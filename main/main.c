@@ -49,13 +49,13 @@ void delay(uint32_t ms) {
     for (uint32_t i = 0; i < ms * 100'000; i++);
 }
 
-int main() {
+int main(void) {
 
     sys_clk_init();
     gpio_init(GPIOC, 13);
 
     while (1) {
         gpio_toggle(GPIOC, 13);
-        delay(500);
+        gpio_set(GPIOC, 13);
     }
 }

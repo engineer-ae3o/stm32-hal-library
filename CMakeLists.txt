@@ -105,6 +105,20 @@ add_custom_target(size
     COMMENT "Binary size"
 )
 
-#add_custom_command(flash
-#
-#)
+add_custom_target(dis
+    COMMAND ${CMAKE_OBJDUMP} -dS ${CMAKE_PROJECT_NAME} > ${CMAKE_PROJECT_NAME}.asm
+    DEPENDS ${CMAKE_PROJECT_NAME}
+    COMMENT "Binary size"
+)
+
+add_custom_target(flash
+    COMMAND openocd -f ${CMAKE_SOURCE_DIR}/openocd.cfg -c "program ${CMAKE_PROJECT_NAME} verify reset exit"
+    DEPENDS ${CMAKE_PROJECT_NAME}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Flashing device"
+)
+
+add_custom_target(debug
+    COMMAND openocd -f ${CMAKE_SOURCE_DIR}/openocd.cfg
+    COMMENT "Starting OpenOCD server"
+)
