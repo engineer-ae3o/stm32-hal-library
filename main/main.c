@@ -37,10 +37,6 @@ void sys_clk_init(void) {
     // Switch to PLL
     RCC->CFGR |= RCC_CFGR_SW_PLL;
     while (!(RCC->CFGR & RCC_CFGR_SW_PLL));
-
-    // Update clock value
-    SystemCoreClock = 100'000'000;
-
 }
 
 // Defined here and used in startup code
@@ -49,12 +45,17 @@ void SystemInit(void) {
     SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
 }
 
+void delay(uint32_t ms) {
+    for (uint32_t i = 0; i < ms * 100'000; i++);
+}
+
 int main() {
 
     sys_clk_init();
-    gpio_init();
+    gpio_init(GPIOC, 13);
 
     while (1) {
-
+        gpio_toggle(GPIOC, 13);
+        delay(500);
     }
 }

@@ -91,3 +91,20 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
+
+add_custom_target(bin
+    COMMAND ${CMAKE_OBJCOPY} -O binary ${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME}.bin
+    COMMAND ${CMAKE_OBJCOPY} -O binary ${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME}.hex
+    DEPENDS ${CMAKE_PROJECT_NAME}
+    COMMENT "Generating binary file from executable"
+)
+
+add_custom_target(size
+    COMMAND ${CMAKE_SIZE} ${CMAKE_PROJECT_NAME}
+    DEPENDS ${CMAKE_PROJECT_NAME}
+    COMMENT "Binary size"
+)
+
+#add_custom_command(flash
+#
+#)
