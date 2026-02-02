@@ -20,6 +20,11 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../startup.s
     ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/gpio.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/timer.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/uart.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/i2c.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/spi.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/pwm.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/wdt.c
 )
 
 # Link directories setup

@@ -31,7 +31,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Set the project name
 set(CMAKE_PROJECT_NAME run_stm)
 
-set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16")
+set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -O2 -g")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MCU_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MCU_FLAGS}")
@@ -94,21 +94,20 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
 add_custom_target(bin
     COMMAND ${CMAKE_OBJCOPY} -O binary ${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME}.bin
-    COMMAND ${CMAKE_OBJCOPY} -O binary ${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME}.hex
     DEPENDS ${CMAKE_PROJECT_NAME}
-    COMMENT "Generating binary file from executable"
+    COMMENT "Generating binary file from built executable"
 )
 
 add_custom_target(size
     COMMAND ${CMAKE_SIZE} ${CMAKE_PROJECT_NAME}
     DEPENDS ${CMAKE_PROJECT_NAME}
-    COMMENT "Binary size"
+    COMMENT "Size of binary sections"
 )
 
 add_custom_target(dis
-    COMMAND ${CMAKE_OBJDUMP} -dS ${CMAKE_PROJECT_NAME} > ${CMAKE_PROJECT_NAME}.asm
+    COMMAND ${CMAKE_OBJDUMP} -D -S ${CMAKE_PROJECT_NAME} > ${CMAKE_PROJECT_NAME}.asm
     DEPENDS ${CMAKE_PROJECT_NAME}
-    COMMENT "Binary size"
+    COMMENT "Generating disassembly of built executable"
 )
 
 add_custom_target(flash

@@ -52,7 +52,10 @@ void system_init(void) {
 }
 
 void TIM2_IRQHandler(void) {
-    
+    if (TIM2->SR & TIM_SR_TIF) {
+        TIM2->SR |= TIM_SR_TIF;
+        gpio_toggle(LED_PORT, LED_PIN);
+    }
 }
 
 void EXTI0_IRQHandler(void) {
@@ -72,7 +75,12 @@ int main(void) {
     gpio_set_input(BUTTON_PORT, BUTTON_PIN);
     gpio_set_interupt(BUTTON_PORT, BUTTON_PIN, 0b10);
 
+    timer_init();
+    timer_set_reload_value(5000);
+    timer_start();
+
     NVIC_EnableIRQ(EXTI0_IRQn);
+    NVIC_EnableIRQ(TIM2_IRQn);
 
     while (1) {
         __WFI();
