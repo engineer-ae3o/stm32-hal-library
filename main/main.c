@@ -7,6 +7,12 @@
 #include <stdint.h>
 
 
+#define LED_PIN 13
+#define LED_PORT GPIOC
+
+#define BUTTON_PIN 0
+#define BUTTON_PORT GPIOA
+
 void sys_clk_init(void) {
 
     // Enable HSE
@@ -55,18 +61,28 @@ void delay(uint32_t ms) {
     delay_cycles(ms * 25'000);
 }
 
+void EXTI0_IRQHandler(void) {
+    if (EXTI->PR & (1UL << BUTTON_PIN)) {
+        EXTI->PR |= (1UL << BUTTON_PIN);
+        gpio_toggle(LED_PORT, LED_PIN);
+    }
+}
+
 int main(void) {
 
     sys_clk_init();
 
-    enable_gpiox_clk(GPIO_C);
-    gpio_set_output(GPIOC, 13);
+    gpiox_clk_enable(LED_PORT);
+    gpio_set_output(LED_PORT, LED_PIN);
     
-    enable_gpiox_clk(GPIO_A);
-    gpio_set_input(GPIOA, 0);
+    gpio_enable_sys_clk();
+    gpiox_clk_enable(BUTTON_PORT);
+    gpio_set_input(BUTTON_PORT, BUTTON_PIN);
+    gpio_set_interupt(BUTTON_PORT, BUTTON_PIN, 0b10);
+
+    NVIC_EnableIRQ(EXTI0_IRQn);
 
     while (1) {
-        gpio_toggle(GPIOC, 13);
-        delay(500);
+        __WFI();
     }
 }
