@@ -13,7 +13,11 @@
 #define BUTTON_PIN 0
 #define BUTTON_PORT GPIOA
 
-void sys_clk_init(void) {
+
+// Defined here and used in startup code
+void system_init(void) {
+    // FPU settings
+    SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
 
     // Enable HSE
     RCC->CR |= RCC_CR_HSEON;
@@ -47,18 +51,8 @@ void sys_clk_init(void) {
     while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
 }
 
-// Defined here and used in startup code
-void SystemInit(void) {
-    // FPU settings
-    SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
-}
-
-void delay_cycles(uint32_t cycles) {
-    while (cycles--);
-}
-
-void delay(uint32_t ms) {
-    delay_cycles(ms * 25'000);
+void TIM2_IRQHandler(void) {
+    
 }
 
 void EXTI0_IRQHandler(void) {
@@ -69,9 +63,7 @@ void EXTI0_IRQHandler(void) {
 }
 
 int main(void) {
-
-    sys_clk_init();
-
+    
     gpiox_clk_enable(LED_PORT);
     gpio_set_output(LED_PORT, LED_PIN);
     

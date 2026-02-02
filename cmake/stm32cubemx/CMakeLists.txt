@@ -17,7 +17,7 @@ set(MX_Include_Dirs
 # STM32CubeMX generated application sources
 set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../main/main.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../startup_stm32f411xe.s
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../startup.s
     ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/gpio.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/timer.c
 )
