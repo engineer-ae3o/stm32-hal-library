@@ -31,6 +31,7 @@ reset_handler:
     ldr r0, =_sbss
     ldr r1, =_ebss
     mov r2, #0
+    b .check_bss_loop_cond
 .zero_bss:
     str r2, [r0], #4
 .check_bss_loop_cond:
@@ -78,7 +79,7 @@ irq_vectors:
     .word 0
     .word PendSV_Handler
     .word SysTick_Handler
-    // External Interrupts
+    // Interrupts
     .word WWDG_IRQHandler       // Window WatchDog
     .word PVD_IRQHandler        // PVD through EXTI line detection
     .word TAMP_STAMP_IRQHandler // Tamper and timeStamps through the EXTI line

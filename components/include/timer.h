@@ -5,13 +5,13 @@
 extern "C" {
 #endif
 
-#include "stm32f411xe.h"
 #include "stdint.h"
+#include "stm32f411xe.h"
 
-void timer_init(void);
-void timer_set_reload_value(uint32_t value);
-void timer_start(void);
-void timer_end(void);
+void timer_init(TIM_TypeDef* timer, uint16_t prescaler);
+void timer_set_reload_value(TIM_TypeDef* timer, uint32_t value);
+void timer_start(TIM_TypeDef* timer);
+void timer_end(TIM_TypeDef* timer);
 
 #ifdef __cpluplus
 }

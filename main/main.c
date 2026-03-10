@@ -13,8 +13,10 @@
 #define BUTTON_PIN 0
 #define BUTTON_PORT GPIOA
 
+#define TIMER_PORT TIM2
 
-// Defined here and used in startup code
+
+// Defined here and used in the startup code
 void system_init(void) {
     // FPU settings
     SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
@@ -52,8 +54,8 @@ void system_init(void) {
 }
 
 void TIM2_IRQHandler(void) {
-    if (TIM2->SR & TIM_SR_TIF) {
-        TIM2->SR |= TIM_SR_TIF;
+    if (TIMER_PORT->SR & TIM_SR_TIF) {
+        TIMER_PORT->SR &= ~TIM_SR_TIF;
         gpio_toggle(LED_PORT, LED_PIN);
     }
 }
@@ -66,18 +68,22 @@ void EXTI0_IRQHandler(void) {
 }
 
 int main(void) {
+
+    const uint16_t prescaler = 25;
+    const uint32_t reload_val = 4'000'000;
     
     gpiox_clk_enable(LED_PORT);
     gpio_set_output(LED_PORT, LED_PIN);
+    gpio_set(LED_PORT, LED_PIN);
     
     gpio_enable_sys_clk();
     gpiox_clk_enable(BUTTON_PORT);
     gpio_set_input(BUTTON_PORT, BUTTON_PIN);
     gpio_set_interupt(BUTTON_PORT, BUTTON_PIN, 0b10);
 
-    timer_init();
-    timer_set_reload_value(5000);
-    timer_start();
+    timer_init(TIMER_PORT, prescaler);
+    timer_set_reload_value(TIMER_PORT, reload_val);
+    timer_start(TIMER_PORT);
 
     NVIC_EnableIRQ(EXTI0_IRQn);
     NVIC_EnableIRQ(TIM2_IRQn);

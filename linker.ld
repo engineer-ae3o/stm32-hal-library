@@ -18,6 +18,7 @@ SECTIONS
         . = ALIGN(4);
         *(.isr_vector)
         *(.isr_vector*)
+        KEEP(*(.isr_vector));
     } > FLASH
 
     .text :
