@@ -2,7 +2,7 @@
 #define _TIMER_H_
 
 
-#ifdef __cpluplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -17,7 +17,7 @@ void timer_start(TIM_TypeDef* timer);
 void timer_end(TIM_TypeDef* timer);
 
 
-#ifdef __cpluplus
+#ifdef __cplusplus
 }
 #endif
 

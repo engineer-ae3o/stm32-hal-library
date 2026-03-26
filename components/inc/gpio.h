@@ -1,9 +1,11 @@
 #ifndef _GPIO_H_
 #define _GPIO_H_
 
-#ifdef __cpluplus
+
+#ifdef __cplusplus
 extern "C" {
 #endif
+
 
 #include "stm32f411xe.h"
 
@@ -18,8 +20,10 @@ void gpio_enable_sys_clk(void);
 void gpio_set_interupt(GPIO_TypeDef* port, uint8_t pin, uint8_t edge);
 void gpio_clear_interrupt(uint8_t pin);
 
-#ifdef __cpluplus
+
+#ifdef __cplusplus
 }
 #endif
+
 
 #endif // _GPIO_H_

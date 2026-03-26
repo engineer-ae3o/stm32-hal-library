@@ -50,6 +50,7 @@ void gpio_set_interupt(GPIO_TypeDef* port, uint8_t pin, uint8_t edge) {
     // Extract register index and bit poition
     const uint8_t reg_idx = pin / 4;
     const uint8_t bit_pos = (pin % 4) * 4;
+
     // Get port code from gpio port
     uint8_t port_code = 0;
     if (port == GPIOA) {
@@ -61,18 +62,23 @@ void gpio_set_interupt(GPIO_TypeDef* port, uint8_t pin, uint8_t edge) {
     } else if (port == GPIOD) {
         port_code = 3;
     }
+
     // Set external interrupt configuration register
     SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
     SYSCFG->EXTICR[reg_idx] |= (port_code << bit_pos);
+
     // Extract rising and falling bits from edge variable
     const uint8_t rising_bit = edge & 0x01UL;
     const uint8_t falling_bit = (edge >> 1UL) & 0x01UL;
+
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(1UL << pin);
     EXTI->FTSR &= ~(1UL << pin);
+
     // Set interrupts edge registers if enabled
     if (rising_bit) EXTI->RTSR |= (1UL << pin);
     if (falling_bit) EXTI->FTSR |= (1UL << pin);
+
     // Unmask interrupts for pin
     EXTI->IMR |= (1UL << pin);
 }
@@ -81,11 +87,14 @@ void gpio_clear_interrupt(uint8_t pin) {
     // Extract register index and bit poition
     const uint8_t reg_idx = pin / 4;
     const uint8_t bit_pos = (pin % 4) * 4;
+
     // Clear external interrupt configuration register
     SYSCFG->EXTICR[reg_idx] &= ~(0x0FUL << bit_pos);
+
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(1UL << pin);
     EXTI->FTSR &= ~(1UL << pin);
+    
     // Mask interrupts for pin
     EXTI->IMR &= ~(1UL << pin);
 }

@@ -2,13 +2,14 @@
 #define _UART_H_
 
 
-#ifdef __cpluplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
 
 #include "stdint.h"
 #include "stddef.h"
+#include "stdbool.h"
 #include "stm32f411xe.h"
 
 
@@ -38,7 +39,7 @@ void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, size_t len,
                        uart_dma_transmit_done_cb_t cb, void* arg);
 
 
-#ifdef __cpluplus
+#ifdef __cplusplus
 }
 #endif
 
