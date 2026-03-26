@@ -12,9 +12,6 @@ reset_handler:
     // Load the value of the top of the stack into the stack pointer register
     ldr sp, =_estack
 
-    // Call the system clock initialization function
-    bl system_init
-
     // Copy the .data section from flash to ram
     ldr r0, =_sdata
     ldr r1, =_edata
@@ -37,6 +34,9 @@ reset_handler:
 .check_bss_loop_cond:
     cmp r0, r1
     blo .zero_bss
+    
+    // Call the system clock initialization function
+    bl system_init
 
     // Call static constructors
     bl __libc_init_array
@@ -82,7 +82,7 @@ irq_vectors:
     // Interrupts
     .word WWDG_IRQHandler       // Window WatchDog
     .word PVD_IRQHandler        // PVD through EXTI line detection
-    .word TAMP_STAMP_IRQHandler // Tamper and timeStamps through the EXTI line
+    .word TAMP_STAMP_IRQHandler // Tamper and timestamps through the EXTI line
     .word RTC_WKUP_IRQHandler   // RTC Wakeup through the EXTI line
     .word FLASH_IRQHandler      // FLASH
     .word RCC_IRQHandler        // RCC

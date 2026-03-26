@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
@@ -31,7 +31,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Set the project name
 set(CMAKE_PROJECT_NAME run_stm)
 
-set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -O2 -g")
+set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Og -g3 -Wall -Wpedantic -Werror -Wextra -Wshadow -Wconversion\
+               -Wwrite-strings -Wformat=2 -Wsign-conversion -fno-common -fstrict-aliasing -flto -std=gnu23")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MCU_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MCU_FLAGS}")

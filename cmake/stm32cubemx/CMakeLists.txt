@@ -9,9 +9,10 @@ set(MX_Defines_Syms
 
 # STM32CubeMX generated include paths
 set(MX_Include_Dirs
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/CMSIS/Device/ST/STM32F4xx/Include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/CMSIS/Include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../components/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/CMSIS/Device/ST/STM32F4xx/Include/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../components/external/printf/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/CMSIS/Include/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../components/include/
 )
 
 # STM32CubeMX generated application sources
@@ -25,6 +26,7 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/spi.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/pwm.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../../components/src/wdt.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../components/external/printf/printf.c
 )
 
 # Link directories setup

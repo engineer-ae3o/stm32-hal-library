@@ -2,7 +2,9 @@
 #include "system_stm32f4xx.h"
 
 #include "gpio.h"
+#include "uart.h"
 #include "timer.h"
+#include "printf.h"
 
 #include <stdint.h>
 
@@ -15,6 +17,7 @@
 
 #define TIMER_PORT TIM2
 
+uint32_t SystemCoreClock;
 
 // Defined here and used in the startup code
 void system_init(void) {
@@ -51,6 +54,9 @@ void system_init(void) {
     // Switch to PLL
     RCC->CFGR |= RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+
+    // Update system clock
+    SystemCoreClock = 100'000'000UL;
 }
 
 void TIM2_IRQHandler(void) {
@@ -67,7 +73,25 @@ void EXTI0_IRQHandler(void) {
     }
 }
 
+void putchar_(char c) {
+    uart_transmit_byte(USART1, (uint8_t)c);
+}
+
 int main(void) {
+
+    const uart_config_t config = {
+        .baud_rate = 115200,
+        .over_sampling = 16,
+
+        .tx_chan = GPIOC,
+        .tx_pin = 2,
+
+        .rx_chan = GPIOC,
+        .rx_pin = 3,
+        
+        .with_dma = false
+    };
+    uart_init(USART1, &config);
 
     const uint16_t prescaler = 25;
     const uint32_t reload_val = 4'000'000;
@@ -87,6 +111,8 @@ int main(void) {
 
     NVIC_EnableIRQ(EXTI0_IRQn);
     NVIC_EnableIRQ(TIM2_IRQn);
+
+    printf_("ggdqiwq\n");
 
     while (1) {
         __WFI();

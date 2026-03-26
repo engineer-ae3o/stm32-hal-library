@@ -62,11 +62,11 @@ void gpio_set_interupt(GPIO_TypeDef* port, uint8_t pin, uint8_t edge) {
         port_code = 3;
     }
     // Set external interrupt configuration register
-    SYSCFG->EXTICR[reg_idx] &= ~(0xF << bit_pos);
+    SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
     SYSCFG->EXTICR[reg_idx] |= (port_code << bit_pos);
     // Extract rising and falling bits from edge variable
-    const uint8_t rising_bit = edge & 0x1;
-    const uint8_t falling_bit = (edge >> 1) & 0x1;
+    const uint8_t rising_bit = edge & 0x01UL;
+    const uint8_t falling_bit = (edge >> 1UL) & 0x01UL;
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(1UL << pin);
     EXTI->FTSR &= ~(1UL << pin);
@@ -82,7 +82,7 @@ void gpio_clear_interrupt(uint8_t pin) {
     const uint8_t reg_idx = pin / 4;
     const uint8_t bit_pos = (pin % 4) * 4;
     // Clear external interrupt configuration register
-    SYSCFG->EXTICR[reg_idx] &= ~(0xF << bit_pos);
+    SYSCFG->EXTICR[reg_idx] &= ~(0x0FUL << bit_pos);
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(1UL << pin);
     EXTI->FTSR &= ~(1UL << pin);
