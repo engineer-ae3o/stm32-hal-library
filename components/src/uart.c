@@ -106,34 +106,45 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         while (1);
     }
     
-    // TODO
     if (config->with_dma) {
-        
+        // Enable dma for transmitter and receiver
+        handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
     }
 
     // Enable UART
     handle->CR1 |= USART_CR1_UE;
 }
 
-void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
+void uart_enable(USART_TypeDef* handle) {
     // Enable UART TX
     handle->CR1 |= USART_CR1_TE;
 
+    // Enable UART RX
+    handle->CR1 |= USART_CR1_RE;
+}
+
+void uart_disable(USART_TypeDef* handle) {
+    // Disable UART TX
+    handle->CR1 &= ~USART_CR1_TE;
+
+    // Disable UART RX
+    handle->CR1 &= ~USART_CR1_RE;
+}
+
+void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
     // Put byte in data register
     handle->DR = byte;
 
     // Wait till byte is fully transmitted
     while (!(handle->SR & USART_SR_TC));
-
-    // Disable UART TX
-    handle->CR1 &= ~USART_CR1_TE;
 }
 
 void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) {
-    // Enable UART TX
-    handle->CR1 |= USART_CR1_TE;
 
-    for (size_t i = 0; i < len; i++) {
+    // Put byte in data register
+    handle->DR = data[0];
+    
+    for (size_t i = 1U; i < (len - 1U); i++) {
         // Block until the byte has been sent to the shift register
         while (!(handle->SR & USART_SR_TXE));
 
@@ -143,34 +154,20 @@ void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) 
 
     // Wait for all bytes to be fully transmitted
     while (!(handle->SR & USART_SR_TC));
-
-    // Disable UART TX
-    handle->CR1 &= ~USART_CR1_TE;
 }
 
 void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, size_t len, uart_dma_transmit_done_cb_t cb, void* arg) {
-    // Enable UART TX
-    handle->CR1 |= USART_CR1_TE;
-
     (void)handle;
     (void)data;
     (void)len;
     (void)cb;
     (void)arg;
-
-    // Disable UART TX
-    handle->CR1 &= ~USART_CR1_TE;
 }
 
 void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, size_t len, uart_dma_transmit_done_cb_t cb, void* arg) {
-    // Enable UART RX
-    handle->CR1 |= USART_CR1_RE;
-    
+    (void)handle;
     (void)data;
     (void)len;
     (void)cb;
     (void)arg;
-
-    // Disable UART RX
-    handle->CR1 &= ~USART_CR1_RE;
 }

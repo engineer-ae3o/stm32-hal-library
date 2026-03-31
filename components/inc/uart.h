@@ -28,6 +28,8 @@ typedef struct {
 } uart_config_t;
 
 void uart_init(USART_TypeDef* handle, const uart_config_t* config);
+void uart_enable(USART_TypeDef* handle);
+void uart_disable(USART_TypeDef* handle);
 void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte);
 void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len);
 void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, size_t len,
