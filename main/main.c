@@ -28,7 +28,7 @@ void system_init(void) {
     while (!(RCC->CR & RCC_CR_HSERDY));
 
     // Set flash latency
-    FLASH->ACR |= FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS;
+    FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS | FLASH_ACR_PRFTEN);
 
     // Configure voltage regulator
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
@@ -79,14 +79,15 @@ void putchar_(char c) {
 int main(void) {
 
     const uart_config_t config = {
-        .over_sampling = 16,
-        .baud_rate = 115200,
+        .with_dma = false,
 
+        .over_sampling = 16UL,
+        .clock_freq_hz = 100'000'000UL,
+        .baud_rate = 115200UL,
+
+        .tx_pin = 2UL,
+        .rx_pin = 3UL,
         .uart_gpio_chan = GPIOC,
-        .tx_pin = 2,
-        .rx_pin = 3,
-        
-        .with_dma = false
     };
     uart_init(USART1, &config);
 

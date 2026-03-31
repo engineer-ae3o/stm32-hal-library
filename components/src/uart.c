@@ -24,12 +24,14 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     handle->CR1 |= (USART_CR1_M | USART_CR1_PCE | USART_CR1_PS);
 
     // Baud rate generator
-    const float uart_div = (float)SystemCoreClock / (float)(config->baud_rate * config->over_sampling);
+    const float uart_div = (float)config->clock_freq_hz / (float)(config->baud_rate * config->over_sampling);
+
+    // Get the mantissa and the fractional parts of the uart clock divider
     const uint16_t mantissa = (uint16_t)floorf(uart_div);
     const uint16_t fraction = (uint16_t)((uart_div - (float)mantissa) * config->over_sampling);
-    handle->BRR = (mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x0FU);
 
     // Set oversampling and baud rate divider
+    // The fractional part can only be 3 bits if oversampling is 8
     if (config->over_sampling == 8) {
         handle->CR1 |= USART_CR1_OVER8;
         handle->BRR = (mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x07U);
@@ -40,7 +42,7 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         while (1);
     }
 
-    // Initialize TX pin
+    // Initialize GPIO pins for UART
     // Enable gpio channel clock
     if (config->uart_gpio_chan == GPIOA) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
@@ -55,12 +57,20 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     }
 
     // Set gpio pin to alternate function
+    // TX pin
     config->uart_gpio_chan->MODER &= ~(0b11UL << (config->tx_pin * 2UL));
     config->uart_gpio_chan->MODER |= (0b10UL << (config->tx_pin * 2UL));
+    // RX pin
+    config->uart_gpio_chan->MODER &= ~(0b11UL << (config->rx_pin * 2UL));
+    config->uart_gpio_chan->MODER |= (0b10UL << (config->rx_pin * 2UL));
 
     // Set pullup
+    // TX pin
     config->uart_gpio_chan->PUPDR &= ~(0b11UL << (config->tx_pin * 2UL));
     config->uart_gpio_chan->PUPDR |= (0b01UL << (config->tx_pin * 2UL));
+    // RX pin
+    config->uart_gpio_chan->PUPDR &= ~(0b11UL << (config->rx_pin * 2UL));
+    config->uart_gpio_chan->PUPDR |= (0b01UL << (config->rx_pin * 2UL));
 
     // Configure the alternate mode
     // Get the alternate function value as it
@@ -74,7 +84,8 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         while (1);
     }
 
-    // Apply alt_val
+    // Set the alternate function
+    // TX pin
     if (config->tx_pin <= 7) {
         config->uart_gpio_chan->AFR[0] &= ~(0b1111UL << (config->tx_pin * 4UL));
         config->uart_gpio_chan->AFR[0] |= (alt_val << (config->tx_pin * 4UL));
@@ -84,39 +95,17 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     } else {
         while (1);
     }
-    
-    // Initialize RX pin
-    // Set gpio pin to alternate function
-    config->uart_gpio_chan->MODER &= ~(0b11UL << (config->rx_pin * 2UL));
-    config->uart_gpio_chan->MODER |= (0b10UL << (config->rx_pin * 2UL));
-
-    // Set pullup
-    config->uart_gpio_chan->PUPDR &= ~(0b11UL << (config->rx_pin * 2UL));
-    config->uart_gpio_chan->PUPDR |= (0b01UL << (config->rx_pin * 2UL));
-
-    // Configure the alternate mode
-    // Get the alternate function value as it
-    // varies for each peripheral instance
-    uint32_t alt_val_2 = 0;
-    if (handle == USART1 || handle == USART2) {
-        alt_val_2 = 7UL;
-    } else if (handle == USART6) {
-        alt_val_2 = 8UL;
-    } else {
-        while (1);
-    }
-
-    // Apply alt_val_2
+    // RX pin
     if (config->rx_pin <= 7) {
         config->uart_gpio_chan->AFR[0] &= ~(0b1111UL << (config->rx_pin * 4UL));
-        config->uart_gpio_chan->AFR[0] |= (alt_val_2 << (config->rx_pin * 4UL));
+        config->uart_gpio_chan->AFR[0] |= (alt_val << (config->rx_pin * 4UL));
     } else if (config->rx_pin <= 15) {
         config->uart_gpio_chan->AFR[1] &= ~(0b1111UL << ((config->rx_pin - 8) * 4UL));
-        config->uart_gpio_chan->AFR[1] |= (alt_val_2 << ((config->rx_pin - 8) * 4UL));
+        config->uart_gpio_chan->AFR[1] |= (alt_val << ((config->rx_pin - 8) * 4UL));
     } else {
         while (1);
     }
-
+    
     // TODO
     if (config->with_dma) {
         
@@ -129,48 +118,53 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
     // Enable UART TX
     handle->CR1 |= USART_CR1_TE;
-    while (!(handle->CR1 & USART_CR1_TE));
 
     // Put byte in data register
     handle->DR = byte;
 
-    // Wait till byte is transmitted
-    while (!(handle->SR & USART_SR_TXE));
+    // Wait till byte is fully transmitted
+    while (!(handle->SR & USART_SR_TC));
 
     // Disable UART TX
     handle->CR1 &= ~USART_CR1_TE;
-    while (handle->CR1 & USART_CR1_TE);
 }
 
 void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) {
     // Enable UART TX
     handle->CR1 |= USART_CR1_TE;
-    while (!(handle->CR1 & USART_CR1_TE));
 
     for (size_t i = 0; i < len; i++) {
+        // Block until the byte has been sent to the shift register
+        while (!(handle->SR & USART_SR_TXE));
+
         // Put byte in data register
         handle->DR = data[i];
-        // Wait till byte is transmitted
-        while (!(handle->SR & USART_SR_TXE));
     }
+
+    // Wait for all bytes to be fully transmitted
+    while (!(handle->SR & USART_SR_TC));
 
     // Disable UART TX
     handle->CR1 &= ~USART_CR1_TE;
-    while (handle->CR1 & USART_CR1_TE);
 }
 
 void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, size_t len, uart_dma_transmit_done_cb_t cb, void* arg) {
+    // Enable UART TX
+    handle->CR1 |= USART_CR1_TE;
+
     (void)handle;
     (void)data;
     (void)len;
     (void)cb;
     (void)arg;
+
+    // Disable UART TX
+    handle->CR1 &= ~USART_CR1_TE;
 }
 
 void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, size_t len, uart_dma_transmit_done_cb_t cb, void* arg) {
     // Enable UART RX
     handle->CR1 |= USART_CR1_RE;
-    while (!(handle->CR1 & USART_CR1_RE));
     
     (void)data;
     (void)len;
@@ -179,5 +173,4 @@ void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, size_t len, uart_dma
 
     // Disable UART RX
     handle->CR1 &= ~USART_CR1_RE;
-    while (handle->CR1 & USART_CR1_RE);
 }
