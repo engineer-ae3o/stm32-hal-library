@@ -1,5 +1,4 @@
 #include "stm32f411xe.h"
-#include "system_stm32f4xx.h"
 
 #include "gpio.h"
 #include "uart.h"
@@ -80,13 +79,11 @@ void putchar_(char c) {
 int main(void) {
 
     const uart_config_t config = {
-        .baud_rate = 115200,
         .over_sampling = 16,
+        .baud_rate = 115200,
 
-        .tx_chan = GPIOC,
+        .uart_gpio_chan = GPIOC,
         .tx_pin = 2,
-
-        .rx_chan = GPIOC,
         .rx_pin = 3,
         
         .with_dma = false

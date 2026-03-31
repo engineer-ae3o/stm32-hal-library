@@ -10,6 +10,8 @@ set(SRCS
 )
 
 set(INC
+    external/CMSIS/Device/ST/STM32F4xx/Include/
+    external/CMSIS/Include/
     inc/
 )
 

@@ -7,18 +7,18 @@ set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR ARM)
 
-set(CMAKE_C_COMPILER   arm-none-eabi-gcc.exe)
-set(CMAKE_CXX_COMPILER arm-none-eabi-g++.exe)
-set(CMAKE_ASM_COMPILER arm-none-eabi-gcc.exe)
-set(CMAKE_AR           arm-none-eabi-ar.exe)
-set(CMAKE_OBJCOPY      arm-none-eabi-objcopy.exe)
-set(CMAKE_OBJDUMP      arm-none-eabi-objdump.exe)
-set(CMAKE_SIZE         arm-none-eabi-size.exe)
-set(CMAKE_GDB          arm-none-eabi-gdb.exe)
+set(CMAKE_C_COMPILER   C:/Users/user/arm-gnu-toolchain/bin/arm-none-eabi-gcc.exe)
+set(CMAKE_CXX_COMPILER C:/Users/user/arm-gnu-toolchain/bin/arm-none-eabi-g++.exe)
+set(CMAKE_ASM_COMPILER C:/Users/user/arm-gnu-toolchain/bin/arm-none-eabi-gcc.exe)
+set(CMAKE_AR           C:/Users/user/arm-gnu-toolchain/bin/arm-none-eabi-ar.exe)
+set(CMAKE_OBJCOPY      C:/Users/user/arm-gnu-toolchain/bin/arm-none-eabi-objcopy.exe)
+set(CMAKE_OBJDUMP      C:/Users/user/arm-gnu-toolchain/bin/arm-none-eabi-objdump.exe)
+set(CMAKE_SIZE         C:/Users/user/arm-gnu-toolchain/bin/arm-none-eabi-size.exe)
+set(CMAKE_GDB          C:/Users/user/arm-gnu-toolchain/bin/arm-none-eabi-gdb.exe)
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM YES)
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
@@ -36,15 +36,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Og -g3 -Wall \
                -Wpedantic -Werror -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 \
-               -Wsign-conversion -fno-common -fstrict-aliasing -flto -std=gnu23 \
-               --specs=nano.specs --specs=nosys.specs")
+               -Wsign-conversion -fno-common -fstrict-aliasing -std=gnu23")
 
 set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/linker.ld")
 
 set(CMAKE_C_FLAGS "${MCU_FLAGS}")
-set(CMAKE_CXX_FLAGS "${MCU_FLAGS}")
-set(CMAKE_ASM_FLAGS "${MCU_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--cref -Wl,--gc-sections")
+set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--cref \
+                            -Wl,--gc-sections --specs=nano.specs --specs=nosys.specs")
 
 add_subdirectory(components/)
 add_subdirectory(components/external/)
@@ -61,15 +59,15 @@ set(SRCS
 
 add_executable(${CMAKE_PROJECT_NAME} ${SRCS})
 
-target_link_libraries(${CMAKE_PROJECT_NAME} hal external)
-target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC ${Defines})
-
-# Add linked libraries
-target_link_libraries(${CMAKE_PROJECT_NAME}
+target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
+    hals
+    external
     -lm
     -lc
     -lnosys
 )
+
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${Defines})
 
 # Commands
 # Generate .bin

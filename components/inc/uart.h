@@ -16,18 +16,14 @@ extern "C" {
 typedef void (*uart_dma_transmit_done_cb_t)(void* arg);
 
 typedef struct {
+    uint16_t over_sampling;
     uint32_t baud_rate;
 
-    GPIO_TypeDef* tx_chan;
+    GPIO_TypeDef* uart_gpio_chan;
     uint32_t tx_pin;
-
-    GPIO_TypeDef* rx_chan;
     uint32_t rx_pin;
 
-    uint16_t over_sampling;
-    
     bool with_dma;
-
 } uart_config_t;
 
 void uart_init(USART_TypeDef* handle, const uart_config_t* config);

@@ -41,55 +41,83 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     }
 
     // Initialize TX pin
-    // Enable TX gpio channel clock
-    if (config->tx_chan == GPIOA) {
+    // Enable gpio channel clock
+    if (config->uart_gpio_chan == GPIOA) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-    } else if (config->tx_chan == GPIOB) {
+    } else if (config->uart_gpio_chan == GPIOB) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
-    } else if (config->tx_chan == GPIOC) {
+    } else if (config->uart_gpio_chan == GPIOC) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
-    } else if (config->tx_chan == GPIOD) {
+    } else if (config->uart_gpio_chan == GPIOD) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
     } else {
         while (1);
     }
 
     // Set gpio pin to alternate function
-    config->tx_chan->MODER &= ~(0b11UL << (config->tx_pin * 2UL));
-    config->tx_chan->MODER |= (0b10UL << (config->tx_pin * 2UL));
+    config->uart_gpio_chan->MODER &= ~(0b11UL << (config->tx_pin * 2UL));
+    config->uart_gpio_chan->MODER |= (0b10UL << (config->tx_pin * 2UL));
 
     // Set pullup
-    config->tx_chan->PUPDR &= ~(0b11UL << (config->tx_pin * 2UL));
-    config->tx_chan->PUPDR |= (0b01UL << (config->tx_pin * 2UL));
+    config->uart_gpio_chan->PUPDR &= ~(0b11UL << (config->tx_pin * 2UL));
+    config->uart_gpio_chan->PUPDR |= (0b01UL << (config->tx_pin * 2UL));
 
     // Configure the alternate mode
+    // Get the alternate function value as it
+    // varies for each peripheral instance
+    uint32_t alt_val = 0;
+    if (handle == USART1 || handle == USART2) {
+        alt_val = 7UL;
+    } else if (handle == USART6) {
+        alt_val = 8UL;
+    } else {
+        while (1);
+    }
+
+    // Apply alt_val
     if (config->tx_pin <= 7) {
-        config->tx_chan->AFR[0] &= ~(0b1111UL << (config->tx_pin * 4UL));
-        config->tx_chan->AFR[0] |= (0b1111UL << (config->tx_pin * 4UL));
+        config->uart_gpio_chan->AFR[0] &= ~(0b1111UL << (config->tx_pin * 4UL));
+        config->uart_gpio_chan->AFR[0] |= (alt_val << (config->tx_pin * 4UL));
     } else if (config->tx_pin <= 15) {
-        config->tx_chan->AFR[1] &= ~(0b1111UL << (config->tx_pin * 4UL));
-        config->tx_chan->AFR[1] |= (0b1111UL << (config->tx_pin * 4UL));
+        config->uart_gpio_chan->AFR[1] &= ~(0b1111UL << ((config->tx_pin - 8) * 4UL));
+        config->uart_gpio_chan->AFR[1] |= (alt_val << ((config->tx_pin - 8) * 4UL));
     } else {
         while (1);
     }
     
     // Initialize RX pin
-    // Enable RX gpio channel clock
-    if (config->rx_chan == GPIOA) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-    } else if (config->rx_chan == GPIOB) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
-    } else if (config->rx_chan == GPIOC) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
-    } else if (config->rx_chan == GPIOD) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+    // Set gpio pin to alternate function
+    config->uart_gpio_chan->MODER &= ~(0b11UL << (config->rx_pin * 2UL));
+    config->uart_gpio_chan->MODER |= (0b10UL << (config->rx_pin * 2UL));
+
+    // Set pullup
+    config->uart_gpio_chan->PUPDR &= ~(0b11UL << (config->rx_pin * 2UL));
+    config->uart_gpio_chan->PUPDR |= (0b01UL << (config->rx_pin * 2UL));
+
+    // Configure the alternate mode
+    // Get the alternate function value as it
+    // varies for each peripheral instance
+    uint32_t alt_val_2 = 0;
+    if (handle == USART1 || handle == USART2) {
+        alt_val_2 = 7UL;
+    } else if (handle == USART6) {
+        alt_val_2 = 8UL;
     } else {
         while (1);
     }
 
-    // 
+    // Apply alt_val_2
+    if (config->rx_pin <= 7) {
+        config->uart_gpio_chan->AFR[0] &= ~(0b1111UL << (config->rx_pin * 4UL));
+        config->uart_gpio_chan->AFR[0] |= (alt_val_2 << (config->rx_pin * 4UL));
+    } else if (config->rx_pin <= 15) {
+        config->uart_gpio_chan->AFR[1] &= ~(0b1111UL << ((config->rx_pin - 8) * 4UL));
+        config->uart_gpio_chan->AFR[1] |= (alt_val_2 << ((config->rx_pin - 8) * 4UL));
+    } else {
+        while (1);
+    }
 
-
+    // TODO
     if (config->with_dma) {
         
     }
