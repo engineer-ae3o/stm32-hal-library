@@ -71,11 +71,11 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${Defines})
 
 # Commands
 add_custom_target(build
+    COMMENT "Building project"
+    DEPENDS ${CMAKE_PROJECT_NAME}
     COMMAND ${CMAKE_OBJCOPY} -O binary ${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME}.bin
     COMMAND ${CMAKE_OBJDUMP} -D -S ${CMAKE_PROJECT_NAME} > ${CMAKE_PROJECT_NAME}.s
     COMMAND ${CMAKE_SIZE} ${CMAKE_PROJECT_NAME}
-    DEPENDS ${CMAKE_PROJECT_NAME}
-    MESSAGE "Building project"
 )
 
 # Flash via openocd

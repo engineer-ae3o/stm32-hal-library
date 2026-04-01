@@ -4,26 +4,49 @@
 #include <math.h>
 
 
-// The 3 UART channels
+// The 3 UART channels: ISRs called when the DMA is done
 uart_dma_transmit_done_cb_t s_uart_done_cbs[3] = {};
 void* s_args[3] = {};
 
+// Utilities for mapping the USART channels to DMA streams
 typedef struct {
     uint8_t controller;
     uint8_t stream;
     uint8_t channel;
+} uart_tx_rx_t;
+
+typedef struct {
+    const uart_tx_rx_t tx;
+    const uart_tx_rx_t rx;
 } dma_stream_map_t;
 
-static const dma_stream_map_t s_uart_map[3] = {
-    { .controller = 0, .stream = 3, .channel = 5 },
-    { .controller = 0, .stream = 3, .channel = 5 },
-    { .controller = 0, .stream = 3, .channel = 5 }
+
+// Mapping for the DMA channels for the 3 USART channels
+static const dma_stream_map_t s_uart_dma_map[3] = {
+    // USART1
+    {
+        .tx = { .controller = 2, .stream = 7, .channel = 4 },
+        .rx = { .controller = 2, .stream = 5, .channel = 4 }
+    },
+    // USART2
+    {
+        .tx = { .controller = 1, .stream = 6, .channel = 4 },
+        .rx = { .controller = 1, .stream = 5, .channel = 4 }
+    },
+    // USART6
+    {
+        .tx = { .controller = 2, .stream = 6, .channel = 5 },
+        .rx = { .controller = 2, .stream = 1, .channel = 5 }
+    }
 };
 
-// Forward declarations
-static uint8_t get_index(const USART_TypeDef* handle);
 
-void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
+// Forward declarations
+static uint8_t get_index(const USART_TypeDef_t handle);
+
+
+// Public API
+void uart_init(USART_TypeDef_t handle, const uart_config_t* config) {
 
     // Enable appropriate UART channel clock
     if (handle == USART1) {
@@ -131,7 +154,7 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     handle->CR1 |= USART_CR1_UE;
 }
 
-void uart_enable(USART_TypeDef* handle) {
+void uart_enable(USART_TypeDef_t handle) {
     // Enable UART TX
     handle->CR1 |= USART_CR1_TE;
 
@@ -139,7 +162,7 @@ void uart_enable(USART_TypeDef* handle) {
     handle->CR1 |= USART_CR1_RE;
 }
 
-void uart_disable(USART_TypeDef* handle) {
+void uart_disable(USART_TypeDef_t handle) {
     // Disable UART TX
     handle->CR1 &= ~USART_CR1_TE;
 
@@ -147,46 +170,44 @@ void uart_disable(USART_TypeDef* handle) {
     handle->CR1 &= ~USART_CR1_RE;
 }
 
-void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
+void uart_transmit_byte(USART_TypeDef_t handle, uint8_t byte) {
     // Put byte in data register
     handle->DR = byte;
 
-    // Wait till byte is fully transmitted
-    while (!(handle->SR & USART_SR_TC));
+    // Poll till byte has been put into the USART's FIFO
+    while (!(handle->SR & USART_SR_TXE));
 }
 
-void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) {
-    
+void uart_transmit_poll(USART_TypeDef_t handle, const uint8_t* data, size_t len) {
     for (size_t i = 0U; i < len; i++) {
-        // Put byte in data register
-        handle->DR = data[i];
-
-        // Block until the byte has been sent to the shift register
-        while (!(handle->SR & USART_SR_TXE));
+        uart_transmit_byte(handle, data[i]);
     }
-
-    // Wait for all bytes to be fully transmitted
-    while (!(handle->SR & USART_SR_TC));
 }
 
-void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, size_t len, uart_dma_transmit_done_cb_t cb, void* arg) {
+void uart_transmit_dma(USART_TypeDef_t handle, const uint8_t* data, size_t len,
+                       uart_dma_transmit_done_cb_t callback, void* arg) {
+    // Map UART handle to index for DMA mapping
+    const uint8_t idx = get_index(handle);
+    
+    // Save user passed callback
+    if (callback) {
+        s_uart_done_cbs[idx] = callback;
+        s_args[idx] = arg;
+    }
+    
+}
+
+void uart_receive_dma(USART_TypeDef_t handle, uint8_t* data, size_t len,
+                      uart_dma_transmit_done_cb_t callback, void* arg) {
     (void)handle;
     (void)data;
     (void)len;
-    (void)cb;
-    (void)arg;
-}
-
-void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, size_t len, uart_dma_transmit_done_cb_t cb, void* arg) {
-    (void)handle;
-    (void)data;
-    (void)len;
-    (void)cb;
+    (void)callback;
     (void)arg;
 }
 
 // Static helpers
-static uint8_t get_index(const USART_TypeDef* handle) {
+static uint8_t get_index(const USART_TypeDef_t handle) {
     if (handle == USART1)      return 0U;
     else if (handle == USART2) return 1U;
     else if (handle == USART6) return 2U;
