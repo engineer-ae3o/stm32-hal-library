@@ -27,7 +27,7 @@ void system_init(void) {
     RCC->CR |= RCC_CR_HSEON;
     while (!(RCC->CR & RCC_CR_HSERDY));
 
-    // Set flash latency
+    // Set flash latency, enable I and D caches, as well as enable instruction prefetching
     FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS | FLASH_ACR_PRFTEN);
 
     // Configure voltage regulator
@@ -35,11 +35,11 @@ void system_init(void) {
     PWR->CR |= PWR_CR_VOS;
 
     // Configure PLL
-    RCC->PLLCFGR = (25 << RCC_PLLCFGR_PLLM_Pos) |
+    RCC->PLLCFGR = (25 << RCC_PLLCFGR_PLLM_Pos)  |
                    (200 << RCC_PLLCFGR_PLLN_Pos) |
-                   (0 << RCC_PLLCFGR_PLLP_Pos) |
-                   RCC_PLLCFGR_PLLSRC_HSE |
-                   (4 << 24);
+                   (0 << RCC_PLLCFGR_PLLP_Pos)   |
+                   (RCC_PLLCFGR_PLLSRC_HSE)      |
+                   (4 << RCC_PLLCFGR_PLLQ_Pos);
 
     // Enable PLL
     RCC->CR |= RCC_CR_PLLON;
@@ -79,8 +79,6 @@ void putchar_(char c) {
 int main(void) {
 
     const uart_config_t config = {
-        .with_dma = false,
-
         .over_sampling = 16UL,
         .clock_freq_hz = 100'000'000UL,
         .baud_rate = 115200UL,

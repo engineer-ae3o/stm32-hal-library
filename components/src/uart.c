@@ -10,8 +10,8 @@ void* s_args[3] = {};
 
 // Utilities for mapping the USART channels to DMA streams
 typedef struct {
-    uint8_t controller;
-    uint8_t stream;
+    DMA_TypeDef* controller;
+    DMA_Stream_TypeDef* stream;
     uint8_t channel;
 } uart_tx_rx_t;
 
@@ -20,26 +20,24 @@ typedef struct {
     const uart_tx_rx_t rx;
 } dma_stream_map_t;
 
-
 // Mapping for the DMA channels for the 3 USART channels
 static const dma_stream_map_t s_uart_dma_map[3] = {
     // USART1
     {
-        .tx = { .controller = 2, .stream = 7, .channel = 4 },
-        .rx = { .controller = 2, .stream = 5, .channel = 4 }
+        .tx = { .controller = DMA2, .stream = DMA2_Stream7, .channel = 4 },
+        .rx = { .controller = DMA2, .stream = DMA2_Stream5, .channel = 4 }
     },
     // USART2
     {
-        .tx = { .controller = 1, .stream = 6, .channel = 4 },
-        .rx = { .controller = 1, .stream = 5, .channel = 4 }
+        .tx = { .controller = DMA1, .stream = DMA1_Stream6, .channel = 4 },
+        .rx = { .controller = DMA1, .stream = DMA1_Stream5, .channel = 4 }
     },
     // USART6
     {
-        .tx = { .controller = 2, .stream = 6, .channel = 5 },
-        .rx = { .controller = 2, .stream = 1, .channel = 5 }
+        .tx = { .controller = DMA2, .stream = DMA2_Stream6, .channel = 5 },
+        .rx = { .controller = DMA2, .stream = DMA2_Stream1, .channel = 5 }
     }
 };
-
 
 // Forward declarations
 static uint8_t get_index(const USART_TypeDef_t handle);
@@ -145,13 +143,61 @@ void uart_init(USART_TypeDef_t handle, const uart_config_t* config) {
         while (1);
     }
     
-    if (config->with_dma) {
-        // Enable dma for transmitter and receiver
-        handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
-    }
-
     // Enable the UART peripheral
     handle->CR1 |= USART_CR1_UE;
+}
+
+void uart_dma_init(USART_TypeDef_t handle) {
+    // Index for DMA mapping
+    uint8_t idx = 0;
+
+    // Enable DMA clock
+    if (handle == USART1) {
+        RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+        idx = 0;
+    } else if (handle == USART2) {
+        RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+        idx = 1;
+    } else if (handle == USART6) {
+        RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+        idx = 2;
+    } else {
+        while (1);
+    }
+    
+    // TX mapping
+    DMA_TypeDef* tx_controller = s_uart_dma_map[idx].tx.controller;
+    DMA_Stream_TypeDef* tx_stream = s_uart_dma_map[idx].tx.stream;
+    uint8_t tx_channel = s_uart_dma_map[idx].tx.channel;
+
+    // RX mapping
+    DMA_TypeDef* rx_controller = s_uart_dma_map[idx].rx.controller;
+    DMA_Stream_TypeDef* rx_stream = s_uart_dma_map[idx].rx.stream;
+    uint8_t rx_channel = s_uart_dma_map[idx].rx.channel;
+
+    // Disable DMA streams for tx and rx
+    tx_stream->CR &= ~DMA_SxCR_EN;
+    while (tx_stream->CR & DMA_SxCR_EN);
+
+    rx_stream->CR &= ~DMA_SxCR_EN;
+    while (rx_stream->CR & DMA_SxCR_EN);
+
+    // Clear global DMA interrupt flags
+    tx_controller->LIFCR = 0xFFFFFFFFUL;
+    tx_controller->HIFCR = 0xFFFFFFFFUL;
+    rx_controller->LIFCR = 0xFFFFFFFFUL;
+    rx_controller->HIFCR = 0xFFFFFFFFUL;
+    
+    // Configuration
+    tx_stream->CR |= ((tx_channel & 0b111U) << DMA_SxCR_CHSEL_Pos) |
+                     (0b11U << DMA_SxCR_PL_Pos)                    |
+                     (0U << );
+
+    // PSIZE and MSIZE
+    tx_stream->CR &= ~();
+    
+    // Enable dma for transmitter and receiver
+    handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
 }
 
 void uart_enable(USART_TypeDef_t handle) {

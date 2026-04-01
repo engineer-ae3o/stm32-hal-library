@@ -20,8 +20,6 @@ typedef void (*uart_dma_transmit_done_cb_t)(void* arg);
 typedef USART_TypeDef* USART_TypeDef_t;
 
 typedef struct {
-    bool with_dma;
-
     uint16_t over_sampling;
     uint32_t clock_freq_hz;
     uint32_t baud_rate;
@@ -33,6 +31,8 @@ typedef struct {
 } uart_config_t;
 
 void uart_init(USART_TypeDef_t handle, const uart_config_t* config);
+void uart_dma_init(USART_TypeDef_t handle);
+void uart_dma_deinit(USART_TypeDef_t handle);
 void uart_enable(USART_TypeDef_t handle);
 void uart_disable(USART_TypeDef_t handle);
 void uart_transmit_byte(USART_TypeDef_t handle, uint8_t byte);
