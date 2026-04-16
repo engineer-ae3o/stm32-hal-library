@@ -157,14 +157,27 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 }
 
 void uart_dma_init(USART_TypeDef* handle) {
+    
+    // DMA interrupt types
+    IRQn_Type tx_dma_irq = 0;
+    IRQn_Type rx_dma_irq = 0;
 
     // Enable DMA clock
     if (handle == USART1) {
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+        tx_dma_irq = DMA2_Stream7_IRQn;
+        rx_dma_irq = DMA2_Stream5_IRQn;
+
     } else if (handle == USART2) {
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+        tx_dma_irq = DMA1_Stream6_IRQn;
+        rx_dma_irq = DMA1_Stream5_IRQn;
+
     } else if (handle == USART6) {
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+        tx_dma_irq = DMA2_Stream6_IRQn;
+        rx_dma_irq = DMA2_Stream1_IRQn;
+
     } else {
         while (1);
     }
@@ -207,10 +220,10 @@ void uart_dma_init(USART_TypeDef* handle) {
 
     // PSIZE and MSIZE
     tx_stream->CR &= ~((0b11U << DMA_SxCR_PSIZE_Pos)    | // Set PSIZE to 00 for 8 bit data
-                      ~(0b11U << DMA_SxCR_MSIZE_Pos)    | // Set MSIZE to 00 for 8 bit data
-                      ~(0b1U <<  DMA_SxCR_CIRC_Pos)     | // No circular mode
-                      ~(0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
-                      ~(0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
+                       (0b11U << DMA_SxCR_MSIZE_Pos)    | // Set MSIZE to 00 for 8 bit data
+                       (0b1U <<  DMA_SxCR_CIRC_Pos)     | // No circular mode
+                       (0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
+                       (0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
 
     // Enable direct mode
     tx_stream->FCR &= ~DMA_SxFCR_DMDIS;
@@ -229,11 +242,11 @@ void uart_dma_init(USART_TypeDef* handle) {
 
     // PSIZE and MSIZE
     rx_stream->CR &= ~((0b11U << DMA_SxCR_PSIZE_Pos)    | // Set PSIZE to 00 for 8 bit data
-                      ~(0b11U << DMA_SxCR_MSIZE_Pos)    | // Set MSIZE to 00 for 8 bit data
-                      ~(0b11U << DMA_SxCR_DIR_Pos)      | // Direction: P-M for RX
-                      ~(0b1U <<  DMA_SxCR_CIRC_Pos)     | // No circular mode
-                      ~(0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
-                      ~(0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
+                       (0b11U << DMA_SxCR_MSIZE_Pos)    | // Set MSIZE to 00 for 8 bit data
+                       (0b11U << DMA_SxCR_DIR_Pos)      | // Direction: P-M for RX
+                       (0b1U <<  DMA_SxCR_CIRC_Pos)     | // No circular mode
+                       (0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
+                       (0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
     
     // Enable direct mode
     rx_stream->FCR &= ~DMA_SxFCR_DMDIS;
@@ -243,6 +256,13 @@ void uart_dma_init(USART_TypeDef* handle) {
     
     // Enable USART DMA
     handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
+
+    // Enable DMA stream interrupts
+    NVIC_SetPriority(tx_dma_irq, 10);
+    NVIC_EnableIRQ(tx_dma_irq);
+
+    NVIC_SetPriority(rx_dma_irq, 10);
+    NVIC_EnableIRQ(rx_dma_irq);
 }
 
 void uart_enable(USART_TypeDef* handle) {
@@ -260,10 +280,10 @@ void uart_disable(USART_TypeDef* handle) {
 }
 
 void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
+    // Check if the data register is empty
+    while (!(handle->SR & USART_SR_TXE));
     // Put byte in data register
     handle->DR = byte;
-    // Poll till byte has been sent to the USART's FIFO
-    while (!(handle->SR & USART_SR_TXE));
 }
 
 void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) {
@@ -272,7 +292,7 @@ void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) 
     }
 }
 
-void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, size_t len,
+void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len,
                        uart_dma_transmit_done_cb_t callback, void* arg) {
     
     // Get index for DMA stream mapping
@@ -296,7 +316,7 @@ void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, size_t len,
     while (!(stream->CR & DMA_SxCR_EN));
 }
 
-void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, size_t len,
+void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
                       uart_dma_transmit_done_cb_t callback, void* arg) {
 
     // Get index for DMA stream mapping

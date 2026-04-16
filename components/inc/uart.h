@@ -24,7 +24,6 @@ typedef struct {
     uint32_t tx_pin;
     uint32_t rx_pin;
     GPIO_TypeDef* uart_gpio_chan;
-
 } uart_config_t;
 
 void uart_init(USART_TypeDef* handle, const uart_config_t* config);
@@ -34,9 +33,9 @@ void uart_enable(USART_TypeDef* handle);
 void uart_disable(USART_TypeDef* handle);
 void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte);
 void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len);
-void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, size_t len,
+void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len,
                        uart_dma_transmit_done_cb_t callback, void* arg);
-void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, size_t len,
+void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
                       uart_dma_transmit_done_cb_t callback, void* arg);
 
 
