@@ -1,6 +1,6 @@
 #include "stm32f411xe.h"
 
-#include "gpio.h"
+#include "iwdg.h"
 #include "uart.h"
 #include "timer.h"
 #include "printf.h"
@@ -8,15 +8,10 @@
 #include <stdint.h>
 
 
-#define LED_PIN 13
-#define LED_PORT GPIOC
-
-#define BUTTON_PIN 0
-#define BUTTON_PORT GPIOA
-
-#define TIMER_PORT TIM2
+#define LOGGING_UART_PORT USART1
 
 uint32_t SystemCoreClock;
+
 
 // Defined here and used in the startup code
 void system_init(void) {
@@ -58,59 +53,32 @@ void system_init(void) {
     SystemCoreClock = 100'000'000UL;
 }
 
-void TIM2_IRQHandler(void) {
-    if (TIMER_PORT->SR & TIM_SR_TIF) {
-        TIMER_PORT->SR &= ~TIM_SR_TIF;
-        gpio_toggle(LED_PORT, LED_PIN);
-    }
-}
-
-void EXTI0_IRQHandler(void) {
-    if (EXTI->PR & (1UL << BUTTON_PIN)) {
-        EXTI->PR |= (1UL << BUTTON_PIN);
-        gpio_toggle(LED_PORT, LED_PIN);
-    }
-}
-
 void putchar_(char c) {
-    uart_transmit_byte(USART1, (uint8_t)c);
+    uart_transmit_byte(LOGGING_UART_PORT, (uint8_t)c);
 }
 
 int main(void) {
 
+    __disable_irq();
+
     const uart_config_t config = {
         .over_sampling = 16UL,
-        .clock_freq_hz = 100'000'000UL,
+        .clock_freq_hz = SystemCoreClock,
         .baud_rate = 115200UL,
 
         .tx_pin = 2UL,
         .rx_pin = 3UL,
         .uart_gpio_chan = GPIOC,
     };
-    uart_init(USART1, &config);
+    uart_init(LOGGING_UART_PORT, &config);
+    uart_dma_init(LOGGING_UART_PORT);
 
-    const uint16_t prescaler = 25;
-    const uint32_t reload_val = 4'000'000;
+    const uint32_t reload_time_s = 2;
+    iwdg_start(reload_time_s);
     
-    gpiox_clk_enable(LED_PORT);
-    gpio_set_output(LED_PORT, LED_PIN);
-    gpio_set(LED_PORT, LED_PIN);
-    
-    gpio_enable_sys_clk();
-    gpiox_clk_enable(BUTTON_PORT);
-    gpio_set_input(BUTTON_PORT, BUTTON_PIN);
-    gpio_set_interupt(BUTTON_PORT, BUTTON_PIN, 0b10);
-
-    timer_init(TIMER_PORT, prescaler);
-    timer_set_reload_value(TIMER_PORT, reload_val);
-    timer_start(TIMER_PORT);
-
-    NVIC_EnableIRQ(EXTI0_IRQn);
-    NVIC_EnableIRQ(TIM2_IRQn);
-
-    printf_("ggdqiwq\n");
+    __enable_irq();
 
     while (1) {
-        __WFI();
+        iwdg_kick();
     }
 }

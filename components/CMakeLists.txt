@@ -2,10 +2,10 @@ set(SRCS
     src/i2c.c
     src/spi.c
     src/pwm.c
-    src/wdt.c
     src/adc.c
     src/gpio.c
     src/uart.c
+    src/iwdg.c
     src/timer.c
 )
 

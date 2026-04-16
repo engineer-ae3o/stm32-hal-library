@@ -349,6 +349,9 @@ void DMA2_Stream7_IRQHandler(void) {
         DMA2->HIFCR = (DMA_HIFCR_CFEIF7 | DMA_HIFCR_CDMEIF7 |
                        DMA_HIFCR_CTEIF7 | DMA_HIFCR_CHTIF7  |
                        DMA_HIFCR_CTCIF7);
+
+        // Poll till transmission is complete
+        while (!(USART1->SR & USART_SR_TC));
         
         if (s_uart_tx_done_cbs[0]) {
             // Invoke user callback
@@ -404,6 +407,9 @@ void DMA1_Stream6_IRQHandler(void) {
                        DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
                        DMA_HIFCR_CTCIF6);
         
+        // Poll till transmission is complete
+        while (!(USART2->SR & USART_SR_TC));
+
         if (s_uart_tx_done_cbs[1]) {
             // Invoke user callback
             s_uart_tx_done_cbs[1](s_tx_args[1]);
@@ -458,6 +464,9 @@ void DMA2_Stream6_IRQHandler(void) {
                        DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
                        DMA_HIFCR_CTCIF6);
         
+        // Poll till transmission is complete
+        while (!(USART6->SR & USART_SR_TC));
+
         if (s_uart_tx_done_cbs[2]) {
             // Invoke user callback
             s_uart_tx_done_cbs[2](s_tx_args[2]);
