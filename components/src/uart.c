@@ -5,8 +5,12 @@
 
 
 // The 3 UART channels: ISRs called when the DMA is done
-uart_dma_transmit_done_cb_t s_uart_done_cbs[3] = {};
-void* s_args[3] = {};
+// TX
+uart_dma_transmit_done_cb_t s_uart_tx_done_cbs[3] = {};
+void* s_tx_args[3] = {};
+// RX
+uart_dma_transmit_done_cb_t s_uart_rx_done_cbs[3] = {};
+void* s_rx_args[3] = {};
 
 // Utilities for mapping the USART channels to DMA streams
 typedef struct {
@@ -39,12 +43,17 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     }
 };
 
-// Forward declarations
-static uint8_t get_index(const USART_TypeDef_t handle);
+// Helper
+static inline uint8_t get_index(const USART_TypeDef* handle) {
+    if (handle == USART1)      return 0U;
+    else if (handle == USART2) return 1U;
+    else if (handle == USART6) return 2U;
+    else while (1);
+}
 
 
 // Public API
-void uart_init(USART_TypeDef_t handle, const uart_config_t* config) {
+void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Enable appropriate UART channel clock
     if (handle == USART1) {
@@ -147,23 +156,21 @@ void uart_init(USART_TypeDef_t handle, const uart_config_t* config) {
     handle->CR1 |= USART_CR1_UE;
 }
 
-void uart_dma_init(USART_TypeDef_t handle) {
-    // Index for DMA mapping
-    uint8_t idx = 0;
+void uart_dma_init(USART_TypeDef* handle) {
 
     // Enable DMA clock
     if (handle == USART1) {
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-        idx = 0;
     } else if (handle == USART2) {
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
-        idx = 1;
     } else if (handle == USART6) {
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-        idx = 2;
     } else {
         while (1);
     }
+    
+    // Index for DMA mapping
+    const uint8_t idx = get_index(handle);
     
     // TX mapping
     DMA_TypeDef* tx_controller = s_uart_dma_map[idx].tx.controller;
@@ -188,19 +195,51 @@ void uart_dma_init(USART_TypeDef_t handle) {
     rx_controller->LIFCR = 0xFFFFFFFFUL;
     rx_controller->HIFCR = 0xFFFFFFFFUL;
     
+    // TX
     // Configuration
-    tx_stream->CR |= ((tx_channel & 0b111U) << DMA_SxCR_CHSEL_Pos) |
-                     (0b11U << DMA_SxCR_PL_Pos)                    |
-                     (0U << );
+    tx_stream->CR |= (tx_channel << DMA_SxCR_CHSEL_Pos) | // Channel select: 3 bits
+                     (0b11U <<      DMA_SxCR_PL_Pos)    | // Priority select: High priority
+                     (0b1U <<       DMA_SxCR_DIR_Pos)   | // Direction: M-P for TX
+                     (0b1U <<       DMA_SxCR_TCIE_Pos)  | // Enable interrupt on TC
+                     (0b1U <<       DMA_SxCR_TEIE_Pos)  | // Enable interrupt on TE
+                     (0b1U <<       DMA_SxCR_DMEIE_Pos) | // Enable interrupt on DME
+                     (0b1U <<       DMA_SxCR_MINC_Pos);   // Increment memory address
 
     // PSIZE and MSIZE
-    tx_stream->CR &= ~();
+    tx_stream->CR &= ~((0b11U << DMA_SxCR_PSIZE_Pos)    | // Set PSIZE to 00 for 8 bit data
+                      ~(0b11U << DMA_SxCR_MSIZE_Pos)    | // Set MSIZE to 00 for 8 bit data
+                      ~(0b1U <<  DMA_SxCR_CIRC_Pos)     | // No circular mode
+                      ~(0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
+                      ~(0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
+
+    // Set peripheral address
+    tx_stream->PAR = (uint32_t)(&handle->DR);
+
+    // RX
+    // Configuration
+    rx_stream->CR |= (rx_channel << DMA_SxCR_CHSEL_Pos) | // Channel select: 3 bits
+                     (0b11U <<      DMA_SxCR_PL_Pos)    | // Priority select: High priority
+                     (0b1U <<       DMA_SxCR_TCIE_Pos)  | // Enable interrupt on TC
+                     (0b1U <<       DMA_SxCR_TEIE_Pos)  | // Enable interrupt on TE
+                     (0b1U <<       DMA_SxCR_DMEIE_Pos) | // Enable interrupt on DME
+                     (0b1U <<       DMA_SxCR_MINC_Pos);   // Increment memory address
+
+    // PSIZE and MSIZE
+    rx_stream->CR &= ~((0b11U << DMA_SxCR_PSIZE_Pos)    | // Set PSIZE to 00 for 8 bit data
+                      ~(0b11U << DMA_SxCR_MSIZE_Pos)    | // Set MSIZE to 00 for 8 bit data
+                      ~(0b11U << DMA_SxCR_DIR_Pos)      | // Direction: P-M for RX
+                      ~(0b1U <<  DMA_SxCR_CIRC_Pos)     | // No circular mode
+                      ~(0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
+                      ~(0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
+
+    // Set peripheral address
+    rx_stream->PAR = (uint32_t)(&handle->DR);
     
-    // Enable dma for transmitter and receiver
+    // Enable USART DMA
     handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
 }
 
-void uart_enable(USART_TypeDef_t handle) {
+void uart_enable(USART_TypeDef* handle) {
     // Enable UART TX
     handle->CR1 |= USART_CR1_TE;
 
@@ -208,7 +247,7 @@ void uart_enable(USART_TypeDef_t handle) {
     handle->CR1 |= USART_CR1_RE;
 }
 
-void uart_disable(USART_TypeDef_t handle) {
+void uart_disable(USART_TypeDef* handle) {
     // Disable UART TX
     handle->CR1 &= ~USART_CR1_TE;
 
@@ -216,7 +255,7 @@ void uart_disable(USART_TypeDef_t handle) {
     handle->CR1 &= ~USART_CR1_RE;
 }
 
-void uart_transmit_byte(USART_TypeDef_t handle, uint8_t byte) {
+void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
     // Put byte in data register
     handle->DR = byte;
 
@@ -224,38 +263,124 @@ void uart_transmit_byte(USART_TypeDef_t handle, uint8_t byte) {
     while (!(handle->SR & USART_SR_TXE));
 }
 
-void uart_transmit_poll(USART_TypeDef_t handle, const uint8_t* data, size_t len) {
+void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) {
     for (size_t i = 0U; i < len; i++) {
         uart_transmit_byte(handle, data[i]);
     }
 }
 
-void uart_transmit_dma(USART_TypeDef_t handle, const uint8_t* data, size_t len,
+void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, size_t len,
                        uart_dma_transmit_done_cb_t callback, void* arg) {
-    // Map UART handle to index for DMA mapping
+    
+    // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
     
     // Save user passed callback
     if (callback) {
-        s_uart_done_cbs[idx] = callback;
-        s_args[idx] = arg;
+        s_uart_tx_done_cbs[idx] = callback;
+        s_tx_args[idx] = arg;
     }
+    
+    // TX mapping
+    DMA_Stream_TypeDef* stream = s_uart_dma_map[idx].tx.stream;
+    
+    // Set memory address and length
+    stream->M0AR = (uint32_t)data;
+    stream->NDTR = (uint32_t)len;
+    
+    // Enable DMA TX stream
+    stream->CR |= DMA_SxCR_EN;
+    while (!(stream->CR & DMA_SxCR_EN));
+}
+
+void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, size_t len,
+                      uart_dma_transmit_done_cb_t callback, void* arg) {
+
+    // Get index for DMA stream mapping
+    const uint8_t idx = get_index(handle);
+    
+    // Save user passed callback
+    if (callback) {
+        s_uart_rx_done_cbs[idx] = callback;
+        s_rx_args[idx] = arg;
+    }
+    
+    // RX mapping
+    DMA_Stream_TypeDef* stream = s_uart_dma_map[idx].rx.stream;
+
+    // Set memory address and length
+    stream->M0AR = (uint32_t)data;
+    stream->NDTR = (uint32_t)len;
+    
+    // Enable DMA RX stream
+    stream->CR |= DMA_SxCR_EN;
+    while (!(stream->CR & DMA_SxCR_EN));
+}
+
+// DMA interrupts
+// USART1: TX
+void DMA2_Stream7_IRQHandler(void) {
+
+    if (DMA2->HISR & DMA_HISR_TCIF7) {
+        // Clear interrupt flags
+        DMA2->HIFCR = (DMA_HIFCR_CFEIF7 | DMA_HIFCR_CDMEIF7 |
+        DMA_HIFCR_CTEIF7 | DMA_HIFCR_CHTIF7 | DMA_HIFCR_CTCIF7);
+
+        // Invoke user callback
+        if (s_uart_tx_done_cbs[0]) s_uart_tx_done_cbs[0](s_tx_args[0]);
+
+        // Clear user passed context
+        s_uart_tx_done_cbs[0] = NULL;
+        s_tx_args[0] = NULL;
+
+    } else {
+        while (1);
+    }
+
+    // Disable DMA TX stream
+    DMA2_Stream7->CR &= ~DMA_SxCR_EN;
+    while (DMA2_Stream7->CR & DMA_SxCR_EN);
+}
+
+// USART1: RX
+void DMA2_Stream5_IRQHandler(void) {
+    if (DMA2->HISR & DMA_HISR_TCIF5) {
+        // Clear interrupt flags
+        DMA2->HIFCR = (DMA_HIFCR_CFEIF5 | DMA_HIFCR_CDMEIF5 |
+        DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTCIF5);
+
+        // Invoke user callback
+        if (s_uart_rx_done_cbs[0]) s_uart_rx_done_cbs[0](s_rx_args[0]);
+
+        // Clear user passed context
+        s_uart_rx_done_cbs[0] = NULL;
+        s_rx_args[0] = NULL;
+
+    } else {
+        while (1);
+    }
+    
+    // Disable DMA RX stream
+    DMA2_Stream5->CR &= ~DMA_SxCR_EN;
+    while (DMA2_Stream5->CR & DMA_SxCR_EN);
+}
+
+// USART2: TX
+void DMA1_Stream6_IRQHandler(void) {
+
+}
+
+// USART2: RX
+void DMA1_Stream5_IRQHandler(void) {
     
 }
 
-void uart_receive_dma(USART_TypeDef_t handle, uint8_t* data, size_t len,
-                      uart_dma_transmit_done_cb_t callback, void* arg) {
-    (void)handle;
-    (void)data;
-    (void)len;
-    (void)callback;
-    (void)arg;
+// USART6: TX
+void DMA2_Stream6_IRQHandler(void) {
+
 }
 
-// Static helpers
-static uint8_t get_index(const USART_TypeDef_t handle) {
-    if (handle == USART1)      return 0U;
-    else if (handle == USART2) return 1U;
-    else if (handle == USART6) return 2U;
-    else while (1);
+// USART6: RX
+void DMA2_Stream1_IRQHandler(void) {
+    
 }
