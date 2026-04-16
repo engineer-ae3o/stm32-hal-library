@@ -212,6 +212,9 @@ void uart_dma_init(USART_TypeDef* handle) {
                       ~(0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
                       ~(0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
 
+    // Enable direct mode
+    tx_stream->FCR &= ~DMA_SxFCR_DMDIS;
+
     // Set peripheral address
     tx_stream->PAR = (uint32_t)(&handle->DR);
 
@@ -231,6 +234,9 @@ void uart_dma_init(USART_TypeDef* handle) {
                       ~(0b1U <<  DMA_SxCR_CIRC_Pos)     | // No circular mode
                       ~(0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
                       ~(0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
+    
+    // Enable direct mode
+    rx_stream->FCR &= ~DMA_SxFCR_DMDIS;
 
     // Set peripheral address
     rx_stream->PAR = (uint32_t)(&handle->DR);
@@ -242,7 +248,6 @@ void uart_dma_init(USART_TypeDef* handle) {
 void uart_enable(USART_TypeDef* handle) {
     // Enable UART TX
     handle->CR1 |= USART_CR1_TE;
-
     // Enable UART RX
     handle->CR1 |= USART_CR1_RE;
 }
@@ -250,7 +255,6 @@ void uart_enable(USART_TypeDef* handle) {
 void uart_disable(USART_TypeDef* handle) {
     // Disable UART TX
     handle->CR1 &= ~USART_CR1_TE;
-
     // Disable UART RX
     handle->CR1 &= ~USART_CR1_RE;
 }
@@ -258,8 +262,7 @@ void uart_disable(USART_TypeDef* handle) {
 void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
     // Put byte in data register
     handle->DR = byte;
-
-    // Poll till byte has been put into the USART's FIFO
+    // Poll till byte has been sent to the USART's FIFO
     while (!(handle->SR & USART_SR_TXE));
 }
 
@@ -324,14 +327,17 @@ void DMA2_Stream7_IRQHandler(void) {
     if (DMA2->HISR & DMA_HISR_TCIF7) {
         // Clear interrupt flags
         DMA2->HIFCR = (DMA_HIFCR_CFEIF7 | DMA_HIFCR_CDMEIF7 |
-        DMA_HIFCR_CTEIF7 | DMA_HIFCR_CHTIF7 | DMA_HIFCR_CTCIF7);
+                       DMA_HIFCR_CTEIF7 | DMA_HIFCR_CHTIF7  |
+                       DMA_HIFCR_CTCIF7);
+        
+        if (s_uart_tx_done_cbs[0]) {
+            // Invoke user callback
+            s_uart_tx_done_cbs[0](s_tx_args[0]);
 
-        // Invoke user callback
-        if (s_uart_tx_done_cbs[0]) s_uart_tx_done_cbs[0](s_tx_args[0]);
-
-        // Clear user passed context
-        s_uart_tx_done_cbs[0] = NULL;
-        s_tx_args[0] = NULL;
+            // Clear user passed context
+            s_uart_tx_done_cbs[0] = NULL;
+            s_tx_args[0] = NULL;
+        }
 
     } else {
         while (1);
@@ -344,17 +350,21 @@ void DMA2_Stream7_IRQHandler(void) {
 
 // USART1: RX
 void DMA2_Stream5_IRQHandler(void) {
+
     if (DMA2->HISR & DMA_HISR_TCIF5) {
         // Clear interrupt flags
         DMA2->HIFCR = (DMA_HIFCR_CFEIF5 | DMA_HIFCR_CDMEIF5 |
-        DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTCIF5);
+                       DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5  |
+                       DMA_HIFCR_CTCIF5);
+        
+        if (s_uart_rx_done_cbs[0]) {
+            // Invoke user callback
+            s_uart_rx_done_cbs[0](s_rx_args[0]);
 
-        // Invoke user callback
-        if (s_uart_rx_done_cbs[0]) s_uart_rx_done_cbs[0](s_rx_args[0]);
-
-        // Clear user passed context
-        s_uart_rx_done_cbs[0] = NULL;
-        s_rx_args[0] = NULL;
+            // Clear user passed context
+            s_uart_rx_done_cbs[0] = NULL;
+            s_rx_args[0] = NULL;
+        }
 
     } else {
         while (1);
@@ -368,19 +378,107 @@ void DMA2_Stream5_IRQHandler(void) {
 // USART2: TX
 void DMA1_Stream6_IRQHandler(void) {
 
+    if (DMA1->HISR & DMA_HISR_TCIF6) {
+        // Clear interrupt flags
+        DMA1->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
+                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
+                       DMA_HIFCR_CTCIF6);
+        
+        if (s_uart_tx_done_cbs[1]) {
+            // Invoke user callback
+            s_uart_tx_done_cbs[1](s_tx_args[1]);
+
+            // Clear user passed context
+            s_uart_tx_done_cbs[1] = NULL;
+            s_tx_args[1] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+
+    // Disable DMA TX stream
+    DMA1_Stream6->CR &= ~DMA_SxCR_EN;
+    while (DMA1_Stream6->CR & DMA_SxCR_EN);
 }
 
 // USART2: RX
 void DMA1_Stream5_IRQHandler(void) {
+
+    if (DMA1->HISR & DMA_HISR_TCIF5) {
+        // Clear interrupt flags
+        DMA1->HIFCR = (DMA_HIFCR_CFEIF5 | DMA_HIFCR_CDMEIF5 |
+                       DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5  |
+                       DMA_HIFCR_CTCIF5);
+        
+        if (s_uart_rx_done_cbs[1]) {
+            // Invoke user callback
+            s_uart_rx_done_cbs[1](s_rx_args[1]);
+
+            // Clear user passed context
+            s_uart_rx_done_cbs[1] = NULL;
+            s_rx_args[1] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
     
+    // Disable DMA RX stream
+    DMA1_Stream5->CR &= ~DMA_SxCR_EN;
+    while (DMA1_Stream5->CR & DMA_SxCR_EN);
 }
 
 // USART6: TX
 void DMA2_Stream6_IRQHandler(void) {
 
+    if (DMA2->HISR & DMA_HISR_TCIF6) {
+        // Clear interrupt flags
+        DMA2->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
+                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
+                       DMA_HIFCR_CTCIF6);
+        
+        if (s_uart_tx_done_cbs[2]) {
+            // Invoke user callback
+            s_uart_tx_done_cbs[2](s_tx_args[2]);
+
+            // Clear user passed context
+            s_uart_tx_done_cbs[2] = NULL;
+            s_tx_args[2] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+
+    // Disable DMA TX stream
+    DMA2_Stream6->CR &= ~DMA_SxCR_EN;
+    while (DMA2_Stream6->CR & DMA_SxCR_EN);
 }
 
 // USART6: RX
 void DMA2_Stream1_IRQHandler(void) {
+
+    if (DMA2->LISR & DMA_LISR_TCIF1) {
+        // Clear interrupt flags
+        DMA2->LIFCR = (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 |
+                       DMA_LIFCR_CTEIF1 | DMA_LIFCR_CHTIF1  |
+                       DMA_LIFCR_CTCIF1);
+        
+        if (s_uart_rx_done_cbs[2]) {
+            // Invoke user callback
+            s_uart_rx_done_cbs[2](s_rx_args[2]);
+
+            // Clear user passed context
+            s_uart_rx_done_cbs[2] = NULL;
+            s_rx_args[2] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
     
+    // Disable DMA RX stream
+    DMA2_Stream1->CR &= ~DMA_SxCR_EN;
+    while (DMA2_Stream1->CR & DMA_SxCR_EN);
 }
