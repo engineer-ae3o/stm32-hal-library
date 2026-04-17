@@ -23,7 +23,7 @@ void iwdg_start(uint32_t reload_val_s) {
     IWDG->PR |= (prescaler & 0b111U);
 
     // Reload value: 12 bits
-    IWDG->RLR |= (actual_reload_val & 0xFFFU);
+    IWDG->RLR = (actual_reload_val & 0xFFFU);
 
     // Wait until PVU and RVU bits are 0 after modifying the PR and RLR
     while ((IWDG->SR & IWDG_SR_PVU) || (IWDG->SR & IWDG_SR_RVU));

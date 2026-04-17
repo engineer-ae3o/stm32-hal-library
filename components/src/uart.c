@@ -1,8 +1,6 @@
 #include "stm32f411xe.h"
 #include "uart.h"
 
-#include <math.h>
-
 
 // The 3 UART channels: ISRs called when the DMA is done
 // TX
@@ -66,8 +64,8 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         while (1);
     }
 
-    // 9 bit UART, parity bit enabled and odd parity
-    handle->CR1 |= (USART_CR1_M | USART_CR1_PCE | USART_CR1_PS);
+    // 8 bit UART and parity bit disabled
+    handle->CR1 &= ~(USART_CR1_M | USART_CR1_PCE);
 
     // Baud rate generator
     const float uart_div = (float)config->clock_freq_hz / (float)(config->baud_rate * config->over_sampling);

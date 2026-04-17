@@ -89,7 +89,7 @@ void gpio_clear_interrupt(uint8_t pin) {
     const uint8_t bit_pos = (pin % 4) * 4;
 
     // Clear external interrupt configuration register
-    SYSCFG->EXTICR[reg_idx] &= ~(0x0FUL << bit_pos);
+    SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
 
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(1UL << pin);
