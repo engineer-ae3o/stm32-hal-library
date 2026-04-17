@@ -12,6 +12,77 @@ static inline void send_stop(I2C_TypeDef* handle) {
     handle->CR1 |= I2C_CR1_STOP;
 }
 
+static inline i2c_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len) {
+    
+    // Send address and write bit
+    handle->DR = ((address << 1UL) | 0UL);
+    
+    // Wait for ACK
+    uint32_t timeout = 10'000UL;
+    while (!(handle->SR1 & I2C_SR1_ADDR) && (timeout--));
+    if (!(handle->SR1 & I2C_SR1_ADDR)) return I2C_DEVICE_NOT_FOUND;
+    
+    // Read both registers to clear them as per the TRM
+    (void)handle->SR1;
+    (void)handle->SR2;
+
+    // Start transmission after receiving ACK
+    for (size_t i = 0U; i < len; i++) {
+        timeout = 10'000UL;
+        while (!(handle->SR1 & I2C_SR1_TXE) && (timeout--));
+        if (!(handle->SR1 & I2C_SR1_TXE)) return I2C_TX_ERROR;
+        // Transmit byte
+        handle->DR = data[i];
+    }
+
+    // Wait till the last byte has been transferred out
+    timeout = 10'000UL;
+    while (!(handle->SR1 & I2C_SR1_BTF) && (timeout--));
+    if (!(handle->SR1 & I2C_SR1_BTF)) return I2C_TX_ERROR;
+
+    return I2C_OK;
+}
+
+static inline i2c_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len) {
+    
+    // Send address and read bit
+    handle->DR = ((address << 1UL) | 1UL);
+    
+    // Wait for ACK
+    uint32_t timeout = 10'000UL;
+    while (!(handle->SR1 & I2C_SR1_ADDR) && (timeout--));
+    if (!(handle->SR1 & I2C_SR1_ADDR)) return I2C_DEVICE_NOT_FOUND;
+    
+    // Read both registers to clear them as per the TRM
+    (void)handle->SR1;
+    (void)handle->SR2;
+
+    // Start reception after receiving ACK
+    size_t remaining_bytes = len;
+
+    for (size_t i = 0U; i < len; i++) {
+        // Handle the different cases for the remaining number of bytes
+        switch (remaining_bytes) {
+            case 1:
+                break;
+
+            case 2:
+                break;
+
+            default:
+                timeout = 10'000UL;
+                while (!(handle->SR1 & I2C_SR1_RXNE) && (timeout--));
+                if (!(handle->SR1 & I2C_SR1_RXNE)) return I2C_RX_ERROR;
+                // Read byte
+                data[i] = handle->DR;
+                break;
+        }
+        remaining_bytes--;
+    }
+    
+    return I2C_OK;
+}
+
 // Public API
 // I2C Master API
 i2c_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config) {
@@ -49,8 +120,12 @@ i2c_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     config->gpio_port->OTYPER |= (0b1UL << config->sda);
     config->gpio_port->OTYPER |= (0b1UL << config->scl);
 
+    // Speed mode
+    config->gpio_port->OSPEEDR |= (0b11UL << (config->sda * 2UL));
+    config->gpio_port->OSPEEDR |= (0b11UL << (config->scl * 2UL));
+    
     // Pullups
-    if (config->pullups_enable) {
+    if (config->use_pullup) {
         // SDA
         config->gpio_port->PUPDR &= ~(0b11UL << (config->sda * 2UL));
         config->gpio_port->PUPDR |= (0b01UL << (config->sda * 2UL));
@@ -83,8 +158,8 @@ i2c_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     }
     
     // I2C configuration
-    handle->CR1 |= (I2C_CR1_ACK | I2C_CR1_POS);
-    handle->CR2 |= (I2C_CR2_ITERREN | I2C_CR2_ITEVTEN | (config->apb1_bus_freq_mhz << I2C_CR2_FREQ_Pos));
+    handle->CR1 |= I2C_CR1_ACK;
+    handle->CR2 |= ((config->apb1_bus_freq_mhz << I2C_CR2_FREQ_Pos) | I2C_CR2_ITERREN);
 
     // Clock configuration
     const uint32_t clk_speed_hz = (config->freq_type == I2C_400KHz) ? 400'000U : 100'000U;
@@ -101,7 +176,7 @@ i2c_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 
     // Analog and digital noise filters
     handle->FLTR &= ~I2C_FLTR_ANOFF;
-    handle->FLTR |= I2C_FLTR_DNF;
+    handle->FLTR |= (4U << I2C_FLTR_DNF_Pos);
 
     // Enable the I2C peripheral
     handle->CR1 |= I2C_CR1_PE;
@@ -110,65 +185,65 @@ i2c_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 }
 
 i2c_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len) {
-    
-    // Set address
-    handle->OAR1 |= ((address & 0x7FU) << 1U);
 
+    // Check if the bus is free before proceeding
+    if (handle->SR2 & I2C_SR2_BUSY) return I2C_INVALID_STATE;
+    
     // Start transaction
     send_start(handle);
     
-    // Send address and write bit
-    handle->DR = ((address << 1UL) | 1U);
-
-    // TODO: Wait for ACK or NACK
+    // Transmit bytes
+    i2c_err_t ret = tx_trans(handle, address, data, len);
     
-    for (size_t i = 0U; i < len; i++) {
-        // Transmit byte
-        handle->DR = data[i];
-
-        // TODO: Handle ACK and NACK responses
-    }
-
     // End transaction
     send_stop(handle);
 
-    return I2C_OK;
+    return ret;
 }
 
 i2c_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len) {
-    
-    // Set address
-    handle->OAR1 |= ((address & 0x7FU) << 1U) | (1U << 14U);
 
+    // Check if the bus is free before proceeding
+    if (handle->SR2 & I2C_SR2_BUSY) return I2C_INVALID_STATE;
+    
     // Start transaction
     send_start(handle);
-
-    // Send address and read bit
-    handle->DR = ((address << 1UL) | 0U);
-
-    // TODO: Wait for ACK or NACK
-
-    for (size_t i = 0U; i < len; i++) {
-        // Read byte
-        data[i] = handle->DR;
-
-        // TODO: Send ACK and NACK responses
-    }
-
+    
+    // Receive bytes
+    i2c_err_t ret = rx_trans(handle, address, data, len);
+    
     // End transaction
     send_stop(handle);
 
-    return I2C_OK;
+    return ret;
 }
 
 i2c_err_t i2c_master_transmit_receive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data,
                                       size_t tx_len, uint8_t* rx_data, size_t rx_len) {
-    // Transmit first
-    i2c_err_t ret = i2c_master_transmit(handle, address, tx_data, tx_len);
-    if (ret != I2C_OK) return ret;
+
+    // Check if the bus is free before proceeding
+    if (handle->SR2 & I2C_SR2_BUSY) return I2C_INVALID_STATE;
     
-    // Then receive
-    return i2c_master_receive(handle, address, rx_data, rx_len);
+    // Start transaction
+    send_start(handle);
+    
+    // Start TX transaction
+    i2c_err_t ret = tx_trans(handle, address, tx_data, tx_len);
+    if (ret != I2C_OK) {
+        send_stop(handle);
+        return ret;
+    }
+
+    // Send a repeated start
+    send_start(handle);
+
+    // Start RX transaction
+    ret = rx_trans(handle, address, rx_data, rx_len);
+    
+    // End transaction
+    send_stop(handle);
+
+    return ret;
 }
 
 // I2C Slave API

@@ -23,7 +23,7 @@ typedef struct {
 
     uint32_t tx_pin;
     uint32_t rx_pin;
-    GPIO_TypeDef* uart_gpio_chan;
+    GPIO_TypeDef* gpio_port;
 } uart_config_t;
 
 void uart_init(USART_TypeDef* handle, const uart_config_t* config);

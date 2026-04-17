@@ -5,6 +5,7 @@
 #include "stm32f411xe.h"
 #include "stddef.h"
 #include "stdint.h"
+#include "stdbool.h"
 
 
 typedef enum {
@@ -23,9 +24,11 @@ typedef enum {
 } i2c_freq_mode_t;
 
 typedef struct {
-    bool pullups_enable;
+    bool use_pullup;
+
     i2c_freq_mode_t freq_type;
     uint32_t apb1_bus_freq_mhz;
+
     uint32_t sda;
     uint32_t scl;
     GPIO_TypeDef* gpio_port;

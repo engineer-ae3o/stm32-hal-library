@@ -53,13 +53,20 @@ static inline uint8_t get_index(const USART_TypeDef* handle) {
 // Public API
 void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
+    // Get the alternate function value as it
+    // varies for each peripheral instance
+    uint32_t alt_val = 0;
+    
     // Enable appropriate UART channel clock
     if (handle == USART1) {
         RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+        alt_val = 7UL;
     } else if (handle == USART2) {
         RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+        alt_val = 7UL;
     } else if (handle == USART6) {
         RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
+        alt_val = 8UL;
     } else {
         while (1);
     }
@@ -88,13 +95,13 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Initialize GPIO pins for UART
     // Enable gpio channel clock
-    if (config->uart_gpio_chan == GPIOA) {
+    if (config->gpio_port == GPIOA) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-    } else if (config->uart_gpio_chan == GPIOB) {
+    } else if (config->gpio_port == GPIOB) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
-    } else if (config->uart_gpio_chan == GPIOC) {
+    } else if (config->gpio_port == GPIOC) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
-    } else if (config->uart_gpio_chan == GPIOD) {
+    } else if (config->gpio_port == GPIOD) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
     } else {
         while (1);
@@ -102,50 +109,42 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Set gpio pin to alternate function
     // TX pin
-    config->uart_gpio_chan->MODER &= ~(0b11UL << (config->tx_pin * 2UL));
-    config->uart_gpio_chan->MODER |= (0b10UL << (config->tx_pin * 2UL));
+    config->gpio_port->MODER &= ~(0b11UL << (config->tx_pin * 2UL));
+    config->gpio_port->MODER |= (0b10UL << (config->tx_pin * 2UL));
     // RX pin
-    config->uart_gpio_chan->MODER &= ~(0b11UL << (config->rx_pin * 2UL));
-    config->uart_gpio_chan->MODER |= (0b10UL << (config->rx_pin * 2UL));
+    config->gpio_port->MODER &= ~(0b11UL << (config->rx_pin * 2UL));
+    config->gpio_port->MODER |= (0b10UL << (config->rx_pin * 2UL));
 
     // Set pullup
     // TX pin
-    config->uart_gpio_chan->PUPDR &= ~(0b11UL << (config->tx_pin * 2UL));
-    config->uart_gpio_chan->PUPDR |= (0b01UL << (config->tx_pin * 2UL));
+    config->gpio_port->PUPDR &= ~(0b11UL << (config->tx_pin * 2UL));
+    config->gpio_port->PUPDR |= (0b01UL << (config->tx_pin * 2UL));
     // RX pin
-    config->uart_gpio_chan->PUPDR &= ~(0b11UL << (config->rx_pin * 2UL));
-    config->uart_gpio_chan->PUPDR |= (0b01UL << (config->rx_pin * 2UL));
-
-    // Configure the alternate mode
-    // Get the alternate function value as it
-    // varies for each peripheral instance
-    uint32_t alt_val = 0;
-    if (handle == USART1 || handle == USART2) {
-        alt_val = 7UL;
-    } else if (handle == USART6) {
-        alt_val = 8UL;
-    } else {
-        while (1);
-    }
-
+    config->gpio_port->PUPDR &= ~(0b11UL << (config->rx_pin * 2UL));
+    config->gpio_port->PUPDR |= (0b01UL << (config->rx_pin * 2UL));
+    
+    // Speed mode
+    config->gpio_port->OSPEEDR |= (0b11UL << (config->tx_pin * 2UL));
+    config->gpio_port->OSPEEDR |= (0b11UL << (config->rx_pin * 2UL));
+    
     // Set the alternate function
     // TX pin
     if (config->tx_pin <= 7) {
-        config->uart_gpio_chan->AFR[0] &= ~(0b1111UL << (config->tx_pin * 4UL));
-        config->uart_gpio_chan->AFR[0] |= (alt_val << (config->tx_pin * 4UL));
+        config->gpio_port->AFR[0] &= ~(0b1111UL << (config->tx_pin * 4UL));
+        config->gpio_port->AFR[0] |= (alt_val << (config->tx_pin * 4UL));
     } else if (config->tx_pin <= 15) {
-        config->uart_gpio_chan->AFR[1] &= ~(0b1111UL << ((config->tx_pin - 8) * 4UL));
-        config->uart_gpio_chan->AFR[1] |= (alt_val << ((config->tx_pin - 8) * 4UL));
+        config->gpio_port->AFR[1] &= ~(0b1111UL << ((config->tx_pin - 8) * 4UL));
+        config->gpio_port->AFR[1] |= (alt_val << ((config->tx_pin - 8) * 4UL));
     } else {
         while (1);
     }
     // RX pin
     if (config->rx_pin <= 7) {
-        config->uart_gpio_chan->AFR[0] &= ~(0b1111UL << (config->rx_pin * 4UL));
-        config->uart_gpio_chan->AFR[0] |= (alt_val << (config->rx_pin * 4UL));
+        config->gpio_port->AFR[0] &= ~(0b1111UL << (config->rx_pin * 4UL));
+        config->gpio_port->AFR[0] |= (alt_val << (config->rx_pin * 4UL));
     } else if (config->rx_pin <= 15) {
-        config->uart_gpio_chan->AFR[1] &= ~(0b1111UL << ((config->rx_pin - 8) * 4UL));
-        config->uart_gpio_chan->AFR[1] |= (alt_val << ((config->rx_pin - 8) * 4UL));
+        config->gpio_port->AFR[1] &= ~(0b1111UL << ((config->rx_pin - 8) * 4UL));
+        config->gpio_port->AFR[1] |= (alt_val << ((config->rx_pin - 8) * 4UL));
     } else {
         while (1);
     }

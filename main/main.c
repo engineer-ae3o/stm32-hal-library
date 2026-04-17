@@ -68,7 +68,7 @@ int main(void) {
 
         .tx_pin = 2UL,
         .rx_pin = 3UL,
-        .uart_gpio_chan = GPIOC,
+        .gpio_port = GPIOC,
     };
     uart_init(LOGGING_UART_PORT, &config);
     uart_dma_init(LOGGING_UART_PORT);
