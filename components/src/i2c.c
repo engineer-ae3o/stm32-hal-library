@@ -2,86 +2,12 @@
 #include "i2c.h"
 
 
-// Helpers
-static inline void send_start(I2C_TypeDef* handle) {
-    handle->CR1 |= I2C_CR1_START;
-    while (!(handle->SR1 & I2C_SR1_SB));
-}
+// Forward declarations
+static inline void send_start(I2C_TypeDef* handle);
+static inline void send_stop(I2C_TypeDef* handle);
+static i2c_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len);
+static i2c_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len);
 
-static inline void send_stop(I2C_TypeDef* handle) {
-    handle->CR1 |= I2C_CR1_STOP;
-}
-
-static inline i2c_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len) {
-    
-    // Send address and write bit
-    handle->DR = ((address << 1UL) | 0UL);
-    
-    // Wait for ACK
-    uint32_t timeout = 10'000UL;
-    while (!(handle->SR1 & I2C_SR1_ADDR) && (timeout--));
-    if (!(handle->SR1 & I2C_SR1_ADDR)) return I2C_DEVICE_NOT_FOUND;
-    
-    // Read both registers to clear them as per the TRM
-    (void)handle->SR1;
-    (void)handle->SR2;
-
-    // Start transmission after receiving ACK
-    for (size_t i = 0U; i < len; i++) {
-        timeout = 10'000UL;
-        while (!(handle->SR1 & I2C_SR1_TXE) && (timeout--));
-        if (!(handle->SR1 & I2C_SR1_TXE)) return I2C_TX_ERROR;
-        // Transmit byte
-        handle->DR = data[i];
-    }
-
-    // Wait till the last byte has been transferred out
-    timeout = 10'000UL;
-    while (!(handle->SR1 & I2C_SR1_BTF) && (timeout--));
-    if (!(handle->SR1 & I2C_SR1_BTF)) return I2C_TX_ERROR;
-
-    return I2C_OK;
-}
-
-static inline i2c_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len) {
-    
-    // Send address and read bit
-    handle->DR = ((address << 1UL) | 1UL);
-    
-    // Wait for ACK
-    uint32_t timeout = 10'000UL;
-    while (!(handle->SR1 & I2C_SR1_ADDR) && (timeout--));
-    if (!(handle->SR1 & I2C_SR1_ADDR)) return I2C_DEVICE_NOT_FOUND;
-    
-    // Read both registers to clear them as per the TRM
-    (void)handle->SR1;
-    (void)handle->SR2;
-
-    // Start reception after receiving ACK
-    size_t remaining_bytes = len;
-
-    for (size_t i = 0U; i < len; i++) {
-        // Handle the different cases for the remaining number of bytes
-        switch (remaining_bytes) {
-            case 1:
-                break;
-
-            case 2:
-                break;
-
-            default:
-                timeout = 10'000UL;
-                while (!(handle->SR1 & I2C_SR1_RXNE) && (timeout--));
-                if (!(handle->SR1 & I2C_SR1_RXNE)) return I2C_RX_ERROR;
-                // Read byte
-                data[i] = handle->DR;
-                break;
-        }
-        remaining_bytes--;
-    }
-    
-    return I2C_OK;
-}
 
 // Public API
 // I2C Master API
@@ -209,13 +135,8 @@ i2c_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data
     // Start transaction
     send_start(handle);
     
-    // Receive bytes
-    i2c_err_t ret = rx_trans(handle, address, data, len);
-    
-    // End transaction
-    send_stop(handle);
-
-    return ret;
+    // No need to call `send_stop()` as `rx_trans()` already does
+    return rx_trans(handle, address, data, len);
 }
 
 i2c_err_t i2c_master_transmit_receive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data,
@@ -236,14 +157,10 @@ i2c_err_t i2c_master_transmit_receive(I2C_TypeDef* handle, uint8_t address, cons
 
     // Send a repeated start
     send_start(handle);
-
-    // Start RX transaction
-    ret = rx_trans(handle, address, rx_data, rx_len);
     
-    // End transaction
-    send_stop(handle);
-
-    return ret;
+    // Start RX transaction
+    // No need to call `send_stop()` as `rx_trans()` already does
+    return rx_trans(handle, address, rx_data, rx_len);
 }
 
 // I2C Slave API
@@ -270,5 +187,161 @@ i2c_err_t i2c_slave_receive(I2C_TypeDef* handle, uint8_t* data, size_t len) {
     (void)data;
     (void)len;
 
+    return I2C_OK;
+}
+
+
+// Helpers
+static inline void send_start(I2C_TypeDef* handle) {
+    handle->CR1 |= I2C_CR1_START;
+    while (!(handle->SR1 & I2C_SR1_SB));
+    // Read the SR1 register as part of the sequence to clear the SB flag
+    (void)handle->SR1;
+}
+
+static inline void send_stop(I2C_TypeDef* handle) {
+    handle->CR1 |= I2C_CR1_STOP;
+}
+
+static i2c_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len) {
+    
+    // Send address and write bit
+    handle->DR = ((address << 1UL) | 0UL);
+    
+    // Wait for ACK
+    uint32_t timeout = 10'000UL;
+    while (!(handle->SR1 & I2C_SR1_ADDR) && (timeout--)) {
+        // If the ADDR bit was not set, and the AF bit was, that means the
+        // slave failed to ACK, implying it was not present on the bus
+        if (handle->SR1 & I2C_SR1_AF) {
+            // Clear the AF bit if set by the hardware
+            handle->SR1 &= ~I2C_SR1_AF;
+            return I2C_DEVICE_NOT_FOUND;
+        }
+    }
+    
+    // Return if the ADDR bit still hasn't been set
+    if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout == 0)) return I2C_FAIL;
+    
+    // Read both registers to clear them as per the TRM
+    (void)handle->SR1;
+    (void)handle->SR2;
+
+    // Start transmission after receiving ACK
+    for (size_t i = 0U; i < len; i++) {
+        // Wait for TXE
+        timeout = 10'000UL;
+        while (!(handle->SR1 & I2C_SR1_TXE) && (timeout--)) {
+            // Check for all error flags
+            if (handle->SR1 & I2C_SR1_AF) {
+                handle->SR1 &= ~I2C_SR1_AF;
+                return I2C_TX_ERROR;
+            }
+            if (handle->SR1 & I2C_SR1_BERR) {
+                handle->SR1 &= ~I2C_SR1_BERR;
+                // Continue with the transfer as spurious bus errors don't corrupt the transaction
+                continue;
+            }
+            if (handle->SR1 & I2C_SR1_ARLO) {
+                handle->SR1 &= ~I2C_SR1_ARLO;
+                return I2C_TX_ERROR;
+            }
+        }
+        // Return if the TXE bit still has't been set
+        if (!(handle->SR1 & I2C_SR1_TXE) || (timeout == 0)) return I2C_TX_ERROR;
+        // Transmit byte
+        handle->DR = data[i];
+    }
+
+    // Wait till the last byte has been fully transmitted on the bus
+    timeout = 10'000UL;
+    while (!(handle->SR1 & I2C_SR1_BTF) && (timeout--)) {
+        // Check for all error flags
+        if (handle->SR1 & I2C_SR1_AF) {
+            handle->SR1 &= ~I2C_SR1_AF;
+            return I2C_TX_ERROR;
+        }
+        if (handle->SR1 & I2C_SR1_BERR) {
+            handle->SR1 &= ~I2C_SR1_BERR;
+            // Continue with the transfer as spurious bus errors don't corrupt the transaction
+            continue;
+        }
+        if (handle->SR1 & I2C_SR1_ARLO) {
+            handle->SR1 &= ~I2C_SR1_ARLO;
+            return I2C_TX_ERROR;
+        }
+    }
+    // Return if the BTF bit still has't been set
+    if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) return I2C_TX_ERROR;
+    
+    return I2C_OK;
+}
+
+static i2c_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len) {
+    
+    // Send address and read bit
+    handle->DR = ((address << 1UL) | 1UL);
+
+    // Wait for ACK
+    uint32_t timeout = 10'000UL;
+    while (!(handle->SR1 & I2C_SR1_ADDR) && (timeout--));
+    
+    // If the ADDR bit was not set, and the AF bit was, that means the
+    // slave failed to ACK, implying it was not present on the bus
+    if (!(handle->SR1 & I2C_SR1_ADDR)) {
+        // Check if the AF bit was set
+        if (handle->SR1 & I2C_SR1_AF) {
+            // Clear the AF bit if set by the hardware
+            handle->SR1 &= ~I2C_SR1_AF;
+            send_stop(handle);
+            return I2C_DEVICE_NOT_FOUND;
+        }
+        // End transaction regardless of whether the AF bit was set or not
+        send_stop(handle);
+        return I2C_FAIL;
+    }
+    
+    // Start reception after receiving ACK
+    size_t remaining_bytes = len;
+
+    for (size_t i = 0U; i < len; i++) {
+        // Handle the cases for the different lengths
+        switch (len) {
+            // When N == 1
+            case 1:
+
+                break;
+
+            // When N == 2
+            case 2:
+
+                break;
+
+            // When N > 2
+            default:
+                // Handle the different cases for the remaining number of bytes
+                switch (remaining_bytes) {
+                    case 3:
+                        handle->CR1 &= ~I2C_CR1_ACK;
+                        break;
+                
+                    case 2:
+                        
+                        break;
+                
+                    default:
+                        timeout = 10'000UL;
+                        while (!(handle->SR1 & I2C_SR1_RXNE) && (timeout--));
+                        if (!(handle->SR1 & I2C_SR1_RXNE)) return I2C_RX_ERROR;
+                        // Read byte
+                        data[i] = handle->DR;
+                        break;
+                }
+                remaining_bytes--;
+                break;
+        }
+    }
+    
+    send_stop(handle);
     return I2C_OK;
 }

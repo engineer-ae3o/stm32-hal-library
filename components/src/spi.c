@@ -1,2 +1,36 @@
 #include "stm32f411xe.h"
 #include "spi.h"
+
+
+// Public API
+void spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config) {
+    
+}
+
+// Polling API
+void spi_master_transmit(SPI_TypeDef* handle, const uint8_t* data, size_t len) {
+
+}
+
+void spi_master_receive(SPI_TypeDef* handle, uint8_t* data, size_t len) {
+
+}
+
+void spi_master_transmit_receive(SPI_TypeDef* handle, const uint8_t* tx_data,
+                                 size_t tx_len, uint8_t* rx_data, size_t rx_len) {
+    
+}
+
+// DMA transfers API
+void spi_master_transmit_dma(SPI_TypeDef* handle, const uint8_t* data, size_t len) {
+
+}
+
+void spi_master_receive_dma(SPI_TypeDef* handle, uint8_t* data, size_t len) {
+
+}
+
+void spi_master_transmit_receive_dma(SPI_TypeDef* handle, const uint8_t* tx_data,
+                                     size_t tx_len, uint8_t* rx_data, size_t rx_len) {
+    
+}

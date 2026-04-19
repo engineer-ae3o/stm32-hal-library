@@ -41,8 +41,10 @@ i2c_err_t i2c_master_transmit_receive(I2C_TypeDef* handle, uint8_t address, cons
                                       size_t tx_len, uint8_t* rx_data, size_t rx_len);
 
 typedef struct {
-    bool pullups_enable;
+    bool use_pullup;
+
     i2c_freq_mode_t freq_type;
+    uint32_t apb1_bus_freq_mhz;
 
     uint32_t sda;
     uint32_t scl;
