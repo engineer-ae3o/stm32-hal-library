@@ -1,12 +1,16 @@
 set(SRCS
     src/i2c.c
+    src/i2s.c
+    src/rtc.c
     src/spi.c
     src/pwm.c
     src/adc.c
     src/gpio.c
     src/uart.c
+    src/wwdg.c
     src/iwdg.c
     src/timer.c
+    src/syscalls.c
 )
 
 set(INC

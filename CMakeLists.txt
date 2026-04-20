@@ -34,15 +34,15 @@ message("Build type: " ${CMAKE_BUILD_TYPE})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Og -g3 -Wall \
-               -Wpedantic -Werror -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 \
-               -Wsign-conversion -fno-common -fstrict-aliasing -std=gnu23")
+set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Og -g3 -Wall -fdata-sections \
+               -Werror -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 -ffunction-sections \
+               -Wsign-conversion -fcommon -fstrict-aliasing -std=gnu23")
 
 set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/linker.ld")
 
 set(CMAKE_C_FLAGS "${MCU_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--cref \
-                            -Wl,--gc-sections --specs=nano.specs --specs=nosys.specs")
+                            -Wl,--gc-sections --specs=nano.specs")
 
 add_subdirectory(components/)
 add_subdirectory(components/external/)
@@ -62,9 +62,6 @@ add_executable(${CMAKE_PROJECT_NAME} ${SRCS})
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
     hals
     external
-    -lm
-    -lc
-    -lnosys
 )
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${Defines})

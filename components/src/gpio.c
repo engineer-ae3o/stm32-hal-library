@@ -11,11 +11,15 @@ void gpiox_clk_enable(GPIO_TypeDef* port) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
     } else if (port == GPIOD) {
         RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+    } else {
+        while (1);
     }
 }
 
 void gpio_set_output(GPIO_TypeDef* port, uint8_t pin) {
+    port->MODER &= ~(3UL << (pin * 2));
     port->MODER |= (1UL << (pin * 2));
+
     port->OTYPER &= ~(1UL << pin);
     port->OSPEEDR |= (3UL << (pin * 2));
     port->BSRR = (1UL << pin);
@@ -46,8 +50,8 @@ void gpio_enable_sys_clk(void) {
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 }
 
-void gpio_set_interupt(GPIO_TypeDef* port, uint8_t pin, uint8_t edge) {
-    // Extract register index and bit poition
+void gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, uint8_t edge) {
+    // Extract register index and bit position
     const uint8_t reg_idx = pin / 4;
     const uint8_t bit_pos = (pin % 4) * 4;
 
@@ -61,6 +65,8 @@ void gpio_set_interupt(GPIO_TypeDef* port, uint8_t pin, uint8_t edge) {
         port_code = 2;
     } else if (port == GPIOD) {
         port_code = 3;
+    } else {
+        while (1);
     }
 
     // Set external interrupt configuration register
@@ -84,7 +90,7 @@ void gpio_set_interupt(GPIO_TypeDef* port, uint8_t pin, uint8_t edge) {
 }
 
 void gpio_clear_interrupt(uint8_t pin) {
-    // Extract register index and bit poition
+    // Extract register index and bit position
     const uint8_t reg_idx = pin / 4;
     const uint8_t bit_pos = (pin % 4) * 4;
 

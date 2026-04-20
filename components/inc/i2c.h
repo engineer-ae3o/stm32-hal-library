@@ -2,6 +2,11 @@
 #define _I2C_H_
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include "stm32f411xe.h"
 #include "stddef.h"
 #include "stdint.h"
@@ -41,21 +46,10 @@ i2c_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data
 i2c_err_t i2c_master_transmit_receive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data,
                                       size_t tx_len, uint8_t* rx_data, size_t rx_len);
 
-typedef struct {
-    bool use_pullup;
-    uint8_t own_addr;
 
-    i2c_freq_mode_t freq_type;
-    uint32_t apb1_bus_freq_mhz;
-
-    uint32_t sda;
-    uint32_t scl;
-    GPIO_TypeDef* gpio_port;
-} i2c_slave_config_t;
-
-i2c_err_t i2c_slave_init(I2C_TypeDef* handle, const i2c_slave_config_t* config);
-i2c_err_t i2c_slave_transmit(I2C_TypeDef* handle, const uint8_t* data, size_t len);
-i2c_err_t i2c_slave_receive(I2C_TypeDef* handle, uint8_t* data, size_t len);
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif // _I2C_H_
