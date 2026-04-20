@@ -8,6 +8,8 @@ static inline void send_stop(I2C_TypeDef* handle);
 static i2c_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len);
 static i2c_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len);
 
+#define TIMEOUT_CYCLES 10'000
+
 
 // Public API
 // I2C Master API
@@ -85,24 +87,23 @@ i2c_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     
     // I2C configuration
     handle->CR1 |= I2C_CR1_ACK;
-    handle->CR2 |= ((config->apb1_bus_freq_mhz << I2C_CR2_FREQ_Pos) | I2C_CR2_ITERREN);
+    handle->CR2 |= (config->apb1_bus_freq_mhz << I2C_CR2_FREQ_Pos);
 
     // Clock configuration
+    // TODO: Calcukate CCR properly
     const uint32_t clk_speed_hz = (config->freq_type == I2C_400KHz) ? 400'000U : 100'000U;
+    (void)clk_speed_hz;
     const uint32_t ccr = 0;
     handle->CCR |= ((config->freq_type << I2C_CCR_FS_Pos) | (((ccr) & 0xFFFU) << I2C_CCR_CCR_Pos) | I2C_CCR_DUTY);
 
     // Rise time
+    // TODO: Account for digital filter for the TRISE value
     uint32_t trise_ns = (config->freq_type == I2C_400KHz) ? 300U : 1'000U;
     handle->TRISE |= (((trise_ns * config->apb1_bus_freq_mhz) / 1000U) + 1);
-
-    // 7 bit addresses only
-    handle->OAR1 &= ~I2C_OAR1_ADDMODE;
-    handle->OAR1 |= (1U << 14U);
-
+    
     // Analog and digital noise filters
     handle->FLTR &= ~I2C_FLTR_ANOFF;
-    handle->FLTR |= (4U << I2C_FLTR_DNF_Pos);
+    handle->FLTR |= (5U << I2C_FLTR_DNF_Pos);
 
     // Enable the I2C peripheral
     handle->CR1 |= I2C_CR1_PE;
@@ -209,57 +210,12 @@ static i2c_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* d
     handle->DR = ((address << 1UL) | 0UL);
     
     // Wait for ACK
-    uint32_t timeout = 10'000UL;
+    uint32_t timeout = TIMEOUT_CYCLES;
     while (!(handle->SR1 & I2C_SR1_ADDR) && (timeout--)) {
-        // If the ADDR bit was not set, and the AF bit was, that means the
-        // slave failed to ACK, implying it was not present on the bus
+        // Check all error flags since the success flag doesn't get set when there's an error
         if (handle->SR1 & I2C_SR1_AF) {
-            // Clear the AF bit if set by the hardware
             handle->SR1 &= ~I2C_SR1_AF;
             return I2C_DEVICE_NOT_FOUND;
-        }
-    }
-    
-    // Return if the ADDR bit still hasn't been set
-    if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout == 0)) return I2C_FAIL;
-    
-    // Read both registers to clear them as per the TRM
-    (void)handle->SR1;
-    (void)handle->SR2;
-
-    // Start transmission after receiving ACK
-    for (size_t i = 0U; i < len; i++) {
-        // Wait for TXE
-        timeout = 10'000UL;
-        while (!(handle->SR1 & I2C_SR1_TXE) && (timeout--)) {
-            // Check for all error flags
-            if (handle->SR1 & I2C_SR1_AF) {
-                handle->SR1 &= ~I2C_SR1_AF;
-                return I2C_TX_ERROR;
-            }
-            if (handle->SR1 & I2C_SR1_BERR) {
-                handle->SR1 &= ~I2C_SR1_BERR;
-                // Continue with the transfer as spurious bus errors don't corrupt the transaction
-                continue;
-            }
-            if (handle->SR1 & I2C_SR1_ARLO) {
-                handle->SR1 &= ~I2C_SR1_ARLO;
-                return I2C_TX_ERROR;
-            }
-        }
-        // Return if the TXE bit still has't been set
-        if (!(handle->SR1 & I2C_SR1_TXE) || (timeout == 0)) return I2C_TX_ERROR;
-        // Transmit byte
-        handle->DR = data[i];
-    }
-
-    // Wait till the last byte has been fully transmitted on the bus
-    timeout = 10'000UL;
-    while (!(handle->SR1 & I2C_SR1_BTF) && (timeout--)) {
-        // Check for all error flags
-        if (handle->SR1 & I2C_SR1_AF) {
-            handle->SR1 &= ~I2C_SR1_AF;
-            return I2C_TX_ERROR;
         }
         if (handle->SR1 & I2C_SR1_BERR) {
             handle->SR1 &= ~I2C_SR1_BERR;
@@ -268,10 +224,63 @@ static i2c_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* d
         }
         if (handle->SR1 & I2C_SR1_ARLO) {
             handle->SR1 &= ~I2C_SR1_ARLO;
+            return I2C_ARBITRATION_LOST;
+        }
+    }
+    
+    // Return if the ADDR bit still hasn't been set
+    if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout == 0)) return I2C_FAIL;
+    
+    // Read both registers to clear the ADDR bit
+    (void)handle->SR1;
+    (void)handle->SR2;
+
+    // Start transmission after receiving ACK
+    for (size_t i = 0U; i < len; i++) {
+        // Wait for TXE
+        timeout = TIMEOUT_CYCLES;
+        while (!(handle->SR1 & I2C_SR1_TXE) && (timeout--)) {
+            // Check all error flags since the success flag doesn't get set when there's an error
+            if (handle->SR1 & I2C_SR1_AF) {
+                handle->SR1 &= ~I2C_SR1_AF;
+                return I2C_TX_ERROR;
+            }
+            if (handle->SR1 & I2C_SR1_BERR) {
+                handle->SR1 &= ~I2C_SR1_BERR;
+                continue;
+            }
+            if (handle->SR1 & I2C_SR1_ARLO) {
+                handle->SR1 &= ~I2C_SR1_ARLO;
+                return I2C_ARBITRATION_LOST;
+            }
+        }
+
+        // Return if the TXE bit still has not been set
+        if (!(handle->SR1 & I2C_SR1_TXE) || (timeout == 0)) return I2C_TX_ERROR;
+
+        // Transmit byte
+        handle->DR = data[i];
+    }
+
+    // Wait till the last byte has been fully transmitted on the bus
+    timeout = TIMEOUT_CYCLES;
+    while (!(handle->SR1 & I2C_SR1_BTF) && (timeout--)) {
+        // Check all error flags since the success flag doesn't get set when there's an error
+        if (handle->SR1 & I2C_SR1_AF) {
+            handle->SR1 &= ~I2C_SR1_AF;
+            return I2C_TX_ERROR;
+        }
+        if (handle->SR1 & I2C_SR1_BERR) {
+            handle->SR1 &= ~I2C_SR1_BERR;
+            continue;
+        }
+        if (handle->SR1 & I2C_SR1_ARLO) {
+            handle->SR1 &= ~I2C_SR1_ARLO;
             return I2C_TX_ERROR;
         }
     }
-    // Return if the BTF bit still has't been set
+
+    // Return if the BTF bit still has not been set
     if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) return I2C_TX_ERROR;
     
     return I2C_OK;
@@ -281,67 +290,217 @@ static i2c_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
     
     // Send address and read bit
     handle->DR = ((address << 1UL) | 1UL);
-
-    // Wait for ACK
-    uint32_t timeout = 10'000UL;
-    while (!(handle->SR1 & I2C_SR1_ADDR) && (timeout--));
     
-    // If the ADDR bit was not set, and the AF bit was, that means the
-    // slave failed to ACK, implying it was not present on the bus
-    if (!(handle->SR1 & I2C_SR1_ADDR)) {
-        // Check if the AF bit was set
+    // Wait for ACK
+    uint32_t timeout = TIMEOUT_CYCLES;
+    while (!(handle->SR1 & I2C_SR1_ADDR) && (timeout--)) {
+        // Check all error flags since the success flag doesn't get set when there's an error
         if (handle->SR1 & I2C_SR1_AF) {
-            // Clear the AF bit if set by the hardware
             handle->SR1 &= ~I2C_SR1_AF;
             send_stop(handle);
             return I2C_DEVICE_NOT_FOUND;
         }
-        // End transaction regardless of whether the AF bit was set or not
-        send_stop(handle);
-        return I2C_FAIL;
-    }
-    
-    // Start reception after receiving ACK
-    size_t remaining_bytes = len;
-
-    for (size_t i = 0U; i < len; i++) {
-        // Handle the cases for the different lengths
-        switch (len) {
-            // When N == 1
-            case 1:
-
-                break;
-
-            // When N == 2
-            case 2:
-
-                break;
-
-            // When N > 2
-            default:
-                // Handle the different cases for the remaining number of bytes
-                switch (remaining_bytes) {
-                    case 3:
-                        handle->CR1 &= ~I2C_CR1_ACK;
-                        break;
-                
-                    case 2:
-                        
-                        break;
-                
-                    default:
-                        timeout = 10'000UL;
-                        while (!(handle->SR1 & I2C_SR1_RXNE) && (timeout--));
-                        if (!(handle->SR1 & I2C_SR1_RXNE)) return I2C_RX_ERROR;
-                        // Read byte
-                        data[i] = handle->DR;
-                        break;
-                }
-                remaining_bytes--;
-                break;
+        if (handle->SR1 & I2C_SR1_BERR) {
+            handle->SR1 &= ~I2C_SR1_BERR;
+            // Continue with the transfer as spurious bus errors don't corrupt the transaction
+            continue;
+        }
+        if (handle->SR1 & I2C_SR1_ARLO) {
+            handle->SR1 &= ~I2C_SR1_ARLO;
+            send_stop(handle);
+            return I2C_ARBITRATION_LOST;
         }
     }
     
-    send_stop(handle);
+    // Return if the ADDR bit still hasn't been set
+    if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout == 0)) {
+        send_stop(handle);
+        return I2C_FAIL;
+    }
+
+    // Set the ACK bit in the case that the previous transaction didn't set it
+    handle->CR1 |= I2C_CR1_ACK;
+    
+    // Start reception after receiving ACK
+    size_t remaining_bytes = len;
+    
+    // Data phase
+    // Handle the cases for the different lengths
+    switch (len) {
+        // Not a valid case
+        case 0:
+            send_stop(handle);
+            return I2C_INVALID_ARG;
+
+        // When N == 1
+        case 1:
+            // Clear the ACK bit so the peripheral sends a NACK after first byte
+            handle->CR1 &= ~I2C_CR1_ACK;
+
+            // Read both registers to clear the ADDR bit
+            (void)handle->SR1;
+            (void)handle->SR2;
+
+            // Send stop now so the peripheral sends the stop immediately after reception
+            send_stop(handle);
+
+            // Wait for RXE
+            timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR1 & I2C_SR1_RXNE) && (timeout--)) {
+                // Check all error flags since the success flag doesn't get set when there's an error
+                if (handle->SR1 & I2C_SR1_BERR) {
+                    handle->SR1 &= ~I2C_SR1_BERR;
+                    continue;
+                }
+                if (handle->SR1 & I2C_SR1_ARLO) {
+                    handle->SR1 &= ~I2C_SR1_ARLO;
+                    return I2C_ARBITRATION_LOST;
+                }
+            }
+
+            // Return if the RXE bit still has not been set
+            if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) return I2C_RX_ERROR;
+
+            // Finally, read byte
+            data[0] = (uint8_t)handle->DR;
+
+            // Set the ACK bit so as not to corrupt other transactions
+            handle->CR1 |= I2C_CR1_ACK;
+            
+            return I2C_OK;
+
+        // When N == 2
+        case 2:
+            // Set POS bit to apply NACK to the next byte
+            handle->CR1 |= I2C_CR1_POS;
+
+            // Clear the ACK bit so the peripheral sends a NACK after all reception has been completed
+            handle->CR1 &= ~I2C_CR1_ACK;
+
+            // Read both registers to clear the ADDR bit
+            (void)handle->SR1;
+            (void)handle->SR2;
+
+            // Wait till the both bytes have been fully received by the bus
+            timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR1 & I2C_SR1_BTF) && (timeout--)) {
+                if (handle->SR1 & I2C_SR1_BERR) {
+                    handle->SR1 &= ~I2C_SR1_BERR;
+                    continue;
+                }
+                if (handle->SR1 & I2C_SR1_ARLO) {
+                    handle->SR1 &= ~I2C_SR1_ARLO;
+                    send_stop(handle);
+                    return I2C_RX_ERROR;
+                }
+            }
+
+            // Return if the BTF bit still has not been set
+            if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) return I2C_RX_ERROR;
+
+            // Send stop now so the peripheral does this immediately after the transaction
+            send_stop(handle);
+
+            // Finally, read DR twice to get both bytes
+            data[0] = (uint8_t)handle->DR;
+            data[1] = (uint8_t)handle->DR;
+
+            // Clear the POS bit and set the ACK bit so as not to corrupt other transactions
+            handle->CR1 |= I2C_CR1_ACK;
+            handle->CR1 &= ~I2C_CR1_POS;
+            
+            return I2C_OK;
+
+        // When N > 2
+        default:
+            while (1) {
+                // Handle the different cases for the remaining number of bytes
+                switch (remaining_bytes) {
+                    case 3:
+                        // Wait till the BTF bit has been set
+                        timeout = TIMEOUT_CYCLES;
+                        while (!(handle->SR1 & I2C_SR1_BTF) && (timeout--)) {
+                            if (handle->SR1 & I2C_SR1_BERR) {
+                                handle->SR1 &= ~I2C_SR1_BERR;
+                                continue;
+                            }
+                            if (handle->SR1 & I2C_SR1_ARLO) {
+                                handle->SR1 &= ~I2C_SR1_ARLO;
+                                send_stop(handle);
+                                return I2C_RX_ERROR;
+                            }
+                        }
+                    
+                        // Return if the BTF bit still has not been set
+                        if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) return I2C_RX_ERROR;
+
+                        // Clear the ACK bit so the peripheral sends a NACK after all reception has been completed
+                        handle->CR1 &= ~I2C_CR1_ACK;
+
+                        // Get the third to the last byte
+                        data[len - remaining_bytes] = (uint8_t)handle->DR;
+                        remaining_bytes--;
+
+                        break;
+                    
+                    case 2:
+                        // Wait till the BTF bit has been set, again
+                        timeout = TIMEOUT_CYCLES;
+                        while (!(handle->SR1 & I2C_SR1_BTF) && (timeout--)) {
+                            if (handle->SR1 & I2C_SR1_BERR) {
+                                handle->SR1 &= ~I2C_SR1_BERR;
+                                continue;
+                            }
+                            if (handle->SR1 & I2C_SR1_ARLO) {
+                                handle->SR1 &= ~I2C_SR1_ARLO;
+                                send_stop(handle);
+                                return I2C_RX_ERROR;
+                            }
+                        }
+                    
+                        // Return if the BTF bit still has not been set
+                        if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) return I2C_RX_ERROR;
+
+                        // Send stop now so the peripheral does this immediately after the transaction
+                        send_stop(handle);
+
+                        // Finally, read DR twice to get both remaining bytes
+                        data[len - remaining_bytes] = (uint8_t)handle->DR;
+                        data[len - remaining_bytes + 1] = (uint8_t)handle->DR;
+
+                        return I2C_OK;
+                    
+                    default:
+                        // Read both registers to clear the ADDR bit
+                        (void)handle->SR1;
+                        (void)handle->SR2;
+
+                        // Read RXE up until remaining_bytes is 3
+                        for (size_t i = 0; i < (len - 3); i++) {
+                            timeout = TIMEOUT_CYCLES;
+                            while (!(handle->SR1 & I2C_SR1_RXNE) && (timeout--)) {
+                                if (handle->SR1 & I2C_SR1_BERR) {
+                                    handle->SR1 &= ~I2C_SR1_BERR;
+                                    continue;
+                                }
+                                if (handle->SR1 & I2C_SR1_ARLO) {
+                                    handle->SR1 &= ~I2C_SR1_ARLO;
+                                    send_stop(handle);
+                                    return I2C_ARBITRATION_LOST;
+                                }
+                            }
+
+                            // Return if RXNE still isn't set
+                            if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) return I2C_RX_ERROR;
+
+                            // Read byte
+                            data[i] = (uint8_t)handle->DR;
+                            remaining_bytes--;
+                        }
+                        break;
+                }
+            }
+    }
+    
     return I2C_OK;
 }

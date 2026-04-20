@@ -15,7 +15,8 @@ typedef enum {
     I2C_RX_ERROR,
     I2C_INVALID_ARG,
     I2C_INVALID_STATE,
-    I2C_DEVICE_NOT_FOUND
+    I2C_DEVICE_NOT_FOUND,
+    I2C_ARBITRATION_LOST
 } i2c_err_t;
 
 typedef enum {
@@ -42,6 +43,7 @@ i2c_err_t i2c_master_transmit_receive(I2C_TypeDef* handle, uint8_t address, cons
 
 typedef struct {
     bool use_pullup;
+    uint8_t own_addr;
 
     i2c_freq_mode_t freq_type;
     uint32_t apb1_bus_freq_mhz;

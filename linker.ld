@@ -6,9 +6,6 @@ MEMORY
 
 _estack = ORIGIN(RAM) + LENGTH(RAM);
 
-min_heap_size = 4K;
-min_stack_size = 8k;
-
 ENTRY(reset_handler)
 
 SECTIONS
@@ -55,13 +52,10 @@ SECTIONS
         *(COMMON)
         _ebss = .;
     } > RAM
-
-    /* This is done to ensure there's enough space for the stack and the heap */
-    .heap_stack (NOLOAD) :
+    
+    .heap (NOLOAD) :
     {
         . = ALIGN(8);
         _sheap = .;
-        . = . + min_heap_size;
-        . = . + min_stack_size;
     } > RAM
 }
