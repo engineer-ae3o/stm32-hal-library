@@ -1,5 +1,7 @@
 #include "stm32f411xe.h"
 
+#include "i2c.h"
+#include "spi.h"
 #include "iwdg.h"
 #include "uart.h"
 #include "timer.h"
@@ -8,10 +10,9 @@
 #include <stdint.h>
 
 
-#define LOGGING_UART_PORT USART1
-
 uint32_t SystemCoreClock;
 
+#define LOGGING_UART_PORT USART1
 
 void putchar_(char c) {
     uart_transmit_byte(LOGGING_UART_PORT, (uint8_t)c);

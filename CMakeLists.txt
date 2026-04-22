@@ -36,7 +36,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Og -g3 -Wall -fdata-sections \
                -Werror -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 -ffunction-sections \
-               -Wsign-conversion -fcommon -fstrict-aliasing -std=gnu23")
+               -Wsign-conversion -fno-common -fstrict-aliasing -std=gnu23 -Wdouble-promotion \
+               -Wstrict-prototypes -Wnull-dereference -Wcast-align")
 
 set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/linker.ld")
 

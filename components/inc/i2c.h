@@ -8,42 +8,34 @@ extern "C" {
 
 
 #include "stm32f411xe.h"
-#include "stddef.h"
-#include "stdint.h"
-#include "stdbool.h"
+#include "common.h"
 
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-typedef enum {
-    I2C_OK = 0,
-    I2C_FAIL,
-    I2C_TX_ERROR,
-    I2C_RX_ERROR,
-    I2C_INVALID_ARG,
-    I2C_INVALID_STATE,
-    I2C_DEVICE_NOT_FOUND,
-    I2C_ARBITRATION_LOST
-} i2c_err_t;
 
 typedef enum {
     I2C_100KHz = 0,
-    I2C_400KHz = 1
+    I2C_400KHz
 } i2c_freq_mode_t;
 
 typedef struct {
     bool use_pullup;
+    uint8_t apb1_bus_freq_mhz;
+
+    uint8_t sda;
+    uint8_t scl;
+    GPIO_TypeDef* gpio_port;
 
     i2c_freq_mode_t freq_type;
-    uint32_t apb1_bus_freq_mhz;
-
-    uint32_t sda;
-    uint32_t scl;
-    GPIO_TypeDef* gpio_port;
 } i2c_master_config_t;
 
-i2c_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config);
-i2c_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len);
-i2c_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len);
-i2c_err_t i2c_master_transmit_receive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data,
+
+hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config);
+hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len);
+hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len);
+hal_err_t i2c_master_transmit_receive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data,
                                       size_t tx_len, uint8_t* rx_data, size_t rx_len);
 
 

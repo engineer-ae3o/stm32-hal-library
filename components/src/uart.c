@@ -1,13 +1,14 @@
 #include "stm32f411xe.h"
+#include "gpio.h"
 #include "uart.h"
 
 
 // The 3 UART channels: ISRs called when the DMA is done
 // TX
-uart_dma_transmit_done_cb_t s_uart_tx_done_cbs[3] = {};
+uart_dma_trans_done_cb_t s_uart_tx_done_cbs[3] = {};
 void* s_tx_args[3] = {};
 // RX
-uart_dma_transmit_done_cb_t s_uart_rx_done_cbs[3] = {};
+uart_dma_trans_done_cb_t s_uart_rx_done_cbs[3] = {};
 void* s_rx_args[3] = {};
 
 // Utilities for mapping the USART channels to DMA streams
@@ -46,16 +47,16 @@ static inline uint8_t get_index(const USART_TypeDef* handle) {
     if (handle == USART1)      return 0U;
     else if (handle == USART2) return 1U;
     else if (handle == USART6) return 2U;
-    else while (1);
+    else                       return 0xFFU;
 }
 
 
 // Public API
-void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
+hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Get the alternate function value as it
     // varies for each peripheral instance
-    uint32_t alt_val = 0;
+    uint8_t alt_val = 0;
     
     // Enable appropriate UART channel clock
     if (handle == USART1) {
@@ -68,7 +69,7 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
         alt_val = 8UL;
     } else {
-        while (1);
+        return HAL_INVALID_ARG;
     }
 
     // 8 bit UART and parity bit disabled
@@ -90,70 +91,35 @@ void uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         handle->CR1 &= ~USART_CR1_OVER8;
         handle->BRR = (mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x0FU);
     } else {
-        while (1);
+        return HAL_INVALID_ARG;
     }
 
     // Initialize GPIO pins for UART
     // Enable gpio channel clock
-    if (config->gpio_port == GPIOA) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-    } else if (config->gpio_port == GPIOB) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
-    } else if (config->gpio_port == GPIOC) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
-    } else if (config->gpio_port == GPIOD) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
-    } else {
-        while (1);
-    }
+    hal_err_t ret = gpiox_clk_enable(config->gpio_port);
+    if (ret != HAL_OK) return ret;
 
     // Set gpio pin to alternate function
-    // TX pin
-    config->gpio_port->MODER &= ~(0b11UL << (config->tx_pin * 2UL));
-    config->gpio_port->MODER |= (0b10UL << (config->tx_pin * 2UL));
-    // RX pin
-    config->gpio_port->MODER &= ~(0b11UL << (config->rx_pin * 2UL));
-    config->gpio_port->MODER |= (0b10UL << (config->rx_pin * 2UL));
+    ret = gpio_set_alternate_function(config->gpio_port, config->tx_pin, alt_val);
+    if (ret != HAL_OK) return ret;
+    ret = gpio_set_alternate_function(config->gpio_port, config->rx_pin, alt_val);
+    if (ret != HAL_OK) return ret;
 
     // Set pullup
-    // TX pin
-    config->gpio_port->PUPDR &= ~(0b11UL << (config->tx_pin * 2UL));
-    config->gpio_port->PUPDR |= (0b01UL << (config->tx_pin * 2UL));
-    // RX pin
-    config->gpio_port->PUPDR &= ~(0b11UL << (config->rx_pin * 2UL));
-    config->gpio_port->PUPDR |= (0b01UL << (config->rx_pin * 2UL));
+    gpio_enable_pullup(config->gpio_port, config->tx_pin, true);
+    gpio_enable_pullup(config->gpio_port, config->rx_pin, true);
     
     // Speed mode
-    config->gpio_port->OSPEEDR |= (0b11UL << (config->tx_pin * 2UL));
-    config->gpio_port->OSPEEDR |= (0b11UL << (config->rx_pin * 2UL));
-    
-    // Set the alternate function
-    // TX pin
-    if (config->tx_pin <= 7) {
-        config->gpio_port->AFR[0] &= ~(0b1111UL << (config->tx_pin * 4UL));
-        config->gpio_port->AFR[0] |= (alt_val << (config->tx_pin * 4UL));
-    } else if (config->tx_pin <= 15) {
-        config->gpio_port->AFR[1] &= ~(0b1111UL << ((config->tx_pin - 8) * 4UL));
-        config->gpio_port->AFR[1] |= (alt_val << ((config->tx_pin - 8) * 4UL));
-    } else {
-        while (1);
-    }
-    // RX pin
-    if (config->rx_pin <= 7) {
-        config->gpio_port->AFR[0] &= ~(0b1111UL << (config->rx_pin * 4UL));
-        config->gpio_port->AFR[0] |= (alt_val << (config->rx_pin * 4UL));
-    } else if (config->rx_pin <= 15) {
-        config->gpio_port->AFR[1] &= ~(0b1111UL << ((config->rx_pin - 8) * 4UL));
-        config->gpio_port->AFR[1] |= (alt_val << ((config->rx_pin - 8) * 4UL));
-    } else {
-        while (1);
-    }
+    gpio_set_speed_mode(config->gpio_port, config->tx_pin, GPIO_HIGH_SPEED);
+    gpio_set_speed_mode(config->gpio_port, config->rx_pin, GPIO_HIGH_SPEED);
     
     // Enable the UART peripheral
     handle->CR1 |= USART_CR1_UE;
+
+    return HAL_OK;
 }
 
-void uart_dma_init(USART_TypeDef* handle) {
+hal_err_t uart_dma_init(USART_TypeDef* handle) {
     
     // DMA interrupt types
     IRQn_Type tx_dma_irq = 0;
@@ -176,7 +142,7 @@ void uart_dma_init(USART_TypeDef* handle) {
         rx_dma_irq = DMA2_Stream1_IRQn;
 
     } else {
-        while (1);
+        return HAL_INVALID_ARG;
     }
     
     // Index for DMA mapping
@@ -260,20 +226,16 @@ void uart_dma_init(USART_TypeDef* handle) {
 
     NVIC_SetPriority(rx_dma_irq, 10);
     NVIC_EnableIRQ(rx_dma_irq);
+
+    return HAL_OK;
 }
 
 void uart_enable(USART_TypeDef* handle) {
-    // Enable UART TX
-    handle->CR1 |= USART_CR1_TE;
-    // Enable UART RX
-    handle->CR1 |= USART_CR1_RE;
+    handle->CR1 |= (USART_CR1_TE | USART_CR1_RE);
 }
 
 void uart_disable(USART_TypeDef* handle) {
-    // Disable UART TX
-    handle->CR1 &= ~USART_CR1_TE;
-    // Disable UART RX
-    handle->CR1 &= ~USART_CR1_RE;
+    handle->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
 }
 
 void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
@@ -289,8 +251,10 @@ void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) 
     }
 }
 
-void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len,
-                       uart_dma_transmit_done_cb_t callback, void* arg) {
+hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len,
+                             uart_dma_trans_done_cb_t callback, void* arg) {
+    
+    if ((handle != USART1) && (handle != USART2) && (handle != USART6)) return HAL_INVALID_ARG;
     
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
@@ -311,10 +275,14 @@ void uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len,
     // Enable DMA TX stream
     stream->CR |= DMA_SxCR_EN;
     while (!(stream->CR & DMA_SxCR_EN));
+
+    return HAL_OK;
 }
 
-void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
-                      uart_dma_transmit_done_cb_t callback, void* arg) {
+hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
+                      uart_dma_trans_done_cb_t callback, void* arg) {
+
+    if ((handle != USART1) && (handle != USART2) && (handle != USART6)) return HAL_INVALID_ARG;
 
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
@@ -335,6 +303,8 @@ void uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
     // Enable DMA RX stream
     stream->CR |= DMA_SxCR_EN;
     while (!(stream->CR & DMA_SxCR_EN));
+
+    return HAL_OK;
 }
 
 // DMA interrupts
