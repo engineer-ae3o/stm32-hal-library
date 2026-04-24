@@ -72,6 +72,8 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         return HAL_INVALID_ARG;
     }
 
+    __DSB();
+
     // 8 bit UART and parity bit disabled
     handle->CR1 &= ~(USART_CR1_M | USART_CR1_PCE);
 

@@ -67,8 +67,25 @@ static inline uint8_t get_index(const SPI_TypeDef* handle) {
 // Public API
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config) {
     
-    (void)handle;
-    (void)config;
+    // Enable SPI clock
+    if (handle == SPI1) {
+        RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+    } else if (handle == SPI2) {
+        RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+    } else if (handle == SPI3) {
+        RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
+    } else if (handle == SPI4) {
+        RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
+    } else if (handle == SPI5) {
+        RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
+    } else {
+        return HAL_INVALID_ARG;
+    }
+
+    __DSB();
+    
+    // Disable SPI before starting
+    handle->CR1 &= ~SPI_CR1_SPE;
 
     return HAL_OK;
 }

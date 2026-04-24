@@ -18,6 +18,8 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port) {
     } else {
         return HAL_INVALID_ARG;
     }
+    __DSB();
+    
     return HAL_OK;
 }
 
@@ -132,7 +134,7 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_
     EXTI->IMR |= (0b1UL << pin);
 
     // Clear interrupt flag
-    EXTI->PR &= ~(0b1UL << pin);
+    EXTI->PR |= (0b1UL << pin);
 
     return HAL_OK;
 }
@@ -150,7 +152,7 @@ void gpio_clear_interrupt(GPIO_TypeDef*, uint8_t pin) {
     EXTI->FTSR &= ~(0b1UL << pin);
     
     // Clear interrupt flag
-    EXTI->PR &= ~(0b1UL << pin);
+    EXTI->PR |= (0b1UL << pin);
 
     // Mask interrupts for pin
     EXTI->IMR &= ~(0b1UL << pin);

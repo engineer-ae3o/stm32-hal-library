@@ -5,6 +5,7 @@ set(SRCS
     src/spi.c
     src/pwm.c
     src/adc.c
+    src/dma.c
     src/gpio.c
     src/uart.c
     src/wwdg.c

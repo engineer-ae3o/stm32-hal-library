@@ -17,7 +17,10 @@ extern "C" {
 typedef struct {
     bool use_miso;
     bool use_mosi;
-    uint8_t cpol_cpha;
+    bool msb_first;
+    bool use_8bit_data;
+
+    uint8_t cpol_cpha : 2;
     
     uint8_t miso;
     uint8_t mosi;

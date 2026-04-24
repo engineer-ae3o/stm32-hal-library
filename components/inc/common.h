@@ -10,19 +10,20 @@ extern "C" {
 #include <stdint.h>
 
 
-typedef uint8_t hal_err_t;
+typedef enum hal_err_t : uint8_t {
+    HAL_OK                    = 0x00U,
+    HAL_FAIL                  = 0x01U,
 
-#define HAL_OK                    0x00U
-#define HAL_FAIL                  0x01U
+    HAL_INVALID_ARG           = 0x02U,
+    HAL_INVALID_STATE         = 0x03U,
+    HAL_TIMEOUT               = 0x04U,
 
-#define HAL_INVALID_ARG           0x02U
-#define HAL_INVALID_STATE         0x03U
-#define HAL_TIMEOUT               0x04U
-#define HAL_TX_ERROR              0x05U
-#define HAL_RX_ERROR              0x06U
+    HAL_TX_ERROR              = 0x05U,
+    HAL_RX_ERROR              = 0x06U,
 
-#define HAL_I2C_DEVICE_NOT_FOUND  0x07U
-#define HAL_I2C_ARBITRATION_LOST  0x08U
+    HAL_I2C_DEVICE_NOT_FOUND  = 0x07U,
+    HAL_I2C_ARBITRATION_LOST  = 0x08U
+} hal_err_t;
 
 
 static inline const char* hal_err_to_string(hal_err_t err) {

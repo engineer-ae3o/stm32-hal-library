@@ -27,12 +27,15 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
         return HAL_INVALID_ARG;
     }
 
+    __DSB();
+
     // Configure pins for I2C
     // Enable gpio channel clock
     hal_err_t ret = gpiox_clk_enable(config->gpio_port);
     if (ret != HAL_OK) return ret;
 
     // Set pins to alternate function for I2C
+    // I2C uses an alternate function value of 0b100
     ret = gpio_set_alternate_function(config->gpio_port, config->sda, 0b100U);
     if (ret != HAL_OK) return ret;
     ret = gpio_set_alternate_function(config->gpio_port, config->scl, 0b100U);
@@ -47,13 +50,8 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     gpio_set_speed_mode(config->gpio_port, config->scl, GPIO_MEDIUM_SPEED);
     
     // Pullups
-    if (config->use_pullup) {
-        gpio_enable_pullup(config->gpio_port, config->sda, true);
-        gpio_enable_pullup(config->gpio_port, config->scl, true);
-    } else {
-        gpio_enable_pullup(config->gpio_port, config->sda, false);
-        gpio_enable_pullup(config->gpio_port, config->scl, false);
-    }
+    gpio_enable_pullup(config->gpio_port, config->sda, config->use_pullup);
+    gpio_enable_pullup(config->gpio_port, config->scl, config->use_pullup);
     
     // I2C configuration
     handle->CR1 |= I2C_CR1_ACK;
