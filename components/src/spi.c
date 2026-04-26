@@ -1,4 +1,5 @@
 #include "stm32f411xe.h"
+#include "i2s.h"
 #include "spi.h"
 
 
@@ -81,11 +82,15 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     } else {
         return HAL_INVALID_ARG;
     }
-
     __DSB();
-    
-    // Disable SPI before starting
+
+    // Disable SPI before modifying the registers
     handle->CR1 &= ~SPI_CR1_SPE;
+    
+    (void)config;
+    
+    // Enable the SPI peripheral
+    handle->CR1 |= SPI_CR1_SPE;
 
     return HAL_OK;
 }

@@ -170,45 +170,30 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     dma_clear_flags(tx_controller);
     dma_clear_flags(rx_controller);
     
-    // TX
     // Configuration
-    tx_stream->CR |= (tx_channel << DMA_SxCR_CHSEL_Pos) | // Channel select: 3 bits
-                     (0b11U <<      DMA_SxCR_PL_Pos)    | // Priority select: High priority
-                     (0b1U <<       DMA_SxCR_DIR_Pos)   | // Direction: M-P for TX
-                     (0b1U <<       DMA_SxCR_TCIE_Pos)  | // Enable interrupt on TC
-                     (0b1U <<       DMA_SxCR_TEIE_Pos)  | // Enable interrupt on TE
-                     (0b1U <<       DMA_SxCR_DMEIE_Pos) | // Enable interrupt on DME
-                     (0b1U <<       DMA_SxCR_MINC_Pos);   // Increment memory address
-
-    // PSIZE and MSIZE
-    tx_stream->CR &= ~((0b11U << DMA_SxCR_PSIZE_Pos)    | // Set PSIZE to 00 for 8 bit data
-                       (0b11U << DMA_SxCR_MSIZE_Pos)    | // Set MSIZE to 00 for 8 bit data
-                       (0b1U <<  DMA_SxCR_CIRC_Pos)     | // No circular mode
-                       (0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
-                       (0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
-    
+    // TX
+    dma_set_channel(tx_stream, tx_channel);
+    dma_set_stream_priority(tx_stream, DMA_PRIORITY_MEDIUM);
+    dma_set_direction(tx_stream, DMA_DIR_M_P);
+    dma_enable_irqs(tx_stream, true, true, false, true);
+    dma_set_increment(tx_stream, false, true);
+    dma_set_per_mem_size(tx_stream, DMA_SIZE_BYTE, DMA_SIZE_BYTE);
+    dma_enable_circm_dbm(tx_stream, false, false);
+    dma_set_flow_controller(tx_stream, true);
     dma_set_direct_mode(tx_stream, true);
-    dma_set_addresses(tx_stream, (uint8_t*)(&handle->DR), NULL, NULL);
+    dma_set_addresses(tx_stream, &handle->DR, NULL, NULL);
 
     // RX
-    // Configuration
-    rx_stream->CR |= (rx_channel << DMA_SxCR_CHSEL_Pos) | // Channel select: 3 bits
-                     (0b11U <<      DMA_SxCR_PL_Pos)    | // Priority select: High priority
-                     (0b1U <<       DMA_SxCR_TCIE_Pos)  | // Enable interrupt on TC
-                     (0b1U <<       DMA_SxCR_TEIE_Pos)  | // Enable interrupt on TE
-                     (0b1U <<       DMA_SxCR_DMEIE_Pos) | // Enable interrupt on DME
-                     (0b1U <<       DMA_SxCR_MINC_Pos);   // Increment memory address
-
-    // PSIZE and MSIZE
-    rx_stream->CR &= ~((0b11U << DMA_SxCR_PSIZE_Pos)    | // Set PSIZE to 00 for 8 bit data
-                       (0b11U << DMA_SxCR_MSIZE_Pos)    | // Set MSIZE to 00 for 8 bit data
-                       (0b11U << DMA_SxCR_DIR_Pos)      | // Direction: P-M for RX
-                       (0b1U <<  DMA_SxCR_CIRC_Pos)     | // No circular mode
-                       (0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
-                       (0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
-    
+    dma_set_channel(rx_stream, rx_channel);
+    dma_set_stream_priority(rx_stream, DMA_PRIORITY_MEDIUM);
+    dma_set_direction(rx_stream, DMA_DIR_P_M);
+    dma_enable_irqs(rx_stream, true, true, false, true);
+    dma_set_increment(rx_stream, false, true);
+    dma_set_per_mem_size(rx_stream, DMA_SIZE_BYTE, DMA_SIZE_BYTE);
+    dma_enable_circm_dbm(rx_stream, false, false);
+    dma_set_flow_controller(rx_stream, true);
     dma_set_direct_mode(rx_stream, true);
-    dma_set_addresses(rx_stream, (uint8_t*)(&handle->DR), NULL, NULL);
+    dma_set_addresses(rx_stream, &handle->DR, NULL, NULL);
     
     // Enable USART DMA
     handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
@@ -245,7 +230,7 @@ void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) 
 }
 
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len,
-                             uart_dma_trans_done_cb_t callback, void* arg) {
+                            uart_dma_trans_done_cb_t callback, void* arg) {
     
     if ((handle != USART1) && (handle != USART2) && (handle != USART6)) return HAL_INVALID_ARG;
     
@@ -270,7 +255,7 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
 }
 
 hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
-                      uart_dma_trans_done_cb_t callback, void* arg) {
+                           uart_dma_trans_done_cb_t callback, void* arg) {
 
     if ((handle != USART1) && (handle != USART2) && (handle != USART6)) return HAL_INVALID_ARG;
 
@@ -303,7 +288,7 @@ void DMA2_Stream7_IRQHandler(void) {
         DMA2->HIFCR = (DMA_HIFCR_CFEIF7 | DMA_HIFCR_CDMEIF7 |
                        DMA_HIFCR_CTEIF7 | DMA_HIFCR_CHTIF7  |
                        DMA_HIFCR_CTCIF7);
-
+        
         // Poll till transmission is complete
         while (!(USART1->SR & USART_SR_TC));
         
