@@ -12,21 +12,21 @@ extern "C" {
 #include <stdint.h>
 
 
-typedef enum {
+typedef enum gpio_speed_mode_t : uint8_t {
     GPIO_LOW_SPEED    = 0x00U,
     GPIO_MEDIUM_SPEED = 0x01U,
     GPIO_FAST_SPEED   = 0x02U,
     GPIO_HIGH_SPEED   = 0x03U
 } gpio_speed_mode_t;
 
-typedef enum {
+typedef enum gpio_edge_trigger_t : uint8_t {
     NONE                         = 0x00U,
     GPIO_RISING_EDGE_ONLY        = 0x01U,
     GPIO_FALLING_EDGE_ONLY       = 0x02U,
     GPIO_RISING_AND_FALLING_EDGE = 0x03U
 } gpio_edge_trigger_t;
 
-typedef enum {
+typedef enum gpio_output_type_t : uint8_t {
     GPIO_PUSH_PULL  = 0x00U,
     GPIO_OPEN_DRAIN = 0x01U,
 } gpio_output_type_t;

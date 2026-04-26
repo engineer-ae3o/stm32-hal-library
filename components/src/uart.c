@@ -1,4 +1,5 @@
 #include "stm32f411xe.h"
+#include "dma.h"
 #include "gpio.h"
 #include "uart.h"
 
@@ -126,23 +127,16 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     // DMA interrupt types
     IRQn_Type tx_dma_irq = 0;
     IRQn_Type rx_dma_irq = 0;
-
-    // Enable DMA clock
+    
     if (handle == USART1) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
         tx_dma_irq = DMA2_Stream7_IRQn;
         rx_dma_irq = DMA2_Stream5_IRQn;
-
     } else if (handle == USART2) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
         tx_dma_irq = DMA1_Stream6_IRQn;
         rx_dma_irq = DMA1_Stream5_IRQn;
-
     } else if (handle == USART6) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
         tx_dma_irq = DMA2_Stream6_IRQn;
         rx_dma_irq = DMA2_Stream1_IRQn;
-
     } else {
         return HAL_INVALID_ARG;
     }
@@ -160,18 +154,21 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     DMA_Stream_TypeDef* rx_stream = s_uart_dma_map[idx].rx.stream;
     uint8_t rx_channel = s_uart_dma_map[idx].rx.channel;
 
+    // Enable DMA clock
+    hal_err_t ret = dmax_clk_enable(tx_controller);
+    if (ret != HAL_OK) return ret;
+    ret = dmax_clk_enable(rx_controller);
+    if (ret != HAL_OK) return ret;
+
     // Disable DMA streams for tx and rx
-    tx_stream->CR &= ~DMA_SxCR_EN;
-    while (tx_stream->CR & DMA_SxCR_EN);
-
-    rx_stream->CR &= ~DMA_SxCR_EN;
-    while (rx_stream->CR & DMA_SxCR_EN);
-
+    ret = dma_disable_stream(tx_stream);
+    if (ret != HAL_OK) return ret;
+    ret = dma_disable_stream(rx_stream);
+    if (ret != HAL_OK) return ret;
+    
     // Clear global DMA interrupt flags
-    tx_controller->LIFCR = 0xFFFFFFFFUL;
-    tx_controller->HIFCR = 0xFFFFFFFFUL;
-    rx_controller->LIFCR = 0xFFFFFFFFUL;
-    rx_controller->HIFCR = 0xFFFFFFFFUL;
+    dma_clear_flags(tx_controller);
+    dma_clear_flags(rx_controller);
     
     // TX
     // Configuration
@@ -189,12 +186,9 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
                        (0b1U <<  DMA_SxCR_CIRC_Pos)     | // No circular mode
                        (0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
                        (0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
-
-    // Enable direct mode
-    tx_stream->FCR &= ~DMA_SxFCR_DMDIS;
-
-    // Set peripheral address
-    tx_stream->PAR = (uint32_t)(&handle->DR);
+    
+    dma_set_direct_mode(tx_stream, true);
+    dma_set_addresses(tx_stream, (uint8_t*)(&handle->DR), NULL, NULL);
 
     // RX
     // Configuration
@@ -213,11 +207,8 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
                        (0b1U <<  DMA_SxCR_PFCTRL_Pos)   | // DMA is the flow controller
                        (0b1U <<  DMA_SxCR_PINC_Pos));     // Peripheral address doesn't get incremented
     
-    // Enable direct mode
-    rx_stream->FCR &= ~DMA_SxFCR_DMDIS;
-
-    // Set peripheral address
-    rx_stream->PAR = (uint32_t)(&handle->DR);
+    dma_set_direct_mode(rx_stream, true);
+    dma_set_addresses(rx_stream, (uint8_t*)(&handle->DR), NULL, NULL);
     
     // Enable USART DMA
     handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
@@ -271,14 +262,11 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
     DMA_Stream_TypeDef* stream = s_uart_dma_map[idx].tx.stream;
     
     // Set memory address and length
-    stream->M0AR = (uint32_t)data;
-    stream->NDTR = (uint32_t)len;
+    dma_set_addresses(stream, NULL, data, NULL);
+    dma_set_trans_length(stream, len);
     
     // Enable DMA TX stream
-    stream->CR |= DMA_SxCR_EN;
-    while (!(stream->CR & DMA_SxCR_EN));
-
-    return HAL_OK;
+    return dma_enable_stream(stream);
 }
 
 hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
@@ -299,14 +287,11 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
     DMA_Stream_TypeDef* stream = s_uart_dma_map[idx].rx.stream;
 
     // Set memory address and length
-    stream->M0AR = (uint32_t)data;
-    stream->NDTR = (uint32_t)len;
+    dma_set_addresses(stream, NULL, data, NULL);
+    dma_set_trans_length(stream, len);
     
     // Enable DMA RX stream
-    stream->CR |= DMA_SxCR_EN;
-    while (!(stream->CR & DMA_SxCR_EN));
-
-    return HAL_OK;
+    return dma_enable_stream(stream);
 }
 
 // DMA interrupts
@@ -336,8 +321,7 @@ void DMA2_Stream7_IRQHandler(void) {
     }
 
     // Disable DMA TX stream
-    DMA2_Stream7->CR &= ~DMA_SxCR_EN;
-    while (DMA2_Stream7->CR & DMA_SxCR_EN);
+    dma_disable_stream(DMA2_Stream7);
 }
 
 // USART1: RX
@@ -363,8 +347,7 @@ void DMA2_Stream5_IRQHandler(void) {
     }
     
     // Disable DMA RX stream
-    DMA2_Stream5->CR &= ~DMA_SxCR_EN;
-    while (DMA2_Stream5->CR & DMA_SxCR_EN);
+    dma_disable_stream(DMA2_Stream5);
 }
 
 // USART2: TX
@@ -393,8 +376,7 @@ void DMA1_Stream6_IRQHandler(void) {
     }
 
     // Disable DMA TX stream
-    DMA1_Stream6->CR &= ~DMA_SxCR_EN;
-    while (DMA1_Stream6->CR & DMA_SxCR_EN);
+    dma_disable_stream(DMA1_Stream6);
 }
 
 // USART2: RX
@@ -420,8 +402,7 @@ void DMA1_Stream5_IRQHandler(void) {
     }
     
     // Disable DMA RX stream
-    DMA1_Stream5->CR &= ~DMA_SxCR_EN;
-    while (DMA1_Stream5->CR & DMA_SxCR_EN);
+    dma_disable_stream(DMA1_Stream5);
 }
 
 // USART6: TX
@@ -450,8 +431,7 @@ void DMA2_Stream6_IRQHandler(void) {
     }
 
     // Disable DMA TX stream
-    DMA2_Stream6->CR &= ~DMA_SxCR_EN;
-    while (DMA2_Stream6->CR & DMA_SxCR_EN);
+    dma_disable_stream(DMA2_Stream6);
 }
 
 // USART6: RX
@@ -477,6 +457,5 @@ void DMA2_Stream1_IRQHandler(void) {
     }
     
     // Disable DMA RX stream
-    DMA2_Stream1->CR &= ~DMA_SxCR_EN;
-    while (DMA2_Stream1->CR & DMA_SxCR_EN);
+    dma_disable_stream(DMA2_Stream1);
 }
