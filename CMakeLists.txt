@@ -27,17 +27,17 @@ set(CMAKE_PROJECT_NAME stm32-hal)
 project(${CMAKE_PROJECT_NAME})
 enable_language(C ASM)
 
-set(CMAKE_BUILD_TYPE "Debug")
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-
-message("Build type: " ${CMAKE_BUILD_TYPE})
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Og -g3 -Wall -fdata-sections \
+set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wall -fdata-sections \
                -Werror -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 -ffunction-sections \
                -Wsign-conversion -fno-common -fstrict-aliasing -std=gnu23 -Wdouble-promotion \
-               -Wstrict-prototypes -Wnull-dereference -Wcast-align")
+               -Wstrict-prototypes -Wnull-dereference -Wcast-align -fstrict-overflow \
+               -Wduplicated-branches -Wswitch -Wlogical-op -Wduplicated-cond")
+
+set(CMAKE_CXX_FLAGS_DEBUG "-Og -g3 -ggdb -DDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wl,-s -DNDEBUG")
 
 set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/linker.ld")
 
@@ -45,12 +45,17 @@ set(CMAKE_C_FLAGS "${MCU_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--cref \
                             -Wl,--gc-sections --specs=nano.specs")
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
+message("Build type: ${CMAKE_BUILD_TYPE}")
+
 add_subdirectory(components/)
 add_subdirectory(components/external/)
 
 set(Defines
 	STM32F411xE
-    $<$<CONFIG:Debug>:DEBUG>
 )
 
 set(SRCS
