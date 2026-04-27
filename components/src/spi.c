@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "i2s.h"
 #include "spi.h"
+#include "gpio.h"
 
 
 // The 5 SPI instances: ISRs called when the DMA is done
@@ -82,13 +83,45 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     } else {
         return HAL_INVALID_ARG;
     }
+
     __DSB();
 
-    // Disable SPI before modifying the registers
+    // Init GPIO
+    hal_err_t ret = gpiox_clk_enable(config->gpio_port);
+    if (ret != HAL_OK) return ret;
+
+    // Alternate function value selection for the GPIOs
+    uint8_t alt_val = 0;
+    if ((handle == SPI1) || (handle == SPI2) || (handle == SPI3)) alt_val = 5U;
+    if ((handle == SPI4) || (handle == SPI5))                     alt_val = 6U;
+
+    if (config->use_miso) {
+        ret = gpio_set_alternate_function(config->gpio_port, config->miso, alt_val);
+        if (ret != HAL_OK) return ret;
+        gpio_enable_pullup(config->gpio_port, config->miso, true);
+        gpio_set_speed_mode(config->gpio_port, config->miso, GPIO_HIGH_SPEED);
+        gpio_set_output_type(config->gpio_port, config->miso, GPIO_PUSH_PULL);
+    }
+    
+    if (config->use_mosi) {
+        ret = gpio_set_alternate_function(config->gpio_port, config->mosi, alt_val);
+        if (ret != HAL_OK) return ret;
+        gpio_enable_pullup(config->gpio_port, config->mosi, true);
+        gpio_set_speed_mode(config->gpio_port, config->mosi, GPIO_HIGH_SPEED);
+        gpio_set_output_type(config->gpio_port, config->mosi, GPIO_PUSH_PULL);
+    }
+
+    ret = gpio_set_alternate_function(config->gpio_port, config->sclk, alt_val);
+    if (ret != HAL_OK) return ret;
+    gpio_enable_pullup(config->gpio_port, config->sclk, true);
+    gpio_set_speed_mode(config->gpio_port, config->sclk, GPIO_HIGH_SPEED);
+    gpio_set_output_type(config->gpio_port, config->sclk, GPIO_PUSH_PULL);
+    
+    // Disable the SPI peripheral
     handle->CR1 &= ~SPI_CR1_SPE;
+
     
-    (void)config;
-    
+
     // Enable the SPI peripheral
     handle->CR1 |= SPI_CR1_SPE;
 

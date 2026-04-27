@@ -20,6 +20,11 @@ void dma_clear_flags(DMA_TypeDef* controller) {
     controller->HIFCR = 0xFFFFFFFFUL;
 }
 
+void dma_clear_flags_bitmask(DMA_TypeDef* handle, uint32_t flags, bool hifcr) {
+    if (hifcr) handle->HIFCR |= flags;
+    else       handle->LIFCR |= flags;
+}
+
 hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {
     stream->CR |= DMA_SxCR_EN;
     uint32_t timeout = 1'000U;
@@ -75,7 +80,7 @@ void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler
 }
 
 void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circ, bool ena_dbm) {
-    stream->CR &= ~(DMA_SxCR_CIRC | DMA_SxCR_CIRC);
+    stream->CR &= ~(DMA_SxCR_CIRC | DMA_SxCR_DBM);
     if (ena_circ) stream->CR |= DMA_SxCR_CIRC;
     if (ena_dbm)  stream->CR |= DMA_SxCR_DBM;
 }
