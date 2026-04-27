@@ -24,6 +24,8 @@ typedef struct {
     const uart_tx_rx_t rx;
 } dma_stream_map_t;
 
+#define UART_DMA_NVIC_IRQ_PRIORITY 8U
+
 // Mapping for the DMA channels for the 3 USART channels
 static const dma_stream_map_t s_uart_dma_map[3] = {
     // USART1
@@ -74,6 +76,9 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     }
 
     __DSB();
+    
+    // Disable the UART peripheral
+    handle->CR1 &= ~USART_CR1_UE;
 
     // 8 bit UART and parity bit disabled
     handle->CR1 &= ~(USART_CR1_M | USART_CR1_PCE);
@@ -199,11 +204,11 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
 
     // Enable DMA stream interrupts
-    NVIC_SetPriority(tx_dma_irq, 10);
     NVIC_EnableIRQ(tx_dma_irq);
+    NVIC_SetPriority(tx_dma_irq, UART_DMA_NVIC_IRQ_PRIORITY);
 
-    NVIC_SetPriority(rx_dma_irq, 10);
     NVIC_EnableIRQ(rx_dma_irq);
+    NVIC_SetPriority(rx_dma_irq, UART_DMA_NVIC_IRQ_PRIORITY);
 
     return HAL_OK;
 }

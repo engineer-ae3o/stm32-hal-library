@@ -1,15 +1,15 @@
 #include "stm32f411xe.h"
-#include "i2s.h"
 #include "spi.h"
+#include "dma.h"
 #include "gpio.h"
 
 
 // The 5 SPI instances: ISRs called when the DMA is done
 // TX
-spi_trans_done_cb_t s_spi_tx_done_cbs[5] = {};
+spi_trans_done_cb_t s_dma_tx_done_cbs[5] = {};
 void* s_tx_args[5] = {};
 // RX
-spi_trans_done_cb_t s_spi_rx_done_cbs[5] = {};
+spi_trans_done_cb_t s_dma_rx_done_cbs[5] = {};
 void* s_rx_args[5] = {};
 
 // Utilities for mapping the SPI instances to DMA streams
@@ -24,9 +24,10 @@ typedef struct {
     const spi_dma_t rx;
 } dma_stream_map_t;
 
+#define SPI_DMA_NVIC_IRQ_PRIORITY 8U
+#define TIMEOUT_CYCLES 1'000UL
 
 // Mapping for the DMA channels for the 3 SPI channels
-__attribute__((unused))
 static const dma_stream_map_t s_spi_dma_map[5] = {
     // SPI1
     {
@@ -92,8 +93,11 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 
     // Alternate function value selection for the GPIOs
     uint8_t alt_val = 0;
-    if ((handle == SPI1) || (handle == SPI2) || (handle == SPI3)) alt_val = 5U;
-    if ((handle == SPI4) || (handle == SPI5))                     alt_val = 6U;
+    if ((handle == SPI1) || (handle == SPI2)) alt_val = 5U;
+    else if (handle == SPI3) alt_val = (config->gpio_port == GPIOD) ? 5U : 6U;
+    else if (handle == SPI4) alt_val = (config->gpio_port == GPIOE) ? 5U : 6U;
+    else if (handle == SPI5) alt_val = 6U;
+    else return HAL_INVALID_ARG;
 
     if (config->use_miso) {
         ret = gpio_set_alternate_function(config->gpio_port, config->miso, alt_val);
@@ -120,7 +124,34 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     // Disable the SPI peripheral
     handle->CR1 &= ~SPI_CR1_SPE;
 
+    // SPI mode
+    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
+
+    handle->CR1 |= (((config->clk_divider & 0b111U) << SPI_CR1_BR_Pos) | // Clock prescaler
+                    SPI_CR1_SSM  | // Software slave select control
+                    SPI_CR1_SSI  | // Set internal slave to high
+                    SPI_CR1_MSTR); // SPI in master mode
     
+    handle->CR1 &= ~(SPI_CR1_LSBFIRST | // MSB first
+                     SPI_CR1_RXONLY   | // TX and RX
+                     SPI_CR1_CRCEN    | // Hardware CRC disable
+                     SPI_CR1_CRCNEXT  | // No CRC phase; data phase always
+                     SPI_CR1_BIDIMODE | // MOSI and MISO used
+                     SPI_CR1_BIDIOE);
+    
+    // CPOL and CPHA setting
+    if (config->cpol) handle->CR1 |= SPI_CR1_CPOL;
+    else              handle->CR1 &= ~SPI_CR1_CPOL;
+
+    if (config->cpha) handle->CR1 |= SPI_CR1_CPHA;
+    else              handle->CR1 &= ~SPI_CR1_CPHA;
+
+    // 8 or 16 bit transfers
+    if (config->use_8bit_mode) handle->CR1 &= ~SPI_CR1_DFF;
+    else                       handle->CR1 |= SPI_CR1_DFF;
+    
+    // Motorolla mode and SS output disable
+    handle->CR2 &= ~(SPI_CR2_FRF | SPI_CR2_SSOE);
 
     // Enable the SPI peripheral
     handle->CR1 |= SPI_CR1_SPE;
@@ -129,14 +160,100 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 }
 
 hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
+    
+    // DMA irq types
+    IRQn_Type tx_dma_irq = 0;
+    IRQn_Type rx_dma_irq = 0;
+    
+    if (handle == SPI1) {
+        tx_dma_irq = DMA2_Stream7_IRQn;
+        rx_dma_irq = DMA2_Stream5_IRQn;
 
-    (void)handle;
+    } else if (handle == SPI2) {
+        tx_dma_irq = DMA1_Stream6_IRQn;
+        rx_dma_irq = DMA1_Stream5_IRQn;
+
+    } else if (handle == SPI3) {
+        tx_dma_irq = DMA2_Stream6_IRQn;
+        rx_dma_irq = DMA2_Stream1_IRQn;
+
+    } else if (handle == SPI4) {
+        tx_dma_irq = DMA2_Stream6_IRQn;
+        rx_dma_irq = DMA2_Stream1_IRQn;
+
+    } else if (handle == SPI5) {
+        tx_dma_irq = DMA2_Stream6_IRQn;
+        rx_dma_irq = DMA2_Stream1_IRQn;
+
+    } else {
+        return HAL_INVALID_ARG;
+    }
+    
+    const uint8_t idx = get_index(handle);
+    
+    // TX mapping
+    DMA_TypeDef* tx_controller = s_spi_dma_map[idx].tx.controller;
+    DMA_Stream_TypeDef* tx_stream = s_spi_dma_map[idx].tx.stream;
+    uint8_t tx_channel = s_spi_dma_map[idx].tx.channel;
+
+    // RX mapping
+    DMA_TypeDef* rx_controller = s_spi_dma_map[idx].rx.controller;
+    DMA_Stream_TypeDef* rx_stream = s_spi_dma_map[idx].rx.stream;
+    uint8_t rx_channel = s_spi_dma_map[idx].rx.channel;
+    
+    hal_err_t ret = dmax_clk_enable(tx_controller);
+    if (ret != HAL_OK) return ret;
+    ret = dmax_clk_enable(rx_controller);
+    if (ret != HAL_OK) return ret;
+    
+    // Disable DMA stream before configuring
+    ret = dma_disable_stream(tx_stream);
+    if (ret != HAL_OK) return ret;
+    ret = dma_disable_stream(rx_stream);
+    if (ret != HAL_OK) return ret;
+
+    dma_clear_flags(tx_controller);
+    dma_set_channel(tx_stream, tx_channel);
+    dma_set_direct_mode(tx_stream, true);
+    dma_set_direction(tx_stream, DMA_DIR_M_P);
+    dma_set_flow_controller(tx_stream, true);
+    dma_set_stream_priority(tx_stream, DMA_PRIORITY_VERY_HIGH);
+    dma_enable_circm_dbm(tx_stream, false, false);
+    dma_set_increment(tx_stream, false, true);
+    dma_enable_irqs(tx_stream, true, true, false, true);
+    dma_set_addresses(tx_stream, &handle->DR, NULL, NULL);
+    
+    dma_clear_flags(rx_controller);
+    dma_set_channel(rx_stream, rx_channel);
+    dma_set_direct_mode(rx_stream, true);
+    dma_set_direction(rx_stream, DMA_DIR_P_M);
+    dma_set_flow_controller(rx_stream, true);
+    dma_set_stream_priority(rx_stream, DMA_PRIORITY_VERY_HIGH);
+    dma_enable_circm_dbm(rx_stream, false, false);
+    dma_set_increment(rx_stream, false, true);
+    dma_enable_irqs(rx_stream, true, true, false, true);
+    dma_set_addresses(rx_stream, &handle->DR, NULL, NULL);
+    
+    // If the DFF bit in SPIx_CR1 is set, then it's a 16 bit transfer
+    const dma_data_size_t dma_data_size = (handle->CR1 & SPI_CR1_DFF) ? DMA_SIZE_HWORD : DMA_SIZE_BYTE;
+    dma_set_per_mem_size(tx_stream, dma_data_size, dma_data_size);
+    dma_set_per_mem_size(rx_stream, dma_data_size, dma_data_size);
+    
+    // Enable SPI requests to DMA
+    handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
+    
+    // Enable DMA stream interrupts
+    NVIC_EnableIRQ(tx_dma_irq);
+    NVIC_SetPriority(tx_dma_irq, SPI_DMA_NVIC_IRQ_PRIORITY);
+
+    NVIC_EnableIRQ(rx_dma_irq);
+    NVIC_SetPriority(rx_dma_irq, SPI_DMA_NVIC_IRQ_PRIORITY);
 
     return HAL_OK;
 }
 
 // Polling API
-hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const uint8_t* data, size_t len) {
+hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t len) {
 
     (void)handle;
     (void)data;
@@ -145,7 +262,7 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const uint8_t* data, siz
     return HAL_OK;
 }
 
-hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, uint8_t* data, size_t len) {
+hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
 
     (void)handle;
     (void)data;
@@ -154,53 +271,151 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, uint8_t* data, size_t len
     return HAL_OK;
 }
 
-hal_err_t spi_master_transmit_receive_poll(SPI_TypeDef* handle, const uint8_t* tx_data,
-                                           size_t tx_len, uint8_t* rx_data, size_t rx_len) {
+hal_err_t spi_master_transmit_receive_poll(SPI_TypeDef* handle, const void* tx_data,
+                                           void* rx_data, size_t len) {
+    
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
 
-    (void)handle;
-    (void)tx_data;
-    (void)tx_len;
-    (void)rx_data;
-    (void)rx_len;
+    const bool is_16bit_data = handle->CR1 & SPI_CR1_DFF;
+
+    if (is_16bit_data) {
+        // Cast to appropriate type
+        const uint16_t* tx_buf = (const uint16_t*)tx_data;
+        uint16_t* rx_buf = (uint16_t*)rx_data;
+
+        for (size_t i = 0; i < len; i++) {
+            // Write data
+            handle->DR = tx_buf[i];
+
+            // Poll till data has been transferred out
+            uint32_t timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Poll till data has been received
+            timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Finally, read data
+            rx_buf[i] = (uint16_t)handle->DR;
+        }
+
+    } else {
+        // Cast to appropriate type
+        const uint8_t* tx_buf = (const uint8_t*)tx_data;
+        uint8_t* rx_buf = (uint8_t*)rx_data;
+
+        for (size_t i = 0; i < len; i++) {
+            // Write data
+            handle->DR = tx_buf[i];
+
+            // Poll till data has been transferred out
+            uint32_t timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Wait till data has been received
+            timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Finally, read data
+            rx_buf[i] = (uint8_t)handle->DR;
+        }
+    }
+    
+    // Wait for the TXE and BSY bits
+    // TXE bit
+    uint32_t timeout = TIMEOUT_CYCLES;
+    while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+    if (timeout == 0) return HAL_TIMEOUT;
+    // BSY bit
+    timeout = TIMEOUT_CYCLES;
+    while ((handle->SR & SPI_SR_BSY) && (--timeout));
+    if (timeout == 0) return HAL_TIMEOUT;
 
     return HAL_OK;
 }
 
 // DMA transfers API
-hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const uint8_t* data, uint16_t len,
+hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t len,
                                   spi_trans_done_cb_t callback, void* arg) {
-
-    (void)handle;
-    (void)data;
-    (void)len;
-    (void)callback;
-    (void)arg;
-
-    return HAL_OK;
+    
+    // Get index for DMA stream mapping
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
+    
+    // Save user passed callback
+    if (callback) {
+        s_dma_tx_done_cbs[idx] = callback;
+        s_tx_args[idx] = arg;
+    }
+    
+    // TX mapping
+    DMA_Stream_TypeDef* stream = s_spi_dma_map[idx].tx.stream;
+    
+    // Set memory address and length
+    dma_set_addresses(stream, NULL, data, NULL);
+    dma_set_trans_length(stream, len);
+    
+    // Enable DMA TX stream
+    return dma_enable_stream(stream);
 }
 
-hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, const uint8_t* data, uint16_t len,
+hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t len,
                                  spi_trans_done_cb_t callback, void* arg) {
-
-    (void)handle;
-    (void)data;
-    (void)len;
-    (void)callback;
-    (void)arg;
-
-    return HAL_OK;
+    
+    // Get index for DMA stream mapping
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
+    
+    // Save user passed callback
+    if (callback) {
+        s_dma_rx_done_cbs[idx] = callback;
+        s_rx_args[idx] = arg;
+    }
+    
+    // RX mapping
+    DMA_Stream_TypeDef* stream = s_spi_dma_map[idx].rx.stream;
+    
+    // Set memory address and length
+    dma_set_addresses(stream, NULL, data, NULL);
+    dma_set_trans_length(stream, len);
+    
+    // Enable DMA RX stream
+    return dma_enable_stream(stream);
 }
 
-hal_err_t spi_master_transmit_receive_dma(SPI_TypeDef* handle, const uint8_t* tx_data, size_t tx_len, uint8_t* rx_data,
-                                          size_t rx_len, spi_trans_done_cb_t callback, void* arg) {
+hal_err_t spi_master_transmit_receive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data,
+                                          uint16_t len, spi_trans_done_cb_t callback, void* arg) {
+    
+    // Get index for DMA stream mapping
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
+    
+    // Save user passed callback
+    if (callback) {
+        // Save callback to the TX DMA irq only
+        s_dma_tx_done_cbs[idx] = callback;
+        s_tx_args[idx] = arg;
+    }
+    
+    // TX and RX mapping
+    DMA_Stream_TypeDef* tx_stream = s_spi_dma_map[idx].tx.stream;
+    DMA_Stream_TypeDef* rx_stream = s_spi_dma_map[idx].rx.stream;
+    
+    // Set memory address and length
+    dma_set_addresses(tx_stream, NULL, tx_data, NULL);
+    dma_set_trans_length(tx_stream, len);
 
-    (void)handle;
-    (void)tx_data;
-    (void)tx_len;
-    (void)rx_data;
-    (void)rx_len;
-    (void)callback;
-    (void)arg;
+    dma_set_addresses(rx_stream, NULL, rx_data, NULL);
+    dma_set_trans_length(rx_stream, len);
+    
+    // Enable DMA TX and RX streams
+    hal_err_t ret = dma_enable_stream(tx_stream);
+    if (ret != HAL_OK) return ret;
 
-    return HAL_OK;
+    return dma_enable_stream(rx_stream);
 }
