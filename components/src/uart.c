@@ -6,10 +6,10 @@
 
 // The 3 UART channels: ISRs called when the DMA is done
 // TX
-uart_dma_trans_done_cb_t s_uart_tx_done_cbs[3] = {};
+uart_dma_trans_done_cb_t s_dma_tx_done_cbs[3] = {};
 void* s_tx_args[3] = {};
 // RX
-uart_dma_trans_done_cb_t s_uart_rx_done_cbs[3] = {};
+uart_dma_trans_done_cb_t s_dma_rx_done_cbs[3] = {};
 void* s_rx_args[3] = {};
 
 // Utilities for mapping the USART channels to DMA streams
@@ -237,14 +237,13 @@ void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) 
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len,
                             uart_dma_trans_done_cb_t callback, void* arg) {
     
-    if ((handle != USART1) && (handle != USART2) && (handle != USART6)) return HAL_INVALID_ARG;
-    
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
     
     // Save user passed callback
     if (callback) {
-        s_uart_tx_done_cbs[idx] = callback;
+        s_dma_tx_done_cbs[idx] = callback;
         s_tx_args[idx] = arg;
     }
     
@@ -261,15 +260,14 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
 
 hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
                            uart_dma_trans_done_cb_t callback, void* arg) {
-
-    if ((handle != USART1) && (handle != USART2) && (handle != USART6)) return HAL_INVALID_ARG;
-
+    
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
     
     // Save user passed callback
     if (callback) {
-        s_uart_rx_done_cbs[idx] = callback;
+        s_dma_rx_done_cbs[idx] = callback;
         s_rx_args[idx] = arg;
     }
     
@@ -297,12 +295,12 @@ void DMA2_Stream7_IRQHandler(void) {
         // Poll till transmission is complete
         while (!(USART1->SR & USART_SR_TC));
         
-        if (s_uart_tx_done_cbs[0]) {
+        if (s_dma_tx_done_cbs[0]) {
             // Invoke user callback
-            s_uart_tx_done_cbs[0](s_tx_args[0]);
+            s_dma_tx_done_cbs[0](s_tx_args[0]);
 
             // Clear user passed context
-            s_uart_tx_done_cbs[0] = NULL;
+            s_dma_tx_done_cbs[0] = NULL;
             s_tx_args[0] = NULL;
         }
 
@@ -323,12 +321,12 @@ void DMA2_Stream5_IRQHandler(void) {
                        DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5  |
                        DMA_HIFCR_CTCIF5);
         
-        if (s_uart_rx_done_cbs[0]) {
+        if (s_dma_rx_done_cbs[0]) {
             // Invoke user callback
-            s_uart_rx_done_cbs[0](s_rx_args[0]);
+            s_dma_rx_done_cbs[0](s_rx_args[0]);
 
             // Clear user passed context
-            s_uart_rx_done_cbs[0] = NULL;
+            s_dma_rx_done_cbs[0] = NULL;
             s_rx_args[0] = NULL;
         }
 
@@ -352,12 +350,12 @@ void DMA1_Stream6_IRQHandler(void) {
         // Poll till transmission is complete
         while (!(USART2->SR & USART_SR_TC));
 
-        if (s_uart_tx_done_cbs[1]) {
+        if (s_dma_tx_done_cbs[1]) {
             // Invoke user callback
-            s_uart_tx_done_cbs[1](s_tx_args[1]);
+            s_dma_tx_done_cbs[1](s_tx_args[1]);
 
             // Clear user passed context
-            s_uart_tx_done_cbs[1] = NULL;
+            s_dma_tx_done_cbs[1] = NULL;
             s_tx_args[1] = NULL;
         }
 
@@ -378,12 +376,12 @@ void DMA1_Stream5_IRQHandler(void) {
                        DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5  |
                        DMA_HIFCR_CTCIF5);
         
-        if (s_uart_rx_done_cbs[1]) {
+        if (s_dma_rx_done_cbs[1]) {
             // Invoke user callback
-            s_uart_rx_done_cbs[1](s_rx_args[1]);
+            s_dma_rx_done_cbs[1](s_rx_args[1]);
 
             // Clear user passed context
-            s_uart_rx_done_cbs[1] = NULL;
+            s_dma_rx_done_cbs[1] = NULL;
             s_rx_args[1] = NULL;
         }
 
@@ -407,12 +405,12 @@ void DMA2_Stream6_IRQHandler(void) {
         // Poll till transmission is complete
         while (!(USART6->SR & USART_SR_TC));
 
-        if (s_uart_tx_done_cbs[2]) {
+        if (s_dma_tx_done_cbs[2]) {
             // Invoke user callback
-            s_uart_tx_done_cbs[2](s_tx_args[2]);
+            s_dma_tx_done_cbs[2](s_tx_args[2]);
 
             // Clear user passed context
-            s_uart_tx_done_cbs[2] = NULL;
+            s_dma_tx_done_cbs[2] = NULL;
             s_tx_args[2] = NULL;
         }
 
@@ -433,12 +431,12 @@ void DMA2_Stream1_IRQHandler(void) {
                        DMA_LIFCR_CTEIF1 | DMA_LIFCR_CHTIF1  |
                        DMA_LIFCR_CTCIF1);
         
-        if (s_uart_rx_done_cbs[2]) {
+        if (s_dma_rx_done_cbs[2]) {
             // Invoke user callback
-            s_uart_rx_done_cbs[2](s_rx_args[2]);
+            s_dma_rx_done_cbs[2](s_rx_args[2]);
 
             // Clear user passed context
-            s_uart_rx_done_cbs[2] = NULL;
+            s_dma_rx_done_cbs[2] = NULL;
             s_rx_args[2] = NULL;
         }
 

@@ -27,32 +27,32 @@ typedef struct {
 #define SPI_DMA_NVIC_IRQ_PRIORITY 8U
 #define TIMEOUT_CYCLES 1'000UL
 
-// Mapping for the DMA channels for the 3 SPI channels
+// Mapping for the DMA channels for the 5 SPI channels
 static const dma_stream_map_t s_spi_dma_map[5] = {
     // SPI1
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream7, .channel = 4 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream5, .channel = 4 }
+        .tx = { .controller = DMA2, .stream = DMA2_Stream5, .channel = 3 },
+        .rx = { .controller = DMA2, .stream = DMA2_Stream2, .channel = 3 }
     },
     // SPI2
     {
-        .tx = { .controller = DMA1, .stream = DMA1_Stream6, .channel = 4 },
-        .rx = { .controller = DMA1, .stream = DMA1_Stream5, .channel = 4 }
+        .tx = { .controller = DMA1, .stream = DMA1_Stream4, .channel = 0 },
+        .rx = { .controller = DMA1, .stream = DMA1_Stream3, .channel = 0 }
     },
     // SPI3
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream6, .channel = 5 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream1, .channel = 5 }
+        .tx = { .controller = DMA1, .stream = DMA1_Stream7, .channel = 0 },
+        .rx = { .controller = DMA1, .stream = DMA1_Stream2, .channel = 0 }
     },
     // SPI4
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream4, .channel = 5 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream2, .channel = 5 }
+        .tx = { .controller = DMA2, .stream = DMA2_Stream1, .channel = 4 },
+        .rx = { .controller = DMA2, .stream = DMA2_Stream0, .channel = 4 }
     },
     // SPI5
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream6, .channel = 5 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream1, .channel = 5 }
+        .tx = { .controller = DMA2, .stream = DMA2_Stream4, .channel = 2 },
+        .rx = { .controller = DMA2, .stream = DMA2_Stream3, .channel = 2 }
     }
 };
 
@@ -117,7 +117,6 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 
     ret = gpio_set_alternate_function(config->gpio_port, config->sclk, alt_val);
     if (ret != HAL_OK) return ret;
-    gpio_enable_pullup(config->gpio_port, config->sclk, true);
     gpio_set_speed_mode(config->gpio_port, config->sclk, GPIO_HIGH_SPEED);
     gpio_set_output_type(config->gpio_port, config->sclk, GPIO_PUSH_PULL);
     
@@ -254,19 +253,131 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
 
 // Polling API
 hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t len) {
+    
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
 
-    (void)handle;
-    (void)data;
-    (void)len;
+    const bool is_16bit_data = handle->CR1 & SPI_CR1_DFF;
+
+    if (is_16bit_data) {
+        // Cast to appropriate type
+        const uint16_t* buf = (const uint16_t*)data;
+        
+        for (size_t i = 0; i < len; i++) {
+            // Write data
+            handle->DR = buf[i];
+
+            // Poll till data has been transferred out
+            uint32_t timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Poll till data has been received
+            timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Read data and discard
+            (void)handle->DR;
+        }
+
+    } else {
+        // Cast to appropriate type
+        const uint8_t* buf = (const uint8_t*)data;
+        
+        for (size_t i = 0; i < len; i++) {
+            // Write data
+            handle->DR = buf[i];
+
+            // Poll till data has been transferred out
+            uint32_t timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Wait till data has been received
+            timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Read data and discard
+            (void)handle->DR;
+        }
+    }
+    
+    // Wait for the TXE and BSY bits
+    // TXE bit
+    uint32_t timeout = TIMEOUT_CYCLES;
+    while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+    if (timeout == 0) return HAL_TIMEOUT;
+    // BSY bit
+    timeout = TIMEOUT_CYCLES;
+    while ((handle->SR & SPI_SR_BSY) && (--timeout));
+    if (timeout == 0) return HAL_TIMEOUT;
 
     return HAL_OK;
 }
 
 hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
+    
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
 
-    (void)handle;
-    (void)data;
-    (void)len;
+    const bool is_16bit_data = handle->CR1 & SPI_CR1_DFF;
+
+    if (is_16bit_data) {
+        // Cast to appropriate type
+        uint16_t* buf = (uint16_t*)data;
+        
+        for (size_t i = 0; i < len; i++) {
+            // Write dummy data
+            handle->DR = 0x00UL;
+
+            // Poll till data has been transferred out
+            uint32_t timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Poll till data has been received
+            timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Read data
+            buf[i] = (uint16_t)handle->DR;
+        }
+
+    } else {
+        // Cast to appropriate type
+        uint8_t* buf = (uint8_t*)data;
+        
+        for (size_t i = 0; i < len; i++) {
+            // Write dummy data
+            handle->DR = 0x00UL;
+
+            // Poll till data has been transferred out
+            uint32_t timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Wait till data has been received
+            timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
+            if (timeout == 0) return HAL_TIMEOUT;
+
+            // Read data
+            buf[i] = (uint8_t)handle->DR;
+        }
+    }
+    
+    // Wait for the TXE and BSY bits
+    // TXE bit
+    uint32_t timeout = TIMEOUT_CYCLES;
+    while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+    if (timeout == 0) return HAL_TIMEOUT;
+    // BSY bit
+    timeout = TIMEOUT_CYCLES;
+    while ((handle->SR & SPI_SR_BSY) && (--timeout));
+    if (timeout == 0) return HAL_TIMEOUT;
 
     return HAL_OK;
 }
@@ -418,4 +529,280 @@ hal_err_t spi_master_transmit_receive_dma(SPI_TypeDef* handle, const void* tx_da
     if (ret != HAL_OK) return ret;
 
     return dma_enable_stream(rx_stream);
+}
+
+// DMA interrupts
+// SPI1: TX
+void DMA2_Stream7_IRQHandler(void) {
+
+    if (DMA2->HISR & DMA_HISR_TCIF7) {
+        // Clear interrupt flags
+        DMA2->HIFCR = (DMA_HIFCR_CFEIF7 | DMA_HIFCR_CDMEIF7 |
+                       DMA_HIFCR_CTEIF7 | DMA_HIFCR_CHTIF7  |
+                       DMA_HIFCR_CTCIF7);
+        
+        // Poll till transmission is complete
+        while (!(SPI1->SR & SPI_SR_TXE));
+        
+        if (s_dma_tx_done_cbs[0]) {
+            // Invoke user callback
+            s_dma_tx_done_cbs[0](s_tx_args[0]);
+
+            // Clear user passed context
+            s_dma_tx_done_cbs[0] = NULL;
+            s_tx_args[0] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+
+    // Disable DMA TX stream
+    dma_disable_stream(DMA2_Stream7);
+}
+
+// SPI1: RX
+void DMA2_Stream5_IRQHandler(void) {
+
+    if (DMA2->HISR & DMA_HISR_TCIF5) {
+        // Clear interrupt flags
+        DMA2->HIFCR = (DMA_HIFCR_CFEIF5 | DMA_HIFCR_CDMEIF5 |
+                       DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5  |
+                       DMA_HIFCR_CTCIF5);
+        
+        if (s_dma_rx_done_cbs[0]) {
+            // Invoke user callback
+            s_dma_rx_done_cbs[0](s_rx_args[0]);
+
+            // Clear user passed context
+            s_dma_rx_done_cbs[0] = NULL;
+            s_rx_args[0] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+    
+    // Disable DMA RX stream
+    dma_disable_stream(DMA2_Stream5);
+}
+
+// SPI2: TX
+void DMA1_Stream6_IRQHandler(void) {
+
+    if (DMA1->HISR & DMA_HISR_TCIF6) {
+        // Clear interrupt flags
+        DMA1->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
+                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
+                       DMA_HIFCR_CTCIF6);
+        
+        // Poll till transmission is complete
+        while (!(SPI2->SR & SPI_SR_TXE));
+
+        if (s_dma_tx_done_cbs[1]) {
+            // Invoke user callback
+            s_dma_tx_done_cbs[1](s_tx_args[1]);
+
+            // Clear user passed context
+            s_dma_tx_done_cbs[1] = NULL;
+            s_tx_args[1] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+
+    // Disable DMA TX stream
+    dma_disable_stream(DMA1_Stream6);
+}
+
+// SPI2: RX
+void DMA1_Stream5_IRQHandler(void) {
+
+    if (DMA1->HISR & DMA_HISR_TCIF5) {
+        // Clear interrupt flags
+        DMA1->HIFCR = (DMA_HIFCR_CFEIF5 | DMA_HIFCR_CDMEIF5 |
+                       DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5  |
+                       DMA_HIFCR_CTCIF5);
+        
+        if (s_dma_rx_done_cbs[1]) {
+            // Invoke user callback
+            s_dma_rx_done_cbs[1](s_rx_args[1]);
+
+            // Clear user passed context
+            s_dma_rx_done_cbs[1] = NULL;
+            s_rx_args[1] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+    
+    // Disable DMA RX stream
+    dma_disable_stream(DMA1_Stream5);
+}
+
+// SPI3: TX
+void DMA2_Stream6_IRQHandler(void) {
+
+    if (DMA2->HISR & DMA_HISR_TCIF6) {
+        // Clear interrupt flags
+        DMA2->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
+                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
+                       DMA_HIFCR_CTCIF6);
+        
+        // Poll till transmission is complete
+        while (!(SPI2->SR & SPI_SR_TXE));
+
+        if (s_dma_tx_done_cbs[2]) {
+            // Invoke user callback
+            s_dma_tx_done_cbs[2](s_tx_args[2]);
+
+            // Clear user passed context
+            s_dma_tx_done_cbs[2] = NULL;
+            s_tx_args[2] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+
+    // Disable DMA TX stream
+    dma_disable_stream(DMA2_Stream6);
+}
+
+// SPI3: RX
+void DMA2_Stream1_IRQHandler(void) {
+
+    if (DMA2->LISR & DMA_LISR_TCIF1) {
+        // Clear interrupt flags
+        DMA2->LIFCR = (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 |
+                       DMA_LIFCR_CTEIF1 | DMA_LIFCR_CHTIF1  |
+                       DMA_LIFCR_CTCIF1);
+        
+        if (s_dma_rx_done_cbs[2]) {
+            // Invoke user callback
+            s_dma_rx_done_cbs[2](s_rx_args[2]);
+
+            // Clear user passed context
+            s_dma_rx_done_cbs[2] = NULL;
+            s_rx_args[2] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+    
+    // Disable DMA RX stream
+    dma_disable_stream(DMA2_Stream1);
+}
+
+// SPI4: TX
+void DMA2_Stream6_IRQHandler(void) {
+
+    if (DMA2->HISR & DMA_HISR_TCIF6) {
+        // Clear interrupt flags
+        DMA2->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
+                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
+                       DMA_HIFCR_CTCIF6);
+        
+        // Poll till transmission is complete
+        while (!(SPI3->SR & SPI_SR_TXE));
+
+        if (s_dma_tx_done_cbs[2]) {
+            // Invoke user callback
+            s_dma_tx_done_cbs[2](s_tx_args[2]);
+
+            // Clear user passed context
+            s_dma_tx_done_cbs[2] = NULL;
+            s_tx_args[2] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+
+    // Disable DMA TX stream
+    dma_disable_stream(DMA2_Stream6);
+}
+
+// SPI4: RX
+void DMA2_Stream1_IRQHandler(void) {
+
+    if (DMA2->LISR & DMA_LISR_TCIF1) {
+        // Clear interrupt flags
+        DMA2->LIFCR = (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 |
+                       DMA_LIFCR_CTEIF1 | DMA_LIFCR_CHTIF1  |
+                       DMA_LIFCR_CTCIF1);
+        
+        if (s_dma_rx_done_cbs[2]) {
+            // Invoke user callback
+            s_dma_rx_done_cbs[2](s_rx_args[2]);
+
+            // Clear user passed context
+            s_dma_rx_done_cbs[2] = NULL;
+            s_rx_args[2] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+    
+    // Disable DMA RX stream
+    dma_disable_stream(DMA2_Stream1);
+}
+
+// SPI5: TX
+void DMA2_Stream6_IRQHandler(void) {
+
+    if (DMA2->HISR & DMA_HISR_TCIF6) {
+        // Clear interrupt flags
+        DMA2->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
+                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
+                       DMA_HIFCR_CTCIF6);
+        
+        // Poll till transmission is complete
+        while (!(SPI3->SR & SPI_SR_TXE));
+
+        if (s_dma_tx_done_cbs[2]) {
+            // Invoke user callback
+            s_dma_tx_done_cbs[2](s_tx_args[2]);
+
+            // Clear user passed context
+            s_dma_tx_done_cbs[2] = NULL;
+            s_tx_args[2] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+
+    // Disable DMA TX stream
+    dma_disable_stream(DMA2_Stream6);
+}
+
+// SPI5: RX
+void DMA2_Stream1_IRQHandler(void) {
+
+    if (DMA2->LISR & DMA_LISR_TCIF1) {
+        // Clear interrupt flags
+        DMA2->LIFCR = (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 |
+                       DMA_LIFCR_CTEIF1 | DMA_LIFCR_CHTIF1  |
+                       DMA_LIFCR_CTCIF1);
+        
+        if (s_dma_rx_done_cbs[2]) {
+            // Invoke user callback
+            s_dma_rx_done_cbs[2](s_rx_args[2]);
+
+            // Clear user passed context
+            s_dma_rx_done_cbs[2] = NULL;
+            s_rx_args[2] = NULL;
+        }
+
+    } else {
+        while (1);
+    }
+    
+    // Disable DMA RX stream
+    dma_disable_stream(DMA2_Stream1);
 }
