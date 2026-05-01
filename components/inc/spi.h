@@ -42,7 +42,22 @@ hal_err_t spi_master_transmit_receive_poll(SPI_TypeDef* handle, const void* tx_d
 
 // DMA transfer API
 // Callback for DMA transmission and reception completion
-typedef void (*spi_trans_done_cb_t)(void* arg);
+typedef enum : uint8_t {
+    SPI_NO_ERROR = 0,
+
+    // Errors with waiting for transfers completion
+    SPI_TXE_FAILED_TO_SET,
+    SPI_BSY_FAILED_TO_CLEAR,
+
+    // DMA specific errors
+    SPI_DMA_TE,
+    SPI_DMA_DME,
+    SPI_DMA_TIMEOUT,
+    SPI_DMA_ERR_UNKNOWN
+
+} spi_dma_err_t;
+
+typedef void (*spi_trans_done_cb_t)(void* arg, spi_dma_err_t error);
 
 hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t len,
                                   spi_trans_done_cb_t callback, void* arg);

@@ -25,7 +25,7 @@ typedef struct {
 } dma_stream_map_t;
 
 #define SPI_DMA_NVIC_IRQ_PRIORITY 8U
-#define TIMEOUT_CYCLES 1'000UL
+#define TIMEOUT_CYCLES 100UL
 
 // Mapping for the DMA channels for the 5 SPI channels
 static const dma_stream_map_t s_spi_dma_map[5] = {
@@ -56,7 +56,7 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     }
 };
 
-// Helper
+// Helpers
 static inline uint8_t get_index(const SPI_TypeDef* handle) {
     if      (handle == SPI1) return 0U;
     else if (handle == SPI2) return 1U;
@@ -66,6 +66,82 @@ static inline uint8_t get_index(const SPI_TypeDef* handle) {
     else                     return 0xFFU;
 }
 
+static inline spi_dma_err_t isr_helper(DMA_Stream_TypeDef* stream, volatile uint32_t* irq_clr_rg,
+                                       volatile uint32_t* irq_sta_rg, uint32_t tc, uint32_t te, uint32_t dme) {
+
+    spi_dma_err_t error = SPI_NO_ERROR;
+
+    // Transfer complete
+    if (*irq_sta_rg & tc) {
+        // Clear DMA TC interrupt bit
+        *irq_clr_rg = tc;
+    }
+    // Transfer error
+    else if (*irq_sta_rg & te) {
+        // Clear DMA TE interrupt bit
+        *irq_clr_rg = te;
+        error = SPI_DMA_TE;
+    }
+    // Direct mode error
+    else if (*irq_sta_rg & dme) {
+        // Clear DMA DME interrupt bit
+        *irq_clr_rg = dme;
+        error = SPI_DMA_DME;
+    }
+    // Unreachable, but default catch-all
+    else {
+        // Clear DMA TC, DME and TE interrupt bits
+        *irq_clr_rg = (tc | te | dme);
+        error = SPI_DMA_ERR_UNKNOWN;
+    }
+    
+    if (dma_disable_stream(stream) != HAL_OK) error = SPI_DMA_TIMEOUT;
+
+    return error;
+}
+
+static inline void isr_tx_helper(SPI_TypeDef* handle, spi_dma_err_t ret, uint8_t idx) {
+
+    if (!s_dma_tx_done_cbs[idx]) return;
+
+    // Transfers require us to poll on the TXE and BSY flags even after data has
+    // been shifted out. If they're not in the required state, an error occurred
+    
+    // Poll till TXE has been set
+    // Skip polling if an error has occurred
+    if (ret == SPI_NO_ERROR) {
+        uint32_t timeout = TIMEOUT_CYCLES;
+        while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+        if (timeout == 0) ret = SPI_TXE_FAILED_TO_SET;
+    }
+
+    // Poll till BSY has been cleared
+    // Skip polling BSY if TXE failed to set
+    if (ret == SPI_NO_ERROR) {
+        uint32_t timeout = TIMEOUT_CYCLES;
+        while ((handle->SR & SPI_SR_BSY) && (--timeout));
+        if (timeout == 0) ret = SPI_BSY_FAILED_TO_CLEAR;
+    }
+
+    // Invoke user callback
+    s_dma_tx_done_cbs[idx](s_tx_args[idx], ret);
+
+    // Clear user passed context
+    s_dma_tx_done_cbs[idx] = NULL;
+    s_tx_args[idx] = NULL;
+}
+
+static inline void isr_rx_helper(SPI_TypeDef* handle, spi_dma_err_t ret, uint8_t idx) {
+
+    if (!s_dma_rx_done_cbs[idx]) return;
+    
+    // Invoke user callback
+    s_dma_rx_done_cbs[idx](s_rx_args[idx], ret);
+
+    // Clear user passed context
+    s_dma_rx_done_cbs[idx] = NULL;
+    s_rx_args[idx] = NULL;
+}
 
 // Public API
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config) {
@@ -533,276 +609,61 @@ hal_err_t spi_master_transmit_receive_dma(SPI_TypeDef* handle, const void* tx_da
 
 // DMA interrupts
 // SPI1: TX
-void DMA2_Stream7_IRQHandler(void) {
-
-    if (DMA2->HISR & DMA_HISR_TCIF7) {
-        // Clear interrupt flags
-        DMA2->HIFCR = (DMA_HIFCR_CFEIF7 | DMA_HIFCR_CDMEIF7 |
-                       DMA_HIFCR_CTEIF7 | DMA_HIFCR_CHTIF7  |
-                       DMA_HIFCR_CTCIF7);
-        
-        // Poll till transmission is complete
-        while (!(SPI1->SR & SPI_SR_TXE));
-        
-        if (s_dma_tx_done_cbs[0]) {
-            // Invoke user callback
-            s_dma_tx_done_cbs[0](s_tx_args[0]);
-
-            // Clear user passed context
-            s_dma_tx_done_cbs[0] = NULL;
-            s_tx_args[0] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-
-    // Disable DMA TX stream
-    dma_disable_stream(DMA2_Stream7);
+void DMA2_Stream5_IRQHandler(void) {
+    spi_dma_err_t ret = isr_helper(DMA2_Stream5, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5);
+    isr_tx_helper(SPI1, ret, 0);
 }
 
 // SPI1: RX
-void DMA2_Stream5_IRQHandler(void) {
-
-    if (DMA2->HISR & DMA_HISR_TCIF5) {
-        // Clear interrupt flags
-        DMA2->HIFCR = (DMA_HIFCR_CFEIF5 | DMA_HIFCR_CDMEIF5 |
-                       DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5  |
-                       DMA_HIFCR_CTCIF5);
-        
-        if (s_dma_rx_done_cbs[0]) {
-            // Invoke user callback
-            s_dma_rx_done_cbs[0](s_rx_args[0]);
-
-            // Clear user passed context
-            s_dma_rx_done_cbs[0] = NULL;
-            s_rx_args[0] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-    
-    // Disable DMA RX stream
-    dma_disable_stream(DMA2_Stream5);
+void DMA2_Stream2_IRQHandler(void) {
+    spi_dma_err_t ret = isr_helper(DMA2_Stream2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2);
+    isr_rx_helper(SPI1, ret, 0);
 }
 
 // SPI2: TX
-void DMA1_Stream6_IRQHandler(void) {
-
-    if (DMA1->HISR & DMA_HISR_TCIF6) {
-        // Clear interrupt flags
-        DMA1->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
-                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
-                       DMA_HIFCR_CTCIF6);
-        
-        // Poll till transmission is complete
-        while (!(SPI2->SR & SPI_SR_TXE));
-
-        if (s_dma_tx_done_cbs[1]) {
-            // Invoke user callback
-            s_dma_tx_done_cbs[1](s_tx_args[1]);
-
-            // Clear user passed context
-            s_dma_tx_done_cbs[1] = NULL;
-            s_tx_args[1] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-
-    // Disable DMA TX stream
-    dma_disable_stream(DMA1_Stream6);
+void DMA1_Stream4_IRQHandler(void) {
+    spi_dma_err_t ret = isr_helper(DMA1_Stream4, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4);
+    isr_tx_helper(SPI2, ret, 1);
 }
 
 // SPI2: RX
-void DMA1_Stream5_IRQHandler(void) {
-
-    if (DMA1->HISR & DMA_HISR_TCIF5) {
-        // Clear interrupt flags
-        DMA1->HIFCR = (DMA_HIFCR_CFEIF5 | DMA_HIFCR_CDMEIF5 |
-                       DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5  |
-                       DMA_HIFCR_CTCIF5);
-        
-        if (s_dma_rx_done_cbs[1]) {
-            // Invoke user callback
-            s_dma_rx_done_cbs[1](s_rx_args[1]);
-
-            // Clear user passed context
-            s_dma_rx_done_cbs[1] = NULL;
-            s_rx_args[1] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-    
-    // Disable DMA RX stream
-    dma_disable_stream(DMA1_Stream5);
+void DMA1_Stream3_IRQHandler(void) {
+    spi_dma_err_t ret = isr_helper(DMA1_Stream3, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF3, DMA_LISR_TEIF3, DMA_LISR_DMEIF3);
+    isr_rx_helper(SPI2, ret, 1);
 }
 
 // SPI3: TX
-void DMA2_Stream6_IRQHandler(void) {
-
-    if (DMA2->HISR & DMA_HISR_TCIF6) {
-        // Clear interrupt flags
-        DMA2->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
-                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
-                       DMA_HIFCR_CTCIF6);
-        
-        // Poll till transmission is complete
-        while (!(SPI2->SR & SPI_SR_TXE));
-
-        if (s_dma_tx_done_cbs[2]) {
-            // Invoke user callback
-            s_dma_tx_done_cbs[2](s_tx_args[2]);
-
-            // Clear user passed context
-            s_dma_tx_done_cbs[2] = NULL;
-            s_tx_args[2] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-
-    // Disable DMA TX stream
-    dma_disable_stream(DMA2_Stream6);
+void DMA1_Stream7_IRQHandler(void) {
+    spi_dma_err_t ret = isr_helper(DMA1_Stream7, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7);
+    isr_tx_helper(SPI3, ret, 2);
 }
 
 // SPI3: RX
-void DMA2_Stream1_IRQHandler(void) {
-
-    if (DMA2->LISR & DMA_LISR_TCIF1) {
-        // Clear interrupt flags
-        DMA2->LIFCR = (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 |
-                       DMA_LIFCR_CTEIF1 | DMA_LIFCR_CHTIF1  |
-                       DMA_LIFCR_CTCIF1);
-        
-        if (s_dma_rx_done_cbs[2]) {
-            // Invoke user callback
-            s_dma_rx_done_cbs[2](s_rx_args[2]);
-
-            // Clear user passed context
-            s_dma_rx_done_cbs[2] = NULL;
-            s_rx_args[2] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-    
-    // Disable DMA RX stream
-    dma_disable_stream(DMA2_Stream1);
+void DMA1_Stream2_IRQHandler(void) {
+    spi_dma_err_t ret = isr_helper(DMA1_Stream2, &DMA1->LIFCR, &DMA1->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2);
+    isr_rx_helper(SPI3, ret, 2);
 }
 
 // SPI4: TX
-void DMA2_Stream6_IRQHandler(void) {
-
-    if (DMA2->HISR & DMA_HISR_TCIF6) {
-        // Clear interrupt flags
-        DMA2->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
-                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
-                       DMA_HIFCR_CTCIF6);
-        
-        // Poll till transmission is complete
-        while (!(SPI3->SR & SPI_SR_TXE));
-
-        if (s_dma_tx_done_cbs[2]) {
-            // Invoke user callback
-            s_dma_tx_done_cbs[2](s_tx_args[2]);
-
-            // Clear user passed context
-            s_dma_tx_done_cbs[2] = NULL;
-            s_tx_args[2] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-
-    // Disable DMA TX stream
-    dma_disable_stream(DMA2_Stream6);
+void DMA2_Stream1_IRQHandler(void) {
+    spi_dma_err_t ret = isr_helper(DMA2_Stream1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_DMEIF1);
+    isr_tx_helper(SPI4, ret, 3);
 }
 
 // SPI4: RX
-void DMA2_Stream1_IRQHandler(void) {
-
-    if (DMA2->LISR & DMA_LISR_TCIF1) {
-        // Clear interrupt flags
-        DMA2->LIFCR = (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 |
-                       DMA_LIFCR_CTEIF1 | DMA_LIFCR_CHTIF1  |
-                       DMA_LIFCR_CTCIF1);
-        
-        if (s_dma_rx_done_cbs[2]) {
-            // Invoke user callback
-            s_dma_rx_done_cbs[2](s_rx_args[2]);
-
-            // Clear user passed context
-            s_dma_rx_done_cbs[2] = NULL;
-            s_rx_args[2] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-    
-    // Disable DMA RX stream
-    dma_disable_stream(DMA2_Stream1);
+void DMA2_Stream0_IRQHandler(void) {
+    spi_dma_err_t ret = isr_helper(DMA2_Stream0, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0);
+    isr_rx_helper(SPI4, ret, 3);
 }
 
 // SPI5: TX
-void DMA2_Stream6_IRQHandler(void) {
-
-    if (DMA2->HISR & DMA_HISR_TCIF6) {
-        // Clear interrupt flags
-        DMA2->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
-                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
-                       DMA_HIFCR_CTCIF6);
-        
-        // Poll till transmission is complete
-        while (!(SPI3->SR & SPI_SR_TXE));
-
-        if (s_dma_tx_done_cbs[2]) {
-            // Invoke user callback
-            s_dma_tx_done_cbs[2](s_tx_args[2]);
-
-            // Clear user passed context
-            s_dma_tx_done_cbs[2] = NULL;
-            s_tx_args[2] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-
-    // Disable DMA TX stream
-    dma_disable_stream(DMA2_Stream6);
+void DMA2_Stream4_IRQHandler(void) {
+    spi_dma_err_t ret = isr_helper(DMA2_Stream4, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4);
+    isr_tx_helper(SPI5, ret, 4);
 }
 
 // SPI5: RX
-void DMA2_Stream1_IRQHandler(void) {
-
-    if (DMA2->LISR & DMA_LISR_TCIF1) {
-        // Clear interrupt flags
-        DMA2->LIFCR = (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 |
-                       DMA_LIFCR_CTEIF1 | DMA_LIFCR_CHTIF1  |
-                       DMA_LIFCR_CTCIF1);
-        
-        if (s_dma_rx_done_cbs[2]) {
-            // Invoke user callback
-            s_dma_rx_done_cbs[2](s_rx_args[2]);
-
-            // Clear user passed context
-            s_dma_rx_done_cbs[2] = NULL;
-            s_rx_args[2] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-    
-    // Disable DMA RX stream
-    dma_disable_stream(DMA2_Stream1);
+void DMA2_Stream3_IRQHandler(void) {
+    spi_dma_err_t ret = isr_helper(DMA2_Stream3, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF3, DMA_LISR_TEIF3, DMA_LISR_DMEIF3);
+    isr_rx_helper(SPI5, ret, 4);
 }

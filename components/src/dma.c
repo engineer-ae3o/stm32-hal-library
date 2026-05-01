@@ -16,8 +16,8 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller) {
 }
 
 void dma_clear_flags(DMA_TypeDef* controller) {
-    controller->LIFCR = 0xFFFFFFFFUL;
-    controller->HIFCR = 0xFFFFFFFFUL;
+    controller->LIFCR = 0x0FFFFFFFUL;
+    controller->HIFCR = 0x0FFFFFFFUL;
 }
 
 void dma_clear_flags_bitmask(DMA_TypeDef* handle, uint32_t flags, bool hifcr) {
