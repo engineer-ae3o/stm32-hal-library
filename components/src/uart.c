@@ -16,6 +16,8 @@ void* s_rx_args[3] = {};
 typedef struct {
     DMA_TypeDef* controller;
     DMA_Stream_TypeDef* stream;
+    uint8_t stream_no;
+    IRQn_Type irq_type;
     uint8_t channel;
 } uart_tx_rx_t;
 
@@ -25,32 +27,102 @@ typedef struct {
 } dma_stream_map_t;
 
 #define UART_DMA_NVIC_IRQ_PRIORITY 8U
+#define TIMEOUT_CYCLES 100UL
 
 // Mapping for the DMA channels for the 3 USART channels
 static const dma_stream_map_t s_uart_dma_map[3] = {
     // USART1
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream7, .channel = 4 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream5, .channel = 4 }
+        .tx = { .controller = DMA2, .stream = DMA2_Stream7, .stream_no = 7, .irq_type = DMA2_Stream7_IRQn, .channel = 4 },
+        .rx = { .controller = DMA2, .stream = DMA2_Stream5, .stream_no = 5, .irq_type = DMA2_Stream5_IRQn, .channel = 4 }
     },
     // USART2
     {
-        .tx = { .controller = DMA1, .stream = DMA1_Stream6, .channel = 4 },
-        .rx = { .controller = DMA1, .stream = DMA1_Stream5, .channel = 4 }
+        .tx = { .controller = DMA1, .stream = DMA1_Stream6, .stream_no = 6, .irq_type = DMA1_Stream6_IRQn, .channel = 4 },
+        .rx = { .controller = DMA1, .stream = DMA1_Stream5, .stream_no = 5, .irq_type = DMA1_Stream5_IRQn, .channel = 4 }
     },
     // USART6
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream6, .channel = 5 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream1, .channel = 5 }
+        .tx = { .controller = DMA2, .stream = DMA2_Stream6, .stream_no = 6, .irq_type = DMA2_Stream6_IRQn, .channel = 5 },
+        .rx = { .controller = DMA2, .stream = DMA2_Stream1, .stream_no = 1, .irq_type = DMA2_Stream1_IRQn, .channel = 5 }
     }
 };
 
 // Helper
 static inline uint8_t get_index(const USART_TypeDef* handle) {
-    if (handle == USART1)      return 0U;
+    if      (handle == USART1) return 0U;
     else if (handle == USART2) return 1U;
     else if (handle == USART6) return 2U;
     else                       return 0xFFU;
+}
+
+static inline hal_err_t isr_helper(DMA_Stream_TypeDef* stream, volatile uint32_t* irq_clr_rg,
+                                   volatile uint32_t* irq_sta_rg, uint32_t tc, uint32_t te, uint32_t dme) {
+
+    hal_err_t error = HAL_OK;
+
+    // Transfer complete
+    if (*irq_sta_rg & tc) {
+        // Clear DMA TC interrupt bit
+        *irq_clr_rg = tc;
+    }
+    // Transfer error
+    else if (*irq_sta_rg & te) {
+        // Clear DMA TE interrupt bit
+        *irq_clr_rg = te;
+        error = HAL_UART_DMA_TE;
+    }
+    // Direct mode error
+    else if (*irq_sta_rg & dme) {
+        // Clear DMA DME interrupt bit
+        *irq_clr_rg = dme;
+        error = HAL_UART_DMA_DME;
+    }
+    // Unreachable, but default catch-all
+    else {
+        // Clear DMA TC, DME and TE interrupt bits
+        *irq_clr_rg = (tc | te | dme);
+        error = HAL_UART_DMA_ERR_UNKNOWN;
+    }
+    
+    if (dma_disable_stream(stream) != HAL_OK) error = HAL_TIMEOUT;
+
+    return error;
+}
+
+static inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t idx) {
+
+    if (!s_dma_tx_done_cbs[idx]) return;
+
+    // Transfers require us to poll on the TC flag
+    // even after data has been shifted out
+    
+    // Poll till TC has been set
+    // Skip polling if an error has occurred
+    if (ret == HAL_OK) {
+        uint32_t timeout = TIMEOUT_CYCLES;
+        while (!(handle->SR & USART_SR_TC) && (--timeout));
+        if (timeout == 0) ret = HAL_UART_TC_FAILED_TO_SET;
+    }
+    
+    // Invoke user callback
+    s_dma_tx_done_cbs[idx](s_tx_args[idx], ret);
+
+    // Clear user passed context
+    s_dma_tx_done_cbs[idx] = NULL;
+    s_tx_args[idx] = NULL;
+}
+
+static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
+
+    if (!s_dma_rx_done_cbs[idx]) return;
+    
+    // Invoke user callback
+    s_dma_rx_done_cbs[idx](s_rx_args[idx], ret);
+
+    // Clear user passed context
+    s_dma_rx_done_cbs[idx] = NULL;
+    s_rx_args[idx] = NULL;
 }
 
 
@@ -129,25 +201,8 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
 hal_err_t uart_dma_init(USART_TypeDef* handle) {
     
-    // DMA interrupt types
-    IRQn_Type tx_dma_irq = 0;
-    IRQn_Type rx_dma_irq = 0;
-    
-    if (handle == USART1) {
-        tx_dma_irq = DMA2_Stream7_IRQn;
-        rx_dma_irq = DMA2_Stream5_IRQn;
-    } else if (handle == USART2) {
-        tx_dma_irq = DMA1_Stream6_IRQn;
-        rx_dma_irq = DMA1_Stream5_IRQn;
-    } else if (handle == USART6) {
-        tx_dma_irq = DMA2_Stream6_IRQn;
-        rx_dma_irq = DMA2_Stream1_IRQn;
-    } else {
-        return HAL_INVALID_ARG;
-    }
-    
-    // Index for DMA mapping
     const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
     
     // TX mapping
     DMA_TypeDef* tx_controller = s_uart_dma_map[idx].tx.controller;
@@ -172,8 +227,8 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     if (ret != HAL_OK) return ret;
     
     // Clear global DMA interrupt flags
-    dma_clear_flags(tx_controller);
-    dma_clear_flags(rx_controller);
+    dma_clear_flags(tx_controller, s_uart_dma_map[idx].tx.stream_no);
+    dma_clear_flags(rx_controller, s_uart_dma_map[idx].rx.stream_no);
     
     // Configuration
     // TX
@@ -204,11 +259,11 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
 
     // Enable DMA stream interrupts
-    NVIC_EnableIRQ(tx_dma_irq);
-    NVIC_SetPriority(tx_dma_irq, UART_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(s_uart_dma_map[idx].tx.irq_type);
+    NVIC_SetPriority(s_uart_dma_map[idx].tx.irq_type, UART_DMA_NVIC_IRQ_PRIORITY);
 
-    NVIC_EnableIRQ(rx_dma_irq);
-    NVIC_SetPriority(rx_dma_irq, UART_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(s_uart_dma_map[idx].rx.irq_type);
+    NVIC_SetPriority(s_uart_dma_map[idx].rx.irq_type, UART_DMA_NVIC_IRQ_PRIORITY);
 
     return HAL_OK;
 }
@@ -285,165 +340,36 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
 // DMA interrupts
 // USART1: TX
 void DMA2_Stream7_IRQHandler(void) {
-
-    if (DMA2->HISR & DMA_HISR_TCIF7) {
-        // Clear interrupt flags
-        DMA2->HIFCR = (DMA_HIFCR_CFEIF7 | DMA_HIFCR_CDMEIF7 |
-                       DMA_HIFCR_CTEIF7 | DMA_HIFCR_CHTIF7  |
-                       DMA_HIFCR_CTCIF7);
-        
-        // Poll till transmission is complete
-        while (!(USART1->SR & USART_SR_TC));
-        
-        if (s_dma_tx_done_cbs[0]) {
-            // Invoke user callback
-            s_dma_tx_done_cbs[0](s_tx_args[0]);
-
-            // Clear user passed context
-            s_dma_tx_done_cbs[0] = NULL;
-            s_tx_args[0] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-
-    // Disable DMA TX stream
-    dma_disable_stream(DMA2_Stream7);
+    hal_err_t ret = isr_helper(DMA2_Stream7, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7);
+    isr_tx_helper(USART1, ret, 0);
 }
 
 // USART1: RX
 void DMA2_Stream5_IRQHandler(void) {
-
-    if (DMA2->HISR & DMA_HISR_TCIF5) {
-        // Clear interrupt flags
-        DMA2->HIFCR = (DMA_HIFCR_CFEIF5 | DMA_HIFCR_CDMEIF5 |
-                       DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5  |
-                       DMA_HIFCR_CTCIF5);
-        
-        if (s_dma_rx_done_cbs[0]) {
-            // Invoke user callback
-            s_dma_rx_done_cbs[0](s_rx_args[0]);
-
-            // Clear user passed context
-            s_dma_rx_done_cbs[0] = NULL;
-            s_rx_args[0] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-    
-    // Disable DMA RX stream
-    dma_disable_stream(DMA2_Stream5);
+    hal_err_t ret = isr_helper(DMA2_Stream5, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5);
+    isr_rx_helper(ret, 0);
 }
 
 // USART2: TX
 void DMA1_Stream6_IRQHandler(void) {
-
-    if (DMA1->HISR & DMA_HISR_TCIF6) {
-        // Clear interrupt flags
-        DMA1->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
-                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
-                       DMA_HIFCR_CTCIF6);
-        
-        // Poll till transmission is complete
-        while (!(USART2->SR & USART_SR_TC));
-
-        if (s_dma_tx_done_cbs[1]) {
-            // Invoke user callback
-            s_dma_tx_done_cbs[1](s_tx_args[1]);
-
-            // Clear user passed context
-            s_dma_tx_done_cbs[1] = NULL;
-            s_tx_args[1] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-
-    // Disable DMA TX stream
-    dma_disable_stream(DMA1_Stream6);
+    hal_err_t ret = isr_helper(DMA1_Stream6, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6);
+    isr_tx_helper(USART2, ret, 1);
 }
 
 // USART2: RX
 void DMA1_Stream5_IRQHandler(void) {
-
-    if (DMA1->HISR & DMA_HISR_TCIF5) {
-        // Clear interrupt flags
-        DMA1->HIFCR = (DMA_HIFCR_CFEIF5 | DMA_HIFCR_CDMEIF5 |
-                       DMA_HIFCR_CTEIF5 | DMA_HIFCR_CHTIF5  |
-                       DMA_HIFCR_CTCIF5);
-        
-        if (s_dma_rx_done_cbs[1]) {
-            // Invoke user callback
-            s_dma_rx_done_cbs[1](s_rx_args[1]);
-
-            // Clear user passed context
-            s_dma_rx_done_cbs[1] = NULL;
-            s_rx_args[1] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-    
-    // Disable DMA RX stream
-    dma_disable_stream(DMA1_Stream5);
+    hal_err_t ret = isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5);
+    isr_rx_helper(ret, 1);
 }
 
 // USART6: TX
 void DMA2_Stream6_IRQHandler(void) {
-
-    if (DMA2->HISR & DMA_HISR_TCIF6) {
-        // Clear interrupt flags
-        DMA2->HIFCR = (DMA_HIFCR_CFEIF6 | DMA_HIFCR_CDMEIF6 |
-                       DMA_HIFCR_CTEIF6 | DMA_HIFCR_CHTIF6  |
-                       DMA_HIFCR_CTCIF6);
-        
-        // Poll till transmission is complete
-        while (!(USART6->SR & USART_SR_TC));
-
-        if (s_dma_tx_done_cbs[2]) {
-            // Invoke user callback
-            s_dma_tx_done_cbs[2](s_tx_args[2]);
-
-            // Clear user passed context
-            s_dma_tx_done_cbs[2] = NULL;
-            s_tx_args[2] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-
-    // Disable DMA TX stream
-    dma_disable_stream(DMA2_Stream6);
+    hal_err_t ret = isr_helper(DMA2_Stream6, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6);
+    isr_tx_helper(USART6, ret, 2);
 }
 
 // USART6: RX
 void DMA2_Stream1_IRQHandler(void) {
-
-    if (DMA2->LISR & DMA_LISR_TCIF1) {
-        // Clear interrupt flags
-        DMA2->LIFCR = (DMA_LIFCR_CFEIF1 | DMA_LIFCR_CDMEIF1 |
-                       DMA_LIFCR_CTEIF1 | DMA_LIFCR_CHTIF1  |
-                       DMA_LIFCR_CTCIF1);
-        
-        if (s_dma_rx_done_cbs[2]) {
-            // Invoke user callback
-            s_dma_rx_done_cbs[2](s_rx_args[2]);
-
-            // Clear user passed context
-            s_dma_rx_done_cbs[2] = NULL;
-            s_rx_args[2] = NULL;
-        }
-
-    } else {
-        while (1);
-    }
-    
-    // Disable DMA RX stream
-    dma_disable_stream(DMA2_Stream1);
+    hal_err_t ret = isr_helper(DMA2_Stream1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_DMEIF1);
+    isr_rx_helper(ret, 2);
 }

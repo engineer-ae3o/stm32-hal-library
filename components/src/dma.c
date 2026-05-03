@@ -15,14 +15,25 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller) {
     return HAL_OK;
 }
 
-void dma_clear_flags(DMA_TypeDef* controller) {
-    controller->LIFCR = 0x0FFFFFFFUL;
-    controller->HIFCR = 0x0FFFFFFFUL;
-}
+hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream) {
 
-void dma_clear_flags_bitmask(DMA_TypeDef* handle, uint32_t flags, bool hifcr) {
-    if (hifcr) handle->HIFCR |= flags;
-    else       handle->LIFCR |= flags;
+    uint32_t flags = 0;
+    switch (stream) {
+        case 0: flags = (DMA_LISR_TCIF0 | DMA_LISR_HTIF0 | DMA_LISR_TEIF0 | DMA_LISR_DMEIF0 | DMA_LISR_FEIF0); break;
+        case 1: flags = (DMA_LISR_TCIF1 | DMA_LISR_HTIF1 | DMA_LISR_TEIF1 | DMA_LISR_DMEIF1 | DMA_LISR_FEIF1); break;
+        case 2: flags = (DMA_LISR_TCIF2 | DMA_LISR_HTIF2 | DMA_LISR_TEIF2 | DMA_LISR_DMEIF2 | DMA_LISR_FEIF2); break;
+        case 3: flags = (DMA_LISR_TCIF3 | DMA_LISR_HTIF3 | DMA_LISR_TEIF3 | DMA_LISR_DMEIF3 | DMA_LISR_FEIF3); break;
+        case 4: flags = (DMA_HISR_TCIF4 | DMA_HISR_HTIF4 | DMA_HISR_TEIF4 | DMA_HISR_DMEIF4 | DMA_HISR_FEIF4); break;
+        case 5: flags = (DMA_HISR_TCIF5 | DMA_HISR_HTIF5 | DMA_HISR_TEIF5 | DMA_HISR_DMEIF5 | DMA_HISR_FEIF5); break;
+        case 6: flags = (DMA_HISR_TCIF6 | DMA_HISR_HTIF6 | DMA_HISR_TEIF6 | DMA_HISR_DMEIF6 | DMA_HISR_FEIF6); break;
+        case 7: flags = (DMA_HISR_TCIF7 | DMA_HISR_HTIF7 | DMA_HISR_TEIF7 | DMA_HISR_DMEIF7 | DMA_HISR_FEIF7); break;
+        default: return HAL_INVALID_ARG;
+    }
+    
+    if      (stream <= 3) controller->LIFCR = flags;
+    else if (stream <= 7) controller->HIFCR = flags;
+    
+    return HAL_OK;
 }
 
 hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {

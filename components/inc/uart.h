@@ -15,9 +15,6 @@ extern "C" {
 #include <stdbool.h>
 
 
-// Callback for DMA transmission and reception completion
-typedef void (*uart_dma_trans_done_cb_t)(void* arg);
-
 typedef struct {
     uint8_t tx_pin;
     uint8_t rx_pin;
@@ -30,10 +27,18 @@ typedef struct {
 
 hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config);
 hal_err_t uart_dma_init(USART_TypeDef* handle);
+
 void uart_enable(USART_TypeDef* handle);
 void uart_disable(USART_TypeDef* handle);
+
+// Polling API
 void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte);
 void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len);
+
+// DMA transfer API
+// Callback for DMA transmission and reception completion
+typedef void (*uart_dma_trans_done_cb_t)(void* arg, hal_err_t error);
+
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len,
                             uart_dma_trans_done_cb_t callback, void* arg);
 hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,

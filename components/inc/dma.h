@@ -34,8 +34,7 @@ typedef enum : uint8_t {
 } dma_data_size_t;
 
 hal_err_t dmax_clk_enable(DMA_TypeDef* handle);
-void dma_clear_flags(DMA_TypeDef* handle);
-void dma_clear_flags_bitmask(DMA_TypeDef* handle, uint32_t flags, bool hifcr);
+hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream);
 
 hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream);
 hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream);
