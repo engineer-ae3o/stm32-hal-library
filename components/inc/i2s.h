@@ -18,11 +18,11 @@ extern "C" {
 // Typedefing to make it clearer
 typedef SPI_TypeDef I2S_TypeDef;
 
-#define I2S1 SPI1
-#define I2S2 SPI2
-#define I2S3 SPI3
-#define I2S4 SPI4
-#define I2S5 SPI5
+#define I2S1 ((I2S_TypeDef*)SPI1)
+#define I2S2 ((I2S_TypeDef*)SPI2)
+#define I2S3 ((I2S_TypeDef*)SPI3)
+#define I2S4 ((I2S_TypeDef*)SPI4)
+#define I2S5 ((I2S_TypeDef*)SPI5)
 
 typedef enum : uint8_t {
     I2S_MODE_PHILLIPS = 0,

@@ -1,5 +1,6 @@
 #include "stm32f411xe.h"
 #include "i2s.h"
+#include "gpio.h"
 
 #include <stddef.h>
 
@@ -60,9 +61,70 @@ static inline uint8_t get_index(const I2S_TypeDef* handle) {
 
 // Public API
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config) {
+    
+    // Enable I2S clock
+    if (handle == I2S1) {
+        RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+    } else if (handle == I2S2) {
+        RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+    } else if (handle == I2S3) {
+        RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
+    } else if (handle == I2S4) {
+        RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
+    } else if (handle == I2S5) {
+        RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
+    } else {
+        return HAL_INVALID_ARG;
+    }
 
-    (void)handle;
-    (void)config;
+    __DSB();
+
+    // Init GPIO
+    hal_err_t ret = gpiox_clk_enable(config->gpio_port);
+    if (ret != HAL_OK) return ret;
+
+    // Alternate function value selection for the GPIOs
+    uint8_t alt_val = 0;
+    if ((handle == SPI1) || (handle == SPI2)) alt_val = 5U;
+    else if (handle == SPI3) alt_val = (config->gpio_port == GPIOD) ? 5U : 6U;
+    else if (handle == SPI4) alt_val = (config->gpio_port == GPIOE) ? 5U : 6U;
+    else if (handle == SPI5) alt_val = 6U;
+    else return HAL_INVALID_ARG;
+
+    // MISO if used
+    if (config->dir == I2S_DIR_FULL_DUPLEX) {
+        ret = gpio_set_alternate_function(config->gpio_port, config->miso, alt_val);
+        if (ret != HAL_OK) return ret;
+        gpio_enable_pullup(config->gpio_port, config->miso, true);
+        gpio_set_speed_mode(config->gpio_port, config->miso, GPIO_HIGH_SPEED);
+        gpio_set_output_type(config->gpio_port, config->miso, GPIO_PUSH_PULL);
+    }
+
+    // SD pin
+    ret = gpio_set_alternate_function(config->gpio_port, config->sd, alt_val);
+    if (ret != HAL_OK) return ret;
+    gpio_enable_pullup(config->gpio_port, config->sd, true);
+    gpio_set_speed_mode(config->gpio_port, config->sd, GPIO_HIGH_SPEED);
+    gpio_set_output_type(config->gpio_port, config->sd, GPIO_PUSH_PULL);
+    
+    // WS pin
+    ret = gpio_set_alternate_function(config->gpio_port, config->ws, alt_val);
+    if (ret != HAL_OK) return ret;
+    gpio_enable_pullup(config->gpio_port, config->ws, true);
+    gpio_set_speed_mode(config->gpio_port, config->ws, GPIO_HIGH_SPEED);
+    gpio_set_output_type(config->gpio_port, config->ws, GPIO_PUSH_PULL);
+    
+    // SCK pin
+    ret = gpio_set_alternate_function(config->gpio_port, config->sck, alt_val);
+    if (ret != HAL_OK) return ret;
+    gpio_set_speed_mode(config->gpio_port, config->sck, GPIO_HIGH_SPEED);
+    gpio_set_output_type(config->gpio_port, config->sck, GPIO_PUSH_PULL);
+    
+    // Disable the I2S peripheral before modifying its registers
+    handle->CR1 &= ~SPI_CR1_SPE;
+
+    // I2S mode
+    handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
 
     return HAL_OK;
 }
