@@ -506,7 +506,7 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t len,
 }
 
 hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data,
-                                          uint16_t len, dma_trans_done_cb_t callback, void* arg) {
+                                    uint16_t len, dma_trans_done_cb_t callback, void* arg) {
     
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);

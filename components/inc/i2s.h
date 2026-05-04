@@ -75,18 +75,17 @@ hal_err_t i2s_master_transceive(I2S_TypeDef* handle, const void* tx_data, void* 
                                 uint16_t len, dma_trans_done_cb_t callback, void* arg);
 
 // Double buffering API
-// NOTE: These API are mutually exclusive with the API above. M-M is not supported
-hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, dma_stream_dir_t dir, void* buf_a,
-                              void* buf_b, uint16_t len, dma_dbm_done_cb_t cb, void* arg);
+// NOTE: These API are mutually exclusive with the API above
+// NOTE: Transfers and M-M are not supported
+hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b,
+                              uint16_t len, dma_dbm_done_cb_t cb, void* arg);
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);
 
 // When start is called, the DMA starts filling buffer A, and
 // then the isr is fired on completion, the starts filling B
+// NOTE: Calling stop can cause the peripheral to drop samples
 hal_err_t i2s_master_dbm_start(I2S_TypeDef* handle);
 hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle);
-
-// NOTE: Calling pause can cause the peripheral to drop samples
-hal_err_t i2s_master_dbm_pause(I2S_TypeDef* handle);
 
 
 #ifdef __cplusplus

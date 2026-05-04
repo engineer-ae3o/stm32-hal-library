@@ -9,6 +9,7 @@ extern "C" {
 
 #include "stm32f411xe.h"
 #include "common.h"
+#include "dma.h"
 
 #include <stddef.h>
 #include <stdint.h>
