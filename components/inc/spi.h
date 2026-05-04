@@ -28,7 +28,6 @@ typedef struct {
     uint8_t mosi;
     uint8_t sclk;
     GPIO_TypeDef* gpio_port;
-
 } spi_master_config_t;
 
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config);
@@ -37,19 +36,16 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle);
 // Polling API
 hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t len);
 hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len);
-hal_err_t spi_master_transmit_receive_poll(SPI_TypeDef* handle, const void* tx_data,
-                                           void* rx_data, size_t len);
+hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data,
+                                     void* rx_data, size_t len);
 
 // DMA transfer API
-// Callback for DMA transmission and reception completion
-typedef void (*spi_dma_trans_done_cb_t)(void* arg, hal_err_t error);
-
 hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t len,
-                                  spi_dma_trans_done_cb_t callback, void* arg);
+                                  dma_trans_done_cb_t callback, void* arg);
 hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t len,
-                                 spi_dma_trans_done_cb_t callback, void* arg);
-hal_err_t spi_master_transmit_receive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data,
-                                          uint16_t len, spi_dma_trans_done_cb_t callback, void* arg);
+                                 dma_trans_done_cb_t callback, void* arg);
+hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data,
+                                    uint16_t len, dma_trans_done_cb_t callback, void* arg);
 
 
 #ifdef __cplusplus

@@ -6,28 +6,11 @@
 
 // The 3 UART channels: ISRs called when the DMA is done
 // TX
-uart_dma_trans_done_cb_t s_dma_tx_done_cbs[3] = {};
+dma_trans_done_cb_t s_dma_tx_done_cbs[3] = {};
 void* s_tx_args[3] = {};
 // RX
-uart_dma_trans_done_cb_t s_dma_rx_done_cbs[3] = {};
+dma_trans_done_cb_t s_dma_rx_done_cbs[3] = {};
 void* s_rx_args[3] = {};
-
-// Utilities for mapping the USART channels to DMA streams
-typedef struct {
-    DMA_TypeDef* controller;
-    DMA_Stream_TypeDef* stream;
-    uint8_t stream_no;
-    IRQn_Type irq_type;
-    uint8_t channel;
-} uart_tx_rx_t;
-
-typedef struct {
-    const uart_tx_rx_t tx;
-    const uart_tx_rx_t rx;
-} dma_stream_map_t;
-
-#define UART_DMA_NVIC_IRQ_PRIORITY 8U
-#define TIMEOUT_CYCLES 100UL
 
 // Mapping for the DMA channels for the 3 USART channels
 static const dma_stream_map_t s_uart_dma_map[3] = {
@@ -48,46 +31,15 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     }
 };
 
+#define UART_DMA_NVIC_IRQ_PRIORITY 8U
+#define TIMEOUT_CYCLES             100UL
+
 // Helper
 static inline uint8_t get_index(const USART_TypeDef* handle) {
     if      (handle == USART1) return 0U;
     else if (handle == USART2) return 1U;
     else if (handle == USART6) return 2U;
     else                       return 0xFFU;
-}
-
-static inline hal_err_t isr_helper(DMA_Stream_TypeDef* stream, volatile uint32_t* irq_clr_rg,
-                                   volatile uint32_t* irq_sta_rg, uint32_t tc, uint32_t te, uint32_t dme) {
-
-    hal_err_t error = HAL_OK;
-
-    // Transfer complete
-    if (*irq_sta_rg & tc) {
-        // Clear DMA TC interrupt bit
-        *irq_clr_rg = tc;
-    }
-    // Transfer error
-    else if (*irq_sta_rg & te) {
-        // Clear DMA TE interrupt bit
-        *irq_clr_rg = te;
-        error = HAL_UART_DMA_TE;
-    }
-    // Direct mode error
-    else if (*irq_sta_rg & dme) {
-        // Clear DMA DME interrupt bit
-        *irq_clr_rg = dme;
-        error = HAL_UART_DMA_DME;
-    }
-    // Unreachable, but default catch-all
-    else {
-        // Clear DMA TC, DME and TE interrupt bits
-        *irq_clr_rg = (tc | te | dme);
-        error = HAL_UART_DMA_ERR_UNKNOWN;
-    }
-    
-    if (dma_disable_stream(stream) != HAL_OK) error = HAL_TIMEOUT;
-
-    return error;
 }
 
 static inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t idx) {
@@ -290,7 +242,7 @@ void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) 
 }
 
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len,
-                            uart_dma_trans_done_cb_t callback, void* arg) {
+                            dma_trans_done_cb_t callback, void* arg) {
     
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
@@ -314,7 +266,7 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
 }
 
 hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
-                           uart_dma_trans_done_cb_t callback, void* arg) {
+                           dma_trans_done_cb_t callback, void* arg) {
     
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);

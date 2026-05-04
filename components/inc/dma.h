@@ -52,6 +52,61 @@ void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_d
 void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* p, const volatile void* m1, const volatile void* m2);
 
 
+// Utilities for mapping the peripherals instances to DMA streams
+typedef struct {
+    DMA_TypeDef* controller;
+    DMA_Stream_TypeDef* stream;
+    IRQn_Type irq_type;
+    uint8_t stream_no;
+    uint8_t channel;
+} dma_map_t;
+
+typedef struct {
+    const dma_map_t tx;
+    const dma_map_t rx;
+} dma_stream_map_t;
+
+// Callback for DMA transmission and reception completion
+typedef void (*dma_trans_done_cb_t)(void* arg, hal_err_t error);
+
+// Callback for DMA transmission and reception completion when double buffering
+typedef void (*dma_dbm_done_cb_t)(void* arg, hal_err_t error, bool is_buf_a);
+
+static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream, volatile uint32_t* irq_clr_rg,
+                                       volatile uint32_t* irq_sta_rg, uint32_t tc, uint32_t te, uint32_t dme) {
+
+    hal_err_t error = HAL_OK;
+
+    // Transfer complete
+    if (*irq_sta_rg & tc) {
+        // Clear DMA TC interrupt bit
+        *irq_clr_rg = tc;
+    }
+    // Transfer error
+    else if (*irq_sta_rg & te) {
+        // Clear DMA TE interrupt bit
+        *irq_clr_rg = te;
+        error = HAL_SPI_DMA_TE;
+    }
+    // Direct mode error
+    else if (*irq_sta_rg & dme) {
+        // Clear DMA DME interrupt bit
+        *irq_clr_rg = dme;
+        error = HAL_SPI_DMA_DME;
+    }
+    // Unreachable, but default catch-all
+    else {
+        // Clear DMA TC, DME and TE interrupt bits
+        *irq_clr_rg = (tc | te | dme);
+        error = HAL_SPI_DMA_ERR_UNKNOWN;
+    }
+    
+    if (dma_disable_stream(stream) != HAL_OK) error = HAL_TIMEOUT;
+
+    return error;
+}
+
+
 #ifdef __cplusplus
 }
 #endif

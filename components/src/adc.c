@@ -1,18 +1,22 @@
 #include "adc.h"
 
 
-void adc_init() {
+hal_err_t adc_init(ADC_TypeDef* handle, const adc_config_t* config) {
 
 }
 
-void adc_get_oneshot_reading() {
+hal_err_t adc_dma_init(ADC_TypeDef* handle) {
 
 }
 
-void adc_start_continuous() {
+uint16_t adc_get_sample_oneshot(ADC_TypeDef* handle) {
 
 }
 
-void adc_stop_continuous() {
+hal_err_t adc_start_sampling(ADC_TypeDef* handle, void* buffer, uint16_t len) {
+
+}
+
+hal_err_t adc_stop_sampling(ADC_TypeDef* handle) {
 
 }
