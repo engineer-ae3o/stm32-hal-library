@@ -72,8 +72,8 @@ typedef void (*dma_trans_done_cb_t)(void* arg, hal_err_t error);
 // Callback for DMA transmission and reception completion when double buffering
 typedef void (*dma_dbm_done_cb_t)(void* arg, hal_err_t error, bool is_buf_a);
 
-static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream, volatile uint32_t* irq_clr_rg,
-                                       volatile uint32_t* irq_sta_rg, uint32_t tc, uint32_t te, uint32_t dme) {
+static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream, volatile uint32_t* irq_clr_rg, volatile uint32_t* irq_sta_rg, 
+                                       uint32_t tc, uint32_t te, uint32_t dme, uint32_t hte) {
 
     hal_err_t error = HAL_OK;
 
@@ -86,19 +86,25 @@ static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream, volatile uint
     else if (*irq_sta_rg & te) {
         // Clear DMA TE interrupt bit
         *irq_clr_rg = te;
-        error = HAL_SPI_DMA_TE;
+        error = HAL_DMA_TE;
     }
     // Direct mode error
     else if (*irq_sta_rg & dme) {
         // Clear DMA DME interrupt bit
         *irq_clr_rg = dme;
-        error = HAL_SPI_DMA_DME;
+        error = HAL_DMA_DME;
     }
-    // Unreachable, but default catch-all
+    // Half transfer error
+    else if (*irq_sta_rg & hte) {
+        // Clear DMA HTE interrupt bit
+        *irq_clr_rg = hte;
+        error = HAL_DMA_HTE;
+    }
+    // Should be unreachable, but default catch-all
     else {
-        // Clear DMA TC, DME and TE interrupt bits
-        *irq_clr_rg = (tc | te | dme);
-        error = HAL_SPI_DMA_ERR_UNKNOWN;
+        // Clear DMA TC, DME, TE and HTE interrupt bits
+        *irq_clr_rg = (tc | te | dme | hte);
+        error = HAL_DMA_ERR_UNKNOWN;
     }
     
     if (dma_disable_stream(stream) != HAL_OK) error = HAL_TIMEOUT;

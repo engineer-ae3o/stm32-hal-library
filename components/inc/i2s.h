@@ -70,6 +70,7 @@ typedef struct {
     GPIO_TypeDef* gpio_port;
 } i2s_master_config_t;
 
+void i2s_master_clock_init(void);
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config);
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle);
 

@@ -292,36 +292,36 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
 // DMA interrupts
 // USART1: TX
 void DMA2_Stream7_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream7, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream7, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7, DMA_HISR_HTIF7);
     isr_tx_helper(USART1, ret, 0);
 }
 
 // USART1: RX
 void DMA2_Stream5_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream5, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream5, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_DMEIF5);
     isr_rx_helper(ret, 0);
 }
 
 // USART2: TX
 void DMA1_Stream6_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream6, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6);
+    hal_err_t ret = dma_isr_helper(DMA1_Stream6, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_DMEIF6);
     isr_tx_helper(USART2, ret, 1);
 }
 
 // USART2: RX
 void DMA1_Stream5_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5);
+    hal_err_t ret = dma_isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_DMEIF5);
     isr_rx_helper(ret, 1);
 }
 
 // USART6: TX
 void DMA2_Stream6_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream6, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream6, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_DMEIF6);
     isr_tx_helper(USART6, ret, 2);
 }
 
 // USART6: RX
 void DMA2_Stream1_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_DMEIF1);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_DMEIF1, DMA_LISR_DMEIF1);
     isr_rx_helper(ret, 2);
 }

@@ -1,4 +1,5 @@
 #include "stm32f411xe.h"
+#include "common.h"
 
 #include <stddef.h>
 #include <sys/stat.h>
@@ -21,24 +22,40 @@ void system_init(void) {
     __DSB();
     PWR->CR |= PWR_CR_VOS;
 
+    // Disable the PLL
+    RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
+    while (RCC->CR & RCC_CR_PLLRDY);
+
+#if USE_HSE == 1
     // Enable HSE
     RCC->CR |= RCC_CR_HSEON;
     while (!(RCC->CR & RCC_CR_HSERDY));
 
     // Configure PLL
-    RCC->PLLCFGR = (25 << RCC_PLLCFGR_PLLM_Pos)  |
-                   (200 << RCC_PLLCFGR_PLLN_Pos) |
-                   (0 << RCC_PLLCFGR_PLLP_Pos)   |
-                   (RCC_PLLCFGR_PLLSRC_HSE)      |
+    RCC->PLLCFGR = (HSE_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) |
+                   (200 << RCC_PLLCFGR_PLLN_Pos)           |
+                   (0 << RCC_PLLCFGR_PLLP_Pos)             |
+                   (RCC_PLLCFGR_PLLSRC_HSE)                |
                    (4 << RCC_PLLCFGR_PLLQ_Pos);
+#else
+    // Enable HSI
+    RCC->CR |= RCC_CR_HSION;
+    while (!(RCC->CR & RCC_CR_HSIRDY));
 
-    // Enable PLL
-    RCC->CR |= RCC_CR_PLLON;
-    while (!(RCC->CR & RCC_CR_PLLRDY));
+    // Configure PLL
+    RCC->PLLCFGR = (HSI_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) |
+                   (200 << RCC_PLLCFGR_PLLN_Pos)           |
+                   (0 << RCC_PLLCFGR_PLLP_Pos)             |
+                   (RCC_PLLCFGR_PLLSRC_HSI)                |
+                   (4 << RCC_PLLCFGR_PLLQ_Pos);
+#endif
 
     // Bus prescaler
     RCC->CFGR |= (RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1);
-    __DSB();
+
+    // Enable the PLL
+    RCC->CR |= RCC_CR_PLLON;
+    while (!(RCC->CR & RCC_CR_PLLRDY));
 
     // Switch to PLL
     RCC->CFGR |= RCC_CFGR_SW_PLL;
@@ -48,7 +65,7 @@ void system_init(void) {
     __ISB();
 
     // Update system clock
-    SystemCoreClock = 100'000'000UL;
+    SystemCoreClock = CLOCK_SPEED_HZ;
 }
 
 int _close(int) {

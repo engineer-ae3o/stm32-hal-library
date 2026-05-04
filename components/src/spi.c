@@ -540,60 +540,60 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
 // DMA interrupts
 // SPI1: TX
 void DMA2_Stream5_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream5, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream5, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
     isr_tx_helper(SPI1, ret, 0);
 }
 
 // SPI1: RX
 void DMA2_Stream2_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
     isr_rx_helper(ret, 0);
 }
 
 // SPI2: TX
 void DMA1_Stream4_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream4, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4);
+    hal_err_t ret = dma_isr_helper(DMA1_Stream4, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4, DMA_HISR_HTIF4);
     isr_tx_helper(SPI2, ret, 1);
 }
 
 // SPI2: RX
 void DMA1_Stream3_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream3, &DMA1->LIFCR, &DMA1->LISR, DMA_LISR_TCIF3, DMA_LISR_TEIF3, DMA_LISR_DMEIF3);
+    hal_err_t ret = dma_isr_helper(DMA1_Stream3, &DMA1->LIFCR, &DMA1->LISR, DMA_LISR_TCIF3, DMA_LISR_TEIF3, DMA_LISR_DMEIF3, DMA_LISR_HTIF3);
     isr_rx_helper(ret, 1);
 }
 
 // SPI3: TX
 void DMA1_Stream7_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream7, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7);
+    hal_err_t ret = dma_isr_helper(DMA1_Stream7, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7, DMA_HISR_HTIF7);
     isr_tx_helper(SPI3, ret, 2);
 }
 
 // SPI3: RX
 void DMA1_Stream2_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream2, &DMA1->LIFCR, &DMA1->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2);
+    hal_err_t ret = dma_isr_helper(DMA1_Stream2, &DMA1->LIFCR, &DMA1->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
     isr_rx_helper(ret, 2);
 }
 
 // SPI4: TX
 void DMA2_Stream1_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_DMEIF1);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_DMEIF1, DMA_LISR_HTIF1);
     isr_tx_helper(SPI4, ret, 3);
 }
 
 // SPI4: RX
 void DMA2_Stream0_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream0, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream0, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0, DMA_LISR_HTIF0);
     isr_rx_helper(ret, 3);
 }
 
 // SPI5: TX
 void DMA2_Stream4_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream4, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream4, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4, DMA_HISR_HTIF4);
     isr_tx_helper(SPI5, ret, 4);
 }
 
 // SPI5: RX
 void DMA2_Stream3_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream3, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF3, DMA_LISR_TEIF3, DMA_LISR_DMEIF3);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream3, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF3, DMA_LISR_TEIF3, DMA_LISR_DMEIF3, DMA_LISR_HTIF3);
     isr_rx_helper(ret, 4);
 }

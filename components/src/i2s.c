@@ -60,6 +60,31 @@ static inline uint8_t get_index(const I2S_TypeDef* handle) {
 
 
 // Public API
+void i2s_master_clock_init(void) {
+    
+    // Disable the audio PLL before setup
+    RCC->CR &= ~RCC_CR_PLLI2SON;
+    
+#if USE_HSE == 1
+    const uint8_t clock_mhz = HSE_VALUE_MHZ;
+#else
+    const uint8_t clock_mhz = HSI_VALUE_MHZ;
+#endif
+    
+    // Divide the HSE or HSI clock by its value in MHz to get a Vco of 1MHz regardless of its value
+    RCC->PLLI2SCFGR &= ~(RCC_PLLI2SCFGR_PLLI2SM | RCC_PLLI2SCFGR_PLLI2SN | RCC_PLLI2SCFGR_PLLI2SR);
+    RCC->PLLI2SCFGR |= (clock_mhz << RCC_PLLI2SCFGR_PLLI2SM_Pos)  | // PLLI2SM of val: Divides HSE or HSI by val to get a 1MHz Vco
+                       (192UL << RCC_PLLI2SCFGR_PLLI2SN_Pos)      | // PLLI2SN of 192: Multiplies Vco by 192 to get 192MHz
+                       (5UL << RCC_PLLI2SCFGR_PLLI2SR_Pos);         // PLLI2SR of 5: Divides the 192MHz Vco by 5 to get us 38.4MHz
+    
+    // Enable the audio PLL
+    RCC->CR |= RCC_CR_PLLI2SON;
+    while (!(RCC->CR & RCC_CR_PLLI2SRDY));
+    
+    // Use the internal I2S PLL for the I2S peripherals
+    RCC->CFGR &= ~RCC_CFGR_I2SSRC;
+}
+
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config) {
     
     // Enable I2S clock
@@ -85,15 +110,11 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 
     // I2S mode
     handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
-
-    // Clock setup
-    // Use the internal PLLI2S clock
-    RCC->PLLI2SCFGR = RCC_PLLI2SCFGR_PLLI2SM;
-
+    
     // Set the clock prescaler
     handle->I2SPR = 0;
     
-    // Clear used bits once in one write op
+    // Clear used bits once in one read-modify-write op
     handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG |
                          SPI_I2SCFGR_CKPOL  |
                          SPI_I2SCFGR_CHLEN  |
@@ -117,22 +138,21 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 
     // Alternate function value selection for the GPIOs
     uint8_t alt_val = 0;
-    if ((handle == SPI1) || (handle == SPI2)) alt_val = 5U;
-    else if (handle == SPI3) alt_val = (config->gpio_port == GPIOD) ? 5U : 6U;
-    else if (handle == SPI4) alt_val = (config->gpio_port == GPIOE) ? 5U : 6U;
-    else if (handle == SPI5) alt_val = 6U;
+    if ((handle == I2S1) || (handle == I2S2)) alt_val = 5U;
+    else if (handle == I2S3) alt_val = (config->gpio_port == GPIOD) ? 5U : 6U;
+    else if (handle == I2S4) alt_val = (config->gpio_port == GPIOE) ? 5U : 6U;
+    else if (handle == I2S5) alt_val = 6U;
     else return HAL_INVALID_ARG;
     
     // MCK
     if (config->use_mck) {
-        // Enable the MCK output
-        handle->I2SPR |= SPI_I2SPR_MCKOE;
-
         ret = gpio_set_alternate_function(config->gpio_port, config->mck, alt_val);
         if (ret != HAL_OK) return ret;
         gpio_enable_pullup(config->gpio_port, config->mck, true);
         gpio_set_speed_mode(config->gpio_port, config->mck, GPIO_MEDIUM_SPEED);
         gpio_set_output_type(config->gpio_port, config->mck, GPIO_PUSH_PULL);
+        // Enable the MCK output
+        handle->I2SPR |= SPI_I2SPR_MCKOE;
     }
 
     // SD pin
@@ -152,6 +172,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     // SCK pin
     ret = gpio_set_alternate_function(config->gpio_port, config->sck, alt_val);
     if (ret != HAL_OK) return ret;
+    gpio_enable_pullup(config->gpio_port, config->sd, true);
     gpio_set_speed_mode(config->gpio_port, config->sck, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->sck, GPIO_PUSH_PULL);
 
@@ -216,7 +237,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     dma_set_per_mem_size(tx_stream, dma_data_size, dma_data_size);
     dma_set_per_mem_size(rx_stream, dma_data_size, dma_data_size);
     
-    // Enable SPI requests to DMA
+    // Enable I2S requests to DMA
     handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
     
     // Enable DMA stream interrupts
