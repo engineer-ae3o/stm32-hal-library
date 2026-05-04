@@ -24,32 +24,40 @@ typedef SPI_TypeDef I2S_TypeDef;
 #define I2S4 ((I2S_TypeDef*)SPI4)
 #define I2S5 ((I2S_TypeDef*)SPI5)
 
+
 typedef enum : uint8_t {
-    I2S_MODE_PHILLIPS = 0,
-    I2S_MODE_LEFT_MSB,
-    I2S_MODE_RIGHT_MSB,
-    I2S_MODE_PCM
+    I2S_MODE_PHILLIPS        = 0b00U,
+    I2S_MODE_LEFT_JUSTIFIED  = 0b01U,
+    I2S_MODE_RIGHT_JUSTIFIED = 0b10U
 } i2s_mode_t;
 
 typedef enum : uint8_t {
-    I2S_DIR_FULL_DUPLEX = 0,
-    I2S_DIR_HALF_DUPLEX_TX,
-    I2S_DIR_HALF_DUPLEX_RX
-} i2s_dir_t;
+    I2S_DATA_16_BITS_FRAME_16_BITS = 0b00U,
+    I2S_DATA_16_BITS_FRAME_32_BITS = 0b00U,
+    I2S_DATA_24_BITS_FRAME_32_BITS = 0b01U,
+    I2S_DATA_32_BITS_FRAME_32_BITS = 0b10U
+} i2s_data_frame_t;
 
 typedef enum : uint8_t {
-    I2S_FREQ_8kHz = 0,
-    I2S_FREQ_16kHz,
-    I2S_FREQ_20kHz,
-    I2S_FREQ_44kHz,
-    I2S_FREQ_48kHz,
-    I2S_FREQ_96kHz,
-    I2S_FREQ_192kHz,
+    I2S_DIR_HALF_DUPLEX_TX = 0b10U,
+    I2S_DIR_HALF_DUPLEX_RX = 0b11U
+} i2s_dir_t;
+
+typedef enum : uint32_t {
+    I2S_FREQ_8kHz   = 8'000UL,
+    I2S_FREQ_16kHz  = 16'000UL,
+    I2S_FREQ_22kHz  = 22'050UL,
+    I2S_FREQ_32kHz  = 32'000UL,
+    I2S_FREQ_44kHz  = 44'100UL,
+    I2S_FREQ_48kHz  = 48'000UL,
+    I2S_FREQ_96kHz  = 96'000UL,
+    I2S_FREQ_192kHz = 192'000UL
 } i2s_freq_t;
 
 typedef struct {
     i2s_dir_t dir;
     i2s_mode_t mode;
+    i2s_data_frame_t data_frame;
     i2s_freq_t freq;
 
     bool cpol;
@@ -59,7 +67,6 @@ typedef struct {
     uint8_t ws;
     uint8_t sd;
     uint8_t sck;
-    uint8_t miso;
     GPIO_TypeDef* gpio_port;
 } i2s_master_config_t;
 
@@ -76,7 +83,7 @@ hal_err_t i2s_master_transceive(I2S_TypeDef* handle, const void* tx_data, void* 
 
 // Double buffering API
 // NOTE: These API are mutually exclusive with the API above
-// NOTE: Transfers and M-M are not supported
+// NOTE: Only reception is supported
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b,
                               uint16_t len, dma_dbm_done_cb_t cb, void* arg);
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);

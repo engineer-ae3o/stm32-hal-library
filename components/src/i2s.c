@@ -78,8 +78,40 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     }
 
     __DSB();
+    
+    // Disable the SPI and I2S peripheral before modifying its registers
+    handle->CR1 &= ~SPI_CR1_SPE;
+    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
 
-    // Init GPIO
+    // I2S mode
+    handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
+
+    // Clock setup
+    // Use the internal PLLI2S clock
+    RCC->PLLI2SCFGR = RCC_PLLI2SCFGR_PLLI2SM;
+
+    // Set the clock prescaler
+    handle->I2SPR = 0;
+    
+    // Clear used bits once in one write op
+    handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG |
+                         SPI_I2SCFGR_CKPOL  |
+                         SPI_I2SCFGR_CHLEN  |
+                         SPI_I2SCFGR_I2SSTD |
+                         SPI_I2SCFGR_DATLEN);
+    
+    // Get frame size: It's can only be 16 bits when the data is 16 bits
+    const uint32_t frame_size_mask = (config->data_frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 0 : SPI_I2SCFGR_CHLEN;
+    const uint32_t cpol_mask = (config->cpol) ? SPI_I2SCFGR_CKPOL : 0;
+    
+    // Apply user settings
+    handle->I2SCFGR |= (((uint32_t)config->dir << SPI_I2SCFGR_I2SCFG_Pos)        | // Direction: TX or RX in master mode
+                        ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos)       | // I2S standard: Phillips, left or right justified
+                        ((uint32_t)config->data_frame << SPI_I2SCFGR_DATLEN_Pos) | // Data length: 16, 24 or 32 bits
+                        frame_size_mask                                          | // Frame size: 16 or 32 bits
+                        cpol_mask);                                                // Clock polarity
+    
+    // Configure GPIO pins
     hal_err_t ret = gpiox_clk_enable(config->gpio_port);
     if (ret != HAL_OK) return ret;
 
@@ -90,42 +122,42 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     else if (handle == SPI4) alt_val = (config->gpio_port == GPIOE) ? 5U : 6U;
     else if (handle == SPI5) alt_val = 6U;
     else return HAL_INVALID_ARG;
+    
+    // MCK
+    if (config->use_mck) {
+        // Enable the MCK output
+        handle->I2SPR |= SPI_I2SPR_MCKOE;
 
-    // MISO if used
-    if (config->dir == I2S_DIR_FULL_DUPLEX) {
-        ret = gpio_set_alternate_function(config->gpio_port, config->miso, alt_val);
+        ret = gpio_set_alternate_function(config->gpio_port, config->mck, alt_val);
         if (ret != HAL_OK) return ret;
-        gpio_enable_pullup(config->gpio_port, config->miso, true);
-        gpio_set_speed_mode(config->gpio_port, config->miso, GPIO_HIGH_SPEED);
-        gpio_set_output_type(config->gpio_port, config->miso, GPIO_PUSH_PULL);
+        gpio_enable_pullup(config->gpio_port, config->mck, true);
+        gpio_set_speed_mode(config->gpio_port, config->mck, GPIO_MEDIUM_SPEED);
+        gpio_set_output_type(config->gpio_port, config->mck, GPIO_PUSH_PULL);
     }
 
     // SD pin
     ret = gpio_set_alternate_function(config->gpio_port, config->sd, alt_val);
     if (ret != HAL_OK) return ret;
     gpio_enable_pullup(config->gpio_port, config->sd, true);
-    gpio_set_speed_mode(config->gpio_port, config->sd, GPIO_HIGH_SPEED);
+    gpio_set_speed_mode(config->gpio_port, config->sd, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->sd, GPIO_PUSH_PULL);
     
     // WS pin
     ret = gpio_set_alternate_function(config->gpio_port, config->ws, alt_val);
     if (ret != HAL_OK) return ret;
     gpio_enable_pullup(config->gpio_port, config->ws, true);
-    gpio_set_speed_mode(config->gpio_port, config->ws, GPIO_HIGH_SPEED);
+    gpio_set_speed_mode(config->gpio_port, config->ws, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->ws, GPIO_PUSH_PULL);
     
     // SCK pin
     ret = gpio_set_alternate_function(config->gpio_port, config->sck, alt_val);
     if (ret != HAL_OK) return ret;
-    gpio_set_speed_mode(config->gpio_port, config->sck, GPIO_HIGH_SPEED);
+    gpio_set_speed_mode(config->gpio_port, config->sck, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->sck, GPIO_PUSH_PULL);
+
+    // Enable the I2S peripheral
+    handle->I2SCFGR |= SPI_I2SCFGR_I2SE;
     
-    // Disable the I2S peripheral before modifying its registers
-    handle->CR1 &= ~SPI_CR1_SPE;
-
-    // I2S mode
-    handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
-
     return HAL_OK;
 }
 
