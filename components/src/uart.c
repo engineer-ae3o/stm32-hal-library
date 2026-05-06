@@ -17,7 +17,7 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     // USART1
     {
         .tx = { .controller = DMA2, .stream = DMA2_Stream7, .stream_no = 7, .irq_type = DMA2_Stream7_IRQn, .channel = 4 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream5, .stream_no = 5, .irq_type = DMA2_Stream5_IRQn, .channel = 4 }
+        .rx = { .controller = DMA2, .stream = DMA2_Stream2, .stream_no = 2, .irq_type = DMA2_Stream2_IRQn, .channel = 4 }
     },
     // USART2
     {
@@ -239,6 +239,8 @@ void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) 
     for (size_t i = 0U; i < len; i++) {
         uart_transmit_byte(handle, data[i]);
     }
+    // Wait till all bytes have been full transmitted
+    while (!(handle->SR & USART_SR_TC));
 }
 
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len,
@@ -297,31 +299,31 @@ void DMA2_Stream7_IRQHandler(void) {
 }
 
 // USART1: RX
-void DMA2_Stream5_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream5, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_DMEIF5);
+void DMA2_Stream2_IRQHandler(void) {
+    hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
     isr_rx_helper(ret, 0);
 }
 
 // USART2: TX
 void DMA1_Stream6_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream6, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_DMEIF6);
+    hal_err_t ret = dma_isr_helper(DMA1_Stream6, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
     isr_tx_helper(USART2, ret, 1);
 }
 
 // USART2: RX
 void DMA1_Stream5_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_DMEIF5);
+    hal_err_t ret = dma_isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
     isr_rx_helper(ret, 1);
 }
 
 // USART6: TX
 void DMA2_Stream6_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream6, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_DMEIF6);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream6, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
     isr_tx_helper(USART6, ret, 2);
 }
 
 // USART6: RX
 void DMA2_Stream1_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_DMEIF1, DMA_LISR_DMEIF1);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_DMEIF1, DMA_LISR_HTIF1);
     isr_rx_helper(ret, 2);
 }

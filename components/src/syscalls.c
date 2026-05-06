@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "common.h"
 
+#include <errno.h>
 #include <stddef.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -21,8 +22,9 @@ void system_init(void) {
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
     __DSB();
     PWR->CR |= PWR_CR_VOS;
+    while (!(PWR->CSR & PWR_CSR_VOSRDY));
 
-    // Disable the PLL
+    // Disable the PLLs
     RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
     while (RCC->CR & RCC_CR_PLLRDY);
 
@@ -68,6 +70,29 @@ void system_init(void) {
     SystemCoreClock = CLOCK_SPEED_HZ;
 }
 
+const char* hal_err_to_string(hal_err_t err) {
+    switch (err) {
+        case HAL_OK:                      return "HAL_OK";
+        case HAL_FAIL:                    return "HAL_FAIL";
+        case HAL_INVALID_ARG:             return "HAL_INVALID_ARG";
+        case HAL_INVALID_STATE:           return "HAL_INVALID_STATE";
+        case HAL_TIMEOUT:                 return "HAL_TIMEOUT";
+        case HAL_TX_ERROR:                return "HAL_TX_ERROR";
+        case HAL_RX_ERROR:                return "HAL_RX_ERROR";
+        case HAL_I2C_DEVICE_NOT_FOUND:    return "HAL_I2C_DEVICE_NOT_FOUND";
+        case HAL_I2C_ARBITRATION_LOST:    return "HAL_I2C_ARBITRATION_LOST";
+        case HAL_SPI_TXE_FAILED_TO_SET:   return "HAL_SPI_TXE_FAILED_TO_SET";
+        case HAL_SPI_BSY_FAILED_TO_CLEAR: return "HAL_SPI_BSY_FAILED_TO_CLEAR";
+        case HAL_UART_TC_FAILED_TO_SET:   return "HAL_UART_TC_FAILED_TO_SET";
+        case HAL_DMA_TC:                  return "HAL_DMA_TC";
+        case HAL_DMA_TE:                  return "HAL_DMA_TE";
+        case HAL_DMA_DME:                 return "HAL_DMA_DME";
+        case HAL_DMA_HTE:                 return "HAL_DMA_HTE";
+        case HAL_DMA_ERR_UNKNOWN:         return "HAL_DMA_ERR_UNKNOWN";
+        default:                          return "";
+    }
+}
+
 int _close(int) {
     return 0;
 }
@@ -85,7 +110,8 @@ int _write(int, char*, int) {
 }
 
 caddr_t _sbrk(int) {
-    return 0;
+    errno = ENOMEM;
+    return (caddr_t)-1;;
 }
 
 int _fstat(int, struct stat*) {

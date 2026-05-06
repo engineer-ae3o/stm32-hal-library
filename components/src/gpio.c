@@ -33,6 +33,8 @@ void gpio_set_input(GPIO_TypeDef* port, uint8_t pin) {
 }
 
 void gpio_set_analog(GPIO_TypeDef* port, uint8_t pin) {
+    // ORing in 0b11 gets us our desired value regardless of
+    // previous state, so it is redundant to clear it first
     port->MODER |= (0b11UL << (pin * 2));
 }
 
@@ -76,11 +78,13 @@ void gpio_set_speed_mode(GPIO_TypeDef* port, uint8_t pin, gpio_speed_mode_t mode
 }
 
 void gpio_level_set(GPIO_TypeDef* port, uint8_t pin, bool level) {
-    if (level) port->BSRR = (0b1UL << pin);
-    else       port->BSRR = (0b1UL << (pin + 16));
+    (level) ? (port->BSRR = (0b1UL << pin)) : (port->BSRR = (0b1UL << (pin + 16)));
 }
 
 void gpio_level_toggle(GPIO_TypeDef* port, uint8_t pin) {
+    // There is no atomic gpio toggle on the F411, so if user wants
+    // an atomic toggle, they should keep track of the state and use
+    // `gpio_level_set`, or disable interrupts before using this
     port->ODR ^= (0b1UL << pin);
 }
 

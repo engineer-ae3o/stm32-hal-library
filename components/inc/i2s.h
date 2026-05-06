@@ -15,7 +15,7 @@ extern "C" {
 #include <stdbool.h>
 
 
-// Typedefing to make it clearer
+// Typedefing to make it clearer that we are working with I2S not SPI
 typedef SPI_TypeDef I2S_TypeDef;
 
 #define I2S1 ((I2S_TypeDef*)SPI1)
@@ -33,7 +33,7 @@ typedef enum : uint8_t {
 
 typedef enum : uint8_t {
     I2S_DATA_16_BITS_FRAME_16_BITS = 0b00U,
-    I2S_DATA_16_BITS_FRAME_32_BITS = 0b00U,
+    I2S_DATA_16_BITS_FRAME_32_BITS = 0b11U,
     I2S_DATA_24_BITS_FRAME_32_BITS = 0b01U,
     I2S_DATA_32_BITS_FRAME_32_BITS = 0b10U
 } i2s_data_frame_t;
@@ -43,15 +43,15 @@ typedef enum : uint8_t {
     I2S_DIR_HALF_DUPLEX_RX = 0b11U
 } i2s_dir_t;
 
-typedef enum : uint32_t {
-    I2S_FREQ_8kHz   = 8'000UL,
-    I2S_FREQ_16kHz  = 16'000UL,
-    I2S_FREQ_22kHz  = 22'050UL,
-    I2S_FREQ_32kHz  = 32'000UL,
-    I2S_FREQ_44kHz  = 44'100UL,
-    I2S_FREQ_48kHz  = 48'000UL,
-    I2S_FREQ_96kHz  = 96'000UL,
-    I2S_FREQ_192kHz = 192'000UL
+typedef enum : uint8_t {
+    I2S_FREQ_8kHz = 0U,
+    I2S_FREQ_16kHz,
+    I2S_FREQ_22kHz, // 22.05kHz
+    I2S_FREQ_32kHz,
+    I2S_FREQ_44kHz, // 44.1kHz
+    I2S_FREQ_48kHz,
+    I2S_FREQ_96kHz,
+    I2S_FREQ_192kHz,
 } i2s_freq_t;
 
 typedef struct {

@@ -172,7 +172,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     // SCK pin
     ret = gpio_set_alternate_function(config->gpio_port, config->sck, alt_val);
     if (ret != HAL_OK) return ret;
-    gpio_enable_pullup(config->gpio_port, config->sd, true);
+    gpio_enable_pullup(config->gpio_port, config->sck, true);
     gpio_set_speed_mode(config->gpio_port, config->sck, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->sck, GPIO_PUSH_PULL);
 
@@ -219,6 +219,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     dma_set_increment(tx_stream, false, true);
     dma_enable_irqs(tx_stream, true, true, false, true);
     dma_set_addresses(tx_stream, &handle->DR, NULL, NULL);
+    dma_set_per_mem_size(tx_stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
     
     // RX stream configuration
     dma_clear_flags(rx_controller, s_i2s_dma_map[idx].rx.stream_no);
@@ -231,11 +232,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     dma_set_increment(rx_stream, false, true);
     dma_enable_irqs(rx_stream, true, true, false, true);
     dma_set_addresses(rx_stream, &handle->DR, NULL, NULL);
-    
-    // If the DFF bit in SPIx_CR1 is set, then it's a 16 bit transfer
-    const dma_data_size_t dma_data_size = (handle->CR1 & SPI_CR1_DFF) ? DMA_SIZE_HWORD : DMA_SIZE_BYTE;
-    dma_set_per_mem_size(tx_stream, dma_data_size, dma_data_size);
-    dma_set_per_mem_size(rx_stream, dma_data_size, dma_data_size);
+    dma_set_per_mem_size(rx_stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
     
     // Enable I2S requests to DMA
     handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);

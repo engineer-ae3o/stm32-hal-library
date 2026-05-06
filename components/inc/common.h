@@ -11,6 +11,7 @@ extern "C" {
 
 
 #define CLOCK_SPEED_HZ      100'000'000UL
+#define AUDIO_PLL_HZ        
 #define HSE_VALUE_MHZ       25U
 #define HSI_VALUE_MHZ       16U
 #define USE_HSE             1U
@@ -49,28 +50,7 @@ typedef enum hal_err_t : uint8_t {
 } hal_err_t;
 
 
-static inline const char* hal_err_to_string(hal_err_t err) {
-    switch (err) {
-        case HAL_OK:                      return "HAL_OK";
-        case HAL_FAIL:                    return "HAL_FAIL";
-        case HAL_INVALID_ARG:             return "HAL_INVALID_ARG";
-        case HAL_INVALID_STATE:           return "HAL_INVALID_STATE";
-        case HAL_TIMEOUT:                 return "HAL_TIMEOUT";
-        case HAL_TX_ERROR:                return "HAL_TX_ERROR";
-        case HAL_RX_ERROR:                return "HAL_RX_ERROR";
-        case HAL_I2C_DEVICE_NOT_FOUND:    return "HAL_I2C_DEVICE_NOT_FOUND";
-        case HAL_I2C_ARBITRATION_LOST:    return "HAL_I2C_ARBITRATION_LOST";
-        case HAL_SPI_TXE_FAILED_TO_SET:   return "HAL_SPI_TXE_FAILED_TO_SET";
-        case HAL_SPI_BSY_FAILED_TO_CLEAR: return "HAL_SPI_BSY_FAILED_TO_CLEAR";
-        case HAL_UART_TC_FAILED_TO_SET:   return "HAL_UART_TC_FAILED_TO_SET";
-        case HAL_DMA_TC:                  return "HAL_DMA_TC";
-        case HAL_DMA_TE:                  return "HAL_DMA_TE";
-        case HAL_DMA_DME:                 return "HAL_DMA_DME";
-        case HAL_DMA_HTE:                 return "HAL_DMA_HTE";
-        case HAL_DMA_ERR_UNKNOWN:         return "HAL_DMA_ERR_UNKNOWN";
-        default:                          return "";
-    }
-}
+const char* hal_err_to_string(hal_err_t err);
 
 
 #ifdef __cplusplus
