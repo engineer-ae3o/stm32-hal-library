@@ -34,7 +34,7 @@ set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wall 
                -Werror -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 -ffunction-sections \
                -Wsign-conversion -fno-common -fstrict-aliasing -std=gnu23 -Wdouble-promotion \
                -Wstrict-prototypes -Wnull-dereference -Wcast-align -fstrict-overflow \
-               -Wduplicated-branches -Wswitch -Wlogical-op -Wduplicated-cond -Wimplicit-int")
+               -Wduplicated-branches -Wswitch-enum -Wlogical-op -Wduplicated-cond -Wimplicit-int")
 
 set(CMAKE_CXX_FLAGS_DEBUG "-Og -g3 -ggdb -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wl,-s -DNDEBUG")

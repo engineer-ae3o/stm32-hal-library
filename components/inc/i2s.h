@@ -52,6 +52,7 @@ typedef enum : uint8_t {
     I2S_FREQ_48kHz,
     I2S_FREQ_96kHz,
     I2S_FREQ_192kHz,
+    I2S_TOTAL_NUM_FREQ
 } i2s_freq_t;
 
 typedef struct {
@@ -75,10 +76,10 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle);
 
 // DMA backed transfers API
-hal_err_t i2s_master_dma_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len,
-                                  dma_trans_done_cb_t callback, void* arg);
-hal_err_t i2s_master_dma_receive(I2S_TypeDef* handle, void* buf, uint16_t len,
-                                 dma_trans_done_cb_t callback, void* arg);
+hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len,
+                              dma_trans_done_cb_t callback, void* arg);
+hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len,
+                             dma_trans_done_cb_t callback, void* arg);
 hal_err_t i2s_master_transceive(I2S_TypeDef* handle, const void* tx_data, void* rx_data,
                                 uint16_t len, dma_trans_done_cb_t callback, void* arg);
 

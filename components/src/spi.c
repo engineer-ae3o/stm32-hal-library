@@ -6,11 +6,11 @@
 
 // The 5 SPI instances: ISRs called when the DMA is done
 // TX
-dma_trans_done_cb_t s_dma_tx_done_cbs[5] = {};
-void* s_tx_args[5] = {};
+static dma_trans_done_cb_t s_dma_tx_done_cbs[5] = {};
+static void* s_tx_args[5] = {};
 // RX
-dma_trans_done_cb_t s_dma_rx_done_cbs[5] = {};
-void* s_rx_args[5] = {};
+static dma_trans_done_cb_t s_dma_rx_done_cbs[5] = {};
+static void* s_rx_args[5] = {};
 
 // Mapping for the DMA channels for the 5 SPI channels
 static const dma_stream_map_t s_spi_dma_map[5] = {
@@ -41,8 +41,6 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     }
 };
 
-#define SPI_DMA_NVIC_IRQ_PRIORITY 6U
-#define TIMEOUT_CYCLES            100UL
 
 // Helpers
 static inline uint8_t get_index(const SPI_TypeDef* handle) {

@@ -28,7 +28,7 @@ void system_init(void) {
     RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
     while (RCC->CR & RCC_CR_PLLRDY);
 
-#if USE_HSE == 1
+#ifdef USE_HSE
     // Enable HSE
     RCC->CR |= RCC_CR_HSEON;
     while (!(RCC->CR & RCC_CR_HSERDY));
@@ -84,7 +84,6 @@ const char* hal_err_to_string(hal_err_t err) {
         case HAL_SPI_TXE_FAILED_TO_SET:   return "HAL_SPI_TXE_FAILED_TO_SET";
         case HAL_SPI_BSY_FAILED_TO_CLEAR: return "HAL_SPI_BSY_FAILED_TO_CLEAR";
         case HAL_UART_TC_FAILED_TO_SET:   return "HAL_UART_TC_FAILED_TO_SET";
-        case HAL_DMA_TC:                  return "HAL_DMA_TC";
         case HAL_DMA_TE:                  return "HAL_DMA_TE";
         case HAL_DMA_DME:                 return "HAL_DMA_DME";
         case HAL_DMA_HTE:                 return "HAL_DMA_HTE";

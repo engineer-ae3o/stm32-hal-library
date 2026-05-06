@@ -6,11 +6,11 @@
 
 // The 3 UART channels: ISRs called when the DMA is done
 // TX
-dma_trans_done_cb_t s_dma_tx_done_cbs[3] = {};
-void* s_tx_args[3] = {};
+static dma_trans_done_cb_t s_dma_tx_done_cbs[3] = {};
+static void* s_tx_args[3] = {};
 // RX
-dma_trans_done_cb_t s_dma_rx_done_cbs[3] = {};
-void* s_rx_args[3] = {};
+static dma_trans_done_cb_t s_dma_rx_done_cbs[3] = {};
+static void* s_rx_args[3] = {};
 
 // Mapping for the DMA channels for the 3 USART channels
 static const dma_stream_map_t s_uart_dma_map[3] = {
@@ -31,8 +31,6 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     }
 };
 
-#define UART_DMA_NVIC_IRQ_PRIORITY 8U
-#define TIMEOUT_CYCLES             100UL
 
 // Helper
 static inline uint8_t get_index(const USART_TypeDef* handle) {

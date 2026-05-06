@@ -5,16 +5,43 @@
 #include <stddef.h>
 
 
-// The 5 I2S instances: ISRs called when the DMA is done
+// The 5 I2S instances: ISRs called when DMA transfers are done
 // TX
-dma_trans_done_cb_t s_dma_tx_done_cbs[5] = {};
-void* s_tx_args[5] = {};
+static dma_trans_done_cb_t s_dma_tx_done_cbs[5] = {};
+static void* s_tx_args[5] = {};
 // RX
-dma_trans_done_cb_t s_dma_rx_done_cbs[5] = {};
-void* s_rx_args[5] = {};
+static dma_trans_done_cb_t s_dma_rx_done_cbs[5] = {};
+static void* s_rx_args[5] = {};
+
 // RX for Double Buffering mode
-dma_dbm_done_cb_t s_dma_dmb_done_cb[5] = {};
-void* s_dmb_args[5] = {};
+static dma_dbm_done_cb_t s_dma_dmb_done_cb[5] = {};
+static void* s_dmb_args[5] = {};
+
+// Clock prescaler table
+typedef struct {
+    uint16_t prescaler;
+    uint16_t prescaler_with_mck;
+} prescaler_mck_t;
+
+// The table assumes an audio input PLL of 76.8MHz
+// Modify that and evrything breaks. It also encodes
+// the bit for ODD and the SPI_I2SPR_MCKOE bit
+static const prescaler_mck_t s_prescaler_table_76_8mhz[I2S_TOTAL_NUM_FREQ] = {
+    [I2S_FREQ_8kHz]   = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [I2S_FREQ_16kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [I2S_FREQ_22kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [I2S_FREQ_32kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [I2S_FREQ_44kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [I2S_FREQ_48kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [I2S_FREQ_96kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [I2S_FREQ_192kHz] = { .prescaler = 0U, .prescaler_with_mck = 0U }
+};
+
+#if AUDIO_PLL_HZ == 76'800'000UL
+    #define prescaler_table s_prescaler_table_76_8mhz
+#else 
+    #define prescaler_table
+#endif
 
 // Mapping for the DMA channels for the 5 I2S channels
 static const dma_stream_map_t s_i2s_dma_map[5] = {
@@ -45,8 +72,6 @@ static const dma_stream_map_t s_i2s_dma_map[5] = {
     }
 };
 
-#define TIMEOUT_CYCLES 100U
-#define I2S_DMA_NVIC_IRQ_PRIORITY 12U
 
 // Helpers
 static inline uint8_t get_index(const I2S_TypeDef* handle) {
@@ -58,14 +83,13 @@ static inline uint8_t get_index(const I2S_TypeDef* handle) {
     else                     return 0xFFU;
 }
 
-
 // Public API
 void i2s_master_clock_init(void) {
     
     // Disable the audio PLL before setup
     RCC->CR &= ~RCC_CR_PLLI2SON;
     
-#if USE_HSE == 1
+#ifdef USE_HSE
     const uint8_t clock_mhz = HSE_VALUE_MHZ;
 #else
     const uint8_t clock_mhz = HSI_VALUE_MHZ;
@@ -74,8 +98,8 @@ void i2s_master_clock_init(void) {
     // Divide the HSE or HSI clock by its value in MHz to get a Vco of 1MHz regardless of its value
     RCC->PLLI2SCFGR &= ~(RCC_PLLI2SCFGR_PLLI2SM | RCC_PLLI2SCFGR_PLLI2SN | RCC_PLLI2SCFGR_PLLI2SR);
     RCC->PLLI2SCFGR |= (clock_mhz << RCC_PLLI2SCFGR_PLLI2SM_Pos)  | // PLLI2SM of val: Divides HSE or HSI by val to get a 1MHz Vco
-                       (192UL << RCC_PLLI2SCFGR_PLLI2SN_Pos)      | // PLLI2SN of 192: Multiplies Vco by 192 to get 192MHz
-                       (5UL << RCC_PLLI2SCFGR_PLLI2SR_Pos);         // PLLI2SR of 5: Divides the 192MHz Vco by 5 to get us 38.4MHz
+                       (384UL << RCC_PLLI2SCFGR_PLLI2SN_Pos)      | // PLLI2SN of 384: Multiplies Vco by 384 to get 384MHz
+                       (5UL << RCC_PLLI2SCFGR_PLLI2SR_Pos);         // PLLI2SR of 5: Divides the 384MHz Vco by 5 to get us 76.8MHz
     
     // Enable the audio PLL
     RCC->CR |= RCC_CR_PLLI2SON;
@@ -104,34 +128,6 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 
     __DSB();
     
-    // Disable the SPI and I2S peripheral before modifying its registers
-    handle->CR1 &= ~SPI_CR1_SPE;
-    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
-
-    // I2S mode
-    handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
-    
-    // Set the clock prescaler
-    handle->I2SPR = 0;
-    
-    // Clear used bits once in one read-modify-write op
-    handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG |
-                         SPI_I2SCFGR_CKPOL  |
-                         SPI_I2SCFGR_CHLEN  |
-                         SPI_I2SCFGR_I2SSTD |
-                         SPI_I2SCFGR_DATLEN);
-    
-    // Get frame size: It's can only be 16 bits when the data is 16 bits
-    const uint32_t frame_size_mask = (config->data_frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 0 : SPI_I2SCFGR_CHLEN;
-    const uint32_t cpol_mask = (config->cpol) ? SPI_I2SCFGR_CKPOL : 0;
-    
-    // Apply user settings
-    handle->I2SCFGR |= (((uint32_t)config->dir << SPI_I2SCFGR_I2SCFG_Pos)        | // Direction: TX or RX in master mode
-                        ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos)       | // I2S standard: Phillips, left or right justified
-                        ((uint32_t)config->data_frame << SPI_I2SCFGR_DATLEN_Pos) | // Data length: 16, 24 or 32 bits
-                        frame_size_mask                                          | // Frame size: 16 or 32 bits
-                        cpol_mask);                                                // Clock polarity
-    
     // Configure GPIO pins
     hal_err_t ret = gpiox_clk_enable(config->gpio_port);
     if (ret != HAL_OK) return ret;
@@ -151,16 +147,15 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
         gpio_enable_pullup(config->gpio_port, config->mck, true);
         gpio_set_speed_mode(config->gpio_port, config->mck, GPIO_MEDIUM_SPEED);
         gpio_set_output_type(config->gpio_port, config->mck, GPIO_PUSH_PULL);
-        // Enable the MCK output
-        handle->I2SPR |= SPI_I2SPR_MCKOE;
     }
 
-    // SD pin
+    // SD pin: Can be input or output
     ret = gpio_set_alternate_function(config->gpio_port, config->sd, alt_val);
     if (ret != HAL_OK) return ret;
     gpio_enable_pullup(config->gpio_port, config->sd, true);
     gpio_set_speed_mode(config->gpio_port, config->sd, GPIO_MEDIUM_SPEED);
-    gpio_set_output_type(config->gpio_port, config->sd, GPIO_PUSH_PULL);
+    // Only set output type as push pull when we are driving, that is, in TX mode
+    if (config->dir == I2S_DIR_HALF_DUPLEX_TX) gpio_set_output_type(config->gpio_port, config->sd, GPIO_PUSH_PULL);
     
     // WS pin
     ret = gpio_set_alternate_function(config->gpio_port, config->ws, alt_val);
@@ -175,7 +170,38 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     gpio_enable_pullup(config->gpio_port, config->sck, true);
     gpio_set_speed_mode(config->gpio_port, config->sck, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->sck, GPIO_PUSH_PULL);
+    
+    // Disable the SPI and I2S peripheral before modifying its registers
+    handle->CR1 &= ~SPI_CR1_SPE;
+    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
 
+    // I2S mode
+    handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
+    
+    // Set the clock prescaler
+    const uint32_t prescaler = (config->use_mck) ? prescaler_table[config->freq].prescaler_with_mck 
+                                                 : prescaler_table[config->freq].prescaler;
+    handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
+    handle->I2SPR |= ((prescaler & 0x3FFUL) << SPI_I2SPR_I2SDIV_Pos);
+
+    // Clear used bits once in one read-modify-write op
+    handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG |
+                         SPI_I2SCFGR_CKPOL  |
+                         SPI_I2SCFGR_CHLEN  |
+                         SPI_I2SCFGR_I2SSTD |
+                         SPI_I2SCFGR_DATLEN);
+    
+    // Get frame size: It can only be 16 bits when the data is 16 bits
+    const uint32_t frame_size_mask = (config->data_frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 0 : SPI_I2SCFGR_CHLEN;
+    const uint32_t cpol_mask = (config->cpol) ? SPI_I2SCFGR_CKPOL : 0;
+    
+    // Apply user settings
+    handle->I2SCFGR |= (((uint32_t)config->dir << SPI_I2SCFGR_I2SCFG_Pos)        | // Direction: TX or RX in master mode
+                        ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos)       | // I2S standard: Phillips, left or right justified
+                        ((uint32_t)config->data_frame << SPI_I2SCFGR_DATLEN_Pos) | // Data length: 16, 24 or 32 bits
+                        frame_size_mask                                          | // Frame size: 16 or 32 bits
+                        cpol_mask);                                                // Clock polarity
+    
     // Enable the I2S peripheral
     handle->I2SCFGR |= SPI_I2SCFGR_I2SE;
     

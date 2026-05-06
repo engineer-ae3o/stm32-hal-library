@@ -9,8 +9,6 @@ static inline void send_stop(I2C_TypeDef* handle);
 static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len);
 static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len);
 
-#define TIMEOUT_CYCLES 10'000UL
-
 
 // Public API
 // I2C Master API
