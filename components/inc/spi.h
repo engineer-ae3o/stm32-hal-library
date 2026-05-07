@@ -31,6 +31,7 @@ typedef struct {
     GPIO_TypeDef* gpio_port;
 } spi_master_config_t;
 
+hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable);
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config);
 hal_err_t spi_master_dma_init(SPI_TypeDef* handle);
 

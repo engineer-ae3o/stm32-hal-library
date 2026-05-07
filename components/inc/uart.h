@@ -25,6 +25,7 @@ typedef struct {
     uint32_t baud_rate;
 } uart_config_t;
 
+hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable);
 hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config);
 hal_err_t uart_dma_init(USART_TypeDef* handle);
 

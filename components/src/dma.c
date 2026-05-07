@@ -2,16 +2,29 @@
 #include "dma.h"
 
 
-hal_err_t dmax_clk_enable(DMA_TypeDef* controller) {
+hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
+
+    if (enable) {
+        if (controller == DMA1) {
+            RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+        } else if (controller == DMA2) {
+            RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
+        goto done;
+    }
+
     if (controller == DMA1) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+        RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;
     } else if (controller == DMA2) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
+        RCC->AHB1ENR &= ~~RCC_AHB1ENR_DMA2EN;
     } else {
         return HAL_INVALID_ARG;
     }
-    __DSB();
 
+done:
+    __DSB();
     return HAL_OK;
 }
 

@@ -12,24 +12,40 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
 
 // Public API
 // I2C Master API
-hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config) {
-
-    // Enable the I2C peripheral clock
+hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
+    
+    if (enable) {
+        if (handle == I2C1) {
+            RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;
+        } else if (handle == I2C2) {
+            RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
+        } else if (handle == I2C3) {
+            RCC->APB1ENR |= RCC_APB1ENR_I2C3EN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
+        goto done;
+    }
+    
     if (handle == I2C1) {
-        RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;
+        RCC->APB1ENR &= ~RCC_APB1ENR_I2C1EN;
     } else if (handle == I2C2) {
-        RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
+        RCC->APB1ENR &= ~RCC_APB1ENR_I2C2EN;
     } else if (handle == I2C3) {
-        RCC->APB1ENR |= RCC_APB1ENR_I2C3EN;
+        RCC->APB1ENR &= ~RCC_APB1ENR_I2C3EN;
     } else {
         return HAL_INVALID_ARG;
     }
-
+    
+done:
     __DSB();
+    return HAL_OK;
+}
 
+hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config) {
     // Configure pins for I2C
     // Enable gpio channel clock
-    hal_err_t ret = gpiox_clk_enable(config->gpio_port);
+    hal_err_t ret = gpiox_clk_enable(config->gpio_port, true);
     if (ret != HAL_OK) return ret;
 
     // Set pins to alternate function for I2C

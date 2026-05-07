@@ -97,27 +97,47 @@ static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
 
 
 // Public API
-hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config) {
+hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable) {
     
-    // Enable SPI clock
+    if (enable) {
+        if (handle == SPI1) {
+            RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+        } else if (handle == SPI2) {
+            RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+        } else if (handle == SPI3) {
+            RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
+        } else if (handle == SPI4) {
+            RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
+        } else if (handle == SPI5) {
+            RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
+        goto done;
+    }
+    
     if (handle == SPI1) {
-        RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+        RCC->APB2ENR &= ~RCC_APB2ENR_SPI1EN;
     } else if (handle == SPI2) {
-        RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+        RCC->APB1ENR &= ~RCC_APB1ENR_SPI2EN;
     } else if (handle == SPI3) {
-        RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
+        RCC->APB1ENR &= ~RCC_APB1ENR_SPI3EN;
     } else if (handle == SPI4) {
-        RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
+        RCC->APB2ENR &= ~RCC_APB2ENR_SPI4EN;
     } else if (handle == SPI5) {
-        RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
+        RCC->APB2ENR &= ~RCC_APB2ENR_SPI5EN;
     } else {
         return HAL_INVALID_ARG;
     }
-
+    
+done:
     __DSB();
+    return HAL_OK;
+}
 
-    // Init GPIO
-    hal_err_t ret = gpiox_clk_enable(config->gpio_port);
+hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config) {
+    // Configure the GPIO pins
+    hal_err_t ret = gpiox_clk_enable(config->gpio_port, true);
     if (ret != HAL_OK) return ret;
 
     // Alternate function value selection for the GPIOs
@@ -202,9 +222,9 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     DMA_Stream_TypeDef* rx_stream = s_spi_dma_map[idx].rx.stream;
     uint8_t rx_channel = s_spi_dma_map[idx].rx.channel;
     
-    hal_err_t ret = dmax_clk_enable(tx_controller);
+    hal_err_t ret = dmax_clk_enable(tx_controller, true);
     if (ret != HAL_OK) return ret;
-    ret = dmax_clk_enable(rx_controller);
+    ret = dmax_clk_enable(rx_controller, true);
     if (ret != HAL_OK) return ret;
     
     // Disable DMA stream before configuring

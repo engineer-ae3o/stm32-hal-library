@@ -2,24 +2,45 @@
 #include <stdint.h>
 
 
-hal_err_t gpiox_clk_enable(GPIO_TypeDef* port) {
+hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
+    
+    if (enable) {
+        if (port == GPIOA) {
+            RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+        } else if (port == GPIOB) {
+            RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+        } else if (port == GPIOC) {
+            RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+        } else if (port == GPIOD) {
+            RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+        } else if (port == GPIOE) {
+            RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
+        } else if (port == GPIOH) {
+            RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
+        goto done;
+    }
+    
     if (port == GPIOA) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOAEN;
     } else if (port == GPIOB) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOBEN;
     } else if (port == GPIOC) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOCEN;
     } else if (port == GPIOD) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIODEN;
     } else if (port == GPIOE) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
+        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOEEN;
     } else if (port == GPIOH) {
-        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;
+        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOHEN;
     } else {
         return HAL_INVALID_ARG;
     }
-    __DSB();
     
+done:
+    __DSB();
     return HAL_OK;
 }
 

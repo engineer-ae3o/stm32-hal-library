@@ -31,7 +31,7 @@ typedef struct {
     i2c_freq_mode_t freq_type;
 } i2c_master_config_t;
 
-
+hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable);
 hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config);
 hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len);
 hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len);

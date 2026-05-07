@@ -30,10 +30,10 @@ typedef enum hal_err_t : uint8_t {
     // Success
     HAL_OK                        = 0x00U,
 
-    // Generic failure error
+    // Generic failure
     HAL_FAIL                      = 0x01U,
 
-    // Specific errors
+    // More specific errors
     HAL_INVALID_ARG               = 0x02U,
     HAL_INVALID_STATE             = 0x03U,
     HAL_TIMEOUT                   = 0x04U,

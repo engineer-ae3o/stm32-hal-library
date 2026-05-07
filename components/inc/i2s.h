@@ -38,6 +38,7 @@ typedef enum : uint8_t {
     I2S_DATA_32_BITS_FRAME_32_BITS = 0b10U
 } i2s_data_frame_t;
 
+// Full duplex not supported
 typedef enum : uint8_t {
     I2S_DIR_HALF_DUPLEX_TX = 0b10U,
     I2S_DIR_HALF_DUPLEX_RX = 0b11U
@@ -71,7 +72,9 @@ typedef struct {
     GPIO_TypeDef* gpio_port;
 } i2s_master_config_t;
 
-void i2s_master_clock_init(void);
+void i2s_pll_init(void);
+hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable);
+
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config);
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle);
 
@@ -80,12 +83,10 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len
                               dma_trans_done_cb_t callback, void* arg);
 hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len,
                              dma_trans_done_cb_t callback, void* arg);
-hal_err_t i2s_master_transceive(I2S_TypeDef* handle, const void* tx_data, void* rx_data,
-                                uint16_t len, dma_trans_done_cb_t callback, void* arg);
 
 // Double buffering API
 // NOTE: These API are mutually exclusive with the API above
-// NOTE: Only reception is supported
+// NOTE: Only data reception is supported
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b,
                               uint16_t len, dma_dbm_done_cb_t cb, void* arg);
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);

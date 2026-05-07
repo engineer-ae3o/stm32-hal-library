@@ -31,7 +31,7 @@ typedef enum : uint8_t {
     GPIO_OPEN_DRAIN = 0x01U,
 } gpio_output_type_t;
 
-hal_err_t gpiox_clk_enable(GPIO_TypeDef* port);
+hal_err_t gpiox_clk_enable(GPIO_TypeDef* handle, bool enable);
 
 void gpio_set_output(GPIO_TypeDef* port, uint8_t pin);
 void gpio_set_input(GPIO_TypeDef* port, uint8_t pin);

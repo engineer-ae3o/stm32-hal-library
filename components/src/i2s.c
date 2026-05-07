@@ -13,9 +13,9 @@ static void* s_tx_args[5] = {};
 static dma_trans_done_cb_t s_dma_rx_done_cbs[5] = {};
 static void* s_rx_args[5] = {};
 
-// RX for Double Buffering mode
-static dma_dbm_done_cb_t s_dma_dmb_done_cb[5] = {};
-static void* s_dmb_args[5] = {};
+// Double Buffering mode: RX only
+static dma_dbm_done_cb_t s_dma_dbm_done_cb[5] = {};
+static void* s_dbm_args[5] = {};
 
 // Clock prescaler table
 typedef struct {
@@ -40,7 +40,7 @@ static const prescaler_mck_t s_prescaler_table_76_8mhz[I2S_TOTAL_NUM_FREQ] = {
 #if AUDIO_PLL_HZ == 76'800'000UL
     #define prescaler_table s_prescaler_table_76_8mhz
 #else 
-    #define prescaler_table
+    #error "No pll table defined for used frequency"
 #endif
 
 // Mapping for the DMA channels for the 5 I2S channels
@@ -84,7 +84,7 @@ static inline uint8_t get_index(const I2S_TypeDef* handle) {
 }
 
 // Public API
-void i2s_master_clock_init(void) {
+void i2s_pll_init(void) {
     
     // Disable the audio PLL before setup
     RCC->CR &= ~RCC_CR_PLLI2SON;
@@ -109,27 +109,47 @@ void i2s_master_clock_init(void) {
     RCC->CFGR &= ~RCC_CFGR_I2SSRC;
 }
 
-hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config) {
+hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
     
-    // Enable I2S clock
+    if (enable) {
+        if (handle == I2S1) {
+            RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+        } else if (handle == I2S2) {
+            RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+        } else if (handle == I2S3) {
+            RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
+        } else if (handle == I2S4) {
+            RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
+        } else if (handle == I2S5) {
+            RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
+        goto done;
+    }
+    
     if (handle == I2S1) {
-        RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
+        RCC->APB2ENR &= ~RCC_APB2ENR_SPI1EN;
     } else if (handle == I2S2) {
-        RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
+        RCC->APB1ENR &= ~RCC_APB1ENR_SPI2EN;
     } else if (handle == I2S3) {
-        RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
+        RCC->APB1ENR &= ~RCC_APB1ENR_SPI3EN;
     } else if (handle == I2S4) {
-        RCC->APB2ENR |= RCC_APB2ENR_SPI4EN;
+        RCC->APB2ENR &= ~RCC_APB2ENR_SPI4EN;
     } else if (handle == I2S5) {
-        RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
+        RCC->APB2ENR &= ~RCC_APB2ENR_SPI5EN;
     } else {
         return HAL_INVALID_ARG;
     }
-
-    __DSB();
     
+done:
+    __DSB();
+    return HAL_OK;
+}
+
+hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config) {
     // Configure GPIO pins
-    hal_err_t ret = gpiox_clk_enable(config->gpio_port);
+    hal_err_t ret = gpiox_clk_enable(config->gpio_port, true);
     if (ret != HAL_OK) return ret;
 
     // Alternate function value selection for the GPIOs
@@ -223,9 +243,9 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     DMA_Stream_TypeDef* rx_stream = s_i2s_dma_map[idx].rx.stream;
     uint8_t rx_channel = s_i2s_dma_map[idx].rx.channel;
     
-    hal_err_t ret = dmax_clk_enable(tx_controller);
+    hal_err_t ret = dmax_clk_enable(tx_controller, true);
     if (ret != HAL_OK) return ret;
-    ret = dmax_clk_enable(rx_controller);
+    ret = dmax_clk_enable(rx_controller, true);
     if (ret != HAL_OK) return ret;
     
     // Disable DMA stream before configuring
@@ -291,7 +311,7 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len
 
     // If the data is 24 or 32 bits, we need two DMA transfers
     // Note that if the DATLEN bits are 0b00, that means 16 bit
-    // data; 0b01 for 24 and 0b10 for 32, so a non zero value
+    // data; 0b01 for 24 and 0b10 for 32. So a non zero value
     // from the DATLEN bits implies a transfer greater than 16 bits
     len = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (len * 2) : len;
     
@@ -328,39 +348,6 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len,
     return dma_enable_stream(stream);
 }
 
-hal_err_t i2s_master_transceive(I2S_TypeDef* handle, const void* tx_data, void* rx_data,
-                                uint16_t len, dma_trans_done_cb_t callback, void* arg) {
-    
-    // Get index for DMA stream mapping
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) return HAL_INVALID_ARG;
-    
-    // Save user passed callback
-    if (callback) {
-        // Save callback to the TX DMA irq only
-        s_dma_tx_done_cbs[idx] = callback;
-        s_tx_args[idx] = arg;
-    }
-    
-    // TX and RX mapping
-    DMA_Stream_TypeDef* tx_stream = s_i2s_dma_map[idx].tx.stream;
-    DMA_Stream_TypeDef* rx_stream = s_i2s_dma_map[idx].rx.stream;
-    len = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (len * 2) : len;
-    
-    // Set memory address and length
-    dma_set_addresses(tx_stream, NULL, tx_data, NULL);
-    dma_set_trans_length(tx_stream, len);
-
-    dma_set_addresses(rx_stream, NULL, rx_data, NULL);
-    dma_set_trans_length(rx_stream, len);
-    
-    // Enable DMA TX and RX streams
-    hal_err_t ret = dma_enable_stream(tx_stream);
-    if (ret != HAL_OK) return ret;
-
-    return dma_enable_stream(rx_stream);
-}
-
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b,
                               uint16_t len, dma_dbm_done_cb_t cb, void* arg) {
 
@@ -378,8 +365,8 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b,
     dma_set_trans_length(stream, len);
     
     if (cb) {
-        s_dma_dmb_done_cb[idx] = cb;
-        s_dmb_args[idx] = arg;
+        s_dma_dbm_done_cb[idx] = cb;
+        s_dbm_args[idx] = arg;
     }
     
     return HAL_OK;
@@ -398,8 +385,8 @@ hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle) {
     dma_enable_circm_dbm(stream, false, false);
     dma_set_trans_length(stream, 0);
 
-    s_dma_rx_done_cbs[idx] = NULL;
-    s_rx_args[idx] = NULL;
+    s_dma_dbm_done_cb[idx] = NULL;
+    s_dbm_args[idx] = NULL;
     
     return HAL_OK;
 }

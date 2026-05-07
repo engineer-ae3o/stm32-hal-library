@@ -77,29 +77,38 @@ static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
 
 
 // Public API
-hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
-
-    // Get the alternate function value as it
-    // varies for each peripheral instance
-    uint8_t alt_val = 0;
+hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable) {
     
-    // Enable appropriate UART channel clock
+    if (enable) {
+        if (handle == USART1) {
+            RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+        } else if (handle == USART2) {
+            RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+        } else if (handle == USART6) {
+            RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
+        goto done;
+    }
+    
     if (handle == USART1) {
-        RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-        alt_val = 7UL;
+        RCC->APB2ENR &= ~RCC_APB2ENR_USART1EN;
     } else if (handle == USART2) {
-        RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
-        alt_val = 7UL;
+        RCC->APB1ENR &= ~RCC_APB1ENR_USART2EN;
     } else if (handle == USART6) {
-        RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
-        alt_val = 8UL;
+        RCC->APB2ENR &= ~RCC_APB2ENR_USART6EN;
     } else {
         return HAL_INVALID_ARG;
     }
-
-    __DSB();
     
-    // Disable the UART peripheral
+done:
+    __DSB();
+    return HAL_OK;
+}
+
+hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
+    // Disable the UART peripheral before modifying its peripherals
     handle->CR1 &= ~USART_CR1_UE;
 
     // 8 bit UART and parity bit disabled
@@ -126,8 +135,12 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Initialize GPIO pins for UART
     // Enable gpio channel clock
-    hal_err_t ret = gpiox_clk_enable(config->gpio_port);
+    hal_err_t ret = gpiox_clk_enable(config->gpio_port, true);
     if (ret != HAL_OK) return ret;
+
+    // Get the alternate function value as it
+    // varies for each peripheral instance
+    const uint8_t alt_val = (handle == USART6) ? 8U : 7U;
 
     // Set gpio pin to alternate function
     ret = gpio_set_alternate_function(config->gpio_port, config->tx_pin, alt_val);
@@ -135,13 +148,17 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     ret = gpio_set_alternate_function(config->gpio_port, config->rx_pin, alt_val);
     if (ret != HAL_OK) return ret;
 
+    // Set as push pull
+    gpio_set_output_type(config->gpio_port, config->tx_pin, GPIO_PUSH_PULL);
+    gpio_set_output_type(config->gpio_port, config->rx_pin, GPIO_PUSH_PULL);
+
     // Set pullup
     gpio_enable_pullup(config->gpio_port, config->tx_pin, true);
     gpio_enable_pullup(config->gpio_port, config->rx_pin, true);
     
     // Speed mode
-    gpio_set_speed_mode(config->gpio_port, config->tx_pin, GPIO_HIGH_SPEED);
-    gpio_set_speed_mode(config->gpio_port, config->rx_pin, GPIO_HIGH_SPEED);
+    gpio_set_speed_mode(config->gpio_port, config->tx_pin, GPIO_MEDIUM_SPEED);
+    gpio_set_speed_mode(config->gpio_port, config->rx_pin, GPIO_MEDIUM_SPEED);
     
     // Enable the UART peripheral
     handle->CR1 |= USART_CR1_UE;
@@ -165,9 +182,9 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     uint8_t rx_channel = s_uart_dma_map[idx].rx.channel;
 
     // Enable DMA clock
-    hal_err_t ret = dmax_clk_enable(tx_controller);
+    hal_err_t ret = dmax_clk_enable(tx_controller, true);
     if (ret != HAL_OK) return ret;
-    ret = dmax_clk_enable(rx_controller);
+    ret = dmax_clk_enable(rx_controller, true);
     if (ret != HAL_OK) return ret;
 
     // Disable DMA streams for tx and rx
@@ -298,7 +315,7 @@ void DMA2_Stream7_IRQHandler(void) {
 
 // USART1: RX
 void DMA2_Stream2_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->HIFCR, &DMA2->HISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
     isr_rx_helper(ret, 0);
 }
 

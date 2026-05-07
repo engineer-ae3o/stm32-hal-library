@@ -33,7 +33,7 @@ typedef enum : uint8_t {
     DMA_SIZE_WORD  = 0b10U
 } dma_data_size_t;
 
-hal_err_t dmax_clk_enable(DMA_TypeDef* handle);
+hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable);
 hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream);
 
 hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream);
@@ -107,7 +107,11 @@ static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream, volatile uint
         error = HAL_DMA_ERR_UNKNOWN;
     }
     
-    if (dma_disable_stream(stream) != HAL_OK) error = HAL_TIMEOUT;
+    // Only disable the stream if not in circular mode
+    if (!(stream->CR & DMA_SxCR_CIRC)) {
+        hal_err_t ret = dma_disable_stream(stream);
+        if (ret != HAL_OK) error = ret;
+    }
 
     return error;
 }
