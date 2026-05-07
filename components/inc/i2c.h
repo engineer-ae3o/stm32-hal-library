@@ -15,20 +15,20 @@ extern "C" {
 #include <stdbool.h>
 
 
-typedef enum {
+typedef enum : uint8_t {
     I2C_100KHz = 0,
     I2C_400KHz
 } i2c_freq_mode_t;
 
 typedef struct {
     bool use_pullup;
+    i2c_freq_mode_t freq_type;
     uint8_t apb1_bus_freq_mhz;
 
     uint8_t sda;
     uint8_t scl;
     GPIO_TypeDef* gpio_port;
 
-    i2c_freq_mode_t freq_type;
 } i2c_master_config_t;
 
 hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable);

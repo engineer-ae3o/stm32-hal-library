@@ -315,7 +315,7 @@ void DMA2_Stream7_IRQHandler(void) {
 
 // USART1: RX
 void DMA2_Stream2_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->HIFCR, &DMA2->HISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
     isr_rx_helper(ret, 0);
 }
 

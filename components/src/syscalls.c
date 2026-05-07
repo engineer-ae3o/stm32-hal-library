@@ -26,7 +26,7 @@ void system_init(void) {
 
     // Disable the PLLs
     RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
-    while (RCC->CR & RCC_CR_PLLRDY);
+    while (RCC->CR & (RCC_CR_PLLRDY | RCC_CR_PLLI2SRDY));
 
 #ifdef USE_HSE
     // Enable HSE
@@ -86,7 +86,6 @@ const char* hal_err_to_string(hal_err_t err) {
         case HAL_UART_TC_FAILED_TO_SET:   return "HAL_UART_TC_FAILED_TO_SET";
         case HAL_DMA_TE:                  return "HAL_DMA_TE";
         case HAL_DMA_DME:                 return "HAL_DMA_DME";
-        case HAL_DMA_HTE:                 return "HAL_DMA_HTE";
         case HAL_DMA_ERR_UNKNOWN:         return "HAL_DMA_ERR_UNKNOWN";
         default:                          return "";
     }

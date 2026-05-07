@@ -56,8 +56,7 @@ typedef enum hal_err_t : uint8_t {
     // DMA extensions
     HAL_DMA_TE                    = 0x0CU,
     HAL_DMA_DME                   = 0x0DU,
-    HAL_DMA_HTE                   = 0x0EU,
-    HAL_DMA_ERR_UNKNOWN           = 0x0FU,
+    HAL_DMA_ERR_UNKNOWN           = 0x0EU,
     
 } hal_err_t;
 

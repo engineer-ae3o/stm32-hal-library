@@ -67,6 +67,9 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     gpio_enable_pullup(config->gpio_port, config->sda, config->use_pullup);
     gpio_enable_pullup(config->gpio_port, config->scl, config->use_pullup);
     
+    // Disable the I2C peripheral
+    handle->CR1 &= ~I2C_CR1_PE;
+
     // I2C configuration
     handle->CR1 |= I2C_CR1_ACK;
     handle->CR2 |= (config->apb1_bus_freq_mhz << I2C_CR2_FREQ_Pos);
@@ -263,7 +266,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* d
         }
         if (handle->SR1 & I2C_SR1_ARLO) {
             handle->SR1 &= ~I2C_SR1_ARLO;
-            return HAL_TX_ERROR;
+            return HAL_I2C_ARBITRATION_LOST;
         }
     }
 
