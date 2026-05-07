@@ -70,7 +70,7 @@ typedef struct {
 typedef void (*dma_trans_done_cb_t)(void* arg, hal_err_t error);
 
 // Callback for DMA transmission and reception completion when double buffering
-typedef void (*dma_dbm_done_cb_t)(void* arg, hal_err_t error, bool is_buf_a);
+typedef void (*dma_dbm_done_cb_t)(void* arg, hal_err_t error, bool is_buf_a_free);
 
 static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream, volatile uint32_t* irq_clr_rg, volatile uint32_t* irq_sta_rg, 
                                        uint32_t tc, uint32_t te, uint32_t dme, uint32_t hte) {

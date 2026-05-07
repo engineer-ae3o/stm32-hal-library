@@ -24,7 +24,7 @@ typedef struct {
 } prescaler_mck_t;
 
 // The table assumes an audio input PLL of 76.8MHz
-// Modify that and evrything breaks. It also encodes
+// Modify that and everything breaks. It also encodes
 // the bit for ODD and the SPI_I2SPR_MCKOE bit
 static const prescaler_mck_t s_prescaler_table_76_8mhz[I2S_TOTAL_NUM_FREQ] = {
     [I2S_FREQ_8kHz]   = { .prescaler = 0U, .prescaler_with_mck = 0U },
@@ -288,6 +288,12 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len
     
     // TX mapping
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].tx.stream;
+
+    // If the data is 24 or 32 bits, we need two DMA transfers
+    // Note that if the DATLEN bits are 0b00, that means 16 bit
+    // data; 0b01 for 24 and 0b10 for 32, so a non zero value
+    // from the DATLEN bits implies a transfer greater than 16 bits
+    len = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (len * 2) : len;
     
     // Set memory address and length
     dma_set_addresses(stream, NULL, buf, NULL);
@@ -312,6 +318,7 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len,
     
     // RX mapping
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
+    len = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (len * 2) : len;
     
     // Set memory address and length
     dma_set_addresses(stream, NULL, buf, NULL);
@@ -338,6 +345,7 @@ hal_err_t i2s_master_transceive(I2S_TypeDef* handle, const void* tx_data, void* 
     // TX and RX mapping
     DMA_Stream_TypeDef* tx_stream = s_i2s_dma_map[idx].tx.stream;
     DMA_Stream_TypeDef* rx_stream = s_i2s_dma_map[idx].rx.stream;
+    len = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (len * 2) : len;
     
     // Set memory address and length
     dma_set_addresses(tx_stream, NULL, tx_data, NULL);
@@ -360,6 +368,7 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b,
     if (idx == 0xFFU) return HAL_INVALID_ARG;
 
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
+    len = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (len * 2) : len;
     
     hal_err_t ret = dma_disable_stream(stream);
     if (ret != HAL_OK) return ret;
