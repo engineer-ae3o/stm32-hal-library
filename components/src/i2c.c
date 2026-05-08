@@ -11,7 +11,6 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
 
 
 // Public API
-// I2C Master API
 hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
     
     if (enable) {
@@ -140,7 +139,7 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data
     return rx_trans(handle, address, data, len);
 }
 
-hal_err_t i2c_master_transmit_receive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data,
+hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data,
                                       size_t tx_len, uint8_t* rx_data, size_t rx_len) {
 
     // Check if the bus is free before proceeding

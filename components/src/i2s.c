@@ -17,6 +17,15 @@ static void* s_rx_args[5] = {};
 static dma_dbm_done_cb_t s_dma_dbm_done_cb[5] = {};
 static void* s_dbm_args[5] = {};
 
+// Audio PLL check. To use a different PLL clock speed
+// provide a corresponding prescaler table, update the
+// #define in "common.h" and update this check
+#if AUDIO_PLL_HZ == 76'800'000UL
+    #define prescaler_table s_prescaler_table_76_8mhz
+#else 
+    #error "No pll table defined for used frequency"
+#endif
+
 // Clock prescaler table
 typedef struct {
     uint16_t prescaler;
@@ -26,7 +35,7 @@ typedef struct {
 // The table assumes an audio input PLL of 76.8MHz
 // Modify that and everything breaks. It also encodes
 // the bit for ODD and the SPI_I2SPR_MCKOE bit
-static const prescaler_mck_t s_prescaler_table_76_8mhz[I2S_TOTAL_NUM_FREQ] = {
+static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
     [I2S_FREQ_8kHz]   = { .prescaler = 0U, .prescaler_with_mck = 0U },
     [I2S_FREQ_16kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
     [I2S_FREQ_22kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
@@ -37,18 +46,12 @@ static const prescaler_mck_t s_prescaler_table_76_8mhz[I2S_TOTAL_NUM_FREQ] = {
     [I2S_FREQ_192kHz] = { .prescaler = 0U, .prescaler_with_mck = 0U }
 };
 
-#if AUDIO_PLL_HZ == 76'800'000UL
-    #define prescaler_table s_prescaler_table_76_8mhz
-#else 
-    #error "No pll table defined for used frequency"
-#endif
-
 // Mapping for the DMA channels for the 5 I2S channels
 static const dma_stream_map_t s_i2s_dma_map[5] = {
-    // I2S1
+    // I2S1: DMA not supported: Not enough streams to go round other peripherals
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream5, .stream_no = 5, .irq_type = DMA2_Stream5_IRQn, .channel = 3 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream2, .stream_no = 2, .irq_type = DMA2_Stream2_IRQn, .channel = 3 }
+        .tx = { .controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0 },
+        .rx = { .controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0 }
     },
     // I2S2
     {
@@ -63,11 +66,11 @@ static const dma_stream_map_t s_i2s_dma_map[5] = {
     // I2S4
     {
         .tx = { .controller = DMA2, .stream = DMA2_Stream1, .stream_no = 1, .irq_type = DMA2_Stream1_IRQn, .channel = 4 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream0, .stream_no = 0, .irq_type = DMA2_Stream0_IRQn, .channel = 4 }
+        .rx = { .controller = DMA2, .stream = DMA2_Stream4, .stream_no = 4, .irq_type = DMA2_Stream4_IRQn, .channel = 4 }
     },
     // I2S5
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream4, .stream_no = 4, .irq_type = DMA2_Stream4_IRQn, .channel = 2 },
+        .tx = { .controller = DMA2, .stream = DMA2_Stream6, .stream_no = 6, .irq_type = DMA2_Stream6_IRQn, .channel = 7 },
         .rx = { .controller = DMA2, .stream = DMA2_Stream3, .stream_no = 3, .irq_type = DMA2_Stream3_IRQn, .channel = 2 }
     }
 };

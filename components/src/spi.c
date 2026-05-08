@@ -14,10 +14,10 @@ static void* s_rx_args[5] = {};
 
 // Mapping for the DMA channels for the 5 SPI channels
 static const dma_stream_map_t s_spi_dma_map[5] = {
-    // SPI1
+    // SPI1: DMA not supported: Not enough streams to go round other peripherals
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream5, .stream_no = 5, .irq_type = DMA2_Stream5_IRQn, .channel = 3 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream2, .stream_no = 2, .irq_type = DMA2_Stream2_IRQn, .channel = 3 }
+        .tx = { .controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0 },
+        .rx = { .controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0 }
     },
     // SPI2
     {
@@ -32,11 +32,11 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     // SPI4
     {
         .tx = { .controller = DMA2, .stream = DMA2_Stream1, .stream_no = 1, .irq_type = DMA2_Stream1_IRQn, .channel = 4 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream0, .stream_no = 0, .irq_type = DMA2_Stream0_IRQn, .channel = 4 }
+        .rx = { .controller = DMA2, .stream = DMA2_Stream4, .stream_no = 4, .irq_type = DMA2_Stream4_IRQn, .channel = 4 }
     },
     // SPI5
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream4, .stream_no = 4, .irq_type = DMA2_Stream4_IRQn, .channel = 2 },
+        .tx = { .controller = DMA2, .stream = DMA2_Stream6, .stream_no = 6, .irq_type = DMA2_Stream6_IRQn, .channel = 7 },
         .rx = { .controller = DMA2, .stream = DMA2_Stream3, .stream_no = 3, .irq_type = DMA2_Stream3_IRQn, .channel = 2 }
     }
 };
@@ -556,18 +556,6 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
 }
 
 // DMA interrupts
-// SPI1: TX
-void DMA2_Stream5_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream5, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
-    isr_tx_helper(SPI1, ret, 0);
-}
-
-// SPI1: RX
-void DMA2_Stream2_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
-    isr_rx_helper(ret, 0);
-}
-
 // SPI2: TX
 void DMA1_Stream4_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA1_Stream4, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4, DMA_HISR_HTIF4);
@@ -599,14 +587,14 @@ void DMA2_Stream1_IRQHandler(void) {
 }
 
 // SPI4: RX
-void DMA2_Stream0_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream0, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0, DMA_LISR_HTIF0);
+void DMA2_Stream4_IRQHandler(void) {
+    hal_err_t ret = dma_isr_helper(DMA2_Stream4, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4, DMA_HISR_HTIF4);
     isr_rx_helper(ret, 3);
 }
 
 // SPI5: TX
-void DMA2_Stream4_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream4, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4, DMA_HISR_HTIF4);
+void DMA2_Stream6_IRQHandler(void) {
+    hal_err_t ret = dma_isr_helper(DMA2_Stream6, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
     isr_tx_helper(SPI5, ret, 4);
 }
 

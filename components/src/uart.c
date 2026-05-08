@@ -24,10 +24,10 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
         .tx = { .controller = DMA1, .stream = DMA1_Stream6, .stream_no = 6, .irq_type = DMA1_Stream6_IRQn, .channel = 4 },
         .rx = { .controller = DMA1, .stream = DMA1_Stream5, .stream_no = 5, .irq_type = DMA1_Stream5_IRQn, .channel = 4 }
     },
-    // USART6
+    // USART6: DMA not supported: Not enough streams to go round other peripherals
     {
-        .tx = { .controller = DMA2, .stream = DMA2_Stream6, .stream_no = 6, .irq_type = DMA2_Stream6_IRQn, .channel = 5 },
-        .rx = { .controller = DMA2, .stream = DMA2_Stream1, .stream_no = 1, .irq_type = DMA2_Stream1_IRQn, .channel = 5 }
+        .tx = { .controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0 },
+        .rx = { .controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0 }
     }
 };
 
@@ -329,16 +329,4 @@ void DMA1_Stream6_IRQHandler(void) {
 void DMA1_Stream5_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
     isr_rx_helper(ret, 1);
-}
-
-// USART6: TX
-void DMA2_Stream6_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream6, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
-    isr_tx_helper(USART6, ret, 2);
-}
-
-// USART6: RX
-void DMA2_Stream1_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_DMEIF1, DMA_LISR_HTIF1);
-    isr_rx_helper(ret, 2);
 }
