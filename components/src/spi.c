@@ -204,11 +204,13 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     
     // Motorolla mode and SS output disable
     handle->CR2 &= ~(SPI_CR2_FRF | SPI_CR2_SSOE);
-
-    // Enable the SPI peripheral
-    handle->CR1 |= SPI_CR1_SPE;
-
+    
     return HAL_OK;
+}
+
+void spi_master_enable(SPI_TypeDef* handle, bool enable) {
+    if (enable) handle->CR1 |= SPI_CR1_SPE;
+    else        handle->CR1 &= ~SPI_CR1_SPE;
 }
 
 hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
@@ -422,7 +424,7 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
 }
 
 hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data,
-                                           void* rx_data, size_t len) {
+                                     void* rx_data, size_t len) {
     
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) return HAL_INVALID_ARG;

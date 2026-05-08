@@ -26,7 +26,7 @@ typedef SPI_TypeDef I2S_TypeDef;
 
 
 typedef enum : uint8_t {
-    I2S_MODE_PHILLIPS        = 0b00U,
+    I2S_MODE_PHILIPS         = 0b00U,
     I2S_MODE_LEFT_JUSTIFIED  = 0b01U,
     I2S_MODE_RIGHT_JUSTIFIED = 0b10U
 } i2s_mode_t;
@@ -75,6 +75,7 @@ void i2s_pll_init(void);
 hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable);
 
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config);
+void i2s_master_enable(I2S_TypeDef* handle, bool enable);
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle);
 hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx);
 

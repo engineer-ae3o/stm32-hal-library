@@ -214,10 +214,12 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
                         frame_size_mask                                          | // Frame size: 16 or 32 bits
                         cpol_mask);                                                // Clock polarity
     
-    // Enable the I2S peripheral
-    handle->I2SCFGR |= SPI_I2SCFGR_I2SE;
-    
     return HAL_OK;
+}
+
+void i2s_master_enable(I2S_TypeDef* handle, bool enable) {
+    if (enable) handle->I2SCFGR |= SPI_I2SCFGR_I2SE;
+    else        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
 }
 
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {

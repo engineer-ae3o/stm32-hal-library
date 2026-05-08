@@ -166,6 +166,11 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     return HAL_OK;
 }
 
+void uart_enable(USART_TypeDef* handle, bool enable) {
+    if (enable) handle->CR1 |= (USART_CR1_TE | USART_CR1_RE);
+    else        handle->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
+}
+
 hal_err_t uart_dma_init(USART_TypeDef* handle) {
     
     const uint8_t idx = get_index(handle);
@@ -222,9 +227,6 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     dma_set_direct_mode(rx_stream, true);
     dma_set_addresses(rx_stream, &handle->DR, NULL, NULL);
     
-    // Enable USART DMA
-    handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
-
     // Enable DMA stream interrupts
     NVIC_EnableIRQ(s_uart_dma_map[idx].tx.irq_type);
     NVIC_SetPriority(s_uart_dma_map[idx].tx.irq_type, UART_DMA_NVIC_IRQ_PRIORITY);
@@ -244,14 +246,6 @@ hal_err_t uart_get_dma_stream(USART_TypeDef* handle, DMA_Stream_TypeDef** tx, DM
     *rx = s_uart_dma_map[idx].rx.stream;
     
     return HAL_OK;
-}
-
-void uart_enable(USART_TypeDef* handle) {
-    handle->CR1 |= (USART_CR1_TE | USART_CR1_RE);
-}
-
-void uart_disable(USART_TypeDef* handle) {
-    handle->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
 }
 
 void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
@@ -290,7 +284,13 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
     dma_set_trans_length(stream, len);
     
     // Enable DMA TX stream
-    return dma_enable_stream(stream);
+    hal_err_t ret = dma_enable_stream(stream);
+    if (ret != HAL_OK) return ret;
+    
+    // Enable USART DMA
+    handle->CR3 |= USART_CR3_DMAT;
+
+    return HAL_OK;
 }
 
 hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
@@ -314,7 +314,13 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
     dma_set_trans_length(stream, len);
     
     // Enable DMA RX stream
-    return dma_enable_stream(stream);
+    hal_err_t ret = dma_enable_stream(stream);
+    if (ret != HAL_OK) return ret;
+    
+    // Enable USART DMA
+    handle->CR3 |= USART_CR3_DMAR;
+
+    return HAL_OK;
 }
 
 // DMA interrupts
@@ -322,22 +328,27 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len,
 void DMA2_Stream7_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA2_Stream7, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7, DMA_HISR_HTIF7);
     isr_tx_helper(USART1, ret, 0);
+    // Enable USART DMA
+    USART1->CR3 &= ~USART_CR3_DMAT;
 }
 
 // USART1: RX
 void DMA2_Stream2_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
     isr_rx_helper(ret, 0);
+    USART1->CR3 &= ~USART_CR3_DMAR;
 }
 
 // USART2: TX
 void DMA1_Stream6_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA1_Stream6, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
     isr_tx_helper(USART2, ret, 1);
+    USART2->CR3 &= ~USART_CR3_DMAT;
 }
 
 // USART2: RX
 void DMA1_Stream5_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
     isr_rx_helper(ret, 1);
+    USART2->CR3 &= ~USART_CR3_DMAR;
 }

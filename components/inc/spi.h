@@ -33,6 +33,7 @@ typedef struct {
 
 hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable);
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config);
+void spi_master_enable(SPI_TypeDef* handle, bool enable);
 hal_err_t spi_master_dma_init(SPI_TypeDef* handle);
 hal_err_t spi_master_get_dma_stream(SPI_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx);
 
