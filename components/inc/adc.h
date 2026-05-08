@@ -24,7 +24,7 @@ typedef enum : uint8_t {
 
 typedef struct {
     adc_resolution_t resolution;
-
+    uint8_t prescaler;
 
 } adc_config_t;
 
@@ -40,6 +40,10 @@ uint16_t adc_get_sample_oneshot(void);
 
 // DMA backed oneshot API: Transfers N samples into user buffer
 hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg);
+
+// 
+void adc_set_threshold(uint8_t low, uint8_t high);
+void adc_set_sequence(uint8_t sequence);
 
 // Double buffering API
 // @note These APIs are mutually exclusive with the DMA oneshot function

@@ -1,6 +1,6 @@
-set(SRCS
-    printf/printf.c
-)
+cmake_minimum_required(VERSION 4.1)
+
+set(SRCS printf/printf.c)
 
 set(INC
     CMSIS/Device/ST/STM32F4xx/Include/

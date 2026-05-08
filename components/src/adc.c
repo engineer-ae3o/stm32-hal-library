@@ -1,14 +1,13 @@
 #include "adc.h"
-
 #include <stddef.h>
 
 
-// ADC DMA stream
-#define ADC_DMA_CONTROLLER DMA2
-#define ADC_DMA_STREAM     DMA2_Stream0
-#define ADC_DMA_STREAM_NO  0U
-#define ADC_DMA_CHANNEL    0U
-#define ADC_DMA_IRQ_TYPE   DMA2_Stream0_IRQn
+// ADC DMA stream settings
+#define ADC_DMA_CONTROLLER       DMA2
+#define ADC_DMA_STREAM           DMA2_Stream0
+#define ADC_DMA_STREAM_NO        0U
+#define ADC_DMA_CHANNEL          0U
+#define ADC_DMA_IRQ_TYPE         DMA2_Stream0_IRQn
 
 // To save user passed callback
 static dma_trans_done_cb_t s_dma_trans_done_cb = NULL;
@@ -65,7 +64,16 @@ DMA_Stream_TypeDef* adc_get_dma_stream(void) {
 }
 
 uint16_t adc_get_sample_oneshot(void) {
-    return 0;
+    // Disable continuous sampling
+    ADC1->CR2 &= ~ADC_CR2_CONT;
+
+    // Start a conversion
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+
+    // Poll till the end of conversion is reached
+    while (!(ADC1->SR & ADC_SR_EOC));
+
+    return (uint16_t)ADC1->DR;
 }
 
 hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
@@ -136,4 +144,8 @@ void DMA2_Stream0_IRQHandler(void) {
 
     s_dma_trans_done_cb = NULL;
     s_arg = NULL;
+}
+
+void ADC_IRQHandler(void) {
+
 }

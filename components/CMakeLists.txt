@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 4.1)
+
 set(SRCS
     src/i2c.c
     src/i2s.c

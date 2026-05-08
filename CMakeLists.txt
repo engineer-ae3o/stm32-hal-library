@@ -32,16 +32,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Wall -fdata-sections \
                -Werror -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 -ffunction-sections \
-               -Wsign-conversion -fno-common -fstrict-aliasing -std=gnu23 -Wdouble-promotion \
-               -Wstrict-prototypes -Wnull-dereference -Wcast-align -fstrict-overflow \
-               -Wduplicated-branches -Wswitch-enum -Wlogical-op -Wduplicated-cond -Wimplicit-int")
+               -Wsign-conversion -fno-common -fstrict-aliasing -Wdouble-promotion -fstack-usage \
+               -Wstrict-prototypes -Wnull-dereference -Wcast-align -fstrict-overflow -Wimplicit-int \
+               -Wduplicated-branches -Wswitch-enum -Wlogical-op -Wduplicated-cond -Wstrict-aliasing=2")
 
 set(CMAKE_CXX_FLAGS_DEBUG "-Og -g3 -ggdb -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wl,-s -DNDEBUG")
 
 set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/linker.ld")
 
-set(CMAKE_C_FLAGS "${MCU_FLAGS}")
+set(CMAKE_C_FLAGS "${MCU_FLAGS} -std=gnu23")
 set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--cref \
                             -Wl,--gc-sections --specs=nano.specs")
 
@@ -68,6 +68,11 @@ add_executable(${CMAKE_PROJECT_NAME} ${SRCS})
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
     hals
     external
+)
+
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC components/external/CMSIS/Device/ST/STM32F4xx/Include/
+                                                        components/external/CMSIS/Include/
+                                                        components/inc/
 )
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE ${Defines})
