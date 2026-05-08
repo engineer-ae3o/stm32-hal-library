@@ -1,0 +1,12 @@
+build/
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+.vscode/
+.cache/
+CMakeFiles/
+CMakeCache.txt
