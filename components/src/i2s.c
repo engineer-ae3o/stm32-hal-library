@@ -405,5 +405,10 @@ uint8_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle) {
 
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
 
+    // CT represents the active buffer, that is, the
+    // buffer currently in use by the dma controller.
+    // 0 represents buf_a, and 1 buf_b. If the bit
+    // is 0, that means buf_a is currently being used
+    // by the DMA controller buf_b is filled and free
     return (stream->CR & DMA_SxCR_CT) ? 0x0U : 0x1U;
 }
