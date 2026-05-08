@@ -11,7 +11,7 @@
 #define ADC_DMA_IRQ_TYPE   DMA2_Stream0_IRQn
 
 // To save user passed callback
-static dma_trans_done_cb_t s_conversion_done_callback = NULL;
+static dma_trans_done_cb_t s_dma_trans_done_cb = NULL;
 static void* s_arg = NULL;
 
 
@@ -76,7 +76,7 @@ hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t
     
     // Save user passed callback
     if (callback) {
-        s_conversion_done_callback = callback;
+        s_dma_trans_done_cb = callback;
         s_arg = arg;
     }
     
@@ -99,7 +99,7 @@ hal_err_t adc_dbm_init(void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb
     
     // Save user passed callback
     if (callback) {
-        s_conversion_done_callback = callback;
+        s_dma_trans_done_cb = callback;
         s_arg = arg;
     }
     
@@ -123,4 +123,17 @@ hal_err_t adc_dbm_start(void) {
 
 hal_err_t adc_dbm_stop(void) {
     return dma_disable_stream(ADC_DMA_STREAM);
+}
+
+void DMA2_Stream0_IRQHandler(void) {
+    hal_err_t ret = dma_isr_helper(DMA2_Stream0, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0, DMA_LISR_HTIF0);
+
+    // Invoke user callback
+    if (s_dma_trans_done_cb) s_dma_trans_done_cb(s_arg, ret);
+
+    // If in circular mode or dbm, return so as not to clear user callback
+    if (ADC_DMA_STREAM->CR & (DMA_SxCR_CIRC| DMA_SxCR_DBM)) return;
+
+    s_dma_trans_done_cb = NULL;
+    s_arg = NULL;
 }

@@ -104,11 +104,13 @@ static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream, volatile uint
         error = HAL_DMA_ERR_UNKNOWN;
     }
     
-    // Only disable the stream if not in circular mode
-    if (!(stream->CR & DMA_SxCR_CIRC)) {
-        hal_err_t ret = dma_disable_stream(stream);
-        if (ret != HAL_OK) error = ret;
-    }
+    // Return if the stream is in circular mode or half transfer,
+    // so as not to disable the DMA strean. Everything else should
+    // disable the stream since not being used till the next transfer
+    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_HTIE | DMA_SxCR_DBM)) return error;
+    
+    hal_err_t ret = dma_disable_stream(stream);
+    if (ret != HAL_OK) error = ret;
 
     return error;
 }

@@ -15,15 +15,17 @@ extern "C" {
 #include <stdbool.h>
 
 
-typedef struct {
-    bool cpol;
-    bool use_mck;
-    uint8_t mck;
+typedef enum : uint8_t {
+    ADC_RESOLUTION_6_BITS = 0,
+    ADC_RESOLUTION_8_BITS,
+    ADC_RESOLUTION_10_BITS,
+    ADC_RESOLUTION_12_BITS
+} adc_resolution_t;
 
-    uint8_t ws;
-    uint8_t sd;
-    uint8_t sck;
-    GPIO_TypeDef* gpio_port;
+typedef struct {
+    adc_resolution_t resolution;
+
+
 } adc_config_t;
 
 void adc_clk_enable(bool enable);
@@ -33,10 +35,10 @@ void adc_init(const adc_config_t* config);
 hal_err_t adc_dma_init(void);
 DMA_Stream_TypeDef* adc_get_dma_stream(void);
 
-// Polling oneshot function
+// Polling oneshot function: Returns 1 sample
 uint16_t adc_get_sample_oneshot(void);
 
-// DMA backed oneshot API
+// DMA backed oneshot API: Transfers N samples into user buffer
 hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg);
 
 // Double buffering API

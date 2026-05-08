@@ -25,14 +25,14 @@ typedef struct {
 // Modify that and everything breaks. It also encodes
 // the bit for ODD and the SPI_I2SPR_MCKOE bit
 static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
-    [I2S_FREQ_8kHz]   = { .prescaler = 0U, .prescaler_with_mck = 0U },
-    [I2S_FREQ_16kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
-    [I2S_FREQ_22kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
-    [I2S_FREQ_32kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
-    [I2S_FREQ_44kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
-    [I2S_FREQ_48kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
-    [I2S_FREQ_96kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
-    [I2S_FREQ_192kHz] = { .prescaler = 0U, .prescaler_with_mck = 0U }
+    [(uint8_t)I2S_FREQ_8kHz]   = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [(uint8_t)I2S_FREQ_16kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [(uint8_t)I2S_FREQ_22kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [(uint8_t)I2S_FREQ_32kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [(uint8_t)I2S_FREQ_44kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [(uint8_t)I2S_FREQ_48kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [(uint8_t)I2S_FREQ_96kHz]  = { .prescaler = 0U, .prescaler_with_mck = 0U },
+    [(uint8_t)I2S_FREQ_192kHz] = { .prescaler = 0U, .prescaler_with_mck = 0U }
 };
 
 // Mapping for the DMA channels for the 5 I2S channels
@@ -298,8 +298,7 @@ hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx
     return HAL_OK;
 }
 
-hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len,
-                              dma_trans_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
     
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
@@ -325,8 +324,7 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len
     return dma_enable_stream(stream);
 }
 
-hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len,
-                             dma_trans_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
     
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
@@ -347,8 +345,7 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len,
     return dma_enable_stream(stream);
 }
 
-hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b,
-                              uint16_t len, dma_trans_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
     
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) return HAL_INVALID_ARG;
