@@ -76,6 +76,7 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable);
 
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config);
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle);
+hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx);
 
 // DMA backed transfers API
 hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len,
@@ -84,17 +85,22 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len,
                              dma_trans_done_cb_t callback, void* arg);
 
 // Double buffering API
-// NOTE: These API are mutually exclusive with the API above
-// NOTE: Only data reception is supported
+// @note These APIs are mutually exclusive with the DMA oneshot functions
+// @note Only data reception is supported. User should determine
+// which buffer is free with `i2s_master_dbm_get_filled_buffer()`
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b,
-                              uint16_t len, dma_dbm_done_cb_t cb, void* arg);
+                              uint16_t len, dma_trans_done_cb_t callback, void* arg);
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);
 
 // When start is called, the DMA starts filling buffer A, and
 // then the isr is fired on completion, the starts filling B
-// NOTE: Calling stop can cause the peripheral to drop samples
+// @note Calling stop can cause the peripheral to drop samples
 hal_err_t i2s_master_dbm_start(I2S_TypeDef* handle);
 hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle);
+
+// @return `0x0` if buf_a is filled and the DMA controller has started filling buf_b,
+// `0x1` if buf_b is filled and buf_a is in use, and `0xFF` if an invalid arg is passed
+uint8_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle);
 
 
 #ifdef __cplusplus

@@ -28,6 +28,7 @@ typedef struct {
 hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable);
 hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config);
 hal_err_t uart_dma_init(USART_TypeDef* handle);
+hal_err_t uart_get_dma_stream(USART_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx);
 
 void uart_enable(USART_TypeDef* handle);
 void uart_disable(USART_TypeDef* handle);

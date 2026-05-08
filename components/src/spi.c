@@ -78,9 +78,11 @@ static inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx
     // Invoke user callback
     s_dma_tx_done_cbs[idx](s_tx_args[idx], ret);
 
-    // Clear user passed context
-    s_dma_tx_done_cbs[idx] = NULL;
-    s_tx_args[idx] = NULL;
+    // Only clear user callback if not in circular mode
+    if (!(s_spi_dma_map[idx].tx.stream->CR & DMA_SxCR_CIRC)) {
+        s_dma_tx_done_cbs[idx] = NULL;
+        s_tx_args[idx] = NULL;
+    }
 }
 
 static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
@@ -90,9 +92,11 @@ static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
     // Invoke user callback
     s_dma_rx_done_cbs[idx](s_rx_args[idx], ret);
 
-    // Clear user passed context
-    s_dma_rx_done_cbs[idx] = NULL;
-    s_rx_args[idx] = NULL;
+    // Only clear user callback if not in circular mode
+    if (!(s_spi_dma_map[idx].rx.stream->CR & DMA_SxCR_CIRC)) {
+        s_dma_rx_done_cbs[idx] = NULL;
+        s_rx_args[idx] = NULL;
+    }
 }
 
 
@@ -272,6 +276,17 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     NVIC_EnableIRQ(s_spi_dma_map[idx].rx.irq_type);
     NVIC_SetPriority(s_spi_dma_map[idx].rx.irq_type, SPI_DMA_NVIC_IRQ_PRIORITY);
 
+    return HAL_OK;
+}
+
+hal_err_t spi_master_get_dma_stream(SPI_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
+    
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
+
+    *tx = s_spi_dma_map[idx].tx.stream;
+    *rx = s_spi_dma_map[idx].rx.stream;
+    
     return HAL_OK;
 }
 
@@ -553,6 +568,18 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     if (ret != HAL_OK) return ret;
 
     return dma_enable_stream(rx_stream);
+}
+
+// To be used by `i2s.c`
+void spi_master_register_callback(dma_trans_done_cb_t callback, void* arg, 
+                                  uint8_t idx, bool tx) {
+    if (tx) {
+        s_dma_tx_done_cbs[idx] = callback;
+        s_tx_args[idx] = arg;
+    } else {
+        s_dma_rx_done_cbs[idx] = callback;
+        s_rx_args[idx] = arg;
+    }
 }
 
 // DMA interrupts

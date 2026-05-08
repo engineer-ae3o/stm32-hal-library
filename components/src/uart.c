@@ -235,6 +235,17 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     return HAL_OK;
 }
 
+hal_err_t uart_get_dma_stream(USART_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
+    
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
+
+    *tx = s_uart_dma_map[idx].tx.stream;
+    *rx = s_uart_dma_map[idx].rx.stream;
+    
+    return HAL_OK;
+}
+
 void uart_enable(USART_TypeDef* handle) {
     handle->CR1 |= (USART_CR1_TE | USART_CR1_RE);
 }

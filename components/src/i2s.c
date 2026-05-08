@@ -1,21 +1,10 @@
 #include "stm32f411xe.h"
+#include "spi.h"
 #include "i2s.h"
 #include "gpio.h"
 
 #include <stddef.h>
 
-
-// The 5 I2S instances: ISRs called when DMA transfers are done
-// TX
-static dma_trans_done_cb_t s_dma_tx_done_cbs[5] = {};
-static void* s_tx_args[5] = {};
-// RX
-static dma_trans_done_cb_t s_dma_rx_done_cbs[5] = {};
-static void* s_rx_args[5] = {};
-
-// Double Buffering mode: RX only
-static dma_dbm_done_cb_t s_dma_dbm_done_cb[5] = {};
-static void* s_dbm_args[5] = {};
 
 // Audio PLL check. To use a different PLL clock speed
 // provide a corresponding prescaler table, update the
@@ -75,7 +64,6 @@ static const dma_stream_map_t s_i2s_dma_map[5] = {
     }
 };
 
-
 // Helpers
 static inline uint8_t get_index(const I2S_TypeDef* handle) {
     if      (handle == I2S1) return 0U;
@@ -85,6 +73,7 @@ static inline uint8_t get_index(const I2S_TypeDef* handle) {
     else if (handle == I2S5) return 4U;
     else                     return 0xFFU;
 }
+
 
 // Public API
 void i2s_pll_init(void) {
@@ -296,6 +285,17 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     return HAL_OK;
 }
 
+hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
+    
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return HAL_INVALID_ARG;
+
+    *tx = s_i2s_dma_map[idx].tx.stream;
+    *rx = s_i2s_dma_map[idx].rx.stream;
+    
+    return HAL_OK;
+}
+
 hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len,
                               dma_trans_done_cb_t callback, void* arg) {
     
@@ -304,10 +304,7 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len
     if (idx == 0xFFU) return HAL_INVALID_ARG;
     
     // Save user passed callback
-    if (callback) {
-        s_dma_tx_done_cbs[idx] = callback;
-        s_tx_args[idx] = arg;
-    }
+    if (callback) spi_master_register_callback(callback, arg, idx, true);
     
     // TX mapping
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].tx.stream;
@@ -334,10 +331,7 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len,
     if (idx == 0xFFU) return HAL_INVALID_ARG;
     
     // Save user passed callback
-    if (callback) {
-        s_dma_rx_done_cbs[idx] = callback;
-        s_rx_args[idx] = arg;
-    }
+    if (callback) spi_master_register_callback(callback, arg, idx, false);
     
     // RX mapping
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
@@ -352,8 +346,8 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len,
 }
 
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b,
-                              uint16_t len, dma_dbm_done_cb_t cb, void* arg) {
-
+                              uint16_t len, dma_trans_done_cb_t callback, void* arg) {
+    
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) return HAL_INVALID_ARG;
 
@@ -367,10 +361,11 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b,
     dma_set_addresses(stream, &handle->DR, buf_a, buf_b);
     dma_set_trans_length(stream, len);
     
-    if (cb) {
-        s_dma_dbm_done_cb[idx] = cb;
-        s_dbm_args[idx] = arg;
-    }
+    // Write 0 to CT to ensure the DMA controller starts at `buf_a`
+    stream->CR &= ~DMA_SxCR_CT;
+    
+    // Save user passed callback
+    if (callback) spi_master_register_callback(callback, arg, idx, false);
     
     return HAL_OK;
 }
@@ -387,9 +382,6 @@ hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle) {
 
     dma_enable_circm_dbm(stream, false, false);
     dma_set_trans_length(stream, 0);
-
-    s_dma_dbm_done_cb[idx] = NULL;
-    s_dbm_args[idx] = NULL;
     
     return HAL_OK;
 }
@@ -404,4 +396,14 @@ hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) return HAL_INVALID_ARG;
     return dma_disable_stream(s_i2s_dma_map[idx].rx.stream);
+}
+
+uint8_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle) {
+
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) return 0xFFU;
+
+    DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
+
+    return (stream->CR & DMA_SxCR_CT) ? 0x0U : 0x1U;
 }
