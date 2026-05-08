@@ -26,9 +26,10 @@ typedef struct {
     GPIO_TypeDef* gpio_port;
 } adc_config_t;
 
-hal_err_t adc_clk_enable(bool enable);
+void adc_clk_enable(bool enable);
+void adc_power_on(bool on);
 
-hal_err_t adc_init(const adc_config_t* config);
+void adc_init(const adc_config_t* config);
 hal_err_t adc_dma_init(void);
 DMA_Stream_TypeDef* adc_get_dma_stream(void);
 

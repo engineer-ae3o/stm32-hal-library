@@ -17,13 +17,14 @@ extern "C" {
 #define HSI_VALUE_MHZ                16U
 #define USE_HSE                      1U
 
-// At 100MHz, this is 100us: suitable for most cases
+// At 100MHz, this is 100us: suitable for most use cases
 #define TIMEOUT_CYCLES               10'000UL
 
 // SPI DMA has the highest priority
 #define SPI_DMA_NVIC_IRQ_PRIORITY    6U
 #define UART_DMA_NVIC_IRQ_PRIORITY   8U
 #define I2S_DMA_NVIC_IRQ_PRIORITY    12U
+#define ADC_DMA_NVIC_IRQ_PRIORITY    12U
 
 
 typedef enum hal_err_t : uint8_t {
