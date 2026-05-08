@@ -71,6 +71,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 
     // I2C configuration
     handle->CR1 |= I2C_CR1_ACK;
+    handle->CR2 &= ~I2C_CR2_FREQ;
     handle->CR2 |= (config->apb1_bus_freq_mhz << I2C_CR2_FREQ_Pos);
 
     // Clock configuration

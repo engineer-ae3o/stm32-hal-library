@@ -100,7 +100,7 @@ hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle);
 
 // @return `0x0` if buf_a is filled and the DMA controller has started filling buf_b,
 // `0x1` if buf_b is filled and buf_a is in use, and `0xFF` if an invalid arg is passed
-uint8_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle);
+uint32_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle);
 
 
 #ifdef __cplusplus

@@ -157,7 +157,7 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
         if (ret != HAL_OK) return ret;
         gpio_enable_pullup(config->gpio_port, config->miso, true);
         gpio_set_speed_mode(config->gpio_port, config->miso, GPIO_HIGH_SPEED);
-        gpio_set_output_type(config->gpio_port, config->miso, GPIO_PUSH_PULL);
+        // MISO cannot be configured as push pull or open drain
     }
     
     if (config->use_mosi) {
@@ -165,7 +165,7 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
         if (ret != HAL_OK) return ret;
         gpio_enable_pullup(config->gpio_port, config->mosi, true);
         gpio_set_speed_mode(config->gpio_port, config->mosi, GPIO_HIGH_SPEED);
-        gpio_set_output_type(config->gpio_port, config->mosi, GPIO_PUSH_PULL);
+        gpio_set_output_type(config->gpio_port, config->miso, GPIO_PUSH_PULL);
     }
 
     ret = gpio_set_alternate_function(config->gpio_port, config->sclk, alt_val);

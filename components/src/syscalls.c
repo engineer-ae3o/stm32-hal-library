@@ -109,7 +109,7 @@ int _write(int, char*, int) {
 
 caddr_t _sbrk(int) {
     errno = ENOMEM;
-    return (caddr_t)-1;;
+    return (caddr_t)-1;
 }
 
 int _fstat(int, struct stat*) {

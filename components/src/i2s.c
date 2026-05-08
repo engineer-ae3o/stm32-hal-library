@@ -398,7 +398,7 @@ hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle) {
     return dma_disable_stream(s_i2s_dma_map[idx].rx.stream);
 }
 
-uint8_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle) {
+uint32_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle) {
 
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) return 0xFFU;

@@ -1,40 +1,46 @@
 #include "adc.h"
 
 
-hal_err_t adc_init(ADC_TypeDef* handle, const adc_config_t* config) {
+hal_err_t adc_clk_enable(bool enable) {
 
-    (void)handle;
-    (void)config;
-
-    return HAL_OK;
 }
 
-hal_err_t adc_dma_init(ADC_TypeDef* handle) {
+hal_err_t adc_init(const adc_config_t* config) {
 
-    (void)handle;
-
-    return HAL_OK;
 }
 
-uint16_t adc_get_sample_oneshot(ADC_TypeDef* handle) {
+hal_err_t adc_dma_init(void) {
 
-    (void)handle;
-
-    return 0U;
 }
 
-hal_err_t adc_start_sampling(ADC_TypeDef* handle, void* buf, uint16_t len) {
+DMA_Stream_TypeDef* adc_get_dma_stream(void) {
 
-    (void)handle;
-    (void)buf;
-    (void)len;
-
-    return HAL_OK;
 }
 
-hal_err_t adc_stop_sampling(ADC_TypeDef* handle) {
+uint16_t adc_get_sample_oneshot(void) {
 
-    (void)handle;
+}
 
-    return HAL_OK;
+hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
+    
+}
+
+hal_err_t adc_dbm_init(void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
+    
+}
+
+hal_err_t adc_dbm_deinit(void) {
+
+}
+
+hal_err_t adc_dbm_start(void) {
+
+}
+
+hal_err_t adc_dbm_stop(void) {
+
+}
+
+uint32_t adc_dbm_get_filled_buffer(void) {
+
 }
