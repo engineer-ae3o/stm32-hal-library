@@ -39,8 +39,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 set(CMAKE_C_FLAGS "-Wall -Wstrict-aliasing=2 -Wimplicit-int -Wduplicated-cond -Werror \
                    -Wlogical-op -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 \
                    -Wsign-conversion -fstrict-aliasing -Wdouble-promotion -fstack-usage \
-                   -Wstrict-prototypes -Wnull-dereference -Wcast-align -fstrict-overflow  \
-                   -Wduplicated-branches -Wswitch-enum")
+                   -Wswitch-enum -Wnull-dereference -Wcast-align -fstrict-overflow  \
+                   -Wduplicated-branches")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 
@@ -72,7 +72,7 @@ endif()
 
 
 # Process subdirectories
-add_subdirectory(components/f411-hal/)
+add_subdirectory(components/drivers/)
 add_subdirectory(components/third-party/RTT/)
 add_subdirectory(components/third-party/o1heap/)
 
@@ -89,9 +89,9 @@ target_compile_definitions(${EXECUTABLE_ELF_NAME} PUBLIC STM32F411xE)
 
 # Link components
 if (BUILD_TESTS)
-    target_link_libraries(${EXECUTABLE_ELF_NAME} PUBLIC tests unity hals rtt o1heap)
+    target_link_libraries(${EXECUTABLE_ELF_NAME} PUBLIC tests unity drivers rtt o1heap)
 else()
-    target_link_libraries(${EXECUTABLE_ELF_NAME} PUBLIC hals rtt o1heap)
+    target_link_libraries(${EXECUTABLE_ELF_NAME} PUBLIC drivers rtt o1heap)
 endif()
 
 

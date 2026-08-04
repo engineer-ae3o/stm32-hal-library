@@ -17,17 +17,19 @@ set(SRCS
 )
 
 set(INC
-    ../components/third-party/RTT/RTT
-    external/CMSIS/Device/ST/STM32F4xx/Include/
-    external/CMSIS/Include/
     inc/
+    ../third-party/o1heap/
+    ../third-party/RTT/RTT/
+    ../third-party/CMSIS/Include/
+    ../third-party/CMSIS/Core/Include/
+    ../third-party/CMSIS/Device/ST/STM32F4xx/Include/
 )
 
 # Create library
-add_library(hals STATIC ${SRCS})
-target_include_directories(hals PUBLIC ${INC})
+add_library(drivers STATIC ${SRCS})
+target_include_directories(drivers PUBLIC ${INC})
 
-set_target_properties(hals PROPERTIES
+set_target_properties(drivers PROPERTIES
     C_STANDARD 23
     C_STANDARD_REQUIRED ON
     C_EXTENSIONS ON
