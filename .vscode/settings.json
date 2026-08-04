@@ -1,0 +1,25 @@
+{
+    "files.associations": {
+        "*.hpp": "cpp",
+        "*.h": "cpp"
+    },
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "cortex-debug.variableUseNaturalFormat": true,
+    "editor.formatOnSave": true,
+    "clangd.path": "clangd",
+    "clangd.arguments": [
+        "--background-index",
+        "--query-driver=arm-none-eabi-g*",
+        "--compile-commands-dir=${workspaceFolder}/build/debug-tests/"
+    ],
+    "[cpp]": {
+        "editor.defaultFormatter": "xaver.clang-format",
+        "editor.formatOnSave": true
+    },
+    "[c]": {
+        "editor.defaultFormatter": "xaver.clang-format",
+        "editor.formatOnSave": true
+    },
+    "workbench.preferredDarkColorTheme": "Solarized Dark",
+    "cmake.configureOnEdit": false,
+}

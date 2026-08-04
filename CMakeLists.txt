@@ -11,10 +11,17 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 
 # Create project
-set(CMAKE_PROJECT_NAME f411-hal)
+set(CMAKE_PROJECT_NAME f411-hal-library)
 
 project(${CMAKE_PROJECT_NAME})
 enable_language(C CXX ASM)
+
+set(EXECUTABLE_NAME f411-hal)
+set(EXECUTABLE_ASM_NAME "${EXECUTABLE_NAME}.s")
+set(EXECUTABLE_ELF_NAME "${EXECUTABLE_NAME}.elf")
+set(EXECUTABLE_BIN_NAME "${EXECUTABLE_NAME}.bin")
+set(EXECUTABLE_MAP_NAME "${EXECUTABLE_NAME}.map")
+
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -29,18 +36,18 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
 
 # Build flags
-set(CMAKE_C_FLAGS "-Wall -Wstrict-aliasing=2 -Wimplicit-int -Wduplicated-cond \
-                   -Werror -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 \
+set(CMAKE_C_FLAGS "-Wall -Wstrict-aliasing=2 -Wimplicit-int -Wduplicated-cond -Werror \
+                   -Wlogical-op -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 \
                    -Wsign-conversion -fstrict-aliasing -Wdouble-promotion -fstack-usage \
                    -Wstrict-prototypes -Wnull-dereference -Wcast-align -fstrict-overflow  \
-                   -Wduplicated-branches -Wswitch-enum -Wlogical-op")
+                   -Wduplicated-branches -Wswitch-enum")
 
-set(CMAKE_CXX_FLAGS "${MCU_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 
 
 # Set linker flags
 set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/stm32411-linker.ld")
-set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${CMAKE_PROJECT_NAME}.map -Wl,--cref \
+set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${EXECUTABLE_MAP_NAME} -Wl,--cref \
                             -Wl,--gc-sections --specs=nano.specs")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -50,32 +57,7 @@ endif()
 message("Build type: ${CMAKE_BUILD_TYPE}")
 
 
-# Create the final static library
-set(EXECUTABLE_NAME f411-hal)
-add_library(${EXECUTABLE_NAME} src/main.cpp src/startup.s)
-
-
-# Set the language standards
-set_target_properties(${EXECUTABLE_NAME} PROPERTIES
-    C_STANDARD 23
-    C_STANDARD_REQUIRED ON
-    C_EXTENSIONS ON
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS ON
-)
-
-
-target_link_libraries(${EXECUTABLE_NAME} PUBLIC
-    hals
-    tests
-    third-party
-)
-
-target_compile_definitions(${EXECUTABLE_NAME} PRIVATE STM32F411xE)
-
-
-# Enable tests to be built. Overridable via -DBUILD_TESTS=ON/OFF or a preset.
+# Enable tests to be built. Overridable via -DBUILD_TESTS=ON/OFF.
 option(BUILD_TESTS "Build the Unity test suite" ON)
 
 # Tests pull in Unity, take up extra flash/RAM, and are meant for interactive
@@ -92,7 +74,7 @@ endif()
 # Process subdirectories
 add_subdirectory(components/f411-hal/)
 add_subdirectory(components/third-party/RTT/)
-add_subdirectory(components/third-party/CMSIS/)
+add_subdirectory(components/third-party/o1heap/)
 
 if (BUILD_TESTS)
     add_subdirectory(components/test/)
@@ -100,22 +82,41 @@ if (BUILD_TESTS)
 endif()
 
 
+# Create the final static library
+add_executable(${EXECUTABLE_ELF_NAME} src/main.cpp src/startup.s)
+target_compile_definitions(${EXECUTABLE_ELF_NAME} PUBLIC STM32F411xE)
+
+
+# Link components
+if (BUILD_TESTS)
+    target_link_libraries(${EXECUTABLE_ELF_NAME} PUBLIC tests unity hals rtt o1heap)
+else()
+    target_link_libraries(${EXECUTABLE_ELF_NAME} PUBLIC hals rtt o1heap)
+endif()
+
+
+# Set the language standards
+set_target_properties(${EXECUTABLE_ELF_NAME} PROPERTIES
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS ON
+)
+
 # Build project to .elf, produce the .bin, dump to get the disassembly and print size
 add_custom_target(build
     COMMENT "Building project"
-    DEPENDS ${EXECUTABLE_NAME}
-    COMMAND ${CMAKE_OBJCOPY} -O binary ${EXECUTABLE_NAME} ${EXECUTABLE_NAME}.bin
-    COMMAND ${CMAKE_OBJDUMP} -D -S ${EXECUTABLE_NAME} > ${EXECUTABLE_NAME}.s
-    COMMAND ${CMAKE_SIZE} ${EXECUTABLE_NAME}
+    DEPENDS ${EXECUTABLE_ELF_NAME}
+    COMMAND ${CMAKE_OBJCOPY} -O binary ${EXECUTABLE_ELF_NAME} ${EXECUTABLE_BIN_NAME}
+    COMMAND ${CMAKE_OBJDUMP} -D -S ${EXECUTABLE_ELF_NAME} > ${EXECUTABLE_ASM_NAME}
+    COMMAND ${CMAKE_SIZE} ${EXECUTABLE_ELF_NAME}
 )
-
 
 # Static analysis with cppcheck
 find_program(CPPCHECK cppcheck)
 
 if(CPPCHECK)
     message(STATUS "Cppcheck found: ${CPPCHECK}")
-    
+
     add_custom_target(cppcheck
     COMMAND mkdir -p ${CMAKE_BINARY_DIR}/.cppcheck
     COMMAND ${CPPCHECK} --enable=all

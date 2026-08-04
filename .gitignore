@@ -10,7 +10,6 @@ sdkconfig.old
 *.hex
 *.map
 *.lst
-.vscode/
 .cache/
 .clangd
 CMakeFiles/

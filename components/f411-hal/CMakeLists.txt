@@ -17,6 +17,7 @@ set(SRCS
 )
 
 set(INC
+    ../components/third-party/RTT/RTT
     external/CMSIS/Device/ST/STM32F4xx/Include/
     external/CMSIS/Include/
     inc/
@@ -30,7 +31,4 @@ set_target_properties(hals PROPERTIES
     C_STANDARD 23
     C_STANDARD_REQUIRED ON
     C_EXTENSIONS ON
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS ON
 )

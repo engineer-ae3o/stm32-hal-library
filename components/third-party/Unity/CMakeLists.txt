@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16...4.1)
+cmake_minimum_required(VERSION 4.0)
 
 add_library(unity STATIC src/unity.c)
 target_include_directories(unity PUBLIC src/)

@@ -1,0 +1,40 @@
+{
+    "version": "2.0.0",
+    "configurations": [
+        {
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/debug-tests/f411-hal.elf",
+            "name": "Debug with OpenOCD",
+            "gdbPath": "arm-none-eabi-gdb",
+            "serverpath": "openocd",
+            "request": "launch",
+            "preLaunchTask": "Flash",
+            "type": "cortex-debug",
+            "device": "STM32F411",
+            "servertype": "openocd",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            },
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
+            "searchDir": [],
+            "runToEntryPoint": "reset_handler",
+            "showDevDebugOutput": "parsed",
+            "svdFile": "${workspaceFolder}/.vscode/STM32F411.svd",
+            "rttConfig": {
+                "enabled": true,
+                "address": "auto",
+                "decoders": [
+                    {
+                        "label": "RTT Log",
+                        "port": 0,
+                        "type": "console"
+                    }
+                ]
+            }
+        },
+    ]
+}

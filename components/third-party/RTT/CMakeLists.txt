@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16...4.1)
+cmake_minimum_required(VERSION 4.0)
 
 add_library(rtt STATIC
     RTT/SEGGER_RTT_ASM_ARMv7M.S
