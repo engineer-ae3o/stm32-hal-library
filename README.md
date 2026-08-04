@@ -1,1 +1,1 @@
-# Implementation of the HAL library
+# Hardware Abstraction Layer for the STM32F411
