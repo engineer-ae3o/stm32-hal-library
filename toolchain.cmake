@@ -18,8 +18,8 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 set(_target_cpu_flags "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16")
 
-set(CMAKE_C_FLAGS_INIT   "${_target_cpu_flags} -ffunction-sections -fdata-sections -fno-common")
-set(CMAKE_CXX_FLAGS_INIT "${_target_cpu_flags} -ffunction-sections -fdata-sections -fno-common")
+set(CMAKE_C_FLAGS_INIT   "${_target_cpu_flags}")
+set(CMAKE_CXX_FLAGS_INIT "${_target_cpu_flags}")
 set(CMAKE_ASM_FLAGS_INIT "${_target_cpu_flags}")
 
 unset(_target_cpu_flags)

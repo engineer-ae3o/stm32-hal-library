@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.1)
+cmake_minimum_required(VERSION 4.0)
 
 set(SRCS
     src/i2c.c
@@ -25,3 +25,12 @@ set(INC
 # Create library
 add_library(hals STATIC ${SRCS})
 target_include_directories(hals PUBLIC ${INC})
+
+set_target_properties(hals PROPERTIES
+    C_STANDARD 23
+    C_STANDARD_REQUIRED ON
+    C_EXTENSIONS ON
+    CXX_STANDARD 23
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS ON
+)
