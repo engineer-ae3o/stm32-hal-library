@@ -5,12 +5,12 @@
 // Forward declarations
 static inline bool send_start(I2C_TypeDef* handle);
 static inline void send_stop(I2C_TypeDef* handle);
-static hal_err_t   tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len);
-static hal_err_t   rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len);
+
+static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len);
+static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len);
 
 // Public API
 hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
-
     if (enable) {
         if (handle == I2C1) {
             RCC->APB1ENR |= RCC_APB1ENR_I2C1EN;
@@ -21,20 +21,18 @@ hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
         } else {
             return HAL_INVALID_ARG;
         }
-        goto done;
-    }
-
-    if (handle == I2C1) {
-        RCC->APB1ENR &= ~RCC_APB1ENR_I2C1EN;
-    } else if (handle == I2C2) {
-        RCC->APB1ENR &= ~RCC_APB1ENR_I2C2EN;
-    } else if (handle == I2C3) {
-        RCC->APB1ENR &= ~RCC_APB1ENR_I2C3EN;
     } else {
-        return HAL_INVALID_ARG;
+        if (handle == I2C1) {
+            RCC->APB1ENR &= ~RCC_APB1ENR_I2C1EN;
+        } else if (handle == I2C2) {
+            RCC->APB1ENR &= ~RCC_APB1ENR_I2C2EN;
+        } else if (handle == I2C3) {
+            RCC->APB1ENR &= ~RCC_APB1ENR_I2C3EN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
     }
 
-done:
     __DSB();
     return HAL_OK;
 }
@@ -116,7 +114,6 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 }
 
 hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len) {
-
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_INVALID_STATE;
@@ -137,7 +134,6 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_
 }
 
 hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len) {
-
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_INVALID_STATE;
@@ -154,7 +150,6 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data
 
 hal_err_t
 i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data, size_t tx_len, uint8_t* rx_data, size_t rx_len) {
-
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_INVALID_STATE;
@@ -215,7 +210,6 @@ static inline void send_stop(I2C_TypeDef* handle) {
 }
 
 static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len) {
-
     // Send address and write bit
     // cppcheck-suppress badBitmaskCheck
     handle->DR = ((uint32_t)(address << 1UL) | 0UL);
@@ -303,7 +297,6 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* d
 }
 
 static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len) {
-
     // Send address and read bit
     handle->DR = ((uint32_t)(address << 1UL) | 1UL);
 

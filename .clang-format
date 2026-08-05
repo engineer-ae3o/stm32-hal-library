@@ -21,12 +21,11 @@ SpacesInParentheses: false
 SpacesInSquareBrackets: false
 SpaceAfterTemplateKeyword: false
 BreakAfterAttributes: Never
-
 SeparateDefinitionBlocks: Always
-MaxEmptyLinesToKeep: 1
+MaxEmptyLinesToKeep: 5
 
 NamespaceIndentation: All
-IndentExternBlock: Indent
+IndentExternBlock: NoIndent
 BreakBeforeBraces: Custom
 BreakTemplateDeclarations: Yes
 AccessModifierOffset: -4

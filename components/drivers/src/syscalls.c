@@ -6,13 +6,20 @@
 #include <errno.h>
 #include <stddef.h>
 #include <sys/stat.h>
+#include <stdatomic.h>
 #include <sys/types.h>
 
-// These are extern declared in the HAL headers. Need to be defined here.
-uint32_t      SystemCoreClock   = {}; // System Clock Frequency
-const uint8_t AHBPrescTable[16] = {}; // AHB prescalers table
-const uint8_t APBPrescTable[8]  = {}; // APB prescalers table
 
+// Use the HSE
+#define USE_HSE
+
+
+// These are extern declared in the CMSIS headers. Need to be defined here.
+uint32_t      SystemCoreClock   = 16'000'000;
+const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
+const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
+
+// Initalizes hardware resources needed before main runs
 void system_init(void) {
     // Enable the FPU
     SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
@@ -76,43 +83,62 @@ void system_init(void) {
 
     // Enable exceptions on divide by 0 and unaligned trapping
     SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk);
+
+    // Configure TIM2 as our tick source
+    // Enable TIM2 clock
+    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+
+    // Configure TIM2 for 1ms interrupts at 100MHz
+    // Prescaler: 100MHz / 100 = 1MHz, so a PSC of 100 - 1 = 99
+    // Auto reload: 1kHz, so an ARR of 1000 - 1 = 999
+    TIM2->PSC = 99;
+    TIM2->ARR = 999;
+    TIM2->EGR = TIM_EGR_UG;
+    TIM2->SR &= ~TIM_SR_UIF;
+    TIM2->DIER |= TIM_DIER_UIE;
+    TIM2->CR1 |= TIM_CR1_CEN;
+
+    // Configure NVIC settings for TIM2
+    NVIC_SetPriority(TIM2_IRQn, 15);
+    NVIC_EnableIRQ(TIM2_IRQn);
 }
 
-const char* hal_err_to_string(hal_err_t err) {
-    switch (err) {
-        case HAL_OK:
-            return "HAL_OK";
-        case HAL_FAIL:
-            return "HAL_FAIL";
-        case HAL_INVALID_ARG:
-            return "HAL_INVALID_ARG";
-        case HAL_INVALID_STATE:
-            return "HAL_INVALID_STATE";
-        case HAL_TIMEOUT:
-            return "HAL_TIMEOUT";
-        case HAL_TX_ERROR:
-            return "HAL_TX_ERROR";
-        case HAL_RX_ERROR:
-            return "HAL_RX_ERROR";
-        case HAL_I2C_DEVICE_NOT_FOUND:
-            return "HAL_I2C_DEVICE_NOT_FOUND";
-        case HAL_I2C_ARBITRATION_LOST:
-            return "HAL_I2C_ARBITRATION_LOST";
-        case HAL_SPI_TXE_FAILED_TO_SET:
-            return "HAL_SPI_TXE_FAILED_TO_SET";
-        case HAL_SPI_BSY_FAILED_TO_CLEAR:
-            return "HAL_SPI_BSY_FAILED_TO_CLEAR";
-        case HAL_UART_TC_FAILED_TO_SET:
-            return "HAL_UART_TC_FAILED_TO_SET";
-        case HAL_DMA_TE:
-            return "HAL_DMA_TE";
-        case HAL_DMA_DME:
-            return "HAL_DMA_DME";
-        case HAL_DMA_ERR_UNKNOWN:
-            return "HAL_DMA_ERR_UNKNOWN";
-        default:
-            return "";
+// Use TIM2 as our tick timer source
+static atomic_uint s_tick_timer_ms = 0;
+
+uint32_t get_tick_ms(void) {
+    return atomic_load_explicit(&s_tick_timer_ms, memory_order_relaxed);
+}
+
+void TIM2_IRQHandler(void) {
+    if (TIM2->SR & TIM_SR_UIF) {
+        // Clear the update interrupt flag and increment the tick counter
+        TIM2->SR &= ~TIM_SR_UIF;
+        atomic_fetch_add_explicit(&s_tick_timer_ms, 1, memory_order_relaxed);
     }
+}
+
+// Convert error codes to string
+const char* err_code_lut[] = {
+    [HAL_OK]                      = "HAL_OK",
+    [HAL_FAIL]                    = "HAL_FAIL",
+    [HAL_INVALID_ARG]             = "HAL_INVALID_ARG",
+    [HAL_INVALID_STATE]           = "HAL_INVALID_STATE",
+    [HAL_TIMEOUT]                 = "HAL_TIMEOUT",
+    [HAL_TX_ERROR]                = "HAL_TX_ERROR",
+    [HAL_RX_ERROR]                = "HAL_RX_ERROR",
+    [HAL_I2C_DEVICE_NOT_FOUND]    = "HAL_I2C_DEVICE_NOT_FOUND",
+    [HAL_I2C_ARBITRATION_LOST]    = "HAL_I2C_ARBITRATION_LOST",
+    [HAL_SPI_TXE_FAILED_TO_SET]   = "HAL_SPI_TXE_FAILED_TO_SET",
+    [HAL_SPI_BSY_FAILED_TO_CLEAR] = "HAL_SPI_BSY_FAILED_TO_CLEAR",
+    [HAL_UART_TC_FAILED_TO_SET]   = "HAL_UART_TC_FAILED_TO_SET",
+    [HAL_DMA_TE]                  = "HAL_DMA_TE",
+    [HAL_DMA_DME]                 = "HAL_DMA_DME",
+    [HAL_DMA_ERR_UNKNOWN]         = "HAL_DMA_ERR_UNKNOWN",
+};
+
+const char* hal_err_to_string(hal_err_t err) {
+    return err_code_lut[err];
 }
 
 // Stub the syscalls needed by newlibc
@@ -140,6 +166,7 @@ int _read(int fd, void* buf, size_t count) {
 
 [[noreturn]] void _exit(int status) {
     (void)status;
+    __asm volatile("bkpt #0");
     while (true) {
     }
 }
@@ -156,7 +183,7 @@ int _kill(pid_t pid, int sig) {
     return -1;
 }
 
-pid_t _getpid() {
+pid_t _getpid(void) {
     return 1;
 }
 
@@ -180,7 +207,7 @@ int _isatty(int fd) {
 }
 
 // Fault Handlers
-__attribute__((naked)) void HardFault_Handler() {
+__attribute__((naked)) void HardFault_Handler(void) {
     __asm volatile("tst lr, #4\n"
                    "ite eq\n"
                    "mrseq r0, msp\n"
@@ -188,7 +215,7 @@ __attribute__((naked)) void HardFault_Handler() {
                    "b hard_fault_dump\n");
 }
 
-__attribute__((naked)) void BusFault_Handler() {
+__attribute__((naked)) void BusFault_Handler(void) {
     __asm volatile("tst lr, #4\n"
                    "ite eq\n"
                    "mrseq r0, msp\n"
@@ -196,7 +223,7 @@ __attribute__((naked)) void BusFault_Handler() {
                    "b bus_fault_dump\n");
 }
 
-__attribute__((naked)) void UsageFault_Handler() {
+__attribute__((naked)) void UsageFault_Handler(void) {
     __asm volatile("tst lr, #4\n"
                    "ite eq\n"
                    "mrseq r0, msp\n"

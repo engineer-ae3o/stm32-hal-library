@@ -1,9 +1,8 @@
 #include "gpio.h"
 #include <stdint.h>
 
-
 hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
-    
+
     if (enable) {
         if (port == GPIOA) {
             RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
@@ -22,7 +21,7 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
         }
         goto done;
     }
-    
+
     if (port == GPIOA) {
         RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOAEN;
     } else if (port == GPIOB) {
@@ -38,7 +37,7 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
     } else {
         return HAL_INVALID_ARG;
     }
-    
+
 done:
     __DSB();
     return HAL_OK;
@@ -80,17 +79,24 @@ hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, uint8_t pin, uint8_t a
 
 void gpio_enable_pullup(GPIO_TypeDef* port, uint8_t pin, bool enable) {
     port->PUPDR &= ~(0b11UL << (pin * 2));
-    if (enable) port->PUPDR |= (0b1UL << (pin * 2));
+    if (enable) {
+        port->PUPDR |= (0b1UL << (pin * 2));
+    }
 }
 
 void gpio_enable_pulldown(GPIO_TypeDef* port, uint8_t pin, bool enable) {
     port->PUPDR &= ~(0b11UL << (pin * 2));
-    if (enable) port->PUPDR |= (0b10UL << (pin * 2));
+    if (enable) {
+        port->PUPDR |= (0b10UL << (pin * 2));
+    }
 }
 
 void gpio_set_output_type(GPIO_TypeDef* port, uint8_t pin, gpio_output_type_t type) {
-    if ((uint8_t)type) port->OTYPER |= (1UL << pin);
-    else               port->OTYPER &= ~(1UL << pin);
+    if ((uint8_t)type) {
+        port->OTYPER |= (1UL << pin);
+    } else {
+        port->OTYPER &= ~(1UL << pin);
+    }
 }
 
 void gpio_set_speed_mode(GPIO_TypeDef* port, uint8_t pin, gpio_speed_mode_t mode) {
@@ -144,16 +150,20 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_
     SYSCFG->EXTICR[reg_idx] |= (port_code << bit_pos);
 
     // Extract rising and falling bits from edge variable
-    const bool rising = (uint8_t)edge & 0x1U;
+    const bool rising  = (uint8_t)edge & 0x1U;
     const bool falling = ((uint8_t)edge >> 0b1U) & 0x1U;
- 
+
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(0b1UL << pin);
     EXTI->FTSR &= ~(0b1UL << pin);
 
     // Set interrupts edge registers if enabled
-    if (rising)  EXTI->RTSR |= (0b1UL << pin);
-    if (falling) EXTI->FTSR |= (0b1UL << pin);
+    if (rising) {
+        EXTI->RTSR |= (0b1UL << pin);
+    }
+    if (falling) {
+        EXTI->FTSR |= (0b1UL << pin);
+    }
 
     // Unmask interrupts for pin
     EXTI->IMR |= (0b1UL << pin);
@@ -175,7 +185,7 @@ void gpio_clear_interrupt(GPIO_TypeDef*, uint8_t pin) {
     // Clear both interrupt edge registers
     EXTI->RTSR &= ~(0b1UL << pin);
     EXTI->FTSR &= ~(0b1UL << pin);
-    
+
     // Clear interrupt flag
     EXTI->PR |= (0b1UL << pin);
 

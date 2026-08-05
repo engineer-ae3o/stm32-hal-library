@@ -9,20 +9,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install latest clang-format
+      - name: Install clang-format
         run: |
-          wget https://apt.llvm.org/llvm.sh -O llvm.sh
+          wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 22
           sudo apt-get install -y clang-format-22
-          clang-format-22 --version
 
       - name: Check formatting
         run: |
-          FILES=$(git ls-files '*.c' '*.cc' '*.cpp' '*.h' '*.hpp' -- ':!components/cmsis-device-f1')
+          FILES=$(git ls-files '*.c' '*.cc' '*.cpp' '*.h' '*.hpp'
           if [ -z "$FILES" ]; then
-          echo "No matching files, nothing to check."
-          exit 0
+            echo "No matching files, nothing to check."
+            exit 0
           fi
           echo "$FILES" | xargs clang-format-22 --style=file --dry-run --Werror
 
@@ -34,12 +33,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup Latest CMake & Ninja
+        uses: lukka/get-cmake@latest
+
       - name: Install Toolchain
         run: |
-          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
-          echo "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi binutils-arm-none-eabi
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
 
       - name: Configure
         run: cmake --preset debug-tests
@@ -55,12 +55,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup Latest CMake & Ninja
+        uses: lukka/get-cmake@latest
+
       - name: Install Toolchain
         run: |
-          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
-          echo "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi binutils-arm-none-eabi
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
 
       - name: Configure
         run: cmake --preset debug
@@ -76,12 +77,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup Latest CMake & Ninja
+        uses: lukka/get-cmake@latest
+
       - name: Install Toolchain
         run: |
-          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
-          echo "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi binutils-arm-none-eabi
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
 
       - name: Configure
         run: cmake --preset release
@@ -97,12 +99,13 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Setup Latest CMake & Ninja
+        uses: lukka/get-cmake@latest
+
       - name: Install Toolchain & Cppcheck
         run: |
-          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
-          echo "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi binutils-arm-none-eabi cppcheck
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi cppcheck
 
       - name: Configure Presets
         run: cmake --preset debug-tests

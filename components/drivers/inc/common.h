@@ -10,64 +10,63 @@ extern "C" {
 #include <stdint.h>
 
 
-#define CLOCK_SPEED_HZ               100'000'000UL
-#define AUDIO_PLL_HZ                 76'800'000UL
+// Core clock and audio PLL frequencies
+constexpr uint32_t CLOCK_SPEED_HZ = 100'000'000;
+constexpr uint32_t AUDIO_PLL_HZ   = 76'800'000;
 
-#define HSE_VALUE_MHZ                25U
-#define HSI_VALUE_MHZ                16U
-#define USE_HSE                      1U
+// HSI and HSE clocks
+constexpr uint32_t HSE_VALUE_MHZ = 25;
+constexpr uint32_t HSI_VALUE_MHZ = 16;
 
 // At 100MHz, this is 100us: suitable for most use cases
-#define TIMEOUT_CYCLES               10'000UL
+constexpr uint32_t TIMEOUT_CYCLES = 10'000;
 
 // SPI DMA has the highest priority
-#define SPI_DMA_NVIC_IRQ_PRIORITY    6U
-#define UART_DMA_NVIC_IRQ_PRIORITY   8U
-#define I2S_DMA_NVIC_IRQ_PRIORITY    12U
-#define ADC_DMA_NVIC_IRQ_PRIORITY    12U
-
+constexpr uint32_t SPI_DMA_NVIC_IRQ_PRIORITY  = 6;
+constexpr uint32_t UART_DMA_NVIC_IRQ_PRIORITY = 8;
+constexpr uint32_t I2S_DMA_NVIC_IRQ_PRIORITY  = 12;
+constexpr uint32_t ADC_DMA_NVIC_IRQ_PRIORITY  = 12;
 
 typedef enum hal_err_t : uint8_t {
     // Success
-    HAL_OK                        = 0x00U,
+    HAL_OK = 0,
 
     // Generic failure
-    HAL_FAIL                      = 0x01U,
+    HAL_FAIL,
 
     // More specific errors
-    HAL_INVALID_ARG               = 0x02U,
-    HAL_INVALID_STATE             = 0x03U,
-    HAL_TIMEOUT                   = 0x04U,
+    HAL_INVALID_ARG,
+    HAL_INVALID_STATE,
+    HAL_TIMEOUT,
 
     // Generic Transfer and Reception failures
-    HAL_TX_ERROR                  = 0x05U,
-    HAL_RX_ERROR                  = 0x06U,
+    HAL_TX_ERROR,
+    HAL_RX_ERROR,
 
     // I2C extensions
-    HAL_I2C_DEVICE_NOT_FOUND      = 0x07U,
-    HAL_I2C_ARBITRATION_LOST      = 0x08U,
+    HAL_I2C_DEVICE_NOT_FOUND,
+    HAL_I2C_ARBITRATION_LOST,
 
     // SPI extensions
-    HAL_SPI_TXE_FAILED_TO_SET     = 0x09U,
-    HAL_SPI_BSY_FAILED_TO_CLEAR   = 0x0AU,
-    
+    HAL_SPI_TXE_FAILED_TO_SET,
+    HAL_SPI_BSY_FAILED_TO_CLEAR,
+
     // UART extension
-    HAL_UART_TC_FAILED_TO_SET     = 0x0BU,
-    
+    HAL_UART_TC_FAILED_TO_SET,
+
     // DMA extensions
-    HAL_DMA_TE                    = 0x0CU,
-    HAL_DMA_DME                   = 0x0DU,
-    HAL_DMA_ERR_UNKNOWN           = 0x0EU,
-    
+    HAL_DMA_TE,
+    HAL_DMA_DME,
+    HAL_DMA_ERR_UNKNOWN,
 } hal_err_t;
 
-
 const char* hal_err_to_string(hal_err_t err);
+
+uint32_t get_tick_ms(void);
 
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif // _COMMON_H_
