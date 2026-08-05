@@ -5,9 +5,9 @@ if(NOT CMAKE_TOOLCHAIN_FILE)
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/toolchain.cmake)
 endif()
 
-set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 
 
 # Create project
@@ -16,11 +16,11 @@ set(CMAKE_PROJECT_NAME f411-hal-library)
 project(${CMAKE_PROJECT_NAME})
 enable_language(C CXX ASM)
 
-set(EXECUTABLE_NAME f411-hal)
-set(EXECUTABLE_ASM_NAME "${EXECUTABLE_NAME}.s")
-set(EXECUTABLE_ELF_NAME "${EXECUTABLE_NAME}.elf")
-set(EXECUTABLE_BIN_NAME "${EXECUTABLE_NAME}.bin")
-set(EXECUTABLE_MAP_NAME "${EXECUTABLE_NAME}.map")
+set(EXE_NAME f411-hal)
+set(EXE_ASM_NAME "${EXE_NAME}.s")
+set(EXE_ELF_NAME "${EXE_NAME}.elf")
+set(EXE_BIN_NAME "${EXE_NAME}.bin")
+set(EXE_MAP_NAME "${EXE_NAME}.map")
 
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -36,18 +36,18 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
 
 # Build flags
-set(CMAKE_C_FLAGS "-Wall -Wstrict-aliasing=2 -Wimplicit-int -Wduplicated-cond -Werror \
-                   -Wlogical-op -Wextra -Wshadow -Wconversion -Wwrite-strings -Wformat=2 \
-                   -Wsign-conversion -fstrict-aliasing -Wdouble-promotion -fstack-usage \
-                   -Wswitch-enum -Wnull-dereference -Wcast-align -fstrict-overflow  \
-                   -Wduplicated-branches")
+set(CMAKE_C_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
+                   -Wall -Wstrict-aliasing=2 -Wduplicated-branches -Wduplicated-cond -Werror \
+                   -Wlogical-op -Wextra -Wshadow -Wno-conversion -Wwrite-strings -Wformat=2 \
+                   -fstrict-overflow -fstrict-aliasing -Wdouble-promotion -fstack-usage \
+                   -Wswitch-enum -Wnull-dereference -Wcast-align -Wno-sign-conversion")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 
 
 # Set linker flags
 set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/stm32411-linker.ld")
-set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${EXECUTABLE_MAP_NAME} -Wl,--cref \
+set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${EXE_MAP_NAME} -Wl,--cref \
                             -Wl,--gc-sections --specs=nano.specs")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -83,20 +83,23 @@ endif()
 
 
 # Create the final static library
-add_executable(${EXECUTABLE_ELF_NAME} src/main.cpp src/startup.s)
-target_compile_definitions(${EXECUTABLE_ELF_NAME} PUBLIC STM32F411xE)
+add_executable(${EXE_ELF_NAME} src/main.cpp src/startup.s)
+target_compile_definitions(${EXE_ELF_NAME} PUBLIC STM32F411xE)
 
 
 # Link components
 if (BUILD_TESTS)
-    target_link_libraries(${EXECUTABLE_ELF_NAME} PUBLIC tests unity drivers rtt o1heap)
+    target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers rtt o1heap)
 else()
-    target_link_libraries(${EXECUTABLE_ELF_NAME} PUBLIC drivers rtt o1heap)
+    target_link_libraries(${EXE_ELF_NAME} PUBLIC drivers rtt o1heap)
 endif()
 
 
 # Set the language standards
-set_target_properties(${EXECUTABLE_ELF_NAME} PROPERTIES
+set_target_properties(${EXE_ELF_NAME} PROPERTIES
+    C_STANDARD 23
+    C_STANDARD_REQUIRED ON
+    C_EXTENSIONS ON
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS ON
@@ -105,10 +108,10 @@ set_target_properties(${EXECUTABLE_ELF_NAME} PROPERTIES
 # Build project to .elf, produce the .bin, dump to get the disassembly and print size
 add_custom_target(build
     COMMENT "Building project"
-    DEPENDS ${EXECUTABLE_ELF_NAME}
-    COMMAND ${CMAKE_OBJCOPY} -O binary ${EXECUTABLE_ELF_NAME} ${EXECUTABLE_BIN_NAME}
-    COMMAND ${CMAKE_OBJDUMP} -D -S ${EXECUTABLE_ELF_NAME} > ${EXECUTABLE_ASM_NAME}
-    COMMAND ${CMAKE_SIZE} ${EXECUTABLE_ELF_NAME}
+    DEPENDS ${EXE_ELF_NAME}
+    COMMAND ${CMAKE_OBJCOPY} -O binary ${EXE_ELF_NAME} ${EXE_BIN_NAME}
+    COMMAND ${CMAKE_OBJDUMP} -D -S ${EXE_ELF_NAME} > ${EXE_ASM_NAME}
+    COMMAND ${CMAKE_SIZE} ${EXE_ELF_NAME}
 )
 
 # Static analysis with cppcheck
