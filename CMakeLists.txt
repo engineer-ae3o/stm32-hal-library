@@ -17,6 +17,7 @@ project(${CMAKE_PROJECT_NAME})
 enable_language(C CXX ASM)
 
 set(EXE_NAME f411-hal)
+set(LIB_ELF_NAME "${EXE_NAME}") # CMake already appends .a automatically
 set(EXE_ASM_NAME "${EXE_NAME}.s")
 set(EXE_ELF_NAME "${EXE_NAME}.elf")
 set(EXE_BIN_NAME "${EXE_NAME}.bin")
@@ -71,48 +72,62 @@ if(BUILD_TESTS AND CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 
-# Process subdirectories
+if (BUILD_TESTS)
+
+# Process all components
+add_subdirectory(components/test/)
 add_subdirectory(components/drivers/)
 add_subdirectory(components/third-party/RTT/)
+add_subdirectory(components/third-party/Unity/)
 add_subdirectory(components/third-party/o1heap/)
 
-if (BUILD_TESTS)
-    add_subdirectory(components/test/)
-    add_subdirectory(components/third-party/Unity/)
-endif()
-
-
-# Create the final static library
-add_executable(${EXE_ELF_NAME} src/main.cpp src/startup.s)
+# Build an executable only if building with tests. 
+add_executable(${EXE_ELF_NAME} test_main.cpp startup.s)
+target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers rtt o1heap)
 target_compile_definitions(${EXE_ELF_NAME} PUBLIC STM32F411xE)
 
-
-# Link components
-if (BUILD_TESTS)
-    target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers rtt o1heap)
-else()
-    target_link_libraries(${EXE_ELF_NAME} PUBLIC drivers rtt o1heap)
-endif()
-
-
-# Set the language standards
+# The tests are C++
 set_target_properties(${EXE_ELF_NAME} PROPERTIES
-    C_STANDARD 23
-    C_STANDARD_REQUIRED ON
-    C_EXTENSIONS ON
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS ON
 )
 
-# Build project to .elf, produce the .bin, dump to get the disassembly and print size
 add_custom_target(build
-    COMMENT "Building project"
+    COMMENT "Building project..."
     DEPENDS ${EXE_ELF_NAME}
     COMMAND ${CMAKE_OBJCOPY} -O binary ${EXE_ELF_NAME} ${EXE_BIN_NAME}
     COMMAND ${CMAKE_OBJDUMP} -D -S ${EXE_ELF_NAME} > ${EXE_ASM_NAME}
     COMMAND ${CMAKE_SIZE} ${EXE_ELF_NAME}
 )
+
+else()
+
+# Leave tests out entirely
+add_subdirectory(components/drivers/)
+add_subdirectory(components/third-party/RTT/)
+add_subdirectory(components/third-party/o1heap/)
+
+# Only produce a static library.
+add_library(${LIB_ELF_NAME} STATIC startup.s)
+target_link_libraries(${LIB_ELF_NAME} PUBLIC drivers rtt o1heap)
+target_compile_definitions(${LIB_ELF_NAME} PUBLIC STM32F411xE)
+
+# The core library is C
+set_target_properties(${LIB_ELF_NAME} PROPERTIES
+    C_STANDARD 23
+    C_STANDARD_REQUIRED ON
+    C_EXTENSIONS ON
+)
+
+# No point in getting the disassembly of a static library.
+add_custom_target(build
+    COMMENT "Building project..."
+    DEPENDS ${LIB_ELF_NAME}
+    COMMAND ${CMAKE_SIZE} "lib${LIB_ELF_NAME}.a" # Handle CMake's format for static libraries
+)
+
+endif()
 
 # Static analysis with cppcheck
 find_program(CPPCHECK cppcheck)
