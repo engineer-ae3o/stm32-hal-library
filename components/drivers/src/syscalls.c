@@ -9,9 +9,9 @@
 #include <sys/types.h>
 
 // These are extern declared in the HAL headers. Need to be defined here.
-uint32_t      SystemCoreClock   = {}; // System Clock Frequency (Core Clock)
-const uint8_t AHBPrescTable[16] = {}; // AHB prescalers table values
-const uint8_t APBPrescTable[8]  = {}; // APB prescalers table values
+uint32_t      SystemCoreClock   = {}; // System Clock Frequency
+const uint8_t AHBPrescTable[16] = {}; // AHB prescalers table
+const uint8_t APBPrescTable[8]  = {}; // APB prescalers table
 
 void system_init(void) {
     // Enable the FPU
@@ -32,7 +32,6 @@ void system_init(void) {
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
     __DSB();
     PWR->CR |= PWR_CR_VOS;
-    while (!(PWR->CSR & PWR_CSR_VOSRDY));
 
 #ifdef USE_HSE
     // Enable HSE
@@ -66,8 +65,17 @@ void system_init(void) {
     __DSB();
     __ISB();
 
+    // Ensure the VOSRDY bit reads 1 before proceeding
+    while (!(PWR->CSR & PWR_CSR_VOSRDY));
+
     // Update system clock
     SystemCoreClock = CLOCK_SPEED_HZ;
+
+    // Enable bus fault and usage fault exceptions
+    SCB->SHCSR |= (SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
+
+    // Enable exceptions on divide by 0 and unaligned trapping
+    SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk);
 }
 
 const char* hal_err_to_string(hal_err_t err) {
@@ -172,7 +180,7 @@ int _isatty(int fd) {
 }
 
 // Fault Handlers
-[[noreturn]] __attribute__((naked)) void HardFault_Handler() {
+__attribute__((naked)) void HardFault_Handler() {
     __asm volatile("tst lr, #4\n"
                    "ite eq\n"
                    "mrseq r0, msp\n"
@@ -180,7 +188,7 @@ int _isatty(int fd) {
                    "b hard_fault_dump\n");
 }
 
-[[noreturn]] __attribute__((naked)) void BusFault_Handler() {
+__attribute__((naked)) void BusFault_Handler() {
     __asm volatile("tst lr, #4\n"
                    "ite eq\n"
                    "mrseq r0, msp\n"
@@ -188,7 +196,7 @@ int _isatty(int fd) {
                    "b bus_fault_dump\n");
 }
 
-[[noreturn]] __attribute__((naked)) void UsageFault_Handler() {
+__attribute__((naked)) void UsageFault_Handler() {
     __asm volatile("tst lr, #4\n"
                    "ite eq\n"
                    "mrseq r0, msp\n"
