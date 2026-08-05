@@ -1,0 +1,111 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  format-check:
+    name: Check Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install latest clang-format
+        run: |
+          wget https://apt.llvm.org/llvm.sh -O llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 22
+          sudo apt-get install -y clang-format-22
+          clang-format-22 --version
+
+      - name: Check formatting
+        run: |
+          FILES=$(git ls-files '*.c' '*.cc' '*.cpp' '*.h' '*.hpp' -- ':!components/cmsis-device-f1')
+          if [ -z "$FILES" ]; then
+          echo "No matching files, nothing to check."
+          exit 0
+          fi
+          echo "$FILES" | xargs clang-format-22 --style=file --dry-run --Werror
+
+  build-debug-tests:
+    name: Build (debug-tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Toolchain
+        run: |
+          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+          echo "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi binutils-arm-none-eabi
+
+      - name: Configure
+        run: cmake --preset debug-tests
+
+      - name: Build
+        run: cmake --build --preset debug-tests
+
+  build-debug:
+    name: Build (debug)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Toolchain
+        run: |
+          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+          echo "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi binutils-arm-none-eabi
+
+      - name: Configure
+        run: cmake --preset debug
+
+      - name: Build
+        run: cmake --build --preset debug
+
+  build-release:
+    name: Build (release)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Toolchain
+        run: |
+          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+          echo "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi binutils-arm-none-eabi
+
+      - name: Configure
+        run: cmake --preset release
+
+      - name: Build
+        run: cmake --build --preset release
+
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Toolchain & Cppcheck
+        run: |
+          wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+          echo "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc-arm-none-eabi binutils-arm-none-eabi cppcheck
+
+      - name: Configure Presets
+        run: cmake --preset debug-tests
+
+      - name: Run Cppcheck Target
+        run: cmake --build --preset debug-tests --target cppcheck

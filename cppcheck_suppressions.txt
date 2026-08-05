@@ -1,10 +1,12 @@
 constParameterCallback
 useInitializationList
+constParameterPointer
 uninitMemberVarNoCtor
 missingIncludeSystem
 unmatchedSuppression
 constVariablePointer
 dangerousTypeCast
+comparePointers
 unusedFunction
 missingInclude
 syntaxError

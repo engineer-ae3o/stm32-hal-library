@@ -25,7 +25,6 @@ set(EXE_MAP_NAME "${EXE_NAME}.map")
 
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
 # Build flags for the different build modes
@@ -93,9 +92,10 @@ set_target_properties(${EXE_ELF_NAME} PROPERTIES
     CXX_EXTENSIONS ON
 )
 
-add_custom_target(build
-    COMMENT "Building project..."
-    DEPENDS ${EXE_ELF_NAME}
+# Get the .bin file, the disassembly as well as print the space occupied by the executable
+add_custom_command(
+    TARGET ${EXE_ELF_NAME} POST_BUILD
+    COMMENT "Building tests..."
     COMMAND ${CMAKE_OBJCOPY} -O binary ${EXE_ELF_NAME} ${EXE_BIN_NAME}
     COMMAND ${CMAKE_OBJDUMP} -D -S ${EXE_ELF_NAME} > ${EXE_ASM_NAME}
     COMMAND ${CMAKE_SIZE} ${EXE_ELF_NAME}
@@ -120,11 +120,22 @@ set_target_properties(${LIB_ELF_NAME} PROPERTIES
     C_EXTENSIONS ON
 )
 
-# No point in getting the disassembly of a static library.
-add_custom_target(build
-    COMMENT "Building project..."
-    DEPENDS ${LIB_ELF_NAME}
-    COMMAND ${CMAKE_SIZE} "lib${LIB_ELF_NAME}.a" # Handle CMake's format for static libraries
+# No point in getting the disassembly of a static library. Just produce an archive of relevant components
+add_custom_command(
+    TARGET ${LIB_ELF_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E echo "CREATE $<TARGET_FILE:${LIB_ELF_NAME}>.tmp.a" > combine.mri
+    COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:${LIB_ELF_NAME}>" >> combine.mri
+    COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:drivers>" >> combine.mri
+    COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:rtt>" >> combine.mri
+    COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:o1heap>" >> combine.mri
+    COMMAND ${CMAKE_COMMAND} -E echo "SAVE" >> combine.mri
+    COMMAND ${CMAKE_COMMAND} -E echo "END" >> combine.mri
+    COMMAND ${CMAKE_AR} -M < combine.mri
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${LIB_ELF_NAME}>.tmp.a $<TARGET_FILE:${LIB_ELF_NAME}>
+    COMMAND ${CMAKE_COMMAND} -E remove $<TARGET_FILE:${LIB_ELF_NAME}>.tmp.a combine.mri
+    COMMENT "Bundling static dependencies into lib${LIB_ELF_NAME}.a..."
+    COMMAND ${CMAKE_SIZE} "lib${LIB_ELF_NAME}.a"
+    VERBATIM
 )
 
 endif()
@@ -132,10 +143,9 @@ endif()
 # Static analysis with cppcheck
 find_program(CPPCHECK cppcheck)
 
-if(CPPCHECK)
-    message(STATUS "Cppcheck found: ${CPPCHECK}")
+if (CPPCHECK)
 
-    add_custom_target(cppcheck
+add_custom_target(cppcheck
     COMMAND mkdir -p ${CMAKE_BINARY_DIR}/.cppcheck
     COMMAND ${CPPCHECK} --enable=all
         --inline-suppr
@@ -143,28 +153,18 @@ if(CPPCHECK)
         --suppressions-list=${CMAKE_SOURCE_DIR}/cppcheck_suppressions.txt
         --error-exitcode=1
         --check-level=exhaustive
-        -DSTM32F411xE -D__GNUC__ -D__ARM_ARCH_7M__ -D__ARM_ARCH_PROFILE=77
-        -I ${CMAKE_SOURCE_DIR}/components/drivers/inc/
-        -I ${CMAKE_SOURCE_DIR}/components/test/inc/
-        -I ${CMAKE_SOURCE_DIR}/components/Unity/src/
-        -I ${CMAKE_SOURCE_DIR}/components/f103-hal/Inc/
-        -I ${CMAKE_SOURCE_DIR}/components/cmsis-device-f1/Core/Include/m-profile/
-        -I ${CMAKE_SOURCE_DIR}/components/cmsis-device-f1/Core/Include/
-        -I ${CMAKE_SOURCE_DIR}/components/cmsis-device-f1/Include/
-        -I ${CMAKE_SOURCE_DIR}/components/freertos/include/
-        -I ${CMAKE_SOURCE_DIR}/components/ascon-suite/src/
-        -I ${CMAKE_SOURCE_DIR}/components/RTT/RTT/
-        -i ${CMAKE_SOURCE_DIR}/components/cmsis-device-f1/
-        -i ${CMAKE_SOURCE_DIR}/components/littlefs/
-        -i ${CMAKE_SOURCE_DIR}/components/freertos/
-        -i ${CMAKE_SOURCE_DIR}/components/Unity/
-        -i ${CMAKE_SOURCE_DIR}/components/etl/
-        -i ${CMAKE_SOURCE_DIR}/components/f103-hal/
-        ${CMAKE_SOURCE_DIR}/main.cpp
-        ${CMAKE_SOURCE_DIR}/components/drivers/src/
-        ${CMAKE_SOURCE_DIR}/components/test/src/
+        -D__GNUC__
+        --project=${CMAKE_BINARY_DIR}/compile_commands.json
+        --file-filter=${CMAKE_SOURCE_DIR}/*.cpp
+        --file-filter=${CMAKE_SOURCE_DIR}/components/drivers/**
+        --file-filter=${CMAKE_SOURCE_DIR}/components/test/**
+        --output-file=${CMAKE_BINARY_DIR}/cppcheck_report.txt
+        --checkers-report=${CMAKE_BINARY_DIR}/cppcheck_checks.txt
     COMMENT "Running static analysis..."
-    )
+)
+
 else()
-    message(WARNING "Cppcheck not found. Static analysis will not be available for this target.")
+
+message(WARNING "Cppcheck not found. Static analysis will not be available for this target.")
+
 endif()
