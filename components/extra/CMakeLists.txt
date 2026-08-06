@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 4.0)
 
 set(SRCS
     src/log.c
+    src/err.c
+    src/heap.c
     src/tick.c
     src/syscalls.c
 )

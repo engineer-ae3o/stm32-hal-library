@@ -1,13 +1,10 @@
-#ifndef _COMMON_H_
-#define _COMMON_H_
+#ifndef COMMON_H_
+#define COMMON_H_
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-#include <stdint.h>
 
 
 // Core clock and audio PLL frequencies
@@ -30,8 +27,10 @@ extern "C" {
 #define I2S_DMA_NVIC_IRQ_PRIORITY 12
 #define ADC_DMA_NVIC_IRQ_PRIORITY 12
 
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _COMMON_H_
+
+#endif // COMMON_H_

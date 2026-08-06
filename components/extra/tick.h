@@ -1,5 +1,5 @@
-#ifndef _TICK_H_
-#define _TICK_H_
+#ifndef TICK_H_
+#define TICK_H_
 
 
 #ifdef __cplusplus
@@ -24,4 +24,4 @@ void delay_us(uint32_t us);
 #endif
 
 
-#endif // _TICK_H_
+#endif // TICK_H_

@@ -1,5 +1,5 @@
-#ifndef _LOG_H_
-#define _LOG_H_
+#ifndef LOG_H_
+#define LOG_H_
 
 
 #ifdef __cplusplus
@@ -7,15 +7,24 @@ extern "C" {
 #endif
 
 
-#include "SEGGER_RTT.h"
-#include "extra/tick.h"
-
-#include <stdarg.h>
-#include <stdint.h>
+// Debug logging levels
+#define LOG_LEVEL_INFO 3
+#define LOG_LEVEL_WARN 2
+#define LOG_LEVEL_ERROR 1
+#define LOG_LEVEL_NONE 0
 
 
 // Set the log level to any appropriate log level
 #define LOG_LEVEL LOG_LEVEL_INFO
+
+
+// The LOGx macros are the standard logging functions, take in variadic arguments
+// and go through the formatting path. The LOGx_ISR macros on the other hand don't
+// have any formatting capability, as its just a plain string write. This simplicity
+// allows it to be called from ISR contexts since the actual transport mechanism is a
+// literal memcpy(...) into the RTT buffer, thud, making it light enough to be called
+// from an ISR. It does lack the TAGs and timestamps that the regular LOGx macros have.
+// This is an acceptable trade-off to have logging inside ISRs.
 
 
 #if LOG_LEVEL == LOG_LEVEL_INFO
@@ -23,17 +32,17 @@ extern "C" {
 #define LOGW(tag, ...) log_fmt(ESC_TEXT_YELLOW, tag, __VA_ARGS__)
 #define LOGI(tag, ...) log_fmt(ESC_TEXT_GREEN, tag, __VA_ARGS__)
 
-#define LOGE_ISR(str) log_isr(ESC_TEXT_RED, str)
-#define LOGW_ISR(str) log_isr(ESC_TEXT_YELLOW, str)
-#define LOGI_ISR(str) log_isr(ESC_TEXT_GREEN, str)
+#define LOGE_ISR(str) log_str(ESC_TEXT_RED, str)
+#define LOGW_ISR(str) log_str(ESC_TEXT_YELLOW, str)
+#define LOGI_ISR(str) log_str(ESC_TEXT_GREEN, str)
 
 #elif LOG_LEVEL == LOG_LEVEL_WARN
 #define LOGE(tag, ...) log_fmt(ESC_TEXT_RED, tag, __VA_ARGS__)
 #define LOGW(tag, ...) log_fmt(ESC_TEXT_YELLOW, tag, __VA_ARGS__)
 #define LOGI(tag, ...)
 
-#define LOGE_ISR(str) log_isr(ESC_TEXT_RED, str)
-#define LOGW_ISR(str) log_isr(ESC_TEXT_YELLOW, str)
+#define LOGE_ISR(str) log_str(ESC_TEXT_RED, str)
+#define LOGW_ISR(str) log_str(ESC_TEXT_YELLOW, str)
 #define LOGI_ISR(str)
 
 #elif LOG_LEVEL == LOG_LEVEL_ERROR
@@ -41,7 +50,7 @@ extern "C" {
 #define LOGW(tag, ...)
 #define LOGI(tag, ...)
 
-#define LOGE_ISR(str) log_isr(ESC_TEXT_RED, str)
+#define LOGE_ISR(str) log_str(ESC_TEXT_RED, str)
 #define LOGW_ISR(str)
 #define LOGI_ISR(str)
 
@@ -54,43 +63,22 @@ extern "C" {
 #define LOGW_ISR(str)
 #define LOGI_ISR(str)
 
+#else
+#error "Invalid debug log level"
+
 #endif
 
 
-// Debug logging levels
-#define LOG_LEVEL_INFO 3
-#define LOG_LEVEL_WARN 2
-#define LOG_LEVEL_ERROR 1
-#define LOG_LEVEL_NONE 0
+// To not be used directly
+__attribute__((format(printf, 3, 4))) void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...);
+
+void log_str(const char* esc_code, const char* str);
 
 
 #define ESC_TEXT_GREEN "\x1B[92m I "
 #define ESC_TEXT_YELLOW "\x1B[93m W "
 #define ESC_TEXT_RED "\x1B[91m R "
-#define ESC_TEXT_RESET "\x1B[0m"
-
-inline void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...) {
-    // Set the output color
-    SEGGER_RTT_WriteString(0, esc_code);
-
-    // Write the timestamp and tag
-    SEGGER_RTT_printf(0, "(%ums) [%s]: ", ticks_since_boot_ms(), tag);
-
-    // Print the actual log message
-    va_list args;
-    va_start(args, fmt);
-    SEGGER_RTT_vprintf(0, fmt, &args);
-    va_end(args);
-
-    // Reset the color back to the terminal's default
-    SEGGER_RTT_WriteString(0, "\r\n" ESC_TEXT_RESET);
-}
-
-inline void log_isr(const char* esc_code, const char* str) {
-    SEGGER_RTT_WriteString(0, esc_code);
-    SEGGER_RTT_WriteString(0, str);
-    SEGGER_RTT_WriteString(0, "\r\n" ESC_TEXT_RESET);
-}
+#define ESC_TEXT_RESET "\r\n\x1B[0m"
 
 
 #ifdef __cplusplus
@@ -98,4 +86,4 @@ inline void log_isr(const char* esc_code, const char* str) {
 #endif
 
 
-#endif // _LOG_H_
+#endif // LOG_H_

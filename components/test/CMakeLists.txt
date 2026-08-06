@@ -3,24 +3,22 @@ cmake_minimum_required(VERSION 4.0)
 if (BUILD_TESTS)
 
 set(SRCS
-    src/test_i2c.cpp
-    src/test_i2s.cpp
-    src/test_rtc.cpp
-    src/test_spi.cpp
-    src/test_pwm.cpp
-    src/test_adc.cpp
-    src/test_dma.cpp
-    src/test_gpio.cpp
-    src/test_uart.cpp
-    src/test_wwdg.cpp
-    src/test_iwdg.cpp
-    src/test_timer.cpp
+    src/i2c.cpp
+    src/i2s.cpp
+    src/rtc.cpp
+    src/spi.cpp
+    src/pwm.cpp
+    src/adc.cpp
+    src/dma.cpp
+    src/gpio.cpp
+    src/uart.cpp
+    src/wwdg.cpp
+    src/iwdg.cpp
+    src/timer.cpp
 )
 
 set(INC
-    inc/
-    ../third-party/o1heap/
-    ../third-party/RTT/RTT/
+    ../
     ../third-party/Unity/src/
     ../third-party/CMSIS/Include/
     ../third-party/CMSIS/Core/Include/

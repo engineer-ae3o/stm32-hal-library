@@ -1,5 +1,5 @@
-#ifndef _ERR_H_
-#define _ERR_H_
+#ifndef ERR_H_
+#define ERR_H_
 
 
 #ifdef __cplusplus
@@ -51,4 +51,4 @@ const char* hal_err_to_string(hal_err_t err);
 #endif
 
 
-#endif // _ERR_H_
+#endif // ERR_H_
