@@ -1,11 +1,14 @@
 #include "stm32f411xe.h"
 #include "extra/tick.h"
+#include "extra/log.h"
 
 #include <stdatomic.h>
 
 
 // Initialize the tick timer before main runs
-void tick_init(void) {
+__attribute__((constructor)) static void tick_init(void) {
+    LOGI_ISR("Initializing the tick timer");
+
     // Configure TIM2 as our tick source
     // Enable TIM2 clock
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;

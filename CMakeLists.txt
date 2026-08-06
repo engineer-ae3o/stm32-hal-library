@@ -85,6 +85,7 @@ add_subdirectory(components/third-party/o1heap/)
 add_executable(${EXE_ELF_NAME} test_main.cpp startup.s)
 target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers extra rtt o1heap)
 target_compile_definitions(${EXE_ELF_NAME} PUBLIC STM32F411xE)
+target_link_options(${EXE_ELF_NAME} PRIVATE -Wl,--no-warn-rwx-segments)
 
 # The tests are C++
 set_target_properties(${EXE_ELF_NAME} PROPERTIES

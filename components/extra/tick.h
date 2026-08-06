@@ -10,12 +10,11 @@ extern "C" {
 #include <stdint.h>
 
 
-__attribute__((constructor)) void tick_init(void);
-
+// Get number of miliseconds that have passed since bootup
 uint32_t ticks_since_boot_ms(void);
 
+// Polling delay functions
 void delay_ms(uint32_t ms);
-
 void delay_us(uint32_t us);
 
 

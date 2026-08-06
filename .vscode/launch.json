@@ -21,7 +21,7 @@
                 "target/stm32f4x.cfg"
             ],
             "searchDir": [],
-            "runToEntryPoint": "reset_handler",
+            "runToEntryPoint": "main",
             "showDevDebugOutput": "parsed",
             "svdFile": "${workspaceFolder}/.vscode/STM32F411.svd",
             "rttConfig": {

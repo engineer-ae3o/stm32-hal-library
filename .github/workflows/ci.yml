@@ -18,7 +18,7 @@ jobs:
 
       - name: Check formatting
         run: |
-          FILES=$(git ls-files '*.c' '*.cc' '*.cpp' '*.h' '*.hpp'
+          FILES=$(git ls-files '*.c' '*.cc' '*.cpp' '*.h' '*.hpp')
           if [ -z "$FILES" ]; then
             echo "No matching files, nothing to check."
             exit 0
