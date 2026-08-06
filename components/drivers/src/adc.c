@@ -1,5 +1,9 @@
-#include "adc.h"
+#include "stm32f411xe.h"
+#include "extra/common.h"
+#include "drivers/adc.h"
+
 #include <stddef.h>
+
 
 // ADC DMA stream settings
 #define ADC_DMA_CONTROLLER DMA2
@@ -10,7 +14,8 @@
 
 // To save user passed callback
 static dma_trans_done_cb_t s_dma_trans_done_cb = NULL;
-static void*               s_arg               = NULL;
+
+static void* s_arg = NULL;
 
 // Public API
 void adc_clk_enable(bool enable) {
@@ -145,8 +150,7 @@ hal_err_t adc_dbm_stop(void) {
 }
 
 void DMA2_Stream0_IRQHandler(void) {
-    hal_err_t ret =
-        dma_isr_helper(DMA2_Stream0, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0, DMA_LISR_HTIF0);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream0, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0, DMA_LISR_HTIF0);
 
     // Invoke user callback
     if (s_dma_trans_done_cb) {

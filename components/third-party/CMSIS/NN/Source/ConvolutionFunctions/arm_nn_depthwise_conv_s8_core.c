@@ -37,46 +37,43 @@
  *
  */
 
-q7_t *arm_nn_depthwise_conv_s8_core(const q7_t *row,
-                                    const q15_t *col,
-                                    const uint16_t num_ch,
-                                    const int32_t *out_shift,
-                                    const int32_t *out_mult,
-                                    const int32_t out_offset,
-                                    const int32_t activation_min,
-                                    const int32_t activation_max,
-                                    const uint16_t kernel_size,
-                                    const int32_t *const output_bias,
-                                    q7_t *out)
-{
+q7_t* arm_nn_depthwise_conv_s8_core(const q7_t*          row,
+                                    const q15_t*         col,
+                                    const uint16_t       num_ch,
+                                    const int32_t*       out_shift,
+                                    const int32_t*       out_mult,
+                                    const int32_t        out_offset,
+                                    const int32_t        activation_min,
+                                    const int32_t        activation_max,
+                                    const uint16_t       kernel_size,
+                                    const int32_t* const output_bias,
+                                    q7_t*                out) {
 #if defined(ARM_MATH_MVEI)
     int32_t ch_per_loop = num_ch / 4;
 
-    const int32_t *bias = output_bias;
-    int8_t *out_tmp = out;
+    const int32_t* bias    = output_bias;
+    int8_t*        out_tmp = out;
 
     int32_t idx = 0;
 
-    while (ch_per_loop > 0)
-    {
+    while (ch_per_loop > 0) {
         int32x4_t ip_0;
         int32x4_t ip_1;
-        int32_t ker_loop = kernel_size / 3;
-        int32x4_t out_0 = vldrwq_s32(bias);
-        int32x4_t out_1 = out_0;
+        int32_t   ker_loop = kernel_size / 3;
+        int32x4_t out_0    = vldrwq_s32(bias);
+        int32x4_t out_1    = out_0;
         bias += 4;
 
-        const int32_t offset = idx * 4;
-        const int8_t *row_0 = row + offset;
-        const int16_t *col_0 = col + offset;
-        const int16_t *col_1 = col + kernel_size * num_ch + offset;
+        const int32_t  offset = idx * 4;
+        const int8_t*  row_0  = row + offset;
+        const int16_t* col_0  = col + offset;
+        const int16_t* col_1  = col + kernel_size * num_ch + offset;
 
         int32x4_t ker_0 = vldrbq_s32(row_0);
 
-        while (ker_loop > 0)
-        {
-            const int8_t *row_1 = row_0 + num_ch;
-            const int8_t *row_2 = row_0 + 2 * num_ch;
+        while (ker_loop > 0) {
+            const int8_t*   row_1 = row_0 + num_ch;
+            const int8_t*   row_2 = row_0 + 2 * num_ch;
             const int32x4_t ker_1 = vldrbq_s32(row_1);
             const int32x4_t ker_2 = vldrbq_s32(row_2);
 
@@ -112,8 +109,7 @@ q7_t *arm_nn_depthwise_conv_s8_core(const q7_t *row,
         idx++;
         /* Handle tail kernel elements */
         ker_loop = kernel_size - ((kernel_size / 3) * 3);
-        while (ker_loop > 0)
-        {
+        while (ker_loop > 0) {
             ip_0 = vldrhq_s32(col_0);
             ip_1 = vldrhq_s32(col_1);
 
@@ -130,7 +126,7 @@ q7_t *arm_nn_depthwise_conv_s8_core(const q7_t *row,
             ker_0 = vldrbq_s32(row_0);
             ker_loop--;
         }
-        const int32x4_t mult = vldrwq_s32(out_mult);
+        const int32x4_t mult  = vldrwq_s32(out_mult);
         const int32x4_t shift = vldrwq_s32(out_shift);
         out_mult += 4;
         out_shift += 4;
@@ -153,24 +149,21 @@ q7_t *arm_nn_depthwise_conv_s8_core(const q7_t *row,
     }
 
     int32_t tail_ch = num_ch & 3;
-    if (tail_ch != 0)
-    {
-        int32_t ch_idx = (num_ch & ~3);
+    if (tail_ch != 0) {
+        int32_t   ch_idx = (num_ch & ~3);
         int32x4_t col_0_sum;
         int32x4_t col_1_sum;
 
         const int32_t single_buffer_size = kernel_size * num_ch;
-        for (int i = 0; i < tail_ch; i++)
-        {
-            const int16_t *col_pos_0 = col + ch_idx;
-            const int16_t *col_pos_1 = col_pos_0 + single_buffer_size;
+        for (int i = 0; i < tail_ch; i++) {
+            const int16_t* col_pos_0 = col + ch_idx;
+            const int16_t* col_pos_1 = col_pos_0 + single_buffer_size;
 
-            const int8_t *row_pos = row + ch_idx;
-            int32_t sum_0 = bias[i];
-            int32_t sum_1 = bias[i];
+            const int8_t* row_pos = row + ch_idx;
+            int32_t       sum_0   = bias[i];
+            int32_t       sum_1   = bias[i];
 
-            for (int j = 0; j < kernel_size; j++)
-            {
+            for (int j = 0; j < kernel_size; j++) {
                 const int8_t row_val = row_pos[j * num_ch];
                 sum_0 += row_val * col_pos_0[j * num_ch];
                 sum_1 += row_val * col_pos_1[j * num_ch];
@@ -180,9 +173,9 @@ q7_t *arm_nn_depthwise_conv_s8_core(const q7_t *row,
 
             ch_idx++;
         }
-        const mve_pred16_t p = vctp32q((uint32_t)tail_ch);
-        const int32x4_t mult = vldrwq_z_s32(out_mult, p);
-        const int32x4_t shift = vldrwq_z_s32(out_shift, p);
+        const mve_pred16_t p     = vctp32q((uint32_t)tail_ch);
+        const int32x4_t    mult  = vldrwq_z_s32(out_mult, p);
+        const int32x4_t    shift = vldrwq_z_s32(out_shift, p);
 
         col_0_sum = arm_requantize_mve_32x4(col_0_sum, mult, shift);
         col_1_sum = arm_requantize_mve_32x4(col_1_sum, mult, shift);

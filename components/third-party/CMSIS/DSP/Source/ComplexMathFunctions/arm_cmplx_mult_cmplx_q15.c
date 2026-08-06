@@ -51,48 +51,41 @@
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mult_cmplx_q15(
-  const q15_t * pSrcA,
-  const q15_t * pSrcB,
-        q15_t * pDst,
-        uint32_t numSamples)
-{
-   int32_t         blkCnt;
-    q15x8_t         vecSrcA, vecSrcB;
-    q15x8_t         vecSrcC, vecSrcD;
-    q15x8_t         vecDst;
+void arm_cmplx_mult_cmplx_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t numSamples) {
+    int32_t blkCnt;
+    q15x8_t vecSrcA, vecSrcB;
+    q15x8_t vecSrcC, vecSrcD;
+    q15x8_t vecDst;
 
     blkCnt = (numSamples >> 3);
     blkCnt -= 1;
-    if (blkCnt > 0) 
-    {
+    if (blkCnt > 0) {
         /* should give more freedom to generate stall free code */
         vecSrcA = vld1q(pSrcA);
         vecSrcB = vld1q(pSrcB);
         pSrcA += 8;
         pSrcB += 8;
 
-        while (blkCnt > 0) 
-        {
+        while (blkCnt > 0) {
 
             /* C[2 * i] = A[2 * i] * B[2 * i] - A[2 * i + 1] * B[2 * i + 1].  */
-            vecDst = vqdmlsdhq(vuninitializedq_s16(), vecSrcA, vecSrcB);
+            vecDst  = vqdmlsdhq(vuninitializedq_s16(), vecSrcA, vecSrcB);
             vecSrcC = vld1q(pSrcA);
             pSrcA += 8;
 
             /* C[2 * i + 1] = A[2 * i] * B[2 * i + 1] + A[2 * i + 1] * B[2 * i].  */
-            vecDst = vqdmladhxq(vecDst, vecSrcA, vecSrcB);
+            vecDst  = vqdmladhxq(vecDst, vecSrcA, vecSrcB);
             vecSrcD = vld1q(pSrcB);
             pSrcB += 8;
 
             vstrhq_s16(pDst, vshrq(vecDst, 2));
             pDst += 8;
 
-            vecDst = vqdmlsdhq(vuninitializedq_s16(), vecSrcC, vecSrcD);
+            vecDst  = vqdmlsdhq(vuninitializedq_s16(), vecSrcC, vecSrcD);
             vecSrcA = vld1q(pSrcA);
             pSrcA += 8;
 
-            vecDst = vqdmladhxq(vecDst, vecSrcC, vecSrcD);
+            vecDst  = vqdmladhxq(vecDst, vecSrcC, vecSrcD);
             vecSrcB = vld1q(pSrcB);
             pSrcB += 8;
 
@@ -106,10 +99,10 @@ void arm_cmplx_mult_cmplx_q15(
         }
 
         /* process last elements out of the loop avoid the armclang breaking the SW pipeline */
-        vecDst = vqdmlsdhq(vuninitializedq_s16(), vecSrcA, vecSrcB);
+        vecDst  = vqdmlsdhq(vuninitializedq_s16(), vecSrcA, vecSrcB);
         vecSrcC = vld1q(pSrcA);
 
-        vecDst = vqdmladhxq(vecDst, vecSrcA, vecSrcB);
+        vecDst  = vqdmladhxq(vecDst, vecSrcA, vecSrcB);
         vecSrcD = vld1q(pSrcB);
 
         vstrhq_s16(pDst, vshrq(vecDst, 2));
@@ -125,9 +118,8 @@ void arm_cmplx_mult_cmplx_q15(
          * tail
          */
         blkCnt = CMPLX_DIM * (numSamples & 7);
-        do 
-        {
-            mve_pred16_t    p = vctp16q(blkCnt);
+        do {
+            mve_pred16_t p = vctp16q(blkCnt);
 
             pSrcA += 8;
             pSrcB += 8;
@@ -141,115 +133,104 @@ void arm_cmplx_mult_cmplx_q15(
             vecDst = vshrq_m(vuninitializedq_s16(), vecDst, 2, p);
             vstrhq_p_s16(pDst, vecDst, p);
             pDst += 8;
+
+            blkCnt -= 8;
+        } while ((int32_t)blkCnt > 0);
+    } else {
+        blkCnt = numSamples * CMPLX_DIM;
+        while (blkCnt > 0) {
+            mve_pred16_t p = vctp16q(blkCnt);
+
+            vecSrcA = vldrhq_z_s16(pSrcA, p);
+            vecSrcB = vldrhq_z_s16(pSrcB, p);
+
+            vecDst = vqdmlsdhq_m(vuninitializedq_s16(), vecSrcA, vecSrcB, p);
+            vecDst = vqdmladhxq_m(vecDst, vecSrcA, vecSrcB, p);
+
+            vecDst = vshrq_m(vuninitializedq_s16(), vecDst, 2, p);
+            vstrhq_p_s16(pDst, vecDst, p);
+
+            pDst += 8;
+            pSrcA += 8;
+            pSrcB += 8;
 
             blkCnt -= 8;
         }
-        while ((int32_t) blkCnt > 0);
-    } 
-    else 
-    {
-        blkCnt = numSamples * CMPLX_DIM;
-        while (blkCnt > 0) {
-            mve_pred16_t    p = vctp16q(blkCnt);
-
-            vecSrcA = vldrhq_z_s16(pSrcA, p);
-            vecSrcB = vldrhq_z_s16(pSrcB, p);
-
-            vecDst = vqdmlsdhq_m(vuninitializedq_s16(), vecSrcA, vecSrcB, p);
-            vecDst = vqdmladhxq_m(vecDst, vecSrcA, vecSrcB, p);
-
-            vecDst = vshrq_m(vuninitializedq_s16(), vecDst, 2, p);
-            vstrhq_p_s16(pDst, vecDst, p);
-
-            pDst += 8;
-            pSrcA += 8;
-            pSrcB += 8;
-
-            blkCnt -= 8;
     }
-  }
 }
 #else
-void arm_cmplx_mult_cmplx_q15(
-  const q15_t * pSrcA,
-  const q15_t * pSrcB,
-        q15_t * pDst,
-        uint32_t numSamples)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-        q15_t a, b, c, d;                              /* Temporary variables */
+void arm_cmplx_mult_cmplx_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t numSamples) {
+    uint32_t blkCnt;     /* Loop counter */
+    q15_t    a, b, c, d; /* Temporary variables */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = numSamples >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = numSamples >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C[2 * i    ] = A[2 * i] * B[2 * i    ] - A[2 * i + 1] * B[2 * i + 1]. */
-    /* C[2 * i + 1] = A[2 * i] * B[2 * i + 1] + A[2 * i + 1] * B[2 * i    ]. */
+    while (blkCnt > 0U) {
+        /* C[2 * i    ] = A[2 * i] * B[2 * i    ] - A[2 * i + 1] * B[2 * i + 1]. */
+        /* C[2 * i + 1] = A[2 * i] * B[2 * i + 1] + A[2 * i + 1] * B[2 * i    ]. */
 
-    a = *pSrcA++;
-    b = *pSrcA++;
-    c = *pSrcB++;
-    d = *pSrcB++;
-    /* store result in 3.13 format in destination buffer. */
-    *pDst++ = (q15_t) ( (((q31_t) a * c) >> 17) - (((q31_t) b * d) >> 17) );
-    *pDst++ = (q15_t) ( (((q31_t) a * d) >> 17) + (((q31_t) b * c) >> 17) );
+        a = *pSrcA++;
+        b = *pSrcA++;
+        c = *pSrcB++;
+        d = *pSrcB++;
+        /* store result in 3.13 format in destination buffer. */
+        *pDst++ = (q15_t)((((q31_t)a * c) >> 17) - (((q31_t)b * d) >> 17));
+        *pDst++ = (q15_t)((((q31_t)a * d) >> 17) + (((q31_t)b * c) >> 17));
 
-    a = *pSrcA++;
-    b = *pSrcA++;
-    c = *pSrcB++;
-    d = *pSrcB++;
-    *pDst++ = (q15_t) ( (((q31_t) a * c) >> 17) - (((q31_t) b * d) >> 17) );
-    *pDst++ = (q15_t) ( (((q31_t) a * d) >> 17) + (((q31_t) b * c) >> 17) );
+        a       = *pSrcA++;
+        b       = *pSrcA++;
+        c       = *pSrcB++;
+        d       = *pSrcB++;
+        *pDst++ = (q15_t)((((q31_t)a * c) >> 17) - (((q31_t)b * d) >> 17));
+        *pDst++ = (q15_t)((((q31_t)a * d) >> 17) + (((q31_t)b * c) >> 17));
 
-    a = *pSrcA++;
-    b = *pSrcA++;
-    c = *pSrcB++;
-    d = *pSrcB++;
-    *pDst++ = (q15_t) ( (((q31_t) a * c) >> 17) - (((q31_t) b * d) >> 17) );
-    *pDst++ = (q15_t) ( (((q31_t) a * d) >> 17) + (((q31_t) b * c) >> 17) );
+        a       = *pSrcA++;
+        b       = *pSrcA++;
+        c       = *pSrcB++;
+        d       = *pSrcB++;
+        *pDst++ = (q15_t)((((q31_t)a * c) >> 17) - (((q31_t)b * d) >> 17));
+        *pDst++ = (q15_t)((((q31_t)a * d) >> 17) + (((q31_t)b * c) >> 17));
 
-    a = *pSrcA++;
-    b = *pSrcA++;
-    c = *pSrcB++;
-    d = *pSrcB++;
-    *pDst++ = (q15_t) ( (((q31_t) a * c) >> 17) - (((q31_t) b * d) >> 17) );
-    *pDst++ = (q15_t) ( (((q31_t) a * d) >> 17) + (((q31_t) b * c) >> 17) );
+        a       = *pSrcA++;
+        b       = *pSrcA++;
+        c       = *pSrcB++;
+        d       = *pSrcB++;
+        *pDst++ = (q15_t)((((q31_t)a * c) >> 17) - (((q31_t)b * d) >> 17));
+        *pDst++ = (q15_t)((((q31_t)a * d) >> 17) + (((q31_t)b * c) >> 17));
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = numSamples % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = numSamples % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = numSamples;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = numSamples;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C[2 * i    ] = A[2 * i] * B[2 * i    ] - A[2 * i + 1] * B[2 * i + 1]. */
-    /* C[2 * i + 1] = A[2 * i] * B[2 * i + 1] + A[2 * i + 1] * B[2 * i    ]. */
+    while (blkCnt > 0U) {
+        /* C[2 * i    ] = A[2 * i] * B[2 * i    ] - A[2 * i + 1] * B[2 * i + 1]. */
+        /* C[2 * i + 1] = A[2 * i] * B[2 * i + 1] + A[2 * i + 1] * B[2 * i    ]. */
 
-    a = *pSrcA++;
-    b = *pSrcA++;
-    c = *pSrcB++;
-    d = *pSrcB++;
+        a = *pSrcA++;
+        b = *pSrcA++;
+        c = *pSrcB++;
+        d = *pSrcB++;
 
-    /* store result in 3.13 format in destination buffer. */
-    *pDst++ = (q15_t) ( (((q31_t) a * c) >> 17) - (((q31_t) b * d) >> 17) );
-    *pDst++ = (q15_t) ( (((q31_t) a * d) >> 17) + (((q31_t) b * c) >> 17) );
+        /* store result in 3.13 format in destination buffer. */
+        *pDst++ = (q15_t)((((q31_t)a * c) >> 17) - (((q31_t)b * d) >> 17));
+        *pDst++ = (q15_t)((((q31_t)a * d) >> 17) + (((q31_t)b * c) >> 17));
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

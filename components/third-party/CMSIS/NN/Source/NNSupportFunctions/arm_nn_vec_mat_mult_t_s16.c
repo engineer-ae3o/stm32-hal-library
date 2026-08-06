@@ -44,43 +44,39 @@
  * Refer header file for details.
  *
  */
-arm_status arm_nn_vec_mat_mult_t_s16(const q15_t *lhs,
-                                     const q7_t *rhs,
-                                     const q63_t *bias,
-                                     q15_t *dst,
+arm_status arm_nn_vec_mat_mult_t_s16(const q15_t*  lhs,
+                                     const q7_t*   rhs,
+                                     const q63_t*  bias,
+                                     q15_t*        dst,
                                      const int32_t dst_multiplier,
                                      const int32_t dst_shift,
                                      const int32_t rhs_cols,
                                      const int32_t rhs_rows,
                                      const int32_t activation_min,
-                                     const int32_t activation_max)
-{
+                                     const int32_t activation_max) {
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
     const int32_t row_loop_cnt = rhs_rows / 2;
 
     int32_t rhs_cols_fast = rhs_cols;
 
-    if (rhs_cols > 512)
-    {
+    if (rhs_cols > 512) {
         rhs_cols_fast = 512;
     }
 
-    for (int32_t i = 0; i < row_loop_cnt; i++)
-    {
-        q63_t acc_64_0 = 0;
-        q63_t acc_64_1 = 0;
-        int32_t acc_0 = 0;
-        int32_t acc_1 = 0;
+    for (int32_t i = 0; i < row_loop_cnt; i++) {
+        q63_t   acc_64_0 = 0;
+        q63_t   acc_64_1 = 0;
+        int32_t acc_0    = 0;
+        int32_t acc_1    = 0;
 
         const int32_t col_loop_cnt = rhs_cols_fast / 4;
 
-        const int16_t *lhs_vec = lhs;
-        const int8_t *rhs_0 = rhs;
-        const int8_t *rhs_1 = rhs + rhs_cols;
+        const int16_t* lhs_vec = lhs;
+        const int8_t*  rhs_0   = rhs;
+        const int8_t*  rhs_1   = rhs + rhs_cols;
         rhs += 2 * rhs_cols;
 
-        for (int j = col_loop_cnt; j != 0; j--)
-        {
+        for (int j = col_loop_cnt; j != 0; j--) {
             int32_t ker_0, ker_1, vec_part_0, vec_part_1;
             vec_part_0 = arm_nn_read_q15x2_ia(&lhs_vec);
             vec_part_1 = arm_nn_read_q15x2_ia(&lhs_vec);
@@ -99,8 +95,7 @@ arm_status arm_nn_vec_mat_mult_t_s16(const q15_t *lhs,
         acc_64_0 += acc_0;
         acc_64_1 += acc_1;
 
-        for (int k = col_loop_cnt * 4; k < rhs_cols; k++)
-        {
+        for (int k = col_loop_cnt * 4; k < rhs_cols; k++) {
             const int32_t lhs_temp = (*lhs_vec);
             lhs_vec++;
             acc_64_0 += lhs_temp * (*rhs_0);
@@ -109,81 +104,73 @@ arm_status arm_nn_vec_mat_mult_t_s16(const q15_t *lhs,
             rhs_1++;
         }
 
-        if (bias)
-        {
+        if (bias) {
             acc_64_0 += *bias++;
             acc_64_1 += *bias++;
         }
         q31_t tmp;
-        tmp = arm_nn_requantize_s64(acc_64_0, dst_multiplier, dst_shift);
-        tmp = MAX(tmp, activation_min);
-        tmp = MIN(tmp, activation_max);
+        tmp    = arm_nn_requantize_s64(acc_64_0, dst_multiplier, dst_shift);
+        tmp    = MAX(tmp, activation_min);
+        tmp    = MIN(tmp, activation_max);
         *dst++ = (q15_t)tmp;
 
-        tmp = arm_nn_requantize_s64(acc_64_1, dst_multiplier, dst_shift);
-        tmp = MAX(tmp, activation_min);
-        tmp = MIN(tmp, activation_max);
+        tmp    = arm_nn_requantize_s64(acc_64_1, dst_multiplier, dst_shift);
+        tmp    = MAX(tmp, activation_min);
+        tmp    = MIN(tmp, activation_max);
         *dst++ = (q15_t)tmp;
     }
 
-    if (rhs_rows & 0x1)
-    {
-        q63_t acc_64_0 = 0;
-        int32_t acc_0 = 0;
+    if (rhs_rows & 0x1) {
+        q63_t         acc_64_0     = 0;
+        int32_t       acc_0        = 0;
         const int32_t col_loop_cnt = rhs_cols_fast / 4;
 
-        const int16_t *lhs_vec = lhs;
-        const int8_t *rhs_0 = rhs;
+        const int16_t* lhs_vec = lhs;
+        const int8_t*  rhs_0   = rhs;
 
-        for (int i = col_loop_cnt; i != 0; i--)
-        {
+        for (int i = col_loop_cnt; i != 0; i--) {
             int32_t ker_0, ker_1, vec;
             rhs_0 = read_and_pad(rhs_0, &ker_0, &ker_1);
 
-            vec = arm_nn_read_q15x2_ia(&lhs_vec);
+            vec   = arm_nn_read_q15x2_ia(&lhs_vec);
             acc_0 = __SMLAD(ker_0, vec, acc_0);
 
-            vec = arm_nn_read_q15x2_ia(&lhs_vec);
+            vec   = arm_nn_read_q15x2_ia(&lhs_vec);
             acc_0 = __SMLAD(ker_1, vec, acc_0);
         }
 
         acc_64_0 += acc_0;
 
-        for (int j = col_loop_cnt * 4; j < rhs_cols; j++)
-        {
+        for (int j = col_loop_cnt * 4; j < rhs_cols; j++) {
             const int32_t lhs_temp = (*lhs_vec);
             lhs_vec++;
             acc_64_0 += lhs_temp * (*rhs_0);
             rhs_0++;
         }
 
-        if (bias)
-        {
+        if (bias) {
             acc_64_0 += *bias++;
         }
         q31_t tmp;
-        tmp = arm_nn_requantize_s64(acc_64_0, dst_multiplier, dst_shift);
-        tmp = MAX(tmp, activation_min);
-        tmp = MIN(tmp, activation_max);
+        tmp    = arm_nn_requantize_s64(acc_64_0, dst_multiplier, dst_shift);
+        tmp    = MAX(tmp, activation_min);
+        tmp    = MIN(tmp, activation_max);
         *dst++ = (q15_t)tmp;
     }
 
 #else
-    for (int i_row_loop_cnt = 0; i_row_loop_cnt < rhs_rows; i_row_loop_cnt++)
-    {
-        const q15_t *lhs_ptr = lhs;
-        const q7_t *rhs_ptr_0 = &rhs[0];
+    for (int i_row_loop_cnt = 0; i_row_loop_cnt < rhs_rows; i_row_loop_cnt++) {
+        const q15_t* lhs_ptr   = lhs;
+        const q7_t*  rhs_ptr_0 = &rhs[0];
 
         q63_t result = 0;
 
-        if (bias)
-        {
+        if (bias) {
             result = *bias++;
         }
-        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols; ++rhs_cols_idx)
-        {
+        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols; ++rhs_cols_idx) {
             const q63_t rhs_value0 = (int8_t)*rhs_ptr_0;
-            const q63_t lhs_value = *lhs_ptr;
+            const q63_t lhs_value  = *lhs_ptr;
 
             result += lhs_value * rhs_value0;
 

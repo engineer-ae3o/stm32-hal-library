@@ -51,22 +51,20 @@
  *
  */
 
-void arm_relu_q15(q15_t *data, uint16_t size)
-{
+void arm_relu_q15(q15_t* data, uint16_t size) {
 
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
     /* Run the following code for M cores with DSP extension */
 
-    uint16_t i = size >> 1;
-    q15_t *input = data;
-    q15_t *output = data;
-    q31_t in;
-    q31_t buf;
-    q31_t mask;
+    uint16_t i      = size >> 1;
+    q15_t*   input  = data;
+    q15_t*   output = data;
+    q31_t    in;
+    q31_t    buf;
+    q31_t    mask;
 
-    while (i)
-    {
-        in = arm_nn_read_q15x2_ia((const q15_t **)&input);
+    while (i) {
+        in = arm_nn_read_q15x2_ia((const q15_t**)&input);
 
         /* extract the first bit */
         buf = __ROR(in & 0x80008000, 15);
@@ -78,10 +76,8 @@ void arm_relu_q15(q15_t *data, uint16_t size)
         i--;
     }
 
-    if (size & 0x1)
-    {
-        if (*input < 0)
-        {
+    if (size & 0x1) {
+        if (*input < 0) {
             *input = 0;
         }
         input++;
@@ -90,10 +86,10 @@ void arm_relu_q15(q15_t *data, uint16_t size)
     /* Run the following code as reference implementation for M cores without DSP extension */
     uint16_t i;
 
-    for (i = 0; i < size; i++)
-    {
-        if (data[i] < 0)
+    for (i = 0; i < size; i++) {
+        if (data[i] < 0) {
             data[i] = 0;
+        }
     }
 
 #endif /* ARM_MATH_DSP */

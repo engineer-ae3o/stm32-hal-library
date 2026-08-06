@@ -46,28 +46,21 @@
   @return        none
  */
 
-void arm_add_f64(
-  const float64_t * pSrcA,
-  const float64_t * pSrcB,
-        float64_t * pDst,
-        uint32_t blockSize)
-{
-  uint32_t blkCnt;                               /* Loop counter */
+void arm_add_f64(const float64_t* pSrcA, const float64_t* pSrcB, float64_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
-  while (blkCnt > 0U)
-  {
-    /* C = A + B */
+    while (blkCnt > 0U) {
+        /* C = A + B */
 
-    /* Add and store result in destination buffer. */
-    *pDst++ = (*pSrcA++) + (*pSrcB++);
+        /* Add and store result in destination buffer. */
+        *pDst++ = (*pSrcA++) + (*pSrcB++);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 
 /**

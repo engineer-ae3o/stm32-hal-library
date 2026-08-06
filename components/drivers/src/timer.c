@@ -1,4 +1,5 @@
-#include "timer.h"
+#include "drivers/timer.h"
+
 
 void timer_init(TIM_TypeDef* timer, uint16_t prescaler) {
     // Enable timer clock

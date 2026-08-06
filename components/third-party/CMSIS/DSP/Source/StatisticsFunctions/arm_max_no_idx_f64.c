@@ -45,29 +45,23 @@
   @param[out]    pResult    maximum value returned here
   @return        none
  */
-void arm_max_no_idx_f64(
-    const float64_t *pSrc,
-    uint32_t   blockSize,
-    float64_t *pResult)
-{
-   float64_t   maxValue = F64_MIN;
-   float64_t   newVal;
+void arm_max_no_idx_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult) {
+    float64_t maxValue = F64_MIN;
+    float64_t newVal;
 
-   while (blockSize > 0U)
-   {
-       newVal = *pSrc++;
-   
-       /* compare for the maximum value */
-       if (maxValue < newVal)
-       {
-           /* Update the maximum value and it's index */
-           maxValue = newVal;
-       }
-   
-       blockSize --;
-   }
-    
-   *pResult = maxValue;
+    while (blockSize > 0U) {
+        newVal = *pSrc++;
+
+        /* compare for the maximum value */
+        if (maxValue < newVal) {
+            /* Update the maximum value and it's index */
+            maxValue = newVal;
+        }
+
+        blockSize--;
+    }
+
+    *pResult = maxValue;
 }
 
 /**

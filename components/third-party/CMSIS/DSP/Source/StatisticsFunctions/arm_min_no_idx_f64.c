@@ -45,29 +45,23 @@
   @param[out]    pResult    minimum value returned here
   @return        none
  */
-void arm_min_no_idx_f64(
-    const float64_t *pSrc,
-    uint32_t   blockSize,
-    float64_t *pResult)
-{
-   float64_t   minValue = F64_MAX;
-   float64_t   newVal;
+void arm_min_no_idx_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult) {
+    float64_t minValue = F64_MAX;
+    float64_t newVal;
 
-   while (blockSize > 0U)
-   {
-       newVal = *pSrc++;
-   
-       /* compare for the minimum value */
-       if (minValue > newVal)
-       {
-           /* Update the minimum value and it's index */
-           minValue = newVal;
-       }
-   
-       blockSize --;
-   }
-    
-   *pResult = minValue;
+    while (blockSize > 0U) {
+        newVal = *pSrc++;
+
+        /* compare for the minimum value */
+        if (minValue > newVal) {
+            /* Update the minimum value and it's index */
+            minValue = newVal;
+        }
+
+        blockSize--;
+    }
+
+    *pResult = minValue;
 }
 
 /**

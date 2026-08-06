@@ -52,12 +52,11 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-float32_t arm_chebyshev_distance_f32(const float32_t *pA,const float32_t *pB, uint32_t blockSize)
-{
-    uint32_t        blkCnt;     /* loop counters */
-    f32x4_t         vecA, vecB;
-    f32x4_t         vecDiff = vdupq_n_f32(0.0);
-    float32_t       maxValue = 0.0;
+float32_t arm_chebyshev_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+    uint32_t  blkCnt; /* loop counters */
+    f32x4_t   vecA, vecB;
+    f32x4_t   vecDiff  = vdupq_n_f32(0.0);
+    float32_t maxValue = 0.0;
 
 
     blkCnt = blockSize >> 2;
@@ -81,7 +80,7 @@ float32_t arm_chebyshev_distance_f32(const float32_t *pA,const float32_t *pB, ui
      */
     blkCnt = blockSize & 3;
     if (blkCnt > 0U) {
-        mve_pred16_t    p0 = vctp32q(blkCnt);
+        mve_pred16_t p0 = vctp32q(blkCnt);
 
         vecA = vldrwq_z_f32(pA, p0);
         vecB = vldrwq_z_f32(pB, p0);
@@ -103,106 +102,94 @@ float32_t arm_chebyshev_distance_f32(const float32_t *pA,const float32_t *pB, ui
 
 #include "NEMath.h"
 
-float32_t arm_chebyshev_distance_f32(const float32_t *pA,const float32_t *pB, uint32_t blockSize)
-{
-   float32_t diff=0.0f, maxVal=0.0f, tmpA, tmpB;
-   uint32_t blkCnt;
-   float32x4_t a,b,diffV, maxValV;
-   float32x2_t maxValV2;
+float32_t arm_chebyshev_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+    float32_t   diff = 0.0f, maxVal = 0.0f, tmpA, tmpB;
+    uint32_t    blkCnt;
+    float32x4_t a, b, diffV, maxValV;
+    float32x2_t maxValV2;
 
-   if (blockSize <= 3)
-   {
-      tmpA = *pA++;
-      tmpB = *pB++;
-      diff = fabsf(tmpA - tmpB);
-      maxVal = diff;
-      blockSize--;
-   
-      while(blockSize > 0)
-      {
-         tmpA = *pA++;
-         tmpB = *pB++;
-         diff = fabsf(tmpA - tmpB);
-         if (diff > maxVal)
-         {
-           maxVal = diff;
-         }
-         blockSize --;
-      }
-   }
-   else
-   {
+    if (blockSize <= 3) {
+        tmpA   = *pA++;
+        tmpB   = *pB++;
+        diff   = fabsf(tmpA - tmpB);
+        maxVal = diff;
+        blockSize--;
 
-      a = vld1q_f32(pA);
-      b = vld1q_f32(pB);
-      pA += 4;
-      pB += 4;
+        while (blockSize > 0) {
+            tmpA = *pA++;
+            tmpB = *pB++;
+            diff = fabsf(tmpA - tmpB);
+            if (diff > maxVal) {
+                maxVal = diff;
+            }
+            blockSize--;
+        }
+    } else {
 
-      diffV = vabdq_f32(a,b);
+        a = vld1q_f32(pA);
+        b = vld1q_f32(pB);
+        pA += 4;
+        pB += 4;
 
-      blockSize -= 4;
+        diffV = vabdq_f32(a, b);
 
-      maxValV = diffV;
+        blockSize -= 4;
 
-  
-      blkCnt = blockSize >> 2;
-      while(blkCnt > 0)
-      {
-           a = vld1q_f32(pA);
-           b = vld1q_f32(pB);
-   
-           diffV = vabdq_f32(a,b);
-           maxValV = vmaxq_f32(maxValV, diffV);
-   
-           pA += 4;
-           pB += 4;
-           blkCnt --;
-      }
-      maxValV2 = vpmax_f32(vget_low_f32(maxValV),vget_high_f32(maxValV));
-      maxValV2 = vpmax_f32(maxValV2,maxValV2);
-      maxVal = vget_lane_f32(maxValV2,0);
+        maxValV = diffV;
 
-  
-      blkCnt = blockSize & 3;
-      while(blkCnt > 0)
-      {
-         tmpA = *pA++;
-         tmpB = *pB++;
-         diff = fabsf(tmpA - tmpB);
-         if (diff > maxVal)
-         {
-            maxVal = diff;
-         }
-         blkCnt --;
-      }
-   }
-   return(maxVal);
+
+        blkCnt = blockSize >> 2;
+        while (blkCnt > 0) {
+            a = vld1q_f32(pA);
+            b = vld1q_f32(pB);
+
+            diffV   = vabdq_f32(a, b);
+            maxValV = vmaxq_f32(maxValV, diffV);
+
+            pA += 4;
+            pB += 4;
+            blkCnt--;
+        }
+        maxValV2 = vpmax_f32(vget_low_f32(maxValV), vget_high_f32(maxValV));
+        maxValV2 = vpmax_f32(maxValV2, maxValV2);
+        maxVal   = vget_lane_f32(maxValV2, 0);
+
+
+        blkCnt = blockSize & 3;
+        while (blkCnt > 0) {
+            tmpA = *pA++;
+            tmpB = *pB++;
+            diff = fabsf(tmpA - tmpB);
+            if (diff > maxVal) {
+                maxVal = diff;
+            }
+            blkCnt--;
+        }
+    }
+    return (maxVal);
 }
 
 #else
-float32_t arm_chebyshev_distance_f32(const float32_t *pA,const float32_t *pB, uint32_t blockSize)
-{
-   float32_t diff=0.0f,  maxVal,tmpA, tmpB;
+float32_t arm_chebyshev_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+    float32_t diff = 0.0f, maxVal, tmpA, tmpB;
 
-   tmpA = *pA++;
-   tmpB = *pB++;
-   diff = fabsf(tmpA - tmpB);
-   maxVal = diff;
-   blockSize--;
+    tmpA   = *pA++;
+    tmpB   = *pB++;
+    diff   = fabsf(tmpA - tmpB);
+    maxVal = diff;
+    blockSize--;
 
-   while(blockSize > 0)
-   {
-      tmpA = *pA++;
-      tmpB = *pB++;
-      diff = fabsf(tmpA - tmpB);
-      if (diff > maxVal)
-      {
-        maxVal = diff;
-      }
-      blockSize --;
-   }
-  
-   return(maxVal);
+    while (blockSize > 0) {
+        tmpA = *pA++;
+        tmpB = *pB++;
+        diff = fabsf(tmpA - tmpB);
+        if (diff > maxVal) {
+            maxVal = diff;
+        }
+        blockSize--;
+    }
+
+    return (maxVal);
 }
 #endif
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */

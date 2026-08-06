@@ -64,25 +64,20 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_f16_to_q15(
-  const float16_t * pSrc,
-  q15_t * pDst,
-  uint32_t blockSize)
-{
-    float16_t       maxQ = (float16_t) Q15_MAX;
-    float16x8_t         vecDst;
+void arm_f16_to_q15(const float16_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+    float16_t   maxQ = (float16_t)Q15_MAX;
+    float16x8_t vecDst;
 
 
     do {
-        mve_pred16_t    p = vctp16q(blockSize);
+        mve_pred16_t p = vctp16q(blockSize);
 
-        vecDst = vldrhq_z_f16((float16_t const *) pSrc, p);
+        vecDst = vldrhq_z_f16((float16_t const*)pSrc, p);
         /* C = A * 32767 */
         /* convert from float to Q15 and then store the results in the destination buffer */
         vecDst = vmulq_m(vuninitializedq_f16(), vecDst, maxQ, p);
 
-        vstrhq_p_s16(pDst,
-            vcvtaq_m(vuninitializedq_s16(), vecDst, p), p);
+        vstrhq_p_s16(pDst, vcvtaq_m(vuninitializedq_s16(), vecDst, p), p);
         /*
          * Decrement the blockSize loop counter
          * Advance vector source and destination pointers
@@ -90,30 +85,24 @@ void arm_f16_to_q15(
         pSrc += 8;
         pDst += 8;
         blockSize -= 8;
-    }
-    while ((int32_t) blockSize > 0);
+    } while ((int32_t)blockSize > 0);
 }
 
 #else
 
-void arm_f16_to_q15(
-  const float16_t * pSrc,
-        q15_t * pDst,
-        uint32_t blockSize)
-{
-    const float16_t *pIn = pSrc;      /* Src pointer */
-    uint32_t  blkCnt;           /* loop counter */
+void arm_f16_to_q15(const float16_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+    const float16_t* pIn = pSrc; /* Src pointer */
+    uint32_t         blkCnt;     /* loop counter */
 #ifdef ARM_MATH_ROUNDING
     float16_t in;
-#endif                          /*      #ifdef ARM_MATH_ROUNDING        */
+#endif /*      #ifdef ARM_MATH_ROUNDING        */
 
     /*
      * Loop over blockSize number of values
      */
     blkCnt = blockSize;
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
 
 #ifdef ARM_MATH_ROUNDING
 
@@ -126,7 +115,7 @@ void arm_f16_to_q15(
         in = *pIn++;
         in = (in * 32768.0);
         in += in > 0.0 ? 0.5 : -0.5;
-        *pDst++ = clip_q31_to_q15((q31_t) (in));
+        *pDst++ = clip_q31_to_q15((q31_t)(in));
 
 #else
 
@@ -136,16 +125,15 @@ void arm_f16_to_q15(
         /*
          * convert from float to Q31 and then store the results in the destination buffer
          */
-        *pDst++ = clip_q31_to_q15((q31_t) ((_Float16)*pIn++ * 32768.0f16));
+        *pDst++ = clip_q31_to_q15((q31_t)((_Float16)*pIn++ * 32768.0f16));
 
-#endif                          /*      #ifdef ARM_MATH_ROUNDING        */
+#endif /*      #ifdef ARM_MATH_ROUNDING        */
 
         /*
          * Decrement the loop counter
          */
         blkCnt--;
     }
-
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 
@@ -153,5 +141,4 @@ void arm_f16_to_q15(
   @} end of f16_to_x group
  */
 
-#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */ 
-
+#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */

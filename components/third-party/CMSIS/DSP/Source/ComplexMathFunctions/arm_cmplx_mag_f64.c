@@ -68,31 +68,25 @@
   @param[in]     numSamples  number of samples in each vector
   @return        none
  */
-void arm_cmplx_mag_f64(
-  const float64_t * pSrc,
-        float64_t * pDst,
-        uint32_t numSamples)
-{
-  uint32_t blkCnt;                               /* loop counter */
-  float64_t real, imag;                      /* Temporary variables to hold input values */
+void arm_cmplx_mag_f64(const float64_t* pSrc, float64_t* pDst, uint32_t numSamples) {
+    uint32_t  blkCnt;     /* loop counter */
+    float64_t real, imag; /* Temporary variables to hold input values */
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = numSamples;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = numSamples;
 
-  while (blkCnt > 0U)
-  {
-    /* C[0] = sqrt(A[0] * A[0] + A[1] * A[1]) */
+    while (blkCnt > 0U) {
+        /* C[0] = sqrt(A[0] * A[0] + A[1] * A[1]) */
 
-    real = *pSrc++;
-    imag = *pSrc++;
+        real = *pSrc++;
+        imag = *pSrc++;
 
-    /* store result in destination buffer. */
-    *pDst++ = sqrt((real * real) + (imag * imag));
+        /* store result in destination buffer. */
+        *pDst++ = sqrt((real * real) + (imag * imag));
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 
 /**

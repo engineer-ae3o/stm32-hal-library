@@ -56,29 +56,26 @@
  * saturation followed by any of these activation functions.
  */
 
-void arm_nn_activations_direct_q7(q7_t *data, uint16_t size, uint16_t int_width, arm_nn_activation_type type)
-{
-    uint16_t i = size;
-    q7_t *pIn = data;
-    q7_t *pOut = data;
-    q7_t in;
-    q7_t out;
-    uint16_t shift_size = 3 - int_width;
-    const q7_t *lookup_table;
-    switch (type)
-    {
-    case ARM_SIGMOID:
-        lookup_table = sigmoidTable_q7;
-        break;
-    case ARM_TANH:
-    default:
-        lookup_table = tanhTable_q7;
-        break;
+void arm_nn_activations_direct_q7(q7_t* data, uint16_t size, uint16_t int_width, arm_nn_activation_type type) {
+    uint16_t    i    = size;
+    q7_t*       pIn  = data;
+    q7_t*       pOut = data;
+    q7_t        in;
+    q7_t        out;
+    uint16_t    shift_size = 3 - int_width;
+    const q7_t* lookup_table;
+    switch (type) {
+        case ARM_SIGMOID:
+            lookup_table = sigmoidTable_q7;
+            break;
+        case ARM_TANH:
+        default:
+            lookup_table = tanhTable_q7;
+            break;
     }
-    while (i)
-    {
-        in = *pIn++;
-        out = lookup_table[(uint8_t)(in >> shift_size)];
+    while (i) {
+        in      = *pIn++;
+        out     = lookup_table[(uint8_t)(in >> shift_size)];
         *pOut++ = out;
         i--;
     }

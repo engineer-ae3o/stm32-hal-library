@@ -1,4 +1,4 @@
-/**************************************************************************//**
+/**************************************************************************/ /**
  * @file     os_tick.h
  * @brief    CMSIS OS Tick header file
  * @version  V1.0.2
@@ -27,54 +27,53 @@
 
 #include <stdint.h>
 
-#ifdef  __cplusplus
-extern "C"
-{
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /// IRQ Handler.
 #ifndef IRQHANDLER_T
 #define IRQHANDLER_T
-typedef void (*IRQHandler_t) (void);
+typedef void (*IRQHandler_t)(void);
 #endif
 
 /// Setup OS Tick timer to generate periodic RTOS Kernel Ticks
 /// \param[in]     freq         tick frequency in Hz
 /// \param[in]     handler      tick IRQ handler
 /// \return 0 on success, -1 on error.
-int32_t  OS_Tick_Setup (uint32_t freq, IRQHandler_t handler);
+int32_t OS_Tick_Setup(uint32_t freq, IRQHandler_t handler);
 
 /// Enable OS Tick timer interrupt
-void     OS_Tick_Enable (void);
+void OS_Tick_Enable(void);
 
 /// Disable OS Tick timer interrupt
-void     OS_Tick_Disable (void);
+void OS_Tick_Disable(void);
 
 /// Acknowledge execution of OS Tick timer interrupt
-void     OS_Tick_AcknowledgeIRQ (void);
+void OS_Tick_AcknowledgeIRQ(void);
 
 /// Get OS Tick timer IRQ number
 /// \return OS Tick IRQ number
-int32_t  OS_Tick_GetIRQn (void);
+int32_t OS_Tick_GetIRQn(void);
 
 /// Get OS Tick timer clock frequency
 /// \return OS Tick timer clock frequency in Hz
-uint32_t OS_Tick_GetClock (void);
+uint32_t OS_Tick_GetClock(void);
 
 /// Get OS Tick timer interval reload value
 /// \return OS Tick timer interval reload value
-uint32_t OS_Tick_GetInterval (void);
+uint32_t OS_Tick_GetInterval(void);
 
 /// Get OS Tick timer counter value
 /// \return OS Tick timer counter value
-uint32_t OS_Tick_GetCount (void);
+uint32_t OS_Tick_GetCount(void);
 
 /// Get OS Tick timer overflow status
 /// \return OS Tick overflow status (1 - overflow, 0 - no overflow).
-uint32_t OS_Tick_GetOverflow (void);
+uint32_t OS_Tick_GetOverflow(void);
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#endif  /* OS_TICK_H */
+#endif /* OS_TICK_H */

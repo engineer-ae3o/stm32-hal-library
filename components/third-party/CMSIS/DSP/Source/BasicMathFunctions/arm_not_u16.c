@@ -53,12 +53,8 @@
   @return        none
  */
 
-void arm_not_u16(
-    const uint16_t * pSrc,
-          uint16_t * pDst,
-          uint32_t blockSize)
-{
-    uint32_t blkCnt;      /* Loop counter */
+void arm_not_u16(const uint16_t* pSrc, uint16_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
     uint16x8_t vecSrc;
@@ -66,11 +62,10 @@ void arm_not_u16(
     /* Compute 8 outputs at a time */
     blkCnt = blockSize >> 3;
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         vecSrc = vld1q(pSrc);
 
-        vst1q(pDst, vmvnq_u16(vecSrc) );
+        vst1q(pDst, vmvnq_u16(vecSrc));
 
         pSrc += 8;
         pDst += 8;
@@ -82,10 +77,9 @@ void arm_not_u16(
     /* Tail */
     blkCnt = blockSize & 7;
 
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         mve_pred16_t p0 = vctp16q(blkCnt);
-        vecSrc = vld1q(pSrc);
+        vecSrc          = vld1q(pSrc);
         vstrhq_p(pDst, vmvnq_u16(vecSrc), p0);
     }
 #else
@@ -95,11 +89,10 @@ void arm_not_u16(
     /* Compute 8 outputs at a time */
     blkCnt = blockSize >> 3U;
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         inV = vld1q_u16(pSrc);
 
-        vst1q_u16(pDst, vmvnq_u16(inV) );
+        vst1q_u16(pDst, vmvnq_u16(inV));
 
         pSrc += 8;
         pDst += 8;
@@ -115,8 +108,7 @@ void arm_not_u16(
     blkCnt = blockSize;
 #endif
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         *pDst++ = ~(*pSrc++);
 
         /* Decrement the loop counter */

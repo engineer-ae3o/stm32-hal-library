@@ -55,27 +55,22 @@
                    Finally, the return result is in 16.48 format.
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_power_q31(
-  const q31_t * pSrc,
-        uint32_t blockSize,
-        q63_t * pResult)
-{
-    uint32_t     blkCnt;           /* loop counters */
-    q31x4_t     vecSrc;
-    q63_t       sum = 0LL;
-    q31_t       in;
+void arm_power_q31(const q31_t* pSrc, uint32_t blockSize, q63_t* pResult) {
+    uint32_t blkCnt; /* loop counters */
+    q31x4_t  vecSrc;
+    q63_t    sum = 0LL;
+    q31_t    in;
 
     /* Compute 4 outputs at a time */
     blkCnt = blockSize >> 2U;
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         vecSrc = vldrwq_s32(pSrc);
         /*
          * sum lanes
          */
         sum = vrmlaldavhaq(sum, vecSrc, vecSrc);
 
-        blkCnt --;
+        blkCnt--;
         pSrc += 4;
     }
 
@@ -83,80 +78,73 @@ void arm_power_q31(
      * tail
      */
     blkCnt = blockSize & 0x3;
-    while (blkCnt > 0U)
-    {
-       /* C = A[0] * A[0] + A[1] * A[1] + ... + A[blockSize-1] * A[blockSize-1] */
+    while (blkCnt > 0U) {
+        /* C = A[0] * A[0] + A[1] * A[1] + ... + A[blockSize-1] * A[blockSize-1] */
 
-       /* Compute Power and store result in a temporary variable, sum. */
-       in = *pSrc++;
-       sum += ((q63_t) in * in) >> 8;
+        /* Compute Power and store result in a temporary variable, sum. */
+        in = *pSrc++;
+        sum += ((q63_t)in * in) >> 8;
 
-       /* Decrement loop counter */
-       blkCnt--;
+        /* Decrement loop counter */
+        blkCnt--;
     }
 
     *pResult = asrl(sum, 6);
 }
 #else
-void arm_power_q31(
-  const q31_t * pSrc,
-        uint32_t blockSize,
-        q63_t * pResult)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-        q63_t sum = 0;                                 /* Temporary result storage */
-        q31_t in;                                      /* Temporary variable to store input value */
+void arm_power_q31(const q31_t* pSrc, uint32_t blockSize, q63_t* pResult) {
+    uint32_t blkCnt;  /* Loop counter */
+    q63_t    sum = 0; /* Temporary result storage */
+    q31_t    in;      /* Temporary variable to store input value */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = A[0] * A[0] + A[1] * A[1] + ... + A[blockSize-1] * A[blockSize-1] */
+    while (blkCnt > 0U) {
+        /* C = A[0] * A[0] + A[1] * A[1] + ... + A[blockSize-1] * A[blockSize-1] */
 
-    /* Compute Power then shift intermediate results by 14 bits to maintain 16.48 format and store result in a temporary variable sum, providing 15 guard bits. */
-    in = *pSrc++;
-    sum += ((q63_t) in * in) >> 14U;
+        /* Compute Power then shift intermediate results by 14 bits to maintain 16.48 format and store result in a temporary variable sum, providing 15 guard bits. */
+        in = *pSrc++;
+        sum += ((q63_t)in * in) >> 14U;
 
-    in = *pSrc++;
-    sum += ((q63_t) in * in) >> 14U;
+        in = *pSrc++;
+        sum += ((q63_t)in * in) >> 14U;
 
-    in = *pSrc++;
-    sum += ((q63_t) in * in) >> 14U;
+        in = *pSrc++;
+        sum += ((q63_t)in * in) >> 14U;
 
-    in = *pSrc++;
-    sum += ((q63_t) in * in) >> 14U;
+        in = *pSrc++;
+        sum += ((q63_t)in * in) >> 14U;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = A[0] * A[0] + A[1] * A[1] + ... + A[blockSize-1] * A[blockSize-1] */
+    while (blkCnt > 0U) {
+        /* C = A[0] * A[0] + A[1] * A[1] + ... + A[blockSize-1] * A[blockSize-1] */
 
-    /* Compute Power and store result in a temporary variable, sum. */
-    in = *pSrc++;
-    sum += ((q63_t) in * in) >> 14U;
+        /* Compute Power and store result in a temporary variable, sum. */
+        in = *pSrc++;
+        sum += ((q63_t)in * in) >> 14U;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Store results in 16.48 format */
-  *pResult = sum;
+    /* Store results in 16.48 format */
+    *pResult = sum;
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

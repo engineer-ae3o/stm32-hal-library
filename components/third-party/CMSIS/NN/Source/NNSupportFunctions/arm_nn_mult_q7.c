@@ -53,12 +53,10 @@
  * Results outside of the allowable Q7 range [0x80 0x7F] will be saturated.
  */
 
-void arm_nn_mult_q7(q7_t *pSrcA, q7_t *pSrcB, q7_t *pDst, const uint16_t out_shift, uint32_t blockSize)
-{
+void arm_nn_mult_q7(q7_t* pSrcA, q7_t* pSrcB, q7_t* pDst, const uint16_t out_shift, uint32_t blockSize) {
     uint32_t blkCnt = blockSize; /* loop counters */
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /* C = A * B */
         /* Multiply the inputs and store the result in the destination buffer */
         *pDst++ = (q7_t)__SSAT(((q15_t)((q15_t)(*pSrcA++) * (*pSrcB++) + NN_ROUND(out_shift)) >> out_shift), 8);

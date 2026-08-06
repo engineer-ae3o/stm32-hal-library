@@ -56,19 +56,16 @@
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "arm_helium_utils.h"
-void arm_quaternion_product_single_f32(const float32_t *qa, 
-    const float32_t *qb, 
-    float32_t *qr)
-{
-    static uint32_t patternA[4] = { 0, 1, 0, 1 };
-    static uint32_t patternB[4] = { 3, 2, 3, 2 };
-    static uint32_t patternC[4] = { 3, 2, 1, 0 };
-    static float32_t signA[4] = { -1, -1, 1, 1 };
+void arm_quaternion_product_single_f32(const float32_t* qa, const float32_t* qb, float32_t* qr) {
+    static uint32_t  patternA[4] = {0, 1, 0, 1};
+    static uint32_t  patternB[4] = {3, 2, 3, 2};
+    static uint32_t  patternC[4] = {3, 2, 1, 0};
+    static float32_t signA[4]    = {-1, -1, 1, 1};
 
-    uint32x4_t vecA = vld1q_u32(patternA);
-    uint32x4_t vecB = vld1q_u32(patternB);
-    uint32x4_t vecC = vld1q_u32(patternC);
-    f32x4_t vecSignA = vld1q_f32(signA);
+    uint32x4_t vecA     = vld1q_u32(patternA);
+    uint32x4_t vecB     = vld1q_u32(patternB);
+    uint32x4_t vecC     = vld1q_u32(patternC);
+    f32x4_t    vecSignA = vld1q_f32(signA);
 
 
     f32x4_t vecTmpA, vecTmpB, vecAcc;
@@ -91,10 +88,7 @@ void arm_quaternion_product_single_f32(const float32_t *qa,
 }
 
 #else
-void arm_quaternion_product_single_f32(const float32_t *qa, 
-    const float32_t *qb, 
-    float32_t *qr)
-{
+void arm_quaternion_product_single_f32(const float32_t* qa, const float32_t* qb, float32_t* qr) {
     qr[0] = qa[0] * qb[0] - qa[1] * qb[1] - qa[2] * qb[2] - qa[3] * qb[3];
     qr[1] = qa[0] * qb[1] + qa[1] * qb[0] + qa[2] * qb[3] - qa[3] * qb[2];
     qr[2] = qa[0] * qb[2] + qa[2] * qb[0] + qa[3] * qb[1] - qa[1] * qb[3];

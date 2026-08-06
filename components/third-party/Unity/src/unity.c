@@ -17,23 +17,23 @@ void UNITY_OUTPUT_CHAR(int);
 #endif
 
 /* Helpful macros for us to use here in Assert functions */
-#define UNITY_FAIL_AND_BAIL                                                                                                                \
-    do {                                                                                                                                   \
-        Unity.CurrentTestFailed = 1;                                                                                                       \
-        UNITY_OUTPUT_FLUSH();                                                                                                              \
-        TEST_ABORT();                                                                                                                      \
+#define UNITY_FAIL_AND_BAIL                                                                                                                          \
+    do {                                                                                                                                             \
+        Unity.CurrentTestFailed = 1;                                                                                                                 \
+        UNITY_OUTPUT_FLUSH();                                                                                                                        \
+        TEST_ABORT();                                                                                                                                \
     } while (0)
-#define UNITY_IGNORE_AND_BAIL                                                                                                              \
-    do {                                                                                                                                   \
-        Unity.CurrentTestIgnored = 1;                                                                                                      \
-        UNITY_OUTPUT_FLUSH();                                                                                                              \
-        TEST_ABORT();                                                                                                                      \
+#define UNITY_IGNORE_AND_BAIL                                                                                                                        \
+    do {                                                                                                                                             \
+        Unity.CurrentTestIgnored = 1;                                                                                                                \
+        UNITY_OUTPUT_FLUSH();                                                                                                                        \
+        TEST_ABORT();                                                                                                                                \
     } while (0)
-#define RETURN_IF_FAIL_OR_IGNORE                                                                                                           \
-    do {                                                                                                                                   \
-        if (Unity.CurrentTestFailed || Unity.CurrentTestIgnored) {                                                                         \
-            TEST_ABORT();                                                                                                                  \
-        }                                                                                                                                  \
+#define RETURN_IF_FAIL_OR_IGNORE                                                                                                                     \
+    do {                                                                                                                                             \
+        if (Unity.CurrentTestFailed || Unity.CurrentTestIgnored) {                                                                                   \
+            TEST_ABORT();                                                                                                                            \
+        }                                                                                                                                            \
     } while (0)
 
 struct UNITY_STORAGE_T Unity;
@@ -548,8 +548,7 @@ static void UnityAddMsgIfSpecified(const char* msg) {
         UNITY_COUNTER_TYPE c;
         for (c = 0; (c < Unity.CurrentDetailStackSize) && (c < UNITY_DETAIL_STACK_SIZE); c++) {
             const char* label;
-            if ((Unity.CurrentDetailStackLabels[c] == UNITY_DETAIL_NONE) ||
-                (Unity.CurrentDetailStackLabels[c] > UnityStrDetailLabelsCount)) {
+            if ((Unity.CurrentDetailStackLabels[c] == UNITY_DETAIL_NONE) || (Unity.CurrentDetailStackLabels[c] > UnityStrDetailLabelsCount)) {
                 break;
             }
             label = UnityStrDetailLabels[Unity.CurrentDetailStackLabels[c]];
@@ -662,8 +661,7 @@ static int UnityIsOneArrayNull(UNITY_INTERNAL_PTR expected, UNITY_INTERNAL_PTR a
  *-----------------------------------------------*/
 
 /*-----------------------------------------------*/
-void UnityAssertBits(
-    const UNITY_INT mask, const UNITY_INT expected, const UNITY_INT actual, const char* msg, const UNITY_LINE_TYPE lineNumber) {
+void UnityAssertBits(const UNITY_INT mask, const UNITY_INT expected, const UNITY_INT actual, const char* msg, const UNITY_LINE_TYPE lineNumber) {
     RETURN_IF_FAIL_OR_IGNORE;
 
     if ((mask & expected) != (mask & actual)) {
@@ -678,11 +676,8 @@ void UnityAssertBits(
 }
 
 /*-----------------------------------------------*/
-void UnityAssertEqualIntNumber(const UNITY_INT             expected,
-                               const UNITY_INT             actual,
-                               const char*                 msg,
-                               const UNITY_LINE_TYPE       lineNumber,
-                               const UNITY_DISPLAY_STYLE_T style) {
+void UnityAssertEqualIntNumber(
+    const UNITY_INT expected, const UNITY_INT actual, const char* msg, const UNITY_LINE_TYPE lineNumber, const UNITY_DISPLAY_STYLE_T style) {
     RETURN_IF_FAIL_OR_IGNORE;
 
     if (expected != actual) {
@@ -696,11 +691,8 @@ void UnityAssertEqualIntNumber(const UNITY_INT             expected,
     }
 }
 
-void UnityAssertEqualUintNumber(const UNITY_UINT            expected,
-                                const UNITY_UINT            actual,
-                                const char*                 msg,
-                                const UNITY_LINE_TYPE       lineNumber,
-                                const UNITY_DISPLAY_STYLE_T style) {
+void UnityAssertEqualUintNumber(
+    const UNITY_UINT expected, const UNITY_UINT actual, const char* msg, const UNITY_LINE_TYPE lineNumber, const UNITY_DISPLAY_STYLE_T style) {
     RETURN_IF_FAIL_OR_IGNORE;
 
     if (expected != actual) {
@@ -800,12 +792,12 @@ void UnityAssertUintGreaterOrLessOrEqualNumber(const UNITY_UINT            thres
     }
 }
 
-#define UnityPrintPointlessAndBail()                                                                                                       \
-    do {                                                                                                                                   \
-        UnityTestResultsFailBegin(lineNumber);                                                                                             \
-        UnityPrint(UnityStrPointless);                                                                                                     \
-        UnityAddMsgIfSpecified(msg);                                                                                                       \
-        UNITY_FAIL_AND_BAIL;                                                                                                               \
+#define UnityPrintPointlessAndBail()                                                                                                                 \
+    do {                                                                                                                                             \
+        UnityTestResultsFailBegin(lineNumber);                                                                                                       \
+        UnityPrint(UnityStrPointless);                                                                                                               \
+        UnityAddMsgIfSpecified(msg);                                                                                                                 \
+        UNITY_FAIL_AND_BAIL;                                                                                                                         \
     } while (0)
 
 /*-----------------------------------------------*/
@@ -914,16 +906,16 @@ void UnityAssertEqualIntArray(UNITY_INTERNAL_PTR          expected,
 /*-----------------------------------------------*/
 #ifndef UNITY_EXCLUDE_FLOAT
 /* Wrap this define in a function with variable types as float or double */
-#define UNITY_FLOAT_OR_DOUBLE_WITHIN(delta, expected, actual, diff)                                                                        \
-    if (UNITY_IS_INF(expected) && UNITY_IS_INF(actual) && (((expected) < 0) == ((actual) < 0)))                                            \
-        return 1;                                                                                                                          \
-    if (UNITY_NAN_CHECK)                                                                                                                   \
-        return 1;                                                                                                                          \
-    (diff) = (actual) - (expected);                                                                                                        \
-    if ((diff) < 0)                                                                                                                        \
-        (diff) = -(diff);                                                                                                                  \
-    if ((delta) < 0)                                                                                                                       \
-        (delta) = -(delta);                                                                                                                \
+#define UNITY_FLOAT_OR_DOUBLE_WITHIN(delta, expected, actual, diff)                                                                                  \
+    if (UNITY_IS_INF(expected) && UNITY_IS_INF(actual) && (((expected) < 0) == ((actual) < 0)))                                                      \
+        return 1;                                                                                                                                    \
+    if (UNITY_NAN_CHECK)                                                                                                                             \
+        return 1;                                                                                                                                    \
+    (diff) = (actual) - (expected);                                                                                                                  \
+    if ((diff) < 0)                                                                                                                                  \
+        (diff) = -(diff);                                                                                                                            \
+    if ((delta) < 0)                                                                                                                                 \
+        (delta) = -(delta);                                                                                                                          \
     return !(UNITY_IS_NAN(diff) || UNITY_IS_INF(diff) || ((diff) > (delta)))
 /* This first part of this condition will catch any NaN or Infinite values */
 #ifndef UNITY_NAN_NOT_EQUAL_NAN
@@ -933,12 +925,12 @@ void UnityAssertEqualIntArray(UNITY_INTERNAL_PTR          expected,
 #endif
 
 #ifndef UNITY_EXCLUDE_FLOAT_PRINT
-#define UNITY_PRINT_EXPECTED_AND_ACTUAL_FLOAT(expected, actual)                                                                            \
-    do {                                                                                                                                   \
-        UnityPrint(UnityStrExpected);                                                                                                      \
-        UnityPrintFloat(expected);                                                                                                         \
-        UnityPrint(UnityStrWas);                                                                                                           \
-        UnityPrintFloat(actual);                                                                                                           \
+#define UNITY_PRINT_EXPECTED_AND_ACTUAL_FLOAT(expected, actual)                                                                                      \
+    do {                                                                                                                                             \
+        UnityPrint(UnityStrExpected);                                                                                                                \
+        UnityPrintFloat(expected);                                                                                                                   \
+        UnityPrint(UnityStrWas);                                                                                                                     \
+        UnityPrintFloat(actual);                                                                                                                     \
     } while (0)
 #else
 #define UNITY_PRINT_EXPECTED_AND_ACTUAL_FLOAT(expected, actual) UnityPrint(UnityStrDelta)
@@ -1050,11 +1042,8 @@ void UnityAssertFloatsNotWithin(
 }
 
 /*-----------------------------------------------*/
-void UnityAssertGreaterOrLessFloat(const UNITY_FLOAT        threshold,
-                                   const UNITY_FLOAT        actual,
-                                   const UNITY_COMPARISON_T compare,
-                                   const char*              msg,
-                                   const UNITY_LINE_TYPE    lineNumber) {
+void UnityAssertGreaterOrLessFloat(
+    const UNITY_FLOAT threshold, const UNITY_FLOAT actual, const UNITY_COMPARISON_T compare, const char* msg, const UNITY_LINE_TYPE lineNumber) {
     int failed;
 
     RETURN_IF_FAIL_OR_IGNORE;
@@ -1259,11 +1248,8 @@ void UnityAssertDoublesNotWithin(
 }
 
 /*-----------------------------------------------*/
-void UnityAssertGreaterOrLessDouble(const UNITY_DOUBLE       threshold,
-                                    const UNITY_DOUBLE       actual,
-                                    const UNITY_COMPARISON_T compare,
-                                    const char*              msg,
-                                    const UNITY_LINE_TYPE    lineNumber) {
+void UnityAssertGreaterOrLessDouble(
+    const UNITY_DOUBLE threshold, const UNITY_DOUBLE actual, const UNITY_COMPARISON_T compare, const char* msg, const UNITY_LINE_TYPE lineNumber) {
     int failed;
 
     RETURN_IF_FAIL_OR_IGNORE;
@@ -1303,10 +1289,7 @@ void UnityAssertGreaterOrLessDouble(const UNITY_DOUBLE       threshold,
 #endif /* ! UNITY_EXCLUDE_FLOAT_PRINT */
 
 /*-----------------------------------------------*/
-void UnityAssertDoubleSpecial(const UNITY_DOUBLE        actual,
-                              const char*               msg,
-                              const UNITY_LINE_TYPE     lineNumber,
-                              const UNITY_FLOAT_TRAIT_T style) {
+void UnityAssertDoubleSpecial(const UNITY_DOUBLE actual, const char* msg, const UNITY_LINE_TYPE lineNumber, const UNITY_FLOAT_TRAIT_T style) {
     const char* trait_names[]   = {UnityStrInf, UnityStrNegInf, UnityStrNaN, UnityStrDet};
     UNITY_INT   should_be_trait = ((UNITY_INT)style & 1);
     UNITY_INT   is_trait        = !should_be_trait;
@@ -1808,23 +1791,23 @@ enum UnityLengthModifier {
     UNITY_LENGTH_MODIFIER_LONG,
 };
 
-#define UNITY_EXTRACT_ARG(NUMBER_T, NUMBER, LENGTH_MOD, VA, ARG_T)                                                                         \
-    do {                                                                                                                                   \
-        switch (LENGTH_MOD) {                                                                                                              \
-            case UNITY_LENGTH_MODIFIER_LONG_LONG: {                                                                                        \
-                NUMBER = (NUMBER_T)va_arg(VA, long long ARG_T);                                                                            \
-                break;                                                                                                                     \
-            }                                                                                                                              \
-            case UNITY_LENGTH_MODIFIER_LONG: {                                                                                             \
-                NUMBER = (NUMBER_T)va_arg(VA, long ARG_T);                                                                                 \
-                break;                                                                                                                     \
-            }                                                                                                                              \
-            case UNITY_LENGTH_MODIFIER_NONE:                                                                                               \
-            default: {                                                                                                                     \
-                NUMBER = (NUMBER_T)va_arg(VA, ARG_T);                                                                                      \
-                break;                                                                                                                     \
-            }                                                                                                                              \
-        }                                                                                                                                  \
+#define UNITY_EXTRACT_ARG(NUMBER_T, NUMBER, LENGTH_MOD, VA, ARG_T)                                                                                   \
+    do {                                                                                                                                             \
+        switch (LENGTH_MOD) {                                                                                                                        \
+            case UNITY_LENGTH_MODIFIER_LONG_LONG: {                                                                                                  \
+                NUMBER = (NUMBER_T)va_arg(VA, long long ARG_T);                                                                                      \
+                break;                                                                                                                               \
+            }                                                                                                                                        \
+            case UNITY_LENGTH_MODIFIER_LONG: {                                                                                                       \
+                NUMBER = (NUMBER_T)va_arg(VA, long ARG_T);                                                                                           \
+                break;                                                                                                                               \
+            }                                                                                                                                        \
+            case UNITY_LENGTH_MODIFIER_NONE:                                                                                                         \
+            default: {                                                                                                                               \
+                NUMBER = (NUMBER_T)va_arg(VA, ARG_T);                                                                                                \
+                break;                                                                                                                               \
+            }                                                                                                                                        \
+        }                                                                                                                                            \
     } while (0)
 
 static enum UnityLengthModifier UnityLengthModifierGet(const char* pch, int* length) {

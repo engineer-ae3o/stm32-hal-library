@@ -51,22 +51,17 @@
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_min_no_idx_f32(
-    const float32_t *pSrc,
-    uint32_t   blockSize,
-    float32_t *pResult)
-{
-   f32x4_t     vecSrc;
-   f32x4_t     curExtremValVec = vdupq_n_f32(F32_MAX);
-   float32_t   minValue = F32_MAX;
-   float32_t   newVal;
-   uint32_t    blkCnt;
+void arm_min_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+    f32x4_t   vecSrc;
+    f32x4_t   curExtremValVec = vdupq_n_f32(F32_MAX);
+    float32_t minValue        = F32_MAX;
+    float32_t newVal;
+    uint32_t  blkCnt;
 
-   /* Loop unrolling: Compute 4 outputs at a time */
-   blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-   while (blkCnt > 0U)
-   {
+    while (blkCnt > 0U) {
 
         vecSrc = vldrwq_f32(pSrc);
         /*
@@ -78,7 +73,7 @@ void arm_min_no_idx_f32(
          * Advance vector source and destination pointers
          */
         pSrc += 4;
-        blkCnt --;
+        blkCnt--;
     }
     /*
      * Get min value across the vector
@@ -87,18 +82,16 @@ void arm_min_no_idx_f32(
 
     blkCnt = blockSize & 3;
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         newVal = *pSrc++;
 
         /* compare for the minimum value */
-        if (minValue > newVal)
-        {
+        if (minValue > newVal) {
             /* Update the minimum value and it's index */
             minValue = newVal;
         }
 
-        blkCnt --;
+        blkCnt--;
     }
 
     *pResult = minValue;
@@ -106,29 +99,23 @@ void arm_min_no_idx_f32(
 
 #else
 
-void arm_min_no_idx_f32(
-    const float32_t *pSrc,
-    uint32_t   blockSize,
-    float32_t *pResult)
-{
-   float32_t   minValue = F32_MAX;
-   float32_t   newVal;
+void arm_min_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+    float32_t minValue = F32_MAX;
+    float32_t newVal;
 
-   while (blockSize > 0U)
-   {
-       newVal = *pSrc++;
-   
-       /* compare for the minimum value */
-       if (minValue > newVal)
-       {
-           /* Update the minimum value and it's index */
-           minValue = newVal;
-       }
-   
-       blockSize --;
-   }
-    
-   *pResult = minValue;
+    while (blockSize > 0U) {
+        newVal = *pSrc++;
+
+        /* compare for the minimum value */
+        if (minValue > newVal) {
+            /* Update the minimum value and it's index */
+            minValue = newVal;
+        }
+
+        blockSize--;
+    }
+
+    *pResult = minValue;
 }
 
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */

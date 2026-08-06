@@ -1,65 +1,63 @@
-#ifndef _I2S_H_
-#define _I2S_H_
+#ifndef ADC_H_
+#define ADC_H_
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
 #include "stm32f411xe.h"
-#include "common.h"
-#include "dma.h"
+#include "drivers/dma.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
-    typedef enum : uint8_t {
-        ADC_RESOLUTION_6_BITS = 0,
-        ADC_RESOLUTION_8_BITS,
-        ADC_RESOLUTION_10_BITS,
-        ADC_RESOLUTION_12_BITS
-    } adc_resolution_t;
 
-    typedef struct {
-        adc_resolution_t resolution;
-        uint8_t          prescaler;
+typedef enum : uint8_t { ADC_RESOLUTION_6_BITS = 0, ADC_RESOLUTION_8_BITS, ADC_RESOLUTION_10_BITS, ADC_RESOLUTION_12_BITS } adc_resolution_t;
 
-    } adc_config_t;
+typedef struct {
+    adc_resolution_t resolution;
+    uint8_t          prescaler;
 
-    void adc_clk_enable(bool enable);
-    void adc_power_on(bool on);
+} adc_config_t;
 
-    void                adc_init(const adc_config_t* config);
-    hal_err_t           adc_dma_init(void);
-    DMA_Stream_TypeDef* adc_get_dma_stream(void);
+void adc_clk_enable(bool enable);
+void adc_power_on(bool on);
 
-    // Polling oneshot function: Returns 1 sample
-    uint16_t adc_get_sample_oneshot(void);
+void                adc_init(const adc_config_t* config);
+hal_err_t           adc_dma_init(void);
+DMA_Stream_TypeDef* adc_get_dma_stream(void);
 
-    // DMA backed oneshot API: Transfers N samples into user buffer
-    hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg);
+// Polling oneshot function: Returns 1 sample
+uint16_t adc_get_sample_oneshot(void);
 
-    //
-    void adc_set_threshold(uint8_t low, uint8_t high);
-    void adc_set_sequence(uint8_t sequence);
+// DMA backed oneshot API: Transfers N samples into user buffer
+hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg);
 
-    // Double buffering API
-    // @note These APIs are mutually exclusive with the DMA oneshot function
-    // User should determine which buffer is free with `adc_dbm_get_filled_buffer()`
-    hal_err_t adc_dbm_init(void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg);
-    hal_err_t adc_dbm_deinit(void);
+void adc_set_threshold(uint8_t low, uint8_t high);
+void adc_set_sequence(uint8_t sequence);
 
-    // When start is called, the DMA starts filling buffer A, and
-    // then the isr is fired on completion, the starts filling B
-    // @note Calling stop can cause the peripheral to drop samples
-    hal_err_t adc_dbm_start(void);
-    hal_err_t adc_dbm_stop(void);
+// Double buffering API
+// @note These APIs are mutually exclusive with the DMA oneshot function
+// User should determine which buffer is free with `adc_dbm_get_filled_buffer()`
+hal_err_t adc_dbm_init(void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg);
+hal_err_t adc_dbm_deinit(void);
 
-    // @return `0x0` if buf_a is filled and the DMA controller has started filling buf_b,
-    // `0x1` if buf_b is filled and buf_a is in use, and `0xFF` if an invalid arg is passed
-    uint32_t adc_dbm_get_filled_buffer(void);
+// When start is called, the DMA starts filling buffer A, and
+// then the isr is fired on completion, the starts filling B
+// @note Calling stop can cause the peripheral to drop samples
+hal_err_t adc_dbm_start(void);
+hal_err_t adc_dbm_stop(void);
+
+// @return `0x0` if buf_a is filled and the DMA controller has started filling buf_b,
+// `0x1` if buf_b is filled and buf_a is in use, and `0xFF` if an invalid arg is passed
+uint32_t adc_dbm_get_filled_buffer(void);
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _I2S_H_
+
+#endif // ADC_H_

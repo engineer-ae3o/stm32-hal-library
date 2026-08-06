@@ -81,25 +81,19 @@
 
 #include "arm_helium_utils.h"
 
-void arm_cmplx_dot_prod_f16(
-    const float16_t * pSrcA,
-    const float16_t * pSrcB,
-    uint32_t numSamples,
-    float16_t * realResult,
-    float16_t * imagResult)
-{
-    int32_t         blkCnt;
-    float16_t       real_sum, imag_sum;
-    f16x8_t         vecSrcA, vecSrcB;
-    f16x8_t         vec_acc = vdupq_n_f16(0.0f16);
-    f16x8_t         vecSrcC, vecSrcD;
+void arm_cmplx_dot_prod_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t numSamples, float16_t* realResult, float16_t* imagResult) {
+    int32_t   blkCnt;
+    float16_t real_sum, imag_sum;
+    f16x8_t   vecSrcA, vecSrcB;
+    f16x8_t   vec_acc = vdupq_n_f16(0.0f16);
+    f16x8_t   vecSrcC, vecSrcD;
 
     blkCnt = (numSamples >> 3);
     blkCnt -= 1;
     if (blkCnt > 0) {
         /* should give more freedom to generate stall free code */
-        vecSrcA = vld1q( pSrcA);
-        vecSrcB = vld1q( pSrcB);
+        vecSrcA = vld1q(pSrcA);
+        vecSrcB = vld1q(pSrcB);
         pSrcA += 8;
         pSrcB += 8;
 
@@ -140,7 +134,7 @@ void arm_cmplx_dot_prod_f16(
          */
         blkCnt = CMPLX_DIM * (numSamples & 7);
         while (blkCnt > 0) {
-            mve_pred16_t    p = vctp16q(blkCnt);
+            mve_pred16_t p = vctp16q(blkCnt);
             pSrcA += 8;
             pSrcB += 8;
 
@@ -153,11 +147,11 @@ void arm_cmplx_dot_prod_f16(
         }
     } else {
         /* small vector */
-        blkCnt = numSamples * CMPLX_DIM;
+        blkCnt  = numSamples * CMPLX_DIM;
         vec_acc = vdupq_n_f16(0.0f16);
 
         do {
-            mve_pred16_t    p = vctp16q(blkCnt);
+            mve_pred16_t p = vctp16q(blkCnt);
 
             vecSrcA = vldrhq_z_f16(pSrcA, p);
             vecSrcB = vldrhq_z_f16(pSrcB, p);
@@ -172,8 +166,7 @@ void arm_cmplx_dot_prod_f16(
             pSrcA += 8;
             pSrcB += 8;
             blkCnt -= 8;
-        }
-        while (blkCnt > 0);
+        } while (blkCnt > 0);
     }
 
     /* Sum the partial parts */
@@ -187,97 +180,89 @@ void arm_cmplx_dot_prod_f16(
 }
 
 #else
-void arm_cmplx_dot_prod_f16(
-  const float16_t * pSrcA,
-  const float16_t * pSrcB,
-        uint32_t numSamples,
-        float16_t * realResult,
-        float16_t * imagResult)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-        _Float16 real_sum = 0.0f, imag_sum = 0.0f;    /* Temporary result variables */
-        _Float16 a0,b0,c0,d0;
+void arm_cmplx_dot_prod_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t numSamples, float16_t* realResult, float16_t* imagResult) {
+    uint32_t blkCnt;                           /* Loop counter */
+    _Float16 real_sum = 0.0f, imag_sum = 0.0f; /* Temporary result variables */
+    _Float16 a0, b0, c0, d0;
 
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = numSamples >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = numSamples >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    a0 = *pSrcA++;
-    b0 = *pSrcA++;
-    c0 = *pSrcB++;
-    d0 = *pSrcB++;
+    while (blkCnt > 0U) {
+        a0 = *pSrcA++;
+        b0 = *pSrcA++;
+        c0 = *pSrcB++;
+        d0 = *pSrcB++;
 
-    real_sum += a0 * c0;
-    imag_sum += a0 * d0;
-    real_sum -= b0 * d0;
-    imag_sum += b0 * c0;
+        real_sum += a0 * c0;
+        imag_sum += a0 * d0;
+        real_sum -= b0 * d0;
+        imag_sum += b0 * c0;
 
-    a0 = *pSrcA++;
-    b0 = *pSrcA++;
-    c0 = *pSrcB++;
-    d0 = *pSrcB++;
+        a0 = *pSrcA++;
+        b0 = *pSrcA++;
+        c0 = *pSrcB++;
+        d0 = *pSrcB++;
 
-    real_sum += a0 * c0;
-    imag_sum += a0 * d0;
-    real_sum -= b0 * d0;
-    imag_sum += b0 * c0;
+        real_sum += a0 * c0;
+        imag_sum += a0 * d0;
+        real_sum -= b0 * d0;
+        imag_sum += b0 * c0;
 
-    a0 = *pSrcA++;
-    b0 = *pSrcA++;
-    c0 = *pSrcB++;
-    d0 = *pSrcB++;
+        a0 = *pSrcA++;
+        b0 = *pSrcA++;
+        c0 = *pSrcB++;
+        d0 = *pSrcB++;
 
-    real_sum += a0 * c0;
-    imag_sum += a0 * d0;
-    real_sum -= b0 * d0;
-    imag_sum += b0 * c0;
+        real_sum += a0 * c0;
+        imag_sum += a0 * d0;
+        real_sum -= b0 * d0;
+        imag_sum += b0 * c0;
 
-    a0 = *pSrcA++;
-    b0 = *pSrcA++;
-    c0 = *pSrcB++;
-    d0 = *pSrcB++;
+        a0 = *pSrcA++;
+        b0 = *pSrcA++;
+        c0 = *pSrcB++;
+        d0 = *pSrcB++;
 
-    real_sum += a0 * c0;
-    imag_sum += a0 * d0;
-    real_sum -= b0 * d0;
-    imag_sum += b0 * c0;
+        real_sum += a0 * c0;
+        imag_sum += a0 * d0;
+        real_sum -= b0 * d0;
+        imag_sum += b0 * c0;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = numSamples % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = numSamples % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = numSamples;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = numSamples;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    a0 = *pSrcA++;
-    b0 = *pSrcA++;
-    c0 = *pSrcB++;
-    d0 = *pSrcB++;
+    while (blkCnt > 0U) {
+        a0 = *pSrcA++;
+        b0 = *pSrcA++;
+        c0 = *pSrcB++;
+        d0 = *pSrcB++;
 
-    real_sum += a0 * c0;
-    imag_sum += a0 * d0;
-    real_sum -= b0 * d0;
-    imag_sum += b0 * c0;
+        real_sum += a0 * c0;
+        imag_sum += a0 * d0;
+        real_sum -= b0 * d0;
+        imag_sum += b0 * c0;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Store real and imaginary result in destination buffer. */
-  *realResult = real_sum;
-  *imagResult = imag_sum;
+    /* Store real and imaginary result in destination buffer. */
+    *realResult = real_sum;
+    *imagResult = imag_sum;
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 

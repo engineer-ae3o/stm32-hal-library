@@ -94,8 +94,8 @@ static void _StoreChar(SEGGER_RTT_PRINTF_DESC* p, char c) {
 *
 *       _PrintUnsigned
 */
-static void _PrintUnsigned(
-    SEGGER_RTT_PRINTF_DESC* pBufferDesc, unsigned v, unsigned Base, unsigned NumDigits, unsigned FieldWidth, unsigned FormatFlags) {
+static void
+_PrintUnsigned(SEGGER_RTT_PRINTF_DESC* pBufferDesc, unsigned v, unsigned Base, unsigned NumDigits, unsigned FieldWidth, unsigned FormatFlags) {
     static const char _aV2C[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
     unsigned          Div;
     unsigned          Digit;
@@ -186,8 +186,7 @@ static void _PrintUnsigned(
 *
 *       _PrintInt
 */
-static void
-_PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc, int v, unsigned Base, unsigned NumDigits, unsigned FieldWidth, unsigned FormatFlags) {
+static void _PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc, int v, unsigned Base, unsigned NumDigits, unsigned FieldWidth, unsigned FormatFlags) {
     unsigned Width;
     int      Number;
 

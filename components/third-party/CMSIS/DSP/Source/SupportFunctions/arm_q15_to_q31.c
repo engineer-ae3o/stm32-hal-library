@@ -51,24 +51,19 @@
   </pre>
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_q15_to_q31(
-  const q15_t * pSrc,
-        q31_t * pDst,
-        uint32_t blockSize)
-{
+void arm_q15_to_q31(const q15_t* pSrc, q31_t* pDst, uint32_t blockSize) {
 
-  uint32_t blkCnt;
+    uint32_t blkCnt;
 
-  q31x4_t         vecDst;
+    q31x4_t vecDst;
 
-  blkCnt = blockSize>> 2;
-  while (blkCnt > 0U)
-  {
+    blkCnt = blockSize >> 2;
+    while (blkCnt > 0U) {
 
         /* C = (q31_t)A << 16 */
         /* convert from q15 to q31 and then store the results in the destination buffer */
         /* load q15 + 32-bit widening */
-        vecDst = vldrhq_s32((q15_t const *) pSrc);
+        vecDst = vldrhq_s32((q15_t const*)pSrc);
         vecDst = vshlq_n(vecDst, 16);
         vstrwq_s32(pDst, vecDst);
 
@@ -78,102 +73,94 @@ void arm_q15_to_q31(
          */
         pDst += 4;
         pSrc += 4;
-        blkCnt --;
+        blkCnt--;
     }
 
-  blkCnt = blockSize & 3;
-  while (blkCnt > 0U)
-  {
-    /* C = (q31_t) A << 16 */
+    blkCnt = blockSize & 3;
+    while (blkCnt > 0U) {
+        /* C = (q31_t) A << 16 */
 
-    /* Convert from q15 to q31 and store result in destination buffer */
-    *pDst++ = (q31_t) *pSrc++ << 16;
+        /* Convert from q15 to q31 and store result in destination buffer */
+        *pDst++ = (q31_t)*pSrc++ << 16;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #else
-void arm_q15_to_q31(
-  const q15_t * pSrc,
-        q31_t * pDst,
-        uint32_t blockSize)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-  const q15_t *pIn = pSrc;                             /* Source pointer */
+void arm_q15_to_q31(const q15_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+    uint32_t     blkCnt;     /* Loop counter */
+    const q15_t* pIn = pSrc; /* Source pointer */
 
-#if defined (ARM_MATH_LOOPUNROLL)
-        q31_t in1, in2;
-        q31_t out1, out2, out3, out4;
+#if defined(ARM_MATH_LOOPUNROLL)
+    q31_t in1, in2;
+    q31_t out1, out2, out3, out4;
 #endif
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = (q31_t)A << 16 */
+    while (blkCnt > 0U) {
+        /* C = (q31_t)A << 16 */
 
-    /* Convert from q15 to q31 and store result in destination buffer */
-    in1 = read_q15x2_ia (&pIn);
-    in2 = read_q15x2_ia (&pIn);
+        /* Convert from q15 to q31 and store result in destination buffer */
+        in1 = read_q15x2_ia(&pIn);
+        in2 = read_q15x2_ia(&pIn);
 
 #ifndef ARM_MATH_BIG_ENDIAN
 
-    /* extract lower 16 bits to 32 bit result */
-    out1 = in1 << 16U;
-    /* extract upper 16 bits to 32 bit result */
-    out2 = in1 & 0xFFFF0000;
-    /* extract lower 16 bits to 32 bit result */
-    out3 = in2 << 16U;
-    /* extract upper 16 bits to 32 bit result */
-    out4 = in2 & 0xFFFF0000;
+        /* extract lower 16 bits to 32 bit result */
+        out1 = in1 << 16U;
+        /* extract upper 16 bits to 32 bit result */
+        out2 = in1 & 0xFFFF0000;
+        /* extract lower 16 bits to 32 bit result */
+        out3 = in2 << 16U;
+        /* extract upper 16 bits to 32 bit result */
+        out4 = in2 & 0xFFFF0000;
 
 #else
 
-    /* extract upper 16 bits to 32 bit result */
-    out1 = in1 & 0xFFFF0000;
-    /* extract lower 16 bits to 32 bit result */
-    out2 = in1 << 16U;
-    /* extract upper 16 bits to 32 bit result */
-    out3 = in2 & 0xFFFF0000;
-    /* extract lower 16 bits to 32 bit result */
-    out4 = in2 << 16U;
+        /* extract upper 16 bits to 32 bit result */
+        out1 = in1 & 0xFFFF0000;
+        /* extract lower 16 bits to 32 bit result */
+        out2 = in1 << 16U;
+        /* extract upper 16 bits to 32 bit result */
+        out3 = in2 & 0xFFFF0000;
+        /* extract lower 16 bits to 32 bit result */
+        out4 = in2 << 16U;
 
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
-    *pDst++ = out1;
-    *pDst++ = out2;
-    *pDst++ = out3;
-    *pDst++ = out4;
+        *pDst++ = out1;
+        *pDst++ = out2;
+        *pDst++ = out3;
+        *pDst++ = out4;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = (q31_t) A << 16 */
+    while (blkCnt > 0U) {
+        /* C = (q31_t) A << 16 */
 
-    /* Convert from q15 to q31 and store result in destination buffer */
-    *pDst++ = (q31_t) *pIn++ << 16;
+        /* Convert from q15 to q31 and store result in destination buffer */
+        *pDst++ = (q31_t)*pIn++ << 16;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

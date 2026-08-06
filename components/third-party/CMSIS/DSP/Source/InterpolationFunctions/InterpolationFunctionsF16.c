@@ -28,6 +28,3 @@
 
 #include "arm_bilinear_interp_f16.c"
 #include "arm_linear_interp_f16.c"
-
-
-

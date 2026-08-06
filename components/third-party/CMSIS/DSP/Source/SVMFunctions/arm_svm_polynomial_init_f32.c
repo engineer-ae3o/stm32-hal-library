@@ -67,29 +67,26 @@
  */
 
 
-void arm_svm_polynomial_init_f32(arm_svm_polynomial_instance_f32 *S, 
-  uint32_t nbOfSupportVectors,
-  uint32_t vectorDimension,
-  float32_t intercept,
-  const float32_t *dualCoefficients,
-  const float32_t *supportVectors,
-  const int32_t *classes,
-  int32_t      degree,
-  float32_t coef0,
-  float32_t gamma
-  )
-{
-   S->nbOfSupportVectors = nbOfSupportVectors;
-   S->vectorDimension = vectorDimension;
-   S->intercept = intercept;
-   S->dualCoefficients = dualCoefficients;
-   S->supportVectors = supportVectors;
-   S->classes = classes;
-   S->degree = degree;
-   S->coef0 = coef0;
-   S->gamma = gamma;
+void arm_svm_polynomial_init_f32(arm_svm_polynomial_instance_f32* S,
+                                 uint32_t                         nbOfSupportVectors,
+                                 uint32_t                         vectorDimension,
+                                 float32_t                        intercept,
+                                 const float32_t*                 dualCoefficients,
+                                 const float32_t*                 supportVectors,
+                                 const int32_t*                   classes,
+                                 int32_t                          degree,
+                                 float32_t                        coef0,
+                                 float32_t                        gamma) {
+    S->nbOfSupportVectors = nbOfSupportVectors;
+    S->vectorDimension    = vectorDimension;
+    S->intercept          = intercept;
+    S->dualCoefficients   = dualCoefficients;
+    S->supportVectors     = supportVectors;
+    S->classes            = classes;
+    S->degree             = degree;
+    S->coef0              = coef0;
+    S->gamma              = gamma;
 }
-
 
 
 /**

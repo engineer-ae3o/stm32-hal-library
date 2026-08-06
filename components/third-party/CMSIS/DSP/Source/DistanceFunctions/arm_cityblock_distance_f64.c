@@ -45,21 +45,19 @@
  * @return distance
  *
  */
-float64_t arm_cityblock_distance_f64(const float64_t *pA,const float64_t *pB, uint32_t blockSize)
-{
-   float64_t accum,tmpA, tmpB;
+float64_t arm_cityblock_distance_f64(const float64_t* pA, const float64_t* pB, uint32_t blockSize) {
+    float64_t accum, tmpA, tmpB;
 
-   accum = 0.;
-   while(blockSize > 0)
-   {
-      tmpA = *pA++;
-      tmpB = *pB++;
-      accum  += fabs(tmpA - tmpB);
-      
-      blockSize --;
-   }
-  
-   return(accum);
+    accum = 0.;
+    while (blockSize > 0) {
+        tmpA = *pA++;
+        tmpB = *pB++;
+        accum += fabs(tmpA - tmpB);
+
+        blockSize--;
+    }
+
+    return (accum);
 }
 
 /**

@@ -71,21 +71,16 @@
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mult_real_f32(
-  const float32_t * pSrcCmplx,
-  const float32_t * pSrcReal,
-        float32_t * pCmplxDst,
-        uint32_t numSamples)
-{
-    static const uint32_t stride_cmplx_x_real_32[4] = { 0, 0, 1, 1 };
+void arm_cmplx_mult_real_f32(const float32_t* pSrcCmplx, const float32_t* pSrcReal, float32_t* pCmplxDst, uint32_t numSamples) {
+    static const uint32_t stride_cmplx_x_real_32[4] = {0, 0, 1, 1};
 
-    uint32_t blockSizeC = numSamples * CMPLX_DIM;   /* loop counters */
-    uint32_t blkCnt;
-    f32x4_t rVec;
-    f32x4_t cmplxVec;
-    f32x4_t dstVec;
+    uint32_t   blockSizeC = numSamples * CMPLX_DIM; /* loop counters */
+    uint32_t   blkCnt;
+    f32x4_t    rVec;
+    f32x4_t    cmplxVec;
+    f32x4_t    dstVec;
     uint32x4_t strideVec;
-    float32_t in;  
+    float32_t  in;
 
 
     /* stride vector for pairs of real generation */
@@ -93,11 +88,10 @@ void arm_cmplx_mult_real_f32(
 
     /* Compute 4 complex outputs at a time */
     blkCnt = blockSizeC >> 2;
-    while (blkCnt > 0U) 
-    {
+    while (blkCnt > 0U) {
         cmplxVec = vld1q(pSrcCmplx);
-        rVec = vldrwq_gather_shifted_offset_f32(pSrcReal, strideVec);
-        dstVec = vmulq(cmplxVec, rVec);
+        rVec     = vldrwq_gather_shifted_offset_f32(pSrcReal, strideVec);
+        dstVec   = vmulq(cmplxVec, rVec);
         vst1q(pCmplxDst, dstVec);
 
         pSrcReal += 2;
@@ -106,45 +100,38 @@ void arm_cmplx_mult_real_f32(
         blkCnt--;
     }
 
-    blkCnt = (blockSizeC & 3) >> 1; 
-    while (blkCnt > 0U)
-    {
-      /* C[2 * i    ] = A[2 * i    ] * B[i]. */
-      /* C[2 * i + 1] = A[2 * i + 1] * B[i]. */
-  
-      in = *pSrcReal++;
-      /* store result in destination buffer. */
-      *pCmplxDst++ = *pSrcCmplx++ * in;
-      *pCmplxDst++ = *pSrcCmplx++ * in;
-  
-      /* Decrement loop counter */
-      blkCnt--;
+    blkCnt = (blockSizeC & 3) >> 1;
+    while (blkCnt > 0U) {
+        /* C[2 * i    ] = A[2 * i    ] * B[i]. */
+        /* C[2 * i + 1] = A[2 * i + 1] * B[i]. */
+
+        in = *pSrcReal++;
+        /* store result in destination buffer. */
+        *pCmplxDst++ = *pSrcCmplx++ * in;
+        *pCmplxDst++ = *pSrcCmplx++ * in;
+
+        /* Decrement loop counter */
+        blkCnt--;
     }
 }
 
 #else
-void arm_cmplx_mult_real_f32(
-  const float32_t * pSrcCmplx,
-  const float32_t * pSrcReal,
-        float32_t * pCmplxDst,
-        uint32_t numSamples)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-        float32_t in;                                  /* Temporary variable */
+void arm_cmplx_mult_real_f32(const float32_t* pSrcCmplx, const float32_t* pSrcReal, float32_t* pCmplxDst, uint32_t numSamples) {
+    uint32_t  blkCnt; /* Loop counter */
+    float32_t in;     /* Temporary variable */
 
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
-    float32x4_t r;
-    float32x4x2_t ab,outCplx;
+    float32x4_t   r;
+    float32x4x2_t ab, outCplx;
 
     /* Compute 4 outputs at a time */
     blkCnt = numSamples >> 2U;
 
-    while (blkCnt > 0U)
-    {
-        ab = vld2q_f32(pSrcCmplx);  // load & separate real/imag pSrcA (de-interleave 2)
-        r = vld1q_f32(pSrcReal);  // load & separate real/imag pSrcB
+    while (blkCnt > 0U) {
+        ab = vld2q_f32(pSrcCmplx); // load & separate real/imag pSrcA (de-interleave 2)
+        r  = vld1q_f32(pSrcReal);  // load & separate real/imag pSrcB
 
-	/* Increment pointers */
+        /* Increment pointers */
         pSrcCmplx += 8;
         pSrcReal += 4;
 
@@ -160,62 +147,59 @@ void arm_cmplx_mult_real_f32(
     /* Tail */
     blkCnt = numSamples & 3;
 #else
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = numSamples >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = numSamples >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C[2 * i    ] = A[2 * i    ] * B[i]. */
-    /* C[2 * i + 1] = A[2 * i + 1] * B[i]. */
+    while (blkCnt > 0U) {
+        /* C[2 * i    ] = A[2 * i    ] * B[i]. */
+        /* C[2 * i + 1] = A[2 * i + 1] * B[i]. */
 
-    in = *pSrcReal++;
-    /* store result in destination buffer. */
-    *pCmplxDst++ = *pSrcCmplx++ * in;
-    *pCmplxDst++ = *pSrcCmplx++ * in;
+        in = *pSrcReal++;
+        /* store result in destination buffer. */
+        *pCmplxDst++ = *pSrcCmplx++ * in;
+        *pCmplxDst++ = *pSrcCmplx++ * in;
 
-    in = *pSrcReal++;
-    *pCmplxDst++ = *pSrcCmplx++ * in;
-    *pCmplxDst++ = *pSrcCmplx++ * in;
+        in           = *pSrcReal++;
+        *pCmplxDst++ = *pSrcCmplx++ * in;
+        *pCmplxDst++ = *pSrcCmplx++ * in;
 
-    in = *pSrcReal++;
-    *pCmplxDst++ = *pSrcCmplx++ * in;
-    *pCmplxDst++ = *pSrcCmplx++ * in;
+        in           = *pSrcReal++;
+        *pCmplxDst++ = *pSrcCmplx++ * in;
+        *pCmplxDst++ = *pSrcCmplx++ * in;
 
-    in = *pSrcReal++;
-    *pCmplxDst++ = *pSrcCmplx++* in;
-    *pCmplxDst++ = *pSrcCmplx++ * in;
+        in           = *pSrcReal++;
+        *pCmplxDst++ = *pSrcCmplx++ * in;
+        *pCmplxDst++ = *pSrcCmplx++ * in;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = numSamples % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = numSamples % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = numSamples;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = numSamples;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 #endif /* #if defined(ARM_MATH_NEON) */
 
-  while (blkCnt > 0U)
-  {
-    /* C[2 * i    ] = A[2 * i    ] * B[i]. */
-    /* C[2 * i + 1] = A[2 * i + 1] * B[i]. */
+    while (blkCnt > 0U) {
+        /* C[2 * i    ] = A[2 * i    ] * B[i]. */
+        /* C[2 * i + 1] = A[2 * i + 1] * B[i]. */
 
-    in = *pSrcReal++;
-    /* store result in destination buffer. */
-    *pCmplxDst++ = *pSrcCmplx++ * in;
-    *pCmplxDst++ = *pSrcCmplx++ * in;
+        in = *pSrcReal++;
+        /* store result in destination buffer. */
+        *pCmplxDst++ = *pSrcCmplx++ * in;
+        *pCmplxDst++ = *pSrcCmplx++ * in;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 

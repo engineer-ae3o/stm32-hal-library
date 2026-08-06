@@ -59,10 +59,8 @@
  *
  */
 
-void arm_softmax_with_batch_q7(const q7_t *vec_in, const uint16_t nb_batches, const uint16_t dim_vec, q7_t *p_out)
-{
-    for (int i = 0; i < nb_batches; i++)
-    {
+void arm_softmax_with_batch_q7(const q7_t* vec_in, const uint16_t nb_batches, const uint16_t dim_vec, q7_t* p_out) {
+    for (int i = 0; i < nb_batches; i++) {
         arm_softmax_q7(vec_in, dim_vec, p_out);
         vec_in += dim_vec;
         p_out += dim_vec;

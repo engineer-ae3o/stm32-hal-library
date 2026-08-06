@@ -45,18 +45,14 @@
   * @param[in]     Y  interpolation coordinate in 12.20 format.
   * @return out interpolated value.
   */
-  q7_t arm_bilinear_interp_q7(
-  arm_bilinear_interp_instance_q7 * S,
-  q31_t X,
-  q31_t Y)
-  {
-    q63_t acc = 0;                               /* output */
-    q31_t out;                                   /* Temporary output */
-    q31_t xfract, yfract;                        /* X, Y fractional parts */
-    q7_t x1, x2, y1, y2;                         /* Nearest output values */
-    int32_t rI, cI;                              /* Row and column indices */
-    q7_t *pYData = S->pData;                     /* pointer to output table values */
-    uint32_t nCols = S->numCols;                 /* num of rows */
+q7_t arm_bilinear_interp_q7(arm_bilinear_interp_instance_q7* S, q31_t X, q31_t Y) {
+    q63_t    acc = 0;             /* output */
+    q31_t    out;                 /* Temporary output */
+    q31_t    xfract, yfract;      /* X, Y fractional parts */
+    q7_t     x1, x2, y1, y2;      /* Nearest output values */
+    int32_t  rI, cI;              /* Row and column indices */
+    q7_t*    pYData = S->pData;   /* pointer to output table values */
+    uint32_t nCols  = S->numCols; /* num of rows */
 
     /* Input is in 12.20 format */
     /* 12 bits for the table index */
@@ -70,9 +66,8 @@
 
     /* Care taken for table outside boundary */
     /* Returns zero output when values are outside table boundary */
-    if (rI < 0 || rI > (S->numCols - 2) || cI < 0 || cI > (S->numRows - 2))
-    {
-      return (0);
+    if (rI < 0 || rI > (S->numCols - 2) || cI < 0 || cI > (S->numRows - 2)) {
+        return (0);
     }
 
     /* 20 bits for the fractional part */
@@ -80,7 +75,7 @@
     xfract = (X & (q31_t)0x000FFFFF);
 
     /* Read two nearest output values from the index */
-    x1 = pYData[((uint32_t)rI) + nCols * ((uint32_t)cI)    ];
+    x1 = pYData[((uint32_t)rI) + nCols * ((uint32_t)cI)];
     x2 = pYData[((uint32_t)rI) + nCols * ((uint32_t)cI) + 1];
 
     /* 20 bits for the fractional part */
@@ -88,30 +83,29 @@
     yfract = (Y & (q31_t)0x000FFFFF);
 
     /* Read two nearest output values from the index */
-    y1 = pYData[((uint32_t)rI) + nCols * ((uint32_t)cI + 1)    ];
+    y1 = pYData[((uint32_t)rI) + nCols * ((uint32_t)cI + 1)];
     y2 = pYData[((uint32_t)rI) + nCols * ((uint32_t)cI + 1) + 1];
 
     /* Calculation of x1 * (1-xfract ) * (1-yfract) and acc is in 16.47 format */
     out = ((x1 * (0xFFFFF - xfract)));
-    acc = (((q63_t) out * (0xFFFFF - yfract)));
+    acc = (((q63_t)out * (0xFFFFF - yfract)));
 
     /* x2 * (xfract) * (1-yfract)  in 2.22 and adding to acc */
     out = ((x2 * (0xFFFFF - yfract)));
-    acc += (((q63_t) out * (xfract)));
+    acc += (((q63_t)out * (xfract)));
 
     /* y1 * (1 - xfract) * (yfract)  in 2.22 and adding to acc */
     out = ((y1 * (0xFFFFF - xfract)));
-    acc += (((q63_t) out * (yfract)));
+    acc += (((q63_t)out * (yfract)));
 
     /* y2 * (xfract) * (yfract)  in 2.22 and adding to acc */
     out = ((y2 * (yfract)));
-    acc += (((q63_t) out * (xfract)));
+    acc += (((q63_t)out * (xfract)));
 
     /* acc in 16.47 format and down shift by 40 to convert to 1.7 format */
     return ((q7_t)(acc >> 40));
-  }
+}
 
-  /**
+/**
    * @} end of BilinearInterpolate group
    */
-

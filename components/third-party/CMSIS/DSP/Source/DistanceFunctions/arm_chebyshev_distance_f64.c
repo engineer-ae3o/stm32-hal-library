@@ -46,29 +46,26 @@
  * @return distance
  *
  */
-float64_t arm_chebyshev_distance_f64(const float64_t *pA,const float64_t *pB, uint32_t blockSize)
-{
-   float64_t diff=0.,  maxVal,tmpA, tmpB;
+float64_t arm_chebyshev_distance_f64(const float64_t* pA, const float64_t* pB, uint32_t blockSize) {
+    float64_t diff = 0., maxVal, tmpA, tmpB;
 
-   tmpA = *pA++;
-   tmpB = *pB++;
-   diff = fabs(tmpA - tmpB);
-   maxVal = diff;
-   blockSize--;
+    tmpA   = *pA++;
+    tmpB   = *pB++;
+    diff   = fabs(tmpA - tmpB);
+    maxVal = diff;
+    blockSize--;
 
-   while(blockSize > 0)
-   {
-      tmpA = *pA++;
-      tmpB = *pB++;
-      diff = fabs(tmpA - tmpB);
-      if (diff > maxVal)
-      {
-        maxVal = diff;
-      }
-      blockSize --;
-   }
-  
-   return(maxVal);
+    while (blockSize > 0) {
+        tmpA = *pA++;
+        tmpB = *pB++;
+        diff = fabs(tmpA - tmpB);
+        if (diff > maxVal) {
+            maxVal = diff;
+        }
+        blockSize--;
+    }
+
+    return (maxVal);
 }
 
 /**

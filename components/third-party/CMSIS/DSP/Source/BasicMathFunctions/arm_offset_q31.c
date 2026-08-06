@@ -54,19 +54,13 @@
 
 #include "arm_helium_utils.h"
 
-void arm_offset_q31(
-    const q31_t * pSrc,
-    q31_t   offset,
-    q31_t * pDst,
-    uint32_t blockSize)
-{
-    uint32_t  blkCnt;           /* loop counters */
-    q31x4_t vecSrc;
+void arm_offset_q31(const q31_t* pSrc, q31_t offset, q31_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* loop counters */
+    q31x4_t  vecSrc;
 
     /* Compute 4 outputs at a time */
     blkCnt = blockSize >> 2;
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /*
          * C = A + offset
          * Add offset and then store the result in the destination buffer.
@@ -87,70 +81,61 @@ void arm_offset_q31(
      * tail
      */
     blkCnt = blockSize & 3;
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         mve_pred16_t p0 = vctp32q(blkCnt);
-        vecSrc = vld1q(pSrc);
+        vecSrc          = vld1q(pSrc);
         vstrwq_p(pDst, vqaddq(vecSrc, offset), p0);
     }
 }
 
 #else
-void arm_offset_q31(
-  const q31_t * pSrc,
-        q31_t offset,
-        q31_t * pDst,
-        uint32_t blockSize)
-{
-        uint32_t blkCnt;                               /* Loop counter */
+void arm_offset_q31(const q31_t* pSrc, q31_t offset, q31_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = A + offset */
+    while (blkCnt > 0U) {
+        /* C = A + offset */
 
-    /* Add offset and store result in destination buffer. */
-    *pDst++ = __QADD(*pSrc++, offset);
-    
-    *pDst++ = __QADD(*pSrc++, offset);
-    
-    *pDst++ = __QADD(*pSrc++, offset);
-    
-    *pDst++ = __QADD(*pSrc++, offset);
+        /* Add offset and store result in destination buffer. */
+        *pDst++ = __QADD(*pSrc++, offset);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        *pDst++ = __QADD(*pSrc++, offset);
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+        *pDst++ = __QADD(*pSrc++, offset);
+
+        *pDst++ = __QADD(*pSrc++, offset);
+
+        /* Decrement loop counter */
+        blkCnt--;
+    }
+
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = A + offset */
+    while (blkCnt > 0U) {
+        /* C = A + offset */
 
-    /* Add offset and store result in destination buffer. */
-#if defined (ARM_MATH_DSP)
-    *pDst++ = __QADD(*pSrc++, offset);
+        /* Add offset and store result in destination buffer. */
+#if defined(ARM_MATH_DSP)
+        *pDst++ = __QADD(*pSrc++, offset);
 #else
-    *pDst++ = (q31_t) clip_q63_to_q31((q63_t) * pSrc++ + offset);
+        *pDst++ = (q31_t)clip_q63_to_q31((q63_t)*pSrc++ + offset);
 #endif
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

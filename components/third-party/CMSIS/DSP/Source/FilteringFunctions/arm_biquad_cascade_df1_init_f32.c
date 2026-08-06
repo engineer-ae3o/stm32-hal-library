@@ -74,31 +74,24 @@
  */
 
 
-void arm_biquad_cascade_df1_init_f32(
-        arm_biquad_casd_df1_inst_f32 * S,
-        uint8_t numStages,
-  const float32_t * pCoeffs,
-        float32_t * pState)
-{
-  /* Assign filter stages */
-  S->numStages = numStages;
+void arm_biquad_cascade_df1_init_f32(arm_biquad_casd_df1_inst_f32* S, uint8_t numStages, const float32_t* pCoeffs, float32_t* pState) {
+    /* Assign filter stages */
+    S->numStages = numStages;
 
-  /* Assign coefficient pointer */
-  S->pCoeffs = pCoeffs;
+    /* Assign coefficient pointer */
+    S->pCoeffs = pCoeffs;
 
-  /* Clear state buffer and size is always 4 * numStages */
-  memset(pState, 0, (4U * (uint32_t) numStages) * sizeof(float32_t));
+    /* Clear state buffer and size is always 4 * numStages */
+    memset(pState, 0, (4U * (uint32_t)numStages) * sizeof(float32_t));
 
-  /* Assign state pointer */
-  S->pState = pState;
+    /* Assign state pointer */
+    S->pState = pState;
 }
 
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-static void generateCoefsFastBiquadF32(float32_t b0, float32_t b1, float32_t b2, float32_t a1, float32_t a2,
-                                arm_biquad_mod_coef_f32 * newCoef)
-{
+static void generateCoefsFastBiquadF32(float32_t b0, float32_t b1, float32_t b2, float32_t a1, float32_t a2, arm_biquad_mod_coef_f32* newCoef) {
     float32_t coeffs[4][8] = {
         {0, 0, 0, b0, b1, b2, a1, a2},
         {0, 0, b0, b1, b2, 0, a2, 0},
@@ -106,8 +99,7 @@ static void generateCoefsFastBiquadF32(float32_t b0, float32_t b1, float32_t b2,
         {b0, b1, b2, 0, 0, 0, 0, 0},
     };
 
-    for (int i = 0; i < 8; i++)
-    {
+    for (int i = 0; i < 8; i++) {
         coeffs[1][i] += a1 * coeffs[0][i];
         coeffs[2][i] += a1 * coeffs[1][i] + a2 * coeffs[0][i];
         coeffs[3][i] += a1 * coeffs[2][i] + a2 * coeffs[1][i];
@@ -115,31 +107,25 @@ static void generateCoefsFastBiquadF32(float32_t b0, float32_t b1, float32_t b2,
         /*
          * transpose
          */
-        newCoef->coeffs[i][0] = (float32_t) coeffs[0][i];
-        newCoef->coeffs[i][1] = (float32_t) coeffs[1][i];
-        newCoef->coeffs[i][2] = (float32_t) coeffs[2][i];
-        newCoef->coeffs[i][3] = (float32_t) coeffs[3][i];
+        newCoef->coeffs[i][0] = (float32_t)coeffs[0][i];
+        newCoef->coeffs[i][1] = (float32_t)coeffs[1][i];
+        newCoef->coeffs[i][2] = (float32_t)coeffs[2][i];
+        newCoef->coeffs[i][3] = (float32_t)coeffs[3][i];
     }
 }
 
 void arm_biquad_cascade_df1_mve_init_f32(
-      arm_biquad_casd_df1_inst_f32 * S,
-      uint8_t numStages,
-      const float32_t * pCoeffs, 
-      arm_biquad_mod_coef_f32 * pCoeffsMod, 
-      float32_t * pState)
-{
-    arm_biquad_cascade_df1_init_f32(S, numStages, (float32_t *)pCoeffsMod, pState);
+    arm_biquad_casd_df1_inst_f32* S, uint8_t numStages, const float32_t* pCoeffs, arm_biquad_mod_coef_f32* pCoeffsMod, float32_t* pState) {
+    arm_biquad_cascade_df1_init_f32(S, numStages, (float32_t*)pCoeffsMod, pState);
 
     /* Generate SIMD friendly modified coefs */
-    for (int i = 0; i < numStages; i++)
-    {
+    for (int i = 0; i < numStages; i++) {
         generateCoefsFastBiquadF32(pCoeffs[0], pCoeffs[1], pCoeffs[2], pCoeffs[3], pCoeffs[4], pCoeffsMod);
         pCoeffs += 5;
         pCoeffsMod++;
     }
 }
-#endif 
+#endif
 
 /**
   @} end of BiquadCascadeDF1 group

@@ -69,57 +69,47 @@
    * @{
    */
 
-  /**
+/**
    * @brief  Process function for the floating-point Linear Interpolation Function.
    * @param[in,out] S  is an instance of the floating-point Linear Interpolation structure
    * @param[in]     x  input sample to process
    * @return y processed output sample.
    *
    */
-  float32_t arm_linear_interp_f32(
-  arm_linear_interp_instance_f32 * S,
-  float32_t x)
-  {
-    float32_t y;
-    float32_t x0, x1;                            /* Nearest input values */
-    float32_t y0, y1;                            /* Nearest output values */
-    float32_t xSpacing = S->xSpacing;            /* spacing between input values */
-    int32_t i;                                   /* Index variable */
-    float32_t *pYData = S->pYData;               /* pointer to output table */
+float32_t arm_linear_interp_f32(arm_linear_interp_instance_f32* S, float32_t x) {
+    float32_t  y;
+    float32_t  x0, x1;                 /* Nearest input values */
+    float32_t  y0, y1;                 /* Nearest output values */
+    float32_t  xSpacing = S->xSpacing; /* spacing between input values */
+    int32_t    i;                      /* Index variable */
+    float32_t* pYData = S->pYData;     /* pointer to output table */
 
     /* Calculation of index */
-    i = (int32_t) ((x - S->x1) / xSpacing);
+    i = (int32_t)((x - S->x1) / xSpacing);
 
-    if (i < 0)
-    {
-      /* Iniatilize output for below specified range as least output value of table */
-      y = pYData[0];
-    }
-    else if ((uint32_t)i >= (S->nValues - 1))
-    {
-      /* Iniatilize output for above specified range as last output value of table */
-      y = pYData[S->nValues - 1];
-    }
-    else
-    {
-      /* Calculation of nearest input values */
-      x0 = S->x1 +  i      * xSpacing;
-      x1 = S->x1 + (i + 1) * xSpacing;
+    if (i < 0) {
+        /* Iniatilize output for below specified range as least output value of table */
+        y = pYData[0];
+    } else if ((uint32_t)i >= (S->nValues - 1)) {
+        /* Iniatilize output for above specified range as last output value of table */
+        y = pYData[S->nValues - 1];
+    } else {
+        /* Calculation of nearest input values */
+        x0 = S->x1 + i * xSpacing;
+        x1 = S->x1 + (i + 1) * xSpacing;
 
-      /* Read of nearest output values */
-      y0 = pYData[i];
-      y1 = pYData[i + 1];
+        /* Read of nearest output values */
+        y0 = pYData[i];
+        y1 = pYData[i + 1];
 
-      /* Calculation of output */
-      y = y0 + (x - x0) * ((y1 - y0) / (x1 - x0));
-
+        /* Calculation of output */
+        y = y0 + (x - x0) * ((y1 - y0) / (x1 - x0));
     }
 
     /* returns output value */
     return (y);
-  }
+}
 
-  /**
+/**
    * @} end of LinearInterpolate group
    */
-

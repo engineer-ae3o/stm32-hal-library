@@ -46,25 +46,23 @@
  * Refer to header file for details.
  *
  */
-void arm_concatenation_s8_y(const int8_t *input,
+void arm_concatenation_s8_y(const int8_t*  input,
                             const uint16_t input_x,
                             const uint16_t input_y,
                             const uint16_t input_z,
                             const uint16_t input_w,
-                            int8_t *output,
+                            int8_t*        output,
                             const uint16_t output_y,
-                            const uint32_t offset_y)
-{
-    const uint32_t num_iterations = input_z * input_w;
+                            const uint32_t offset_y) {
+    const uint32_t num_iterations  = input_z * input_w;
     const uint32_t input_copy_size = input_x * input_y;
-    const uint32_t output_stride = input_x * output_y;
+    const uint32_t output_stride   = input_x * output_y;
 
     output += offset_y * input_x;
     uint32_t i;
 
     // Copy per tile
-    for (i = 0; i < num_iterations; ++i)
-    {
+    for (i = 0; i < num_iterations; ++i) {
         arm_memcpy_q7(output, input, input_copy_size);
         input += input_copy_size;
         output += output_stride;

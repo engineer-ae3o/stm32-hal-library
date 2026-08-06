@@ -32,7 +32,6 @@
 #include <math.h>
 
 
-
 /**
   @addtogroup Euclidean
   @{
@@ -51,11 +50,10 @@
 
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
-float32_t arm_euclidean_distance_f32(const float32_t *pA,const float32_t *pB, uint32_t blockSize)
-{
-    uint32_t        blkCnt;
-    float32_t       tmp;
-    f32x4_t         a, b, accumV, tempV;
+float32_t arm_euclidean_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+    uint32_t  blkCnt;
+    float32_t tmp;
+    f32x4_t   a, b, accumV, tempV;
 
     accumV = vdupq_n_f32(0.0f);
 
@@ -64,7 +62,7 @@ float32_t arm_euclidean_distance_f32(const float32_t *pA,const float32_t *pB, ui
         a = vld1q(pA);
         b = vld1q(pB);
 
-        tempV = vsubq(a, b);
+        tempV  = vsubq(a, b);
         accumV = vfmaq(accumV, tempV, tempV);
 
         pA += 4;
@@ -78,12 +76,12 @@ float32_t arm_euclidean_distance_f32(const float32_t *pA,const float32_t *pB, ui
      */
     blkCnt = blockSize & 3;
     if (blkCnt > 0U) {
-        mve_pred16_t    p0 = vctp32q(blkCnt);
+        mve_pred16_t p0 = vctp32q(blkCnt);
 
         a = vldrwq_z_f32(pA, p0);
         b = vldrwq_z_f32(pB, p0);
 
-        tempV = vsubq(a, b);
+        tempV  = vsubq(a, b);
         accumV = vfmaq_m(accumV, tempV, tempV, p0);
     }
 
@@ -95,53 +93,48 @@ float32_t arm_euclidean_distance_f32(const float32_t *pA,const float32_t *pB, ui
 
 #include "NEMath.h"
 
-float32_t arm_euclidean_distance_f32(const float32_t *pA,const float32_t *pB, uint32_t blockSize)
-{
-   float32_t accum=0.0f,tmp;
-   uint32_t blkCnt;
-   float32x4_t a,b,accumV;
-   float32x2_t accumV2;
+float32_t arm_euclidean_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+    float32_t   accum = 0.0f, tmp;
+    uint32_t    blkCnt;
+    float32x4_t a, b, accumV;
+    float32x2_t accumV2;
 
-   accumV = vdupq_n_f32(0.0f);
-   blkCnt = blockSize >> 2;
-   while(blkCnt > 0)
-   {
+    accumV = vdupq_n_f32(0.0f);
+    blkCnt = blockSize >> 2;
+    while (blkCnt > 0) {
         a = vld1q_f32(pA);
         b = vld1q_f32(pB);
 
-        a = vsubq_f32(a,b);
-        accumV = vmlaq_f32(accumV,a,a);
+        a      = vsubq_f32(a, b);
+        accumV = vmlaq_f32(accumV, a, a);
         pA += 4;
         pB += 4;
-        blkCnt --;
-   }
-   accumV2 = vpadd_f32(vget_low_f32(accumV),vget_high_f32(accumV));
-   accum = vget_lane_f32(accumV2, 0) + vget_lane_f32(accumV2, 1);
+        blkCnt--;
+    }
+    accumV2 = vpadd_f32(vget_low_f32(accumV), vget_high_f32(accumV));
+    accum   = vget_lane_f32(accumV2, 0) + vget_lane_f32(accumV2, 1);
 
-   blkCnt = blockSize & 3;
-   while(blkCnt > 0)
-   {
-      tmp = *pA++ - *pB++;
-      accum += SQ(tmp);
-      blkCnt --;
-   }
-   arm_sqrt_f32(accum,&tmp);
-   return(tmp);
+    blkCnt = blockSize & 3;
+    while (blkCnt > 0) {
+        tmp = *pA++ - *pB++;
+        accum += SQ(tmp);
+        blkCnt--;
+    }
+    arm_sqrt_f32(accum, &tmp);
+    return (tmp);
 }
 
 #else
-float32_t arm_euclidean_distance_f32(const float32_t *pA,const float32_t *pB, uint32_t blockSize)
-{
-   float32_t accum=0.0f,tmp;
+float32_t arm_euclidean_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+    float32_t accum = 0.0f, tmp;
 
-   while(blockSize > 0)
-   {
-      tmp = *pA++ - *pB++;
-      accum += SQ(tmp);
-      blockSize --;
-   }
-   arm_sqrt_f32(accum,&tmp);
-   return(tmp);
+    while (blockSize > 0) {
+        tmp = *pA++ - *pB++;
+        accum += SQ(tmp);
+        blockSize--;
+    }
+    arm_sqrt_f32(accum, &tmp);
+    return (tmp);
 }
 #endif
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */

@@ -51,22 +51,20 @@
  *
  */
 
-void arm_relu_q7(q7_t *data, uint16_t size)
-{
+void arm_relu_q7(q7_t* data, uint16_t size) {
 
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
     /* Run the following code for M cores with DSP extension */
 
-    uint16_t i = size >> 2;
-    q7_t *input = data;
-    q7_t *output = data;
-    q31_t in;
-    q31_t buf;
-    q31_t mask;
+    uint16_t i      = size >> 2;
+    q7_t*    input  = data;
+    q7_t*    output = data;
+    q31_t    in;
+    q31_t    buf;
+    q31_t    mask;
 
-    while (i)
-    {
-        in = arm_nn_read_q7x4_ia((const q7_t **)&input);
+    while (i) {
+        in = arm_nn_read_q7x4_ia((const q7_t**)&input);
 
         /* extract the first bit */
         buf = (int32_t)__ROR((uint32_t)in & 0x80808080, 7);
@@ -80,10 +78,8 @@ void arm_relu_q7(q7_t *data, uint16_t size)
     }
 
     i = size & 0x3;
-    while (i)
-    {
-        if (*input < 0)
-        {
+    while (i) {
+        if (*input < 0) {
             *input = 0;
         }
         input++;
@@ -95,10 +91,10 @@ void arm_relu_q7(q7_t *data, uint16_t size)
 
     uint16_t i;
 
-    for (i = 0; i < size; i++)
-    {
-        if (data[i] < 0)
+    for (i = 0; i < size; i++) {
+        if (data[i] < 0) {
             data[i] = 0;
+        }
     }
 
 #endif

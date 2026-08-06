@@ -1,12 +1,15 @@
-#ifndef _WWDG_H_
-#define _WWDG_H_
+#ifndef WWDG_H_
+#define WWDG_H_
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _WWDG_H_
+
+#endif // WWDG_H_

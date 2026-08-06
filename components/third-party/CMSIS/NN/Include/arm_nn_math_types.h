@@ -155,10 +155,9 @@ extern "C" {
  * @brief Error status returned by some functions in the library.
  */
 
-typedef enum
-{
-    ARM_CMSIS_NN_SUCCESS = 0,        /**< No error */
-    ARM_CMSIS_NN_ARG_ERROR = -1,     /**< One or more arguments are incorrect */
+typedef enum {
+    ARM_CMSIS_NN_SUCCESS       = 0,  /**< No error */
+    ARM_CMSIS_NN_ARG_ERROR     = -1, /**< One or more arguments are incorrect */
     ARM_CMSIS_NN_NO_IMPL_ERROR = -2, /**<  No implementation available */
 } arm_cmsis_nn_status;
 

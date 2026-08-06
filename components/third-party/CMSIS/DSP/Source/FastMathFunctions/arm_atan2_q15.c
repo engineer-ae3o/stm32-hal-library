@@ -26,8 +26,8 @@
  * limitations under the License.
  */
 
-#include "dsp/fast_math_functions.h"        
-#include "dsp/utils.h"        
+#include "dsp/fast_math_functions.h"
+#include "dsp/utils.h"
 
 /*
 
@@ -43,84 +43,64 @@ atan for argument between in [0, 1.0]
 
 #define ATAN2_NB_COEFS_Q15 10
 
-static const q15_t atan2_coefs_q15[ATAN2_NB_COEFS_Q15]={0x0000
-,0x7fff
-,0xffff
-,0xd567
-,0xff70
-,0x1bad
-,0xfd58
-,0xe9a9
-,0x1129
-,0xfbdb
-};
+static const q15_t atan2_coefs_q15[ATAN2_NB_COEFS_Q15] = {0x0000, 0x7fff, 0xffff, 0xd567, 0xff70, 0x1bad, 0xfd58, 0xe9a9, 0x1129, 0xfbdb};
 
-__STATIC_FORCEINLINE q15_t arm_atan_limited_q15(q15_t x)
-{
-    q31_t res=(q31_t)atan2_coefs_q15[ATAN2_NB_COEFS_Q15-1];
-    int i=1;
-    for(i=1;i<ATAN2_NB_COEFS_Q15;i++)
-    {
-        res = ((q31_t) x * res) >> 15U;
-        res = res + ((q31_t) atan2_coefs_q15[ATAN2_NB_COEFS_Q15-1-i]) ;
+__STATIC_FORCEINLINE q15_t arm_atan_limited_q15(q15_t x) {
+    q31_t res = (q31_t)atan2_coefs_q15[ATAN2_NB_COEFS_Q15 - 1];
+    int   i   = 1;
+    for (i = 1; i < ATAN2_NB_COEFS_Q15; i++) {
+        res = ((q31_t)x * res) >> 15U;
+        res = res + ((q31_t)atan2_coefs_q15[ATAN2_NB_COEFS_Q15 - 1 - i]);
     }
 
-    res = __SSAT(res>>2,16);
+    res = __SSAT(res >> 2, 16);
 
-    
-    return(res);
+
+    return (res);
 }
 
 
-__STATIC_FORCEINLINE q15_t arm_atan_q15(q15_t y,q15_t x)
-{
-   int sign=0;
-   q15_t res=0;
+__STATIC_FORCEINLINE q15_t arm_atan_q15(q15_t y, q15_t x) {
+    int   sign = 0;
+    q15_t res  = 0;
 
-   if (y<0)
-   {
-     arm_negate_q15(&y,&y,1);
-     sign=1-sign;
-   }
+    if (y < 0) {
+        arm_negate_q15(&y, &y, 1);
+        sign = 1 - sign;
+    }
 
-   if (x < 0)
-   {
-      sign=1 - sign;
-      arm_negate_q15(&x,&x,1);
-   }
+    if (x < 0) {
+        sign = 1 - sign;
+        arm_negate_q15(&x, &x, 1);
+    }
 
-   if (y > x)
-   {
-    q15_t ratio;
-    int16_t shift;
+    if (y > x) {
+        q15_t   ratio;
+        int16_t shift;
 
-    arm_divide_q15(x,y,&ratio,&shift);
+        arm_divide_q15(x, y, &ratio, &shift);
 
-    arm_shift_q15(&ratio,shift,&ratio,1);
-   
-    res = PIHALFQ13 - arm_atan_limited_q15(ratio);
-      
-   }
-   else
-   {
-    q15_t ratio;
-    int16_t shift;
+        arm_shift_q15(&ratio, shift, &ratio, 1);
 
-    arm_divide_q15(y,x,&ratio,&shift);
+        res = PIHALFQ13 - arm_atan_limited_q15(ratio);
 
-    arm_shift_q15(&ratio,shift,&ratio,1);
+    } else {
+        q15_t   ratio;
+        int16_t shift;
 
-    res = arm_atan_limited_q15(ratio);
+        arm_divide_q15(y, x, &ratio, &shift);
 
-   }
+        arm_shift_q15(&ratio, shift, &ratio, 1);
+
+        res = arm_atan_limited_q15(ratio);
+    }
 
 
-   if (sign)
-   {
-     arm_negate_q15(&res,&res,1);
-   }
+    if (sign) {
+        arm_negate_q15(&res, &res, 1);
+    }
 
-   return(res);
+    return (res);
 }
 
 
@@ -147,53 +127,38 @@ __STATIC_FORCEINLINE q15_t arm_atan_q15(q15_t y,q15_t x)
 */
 
 
-arm_status arm_atan2_q15(q15_t y,q15_t x,q15_t *result)
-{
-    if (x > 0)
-    {
-        *result=arm_atan_q15(y,x);
-        return(ARM_MATH_SUCCESS);
+arm_status arm_atan2_q15(q15_t y, q15_t x, q15_t* result) {
+    if (x > 0) {
+        *result = arm_atan_q15(y, x);
+        return (ARM_MATH_SUCCESS);
     }
-    if (x < 0)
-    {
-        if (y > 0)
-        {
-           *result=arm_atan_q15(y,x) + PIQ13;
-        }
-        else if (y < 0)
-        {
-           *result=arm_atan_q15(y,x) - PIQ13;
-        }
-        else
-        {
-            if (y<0)
-            {
-               *result= -PIQ13;
-            }
-            else
-            {
-               *result= PIQ13;
+    if (x < 0) {
+        if (y > 0) {
+            *result = arm_atan_q15(y, x) + PIQ13;
+        } else if (y < 0) {
+            *result = arm_atan_q15(y, x) - PIQ13;
+        } else {
+            if (y < 0) {
+                *result = -PIQ13;
+            } else {
+                *result = PIQ13;
             }
         }
-        return(ARM_MATH_SUCCESS);
+        return (ARM_MATH_SUCCESS);
     }
-    if (x == 0)
-    {
-        if (y > 0)
-        {
-            *result=PIHALFQ13;
-            return(ARM_MATH_SUCCESS);
+    if (x == 0) {
+        if (y > 0) {
+            *result = PIHALFQ13;
+            return (ARM_MATH_SUCCESS);
         }
-        if (y < 0)
-        {
-            *result=-PIHALFQ13;
-            return(ARM_MATH_SUCCESS);
+        if (y < 0) {
+            *result = -PIHALFQ13;
+            return (ARM_MATH_SUCCESS);
         }
     }
-    
 
-    return(ARM_MATH_NANINF);
 
+    return (ARM_MATH_NANINF);
 }
 
 /**

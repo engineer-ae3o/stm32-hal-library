@@ -45,50 +45,45 @@
  * Refer header file for details.
  *
  */
-arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
-                                   const q7_t *rhs,
-                                   const q31_t *bias,
-                                   q7_t *dst,
-                                   const int32_t *dst_multipliers,
-                                   const int32_t *dst_shifts,
-                                   const int32_t lhs_rows,
-                                   const int32_t rhs_rows,
-                                   const int32_t rhs_cols,
-                                   const int32_t lhs_offset,
-                                   const int32_t dst_offset,
-                                   const int32_t activation_min,
-                                   const int32_t activation_max)
-{
+arm_status arm_nn_mat_mult_nt_t_s8(const q7_t*    lhs,
+                                   const q7_t*    rhs,
+                                   const q31_t*   bias,
+                                   q7_t*          dst,
+                                   const int32_t* dst_multipliers,
+                                   const int32_t* dst_shifts,
+                                   const int32_t  lhs_rows,
+                                   const int32_t  rhs_rows,
+                                   const int32_t  rhs_cols,
+                                   const int32_t  lhs_offset,
+                                   const int32_t  dst_offset,
+                                   const int32_t  activation_min,
+                                   const int32_t  activation_max) {
 #if defined(ARM_MATH_DSP)
     const int32_t off0 = rhs_cols - 4;
 
-    for (int32_t rhs_rows_idx = 0; rhs_rows_idx <= (rhs_rows - 2); rhs_rows_idx += 2)
-    {
-        const q7_t *lhs_ptr = &lhs[0];
-        q7_t *dst_ptr = &dst[0];
+    for (int32_t rhs_rows_idx = 0; rhs_rows_idx <= (rhs_rows - 2); rhs_rows_idx += 2) {
+        const q7_t* lhs_ptr = &lhs[0];
+        q7_t*       dst_ptr = &dst[0];
 
         q31_t lhs_offset_contribution0 = 0;
         q31_t lhs_offset_contribution1 = 0;
 
-        for (int32_t x = 0; x < rhs_cols; ++x)
-        {
+        for (int32_t x = 0; x < rhs_cols; ++x) {
             lhs_offset_contribution0 += rhs[x];
             lhs_offset_contribution1 += rhs[x + rhs_cols];
         }
 
         lhs_offset_contribution0 *= lhs_offset;
         lhs_offset_contribution1 *= lhs_offset;
-        if (bias)
-        {
+        if (bias) {
             lhs_offset_contribution0 += bias[rhs_rows_idx];
             lhs_offset_contribution1 += bias[rhs_rows_idx + 1];
         }
 
         int32_t lhs_rows_idx = lhs_rows >> 1;
 
-        while (lhs_rows_idx)
-        {
-            const q7_t *rhs_ptr = &rhs[0];
+        while (lhs_rows_idx) {
+            const q7_t* rhs_ptr = &rhs[0];
 
             q31_t res00 = lhs_offset_contribution0;
             q31_t res01 = lhs_offset_contribution1;
@@ -99,114 +94,112 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
 
             q31_t val0, val1, val2, val3, val4, val5;
 
-            for (; rhs_cols_idx <= (rhs_cols - 16); rhs_cols_idx += 16)
-            {
-                val1 = arm_nn_read_q7x4_ia((const q7_t **)&rhs_ptr);
+            for (; rhs_cols_idx <= (rhs_cols - 16); rhs_cols_idx += 16) {
+                val1 = arm_nn_read_q7x4_ia((const q7_t**)&rhs_ptr);
                 val2 = __SXTB16(val1);
-                val0 = arm_nn_read_q7x4_ia((const q7_t **)&lhs_ptr);
+                val0 = arm_nn_read_q7x4_ia((const q7_t**)&lhs_ptr);
                 val3 = __SXTB16(val0);
-                val4 = arm_nn_read_q7x4((const q7_t *)&rhs_ptr[off0]);
+                val4 = arm_nn_read_q7x4((const q7_t*)&rhs_ptr[off0]);
                 val1 = __SXTB16_RORn(val1, 8);
                 val0 = __SXTB16_RORn(val0, 8);
 
                 // 4 x MAC res00, res01
                 res00 = __SMLAD(val3, val2, res00);
-                val5 = __SXTB16(val4);
+                val5  = __SXTB16(val4);
                 res00 = __SMLAD(val0, val1, res00);
-                val4 = __SXTB16_RORn(val4, 8);
+                val4  = __SXTB16_RORn(val4, 8);
                 res01 = __SMLAD(val3, val5, res01);
                 res01 = __SMLAD(val0, val4, res01);
 
                 // 4 x MAC res10, res11
-                val0 = arm_nn_read_q7x4((const q7_t *)&lhs_ptr[off0]);
-                val3 = __SXTB16(val0);
-                val0 = __SXTB16_RORn(val0, 8);
+                val0  = arm_nn_read_q7x4((const q7_t*)&lhs_ptr[off0]);
+                val3  = __SXTB16(val0);
+                val0  = __SXTB16_RORn(val0, 8);
                 res10 = __SMLAD(val3, val2, res10);
                 res11 = __SMLAD(val3, val5, res11);
                 res10 = __SMLAD(val0, val1, res10);
-                val1 = arm_nn_read_q7x4_ia((const q7_t **)&rhs_ptr);
+                val1  = arm_nn_read_q7x4_ia((const q7_t**)&rhs_ptr);
                 res11 = __SMLAD(val0, val4, res11);
 
-                val4 = arm_nn_read_q7x4((const q7_t *)&rhs_ptr[off0]);
+                val4 = arm_nn_read_q7x4((const q7_t*)&rhs_ptr[off0]);
                 val2 = __SXTB16(val1);
-                val0 = arm_nn_read_q7x4_ia((const q7_t **)&lhs_ptr);
+                val0 = arm_nn_read_q7x4_ia((const q7_t**)&lhs_ptr);
                 val3 = __SXTB16(val0);
                 val1 = __SXTB16_RORn(val1, 8);
                 val0 = __SXTB16_RORn(val0, 8);
 
                 // 4 x MAC res00, res01
                 res00 = __SMLAD(val3, val2, res00);
-                val5 = __SXTB16(val4);
+                val5  = __SXTB16(val4);
                 res00 = __SMLAD(val0, val1, res00);
-                val4 = __SXTB16_RORn(val4, 8);
+                val4  = __SXTB16_RORn(val4, 8);
                 res01 = __SMLAD(val3, val5, res01);
                 res01 = __SMLAD(val0, val4, res01);
 
                 // 4 x MAC res10, res11
-                val0 = arm_nn_read_q7x4((const q7_t *)&lhs_ptr[off0]);
-                val3 = __SXTB16(val0);
-                val0 = __SXTB16_RORn(val0, 8);
+                val0  = arm_nn_read_q7x4((const q7_t*)&lhs_ptr[off0]);
+                val3  = __SXTB16(val0);
+                val0  = __SXTB16_RORn(val0, 8);
                 res10 = __SMLAD(val3, val2, res10);
                 res11 = __SMLAD(val3, val5, res11);
                 res10 = __SMLAD(val0, val1, res10);
-                val1 = arm_nn_read_q7x4_ia((const q7_t **)&rhs_ptr);
+                val1  = arm_nn_read_q7x4_ia((const q7_t**)&rhs_ptr);
                 res11 = __SMLAD(val0, val4, res11);
 
-                val4 = arm_nn_read_q7x4((const q7_t *)&rhs_ptr[off0]);
+                val4 = arm_nn_read_q7x4((const q7_t*)&rhs_ptr[off0]);
                 val2 = __SXTB16(val1);
-                val0 = arm_nn_read_q7x4_ia((const q7_t **)&lhs_ptr);
+                val0 = arm_nn_read_q7x4_ia((const q7_t**)&lhs_ptr);
                 val3 = __SXTB16(val0);
                 val1 = __SXTB16_RORn(val1, 8);
                 val0 = __SXTB16_RORn(val0, 8);
 
                 // 4 x MAC res00, res01
                 res00 = __SMLAD(val3, val2, res00);
-                val5 = __SXTB16(val4);
+                val5  = __SXTB16(val4);
                 res00 = __SMLAD(val0, val1, res00);
-                val4 = __SXTB16_RORn(val4, 8);
+                val4  = __SXTB16_RORn(val4, 8);
                 res01 = __SMLAD(val3, val5, res01);
                 res01 = __SMLAD(val0, val4, res01);
 
                 // 4 x MAC res10, res11
-                val0 = arm_nn_read_q7x4((const q7_t *)&lhs_ptr[off0]);
-                val3 = __SXTB16(val0);
-                val0 = __SXTB16_RORn(val0, 8);
+                val0  = arm_nn_read_q7x4((const q7_t*)&lhs_ptr[off0]);
+                val3  = __SXTB16(val0);
+                val0  = __SXTB16_RORn(val0, 8);
                 res10 = __SMLAD(val3, val2, res10);
                 res11 = __SMLAD(val3, val5, res11);
                 res10 = __SMLAD(val0, val1, res10);
-                val1 = arm_nn_read_q7x4_ia((const q7_t **)&rhs_ptr);
+                val1  = arm_nn_read_q7x4_ia((const q7_t**)&rhs_ptr);
                 res11 = __SMLAD(val0, val4, res11);
 
-                val4 = arm_nn_read_q7x4((const q7_t *)&rhs_ptr[off0]);
+                val4 = arm_nn_read_q7x4((const q7_t*)&rhs_ptr[off0]);
                 val2 = __SXTB16(val1);
-                val0 = arm_nn_read_q7x4_ia((const q7_t **)&lhs_ptr);
+                val0 = arm_nn_read_q7x4_ia((const q7_t**)&lhs_ptr);
                 val3 = __SXTB16(val0);
                 val1 = __SXTB16_RORn(val1, 8);
                 val0 = __SXTB16_RORn(val0, 8);
 
                 // 4 x MAC res00, res01
                 res00 = __SMLAD(val3, val2, res00);
-                val5 = __SXTB16(val4);
+                val5  = __SXTB16(val4);
                 res00 = __SMLAD(val0, val1, res00);
-                val4 = __SXTB16_RORn(val4, 8);
+                val4  = __SXTB16_RORn(val4, 8);
                 res01 = __SMLAD(val3, val5, res01);
                 res01 = __SMLAD(val0, val4, res01);
 
                 // 4 x MAC res10, res11
-                val0 = arm_nn_read_q7x4((const q7_t *)&lhs_ptr[off0]);
-                val3 = __SXTB16(val0);
-                val0 = __SXTB16_RORn(val0, 8);
+                val0  = arm_nn_read_q7x4((const q7_t*)&lhs_ptr[off0]);
+                val3  = __SXTB16(val0);
+                val0  = __SXTB16_RORn(val0, 8);
                 res10 = __SMLAD(val3, val2, res10);
                 res11 = __SMLAD(val3, val5, res11);
                 res10 = __SMLAD(val0, val1, res10);
                 res11 = __SMLAD(val0, val4, res11);
             }
 
-            for (; rhs_cols_idx < rhs_cols; ++rhs_cols_idx)
-            {
+            for (; rhs_cols_idx < rhs_cols; ++rhs_cols_idx) {
                 q7_t rhs_value0 = rhs_ptr[0];
                 q7_t rhs_value1 = rhs_ptr[rhs_cols];
-                q7_t lhs_value = lhs_ptr[0];
+                q7_t lhs_value  = lhs_ptr[0];
 
                 res00 += lhs_value * rhs_value0;
                 res01 += lhs_value * rhs_value1;
@@ -254,9 +247,8 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
         }
 
         // Left-over rows
-        if (lhs_rows % 2)
-        {
-            const q7_t *rhs_ptr = &rhs[0];
+        if (lhs_rows % 2) {
+            const q7_t* rhs_ptr = &rhs[0];
 
             q31_t res00 = lhs_offset_contribution0;
             q31_t res01 = lhs_offset_contribution1;
@@ -264,11 +256,10 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
             int32_t rhs_cols_idx = 0;
 
             q31_t val0, val1, val2, val3, val4, val5;
-            for (; rhs_cols_idx <= (rhs_cols - 16); rhs_cols_idx += 16)
-            {
-                val0 = arm_nn_read_q7x4_ia((const q7_t **)&rhs_ptr);
-                val1 = arm_nn_read_q7x4((const q7_t *)&rhs_ptr[off0]);
-                val2 = arm_nn_read_q7x4_ia((const q7_t **)&lhs_ptr);
+            for (; rhs_cols_idx <= (rhs_cols - 16); rhs_cols_idx += 16) {
+                val0 = arm_nn_read_q7x4_ia((const q7_t**)&rhs_ptr);
+                val1 = arm_nn_read_q7x4((const q7_t*)&rhs_ptr[off0]);
+                val2 = arm_nn_read_q7x4_ia((const q7_t**)&lhs_ptr);
                 val3 = __SXTB16(val0);
                 val5 = __SXTB16(val2);
                 val4 = __SXTB16(val1);
@@ -282,9 +273,9 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
                 res01 = __SMLAD(val5, val4, res01);
                 res01 = __SMLAD(val2, val1, res01);
 
-                val0 = arm_nn_read_q7x4_ia((const q7_t **)&rhs_ptr);
-                val1 = arm_nn_read_q7x4((const q7_t *)&rhs_ptr[off0]);
-                val2 = arm_nn_read_q7x4_ia((const q7_t **)&lhs_ptr);
+                val0 = arm_nn_read_q7x4_ia((const q7_t**)&rhs_ptr);
+                val1 = arm_nn_read_q7x4((const q7_t*)&rhs_ptr[off0]);
+                val2 = arm_nn_read_q7x4_ia((const q7_t**)&lhs_ptr);
                 val3 = __SXTB16(val0);
                 val5 = __SXTB16(val2);
                 val4 = __SXTB16(val1);
@@ -298,9 +289,9 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
                 res01 = __SMLAD(val5, val4, res01);
                 res01 = __SMLAD(val2, val1, res01);
 
-                val0 = arm_nn_read_q7x4_ia((const q7_t **)&rhs_ptr);
-                val1 = arm_nn_read_q7x4((const q7_t *)&rhs_ptr[off0]);
-                val2 = arm_nn_read_q7x4_ia((const q7_t **)&lhs_ptr);
+                val0 = arm_nn_read_q7x4_ia((const q7_t**)&rhs_ptr);
+                val1 = arm_nn_read_q7x4((const q7_t*)&rhs_ptr[off0]);
+                val2 = arm_nn_read_q7x4_ia((const q7_t**)&lhs_ptr);
                 val3 = __SXTB16(val0);
                 val5 = __SXTB16(val2);
                 val4 = __SXTB16(val1);
@@ -314,9 +305,9 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
                 res01 = __SMLAD(val5, val4, res01);
                 res01 = __SMLAD(val2, val1, res01);
 
-                val0 = arm_nn_read_q7x4_ia((const q7_t **)&rhs_ptr);
-                val1 = arm_nn_read_q7x4((const q7_t *)&rhs_ptr[off0]);
-                val2 = arm_nn_read_q7x4_ia((const q7_t **)&lhs_ptr);
+                val0 = arm_nn_read_q7x4_ia((const q7_t**)&rhs_ptr);
+                val1 = arm_nn_read_q7x4((const q7_t*)&rhs_ptr[off0]);
+                val2 = arm_nn_read_q7x4_ia((const q7_t**)&lhs_ptr);
                 val3 = __SXTB16(val0);
                 val5 = __SXTB16(val2);
                 val4 = __SXTB16(val1);
@@ -332,11 +323,10 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
             }
 
             // Left-over accumulations
-            for (; rhs_cols_idx < rhs_cols; ++rhs_cols_idx)
-            {
+            for (; rhs_cols_idx < rhs_cols; ++rhs_cols_idx) {
                 q7_t rhs_value0 = rhs_ptr[0];
                 q7_t rhs_value1 = rhs_ptr[rhs_cols];
-                q7_t lhs_value = lhs_ptr[0];
+                q7_t lhs_value  = lhs_ptr[0];
 
                 res00 += lhs_value * rhs_value0;
                 res01 += lhs_value * rhs_value1;
@@ -367,22 +357,18 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
         dst += 2;
     }
 
-    if (rhs_rows % 2)
-    {
-        const q7_t *lhs_ptr = &lhs[0];
-        q7_t *dst_ptr = &dst[0];
+    if (rhs_rows % 2) {
+        const q7_t* lhs_ptr = &lhs[0];
+        q7_t*       dst_ptr = &dst[0];
 
-        for (int32_t lhs_rows_idx = 0; lhs_rows_idx < lhs_rows; ++lhs_rows_idx)
-        {
-            const q7_t *rhs_ptr = &rhs[0];
-            q31_t res00 = 0;
-            if (bias)
-            {
+        for (int32_t lhs_rows_idx = 0; lhs_rows_idx < lhs_rows; ++lhs_rows_idx) {
+            const q7_t* rhs_ptr = &rhs[0];
+            q31_t       res00   = 0;
+            if (bias) {
                 res00 = bias[rhs_rows - 1];
             }
 
-            for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols; ++rhs_cols_idx)
-            {
+            for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols; ++rhs_cols_idx) {
                 q31_t rhs_value = rhs_ptr[0];
                 q31_t lhs_value = lhs_ptr[0] + lhs_offset;
 
@@ -407,44 +393,39 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
         }
     }
 #else
-    for (int32_t rhs_rows_idx = 0; rhs_rows_idx <= (rhs_rows - 2); rhs_rows_idx += 2)
-    {
-        const q7_t *lhs_ptr = &lhs[0];
-        q7_t *dst_ptr = &dst[0];
+    for (int32_t rhs_rows_idx = 0; rhs_rows_idx <= (rhs_rows - 2); rhs_rows_idx += 2) {
+        const q7_t* lhs_ptr = &lhs[0];
+        q7_t*       dst_ptr = &dst[0];
 
         q31_t lhs_offset_contribution0 = 0;
         q31_t lhs_offset_contribution1 = 0;
 
-        for (int32_t x = 0; x < rhs_cols; ++x)
-        {
+        for (int32_t x = 0; x < rhs_cols; ++x) {
             lhs_offset_contribution0 += rhs[x];
             lhs_offset_contribution1 += rhs[x + rhs_cols];
         }
 
         lhs_offset_contribution0 *= lhs_offset;
         lhs_offset_contribution1 *= lhs_offset;
-        if (bias)
-        {
+        if (bias) {
             lhs_offset_contribution0 += bias[rhs_rows_idx];
             lhs_offset_contribution1 += bias[rhs_rows_idx + 1];
         }
 
         int32_t lhs_rows_idx = lhs_rows >> 1;
 
-        while (lhs_rows_idx)
-        {
-            const q7_t *rhs_ptr = &rhs[0];
+        while (lhs_rows_idx) {
+            const q7_t* rhs_ptr = &rhs[0];
 
             q31_t res00 = lhs_offset_contribution0;
             q31_t res01 = lhs_offset_contribution1;
             q31_t res10 = lhs_offset_contribution0;
             q31_t res11 = lhs_offset_contribution1;
 
-            for (int32_t rhs_cols_idx = rhs_cols; rhs_cols_idx != 0; rhs_cols_idx--)
-            {
+            for (int32_t rhs_cols_idx = rhs_cols; rhs_cols_idx != 0; rhs_cols_idx--) {
                 q7_t rhs_value0 = rhs_ptr[0];
                 q7_t rhs_value1 = rhs_ptr[rhs_cols];
-                q7_t lhs_value = lhs_ptr[0];
+                q7_t lhs_value  = lhs_ptr[0];
 
                 res00 += lhs_value * rhs_value0;
                 res01 += lhs_value * rhs_value1;
@@ -492,18 +473,16 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
         }
 
         // Left-over rows
-        if (lhs_rows % 2)
-        {
-            const q7_t *rhs_ptr = &rhs[0];
+        if (lhs_rows % 2) {
+            const q7_t* rhs_ptr = &rhs[0];
 
             q31_t res00 = lhs_offset_contribution0;
             q31_t res01 = lhs_offset_contribution1;
 
-            for (int32_t rhs_cols_idx = rhs_cols; rhs_cols_idx != 0; rhs_cols_idx--)
-            {
+            for (int32_t rhs_cols_idx = rhs_cols; rhs_cols_idx != 0; rhs_cols_idx--) {
                 q7_t rhs_value0 = rhs_ptr[0];
                 q7_t rhs_value1 = rhs_ptr[rhs_cols];
-                q7_t lhs_value = lhs_ptr[0];
+                q7_t lhs_value  = lhs_ptr[0];
 
                 res00 += lhs_value * rhs_value0;
                 res01 += lhs_value * rhs_value1;
@@ -534,22 +513,18 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t *lhs,
         dst += 2;
     }
 
-    if (rhs_rows % 2)
-    {
-        const q7_t *lhs_ptr = &lhs[0];
-        q7_t *dst_ptr = &dst[0];
+    if (rhs_rows % 2) {
+        const q7_t* lhs_ptr = &lhs[0];
+        q7_t*       dst_ptr = &dst[0];
 
-        for (int32_t lhs_rows_idx = 0; lhs_rows_idx < lhs_rows; ++lhs_rows_idx)
-        {
-            const q7_t *rhs_ptr = &rhs[0];
-            q31_t res00 = 0;
-            if (bias)
-            {
+        for (int32_t lhs_rows_idx = 0; lhs_rows_idx < lhs_rows; ++lhs_rows_idx) {
+            const q7_t* rhs_ptr = &rhs[0];
+            q31_t       res00   = 0;
+            if (bias) {
                 res00 = bias[rhs_rows - 1];
             }
 
-            for (int32_t rhs_cols_idx = rhs_cols; rhs_cols_idx != 0; rhs_cols_idx--)
-            {
+            for (int32_t rhs_cols_idx = rhs_cols; rhs_cols_idx != 0; rhs_cols_idx--) {
                 q31_t rhs_value = rhs_ptr[0];
                 q31_t lhs_value = lhs_ptr[0] + lhs_offset;
 

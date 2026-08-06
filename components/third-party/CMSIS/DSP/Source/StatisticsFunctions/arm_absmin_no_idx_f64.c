@@ -44,39 +44,33 @@
   @param[out]    pResult    minimum value returned here
   @return        none
  */
-void arm_absmin_no_idx_f64(
-  const float64_t * pSrc,
-        uint32_t blockSize,
-        float64_t * pResult)
-{
-       float64_t minVal, out;                         /* Temporary variables to store the output value. */
-       uint32_t blkCnt;                     /* Loop counter */
+void arm_absmin_no_idx_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult) {
+    float64_t minVal, out; /* Temporary variables to store the output value. */
+    uint32_t  blkCnt;      /* Loop counter */
 
 
-  /* Load first input value that act as reference value for comparision */
-  out = fabs(*pSrc++);
+    /* Load first input value that act as reference value for comparision */
+    out = fabs(*pSrc++);
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = (blockSize - 1U);
+    /* Initialize blkCnt with number of samples */
+    blkCnt = (blockSize - 1U);
 
-  while (blkCnt > 0U)
-  {
-    /* Initialize minVal to the next consecutive values one by one */
-    minVal = fabs(*pSrc++);
+    while (blkCnt > 0U) {
+        /* Initialize minVal to the next consecutive values one by one */
+        minVal = fabs(*pSrc++);
 
-    /* compare for the minimum value */
-    if (out > minVal)
-    {
-      /* Update the minimum value and it's index */
-      out = minVal;
+        /* compare for the minimum value */
+        if (out > minVal) {
+            /* Update the minimum value and it's index */
+            out = minVal;
+        }
+
+        /* Decrement loop counter */
+        blkCnt--;
     }
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
-  /* Store the minimum value and it's index into destination pointers */
-  *pResult = out;
+    /* Store the minimum value and it's index into destination pointers */
+    *pResult = out;
 }
 
 /**

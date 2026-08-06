@@ -45,16 +45,16 @@ void system_init(void) {
     while (!(RCC->CR & RCC_CR_HSERDY));
 
     // Configure PLL
-    RCC->PLLCFGR = (HSE_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) |
-                   (RCC_PLLCFGR_PLLSRC_HSE) | (4 << RCC_PLLCFGR_PLLQ_Pos);
+    RCC->PLLCFGR = (HSE_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSE) |
+                   (4 << RCC_PLLCFGR_PLLQ_Pos);
 #else
     // Enable HSI
     RCC->CR |= RCC_CR_HSION;
     while (!(RCC->CR & RCC_CR_HSIRDY));
 
     // Configure PLL
-    RCC->PLLCFGR = (HSI_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) |
-                   (RCC_PLLCFGR_PLLSRC_HSI) | (4 << RCC_PLLCFGR_PLLQ_Pos);
+    RCC->PLLCFGR = (HSI_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSI) |
+                   (4 << RCC_PLLCFGR_PLLQ_Pos);
 #endif
 
     // Bus prescaler
@@ -110,18 +110,18 @@ __attribute__((naked)) void UsageFault_Handler(void) {
 }
 
 // Fault state dumps
-[[noreturn]] void hard_fault_dump(const uint32_t* frame) {
+[[noreturn]] void hard_fault_dump(const unsigned int* frame) {
     LOGE("CPU Exception", "Hard fault. All operation is halted.");
 
-    const uint32_t r0   = frame[0];
-    const uint32_t r1   = frame[1];
-    const uint32_t r2   = frame[2];
-    const uint32_t r3   = frame[3];
-    const uint32_t r12  = frame[4];
-    const uint32_t lr   = frame[5];
-    const uint32_t pc   = frame[6];
-    const uint32_t psr  = frame[7];
-    const uint32_t cfsr = SCB->CFSR;
+    const unsigned int r0   = frame[0];
+    const unsigned int r1   = frame[1];
+    const unsigned int r2   = frame[2];
+    const unsigned int r3   = frame[3];
+    const unsigned int r12  = frame[4];
+    const unsigned int lr   = frame[5];
+    const unsigned int pc   = frame[6];
+    const unsigned int psr  = frame[7];
+    const unsigned int cfsr = SCB->CFSR;
 
     LOGE("Fault", "R0: 0x%X", r0);
     LOGE("Fault", "R1: 0x%X", r1);
@@ -139,18 +139,18 @@ __attribute__((naked)) void UsageFault_Handler(void) {
     while (true);
 }
 
-[[noreturn]] void bus_fault_dump(const uint32_t* frame) {
+[[noreturn]] void bus_fault_dump(const unsigned int* frame) {
     LOGE("CPU Exception", "Bus fault. All operation is halted.");
 
-    const uint32_t r0   = frame[0];
-    const uint32_t r1   = frame[1];
-    const uint32_t r2   = frame[2];
-    const uint32_t r3   = frame[3];
-    const uint32_t r12  = frame[4];
-    const uint32_t lr   = frame[5];
-    const uint32_t pc   = frame[6];
-    const uint32_t cfsr = SCB->CFSR;
-    const uint32_t bfar = SCB->BFAR;
+    const unsigned int r0   = frame[0];
+    const unsigned int r1   = frame[1];
+    const unsigned int r2   = frame[2];
+    const unsigned int r3   = frame[3];
+    const unsigned int r12  = frame[4];
+    const unsigned int lr   = frame[5];
+    const unsigned int pc   = frame[6];
+    const unsigned int cfsr = SCB->CFSR;
+    const unsigned int bfar = SCB->BFAR;
 
     LOGE("Fault", "R0: 0x%X", r0);
     LOGE("Fault", "R1: 0x%X", r1);
@@ -168,17 +168,17 @@ __attribute__((naked)) void UsageFault_Handler(void) {
     while (true);
 }
 
-[[noreturn]] void usage_fault_dump(const uint32_t* frame) {
+[[noreturn]] void usage_fault_dump(const unsigned int* frame) {
     LOGE("CPU Exception", "Usage fault. All operation is halted.");
 
-    const uint32_t r0   = frame[0];
-    const uint32_t r1   = frame[1];
-    const uint32_t r2   = frame[2];
-    const uint32_t r3   = frame[3];
-    const uint32_t r12  = frame[4];
-    const uint32_t lr   = frame[5];
-    const uint32_t pc   = frame[6];
-    const uint32_t cfsr = SCB->CFSR;
+    const unsigned int r0   = frame[0];
+    const unsigned int r1   = frame[1];
+    const unsigned int r2   = frame[2];
+    const unsigned int r3   = frame[3];
+    const unsigned int r12  = frame[4];
+    const unsigned int lr   = frame[5];
+    const unsigned int pc   = frame[6];
+    const unsigned int cfsr = SCB->CFSR;
 
     LOGE("Fault", "R0: 0x%X", r0);
     LOGE("Fault", "R1: 0x%X", r1);

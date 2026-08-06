@@ -65,32 +65,27 @@
 
 #include "arm_helium_utils.h"
 
-void arm_abs_f32(
-  const float32_t * pSrc,
-        float32_t * pDst,
-        uint32_t blockSize)
-{
-    uint32_t blkCnt;                               /* Loop counter */
-    f32x4_t vec1;
-    f32x4_t res;
+void arm_abs_f32(const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
+    f32x4_t  vec1;
+    f32x4_t  res;
 
 
     /* Compute 4 outputs at a time */
     blkCnt = blockSize >> 2U;
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /* C = |A| */
 
         /* Calculate absolute values and then store the results in the destination buffer. */
         vec1 = vld1q(pSrc);
-        res = vabsq(vec1);
+        res  = vabsq(vec1);
         vst1q(pDst, res);
 
         /* Increment pointers */
         pSrc += 4;
         pDst += 4;
-        
+
         /* Decrement the loop counter */
         blkCnt--;
     }
@@ -99,23 +94,17 @@ void arm_abs_f32(
     blkCnt = blockSize & 0x3;
 
 
-    if (blkCnt > 0U)
-    {
-      /* C = |A| */
-      mve_pred16_t p0 = vctp32q(blkCnt);
-      vec1 = vld1q(pSrc);
-      vstrwq_p(pDst, vabsq(vec1), p0);
+    if (blkCnt > 0U) {
+        /* C = |A| */
+        mve_pred16_t p0 = vctp32q(blkCnt);
+        vec1            = vld1q(pSrc);
+        vstrwq_p(pDst, vabsq(vec1), p0);
     }
-
 }
 
 #else
-void arm_abs_f32(
-  const float32_t * pSrc,
-        float32_t * pDst,
-        uint32_t blockSize)
-{
-        uint32_t blkCnt;                               /* Loop counter */
+void arm_abs_f32(const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
     f32x4_t vec1;
@@ -124,19 +113,18 @@ void arm_abs_f32(
     /* Compute 4 outputs at a time */
     blkCnt = blockSize >> 2U;
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /* C = |A| */
 
-    	/* Calculate absolute values and then store the results in the destination buffer. */
+        /* Calculate absolute values and then store the results in the destination buffer. */
         vec1 = vld1q_f32(pSrc);
-        res = vabsq_f32(vec1);
+        res  = vabsq_f32(vec1);
         vst1q_f32(pDst, res);
 
         /* Increment pointers */
         pSrc += 4;
         pDst += 4;
-        
+
         /* Decrement the loop counter */
         blkCnt--;
     }
@@ -145,50 +133,47 @@ void arm_abs_f32(
     blkCnt = blockSize & 0x3;
 
 #else
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = |A| */
+    while (blkCnt > 0U) {
+        /* C = |A| */
 
-    /* Calculate absolute and store result in destination buffer. */
-    *pDst++ = fabsf(*pSrc++);
+        /* Calculate absolute and store result in destination buffer. */
+        *pDst++ = fabsf(*pSrc++);
 
-    *pDst++ = fabsf(*pSrc++);
+        *pDst++ = fabsf(*pSrc++);
 
-    *pDst++ = fabsf(*pSrc++);
+        *pDst++ = fabsf(*pSrc++);
 
-    *pDst++ = fabsf(*pSrc++);
+        *pDst++ = fabsf(*pSrc++);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 #endif /* #if defined(ARM_MATH_NEON) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = |A| */
+    while (blkCnt > 0U) {
+        /* C = |A| */
 
-    /* Calculate absolute and store result in destination buffer. */
-    *pDst++ = fabsf(*pSrc++);
+        /* Calculate absolute and store result in destination buffer. */
+        *pDst++ = fabsf(*pSrc++);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 /**

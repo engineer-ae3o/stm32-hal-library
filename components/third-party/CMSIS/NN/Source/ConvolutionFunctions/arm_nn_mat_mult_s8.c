@@ -36,43 +36,39 @@
  *
  */
 
-q7_t *arm_nn_mat_mult_s8(const q7_t *input_row,
-                         const q7_t *input_col,
-                         const uint16_t output_ch,
-                         const uint16_t col_batches,
-                         const int32_t *output_shift,
-                         const int32_t *output_mult,
-                         const int32_t out_offset,
-                         const int32_t col_offset,
-                         const int32_t row_offset,
-                         const int16_t activation_min,
-                         const int16_t activation_max,
-                         const uint16_t row_len,
-                         const int32_t *const bias,
-                         q7_t *out)
-{
+q7_t* arm_nn_mat_mult_s8(const q7_t*          input_row,
+                         const q7_t*          input_col,
+                         const uint16_t       output_ch,
+                         const uint16_t       col_batches,
+                         const int32_t*       output_shift,
+                         const int32_t*       output_mult,
+                         const int32_t        out_offset,
+                         const int32_t        col_offset,
+                         const int32_t        row_offset,
+                         const int16_t        activation_min,
+                         const int16_t        activation_max,
+                         const uint16_t       row_len,
+                         const int32_t* const bias,
+                         q7_t*                out) {
 #if defined(ARM_MATH_MVEI)
     (void)row_offset;
-    if (col_batches == 4)
-    {
-        for (int i_out_ch = 0; i_out_ch < output_ch; i_out_ch++)
-        {
-            int32_t row_len_tmp = row_len;
-            const int8_t *ip_r0 = input_row + (i_out_ch * row_len);
-            const int8_t *ip_c0 = input_col;
-            const int8_t *ip_c1 = input_col + row_len;
-            const int8_t *ip_c2 = input_col + (2 * row_len);
-            const int8_t *ip_c3 = input_col + (3 * row_len);
+    if (col_batches == 4) {
+        for (int i_out_ch = 0; i_out_ch < output_ch; i_out_ch++) {
+            int32_t       row_len_tmp = row_len;
+            const int8_t* ip_r0       = input_row + (i_out_ch * row_len);
+            const int8_t* ip_c0       = input_col;
+            const int8_t* ip_c1       = input_col + row_len;
+            const int8_t* ip_c2       = input_col + (2 * row_len);
+            const int8_t* ip_c3       = input_col + (3 * row_len);
 
-            int32_t acc_0 = 0;
-            int32_t acc_1 = 0;
-            int32_t acc_2 = 0;
-            int32_t acc_3 = 0;
+            int32_t       acc_0        = 0;
+            int32_t       acc_1        = 0;
+            int32_t       acc_2        = 0;
+            int32_t       acc_3        = 0;
             const int32_t row_loop_cnt = (row_len + 7) / 8;
 
-            for (int i_row_loop = 0; i_row_loop < row_loop_cnt; i_row_loop++)
-            {
-                mve_pred16_t p = vctp16q((uint32_t)row_len_tmp);
+            for (int i_row_loop = 0; i_row_loop < row_loop_cnt; i_row_loop++) {
+                mve_pred16_t    p      = vctp16q((uint32_t)row_len_tmp);
                 const int16x8_t offset = vdupq_m_n_s16(vuninitializedq_s16(), col_offset, p);
                 row_len_tmp -= 8;
 
@@ -102,8 +98,7 @@ q7_t *arm_nn_mat_mult_s8(const q7_t *input_row,
             }
 
             int32x4_t res = {acc_0, acc_1, acc_2, acc_3};
-            if (bias)
-            {
+            if (bias) {
                 res = vaddq_n_s32(res, bias[i_out_ch]);
             }
             res = arm_requantize_mve(res, output_mult[i_out_ch], output_shift[i_out_ch]);
@@ -116,24 +111,19 @@ q7_t *arm_nn_mat_mult_s8(const q7_t *input_row,
             vstrbq_scatter_offset_s32(&out[i_out_ch], scatter_offset, res);
         }
         out += 4 * output_ch;
-    }
-    else
-    {
-        for (int i_col_batch = (col_batches & ~0x3); i_col_batch < (col_batches & 0x3); i_col_batch++)
-        {
-            for (int i_out_ch = 0; i_out_ch < output_ch; i_out_ch++)
-            {
+    } else {
+        for (int i_col_batch = (col_batches & ~0x3); i_col_batch < (col_batches & 0x3); i_col_batch++) {
+            for (int i_out_ch = 0; i_out_ch < output_ch; i_out_ch++) {
                 int32_t row_len_tmp = row_len;
 
-                const int8_t *ip_r0 = input_row + (i_out_ch * row_len);
-                const int8_t *ip_c0 = input_col + (i_col_batch * row_len);
-                int32_t acc_0 = 0;
+                const int8_t* ip_r0        = input_row + (i_out_ch * row_len);
+                const int8_t* ip_c0        = input_col + (i_col_batch * row_len);
+                int32_t       acc_0        = 0;
                 const int32_t row_loop_cnt = (row_len + 7) / 8;
 
-                for (int i_row_loop = 0; i_row_loop < row_loop_cnt; i_row_loop++)
-                {
-                    const mve_pred16_t p = vctp16q((uint32_t)row_len_tmp);
-                    const int16x8_t offset = vdupq_m_n_s16(vuninitializedq_s16(), col_offset, p);
+                for (int i_row_loop = 0; i_row_loop < row_loop_cnt; i_row_loop++) {
+                    const mve_pred16_t p      = vctp16q((uint32_t)row_len_tmp);
+                    const int16x8_t    offset = vdupq_m_n_s16(vuninitializedq_s16(), col_offset, p);
                     row_len_tmp -= 8;
 
                     int16x8_t c0 = vldrbq_s16(ip_c0);
@@ -145,14 +135,13 @@ q7_t *arm_nn_mat_mult_s8(const q7_t *input_row,
                     acc_0 = vmladavaq_p_s16(acc_0, r0, c0, p);
                 }
 
-                if (bias)
-                {
+                if (bias) {
                     acc_0 += bias[i_out_ch];
                 }
                 acc_0 = arm_nn_requantize(acc_0, output_mult[i_out_ch], output_shift[i_out_ch]);
                 acc_0 += out_offset;
-                acc_0 = MAX(acc_0, activation_min);
-                acc_0 = MIN(acc_0, activation_max);
+                acc_0         = MAX(acc_0, activation_min);
+                acc_0         = MIN(acc_0, activation_max);
                 out[i_out_ch] = (q7_t)acc_0;
             }
             out += output_ch;

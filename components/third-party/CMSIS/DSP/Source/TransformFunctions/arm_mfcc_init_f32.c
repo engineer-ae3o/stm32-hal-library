@@ -40,7 +40,6 @@
 #include "dsp/transform_functions.h"
 
 
-
 /**
   @brief         Initialization of the MFCC F32 instance structure
   @param[out]    S       points to the mfcc instance structure
@@ -70,36 +69,33 @@
                    to generate the filter, dct and window arrays.
  */
 
-arm_status arm_mfcc_init_f32(
-  arm_mfcc_instance_f32 * S,
-  uint32_t fftLen,
-  uint32_t nbMelFilters,
-  uint32_t nbDctOutputs,
-  const float32_t *dctCoefs,
-  const uint32_t *filterPos,
-  const uint32_t *filterLengths,
-  const float32_t *filterCoefs,
-  const float32_t *windowCoefs
-  )
-{
- arm_status status;
+arm_status arm_mfcc_init_f32(arm_mfcc_instance_f32* S,
+                             uint32_t               fftLen,
+                             uint32_t               nbMelFilters,
+                             uint32_t               nbDctOutputs,
+                             const float32_t*       dctCoefs,
+                             const uint32_t*        filterPos,
+                             const uint32_t*        filterLengths,
+                             const float32_t*       filterCoefs,
+                             const float32_t*       windowCoefs) {
+    arm_status status;
 
- S->fftLen=fftLen;
- S->nbMelFilters=nbMelFilters;
- S->nbDctOutputs=nbDctOutputs;
- S->dctCoefs=dctCoefs;
- S->filterPos=filterPos;
- S->filterLengths=filterLengths;
- S->filterCoefs=filterCoefs;
- S->windowCoefs=windowCoefs;
+    S->fftLen        = fftLen;
+    S->nbMelFilters  = nbMelFilters;
+    S->nbDctOutputs  = nbDctOutputs;
+    S->dctCoefs      = dctCoefs;
+    S->filterPos     = filterPos;
+    S->filterLengths = filterLengths;
+    S->filterCoefs   = filterCoefs;
+    S->windowCoefs   = windowCoefs;
 
- #if defined(ARM_MFCC_CFFT_BASED)
- status=arm_cfft_init_f32(&(S->cfft),fftLen);
- #else
- status=arm_rfft_fast_init_f32(&(S->rfft),fftLen);
- #endif
- 
- return(status);
+#if defined(ARM_MFCC_CFFT_BASED)
+    status = arm_cfft_init_f32(&(S->cfft), fftLen);
+#else
+    status = arm_rfft_fast_init_f32(&(S->rfft), fftLen);
+#endif
+
+    return (status);
 }
 
 /**

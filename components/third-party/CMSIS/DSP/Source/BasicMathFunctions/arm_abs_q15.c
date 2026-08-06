@@ -53,18 +53,13 @@
 
 #include "arm_helium_utils.h"
 
-void arm_abs_q15(
-    const q15_t * pSrc,
-    q15_t * pDst,
-    uint32_t blockSize)
-{
-    uint32_t  blkCnt;           /* loop counters */
-    q15x8_t vecSrc;
+void arm_abs_q15(const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* loop counters */
+    q15x8_t  vecSrc;
 
     /* Compute 8 outputs at a time */
     blkCnt = blockSize >> 3;
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /*
          * C = |A|
          * Calculate absolute and then store the results in the destination buffer.
@@ -85,91 +80,83 @@ void arm_abs_q15(
      * tail
      */
     blkCnt = blockSize & 7;
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         mve_pred16_t p0 = vctp16q(blkCnt);
-        vecSrc = vld1q(pSrc);
+        vecSrc          = vld1q(pSrc);
         vstrhq_p(pDst, vqabsq(vecSrc), p0);
     }
 }
 
 #else
-void arm_abs_q15(
-  const q15_t * pSrc,
-        q15_t * pDst,
-        uint32_t blockSize)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-        q15_t in;                                      /* Temporary input variable */
+void arm_abs_q15(const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
+    q15_t    in;     /* Temporary input variable */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = |A| */
+    while (blkCnt > 0U) {
+        /* C = |A| */
 
-    /* Calculate absolute of input (if -1 then saturated to 0x7fff) and store result in destination buffer. */
-    in = *pSrc++;
-#if defined (ARM_MATH_DSP)
-    *pDst++ = (in > 0) ? in : (q15_t)__QSUB16(0, in);
+        /* Calculate absolute of input (if -1 then saturated to 0x7fff) and store result in destination buffer. */
+        in = *pSrc++;
+#if defined(ARM_MATH_DSP)
+        *pDst++ = (in > 0) ? in : (q15_t)__QSUB16(0, in);
 #else
-    *pDst++ = (in > 0) ? in : ((in == (q15_t) 0x8000) ? 0x7fff : -in);
+        *pDst++ = (in > 0) ? in : ((in == (q15_t)0x8000) ? 0x7fff : -in);
 #endif
 
-    in = *pSrc++;
-#if defined (ARM_MATH_DSP)
-    *pDst++ = (in > 0) ? in : (q15_t)__QSUB16(0, in);
+        in = *pSrc++;
+#if defined(ARM_MATH_DSP)
+        *pDst++ = (in > 0) ? in : (q15_t)__QSUB16(0, in);
 #else
-    *pDst++ = (in > 0) ? in : ((in == (q15_t) 0x8000) ? 0x7fff : -in);
+        *pDst++ = (in > 0) ? in : ((in == (q15_t)0x8000) ? 0x7fff : -in);
 #endif
 
-    in = *pSrc++;
-#if defined (ARM_MATH_DSP)
-    *pDst++ = (in > 0) ? in : (q15_t)__QSUB16(0, in);
+        in = *pSrc++;
+#if defined(ARM_MATH_DSP)
+        *pDst++ = (in > 0) ? in : (q15_t)__QSUB16(0, in);
 #else
-    *pDst++ = (in > 0) ? in : ((in == (q15_t) 0x8000) ? 0x7fff : -in);
+        *pDst++ = (in > 0) ? in : ((in == (q15_t)0x8000) ? 0x7fff : -in);
 #endif
 
-    in = *pSrc++;
-#if defined (ARM_MATH_DSP)
-    *pDst++ = (in > 0) ? in : (q15_t)__QSUB16(0, in);
+        in = *pSrc++;
+#if defined(ARM_MATH_DSP)
+        *pDst++ = (in > 0) ? in : (q15_t)__QSUB16(0, in);
 #else
-    *pDst++ = (in > 0) ? in : ((in == (q15_t) 0x8000) ? 0x7fff : -in);
+        *pDst++ = (in > 0) ? in : ((in == (q15_t)0x8000) ? 0x7fff : -in);
 #endif
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = |A| */
+    while (blkCnt > 0U) {
+        /* C = |A| */
 
-    /* Calculate absolute of input (if -1 then saturated to 0x7fff) and store result in destination buffer. */
-    in = *pSrc++;
-#if defined (ARM_MATH_DSP)
-    *pDst++ = (in > 0) ? in : (q15_t)__QSUB16(0, in);
+        /* Calculate absolute of input (if -1 then saturated to 0x7fff) and store result in destination buffer. */
+        in = *pSrc++;
+#if defined(ARM_MATH_DSP)
+        *pDst++ = (in > 0) ? in : (q15_t)__QSUB16(0, in);
 #else
-    *pDst++ = (in > 0) ? in : ((in == (q15_t) 0x8000) ? 0x7fff : -in);
+        *pDst++ = (in > 0) ? in : ((in == (q15_t)0x8000) ? 0x7fff : -in);
 #endif
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

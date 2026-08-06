@@ -46,8 +46,7 @@ typedef struct O1HeapInstance O1HeapInstance;
 /// compared to the amount of computation needed to do the actual memory management. In the future, we may add a
 /// preprocessor option that disables diagnostics for the benefit of the most performance-sensitive applications.
 /// If you find this feature relevant for your use case, consider opening a ticket.
-typedef struct
-{
+typedef struct {
     /// The total amount of memory available for serving allocation requests (heap size).
     /// The maximum allocation size is (capacity - O1HEAP_ALIGNMENT).
     /// This parameter does not include the overhead used up by O1HeapInstance and arena alignment.
@@ -165,4 +164,4 @@ O1HeapDiagnostics o1heapGetDiagnostics(const O1HeapInstance* const handle);
 #ifdef __cplusplus
 }
 #endif
-#endif  // O1HEAP_H_INCLUDED
+#endif // O1HEAP_H_INCLUDED

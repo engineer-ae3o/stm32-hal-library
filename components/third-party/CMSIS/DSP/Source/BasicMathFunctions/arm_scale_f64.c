@@ -46,28 +46,21 @@
   @return        none
  */
 
-void arm_scale_f64(
-  const float64_t *pSrc,
-        float64_t scale,
-        float64_t *pDst,
-        uint32_t blockSize)
-{
-  uint32_t blkCnt;                               /* Loop counter */
+void arm_scale_f64(const float64_t* pSrc, float64_t scale, float64_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
-  while (blkCnt > 0U)
-  {
-    /* C = A * scale */
+    while (blkCnt > 0U) {
+        /* C = A * scale */
 
-    /* Scale input and store result in destination buffer. */
-    *pDst++ = (*pSrc++) * scale;
+        /* Scale input and store result in destination buffer. */
+        *pDst++ = (*pSrc++) * scale;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 
 /**

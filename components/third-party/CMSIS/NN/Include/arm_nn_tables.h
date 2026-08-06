@@ -37,9 +37,9 @@
  */
 
 extern const q15_t sigmoidTable_q15[256];
-extern const q7_t sigmoidTable_q7[256];
+extern const q7_t  sigmoidTable_q7[256];
 
-extern const q7_t tanhTable_q7[256];
+extern const q7_t  tanhTable_q7[256];
 extern const q15_t tanhTable_q15[256];
 
 /**

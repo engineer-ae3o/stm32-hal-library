@@ -52,69 +52,56 @@
    */
 
 
-arm_status arm_mat_cholesky_f64(
-  const arm_matrix_instance_f64 * pSrc,
-        arm_matrix_instance_f64 * pDst)
-{
+arm_status arm_mat_cholesky_f64(const arm_matrix_instance_f64* pSrc, arm_matrix_instance_f64* pDst) {
 
-  arm_status status;                             /* status of matrix inverse */
+    arm_status status; /* status of matrix inverse */
 
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
-  /* Check for matrix mismatch condition */
-  if ((pSrc->numRows != pSrc->numCols) ||
-      (pDst->numRows != pDst->numCols) ||
-      (pSrc->numRows != pDst->numRows)   )
-  {
-    /* Set status as ARM_MATH_SIZE_MISMATCH */
-    status = ARM_MATH_SIZE_MISMATCH;
-  }
-  else
+    /* Check for matrix mismatch condition */
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+        /* Set status as ARM_MATH_SIZE_MISMATCH */
+        status = ARM_MATH_SIZE_MISMATCH;
+    } else
 
 #endif /* #ifdef ARM_MATH_MATRIX_CHECK */
 
-  {
-    int i,j,k;
-    int n = pSrc->numRows;
-    float64_t invSqrtVj;
-    float64_t *pA,*pG;
-
-    pA = pSrc->pData;
-    pG = pDst->pData;
-    
-
-    for(i=0 ; i < n ; i++)
     {
-       for(j=i ; j < n ; j++)
-       {
-          pG[j * n + i] = pA[j * n + i];
+        int        i, j, k;
+        int        n = pSrc->numRows;
+        float64_t  invSqrtVj;
+        float64_t *pA, *pG;
 
-          for(k=0; k < i ; k++)
-          {
-             pG[j * n + i] = pG[j * n + i] - pG[i * n + k] * pG[j * n + k];
-          }
-       }
+        pA = pSrc->pData;
+        pG = pDst->pData;
 
-       if (pG[i * n + i] <= 0.0)
-       {
-         return(ARM_MATH_DECOMPOSITION_FAILURE);
-       }
 
-       invSqrtVj = 1.0/sqrt(pG[i * n + i]);
-       for(j=i ; j < n ; j++)
-       {
-         pG[j * n + i] = pG[j * n + i] * invSqrtVj ;
-       }
+        for (i = 0; i < n; i++) {
+            for (j = i; j < n; j++) {
+                pG[j * n + i] = pA[j * n + i];
+
+                for (k = 0; k < i; k++) {
+                    pG[j * n + i] = pG[j * n + i] - pG[i * n + k] * pG[j * n + k];
+                }
+            }
+
+            if (pG[i * n + i] <= 0.0) {
+                return (ARM_MATH_DECOMPOSITION_FAILURE);
+            }
+
+            invSqrtVj = 1.0 / sqrt(pG[i * n + i]);
+            for (j = i; j < n; j++) {
+                pG[j * n + i] = pG[j * n + i] * invSqrtVj;
+            }
+        }
+
+        status = ARM_MATH_SUCCESS;
     }
 
-    status = ARM_MATH_SUCCESS;
 
-  }
-
-  
-  /* Return to application */
-  return (status);
+    /* Return to application */
+    return (status);
 }
 
 /**

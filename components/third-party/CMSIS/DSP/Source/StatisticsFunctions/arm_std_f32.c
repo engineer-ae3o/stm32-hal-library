@@ -68,14 +68,10 @@
   @param[out]    pResult    standard deviation value returned here
   @return        none
  */
-void arm_std_f32(
-  const float32_t * pSrc,
-        uint32_t blockSize,
-        float32_t * pResult)
-{
-  float32_t var;
-  arm_var_f32(pSrc,blockSize,&var);
-  arm_sqrt_f32(var, pResult);
+void arm_std_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+    float32_t var;
+    arm_var_f32(pSrc, blockSize, &var);
+    arm_sqrt_f32(var, pResult);
 }
 
 /**

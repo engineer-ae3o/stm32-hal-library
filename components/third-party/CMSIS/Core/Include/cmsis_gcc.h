@@ -363,7 +363,7 @@ __STATIC_FORCEINLINE uint32_t __ROR(uint32_t op1, uint32_t op2) {
 __STATIC_FORCEINLINE uint32_t __RBIT(uint32_t value) {
     uint32_t result;
 
-#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                     \
+#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                               \
      (defined(__ARM_ARCH_8M_MAIN__) && (__ARM_ARCH_8M_MAIN__ == 1)))
     __ASM("rbit %0, %1" : "=r"(result) : "r"(value));
 #else
@@ -402,7 +402,7 @@ __STATIC_FORCEINLINE uint8_t __CLZ(uint32_t value) {
     return __builtin_clz(value);
 }
 
-#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                     \
+#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                               \
      (defined(__ARM_ARCH_8M_MAIN__) && (__ARM_ARCH_8M_MAIN__ == 1)) || (defined(__ARM_ARCH_8M_BASE__) && (__ARM_ARCH_8M_BASE__ == 1)))
 /**
   \brief   LDR Exclusive (8 bit)
@@ -515,7 +515,7 @@ __STATIC_FORCEINLINE void __CLREX(void) {
            (defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)) || \
            (defined (__ARM_ARCH_8M_BASE__ ) && (__ARM_ARCH_8M_BASE__ == 1))    ) */
 
-#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                     \
+#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                               \
      (defined(__ARM_ARCH_8M_MAIN__) && (__ARM_ARCH_8M_MAIN__ == 1)))
 /**
   \brief   Signed Saturate
@@ -524,11 +524,11 @@ __STATIC_FORCEINLINE void __CLREX(void) {
   \param [in]  ARG2  Bit position to saturate to (1..32)
   \return             Saturated value
  */
-#define __SSAT(ARG1, ARG2)                                                                                                                 \
-    __extension__({                                                                                                                        \
-        int32_t __RES, __ARG1 = (ARG1);                                                                                                    \
-        __ASM volatile("ssat %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc");                                                   \
-        __RES;                                                                                                                             \
+#define __SSAT(ARG1, ARG2)                                                                                                                           \
+    __extension__({                                                                                                                                  \
+        int32_t __RES, __ARG1 = (ARG1);                                                                                                              \
+        __ASM volatile("ssat %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc");                                                             \
+        __RES;                                                                                                                                       \
     })
 
 /**
@@ -538,11 +538,11 @@ __STATIC_FORCEINLINE void __CLREX(void) {
   \param [in]  ARG2  Bit position to saturate to (0..31)
   \return             Saturated value
  */
-#define __USAT(ARG1, ARG2)                                                                                                                 \
-    __extension__({                                                                                                                        \
-        uint32_t __RES, __ARG1 = (ARG1);                                                                                                   \
-        __ASM volatile("usat %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc");                                                   \
-        __RES;                                                                                                                             \
+#define __USAT(ARG1, ARG2)                                                                                                                           \
+    __extension__({                                                                                                                                  \
+        uint32_t __RES, __ARG1 = (ARG1);                                                                                                             \
+        __ASM volatile("usat %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc");                                                             \
+        __RES;                                                                                                                                       \
     })
 
 /**
@@ -1117,7 +1117,7 @@ __STATIC_FORCEINLINE void __TZ_set_PRIMASK_NS(uint32_t priMask) {
 }
 #endif
 
-#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                     \
+#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                               \
      (defined(__ARM_ARCH_8M_MAIN__) && (__ARM_ARCH_8M_MAIN__ == 1)))
 /**
   \brief   Enable FIQ
@@ -1723,18 +1723,18 @@ __STATIC_FORCEINLINE uint32_t __USADA8(uint32_t op1, uint32_t op2, uint32_t op3)
     return (result);
 }
 
-#define __SSAT16(ARG1, ARG2)                                                                                                               \
-    __extension__({                                                                                                                        \
-        int32_t __RES, __ARG1 = (ARG1);                                                                                                    \
-        __ASM volatile("ssat16 %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc");                                                 \
-        __RES;                                                                                                                             \
+#define __SSAT16(ARG1, ARG2)                                                                                                                         \
+    __extension__({                                                                                                                                  \
+        int32_t __RES, __ARG1 = (ARG1);                                                                                                              \
+        __ASM volatile("ssat16 %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc");                                                           \
+        __RES;                                                                                                                                       \
     })
 
-#define __USAT16(ARG1, ARG2)                                                                                                               \
-    __extension__({                                                                                                                        \
-        uint32_t __RES, __ARG1 = (ARG1);                                                                                                   \
-        __ASM volatile("usat16 %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc");                                                 \
-        __RES;                                                                                                                             \
+#define __USAT16(ARG1, ARG2)                                                                                                                         \
+    __extension__({                                                                                                                                  \
+        uint32_t __RES, __ARG1 = (ARG1);                                                                                                             \
+        __ASM volatile("usat16 %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1) : "cc");                                                           \
+        __RES;                                                                                                                                       \
     })
 
 __STATIC_FORCEINLINE uint32_t __UXTB16(uint32_t op1) {
@@ -1930,21 +1930,21 @@ __STATIC_FORCEINLINE int32_t __QSUB(int32_t op1, int32_t op2) {
     return (result);
 }
 
-#define __PKHBT(ARG1, ARG2, ARG3)                                                                                                          \
-    __extension__({                                                                                                                        \
-        uint32_t __RES, __ARG1 = (ARG1), __ARG2 = (ARG2);                                                                                  \
-        __ASM("pkhbt %0, %1, %2, lsl %3" : "=r"(__RES) : "r"(__ARG1), "r"(__ARG2), "I"(ARG3));                                             \
-        __RES;                                                                                                                             \
+#define __PKHBT(ARG1, ARG2, ARG3)                                                                                                                    \
+    __extension__({                                                                                                                                  \
+        uint32_t __RES, __ARG1 = (ARG1), __ARG2 = (ARG2);                                                                                            \
+        __ASM("pkhbt %0, %1, %2, lsl %3" : "=r"(__RES) : "r"(__ARG1), "r"(__ARG2), "I"(ARG3));                                                       \
+        __RES;                                                                                                                                       \
     })
 
-#define __PKHTB(ARG1, ARG2, ARG3)                                                                                                          \
-    __extension__({                                                                                                                        \
-        uint32_t __RES, __ARG1 = (ARG1), __ARG2 = (ARG2);                                                                                  \
-        if (ARG3 == 0)                                                                                                                     \
-            __ASM("pkhtb %0, %1, %2" : "=r"(__RES) : "r"(__ARG1), "r"(__ARG2));                                                            \
-        else                                                                                                                               \
-            __ASM("pkhtb %0, %1, %2, asr %3" : "=r"(__RES) : "r"(__ARG1), "r"(__ARG2), "I"(ARG3));                                         \
-        __RES;                                                                                                                             \
+#define __PKHTB(ARG1, ARG2, ARG3)                                                                                                                    \
+    __extension__({                                                                                                                                  \
+        uint32_t __RES, __ARG1 = (ARG1), __ARG2 = (ARG2);                                                                                            \
+        if (ARG3 == 0)                                                                                                                               \
+            __ASM("pkhtb %0, %1, %2" : "=r"(__RES) : "r"(__ARG1), "r"(__ARG2));                                                                      \
+        else                                                                                                                                         \
+            __ASM("pkhtb %0, %1, %2, asr %3" : "=r"(__RES) : "r"(__ARG1), "r"(__ARG2), "I"(ARG3));                                                   \
+        __RES;                                                                                                                                       \
     })
 
 __STATIC_FORCEINLINE int32_t __SMMLA(int32_t op1, int32_t op2, int32_t op3) {

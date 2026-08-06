@@ -31,7 +31,6 @@
 #include "arm_const_structs.h"
 
 
-
 /**
   @addtogroup RealFFT
   @{
@@ -64,13 +63,8 @@
                    This function also initializes Twiddle factor table.
 */
 
-arm_status arm_rfft_init_q31(
-    arm_rfft_instance_q31 * S,
-    uint32_t fftLenReal,
-    uint32_t ifftFlagR,
-    uint32_t bitReverseFlag)
-{
-     /*  Initialise the default arm status */
+arm_status arm_rfft_init_q31(arm_rfft_instance_q31* S, uint32_t fftLenReal, uint32_t ifftFlagR, uint32_t bitReverseFlag) {
+    /*  Initialise the default arm status */
     arm_status status = ARM_MATH_ARGUMENT_ERROR;
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_FFT_ALLOW_TABLES)
@@ -81,158 +75,151 @@ arm_status arm_rfft_init_q31(
     status = ARM_MATH_SUCCESS;
 
     /*  Initialize the Real FFT length */
-    S->fftLenReal = (uint16_t) fftLenReal;
+    S->fftLenReal = (uint16_t)fftLenReal;
 
     /*  Initialize the Twiddle coefficientA pointer */
-    S->pTwiddleAReal = (q31_t *) realCoefAQ31;
+    S->pTwiddleAReal = (q31_t*)realCoefAQ31;
 
     /*  Initialize the Twiddle coefficientB pointer */
-    S->pTwiddleBReal = (q31_t *) realCoefBQ31;
+    S->pTwiddleBReal = (q31_t*)realCoefBQ31;
 
     /*  Initialize the Flag for selection of RFFT or RIFFT */
-    S->ifftFlagR = (uint8_t) ifftFlagR;
+    S->ifftFlagR = (uint8_t)ifftFlagR;
 
     /*  Initialize the Flag for calculation Bit reversal or not */
-    S->bitReverseFlagR = (uint8_t) bitReverseFlag;
+    S->bitReverseFlagR = (uint8_t)bitReverseFlag;
 
     /*  Initialization of coef modifier depending on the FFT length */
-    switch (S->fftLenReal)
-    {
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_Q31_4096) && defined(ARM_TABLE_BITREVIDX_FXT_4096))
-    case 8192U:
+    switch (S->fftLenReal) {
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                                                                                \
+    (defined(ARM_TABLE_TWIDDLECOEF_Q31_4096) && defined(ARM_TABLE_BITREVIDX_FXT_4096))
+        case 8192U:
 
 
-        S->twidCoefRModifier = 1U;
+            S->twidCoefRModifier = 1U;
 
-        #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-           status=arm_cfft_init_q31(&(S->cfftInst),4096);
-           if (status != ARM_MATH_SUCCESS)
-           {
-               return(status);
-           }
-        #else
-           S->pCfft = &arm_cfft_sR_q31_len4096;
-        #endif
-        break;
+#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
+            status = arm_cfft_init_q31(&(S->cfftInst), 4096);
+            if (status != ARM_MATH_SUCCESS) {
+                return (status);
+            }
+#else
+            S->pCfft = &arm_cfft_sR_q31_len4096;
 #endif
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_Q31_2048) && defined(ARM_TABLE_BITREVIDX_FXT_2048))
-    case 4096U:
-        S->twidCoefRModifier = 2U;
-
-        #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-           status=arm_cfft_init_q31(&(S->cfftInst),2048);
-           if (status != ARM_MATH_SUCCESS)
-           {
-               return(status);
-           }
-        #else
-           S->pCfft = &arm_cfft_sR_q31_len2048;
-        #endif
-        break;
+            break;
 #endif
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_Q31_1024) && defined(ARM_TABLE_BITREVIDX_FXT_1024))
-    case 2048U:
-        S->twidCoefRModifier = 4U;
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                                                                                \
+    (defined(ARM_TABLE_TWIDDLECOEF_Q31_2048) && defined(ARM_TABLE_BITREVIDX_FXT_2048))
+        case 4096U:
+            S->twidCoefRModifier = 2U;
 
-        #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-           status=arm_cfft_init_q31(&(S->cfftInst),1024);
-           if (status != ARM_MATH_SUCCESS)
-           {
-               return(status);
-           }
-        #else
-          S->pCfft = &arm_cfft_sR_q31_len1024;
-        #endif
-        break;
+#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
+            status = arm_cfft_init_q31(&(S->cfftInst), 2048);
+            if (status != ARM_MATH_SUCCESS) {
+                return (status);
+            }
+#else
+            S->pCfft = &arm_cfft_sR_q31_len2048;
+#endif
+            break;
+#endif
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                                                                                \
+    (defined(ARM_TABLE_TWIDDLECOEF_Q31_1024) && defined(ARM_TABLE_BITREVIDX_FXT_1024))
+        case 2048U:
+            S->twidCoefRModifier = 4U;
+
+#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
+            status = arm_cfft_init_q31(&(S->cfftInst), 1024);
+            if (status != ARM_MATH_SUCCESS) {
+                return (status);
+            }
+#else
+            S->pCfft = &arm_cfft_sR_q31_len1024;
+#endif
+            break;
 #endif
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_Q31_512) && defined(ARM_TABLE_BITREVIDX_FXT_512))
-    case 1024U:
-        S->twidCoefRModifier = 8U;
-        #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-           status=arm_cfft_init_q31(&(S->cfftInst),512);
-           if (status != ARM_MATH_SUCCESS)
-           {
-               return(status);
-           }
-        #else
-           S->pCfft = &arm_cfft_sR_q31_len512;
-        #endif
-        break;
+        case 1024U:
+            S->twidCoefRModifier = 8U;
+#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
+            status = arm_cfft_init_q31(&(S->cfftInst), 512);
+            if (status != ARM_MATH_SUCCESS) {
+                return (status);
+            }
+#else
+            S->pCfft = &arm_cfft_sR_q31_len512;
+#endif
+            break;
 #endif
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_Q31_256) && defined(ARM_TABLE_BITREVIDX_FXT_256))
-    case 512U:
-        S->twidCoefRModifier = 16U;
-        #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-           status=arm_cfft_init_q31(&(S->cfftInst),256);
-           if (status != ARM_MATH_SUCCESS)
-           {
-               return(status);
-           }
-        #else
-           S->pCfft = &arm_cfft_sR_q31_len256;
-        #endif
-        break;
-#endif 
+        case 512U:
+            S->twidCoefRModifier = 16U;
+#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
+            status = arm_cfft_init_q31(&(S->cfftInst), 256);
+            if (status != ARM_MATH_SUCCESS) {
+                return (status);
+            }
+#else
+            S->pCfft = &arm_cfft_sR_q31_len256;
+#endif
+            break;
+#endif
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_Q31_128) && defined(ARM_TABLE_BITREVIDX_FXT_128))
-    case 256U:
-        S->twidCoefRModifier = 32U;
-        #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-           status=arm_cfft_init_q31(&(S->cfftInst),128);
-           if (status != ARM_MATH_SUCCESS)
-           {
-               return(status);
-           }
-        #else
-           S->pCfft = &arm_cfft_sR_q31_len128;
-        #endif
-        break;
-#endif 
+        case 256U:
+            S->twidCoefRModifier = 32U;
+#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
+            status = arm_cfft_init_q31(&(S->cfftInst), 128);
+            if (status != ARM_MATH_SUCCESS) {
+                return (status);
+            }
+#else
+            S->pCfft = &arm_cfft_sR_q31_len128;
+#endif
+            break;
+#endif
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_Q31_64) && defined(ARM_TABLE_BITREVIDX_FXT_64))
-    case 128U:
-        S->twidCoefRModifier = 64U;
-        #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-           status=arm_cfft_init_q31(&(S->cfftInst),64);
-           if (status != ARM_MATH_SUCCESS)
-           {
-               return(status);
-           }
-        #else
-           S->pCfft = &arm_cfft_sR_q31_len64;
-        #endif
-        break;
+        case 128U:
+            S->twidCoefRModifier = 64U;
+#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
+            status = arm_cfft_init_q31(&(S->cfftInst), 64);
+            if (status != ARM_MATH_SUCCESS) {
+                return (status);
+            }
+#else
+            S->pCfft = &arm_cfft_sR_q31_len64;
+#endif
+            break;
 #endif
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_Q31_32) && defined(ARM_TABLE_BITREVIDX_FXT_32))
-    case 64U:
-        S->twidCoefRModifier = 128U;
-        #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-           status=arm_cfft_init_q31(&(S->cfftInst),32);
-           if (status != ARM_MATH_SUCCESS)
-           {
-               return(status);
-           }
-        #else
-           S->pCfft = &arm_cfft_sR_q31_len32;
-        #endif
-        break;
-#endif 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_Q31_16) && defined(ARM_TABLE_BITREVIDX_FXT_16))
-    case 32U:
-        S->twidCoefRModifier = 256U;
-        #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-           status=arm_cfft_init_q31(&(S->cfftInst),16);
-           if (status != ARM_MATH_SUCCESS)
-           {
-               return(status);
-           }
-        #else
-           S->pCfft = &arm_cfft_sR_q31_len16;
-        #endif
-        break;
+        case 64U:
+            S->twidCoefRModifier = 128U;
+#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
+            status = arm_cfft_init_q31(&(S->cfftInst), 32);
+            if (status != ARM_MATH_SUCCESS) {
+                return (status);
+            }
+#else
+            S->pCfft = &arm_cfft_sR_q31_len32;
 #endif
-    default:
-        /*  Reporting argument error if rfftSize is not valid value */
-        status = ARM_MATH_ARGUMENT_ERROR;
-        break;
+            break;
+#endif
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_Q31_16) && defined(ARM_TABLE_BITREVIDX_FXT_16))
+        case 32U:
+            S->twidCoefRModifier = 256U;
+#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
+            status = arm_cfft_init_q31(&(S->cfftInst), 16);
+            if (status != ARM_MATH_SUCCESS) {
+                return (status);
+            }
+#else
+            S->pCfft = &arm_cfft_sR_q31_len16;
+#endif
+            break;
+#endif
+        default:
+            /*  Reporting argument error if rfftSize is not valid value */
+            status = ARM_MATH_ARGUMENT_ERROR;
+            break;
     }
 
 #endif

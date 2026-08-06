@@ -26,8 +26,8 @@
  * limitations under the License.
  */
 
-#include "dsp/fast_math_functions.h"        
-#include "dsp/utils.h"        
+#include "dsp/fast_math_functions.h"
+#include "dsp/utils.h"
 
 /*
 
@@ -43,85 +43,74 @@ atan for argument between in [0, 1.0]
 
 #define ATAN2_NB_COEFS_Q31 13
 
-static const q31_t atan2_coefs_q31[ATAN2_NB_COEFS_Q31]={0x00000000
-,0x7ffffffe
-,0x000001b6
-,0xd555158e
-,0x00036463
-,0x1985f617
-,0x001992ae
-,0xeed53a7f
-,0xf8f15245
-,0x2215a3a4
-,0xe0fab004
-,0x0cdd4825
-,0xfddbc054
-};
+static const q31_t atan2_coefs_q31[ATAN2_NB_COEFS_Q31] = {0x00000000,
+                                                          0x7ffffffe,
+                                                          0x000001b6,
+                                                          0xd555158e,
+                                                          0x00036463,
+                                                          0x1985f617,
+                                                          0x001992ae,
+                                                          0xeed53a7f,
+                                                          0xf8f15245,
+                                                          0x2215a3a4,
+                                                          0xe0fab004,
+                                                          0x0cdd4825,
+                                                          0xfddbc054};
 
 
-__STATIC_FORCEINLINE q31_t arm_atan_limited_q31(q31_t x)
-{
-    q63_t res=(q63_t)atan2_coefs_q31[ATAN2_NB_COEFS_Q31-1];
-    int i=1;
-    for(i=1;i<ATAN2_NB_COEFS_Q31;i++)
-    {
-        res = ((q63_t) x * res) >> 31U;
-        res = res + ((q63_t) atan2_coefs_q31[ATAN2_NB_COEFS_Q31-1-i]) ;
+__STATIC_FORCEINLINE q31_t arm_atan_limited_q31(q31_t x) {
+    q63_t res = (q63_t)atan2_coefs_q31[ATAN2_NB_COEFS_Q31 - 1];
+    int   i   = 1;
+    for (i = 1; i < ATAN2_NB_COEFS_Q31; i++) {
+        res = ((q63_t)x * res) >> 31U;
+        res = res + ((q63_t)atan2_coefs_q31[ATAN2_NB_COEFS_Q31 - 1 - i]);
     }
 
-    return(clip_q63_to_q31(res>>2));
+    return (clip_q63_to_q31(res >> 2));
 }
 
 
-__STATIC_FORCEINLINE q31_t arm_atan_q31(q31_t y,q31_t x)
-{
-   int sign=0;
-   q31_t res=0;
+__STATIC_FORCEINLINE q31_t arm_atan_q31(q31_t y, q31_t x) {
+    int   sign = 0;
+    q31_t res  = 0;
 
-   if (y<0)
-   {
-     arm_negate_q31(&y,&y,1);
-     sign=1-sign;
-   }
+    if (y < 0) {
+        arm_negate_q31(&y, &y, 1);
+        sign = 1 - sign;
+    }
 
-   if (x < 0)
-   {
-      sign=1 - sign;
-      arm_negate_q31(&x,&x,1);
-   }
+    if (x < 0) {
+        sign = 1 - sign;
+        arm_negate_q31(&x, &x, 1);
+    }
 
-   if (y > x)
-   {
-    q31_t ratio;
-    int16_t shift;
+    if (y > x) {
+        q31_t   ratio;
+        int16_t shift;
 
-    arm_divide_q31(x,y,&ratio,&shift);
+        arm_divide_q31(x, y, &ratio, &shift);
 
-    arm_shift_q31(&ratio,shift,&ratio,1);
-   
-    res = PIHALF_Q29 - arm_atan_limited_q31(ratio);
-      
-   }
-   else
-   {
-    q31_t ratio;
-    int16_t shift;
+        arm_shift_q31(&ratio, shift, &ratio, 1);
 
-    arm_divide_q31(y,x,&ratio,&shift);
+        res = PIHALF_Q29 - arm_atan_limited_q31(ratio);
 
-    arm_shift_q31(&ratio,shift,&ratio,1);
+    } else {
+        q31_t   ratio;
+        int16_t shift;
 
-    res = arm_atan_limited_q31(ratio);
+        arm_divide_q31(y, x, &ratio, &shift);
 
-   }
+        arm_shift_q31(&ratio, shift, &ratio, 1);
+
+        res = arm_atan_limited_q31(ratio);
+    }
 
 
-   if (sign)
-   {
-     arm_negate_q31(&res,&res,1);
-   }
+    if (sign) {
+        arm_negate_q31(&res, &res, 1);
+    }
 
-   return(res);
+    return (res);
 }
 
 
@@ -148,53 +137,38 @@ __STATIC_FORCEINLINE q31_t arm_atan_q31(q31_t y,q31_t x)
 */
 
 
-arm_status arm_atan2_q31(q31_t y,q31_t x,q31_t *result)
-{
-    if (x > 0)
-    {
-        *result=arm_atan_q31(y,x);
-        return(ARM_MATH_SUCCESS);
+arm_status arm_atan2_q31(q31_t y, q31_t x, q31_t* result) {
+    if (x > 0) {
+        *result = arm_atan_q31(y, x);
+        return (ARM_MATH_SUCCESS);
     }
-    if (x < 0)
-    {
-        if (y > 0)
-        {
-           *result=arm_atan_q31(y,x) + PIQ29;
-        }
-        else if (y < 0)
-        {
-           *result=arm_atan_q31(y,x) - PIQ29;
-        }
-        else
-        {
-            if (y<0)
-            {
-               *result= -PIQ29;
-            }
-            else
-            {
-               *result= PIQ29;
+    if (x < 0) {
+        if (y > 0) {
+            *result = arm_atan_q31(y, x) + PIQ29;
+        } else if (y < 0) {
+            *result = arm_atan_q31(y, x) - PIQ29;
+        } else {
+            if (y < 0) {
+                *result = -PIQ29;
+            } else {
+                *result = PIQ29;
             }
         }
-        return(ARM_MATH_SUCCESS);
+        return (ARM_MATH_SUCCESS);
     }
-    if (x == 0)
-    {
-        if (y > 0)
-        {
-            *result=PIHALF_Q29;
-            return(ARM_MATH_SUCCESS);
+    if (x == 0) {
+        if (y > 0) {
+            *result = PIHALF_Q29;
+            return (ARM_MATH_SUCCESS);
         }
-        if (y < 0)
-        {
-            *result=-PIHALF_Q29;
-            return(ARM_MATH_SUCCESS);
+        if (y < 0) {
+            *result = -PIHALF_Q29;
+            return (ARM_MATH_SUCCESS);
         }
     }
-    
 
-    return(ARM_MATH_NANINF);
 
+    return (ARM_MATH_NANINF);
 }
 
 /**

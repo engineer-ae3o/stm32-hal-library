@@ -1,13 +1,17 @@
 #include "stm32f411xe.h"
-#include "gpio.h"
-#include "i2c.h"
+#include "drivers/gpio.h"
+#include "extra/common.h"
+#include "drivers/i2c.h"
+#include "extra/err.h"
+
 
 // Forward declarations
 static inline bool send_start(I2C_TypeDef* handle);
 static inline void send_stop(I2C_TypeDef* handle);
 
-static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len);
-static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len);
+static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t len);
+static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t len);
+
 
 // Public API
 hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
@@ -113,7 +117,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     return HAL_OK;
 }
 
-hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len) {
+hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t len) {
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_INVALID_STATE;
@@ -125,7 +129,7 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_
     }
 
     // Transmit bytes
-    hal_err_t ret = tx_trans(handle, address, data, len);
+    hal_err_t ret = tx_trans(handle, addr, data, len);
 
     // End transaction
     send_stop(handle);
@@ -133,7 +137,7 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_
     return ret;
 }
 
-hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len) {
+hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t len) {
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_INVALID_STATE;
@@ -145,11 +149,10 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data
     }
 
     // No need to call `send_stop()` as `rx_trans()` already does
-    return rx_trans(handle, address, data, len);
+    return rx_trans(handle, addr, data, len);
 }
 
-hal_err_t
-i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data, size_t tx_len, uint8_t* rx_data, size_t rx_len) {
+hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t* tx_data, size_t tx_len, uint8_t* rx_data, size_t rx_len) {
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_INVALID_STATE;
@@ -161,7 +164,7 @@ i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_da
     }
 
     // Start TX transaction
-    hal_err_t ret = tx_trans(handle, address, tx_data, tx_len);
+    hal_err_t ret = tx_trans(handle, addr, tx_data, tx_len);
     if (ret != HAL_OK) {
         send_stop(handle);
         return ret;
@@ -174,7 +177,7 @@ i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_da
 
     // Start RX transaction
     // No need to call `send_stop()` as `rx_trans()` already does
-    return rx_trans(handle, address, rx_data, rx_len);
+    return rx_trans(handle, addr, rx_data, rx_len);
 }
 
 // Helpers
@@ -209,10 +212,10 @@ static inline void send_stop(I2C_TypeDef* handle) {
     handle->CR1 |= I2C_CR1_STOP;
 }
 
-static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t len) {
-    // Send address and write bit
+static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t len) {
+    // Send addr and write bit
     // cppcheck-suppress badBitmaskCheck
-    handle->DR = ((uint32_t)(address << 1UL) | 0UL);
+    handle->DR = ((uint32_t)(addr << 1UL) | 0UL);
 
     // Wait for ACK
     uint32_t timeout = TIMEOUT_CYCLES;
@@ -296,9 +299,9 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* d
     return HAL_OK;
 }
 
-static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t len) {
-    // Send address and read bit
-    handle->DR = ((uint32_t)(address << 1UL) | 1UL);
+static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t len) {
+    // Send addr and read bit
+    handle->DR = ((uint32_t)(addr << 1UL) | 1UL);
 
     // Wait for ACK
     uint32_t timeout = TIMEOUT_CYCLES;

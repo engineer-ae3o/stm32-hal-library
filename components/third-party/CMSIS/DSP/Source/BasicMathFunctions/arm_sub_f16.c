@@ -61,13 +61,8 @@
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 #include "arm_helium_utils.h"
 
-void arm_sub_f16(
-  const float16_t * pSrcA,
-  const float16_t * pSrcB,
-        float16_t * pDst,
-        uint32_t blockSize)
-{
-    uint32_t blkCnt;                               /* Loop counter */
+void arm_sub_f16(const float16_t* pSrcA, const float16_t* pSrcB, float16_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
     f16x8_t vec1;
     f16x8_t vec2;
@@ -76,21 +71,20 @@ void arm_sub_f16(
     /* Compute 4 outputs at a time */
     blkCnt = blockSize >> 3U;
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /* C = A + B */
 
-      /* Add and then store the results in the destination buffer. */
+        /* Add and then store the results in the destination buffer. */
         vec1 = vld1q(pSrcA);
         vec2 = vld1q(pSrcB);
-        res = vsubq(vec1, vec2);
+        res  = vsubq(vec1, vec2);
         vst1q(pDst, res);
 
         /* Increment pointers */
         pSrcA += 8;
-        pSrcB += 8; 
+        pSrcB += 8;
         pDst += 8;
-        
+
         /* Decrement the loop counter */
         blkCnt--;
     }
@@ -98,70 +92,60 @@ void arm_sub_f16(
     /* Tail */
     blkCnt = blockSize & 0x7;
 
-    if (blkCnt > 0U)
-    {
-      /* C = A + B */
-      mve_pred16_t p0 = vctp16q(blkCnt);
-      vec1 = vld1q(pSrcA);
-      vec2 = vld1q(pSrcB);
-      vstrhq_p(pDst, vsubq(vec1,vec2), p0);
+    if (blkCnt > 0U) {
+        /* C = A + B */
+        mve_pred16_t p0 = vctp16q(blkCnt);
+        vec1            = vld1q(pSrcA);
+        vec2            = vld1q(pSrcB);
+        vstrhq_p(pDst, vsubq(vec1, vec2), p0);
     }
-
 }
 
 #else
 #if defined(ARM_FLOAT16_SUPPORTED)
-void arm_sub_f16(
-  const float16_t * pSrcA,
-  const float16_t * pSrcB,
-        float16_t * pDst,
-        uint32_t blockSize)
-{
-        uint32_t blkCnt;                               /* Loop counter */
+void arm_sub_f16(const float16_t* pSrcA, const float16_t* pSrcB, float16_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = A - B */
+    while (blkCnt > 0U) {
+        /* C = A - B */
 
-    /* Subtract and store result in destination buffer. */
-    *pDst++ = (_Float16)(*pSrcA++) - (_Float16)(*pSrcB++);
+        /* Subtract and store result in destination buffer. */
+        *pDst++ = (_Float16)(*pSrcA++) - (_Float16)(*pSrcB++);
 
-    *pDst++ = (_Float16)(*pSrcA++) - (_Float16)(*pSrcB++);
+        *pDst++ = (_Float16)(*pSrcA++) - (_Float16)(*pSrcB++);
 
-    *pDst++ = (_Float16)(*pSrcA++) - (_Float16)(*pSrcB++);
+        *pDst++ = (_Float16)(*pSrcA++) - (_Float16)(*pSrcB++);
 
-    *pDst++ = (_Float16)(*pSrcA++) - (_Float16)(*pSrcB++);
+        *pDst++ = (_Float16)(*pSrcA++) - (_Float16)(*pSrcB++);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = A - B */
+    while (blkCnt > 0U) {
+        /* C = A - B */
 
-    /* Subtract and store result in destination buffer. */
-    *pDst++ = (_Float16)(*pSrcA++) - (_Float16)(*pSrcB++);
+        /* Subtract and store result in destination buffer. */
+        *pDst++ = (_Float16)(*pSrcA++) - (_Float16)(*pSrcB++);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */

@@ -45,13 +45,9 @@
  *
  */
 
-arm_status arm_nn_mat_mul_core_1x_s8(int32_t row_elements,
-                                     const int8_t *row_base,
-                                     const int8_t *col_base,
-                                     int32_t *const sum_col,
-                                     int32_t *const output)
-{
-    int32_t acc_n0 = 0;
+arm_status
+arm_nn_mat_mul_core_1x_s8(int32_t row_elements, const int8_t* row_base, const int8_t* col_base, int32_t* const sum_col, int32_t* const output) {
+    int32_t acc_n0  = 0;
     int32_t sum_tmp = 0;
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
@@ -64,20 +60,22 @@ arm_status arm_nn_mat_mul_core_1x_s8(int32_t row_elements,
                    "   vmladava.s8    %[out0], q0, q1       \n"
                    "   vldrb.8         q0, [%[col]], #16     \n"
                    "   letp            lr, 2b               \n"
-                   "1:                                      \n"
-                   : [col] "+r"(col_base), [sum] "+Te"(sum_tmp), [row0] "+r"(row_base), [out0] "+Te"(acc_n0)
-                   : [cnt] "r"(row_elements)
-                   : "q0", "q1", "memory", "r14");
+                   "1:                                      \n" : [col] "+r"(col_base),
+                   [sum] "+Te"(sum_tmp),
+                   [row0] "+r"(row_base),
+                   [out0] "+Te"(acc_n0) : [cnt] "r"(row_elements) : "q0",
+                   "q1",
+                   "memory",
+                   "r14");
 #else
-    for (int i = 0; i < row_elements; i++)
-    {
+    for (int i = 0; i < row_elements; i++) {
         sum_tmp += col_base[i];
         acc_n0 += row_base[i] * col_base[i];
     }
 #endif
 
     *sum_col = sum_tmp;
-    *output = acc_n0;
+    *output  = acc_n0;
     return ARM_MATH_SUCCESS;
 }
 

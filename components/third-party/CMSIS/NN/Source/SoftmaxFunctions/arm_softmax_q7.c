@@ -58,19 +58,16 @@
  *
  */
 
-void arm_softmax_q7(const q7_t *vec_in, const uint16_t dim_vec, q7_t *p_out)
-{
-    q31_t sum;
+void arm_softmax_q7(const q7_t* vec_in, const uint16_t dim_vec, q7_t* p_out) {
+    q31_t   sum;
     int16_t i;
     uint8_t shift;
-    q15_t base;
+    q15_t   base;
     base = -128;
 
     /* We first search for the maximum */
-    for (i = 0; i < dim_vec; i++)
-    {
-        if (vec_in[i] > base)
-        {
+    for (i = 0; i < dim_vec; i++) {
+        if (vec_in[i] > base) {
             base = vec_in[i];
         }
     }
@@ -84,8 +81,7 @@ void arm_softmax_q7(const q7_t *vec_in, const uint16_t dim_vec, q7_t *p_out)
 
     sum = 0;
 
-    for (i = 0; i < dim_vec; i++)
-    {
+    for (i = 0; i < dim_vec; i++) {
         shift = (uint8_t)__USAT(vec_in[i] - base, 3);
         sum += 0x1 << shift;
     }
@@ -93,11 +89,10 @@ void arm_softmax_q7(const q7_t *vec_in, const uint16_t dim_vec, q7_t *p_out)
     /* This is effectively (0x1 << 20) / sum */
     int output_base = (1 << 20) / sum;
 
-    for (i = 0; i < dim_vec; i++)
-    {
+    for (i = 0; i < dim_vec; i++) {
 
         /* Here minimum value of 13+base-vec_in[i] will be 5 */
-        shift = (uint8_t)__USAT(13 + base - vec_in[i], 5);
+        shift    = (uint8_t)__USAT(13 + base - vec_in[i], 5);
         p_out[i] = (q7_t)__SSAT((output_base >> shift), 8);
     }
 }

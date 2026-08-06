@@ -48,24 +48,22 @@
 #if (defined(ARM_MATH_MVEF) && defined(ARM_MATH_HELIUM_EXPERIMENTAL)) && !defined(ARM_MATH_AUTOVECTORIZE)
 #include "arm_helium_utils.h"
 
-void arm_biquad_cascade_stereo_df2T_f32(
-  const arm_biquad_cascade_stereo_df2T_instance_f32 * S,
-  const float32_t * pSrc,
-        float32_t * pDst,
-        uint32_t blockSize)
-{
-    const float32_t *pIn = pSrc;              /*  source pointer            */
-    float32_t *pOut = pDst;             /*  destination pointer       */
-    float32_t *pState = S->pState;      /*  State pointer             */
-    const float32_t *pCoeffs = S->pCoeffs;    /*  coefficient pointer       */
-    float32_t b0, b1, b2, a1, a2;       /*  Filter coefficients       */
-    uint32_t  sample, stage = S->numStages; /*  loop counters           */
-    float32_t scratch[6];
-    uint32x4_t loadIdxVec;
-    f32x4_t aCoeffs, bCoeffs;
-    f32x4_t stateVec0, stateVec1;
-    f32x4_t inVec;
-    uint32_t  startIdx = 0;
+void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_instance_f32* S,
+                                        const float32_t*                                   pSrc,
+                                        float32_t*                                         pDst,
+                                        uint32_t                                           blockSize) {
+    const float32_t* pIn     = pSrc;               /*  source pointer            */
+    float32_t*       pOut    = pDst;               /*  destination pointer       */
+    float32_t*       pState  = S->pState;          /*  State pointer             */
+    const float32_t* pCoeffs = S->pCoeffs;         /*  coefficient pointer       */
+    float32_t        b0, b1, b2, a1, a2;           /*  Filter coefficients       */
+    uint32_t         sample, stage = S->numStages; /*  loop counters           */
+    float32_t        scratch[6];
+    uint32x4_t       loadIdxVec;
+    f32x4_t          aCoeffs, bCoeffs;
+    f32x4_t          stateVec0, stateVec1;
+    f32x4_t          inVec;
+    uint32_t         startIdx = 0;
 
     /*
      * {0, 1, 0, 1} generator
@@ -79,8 +77,7 @@ void arm_biquad_cascade_stereo_df2T_f32(
     scratch[4] = 0.0f;
     scratch[5] = 0.0f;
 
-    do
-    {
+    do {
         /*
          * Reading the coefficients
          */
@@ -108,12 +105,11 @@ void arm_biquad_cascade_stereo_df2T_f32(
          * Reading the state values
          * Save into scratch
          */
-        *(f32x4_t *) scratch = *(f32x4_t *) pState;
+        *(f32x4_t*)scratch = *(f32x4_t*)pState;
 
         sample = blockSize;
 
-        while (sample > 0U)
-        {
+        while (sample > 0U) {
             /*
              * step 1
              *
@@ -125,15 +121,15 @@ void arm_biquad_cascade_stereo_df2T_f32(
             /*
              * load {d1a, d1b, d1a, d1b}
              */
-            stateVec0 = (f32x4_t)vldrwq_gather_shifted_offset((uint32_t const *) scratch, loadIdxVec);
+            stateVec0 = (f32x4_t)vldrwq_gather_shifted_offset((uint32_t const*)scratch, loadIdxVec);
             /*
              * load {in0 in1 in0 in1}
              */
-            inVec = (f32x4_t)vldrwq_gather_shifted_offset((uint32_t const *) pIn, loadIdxVec);
+            inVec = (f32x4_t)vldrwq_gather_shifted_offset((uint32_t const*)pIn, loadIdxVec);
 
             stateVec0 = vfmaq(stateVec0, inVec, b0);
-            *pOut++ = vgetq_lane(stateVec0, 0);
-            *pOut++ = vgetq_lane(stateVec0, 1);
+            *pOut++   = vgetq_lane(stateVec0, 0);
+            *pOut++   = vgetq_lane(stateVec0, 1);
 
             /*
              * step 2
@@ -147,10 +143,10 @@ void arm_biquad_cascade_stereo_df2T_f32(
             /*
              * load {d2a, d2b, 0, 0}
              */
-            stateVec1 = *(f32x4_t *) & scratch[2];
-            stateVec1 = vfmaq(stateVec1, stateVec0, aCoeffs);
-            stateVec1 = vfmaq(stateVec1, inVec, bCoeffs);
-            *(f32x4_t *) scratch = stateVec1;
+            stateVec1          = *(f32x4_t*)&scratch[2];
+            stateVec1          = vfmaq(stateVec1, stateVec0, aCoeffs);
+            stateVec1          = vfmaq(stateVec1, inVec, bCoeffs);
+            *(f32x4_t*)scratch = stateVec1;
 
             pIn = pIn + 2;
             sample--;
@@ -174,30 +170,26 @@ void arm_biquad_cascade_stereo_df2T_f32(
          * decrement the loop counter
          */
         stage--;
-    }
-    while (stage > 0U);
+    } while (stage > 0U);
 }
 
 #else
 
-void arm_biquad_cascade_stereo_df2T_f32(
-  const arm_biquad_cascade_stereo_df2T_instance_f32 * S,
-  const float32_t * pSrc,
-        float32_t * pDst,
-        uint32_t blockSize)
-{
-  const float32_t *pIn = pSrc;                         /* Source pointer */
-        float32_t *pOut = pDst;                        /* Destination pointer */
-        float32_t *pState = S->pState;                 /* State pointer */
-  const float32_t *pCoeffs = S->pCoeffs;               /* Coefficient pointer */
-        float32_t acc1a, acc1b;                        /* Accumulator */
-        float32_t b0, b1, b2, a1, a2;                  /* Filter coefficients */
-        float32_t Xn1a, Xn1b;                          /* Temporary input */
-        float32_t d1a, d2a, d1b, d2b;                  /* State variables */
-        uint32_t sample, stage = S->numStages;         /* Loop counters */
+void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_instance_f32* S,
+                                        const float32_t*                                   pSrc,
+                                        float32_t*                                         pDst,
+                                        uint32_t                                           blockSize) {
+    const float32_t* pIn     = pSrc;               /* Source pointer */
+    float32_t*       pOut    = pDst;               /* Destination pointer */
+    float32_t*       pState  = S->pState;          /* State pointer */
+    const float32_t* pCoeffs = S->pCoeffs;         /* Coefficient pointer */
+    float32_t        acc1a, acc1b;                 /* Accumulator */
+    float32_t        b0, b1, b2, a1, a2;           /* Filter coefficients */
+    float32_t        Xn1a, Xn1b;                   /* Temporary input */
+    float32_t        d1a, d2a, d1b, d2b;           /* State variables */
+    uint32_t         sample, stage = S->numStages; /* Loop counters */
 
-    do
-    {
+    do {
         /* Reading the coefficients */
         b0 = pCoeffs[0];
         b1 = pCoeffs[1];
@@ -213,146 +205,146 @@ void arm_biquad_cascade_stereo_df2T_f32(
 
         pCoeffs += 5U;
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-    /* Loop unrolling: Compute 8 outputs at a time */
+        /* Loop unrolling: Compute 8 outputs at a time */
         sample = blockSize >> 3U;
 
         while (sample > 0U) {
-          /* y[n] = b0 * x[n] + d1 */
-          /* d1 = b1 * x[n] + a1 * y[n] + d2 */
-          /* d2 = b2 * x[n] + a2 * y[n] */
+            /* y[n] = b0 * x[n] + d1 */
+            /* d1 = b1 * x[n] + a1 * y[n] + d2 */
+            /* d2 = b2 * x[n] + a2 * y[n] */
 
-/*  1 */
-          Xn1a = *pIn++; /* Channel a */
-          Xn1b = *pIn++; /* Channel b */
+            /*  1 */
+            Xn1a = *pIn++; /* Channel a */
+            Xn1b = *pIn++; /* Channel b */
 
-          acc1a = (b0 * Xn1a) + d1a;
-          acc1b = (b0 * Xn1b) + d1b;
+            acc1a = (b0 * Xn1a) + d1a;
+            acc1b = (b0 * Xn1b) + d1b;
 
-          *pOut++ = acc1a;
-          *pOut++ = acc1b;
+            *pOut++ = acc1a;
+            *pOut++ = acc1b;
 
-          d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
-          d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
+            d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
+            d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
 
-          d2a = (b2 * Xn1a) + (a2 * acc1a);
-          d2b = (b2 * Xn1b) + (a2 * acc1b);
+            d2a = (b2 * Xn1a) + (a2 * acc1a);
+            d2b = (b2 * Xn1b) + (a2 * acc1b);
 
-/*  2 */
-          Xn1a = *pIn++; /* Channel a */
-          Xn1b = *pIn++; /* Channel b */
+            /*  2 */
+            Xn1a = *pIn++; /* Channel a */
+            Xn1b = *pIn++; /* Channel b */
 
-          acc1a = (b0 * Xn1a) + d1a;
-          acc1b = (b0 * Xn1b) + d1b;
+            acc1a = (b0 * Xn1a) + d1a;
+            acc1b = (b0 * Xn1b) + d1b;
 
-          *pOut++ = acc1a;
-          *pOut++ = acc1b;
+            *pOut++ = acc1a;
+            *pOut++ = acc1b;
 
-          d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
-          d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
+            d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
+            d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
 
-          d2a = (b2 * Xn1a) + (a2 * acc1a);
-          d2b = (b2 * Xn1b) + (a2 * acc1b);
+            d2a = (b2 * Xn1a) + (a2 * acc1a);
+            d2b = (b2 * Xn1b) + (a2 * acc1b);
 
-/*  3 */
-          Xn1a = *pIn++; /* Channel a */
-          Xn1b = *pIn++; /* Channel b */
+            /*  3 */
+            Xn1a = *pIn++; /* Channel a */
+            Xn1b = *pIn++; /* Channel b */
 
-          acc1a = (b0 * Xn1a) + d1a;
-          acc1b = (b0 * Xn1b) + d1b;
+            acc1a = (b0 * Xn1a) + d1a;
+            acc1b = (b0 * Xn1b) + d1b;
 
-          *pOut++ = acc1a;
-          *pOut++ = acc1b;
+            *pOut++ = acc1a;
+            *pOut++ = acc1b;
 
-          d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
-          d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
+            d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
+            d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
 
-          d2a = (b2 * Xn1a) + (a2 * acc1a);
-          d2b = (b2 * Xn1b) + (a2 * acc1b);
+            d2a = (b2 * Xn1a) + (a2 * acc1a);
+            d2b = (b2 * Xn1b) + (a2 * acc1b);
 
-/*  4 */
-          Xn1a = *pIn++; /* Channel a */
-          Xn1b = *pIn++; /* Channel b */
+            /*  4 */
+            Xn1a = *pIn++; /* Channel a */
+            Xn1b = *pIn++; /* Channel b */
 
-          acc1a = (b0 * Xn1a) + d1a;
-          acc1b = (b0 * Xn1b) + d1b;
+            acc1a = (b0 * Xn1a) + d1a;
+            acc1b = (b0 * Xn1b) + d1b;
 
-          *pOut++ = acc1a;
-          *pOut++ = acc1b;
+            *pOut++ = acc1a;
+            *pOut++ = acc1b;
 
-          d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
-          d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
+            d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
+            d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
 
-          d2a = (b2 * Xn1a) + (a2 * acc1a);
-          d2b = (b2 * Xn1b) + (a2 * acc1b);
+            d2a = (b2 * Xn1a) + (a2 * acc1a);
+            d2b = (b2 * Xn1b) + (a2 * acc1b);
 
-/*  5 */
-          Xn1a = *pIn++; /* Channel a */
-          Xn1b = *pIn++; /* Channel b */
+            /*  5 */
+            Xn1a = *pIn++; /* Channel a */
+            Xn1b = *pIn++; /* Channel b */
 
-          acc1a = (b0 * Xn1a) + d1a;
-          acc1b = (b0 * Xn1b) + d1b;
+            acc1a = (b0 * Xn1a) + d1a;
+            acc1b = (b0 * Xn1b) + d1b;
 
-          *pOut++ = acc1a;
-          *pOut++ = acc1b;
+            *pOut++ = acc1a;
+            *pOut++ = acc1b;
 
-          d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
-          d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
+            d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
+            d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
 
-          d2a = (b2 * Xn1a) + (a2 * acc1a);
-          d2b = (b2 * Xn1b) + (a2 * acc1b);
+            d2a = (b2 * Xn1a) + (a2 * acc1a);
+            d2b = (b2 * Xn1b) + (a2 * acc1b);
 
-/*  6 */
-          Xn1a = *pIn++; /* Channel a */
-          Xn1b = *pIn++; /* Channel b */
+            /*  6 */
+            Xn1a = *pIn++; /* Channel a */
+            Xn1b = *pIn++; /* Channel b */
 
-          acc1a = (b0 * Xn1a) + d1a;
-          acc1b = (b0 * Xn1b) + d1b;
+            acc1a = (b0 * Xn1a) + d1a;
+            acc1b = (b0 * Xn1b) + d1b;
 
-          *pOut++ = acc1a;
-          *pOut++ = acc1b;
+            *pOut++ = acc1a;
+            *pOut++ = acc1b;
 
-          d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
-          d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
+            d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
+            d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
 
-          d2a = (b2 * Xn1a) + (a2 * acc1a);
-          d2b = (b2 * Xn1b) + (a2 * acc1b);
+            d2a = (b2 * Xn1a) + (a2 * acc1a);
+            d2b = (b2 * Xn1b) + (a2 * acc1b);
 
-/*  7 */
-          Xn1a = *pIn++; /* Channel a */
-          Xn1b = *pIn++; /* Channel b */
+            /*  7 */
+            Xn1a = *pIn++; /* Channel a */
+            Xn1b = *pIn++; /* Channel b */
 
-          acc1a = (b0 * Xn1a) + d1a;
-          acc1b = (b0 * Xn1b) + d1b;
+            acc1a = (b0 * Xn1a) + d1a;
+            acc1b = (b0 * Xn1b) + d1b;
 
-          *pOut++ = acc1a;
-          *pOut++ = acc1b;
+            *pOut++ = acc1a;
+            *pOut++ = acc1b;
 
-          d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
-          d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
+            d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
+            d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
 
-          d2a = (b2 * Xn1a) + (a2 * acc1a);
-          d2b = (b2 * Xn1b) + (a2 * acc1b);
+            d2a = (b2 * Xn1a) + (a2 * acc1a);
+            d2b = (b2 * Xn1b) + (a2 * acc1b);
 
-/*  8 */
-          Xn1a = *pIn++; /* Channel a */
-          Xn1b = *pIn++; /* Channel b */
+            /*  8 */
+            Xn1a = *pIn++; /* Channel a */
+            Xn1b = *pIn++; /* Channel b */
 
-          acc1a = (b0 * Xn1a) + d1a;
-          acc1b = (b0 * Xn1b) + d1b;
+            acc1a = (b0 * Xn1a) + d1a;
+            acc1b = (b0 * Xn1b) + d1b;
 
-          *pOut++ = acc1a;
-          *pOut++ = acc1b;
+            *pOut++ = acc1a;
+            *pOut++ = acc1b;
 
-          d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
-          d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
+            d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
+            d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
 
-          d2a = (b2 * Xn1a) + (a2 * acc1a);
-          d2b = (b2 * Xn1b) + (a2 * acc1b);
+            d2a = (b2 * Xn1a) + (a2 * acc1a);
+            d2b = (b2 * Xn1b) + (a2 * acc1b);
 
-          /* decrement loop counter */
-          sample--;
+            /* decrement loop counter */
+            sample--;
         }
 
         /* Loop unrolling: Compute remaining outputs */
@@ -366,29 +358,29 @@ void arm_biquad_cascade_stereo_df2T_f32(
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
         while (sample > 0U) {
-          /* Read the input */
-          Xn1a = *pIn++; /* Channel a */
-          Xn1b = *pIn++; /* Channel b */
+            /* Read the input */
+            Xn1a = *pIn++; /* Channel a */
+            Xn1b = *pIn++; /* Channel b */
 
-          /* y[n] = b0 * x[n] + d1 */
-          acc1a = (b0 * Xn1a) + d1a;
-          acc1b = (b0 * Xn1b) + d1b;
+            /* y[n] = b0 * x[n] + d1 */
+            acc1a = (b0 * Xn1a) + d1a;
+            acc1b = (b0 * Xn1b) + d1b;
 
-          /* Store the result in the accumulator in the destination buffer. */
-          *pOut++ = acc1a;
-          *pOut++ = acc1b;
+            /* Store the result in the accumulator in the destination buffer. */
+            *pOut++ = acc1a;
+            *pOut++ = acc1b;
 
-          /* Every time after the output is computed state should be updated. */
-          /* d1 = b1 * x[n] + a1 * y[n] + d2 */
-          d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
-          d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
+            /* Every time after the output is computed state should be updated. */
+            /* d1 = b1 * x[n] + a1 * y[n] + d2 */
+            d1a = ((b1 * Xn1a) + (a1 * acc1a)) + d2a;
+            d1b = ((b1 * Xn1b) + (a1 * acc1b)) + d2b;
 
-          /* d2 = b2 * x[n] + a2 * y[n] */
-          d2a = (b2 * Xn1a) + (a2 * acc1a);
-          d2b = (b2 * Xn1b) + (a2 * acc1b);
+            /* d2 = b2 * x[n] + a2 * y[n] */
+            d2a = (b2 * Xn1a) + (a2 * acc1a);
+            d2b = (b2 * Xn1b) + (a2 * acc1b);
 
-          /* decrement loop counter */
-          sample--;
+            /* decrement loop counter */
+            sample--;
         }
 
         /* Store the updated state variables back into the state array */
@@ -410,7 +402,6 @@ void arm_biquad_cascade_stereo_df2T_f32(
         stage--;
 
     } while (stage > 0U);
-
 }
 
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */

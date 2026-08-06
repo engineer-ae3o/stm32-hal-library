@@ -46,23 +46,21 @@
                    - \ref ARM_MATH_SIZE_MISMATCH : Matrix size check failed
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-arm_status arm_mat_trans_q7(const arm_matrix_instance_q7 *pSrc, arm_matrix_instance_q7 *pDst)
-{
+arm_status arm_mat_trans_q7(const arm_matrix_instance_q7* pSrc, arm_matrix_instance_q7* pDst) {
 
-    uint16x8_t    vecOffs;
-    uint32_t        i;
-    uint32_t        blkCnt;
-    uint8_t const  *pDataC;
-    uint8_t        *pDataDestR;
-    uint16x8_t    vecIn;
+    uint16x8_t     vecOffs;
+    uint32_t       i;
+    uint32_t       blkCnt;
+    uint8_t const* pDataC;
+    uint8_t*       pDataDestR;
+    uint16x8_t     vecIn;
 
-    const uint8_t   * pDataSrc=(const uint8_t  *)pSrc->pData;
-    uint8_t   * pDataDst=(uint8_t  *)pDst->pData;
+    const uint8_t* pDataSrc = (const uint8_t*)pSrc->pData;
+    uint8_t*       pDataDst = (uint8_t*)pDst->pData;
 
 #ifdef ARM_MATH_MATRIX_CHECK
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pDst->numCols) || (pSrc->numCols != pDst->numRows))
-    {
+    if ((pSrc->numRows != pDst->numCols) || (pSrc->numCols != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         return ARM_MATH_SIZE_MISMATCH;
     }
@@ -72,17 +70,15 @@ arm_status arm_mat_trans_q7(const arm_matrix_instance_q7 *pSrc, arm_matrix_insta
     vecOffs = vecOffs * pSrc->numCols;
 
     i = pSrc->numCols;
-    do
-    {
-        pDataC = (uint8_t const *) pDataSrc;
+    do {
+        pDataC     = (uint8_t const*)pDataSrc;
         pDataDestR = (uint8_t*)pDataDst;
 
         blkCnt = pSrc->numRows >> 3;
-        while (blkCnt > 0U)
-        {
+        while (blkCnt > 0U) {
             /* widened loads */
             vecIn = vldrbq_gather_offset_u16(pDataC, vecOffs);
-            vstrbq_u16(pDataDestR, vecIn);  
+            vstrbq_u16(pDataDestR, vecIn);
             pDataDestR += 8;
             pDataC = pDataC + pSrc->numCols * 8;
             /*
@@ -96,28 +92,25 @@ arm_status arm_mat_trans_q7(const arm_matrix_instance_q7 *pSrc, arm_matrix_insta
          * (will be merged thru tail predication)
          */
         blkCnt = pSrc->numRows & 7;
-        if (blkCnt > 0U)
-        {
+        if (blkCnt > 0U) {
             mve_pred16_t p0 = vctp16q(blkCnt);
-            vecIn = vldrbq_gather_offset_u16(pDataC, vecOffs);
+            vecIn           = vldrbq_gather_offset_u16(pDataC, vecOffs);
             vstrbq_p_u16(pDataDestR, vecIn, p0);
         }
         pDataSrc += 1;
         pDataDst += pSrc->numRows;
-    }
-    while (--i);
+    } while (--i);
 
     return (ARM_MATH_SUCCESS);
 }
 #else
-arm_status arm_mat_trans_q7(const arm_matrix_instance_q7 *pSrc, arm_matrix_instance_q7 *pDst)
-{
-    q7_t *pSrcA = pSrc->pData;         /* input data matrix pointer */
-    q7_t *pOut = pDst->pData;          /* output data matrix pointer */
-    uint16_t nRows = pSrc->numRows;    /* number of nRows */
-    uint16_t nColumns = pSrc->numCols; /* number of nColumns */
-    uint16_t col, row = nRows, i = 0U; /* row and column loop counters */
-    arm_status status;                 /* status of matrix transpose */
+arm_status arm_mat_trans_q7(const arm_matrix_instance_q7* pSrc, arm_matrix_instance_q7* pDst) {
+    q7_t*      pSrcA    = pSrc->pData;   /* input data matrix pointer */
+    q7_t*      pOut     = pDst->pData;   /* output data matrix pointer */
+    uint16_t   nRows    = pSrc->numRows; /* number of nRows */
+    uint16_t   nColumns = pSrc->numCols; /* number of nColumns */
+    uint16_t   col, row = nRows, i = 0U; /* row and column loop counters */
+    arm_status status;                   /* status of matrix transpose */
 
 
 #ifdef ARM_MATH_MATRIX_CHECK

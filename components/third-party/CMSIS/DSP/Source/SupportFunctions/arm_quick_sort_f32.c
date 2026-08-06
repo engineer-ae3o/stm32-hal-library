@@ -28,23 +28,21 @@
 
 #include "arm_sorting.h"
 
-static uint32_t arm_quick_sort_partition_f32(float32_t *pSrc, int32_t first, int32_t last, uint8_t dir)
-{
+static uint32_t arm_quick_sort_partition_f32(float32_t* pSrc, int32_t first, int32_t last, uint8_t dir) {
     /* This function will be called */
-    int32_t i, j, pivot_index;
+    int32_t   i, j, pivot_index;
     float32_t pivot;
     float32_t temp;
 
     /* The first element is the pivot */
-    pivot_index = first; 
-    pivot = pSrc[pivot_index];
+    pivot_index = first;
+    pivot       = pSrc[pivot_index];
 
     /* Initialize indices for do-while loops */
     i = first - 1;
-    j = last + 1; 
+    j = last + 1;
 
-    while(i < j) 
-    {
+    while (i < j) {
         /* The loop will stop as soon as the indices i and j cross each other.
          *
          * This event will happen surely since the values of the indices are incremented and 
@@ -55,64 +53,54 @@ static uint32_t arm_quick_sort_partition_f32(float32_t *pSrc, int32_t first, int
          * For example, in the extreme case of an ordered array the do-while loop related to i will stop
          * at the first iteration (because pSrc[i]=pSrc[pivot] already), and the loop related to j
          * will stop after (last-first) iterations (when j=pivot=i=first). j is returned and
-         * j+1 is going to be used as pivot by other calls of the function, until j=pivot=last. */ 
+         * j+1 is going to be used as pivot by other calls of the function, until j=pivot=last. */
 
         /* Move indices to the right and to the left */
-        if(dir)
-        {    
+        if (dir) {
             /* Compare left elements with pivot */
-            do
-            {
-                i++; 
-            } while (pSrc[i] < pivot && i<last);
-       
+            do {
+                i++;
+            } while (pSrc[i] < pivot && i < last);
+
             /* Compare right elements with pivot */
-            do
-            {
-                j--; 
+            do {
+                j--;
             } while (pSrc[j] > pivot);
-        }
-        else
-        {
+        } else {
             /* Compare left elements with pivot */
-            do
-            {
-                i++; 
-            } while (pSrc[i] > pivot && i<last);
-        
+            do {
+                i++;
+            } while (pSrc[i] > pivot && i < last);
+
             /* Compare right elements with pivot */
-            do
-            {
-                j--; 
+            do {
+                j--;
             } while (pSrc[j] < pivot);
         }
 
         /* If the indices didn't cross each other */
-        if (i < j) 
-        { 
+        if (i < j) {
             /* i and j are in the wrong position -> Swap */
-            temp=pSrc[i];
-            pSrc[i]=pSrc[j];
-            pSrc[j]=temp;
+            temp    = pSrc[i];
+            pSrc[i] = pSrc[j];
+            pSrc[j] = temp;
         }
     }
 
-    return j; 
+    return j;
 }
 
-static void arm_quick_sort_core_f32(float32_t *pSrc, int32_t first, int32_t last, uint8_t dir)
-{
+static void arm_quick_sort_core_f32(float32_t* pSrc, int32_t first, int32_t last, uint8_t dir) {
     /* If the array [first ... last] has more than one element */
-    if(first<last)
-    {
+    if (first < last) {
         int32_t pivot;
 
         /* Compute pivot */
         pivot = arm_quick_sort_partition_f32(pSrc, first, last, dir);
 
         /* Iterate algorithm with two sub-arrays [first ... pivot] and [pivot+1 ... last] */
-        arm_quick_sort_core_f32(pSrc, first,   pivot, dir);
-        arm_quick_sort_core_f32(pSrc, pivot+1, last,  dir);
+        arm_quick_sort_core_f32(pSrc, first, pivot, dir);
+        arm_quick_sort_core_f32(pSrc, pivot + 1, last, dir);
     }
 }
 
@@ -154,24 +142,18 @@ static void arm_quick_sort_core_f32(float32_t *pSrc, int32_t first, int32_t last
    *                function, a memcpy of the source vector is performed.
    */
 
-void arm_quick_sort_f32(
-  const arm_sort_instance_f32 * S, 
-        float32_t * pSrc, 
-        float32_t * pDst, 
-        uint32_t blockSize)
-{
-    float32_t * pA;
+void arm_quick_sort_f32(const arm_sort_instance_f32* S, float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+    float32_t* pA;
 
     /* Out-of-place */
-    if(pSrc != pDst) 
-    {   
-        memcpy(pDst, pSrc, blockSize*sizeof(float32_t) );
+    if (pSrc != pDst) {
+        memcpy(pDst, pSrc, blockSize * sizeof(float32_t));
         pA = pDst;
-    }
-    else
+    } else {
         pA = pSrc;
+    }
 
-    arm_quick_sort_core_f32(pA, 0, blockSize-1, S->dir);
+    arm_quick_sort_core_f32(pA, 0, blockSize - 1, S->dir);
     /* The previous function could be called recursively a maximum 
      * of (blockSize-1) times, generating a stack consumption of 4*(blockSize-1) bytes. */
 }

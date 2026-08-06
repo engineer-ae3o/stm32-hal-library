@@ -38,8 +38,7 @@
  */
 
 
-
-#if defined(ARM_MATH_NEON) 
+#if defined(ARM_MATH_NEON)
 /**
   @brief         Compute new coefficient arrays for use in vectorized filter (Neon only).
   @param[in]     numStages         number of 2nd order stages in the filter.
@@ -55,91 +54,83 @@
             pComputedCoeffs is the array to be used in arm_biquad_cascade_df2T_init_f32.
 
 */
-void arm_biquad_cascade_df2T_compute_coefs_f32(
-  uint8_t numStages,
-  const float32_t * pCoeffs,
-  float32_t * pComputedCoeffs)
-{
-   uint8_t cnt;
-   float32_t b0[4],b1[4],b2[4],a1[4],a2[4];
+void arm_biquad_cascade_df2T_compute_coefs_f32(uint8_t numStages, const float32_t* pCoeffs, float32_t* pComputedCoeffs) {
+    uint8_t   cnt;
+    float32_t b0[4], b1[4], b2[4], a1[4], a2[4];
 
-   cnt = numStages >> 2; 
-   while(cnt > 0)
-   {
-      for(int i=0;i<4;i++)
-      {
-        b0[i] = pCoeffs[0];
-        b1[i] = pCoeffs[1];
-        b2[i] = pCoeffs[2];
-        a1[i] = pCoeffs[3];
-        a2[i] = pCoeffs[4];
-        pCoeffs += 5;
-      }
+    cnt = numStages >> 2;
+    while (cnt > 0) {
+        for (int i = 0; i < 4; i++) {
+            b0[i] = pCoeffs[0];
+            b1[i] = pCoeffs[1];
+            b2[i] = pCoeffs[2];
+            a1[i] = pCoeffs[3];
+            a2[i] = pCoeffs[4];
+            pCoeffs += 5;
+        }
 
-      /* Vec 1 */
-      *pComputedCoeffs++ = 0;
-      *pComputedCoeffs++ = b0[1];
-      *pComputedCoeffs++ = b0[2];
-      *pComputedCoeffs++ = b0[3];
+        /* Vec 1 */
+        *pComputedCoeffs++ = 0;
+        *pComputedCoeffs++ = b0[1];
+        *pComputedCoeffs++ = b0[2];
+        *pComputedCoeffs++ = b0[3];
 
-      /* Vec 2 */
-      *pComputedCoeffs++ = 0;
-      *pComputedCoeffs++ = 0;
-      *pComputedCoeffs++ = b0[1] * b0[2];
-      *pComputedCoeffs++ = b0[2] * b0[3];
+        /* Vec 2 */
+        *pComputedCoeffs++ = 0;
+        *pComputedCoeffs++ = 0;
+        *pComputedCoeffs++ = b0[1] * b0[2];
+        *pComputedCoeffs++ = b0[2] * b0[3];
 
-      /* Vec 3 */
-      *pComputedCoeffs++ = 0;
-      *pComputedCoeffs++ = 0;
-      *pComputedCoeffs++ = 0;
-      *pComputedCoeffs++ = b0[1] * b0[2] * b0[3];
-      
-      /* Vec 4 */
-      *pComputedCoeffs++ = b0[0];
-      *pComputedCoeffs++ = b0[0] * b0[1];
-      *pComputedCoeffs++ = b0[0] * b0[1] * b0[2];
-      *pComputedCoeffs++ = b0[0] * b0[1] * b0[2] * b0[3];
+        /* Vec 3 */
+        *pComputedCoeffs++ = 0;
+        *pComputedCoeffs++ = 0;
+        *pComputedCoeffs++ = 0;
+        *pComputedCoeffs++ = b0[1] * b0[2] * b0[3];
 
-      /* Vec 5 */
-      *pComputedCoeffs++ = b1[0];
-      *pComputedCoeffs++ = b1[1];
-      *pComputedCoeffs++ = b1[2];
-      *pComputedCoeffs++ = b1[3];
+        /* Vec 4 */
+        *pComputedCoeffs++ = b0[0];
+        *pComputedCoeffs++ = b0[0] * b0[1];
+        *pComputedCoeffs++ = b0[0] * b0[1] * b0[2];
+        *pComputedCoeffs++ = b0[0] * b0[1] * b0[2] * b0[3];
 
-      /* Vec 6 */
-      *pComputedCoeffs++ = b2[0];
-      *pComputedCoeffs++ = b2[1];
-      *pComputedCoeffs++ = b2[2];
-      *pComputedCoeffs++ = b2[3];
+        /* Vec 5 */
+        *pComputedCoeffs++ = b1[0];
+        *pComputedCoeffs++ = b1[1];
+        *pComputedCoeffs++ = b1[2];
+        *pComputedCoeffs++ = b1[3];
 
-      /* Vec 7 */
-      *pComputedCoeffs++ = a1[0];
-      *pComputedCoeffs++ = a1[1];
-      *pComputedCoeffs++ = a1[2];
-      *pComputedCoeffs++ = a1[3];
+        /* Vec 6 */
+        *pComputedCoeffs++ = b2[0];
+        *pComputedCoeffs++ = b2[1];
+        *pComputedCoeffs++ = b2[2];
+        *pComputedCoeffs++ = b2[3];
 
-      /* Vec 8 */
-      *pComputedCoeffs++ = a2[0];
-      *pComputedCoeffs++ = a2[1];
-      *pComputedCoeffs++ = a2[2];
-      *pComputedCoeffs++ = a2[3];
+        /* Vec 7 */
+        *pComputedCoeffs++ = a1[0];
+        *pComputedCoeffs++ = a1[1];
+        *pComputedCoeffs++ = a1[2];
+        *pComputedCoeffs++ = a1[3];
 
-      cnt--;
-   }
+        /* Vec 8 */
+        *pComputedCoeffs++ = a2[0];
+        *pComputedCoeffs++ = a2[1];
+        *pComputedCoeffs++ = a2[2];
+        *pComputedCoeffs++ = a2[3];
 
-   cnt = numStages & 0x3;
-   while(cnt > 0)
-   {
-      *pComputedCoeffs++ = *pCoeffs++;
-      *pComputedCoeffs++ = *pCoeffs++;
-      *pComputedCoeffs++ = *pCoeffs++;
-      *pComputedCoeffs++ = *pCoeffs++;
-      *pComputedCoeffs++ = *pCoeffs++;
-      cnt--;
-   }
+        cnt--;
+    }
 
+    cnt = numStages & 0x3;
+    while (cnt > 0) {
+        *pComputedCoeffs++ = *pCoeffs++;
+        *pComputedCoeffs++ = *pCoeffs++;
+        *pComputedCoeffs++ = *pCoeffs++;
+        *pComputedCoeffs++ = *pCoeffs++;
+        *pComputedCoeffs++ = *pCoeffs++;
+        cnt--;
+    }
 }
-#endif 
+#endif
 
 /**
   @brief         Initialization function for the floating-point transposed direct form II Biquad cascade filter.
@@ -190,23 +181,18 @@ void arm_biquad_cascade_df2T_compute_coefs_f32(
                    The state array has a total length of <code>2*numStages</code> values.
                    The state variables are updated after each block of data is processed; the coefficients are untouched.
  */
-void arm_biquad_cascade_df2T_init_f32(
-        arm_biquad_cascade_df2T_instance_f32 * S,
-        uint8_t numStages,
-  const float32_t * pCoeffs,
-        float32_t * pState)
-{
-  /* Assign filter stages */
-  S->numStages = numStages;
+void arm_biquad_cascade_df2T_init_f32(arm_biquad_cascade_df2T_instance_f32* S, uint8_t numStages, const float32_t* pCoeffs, float32_t* pState) {
+    /* Assign filter stages */
+    S->numStages = numStages;
 
-  /* Assign coefficient pointer */
-  S->pCoeffs = pCoeffs;
+    /* Assign coefficient pointer */
+    S->pCoeffs = pCoeffs;
 
-  /* Clear state buffer and size is always 2 * numStages */
-  memset(pState, 0, (2U * (uint32_t) numStages) * sizeof(float32_t));
+    /* Clear state buffer and size is always 2 * numStages */
+    memset(pState, 0, (2U * (uint32_t)numStages) * sizeof(float32_t));
 
-  /* Assign state pointer */
-  S->pState = pState;
+    /* Assign state pointer */
+    S->pState = pState;
 }
 
 /**

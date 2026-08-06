@@ -56,20 +56,14 @@
 
 #include "arm_helium_utils.h"
 
-void arm_shift_q7(
-    const q7_t * pSrc,
-    int8_t shiftBits,
-    q7_t * pDst,
-    uint32_t blockSize)
-{
-    uint32_t  blkCnt;           /* loop counters */
-    q7x16_t vecSrc;
-    q7x16_t vecDst;
+void arm_shift_q7(const q7_t* pSrc, int8_t shiftBits, q7_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* loop counters */
+    q7x16_t  vecSrc;
+    q7x16_t  vecDst;
 
     /* Compute 16 outputs at a time */
     blkCnt = blockSize >> 4;
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /*
          * C = A (>> or <<) shiftBits
          * Shift the input and then store the result in the destination buffer.
@@ -91,132 +85,113 @@ void arm_shift_q7(
      * tail
      */
     blkCnt = blockSize & 0xF;
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         mve_pred16_t p0 = vctp8q(blkCnt);
-        vecSrc = vld1q(pSrc);
-        vecDst = vqshlq_r(vecSrc, shiftBits);
+        vecSrc          = vld1q(pSrc);
+        vecDst          = vqshlq_r(vecSrc, shiftBits);
         vstrbq_p(pDst, vecDst, p0);
     }
 }
 
 #else
-void arm_shift_q7(
-  const q7_t * pSrc,
-        int8_t shiftBits,
-        q7_t * pDst,
-        uint32_t blockSize)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-        uint8_t sign = (shiftBits & 0x80);             /* Sign of shiftBits */
+void arm_shift_q7(const q7_t* pSrc, int8_t shiftBits, q7_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt;                    /* Loop counter */
+    uint8_t  sign = (shiftBits & 0x80); /* Sign of shiftBits */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-#if defined (ARM_MATH_DSP)
-  q7_t in1,  in2,  in3,  in4;                    /* Temporary input variables */
+#if defined(ARM_MATH_DSP)
+    q7_t in1, in2, in3, in4; /* Temporary input variables */
 #endif
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  /* If the shift value is positive then do right shift else left shift */
-  if (sign == 0U)
-  {
-    while (blkCnt > 0U)
-    {
-      /* C = A << shiftBits */
+    /* If the shift value is positive then do right shift else left shift */
+    if (sign == 0U) {
+        while (blkCnt > 0U) {
+            /* C = A << shiftBits */
 
-#if defined (ARM_MATH_DSP)
-      /* Read 4 inputs */
-      in1 = *pSrc++;
-      in2 = *pSrc++;
-      in3 = *pSrc++;
-      in4 = *pSrc++;
+#if defined(ARM_MATH_DSP)
+            /* Read 4 inputs */
+            in1 = *pSrc++;
+            in2 = *pSrc++;
+            in3 = *pSrc++;
+            in4 = *pSrc++;
 
-    /* Pack and store result in destination buffer (in single write) */
-      write_q7x4_ia (&pDst, __PACKq7(__SSAT(((q15_t) in1 << shiftBits), 8),
-                                     __SSAT(((q15_t) in2 << shiftBits), 8),
-                                     __SSAT(((q15_t) in3 << shiftBits), 8),
-                                     __SSAT(((q15_t) in4 << shiftBits), 8) ));
+            /* Pack and store result in destination buffer (in single write) */
+            write_q7x4_ia(&pDst,
+                          __PACKq7(__SSAT(((q15_t)in1 << shiftBits), 8),
+                                   __SSAT(((q15_t)in2 << shiftBits), 8),
+                                   __SSAT(((q15_t)in3 << shiftBits), 8),
+                                   __SSAT(((q15_t)in4 << shiftBits), 8)));
 #else
-      *pDst++ = (q7_t) __SSAT(((q15_t) *pSrc++ << shiftBits), 8);
-      *pDst++ = (q7_t) __SSAT(((q15_t) *pSrc++ << shiftBits), 8);
-      *pDst++ = (q7_t) __SSAT(((q15_t) *pSrc++ << shiftBits), 8);
-      *pDst++ = (q7_t) __SSAT(((q15_t) *pSrc++ << shiftBits), 8);
+            *pDst++ = (q7_t)__SSAT(((q15_t)*pSrc++ << shiftBits), 8);
+            *pDst++ = (q7_t)__SSAT(((q15_t)*pSrc++ << shiftBits), 8);
+            *pDst++ = (q7_t)__SSAT(((q15_t)*pSrc++ << shiftBits), 8);
+            *pDst++ = (q7_t)__SSAT(((q15_t)*pSrc++ << shiftBits), 8);
 #endif
 
-      /* Decrement loop counter */
-      blkCnt--;
+            /* Decrement loop counter */
+            blkCnt--;
+        }
+    } else {
+        while (blkCnt > 0U) {
+            /* C = A >> shiftBits */
+
+#if defined(ARM_MATH_DSP)
+            /* Read 4 inputs */
+            in1 = *pSrc++;
+            in2 = *pSrc++;
+            in3 = *pSrc++;
+            in4 = *pSrc++;
+
+            /* Pack and store result in destination buffer (in single write) */
+            write_q7x4_ia(&pDst, __PACKq7((in1 >> -shiftBits), (in2 >> -shiftBits), (in3 >> -shiftBits), (in4 >> -shiftBits)));
+#else
+            *pDst++ = (*pSrc++ >> -shiftBits);
+            *pDst++ = (*pSrc++ >> -shiftBits);
+            *pDst++ = (*pSrc++ >> -shiftBits);
+            *pDst++ = (*pSrc++ >> -shiftBits);
+#endif
+
+            /* Decrement loop counter */
+            blkCnt--;
+        }
     }
-  }
-  else
-  {
-    while (blkCnt > 0U)
-    {
-      /* C = A >> shiftBits */
 
-#if defined (ARM_MATH_DSP)
-      /* Read 4 inputs */
-      in1 = *pSrc++;
-      in2 = *pSrc++;
-      in3 = *pSrc++;
-      in4 = *pSrc++;
-
-    /* Pack and store result in destination buffer (in single write) */
-      write_q7x4_ia (&pDst, __PACKq7((in1 >> -shiftBits),
-                                     (in2 >> -shiftBits),
-                                     (in3 >> -shiftBits),
-                                     (in4 >> -shiftBits) ));
-#else
-      *pDst++ = (*pSrc++ >> -shiftBits);
-      *pDst++ = (*pSrc++ >> -shiftBits);
-      *pDst++ = (*pSrc++ >> -shiftBits);
-      *pDst++ = (*pSrc++ >> -shiftBits);
-#endif
-
-      /* Decrement loop counter */
-      blkCnt--;
-    }
-  }
-
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  /* If the shift value is positive then do right shift else left shift */
-  if (sign == 0U)
-  {
-    while (blkCnt > 0U)
-    {
-      /* C = A << shiftBits */
+    /* If the shift value is positive then do right shift else left shift */
+    if (sign == 0U) {
+        while (blkCnt > 0U) {
+            /* C = A << shiftBits */
 
-      /* Shift input and store result in destination buffer. */
-      *pDst++ = (q7_t) __SSAT(((q15_t) *pSrc++ << shiftBits), 8);
+            /* Shift input and store result in destination buffer. */
+            *pDst++ = (q7_t)__SSAT(((q15_t)*pSrc++ << shiftBits), 8);
 
-      /* Decrement loop counter */
-      blkCnt--;
+            /* Decrement loop counter */
+            blkCnt--;
+        }
+    } else {
+        while (blkCnt > 0U) {
+            /* C = A >> shiftBits */
+
+            /* Shift input and store result in destination buffer. */
+            *pDst++ = (*pSrc++ >> -shiftBits);
+
+            /* Decrement loop counter */
+            blkCnt--;
+        }
     }
-  }
-  else
-  {
-    while (blkCnt > 0U)
-    {
-      /* C = A >> shiftBits */
-
-      /* Shift input and store result in destination buffer. */
-      *pDst++ = (*pSrc++ >> -shiftBits);
-
-      /* Decrement loop counter */
-      blkCnt--;
-    }
-  }
-
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

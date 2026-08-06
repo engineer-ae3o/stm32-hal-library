@@ -60,23 +60,18 @@
 
 #include "arm_helium_utils.h"
 
-void arm_fir_decimate_q31(
-  const arm_fir_decimate_instance_q31 * S,
-  const q31_t * pSrc,
-        q31_t * pDst,
-        uint32_t blockSize)
-{
-    q31_t    *pState = S->pState;   /* State pointer */
-    const q31_t    *pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q31_t    *pStateCurnt;      /* Points to the current sample of the state */
-    const q31_t    *px, *pb;          /* Temporary pointers for state and coefficient buffers */
-    uint32_t  numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t  i, tapCnt, blkCnt, outBlockSize = blockSize / S->M;   /* Loop counters */
-    uint32_t  blkCntN4;
-    const q31_t    *px0, *px1, *px2, *px3;
-    q63_t     acc0v, acc1v, acc2v, acc3v;
-    q31x4_t x0v, x1v, x2v, x3v;
-    q31x4_t c0v;
+void arm_fir_decimate_q31(const arm_fir_decimate_instance_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+    q31_t*       pState  = S->pState;                                /* State pointer */
+    const q31_t* pCoeffs = S->pCoeffs;                               /* Coefficient pointer */
+    q31_t*       pStateCurnt;                                        /* Points to the current sample of the state */
+    const q31_t *px, *pb;                                            /* Temporary pointers for state and coefficient buffers */
+    uint32_t     numTaps = S->numTaps;                               /* Number of filter coefficients in the filter */
+    uint32_t     i, tapCnt, blkCnt, outBlockSize = blockSize / S->M; /* Loop counters */
+    uint32_t     blkCntN4;
+    const q31_t *px0, *px1, *px2, *px3;
+    q63_t        acc0v, acc1v, acc2v, acc3v;
+    q31x4_t      x0v, x1v, x2v, x3v;
+    q31x4_t      c0v;
 
     /*
      * S->pState buffer contains previous frame (numTaps - 1) samples
@@ -86,23 +81,20 @@ void arm_fir_decimate_q31(
     /*
      * Total number of output samples to be computed
      */
-    blkCnt = outBlockSize / 4;
+    blkCnt   = outBlockSize / 4;
     blkCntN4 = outBlockSize - (4 * blkCnt);
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /*
          * Copy 4 * decimation factor number of new input samples into the state buffer
          */
         i = (4 * S->M) >> 2;
-        do
-        {
+        do {
             vst1q(pStateCurnt, vldrwq_s32(pSrc));
             pSrc += 4;
             pStateCurnt += 4;
             i--;
-        }
-        while (i > 0U);
+        } while (i > 0U);
 
         /*
          * Clear all accumulators
@@ -130,8 +122,7 @@ void arm_fir_decimate_q31(
          * Loop over the number of taps.  Unroll by a factor of 4.
          * Repeat until we've computed numTaps-4 coefficients.
          */
-        while (tapCnt > 0U)
-        {
+        while (tapCnt > 0U) {
             /*
              * Read the b[numTaps-1] coefficient
              */
@@ -164,8 +155,7 @@ void arm_fir_decimate_q31(
          * should be tail predicated
          */
         tapCnt = numTaps % 0x4U;
-        if (tapCnt > 0U)
-        {
+        if (tapCnt > 0U) {
             mve_pred16_t p0 = vctp32q(tapCnt);
             /*
              * Read the b[numTaps-1] coefficient
@@ -197,10 +187,10 @@ void arm_fir_decimate_q31(
         /*
          * store in the destination buffer.
          */
-        *pDst++ = (q31_t) acc0v;
-        *pDst++ = (q31_t) acc1v;
-        *pDst++ = (q31_t) acc2v;
-        *pDst++ = (q31_t) acc3v;
+        *pDst++ = (q31_t)acc0v;
+        *pDst++ = (q31_t)acc1v;
+        *pDst++ = (q31_t)acc2v;
+        *pDst++ = (q31_t)acc3v;
 
         /*
          * Advance the state pointer by the decimation factor
@@ -213,17 +203,14 @@ void arm_fir_decimate_q31(
         blkCnt--;
     }
 
-    while (blkCntN4 > 0U)
-    {
+    while (blkCntN4 > 0U) {
         /*
          * Copy decimation factor number of new input samples into the state buffer
          */
         i = S->M;
-        do
-        {
+        do {
             *pStateCurnt++ = *pSrc++;
-        }
-        while (--i);
+        } while (--i);
         /*
          * Set accumulator to zero
          */
@@ -244,8 +231,7 @@ void arm_fir_decimate_q31(
          * Loop over the number of taps.  Unroll by a factor of 4.
          * Repeat until we've computed numTaps-4 coefficients.
          */
-        while (tapCnt > 0U)
-        {
+        while (tapCnt > 0U) {
             c0v = vldrwq_s32(pb);
             x0v = vldrwq_s32(px);
             pb += 4;
@@ -257,12 +243,11 @@ void arm_fir_decimate_q31(
             tapCnt--;
         }
         tapCnt = numTaps % 0x4U;
-        if (tapCnt > 0U)
-        {
+        if (tapCnt > 0U) {
             mve_pred16_t p0 = vctp32q(tapCnt);
-            c0v = vldrwq_z_s32(pb, p0);
-            x0v = vldrwq_z_s32(px, p0);
-            acc0v = vrmlaldavhaq_p(acc0v, x0v, c0v, p0);
+            c0v             = vldrwq_z_s32(pb, p0);
+            x0v             = vldrwq_z_s32(px, p0);
+            acc0v           = vrmlaldavhaq_p(acc0v, x0v, c0v, p0);
         }
         acc0v = asrl(acc0v, 31 - 8);
 
@@ -274,7 +259,7 @@ void arm_fir_decimate_q31(
         /*
          * The result is in the accumulator, store in the destination buffer.
          */
-        *pDst++ = (q31_t) acc0v;
+        *pDst++ = (q31_t)acc0v;
         /*
          * Decrement the loop counter
          */
@@ -287,346 +272,328 @@ void arm_fir_decimate_q31(
      * This prepares the state buffer for the next function call.
      */
     pStateCurnt = S->pState;
-    blkCnt = (numTaps - 1) >> 2;
-    while (blkCnt > 0U)
-    {
+    blkCnt      = (numTaps - 1) >> 2;
+    while (blkCnt > 0U) {
         vst1q(pStateCurnt, vldrwq_s32(pState));
         pState += 4;
         pStateCurnt += 4;
         blkCnt--;
     }
     blkCnt = (numTaps - 1) & 3;
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         mve_pred16_t p0 = vctp32q(blkCnt);
         vstrwq_p_s32(pStateCurnt, vldrwq_s32(pState), p0);
     }
 }
 #else
-void arm_fir_decimate_q31(
-  const arm_fir_decimate_instance_q31 * S,
-  const q31_t * pSrc,
-        q31_t * pDst,
-        uint32_t blockSize)
-{
-        q31_t *pState = S->pState;                     /* State pointer */
-  const q31_t *pCoeffs = S->pCoeffs;                   /* Coefficient pointer */
-        q31_t *pStateCur;                              /* Points to the current sample of the state */
-        q31_t *px0;                                    /* Temporary pointer for state buffer */
-  const q31_t *pb;                                     /* Temporary pointer for coefficient buffer */
-        q31_t x0, c0;                                  /* Temporary variables to hold state and coefficient values */
-        q63_t acc0;                                    /* Accumulator */
-        uint32_t numTaps = S->numTaps;                 /* Number of filter coefficients in the filter */
-        uint32_t i, tapCnt, blkCnt, outBlockSize = blockSize / S->M;  /* Loop counters */
+void arm_fir_decimate_q31(const arm_fir_decimate_instance_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+    q31_t*       pState  = S->pState;                                /* State pointer */
+    const q31_t* pCoeffs = S->pCoeffs;                               /* Coefficient pointer */
+    q31_t*       pStateCur;                                          /* Points to the current sample of the state */
+    q31_t*       px0;                                                /* Temporary pointer for state buffer */
+    const q31_t* pb;                                                 /* Temporary pointer for coefficient buffer */
+    q31_t        x0, c0;                                             /* Temporary variables to hold state and coefficient values */
+    q63_t        acc0;                                               /* Accumulator */
+    uint32_t     numTaps = S->numTaps;                               /* Number of filter coefficients in the filter */
+    uint32_t     i, tapCnt, blkCnt, outBlockSize = blockSize / S->M; /* Loop counters */
 
-#if defined (ARM_MATH_LOOPUNROLL)
-        q31_t *px1, *px2, *px3;
-        q31_t x1, x2, x3;
-        q63_t acc1, acc2, acc3;
+#if defined(ARM_MATH_LOOPUNROLL)
+    q31_t *px1, *px2, *px3;
+    q31_t  x1, x2, x3;
+    q63_t  acc1, acc2, acc3;
 #endif
 
-  /* S->pState buffer contains previous frame (numTaps - 1) samples */
-  /* pStateCur points to the location where the new input data should be written */
-  pStateCur = S->pState + (numTaps - 1U);
+    /* S->pState buffer contains previous frame (numTaps - 1) samples */
+    /* pStateCur points to the location where the new input data should be written */
+    pStateCur = S->pState + (numTaps - 1U);
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
     /* Loop unrolling: Compute 4 samples at a time */
-  blkCnt = outBlockSize >> 2U;
+    blkCnt = outBlockSize >> 2U;
 
-  /* Samples loop unrolled by 4 */
-  while (blkCnt > 0U)
-  {
-    /* Copy 4 * decimation factor number of new input samples into the state buffer */
-    i = S->M * 4;
+    /* Samples loop unrolled by 4 */
+    while (blkCnt > 0U) {
+        /* Copy 4 * decimation factor number of new input samples into the state buffer */
+        i = S->M * 4;
 
-    do
-    {
-      *pStateCur++ = *pSrc++;
+        do {
+            *pStateCur++ = *pSrc++;
 
-    } while (--i);
+        } while (--i);
 
-    /* Set accumulators to zero */
-    acc0 = 0;
-    acc1 = 0;
-    acc2 = 0;
-    acc3 = 0;
+        /* Set accumulators to zero */
+        acc0 = 0;
+        acc1 = 0;
+        acc2 = 0;
+        acc3 = 0;
 
-    /* Initialize state pointer for all the samples */
-    px0 = pState;
-    px1 = pState + S->M;
-    px2 = pState + 2 * S->M;
-    px3 = pState + 3 * S->M;
+        /* Initialize state pointer for all the samples */
+        px0 = pState;
+        px1 = pState + S->M;
+        px2 = pState + 2 * S->M;
+        px3 = pState + 3 * S->M;
 
-    /* Initialize coeff pointer */
-    pb = pCoeffs;
+        /* Initialize coeff pointer */
+        pb = pCoeffs;
 
-    /* Loop unrolling: Compute 4 taps at a time */
-    tapCnt = numTaps >> 2U;
+        /* Loop unrolling: Compute 4 taps at a time */
+        tapCnt = numTaps >> 2U;
 
-    while (tapCnt > 0U)
-    {
-      /* Read the b[numTaps-1] coefficient */
-      c0 = *(pb++);
+        while (tapCnt > 0U) {
+            /* Read the b[numTaps-1] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-1] sample for acc0 */
-      x0 = *(px0++);
-      /* Read x[n-numTaps-1] sample for acc1 */
-      x1 = *(px1++);
-      /* Read x[n-numTaps-1] sample for acc2 */
-      x2 = *(px2++);
-      /* Read x[n-numTaps-1] sample for acc3 */
-      x3 = *(px3++);
+            /* Read x[n-numTaps-1] sample for acc0 */
+            x0 = *(px0++);
+            /* Read x[n-numTaps-1] sample for acc1 */
+            x1 = *(px1++);
+            /* Read x[n-numTaps-1] sample for acc2 */
+            x2 = *(px2++);
+            /* Read x[n-numTaps-1] sample for acc3 */
+            x3 = *(px3++);
 
-      /* Perform the multiply-accumulate */
-      acc0 += (q63_t) x0 * c0;
-      acc1 += (q63_t) x1 * c0;
-      acc2 += (q63_t) x2 * c0;
-      acc3 += (q63_t) x3 * c0;
+            /* Perform the multiply-accumulate */
+            acc0 += (q63_t)x0 * c0;
+            acc1 += (q63_t)x1 * c0;
+            acc2 += (q63_t)x2 * c0;
+            acc3 += (q63_t)x3 * c0;
 
-      /* Read the b[numTaps-2] coefficient */
-      c0 = *(pb++);
+            /* Read the b[numTaps-2] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-2] sample for acc0, acc1, acc2, acc3 */
-      x0 = *(px0++);
-      x1 = *(px1++);
-      x2 = *(px2++);
-      x3 = *(px3++);
+            /* Read x[n-numTaps-2] sample for acc0, acc1, acc2, acc3 */
+            x0 = *(px0++);
+            x1 = *(px1++);
+            x2 = *(px2++);
+            x3 = *(px3++);
 
-      /* Perform the multiply-accumulate */
-      acc0 += (q63_t) x0 * c0;
-      acc1 += (q63_t) x1 * c0;
-      acc2 += (q63_t) x2 * c0;
-      acc3 += (q63_t) x3 * c0;
+            /* Perform the multiply-accumulate */
+            acc0 += (q63_t)x0 * c0;
+            acc1 += (q63_t)x1 * c0;
+            acc2 += (q63_t)x2 * c0;
+            acc3 += (q63_t)x3 * c0;
 
-      /* Read the b[numTaps-3] coefficient */
-      c0 = *(pb++);
+            /* Read the b[numTaps-3] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-3] sample acc0, acc1, acc2, acc3 */
-      x0 = *(px0++);
-      x1 = *(px1++);
-      x2 = *(px2++);
-      x3 = *(px3++);
+            /* Read x[n-numTaps-3] sample acc0, acc1, acc2, acc3 */
+            x0 = *(px0++);
+            x1 = *(px1++);
+            x2 = *(px2++);
+            x3 = *(px3++);
 
-      /* Perform the multiply-accumulate */
-      acc0 += (q63_t) x0 * c0;
-      acc1 += (q63_t) x1 * c0;
-      acc2 += (q63_t) x2 * c0;
-      acc3 += (q63_t) x3 * c0;
+            /* Perform the multiply-accumulate */
+            acc0 += (q63_t)x0 * c0;
+            acc1 += (q63_t)x1 * c0;
+            acc2 += (q63_t)x2 * c0;
+            acc3 += (q63_t)x3 * c0;
 
-      /* Read the b[numTaps-4] coefficient */
-      c0 = *(pb++);
+            /* Read the b[numTaps-4] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-4] sample acc0, acc1, acc2, acc3 */
-      x0 = *(px0++);
-      x1 = *(px1++);
-      x2 = *(px2++);
-      x3 = *(px3++);
+            /* Read x[n-numTaps-4] sample acc0, acc1, acc2, acc3 */
+            x0 = *(px0++);
+            x1 = *(px1++);
+            x2 = *(px2++);
+            x3 = *(px3++);
 
-      /* Perform the multiply-accumulate */
-      acc0 += (q63_t) x0 * c0;
-      acc1 += (q63_t) x1 * c0;
-      acc2 += (q63_t) x2 * c0;
-      acc3 += (q63_t) x3 * c0;
+            /* Perform the multiply-accumulate */
+            acc0 += (q63_t)x0 * c0;
+            acc1 += (q63_t)x1 * c0;
+            acc2 += (q63_t)x2 * c0;
+            acc3 += (q63_t)x3 * c0;
 
-      /* Decrement loop counter */
-      tapCnt--;
-    }
+            /* Decrement loop counter */
+            tapCnt--;
+        }
 
-    /* Loop unrolling: Compute remaining taps */
-    tapCnt = numTaps % 0x4U;
+        /* Loop unrolling: Compute remaining taps */
+        tapCnt = numTaps % 0x4U;
 
-    while (tapCnt > 0U)
-    {
-      /* Read coefficients */
-      c0 = *(pb++);
+        while (tapCnt > 0U) {
+            /* Read coefficients */
+            c0 = *(pb++);
 
-      /* Fetch state variables for acc0, acc1, acc2, acc3 */
-      x0 = *(px0++);
-      x1 = *(px1++);
-      x2 = *(px2++);
-      x3 = *(px3++);
+            /* Fetch state variables for acc0, acc1, acc2, acc3 */
+            x0 = *(px0++);
+            x1 = *(px1++);
+            x2 = *(px2++);
+            x3 = *(px3++);
 
-      /* Perform the multiply-accumulate */
-      acc0 += (q63_t) x0 * c0;
-      acc1 += (q63_t) x1 * c0;
-      acc2 += (q63_t) x2 * c0;
-      acc3 += (q63_t) x3 * c0;
+            /* Perform the multiply-accumulate */
+            acc0 += (q63_t)x0 * c0;
+            acc1 += (q63_t)x1 * c0;
+            acc2 += (q63_t)x2 * c0;
+            acc3 += (q63_t)x3 * c0;
 
-      /* Decrement loop counter */
-      tapCnt--;
-    }
+            /* Decrement loop counter */
+            tapCnt--;
+        }
 
-    /* Advance the state pointer by the decimation factor
+        /* Advance the state pointer by the decimation factor
      * to process the next group of decimation factor number samples */
-    pState = pState + S->M * 4;
+        pState = pState + S->M * 4;
 
-    /* The result is in the accumulator, store in the destination buffer. */
-    *pDst++ = (q31_t) (acc0 >> 31);
-    *pDst++ = (q31_t) (acc1 >> 31);
-    *pDst++ = (q31_t) (acc2 >> 31);
-    *pDst++ = (q31_t) (acc3 >> 31);
+        /* The result is in the accumulator, store in the destination buffer. */
+        *pDst++ = (q31_t)(acc0 >> 31);
+        *pDst++ = (q31_t)(acc1 >> 31);
+        *pDst++ = (q31_t)(acc2 >> 31);
+        *pDst++ = (q31_t)(acc3 >> 31);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining samples */
-  blkCnt = outBlockSize % 0x4U;
+    /* Loop unrolling: Compute remaining samples */
+    blkCnt = outBlockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = outBlockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = outBlockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* Copy decimation factor number of new input samples into the state buffer */
-    i = S->M;
+    while (blkCnt > 0U) {
+        /* Copy decimation factor number of new input samples into the state buffer */
+        i = S->M;
 
-    do
-    {
-      *pStateCur++ = *pSrc++;
+        do {
+            *pStateCur++ = *pSrc++;
 
-    } while (--i);
+        } while (--i);
 
-    /* Set accumulator to zero */
-    acc0 = 0;
+        /* Set accumulator to zero */
+        acc0 = 0;
 
-    /* Initialize state pointer */
-    px0 = pState;
+        /* Initialize state pointer */
+        px0 = pState;
 
-    /* Initialize coeff pointer */
-    pb = pCoeffs;
+        /* Initialize coeff pointer */
+        pb = pCoeffs;
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
+
+        /* Loop unrolling: Compute 4 taps at a time */
+        tapCnt = numTaps >> 2U;
+
+        while (tapCnt > 0U) {
+            /* Read the b[numTaps-1] coefficient */
+            c0 = *pb++;
+
+            /* Read x[n-numTaps-1] sample */
+            x0 = *px0++;
+
+            /* Perform the multiply-accumulate */
+            acc0 += (q63_t)x0 * c0;
+
+            /* Read the b[numTaps-2] coefficient */
+            c0 = *pb++;
+
+            /* Read x[n-numTaps-2] sample */
+            x0 = *px0++;
+
+            /* Perform the multiply-accumulate */
+            acc0 += (q63_t)x0 * c0;
+
+            /* Read the b[numTaps-3] coefficient */
+            c0 = *pb++;
+
+            /* Read x[n-numTaps-3] sample */
+            x0 = *px0++;
+
+            /* Perform the multiply-accumulate */
+            acc0 += (q63_t)x0 * c0;
+
+            /* Read the b[numTaps-4] coefficient */
+            c0 = *pb++;
+
+            /* Read x[n-numTaps-4] sample */
+            x0 = *px0++;
+
+            /* Perform the multiply-accumulate */
+            acc0 += (q63_t)x0 * c0;
+
+            /* Decrement loop counter */
+            tapCnt--;
+        }
+
+        /* Loop unrolling: Compute remaining taps */
+        tapCnt = numTaps % 0x4U;
+
+#else
+
+        /* Initialize tapCnt with number of taps */
+        tapCnt = numTaps;
+
+#endif /* #if defined (ARM_MATH_LOOPUNROLL) */
+
+        while (tapCnt > 0U) {
+            /* Read coefficients */
+            c0 = *pb++;
+
+            /* Fetch 1 state variable */
+            x0 = *px0++;
+
+            /* Perform the multiply-accumulate */
+            acc0 += (q63_t)x0 * c0;
+
+            /* Decrement loop counter */
+            tapCnt--;
+        }
+
+        /* Advance the state pointer by the decimation factor
+     * to process the next group of decimation factor number samples */
+        pState = pState + S->M;
+
+        /* The result is in the accumulator, store in the destination buffer. */
+        *pDst++ = (q31_t)(acc0 >> 31);
+
+        /* Decrement loop counter */
+        blkCnt--;
+    }
+
+    /* Processing is complete.
+     Now copy the last numTaps - 1 samples to the satrt of the state buffer.
+     This prepares the state buffer for the next function call. */
+
+    /* Points to the start of the state buffer */
+    pStateCur = S->pState;
+
+#if defined(ARM_MATH_LOOPUNROLL)
 
     /* Loop unrolling: Compute 4 taps at a time */
-    tapCnt = numTaps >> 2U;
+    tapCnt = (numTaps - 1U) >> 2U;
 
-    while (tapCnt > 0U)
-    {
-      /* Read the b[numTaps-1] coefficient */
-      c0 = *pb++;
+    /* Copy data */
+    while (tapCnt > 0U) {
+        *pStateCur++ = *pState++;
+        *pStateCur++ = *pState++;
+        *pStateCur++ = *pState++;
+        *pStateCur++ = *pState++;
 
-      /* Read x[n-numTaps-1] sample */
-      x0 = *px0++;
-
-      /* Perform the multiply-accumulate */
-      acc0 += (q63_t) x0 * c0;
-
-      /* Read the b[numTaps-2] coefficient */
-      c0 = *pb++;
-
-      /* Read x[n-numTaps-2] sample */
-      x0 = *px0++;
-
-      /* Perform the multiply-accumulate */
-      acc0 += (q63_t) x0 * c0;
-
-      /* Read the b[numTaps-3] coefficient */
-      c0 = *pb++;
-
-      /* Read x[n-numTaps-3] sample */
-      x0 = *px0++;
-
-      /* Perform the multiply-accumulate */
-      acc0 += (q63_t) x0 * c0;
-
-      /* Read the b[numTaps-4] coefficient */
-      c0 = *pb++;
-
-      /* Read x[n-numTaps-4] sample */
-      x0 = *px0++;
-
-      /* Perform the multiply-accumulate */
-      acc0 += (q63_t) x0 * c0;
-
-      /* Decrement loop counter */
-      tapCnt--;
+        /* Decrement loop counter */
+        tapCnt--;
     }
 
     /* Loop unrolling: Compute remaining taps */
-    tapCnt = numTaps % 0x4U;
+    tapCnt = (numTaps - 1U) % 0x04U;
 
 #else
 
     /* Initialize tapCnt with number of taps */
-    tapCnt = numTaps;
+    tapCnt = (numTaps - 1U);
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-    while (tapCnt > 0U)
-    {
-      /* Read coefficients */
-      c0 = *pb++;
+    /* Copy data */
+    while (tapCnt > 0U) {
+        *pStateCur++ = *pState++;
 
-      /* Fetch 1 state variable */
-      x0 = *px0++;
-
-      /* Perform the multiply-accumulate */
-      acc0 += (q63_t) x0 * c0;
-
-      /* Decrement loop counter */
-      tapCnt--;
+        /* Decrement loop counter */
+        tapCnt--;
     }
-
-    /* Advance the state pointer by the decimation factor
-     * to process the next group of decimation factor number samples */
-    pState = pState + S->M;
-
-    /* The result is in the accumulator, store in the destination buffer. */
-    *pDst++ = (q31_t) (acc0 >> 31);
-
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
-  /* Processing is complete.
-     Now copy the last numTaps - 1 samples to the satrt of the state buffer.
-     This prepares the state buffer for the next function call. */
-
-  /* Points to the start of the state buffer */
-  pStateCur = S->pState;
-
-#if defined (ARM_MATH_LOOPUNROLL)
-
-  /* Loop unrolling: Compute 4 taps at a time */
-  tapCnt = (numTaps - 1U) >> 2U;
-
-  /* Copy data */
-  while (tapCnt > 0U)
-  {
-    *pStateCur++ = *pState++;
-    *pStateCur++ = *pState++;
-    *pStateCur++ = *pState++;
-    *pStateCur++ = *pState++;
-
-    /* Decrement loop counter */
-    tapCnt--;
-  }
-
-  /* Loop unrolling: Compute remaining taps */
-  tapCnt = (numTaps - 1U) % 0x04U;
-
-#else
-
-  /* Initialize tapCnt with number of taps */
-  tapCnt = (numTaps - 1U);
-
-#endif /* #if defined (ARM_MATH_LOOPUNROLL) */
-
-  /* Copy data */
-  while (tapCnt > 0U)
-  {
-    *pStateCur++ = *pState++;
-
-    /* Decrement loop counter */
-    tapCnt--;
-  }
-
 }
 #endif /* defined(ARM_MATH_MVEI) */
 /**

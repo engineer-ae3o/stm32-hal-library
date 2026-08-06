@@ -55,38 +55,31 @@
    *               function, a memcpy of the source vector is performed.
    */
 
-void arm_insertion_sort_f32(
-  const arm_sort_instance_f32 * S, 
-        float32_t *pSrc, 
-        float32_t* pDst, 
-        uint32_t blockSize)
-{
-    float32_t * pA;
-    uint8_t dir = S->dir;
-    uint32_t i, j;
-    float32_t temp;
+void arm_insertion_sort_f32(const arm_sort_instance_f32* S, float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+    float32_t* pA;
+    uint8_t    dir = S->dir;
+    uint32_t   i, j;
+    float32_t  temp;
 
-    if(pSrc != pDst) // out-of-place
-    {   
-        memcpy(pDst, pSrc, blockSize*sizeof(float32_t) );
-        pA = pDst;
-    }
-    else
-        pA = pSrc;
- 
-    // Real all the element of the input array
-    for(i=0; i<blockSize; i++)
+    if (pSrc != pDst) // out-of-place
     {
-	// Move the i-th element to the right position
-        for (j = i; j>0 && dir==(pA[j]<pA[j-1]); j--)
-        {
-	    // Swap
-            temp = pA[j];
-	    pA[j] = pA[j-1];
-	    pA[j-1] = temp;
+        memcpy(pDst, pSrc, blockSize * sizeof(float32_t));
+        pA = pDst;
+    } else {
+        pA = pSrc;
+    }
+
+    // Real all the element of the input array
+    for (i = 0; i < blockSize; i++) {
+        // Move the i-th element to the right position
+        for (j = i; j > 0 && dir == (pA[j] < pA[j - 1]); j--) {
+            // Swap
+            temp      = pA[j];
+            pA[j]     = pA[j - 1];
+            pA[j - 1] = temp;
         }
     }
-} 
+}
 
 /**
   @} end of Sorting group

@@ -71,11 +71,11 @@
  *   ch_im_out is multiple of 2
  */
 
-arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
+arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                                               const uint16_t dim_im_in_x,
                                               const uint16_t dim_im_in_y,
                                               const uint16_t ch_im_in,
-                                              const q7_t *wt,
+                                              const q7_t*    wt,
                                               const uint16_t ch_im_out,
                                               const uint16_t dim_kernel_x,
                                               const uint16_t dim_kernel_y,
@@ -83,15 +83,14 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
                                               const uint16_t padding_y,
                                               const uint16_t stride_x,
                                               const uint16_t stride_y,
-                                              const q7_t *bias,
+                                              const q7_t*    bias,
                                               const uint16_t bias_shift,
                                               const uint16_t out_shift,
-                                              q7_t *Im_out,
+                                              q7_t*          Im_out,
                                               const uint16_t dim_im_out_x,
                                               const uint16_t dim_im_out_y,
-                                              q15_t *bufferA,
-                                              q7_t *bufferB)
-{
+                                              q15_t*         bufferA,
+                                              q7_t*          bufferB) {
     (void)bufferB;
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
     /* Run the following code for Cortex-M4 and Cortex-M7 */
@@ -103,11 +102,10 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
      *  im2col are done to output in q15_t format from q7_t input
      */
 
-    q15_t *pBuffer = bufferA;
-    q7_t *pOut = Im_out;
+    q15_t* pBuffer = bufferA;
+    q7_t*  pOut    = Im_out;
 
-    if (ch_im_in % 4 != 0 || ch_im_out % 2 != 0)
-    {
+    if (ch_im_in % 4 != 0 || ch_im_out % 2 != 0) {
         /* check if the input dimension meets the constraints */
         return ARM_MATH_SIZE_MISMATCH;
     }
@@ -120,33 +118,22 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
      */
 
     /* top part */
-    for (i_out_y = 0; i_out_y < padding_y; i_out_y++)
-    {
-        for (i_out_x = 0; i_out_x < dim_im_out_x; i_out_x++)
-        {
+    for (i_out_y = 0; i_out_y < padding_y; i_out_y++) {
+        for (i_out_x = 0; i_out_x < dim_im_out_x; i_out_x++) {
             /* This part implements the im2col function */
-            for (i_ker_y = i_out_y * stride_y - padding_y; i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y;
-                 i_ker_y++)
-            {
-                for (i_ker_x = i_out_x * stride_x - padding_x; i_ker_x < i_out_x * stride_x - padding_x + dim_kernel_x;
-                     i_ker_x++)
-                {
-                    if (i_ker_y < 0 || i_ker_y >= dim_im_in_y || i_ker_x < 0 || i_ker_x >= dim_im_in_x)
-                    {
+            for (i_ker_y = i_out_y * stride_y - padding_y; i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y; i_ker_y++) {
+                for (i_ker_x = i_out_x * stride_x - padding_x; i_ker_x < i_out_x * stride_x - padding_x + dim_kernel_x; i_ker_x++) {
+                    if (i_ker_y < 0 || i_ker_y >= dim_im_in_y || i_ker_x < 0 || i_ker_x >= dim_im_in_x) {
                         /* arm_fill_q15(0, pBuffer, ch_im_in); */
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
-                    }
-                    else
-                    {
-                        arm_q7_to_q15_reordered_no_shift(
-                            (q7_t *)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in, pBuffer, ch_im_in);
+                    } else {
+                        arm_q7_to_q15_reordered_no_shift((q7_t*)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in, pBuffer, ch_im_in);
                     }
                     pBuffer += ch_im_in;
                 }
             }
 
-            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y)
-            {
+            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
                 pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
                     wt, bufferA, ch_im_out, ch_im_in * dim_kernel_x * dim_kernel_y, bias_shift, out_shift, bias, pOut);
                 /* counter reset */
@@ -156,35 +143,24 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
     }
 
     /* middle part, here we also divide the x into left, mid and right */
-    for (; i_out_y < dim_im_out_y - padding_y; i_out_y++)
-    {
+    for (; i_out_y < dim_im_out_y - padding_y; i_out_y++) {
 
         /* left part */
-        for (i_out_x = 0; i_out_x < padding_x; i_out_x++)
-        {
+        for (i_out_x = 0; i_out_x < padding_x; i_out_x++) {
             /* This part implements the im2col function */
-            for (i_ker_y = i_out_y * stride_y - padding_y; i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y;
-                 i_ker_y++)
-            {
-                for (i_ker_x = i_out_x * stride_x - padding_x; i_ker_x < i_out_x * stride_x - padding_x + dim_kernel_x;
-                     i_ker_x++)
-                {
-                    if (i_ker_x < 0 || i_ker_x >= dim_im_in_x)
-                    {
+            for (i_ker_y = i_out_y * stride_y - padding_y; i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y; i_ker_y++) {
+                for (i_ker_x = i_out_x * stride_x - padding_x; i_ker_x < i_out_x * stride_x - padding_x + dim_kernel_x; i_ker_x++) {
+                    if (i_ker_x < 0 || i_ker_x >= dim_im_in_x) {
                         /* arm_fill_q15(0, pBuffer, ch_im_in); */
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
-                    }
-                    else
-                    {
-                        arm_q7_to_q15_reordered_no_shift(
-                            (q7_t *)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in, pBuffer, ch_im_in);
+                    } else {
+                        arm_q7_to_q15_reordered_no_shift((q7_t*)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in, pBuffer, ch_im_in);
                     }
                     pBuffer += ch_im_in;
                 }
             }
 
-            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y)
-            {
+            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
                 pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
                     wt, bufferA, ch_im_out, ch_im_in * dim_kernel_x * dim_kernel_y, bias_shift, out_shift, bias, pOut);
                 /* counter reset */
@@ -193,21 +169,15 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
         }
 
         /* mid part */
-        for (; i_out_x < dim_im_out_x - padding_x; i_out_x++)
-        {
+        for (; i_out_x < dim_im_out_x - padding_x; i_out_x++) {
             /* This part implements the im2col function */
-            for (i_ker_y = i_out_y * stride_y - padding_y; i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y;
-                 i_ker_y++)
-            {
+            for (i_ker_y = i_out_y * stride_y - padding_y; i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y; i_ker_y++) {
                 arm_q7_to_q15_reordered_no_shift(
-                    (q7_t *)Im_in + (i_ker_y * dim_im_in_x + i_out_x * stride_x - padding_x) * ch_im_in,
-                    pBuffer,
-                    ch_im_in * dim_kernel_x);
+                    (q7_t*)Im_in + (i_ker_y * dim_im_in_x + i_out_x * stride_x - padding_x) * ch_im_in, pBuffer, ch_im_in * dim_kernel_x);
                 pBuffer += ch_im_in * dim_kernel_x;
             }
 
-            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y)
-            {
+            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
                 pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
                     wt, bufferA, ch_im_out, ch_im_in * dim_kernel_x * dim_kernel_y, bias_shift, out_shift, bias, pOut);
                 /* counter reset */
@@ -216,31 +186,21 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
         }
 
         /* right part */
-        for (; i_out_x < dim_im_out_x; i_out_x++)
-        {
+        for (; i_out_x < dim_im_out_x; i_out_x++) {
             /* This part implements the im2col function */
-            for (i_ker_y = i_out_y * stride_y - padding_y; i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y;
-                 i_ker_y++)
-            {
-                for (i_ker_x = i_out_x * stride_x - padding_x; i_ker_x < i_out_x * stride_x - padding_x + dim_kernel_x;
-                     i_ker_x++)
-                {
-                    if (i_ker_x < 0 || i_ker_x >= dim_im_in_x)
-                    {
+            for (i_ker_y = i_out_y * stride_y - padding_y; i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y; i_ker_y++) {
+                for (i_ker_x = i_out_x * stride_x - padding_x; i_ker_x < i_out_x * stride_x - padding_x + dim_kernel_x; i_ker_x++) {
+                    if (i_ker_x < 0 || i_ker_x >= dim_im_in_x) {
                         /* arm_fill_q15(0, pBuffer, ch_im_in); */
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
-                    }
-                    else
-                    {
-                        arm_q7_to_q15_reordered_no_shift(
-                            (q7_t *)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in, pBuffer, ch_im_in);
+                    } else {
+                        arm_q7_to_q15_reordered_no_shift((q7_t*)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in, pBuffer, ch_im_in);
                     }
                     pBuffer += ch_im_in;
                 }
             }
 
-            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y)
-            {
+            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
                 pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
                     wt, bufferA, ch_im_out, ch_im_in * dim_kernel_x * dim_kernel_y, bias_shift, out_shift, bias, pOut);
                 /* counter reset */
@@ -249,33 +209,22 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
         }
     }
 
-    for (; i_out_y < dim_im_out_y; i_out_y++)
-    {
-        for (i_out_x = 0; i_out_x < dim_im_out_x; i_out_x++)
-        {
+    for (; i_out_y < dim_im_out_y; i_out_y++) {
+        for (i_out_x = 0; i_out_x < dim_im_out_x; i_out_x++) {
             /* This part implements the im2col function */
-            for (i_ker_y = i_out_y * stride_y - padding_y; i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y;
-                 i_ker_y++)
-            {
-                for (i_ker_x = i_out_x * stride_x - padding_x; i_ker_x < i_out_x * stride_x - padding_x + dim_kernel_x;
-                     i_ker_x++)
-                {
-                    if (i_ker_y < 0 || i_ker_y >= dim_im_in_y || i_ker_x < 0 || i_ker_x >= dim_im_in_x)
-                    {
+            for (i_ker_y = i_out_y * stride_y - padding_y; i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y; i_ker_y++) {
+                for (i_ker_x = i_out_x * stride_x - padding_x; i_ker_x < i_out_x * stride_x - padding_x + dim_kernel_x; i_ker_x++) {
+                    if (i_ker_y < 0 || i_ker_y >= dim_im_in_y || i_ker_x < 0 || i_ker_x >= dim_im_in_x) {
                         /* arm_fill_q15(0, pBuffer, ch_im_in); */
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
-                    }
-                    else
-                    {
-                        arm_q7_to_q15_reordered_no_shift(
-                            (q7_t *)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in, pBuffer, ch_im_in);
+                    } else {
+                        arm_q7_to_q15_reordered_no_shift((q7_t*)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in, pBuffer, ch_im_in);
                     }
                     pBuffer += ch_im_in;
                 }
             }
 
-            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y)
-            {
+            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
                 pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
                     wt, bufferA, ch_im_out, ch_im_in * dim_kernel_x * dim_kernel_y, bias_shift, out_shift, bias, pOut);
                 /* counter reset */
@@ -285,19 +234,16 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
     }
 
     /* check if there is left-over for compute */
-    if (pBuffer != bufferA)
-    {
-        const q7_t *pA = wt;
-        int i;
-        for (i = 0; i < ch_im_out; i++)
-        {
-            q31_t sum = ((q31_t)(bias[i]) << bias_shift) + NN_ROUND(out_shift);
-            const q15_t *pB = bufferA;
+    if (pBuffer != bufferA) {
+        const q7_t* pA = wt;
+        int         i;
+        for (i = 0; i < ch_im_out; i++) {
+            q31_t        sum = ((q31_t)(bias[i]) << bias_shift) + NN_ROUND(out_shift);
+            const q15_t* pB  = bufferA;
             /* basically each time it process 4 entries */
             uint16_t colCnt = ch_im_in * dim_kernel_x * dim_kernel_y >> 2;
 
-            while (colCnt)
-            {
+            while (colCnt) {
 
                 q31_t inA1, inA2;
                 q31_t inB1, inB2;
@@ -305,16 +251,15 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
                 pA = read_and_pad_reordered(pA, &inA1, &inA2);
 
                 inB1 = arm_nn_read_q15x2_ia(&pB);
-                sum = __SMLAD(inA1, inB1, sum);
+                sum  = __SMLAD(inA1, inB1, sum);
                 inB2 = arm_nn_read_q15x2_ia(&pB);
-                sum = __SMLAD(inA2, inB2, sum);
+                sum  = __SMLAD(inA2, inB2, sum);
 
                 colCnt--;
             }
             colCnt = (ch_im_in * dim_kernel_y * dim_kernel_x) & 0x3;
-            while (colCnt)
-            {
-                q7_t inA1 = *pA++;
+            while (colCnt) {
+                q7_t  inA1 = *pA++;
                 q15_t inB1 = *pB++;
                 sum += inA1 * inB1;
                 colCnt--;
@@ -331,33 +276,24 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t *Im_in,
     int conv_out;
     int in_row, in_col;
 
-    if (ch_im_in % 4 != 0 || ch_im_out % 2 != 0)
-    {
+    if (ch_im_in % 4 != 0 || ch_im_out % 2 != 0) {
         /* check if the input dimension meets the constraints */
         return ARM_MATH_SIZE_MISMATCH;
     }
 
-    for (i = 0; i < ch_im_out; i++)
-    {
-        for (j = 0; j < dim_im_out_y; j++)
-        {
-            for (k = 0; k < dim_im_out_x; k++)
-            {
+    for (i = 0; i < ch_im_out; i++) {
+        for (j = 0; j < dim_im_out_y; j++) {
+            for (k = 0; k < dim_im_out_x; k++) {
                 conv_out = ((q31_t)(bias[i]) << bias_shift) + NN_ROUND(out_shift);
-                for (m = 0; m < dim_kernel_y; m++)
-                {
-                    for (n = 0; n < dim_kernel_x; n++)
-                    {
+                for (m = 0; m < dim_kernel_y; m++) {
+                    for (n = 0; n < dim_kernel_x; n++) {
                         /* if-for implementation */
                         in_row = stride_y * j + m - padding_y;
                         in_col = stride_x * k + n - padding_x;
-                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in_y && in_col < dim_im_in_x)
-                        {
-                            for (l = 0; l < ch_im_in; l++)
-                            {
+                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in_y && in_col < dim_im_in_x) {
+                            for (l = 0; l < ch_im_in; l++) {
                                 conv_out += Im_in[(in_row * dim_im_in_x + in_col) * ch_im_in + l] *
-                                    wt[i * ch_im_in * dim_kernel_y * dim_kernel_x + (m * dim_kernel_x + n) * ch_im_in +
-                                       l];
+                                            wt[i * ch_im_in * dim_kernel_y * dim_kernel_x + (m * dim_kernel_x + n) * ch_im_in + l];
                             }
                         }
                     }

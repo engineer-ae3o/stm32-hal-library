@@ -46,18 +46,17 @@
  * Refer header file for details.
  *
  */
-arm_status arm_fully_connected_s16(const cmsis_nn_context *ctx,
-                                   const cmsis_nn_fc_params *fc_params,
-                                   const cmsis_nn_per_tensor_quant_params *quant_params,
-                                   const cmsis_nn_dims *input_dims,
-                                   const q15_t *input,
-                                   const cmsis_nn_dims *filter_dims,
-                                   const q7_t *kernel,
-                                   const cmsis_nn_dims *bias_dims,
-                                   const int64_t *bias,
-                                   const cmsis_nn_dims *output_dims,
-                                   q15_t *output)
-{
+arm_status arm_fully_connected_s16(const cmsis_nn_context*                 ctx,
+                                   const cmsis_nn_fc_params*               fc_params,
+                                   const cmsis_nn_per_tensor_quant_params* quant_params,
+                                   const cmsis_nn_dims*                    input_dims,
+                                   const q15_t*                            input,
+                                   const cmsis_nn_dims*                    filter_dims,
+                                   const q7_t*                             kernel,
+                                   const cmsis_nn_dims*                    bias_dims,
+                                   const int64_t*                          bias,
+                                   const cmsis_nn_dims*                    output_dims,
+                                   q15_t*                                  output) {
     (void)bias_dims;
     (void)ctx;
     (void)fc_params->filter_offset;
@@ -66,8 +65,7 @@ arm_status arm_fully_connected_s16(const cmsis_nn_context *ctx,
 
     const q31_t reduced_multiplier = REDUCE_MULTIPLIER(quant_params->multiplier);
 
-    while (batch_cnt)
-    {
+    while (batch_cnt) {
         arm_nn_vec_mat_mult_t_s16(input,
                                   kernel,
                                   bias,
@@ -86,8 +84,7 @@ arm_status arm_fully_connected_s16(const cmsis_nn_context *ctx,
     return (ARM_MATH_SUCCESS);
 }
 
-int32_t arm_fully_connected_s16_get_buffer_size(const cmsis_nn_dims *filter_dims)
-{
+int32_t arm_fully_connected_s16_get_buffer_size(const cmsis_nn_dims* filter_dims) {
     (void)filter_dims;
     return 0;
 }

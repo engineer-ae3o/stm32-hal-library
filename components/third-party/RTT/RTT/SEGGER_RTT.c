@@ -149,8 +149,8 @@ Additional information:
 #define SEGGER_RTT_ALIGN(Var, Alignment) Var __attribute__((aligned(Alignment)))
 #elif (defined __ICCARM__) || (defined __ICCRX__)
 #define PRAGMA(A) _Pragma(#A)
-#define SEGGER_RTT_ALIGN(Var, Alignment)                                                                                                   \
-    RTT_PRAGMA(data_alignment = Alignment)                                                                                                 \
+#define SEGGER_RTT_ALIGN(Var, Alignment)                                                                                                             \
+    RTT_PRAGMA(data_alignment = Alignment)                                                                                                           \
     Var
 #elif (defined __CC_ARM)
 #define SEGGER_RTT_ALIGN(Var, Alignment) Var __attribute__((aligned(Alignment)))
@@ -165,8 +165,8 @@ Additional information:
 #if ((defined __GNUC__) || (defined __clang__))
 #define SEGGER_RTT_PUT_SECTION(Var, Section) __attribute__((section(Section))) Var
 #elif (defined __ICCARM__) || (defined __ICCRX__)
-#define SEGGER_RTT_PUT_SECTION(Var, Section)                                                                                               \
-    RTT_PRAGMA(location = Section)                                                                                                         \
+#define SEGGER_RTT_PUT_SECTION(Var, Section)                                                                                                         \
+    RTT_PRAGMA(location = Section)                                                                                                                   \
     Var
 #elif (defined __CC_ARM)
 #define SEGGER_RTT_PUT_SECTION(Var, Section) __attribute__((section(Section))) Var
@@ -224,8 +224,7 @@ static const unsigned char _aTerminalId[16] = {'0', '1', '2', '3', '4', '5', '6'
 #if ((defined __GNUC__) || (defined __clang__))
 SEGGER_RTT_CB _SEGGER_RTT __attribute__((aligned(SEGGER_RTT_CPU_CACHE_LINE_SIZE)));
 static char   _acUpBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_UP)] __attribute__((aligned(SEGGER_RTT_CPU_CACHE_LINE_SIZE)));
-static char   _acDownBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_DOWN)]
-    __attribute__((aligned(SEGGER_RTT_CPU_CACHE_LINE_SIZE)));
+static char   _acDownBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_DOWN)] __attribute__((aligned(SEGGER_RTT_CPU_CACHE_LINE_SIZE)));
 #elif (defined __ICCARM__)
 #pragma data_alignment = SEGGER_RTT_CPU_CACHE_LINE_SIZE
 SEGGER_RTT_CB _SEGGER_RTT;
@@ -262,13 +261,13 @@ static unsigned char _ActiveTerminal;
 *    (1) May only be called via INIT() to avoid overriding settings.
 *        The only exception is SEGGER_RTT_Init(), to make an intentional override possible.
 */
-#define INIT()                                                                                                                             \
-    do {                                                                                                                                   \
-        volatile SEGGER_RTT_CB* pRTTCBInit;                                                                                                \
-        pRTTCBInit = (volatile SEGGER_RTT_CB*)((uintptr_t)&_SEGGER_RTT + SEGGER_RTT_UNCACHED_OFF);                                         \
-        if (pRTTCBInit->acID[0] != 'S') {                                                                                                  \
-            _DoInit();                                                                                                                     \
-        }                                                                                                                                  \
+#define INIT()                                                                                                                                       \
+    do {                                                                                                                                             \
+        volatile SEGGER_RTT_CB* pRTTCBInit;                                                                                                          \
+        pRTTCBInit = (volatile SEGGER_RTT_CB*)((uintptr_t)&_SEGGER_RTT + SEGGER_RTT_UNCACHED_OFF);                                                   \
+        if (pRTTCBInit->acID[0] != 'S') {                                                                                                            \
+            _DoInit();                                                                                                                               \
+        }                                                                                                                                            \
     } while (0)
 
 static void _DoInit(void) {
@@ -351,8 +350,7 @@ static unsigned _WriteBlocking(SEGGER_RTT_BUFFER_UP* pRing, const char* pBuffer,
         } else {
             NumBytesToWrite = pRing->SizeOfBuffer - (WrOff - RdOff + 1u);
         }
-        NumBytesToWrite =
-            MIN(NumBytesToWrite, (pRing->SizeOfBuffer - WrOff)); // Number of bytes that can be written until buffer wrap-around
+        NumBytesToWrite = MIN(NumBytesToWrite, (pRing->SizeOfBuffer - WrOff)); // Number of bytes that can be written until buffer wrap-around
         NumBytesToWrite = MIN(NumBytesToWrite, NumBytes);
         pDst            = (pRing->pBuffer + WrOff) + SEGGER_RTT_UNCACHED_OFF;
 #if SEGGER_RTT_MEMCPY_USE_BYTELOOP

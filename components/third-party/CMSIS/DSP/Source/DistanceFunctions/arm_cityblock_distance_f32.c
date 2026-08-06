@@ -50,10 +50,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-float32_t arm_cityblock_distance_f32(const float32_t *pA,const float32_t *pB, uint32_t blockSize)
-{
-    uint32_t        blkCnt;
-    f32x4_t         a, b, accumV, tempV;
+float32_t arm_cityblock_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+    uint32_t blkCnt;
+    f32x4_t  a, b, accumV, tempV;
 
     accumV = vdupq_n_f32(0.0f);
 
@@ -62,7 +61,7 @@ float32_t arm_cityblock_distance_f32(const float32_t *pA,const float32_t *pB, ui
         a = vld1q(pA);
         b = vld1q(pB);
 
-        tempV = vabdq(a, b);
+        tempV  = vabdq(a, b);
         accumV = vaddq(accumV, tempV);
 
         pA += 4;
@@ -76,12 +75,12 @@ float32_t arm_cityblock_distance_f32(const float32_t *pA,const float32_t *pB, ui
      */
     blkCnt = blockSize & 3;
     if (blkCnt > 0U) {
-        mve_pred16_t    p0 = vctp32q(blkCnt);
+        mve_pred16_t p0 = vctp32q(blkCnt);
 
         a = vldrwq_z_f32(pA, p0);
         b = vldrwq_z_f32(pB, p0);
 
-        tempV = vabdq(a, b);
+        tempV  = vabdq(a, b);
         accumV = vaddq_m(accumV, accumV, tempV, p0);
     }
 
@@ -93,61 +92,56 @@ float32_t arm_cityblock_distance_f32(const float32_t *pA,const float32_t *pB, ui
 
 #include "NEMath.h"
 
-float32_t arm_cityblock_distance_f32(const float32_t *pA,const float32_t *pB, uint32_t blockSize)
-{
-   float32_t accum=0.0f, tmpA, tmpB;
-   uint32_t blkCnt;
-   float32x4_t a,b,accumV, tempV;
-   float32x2_t accumV2;
+float32_t arm_cityblock_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+    float32_t   accum = 0.0f, tmpA, tmpB;
+    uint32_t    blkCnt;
+    float32x4_t a, b, accumV, tempV;
+    float32x2_t accumV2;
 
-   accumV = vdupq_n_f32(0.0f);
+    accumV = vdupq_n_f32(0.0f);
 
-   blkCnt = blockSize >> 2;
-   while(blkCnt > 0)
-   {
+    blkCnt = blockSize >> 2;
+    while (blkCnt > 0) {
         a = vld1q_f32(pA);
         b = vld1q_f32(pB);
- 
-        tempV = vabdq_f32(a,b);
+
+        tempV  = vabdq_f32(a, b);
         accumV = vaddq_f32(accumV, tempV);
- 
+
         pA += 4;
         pB += 4;
-        blkCnt --;
-   }
-   accumV2 = vpadd_f32(vget_low_f32(accumV),vget_high_f32(accumV));
-   accumV2 = vpadd_f32(accumV2,accumV2);
-   accum = vget_lane_f32(accumV2,0);
-   
+        blkCnt--;
+    }
+    accumV2 = vpadd_f32(vget_low_f32(accumV), vget_high_f32(accumV));
+    accumV2 = vpadd_f32(accumV2, accumV2);
+    accum   = vget_lane_f32(accumV2, 0);
 
-   blkCnt = blockSize & 3;
-   while(blkCnt > 0)
-   {
-      tmpA = *pA++;
-      tmpB = *pB++;
-      accum += fabsf(tmpA - tmpB);
-      
-      blkCnt --;
-   }
-   return(accum);
+
+    blkCnt = blockSize & 3;
+    while (blkCnt > 0) {
+        tmpA = *pA++;
+        tmpB = *pB++;
+        accum += fabsf(tmpA - tmpB);
+
+        blkCnt--;
+    }
+    return (accum);
 }
 
 #else
-float32_t arm_cityblock_distance_f32(const float32_t *pA,const float32_t *pB, uint32_t blockSize)
-{
-   float32_t accum,tmpA, tmpB;
+float32_t arm_cityblock_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+    float32_t accum, tmpA, tmpB;
 
-   accum = 0.0f;
-   while(blockSize > 0)
-   {
-      tmpA = *pA++;
-      tmpB = *pB++;
-      accum  += fabsf(tmpA - tmpB);
-      
-      blockSize --;
-   }
-  
-   return(accum);
+    accum = 0.0f;
+    while (blockSize > 0) {
+        tmpA = *pA++;
+        tmpB = *pB++;
+        accum += fabsf(tmpA - tmpB);
+
+        blockSize--;
+    }
+
+    return (accum);
 }
 #endif
 #endif

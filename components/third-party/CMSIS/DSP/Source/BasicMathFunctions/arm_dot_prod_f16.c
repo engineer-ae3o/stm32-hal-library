@@ -64,22 +64,16 @@
 #include "arm_helium_utils.h"
 
 
-void arm_dot_prod_f16(
-    const float16_t * pSrcA,
-    const float16_t * pSrcB,
-    uint32_t    blockSize,
-    float16_t * result)
-{
-    f16x8_t vecA, vecB;
-    f16x8_t vecSum;
-    uint32_t blkCnt; 
-    float16_t sum = 0.0f;  
-    vecSum = vdupq_n_f16(0.0f);
+void arm_dot_prod_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize, float16_t* result) {
+    f16x8_t   vecA, vecB;
+    f16x8_t   vecSum;
+    uint32_t  blkCnt;
+    float16_t sum = 0.0f;
+    vecSum        = vdupq_n_f16(0.0f);
 
     /* Compute 4 outputs at a time */
     blkCnt = blockSize >> 3U;
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /*
          * C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1]
          * Calculate dot product and then store the result in a temporary buffer.
@@ -87,7 +81,7 @@ void arm_dot_prod_f16(
          */
         vecA = vld1q(pSrcA);
         pSrcA += 8;
-        
+
         vecB = vld1q(pSrcB);
         pSrcB += 8;
 
@@ -95,87 +89,78 @@ void arm_dot_prod_f16(
         /*
          * Decrement the blockSize loop counter
          */
-        blkCnt --;
+        blkCnt--;
     }
 
 
     blkCnt = blockSize & 7;
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
 
         mve_pred16_t p0 = vctp16q(blkCnt);
-        vecA = vld1q(pSrcA);
-        vecB = vld1q(pSrcB);
-        vecSum = vfmaq_m(vecSum, vecA, vecB, p0);
+        vecA            = vld1q(pSrcA);
+        vecB            = vld1q(pSrcB);
+        vecSum          = vfmaq_m(vecSum, vecA, vecB, p0);
     }
 
     sum = vecAddAcrossF16Mve(vecSum);
 
     /* Store result in destination buffer */
     *result = sum;
-
 }
 
 #else
 #if defined(ARM_FLOAT16_SUPPORTED)
-void arm_dot_prod_f16(
-  const float16_t * pSrcA,
-  const float16_t * pSrcB,
-        uint32_t blockSize,
-        float16_t * result)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-        _Float16 sum = 0.0f;                          /* Temporary return variable */
+void arm_dot_prod_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize, float16_t* result) {
+    uint32_t blkCnt;     /* Loop counter */
+    _Float16 sum = 0.0f; /* Temporary return variable */
 
 
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  /* First part of the processing with loop unrolling. Compute 4 outputs at a time.
+    /* First part of the processing with loop unrolling. Compute 4 outputs at a time.
    ** a second loop below computes the remaining 1 to 3 samples. */
-  while (blkCnt > 0U)
-  {
-    /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
+    while (blkCnt > 0U) {
+        /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
 
-    /* Calculate dot product and store result in a temporary buffer. */
-    sum += (_Float16)(*pSrcA++) * (_Float16)(*pSrcB++);
+        /* Calculate dot product and store result in a temporary buffer. */
+        sum += (_Float16)(*pSrcA++) * (_Float16)(*pSrcB++);
 
-    sum += (_Float16)(*pSrcA++) * (_Float16)(*pSrcB++);
+        sum += (_Float16)(*pSrcA++) * (_Float16)(*pSrcB++);
 
-    sum += (_Float16)(*pSrcA++) * (_Float16)(*pSrcB++);
+        sum += (_Float16)(*pSrcA++) * (_Float16)(*pSrcB++);
 
-    sum += (_Float16)(*pSrcA++) * (_Float16)(*pSrcB++);
+        sum += (_Float16)(*pSrcA++) * (_Float16)(*pSrcB++);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
+    while (blkCnt > 0U) {
+        /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
 
-    /* Calculate dot product and store result in a temporary buffer. */
-    sum += (_Float16)(*pSrcA++) * (_Float16)(*pSrcB++);
+        /* Calculate dot product and store result in a temporary buffer. */
+        sum += (_Float16)(*pSrcA++) * (_Float16)(*pSrcB++);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Store result in destination buffer */
-  *result = sum;
+    /* Store result in destination buffer */
+    *result = sum;
 }
 #endif
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */

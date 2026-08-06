@@ -39,41 +39,41 @@
  *
  */
 
-static void buffer_scale_back_q15_to_q7(q15_t *buffer, q7_t *target, uint16_t length, uint16_t scale)
-{
+static void buffer_scale_back_q15_to_q7(q15_t* buffer, q7_t* target, uint16_t length, uint16_t scale) {
     int i;
 
-    for (i = 0; i < length; i++)
-    {
+    for (i = 0; i < length; i++) {
         target[i] = (q7_t)(buffer[i] / scale);
     }
 }
 
-static void compare_and_replace_if_larger_q7(q7_t *base,           // base data
-                                             const q7_t *target,   // compare target
-                                             const uint16_t length // data length
-)
-{
-    q7_t *pIn = base;
-    const q7_t *pCom = target;
+static void compare_and_replace_if_larger_q7(q7_t*          base,   // base data
+                                             const q7_t*    target, // compare target
+                                             const uint16_t length  // data length
+) {
+    q7_t*            pIn  = base;
+    const q7_t*      pCom = target;
     union arm_nnword in;
     union arm_nnword com;
-    uint16_t cnt = length >> 2;
+    uint16_t         cnt = length >> 2;
 
-    while (cnt > 0u)
-    {
-        in.word = arm_nn_read_q7x4((const q7_t *)pIn);
-        com.word = arm_nn_read_q7x4_ia((const q7_t **)&pCom);
+    while (cnt > 0u) {
+        in.word  = arm_nn_read_q7x4((const q7_t*)pIn);
+        com.word = arm_nn_read_q7x4_ia((const q7_t**)&pCom);
 
         // if version
-        if (com.bytes[0] > in.bytes[0])
+        if (com.bytes[0] > in.bytes[0]) {
             in.bytes[0] = com.bytes[0];
-        if (com.bytes[1] > in.bytes[1])
+        }
+        if (com.bytes[1] > in.bytes[1]) {
             in.bytes[1] = com.bytes[1];
-        if (com.bytes[2] > in.bytes[2])
+        }
+        if (com.bytes[2] > in.bytes[2]) {
             in.bytes[2] = com.bytes[2];
-        if (com.bytes[3] > in.bytes[3])
+        }
+        if (com.bytes[3] > in.bytes[3]) {
             in.bytes[3] = com.bytes[3];
+        }
 
         arm_nn_write_q7x4_ia(&pIn, in.word);
 
@@ -81,10 +81,8 @@ static void compare_and_replace_if_larger_q7(q7_t *base,           // base data
     }
 
     cnt = length & 0x3;
-    while (cnt > 0u)
-    {
-        if (*pCom > *pIn)
-        {
+    while (cnt > 0u) {
+        if (*pCom > *pIn) {
             *pIn = *pCom;
         }
         pIn++;
@@ -93,19 +91,17 @@ static void compare_and_replace_if_larger_q7(q7_t *base,           // base data
     }
 }
 
-static void accumulate_q7_to_q15(q15_t *base, q7_t *target, const uint16_t length)
-{
-    q15_t *pCnt = base;
-    q7_t *pV = target;
-    q31_t v1, v2, vo1, vo2;
+static void accumulate_q7_to_q15(q15_t* base, q7_t* target, const uint16_t length) {
+    q15_t*   pCnt = base;
+    q7_t*    pV   = target;
+    q31_t    v1, v2, vo1, vo2;
     uint16_t cnt = length >> 2;
-    q31_t in;
+    q31_t    in;
 
-    while (cnt > 0u)
-    {
-        q31_t value = arm_nn_read_q7x4_ia((const q7_t **)&pV);
-        v1 = __SXTB16(__ROR(value, 8));
-        v2 = __SXTB16(value);
+    while (cnt > 0u) {
+        q31_t value = arm_nn_read_q7x4_ia((const q7_t**)&pV);
+        v1          = __SXTB16(__ROR(value, 8));
+        v2          = __SXTB16(value);
 #ifndef ARM_MATH_BIG_ENDIAN
 
         vo2 = __PKHTB(v1, v2, 16);
@@ -127,8 +123,7 @@ static void accumulate_q7_to_q15(q15_t *base, q7_t *target, const uint16_t lengt
         cnt--;
     }
     cnt = length & 0x3;
-    while (cnt > 0u)
-    {
+    while (cnt > 0u) {
         *pCnt++ += *pV++;
         cnt--;
     }
@@ -167,16 +162,15 @@ static void accumulate_q7_to_q15(q15_t *base, q7_t *target, const uint16_t lengt
  *
  */
 
-void arm_maxpool_q7_HWC(q7_t *Im_in,
+void arm_maxpool_q7_HWC(q7_t*          Im_in,
                         const uint16_t dim_im_in,
                         const uint16_t ch_im_in,
                         const uint16_t dim_kernel,
                         const uint16_t padding,
                         const uint16_t stride,
                         const uint16_t dim_im_out,
-                        q7_t *bufferA,
-                        q7_t *Im_out)
-{
+                        q7_t*          bufferA,
+                        q7_t*          Im_out) {
     (void)bufferA;
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
     /* Run the following code for Cortex-M4 and Cortex-M7 */
@@ -184,30 +178,22 @@ void arm_maxpool_q7_HWC(q7_t *Im_in,
     int16_t i_x, i_y;
 
     /* first does the pooling along x axis */
-    for (i_y = 0; i_y < dim_im_in; i_y++)
-    {
+    for (i_y = 0; i_y < dim_im_in; i_y++) {
 
-        for (i_x = 0; i_x < dim_im_out; i_x++)
-        {
+        for (i_x = 0; i_x < dim_im_out; i_x++) {
             /* for each output pixel */
-            q7_t *target = Im_in + (i_y * dim_im_in + i_x) * ch_im_in;
-            q7_t *win_start;
-            q7_t *win_stop;
-            if (i_x * stride - padding < 0)
-            {
+            q7_t* target = Im_in + (i_y * dim_im_in + i_x) * ch_im_in;
+            q7_t* win_start;
+            q7_t* win_stop;
+            if (i_x * stride - padding < 0) {
                 win_start = target;
-            }
-            else
-            {
+            } else {
                 win_start = Im_in + (i_y * dim_im_in + i_x * stride - padding) * ch_im_in;
             }
 
-            if (i_x * stride - padding + dim_kernel >= dim_im_in)
-            {
+            if (i_x * stride - padding + dim_kernel >= dim_im_in) {
                 win_stop = Im_in + (i_y * dim_im_in + dim_im_in) * ch_im_in;
-            }
-            else
-            {
+            } else {
                 win_stop = Im_in + (i_y * dim_im_in + i_x * stride - padding + dim_kernel) * ch_im_in;
             }
 
@@ -217,37 +203,29 @@ void arm_maxpool_q7_HWC(q7_t *Im_in,
 
             /* start the max operation from the second part */
             win_start += ch_im_in;
-            for (; win_start < win_stop; win_start += ch_im_in)
-            {
+            for (; win_start < win_stop; win_start += ch_im_in) {
                 compare_and_replace_if_larger_q7(target, win_start, ch_im_in);
             }
         }
     }
 
     /* then does the pooling along y axis */
-    for (i_y = 0; i_y < dim_im_out; i_y++)
-    {
+    for (i_y = 0; i_y < dim_im_out; i_y++) {
 
         /* for each output row */
-        q7_t *target = Im_out + i_y * dim_im_out * ch_im_in;
-        q7_t *row_start;
-        q7_t *row_end;
+        q7_t* target = Im_out + i_y * dim_im_out * ch_im_in;
+        q7_t* row_start;
+        q7_t* row_end;
         /* setting the starting row */
-        if (i_y * stride - padding < 0)
-        {
+        if (i_y * stride - padding < 0) {
             row_start = Im_in;
-        }
-        else
-        {
+        } else {
             row_start = Im_in + (i_y * stride - padding) * dim_im_in * ch_im_in;
         }
         /* setting the stopping row */
-        if (i_y * stride - padding + dim_kernel >= dim_im_in)
-        {
+        if (i_y * stride - padding + dim_kernel >= dim_im_in) {
             row_end = Im_in + dim_im_in * dim_im_in * ch_im_in;
-        }
-        else
-        {
+        } else {
             row_end = Im_in + (i_y * stride - padding + dim_kernel) * dim_im_in * ch_im_in;
         }
 
@@ -258,8 +236,7 @@ void arm_maxpool_q7_HWC(q7_t *Im_in,
         /* move over to next row */
         row_start += ch_im_in * dim_im_in;
 
-        for (; row_start < row_end; row_start += dim_im_in * ch_im_in)
-        {
+        for (; row_start < row_end; row_start += dim_im_in * ch_im_in) {
             compare_and_replace_if_larger_q7(target, row_start, dim_im_out * ch_im_in);
         }
     }
@@ -269,21 +246,14 @@ void arm_maxpool_q7_HWC(q7_t *Im_in,
     int16_t i_ch_in, i_x, i_y;
     int16_t k_x, k_y;
 
-    for (i_ch_in = 0; i_ch_in < ch_im_in; i_ch_in++)
-    {
-        for (i_y = 0; i_y < dim_im_out; i_y++)
-        {
-            for (i_x = 0; i_x < dim_im_out; i_x++)
-            {
+    for (i_ch_in = 0; i_ch_in < ch_im_in; i_ch_in++) {
+        for (i_y = 0; i_y < dim_im_out; i_y++) {
+            for (i_x = 0; i_x < dim_im_out; i_x++) {
                 int max = -129;
-                for (k_y = i_y * stride - padding; k_y < i_y * stride - padding + dim_kernel; k_y++)
-                {
-                    for (k_x = i_x * stride - padding; k_x < i_x * stride - padding + dim_kernel; k_x++)
-                    {
-                        if (k_y >= 0 && k_x >= 0 && k_y < dim_im_in && k_x < dim_im_in)
-                        {
-                            if (Im_in[i_ch_in + ch_im_in * (k_x + k_y * dim_im_in)] > max)
-                            {
+                for (k_y = i_y * stride - padding; k_y < i_y * stride - padding + dim_kernel; k_y++) {
+                    for (k_x = i_x * stride - padding; k_x < i_x * stride - padding + dim_kernel; k_x++) {
+                        if (k_y >= 0 && k_x >= 0 && k_y < dim_im_in && k_x < dim_im_in) {
+                            if (Im_in[i_ch_in + ch_im_in * (k_x + k_y * dim_im_in)] > max) {
                                 max = Im_in[i_ch_in + ch_im_in * (k_x + k_y * dim_im_in)];
                             }
                         }
@@ -323,49 +293,40 @@ void arm_maxpool_q7_HWC(q7_t *Im_in,
  *
  */
 
-void arm_avepool_q7_HWC(q7_t *Im_in,
+void arm_avepool_q7_HWC(q7_t*          Im_in,
                         const uint16_t dim_im_in,
                         const uint16_t ch_im_in,
                         const uint16_t dim_kernel,
                         const uint16_t padding,
                         const uint16_t stride,
                         const uint16_t dim_im_out,
-                        q7_t *bufferA,
-                        q7_t *Im_out)
-{
+                        q7_t*          bufferA,
+                        q7_t*          Im_out) {
 
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
     /* Run the following code for Cortex-M4 and Cortex-M7 */
 
-    q15_t *buffer = (q15_t *)bufferA;
+    q15_t*  buffer = (q15_t*)bufferA;
     int16_t i_x, i_y;
     int16_t count = 0;
 
     /* first does the pooling along x axis */
-    for (i_y = 0; i_y < dim_im_in; i_y++)
-    {
+    for (i_y = 0; i_y < dim_im_in; i_y++) {
 
-        for (i_x = 0; i_x < dim_im_out; i_x++)
-        {
+        for (i_x = 0; i_x < dim_im_out; i_x++) {
             /* for each output pixel */
-            q7_t *target = Im_in + (i_y * dim_im_in + i_x) * ch_im_in;
-            q7_t *win_start;
-            q7_t *win_stop;
-            if (i_x * stride - padding < 0)
-            {
+            q7_t* target = Im_in + (i_y * dim_im_in + i_x) * ch_im_in;
+            q7_t* win_start;
+            q7_t* win_stop;
+            if (i_x * stride - padding < 0) {
                 win_start = target;
-            }
-            else
-            {
+            } else {
                 win_start = Im_in + (i_y * dim_im_in + i_x * stride - padding) * ch_im_in;
             }
 
-            if (i_x * stride - padding + dim_kernel >= dim_im_in)
-            {
+            if (i_x * stride - padding + dim_kernel >= dim_im_in) {
                 win_stop = Im_in + (i_y * dim_im_in + dim_im_in) * ch_im_in;
-            }
-            else
-            {
+            } else {
                 win_stop = Im_in + (i_y * dim_im_in + i_x * stride - padding + dim_kernel) * ch_im_in;
             }
 
@@ -375,8 +336,7 @@ void arm_avepool_q7_HWC(q7_t *Im_in,
 
             /* start the max operation from the second part */
             win_start += ch_im_in;
-            for (; win_start < win_stop; win_start += ch_im_in)
-            {
+            for (; win_start < win_stop; win_start += ch_im_in) {
                 accumulate_q7_to_q15(buffer, win_start, ch_im_in);
                 count++;
             }
@@ -385,28 +345,21 @@ void arm_avepool_q7_HWC(q7_t *Im_in,
     }
 
     /* then does the pooling along y axis */
-    for (i_y = 0; i_y < dim_im_out; i_y++)
-    {
+    for (i_y = 0; i_y < dim_im_out; i_y++) {
         /* for each output row */
-        q7_t *target = Im_out + i_y * dim_im_out * ch_im_in;
-        q7_t *row_start;
-        q7_t *row_end;
+        q7_t* target = Im_out + i_y * dim_im_out * ch_im_in;
+        q7_t* row_start;
+        q7_t* row_end;
         /* setting the starting row */
-        if (i_y * stride - padding < 0)
-        {
+        if (i_y * stride - padding < 0) {
             row_start = Im_in;
-        }
-        else
-        {
+        } else {
             row_start = Im_in + (i_y * stride - padding) * dim_im_in * ch_im_in;
         }
         /* setting the stopping row */
-        if (i_y * stride - padding + dim_kernel >= dim_im_in)
-        {
+        if (i_y * stride - padding + dim_kernel >= dim_im_in) {
             row_end = Im_in + dim_im_in * dim_im_in * ch_im_in;
-        }
-        else
-        {
+        } else {
             row_end = Im_in + (i_y * stride - padding + dim_kernel) * dim_im_in * ch_im_in;
         }
 
@@ -417,8 +370,7 @@ void arm_avepool_q7_HWC(q7_t *Im_in,
         /* move over to next row */
         row_start += ch_im_in * dim_im_in;
 
-        for (; row_start < row_end; row_start += dim_im_in * ch_im_in)
-        {
+        for (; row_start < row_end; row_start += dim_im_in * ch_im_in) {
             accumulate_q7_to_q15(buffer, row_start, dim_im_out * ch_im_in);
             count++;
         }
@@ -432,20 +384,14 @@ void arm_avepool_q7_HWC(q7_t *Im_in,
     int16_t i_ch_in, i_x, i_y;
     int16_t k_x, k_y;
 
-    for (i_ch_in = 0; i_ch_in < ch_im_in; i_ch_in++)
-    {
-        for (i_y = 0; i_y < dim_im_out; i_y++)
-        {
-            for (i_x = 0; i_x < dim_im_out; i_x++)
-            {
-                int sum = 0;
+    for (i_ch_in = 0; i_ch_in < ch_im_in; i_ch_in++) {
+        for (i_y = 0; i_y < dim_im_out; i_y++) {
+            for (i_x = 0; i_x < dim_im_out; i_x++) {
+                int sum   = 0;
                 int count = 0;
-                for (k_y = i_y * stride - padding; k_y < i_y * stride - padding + dim_kernel; k_y++)
-                {
-                    for (k_x = i_x * stride - padding; k_x < i_x * stride - padding + dim_kernel; k_x++)
-                    {
-                        if (k_y >= 0 && k_x >= 0 && k_y < dim_im_in && k_x < dim_im_in)
-                        {
+                for (k_y = i_y * stride - padding; k_y < i_y * stride - padding + dim_kernel; k_y++) {
+                    for (k_x = i_x * stride - padding; k_x < i_x * stride - padding + dim_kernel; k_x++) {
+                        if (k_y >= 0 && k_x >= 0 && k_y < dim_im_in && k_x < dim_im_in) {
                             sum += Im_in[i_ch_in + ch_im_in * (k_x + k_y * dim_im_in)];
                             count++;
                         }

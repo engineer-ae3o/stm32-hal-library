@@ -64,136 +64,124 @@
  */
 
 
-arm_status arm_mat_mult_f64(
-  const arm_matrix_instance_f64 * pSrcA,
-  const arm_matrix_instance_f64 * pSrcB,
-        arm_matrix_instance_f64 * pDst)
-{
-  float64_t *pIn1 = pSrcA->pData;                /* Input data matrix pointer A */
-  float64_t *pIn2 = pSrcB->pData;                /* Input data matrix pointer B */
-  float64_t *pInA = pSrcA->pData;                /* Input data matrix pointer A */
-  float64_t *pInB = pSrcB->pData;                /* Input data matrix pointer B */
-  float64_t *pOut = pDst->pData;                 /* Output data matrix pointer */
-  float64_t *px;                                 /* Temporary output data matrix pointer */
-  float64_t sum;                                 /* Accumulator */
-  uint16_t numRowsA = pSrcA->numRows;            /* Number of rows of input matrix A */
-  uint16_t numColsB = pSrcB->numCols;            /* Number of columns of input matrix B */
-  uint16_t numColsA = pSrcA->numCols;            /* Number of columns of input matrix A */
-  uint64_t col, i = 0U, row = numRowsA, colCnt;  /* Loop counters */
-  arm_status status;                             /* Status of matrix multiplication */
+arm_status arm_mat_mult_f64(const arm_matrix_instance_f64* pSrcA, const arm_matrix_instance_f64* pSrcB, arm_matrix_instance_f64* pDst) {
+    float64_t* pIn1 = pSrcA->pData;                 /* Input data matrix pointer A */
+    float64_t* pIn2 = pSrcB->pData;                 /* Input data matrix pointer B */
+    float64_t* pInA = pSrcA->pData;                 /* Input data matrix pointer A */
+    float64_t* pInB = pSrcB->pData;                 /* Input data matrix pointer B */
+    float64_t* pOut = pDst->pData;                  /* Output data matrix pointer */
+    float64_t* px;                                  /* Temporary output data matrix pointer */
+    float64_t  sum;                                 /* Accumulator */
+    uint16_t   numRowsA = pSrcA->numRows;           /* Number of rows of input matrix A */
+    uint16_t   numColsB = pSrcB->numCols;           /* Number of columns of input matrix B */
+    uint16_t   numColsA = pSrcA->numCols;           /* Number of columns of input matrix A */
+    uint64_t   col, i = 0U, row = numRowsA, colCnt; /* Loop counters */
+    arm_status status;                              /* Status of matrix multiplication */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
-  /* Check for matrix mismatch condition */
-  if ((pSrcA->numCols != pSrcB->numRows) ||
-      (pSrcA->numRows != pDst->numRows)  ||
-      (pSrcB->numCols != pDst->numCols)    )
-  {
-    /* Set status as ARM_MATH_SIZE_MISMATCH */
-    status = ARM_MATH_SIZE_MISMATCH;
-  }
-  else
+    /* Check for matrix mismatch condition */
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+        /* Set status as ARM_MATH_SIZE_MISMATCH */
+        status = ARM_MATH_SIZE_MISMATCH;
+    } else
 
 #endif /* #ifdef ARM_MATH_MATRIX_CHECK */
 
-  {
-    /* The following loop performs the dot-product of each row in pSrcA with each column in pSrcB */
-    /* row loop */
-    do
     {
-      /* Output pointer is set to starting address of row being processed */
-      px = pOut + i;
+        /* The following loop performs the dot-product of each row in pSrcA with each column in pSrcB */
+        /* row loop */
+        do {
+            /* Output pointer is set to starting address of row being processed */
+            px = pOut + i;
 
-      /* For every row wise process, column loop counter is to be initiated */
-      col = numColsB;
+            /* For every row wise process, column loop counter is to be initiated */
+            col = numColsB;
 
-      /* For every row wise process, pIn2 pointer is set to starting address of pSrcB data */
-      pIn2 = pSrcB->pData;
+            /* For every row wise process, pIn2 pointer is set to starting address of pSrcB data */
+            pIn2 = pSrcB->pData;
 
-      /* column loop */
-      do
-      {
-        /* Set the variable sum, that acts as accumulator, to zero */
-        sum = 0.0;
+            /* column loop */
+            do {
+                /* Set the variable sum, that acts as accumulator, to zero */
+                sum = 0.0;
 
-        /* Initialize pointer pIn1 to point to starting address of column being processed */
-        pIn1 = pInA;
+                /* Initialize pointer pIn1 to point to starting address of column being processed */
+                pIn1 = pInA;
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-        /* Loop unrolling: Compute 4 MACs at a time. */
-        colCnt = numColsA >> 2U;
+                /* Loop unrolling: Compute 4 MACs at a time. */
+                colCnt = numColsA >> 2U;
 
-        /* matrix multiplication */
-        while (colCnt > 0U)
-        {
-          /* c(m,n) = a(1,1) * b(1,1) + a(1,2) * b(2,1) + .... + a(m,p) * b(p,n) */
+                /* matrix multiplication */
+                while (colCnt > 0U) {
+                    /* c(m,n) = a(1,1) * b(1,1) + a(1,2) * b(2,1) + .... + a(m,p) * b(p,n) */
 
-          /* Perform the multiply-accumulates */
-          sum += *pIn1++ * *pIn2;
-          pIn2 += numColsB;
+                    /* Perform the multiply-accumulates */
+                    sum += *pIn1++ * *pIn2;
+                    pIn2 += numColsB;
 
-          sum += *pIn1++ * *pIn2;
-          pIn2 += numColsB;
+                    sum += *pIn1++ * *pIn2;
+                    pIn2 += numColsB;
 
-          sum += *pIn1++ * *pIn2;
-          pIn2 += numColsB;
+                    sum += *pIn1++ * *pIn2;
+                    pIn2 += numColsB;
 
-          sum += *pIn1++ * *pIn2;
-          pIn2 += numColsB;
+                    sum += *pIn1++ * *pIn2;
+                    pIn2 += numColsB;
 
-          /* Decrement loop counter */
-          colCnt--;
-        }
+                    /* Decrement loop counter */
+                    colCnt--;
+                }
 
-        /* Loop unrolling: Compute remaining MACs */
-        colCnt = numColsA % 0x4U;
+                /* Loop unrolling: Compute remaining MACs */
+                colCnt = numColsA % 0x4U;
 
 #else
 
-        /* Initialize cntCnt with number of columns */
-        colCnt = numColsA;
+                /* Initialize cntCnt with number of columns */
+                colCnt = numColsA;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-        while (colCnt > 0U)
-        {
-          /* c(m,n) = a(1,1) * b(1,1) + a(1,2) * b(2,1) + .... + a(m,p) * b(p,n) */
+                while (colCnt > 0U) {
+                    /* c(m,n) = a(1,1) * b(1,1) + a(1,2) * b(2,1) + .... + a(m,p) * b(p,n) */
 
-          /* Perform the multiply-accumulates */
-          sum += *pIn1++ * *pIn2;
-          pIn2 += numColsB;
+                    /* Perform the multiply-accumulates */
+                    sum += *pIn1++ * *pIn2;
+                    pIn2 += numColsB;
 
-          /* Decrement loop counter */
-          colCnt--;
-        }
+                    /* Decrement loop counter */
+                    colCnt--;
+                }
 
-        /* Store result in destination buffer */
-        *px++ = sum;
+                /* Store result in destination buffer */
+                *px++ = sum;
 
-        /* Decrement column loop counter */
-        col--;
+                /* Decrement column loop counter */
+                col--;
 
-        /* Update pointer pIn2 to point to starting address of next column */
-        pIn2 = pInB + (numColsB - col);
+                /* Update pointer pIn2 to point to starting address of next column */
+                pIn2 = pInB + (numColsB - col);
 
-      } while (col > 0U);
+            } while (col > 0U);
 
-      /* Update pointer pInA to point to starting address of next row */
-      i = i + numColsB;
-      pInA = pInA + numColsA;
+            /* Update pointer pInA to point to starting address of next row */
+            i    = i + numColsB;
+            pInA = pInA + numColsA;
 
-      /* Decrement row loop counter */
-      row--;
+            /* Decrement row loop counter */
+            row--;
 
-    } while (row > 0U);
+        } while (row > 0U);
 
-    /* Set status as ARM_MATH_SUCCESS */
-    status = ARM_MATH_SUCCESS;
-  }
+        /* Set status as ARM_MATH_SUCCESS */
+        status = ARM_MATH_SUCCESS;
+    }
 
-  /* Return to application */
-  return (status);
+    /* Return to application */
+    return (status);
 }
 
 

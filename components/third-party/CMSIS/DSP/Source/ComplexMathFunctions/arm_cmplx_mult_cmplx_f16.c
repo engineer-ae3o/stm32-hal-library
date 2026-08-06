@@ -72,16 +72,11 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mult_cmplx_f16(
-  const float16_t * pSrcA,
-  const float16_t * pSrcB,
-        float16_t * pDst,
-        uint32_t numSamples)
-{
-     int32_t         blkCnt;
-    f16x8_t         vecSrcA, vecSrcB;
-    f16x8_t         vecSrcC, vecSrcD;
-    f16x8_t         vec_acc;
+void arm_cmplx_mult_cmplx_f16(const float16_t* pSrcA, const float16_t* pSrcB, float16_t* pDst, uint32_t numSamples) {
+    int32_t blkCnt;
+    f16x8_t vecSrcA, vecSrcB;
+    f16x8_t vecSrcC, vecSrcD;
+    f16x8_t vec_acc;
 
     blkCnt = (numSamples >> 3);
     blkCnt -= 1;
@@ -137,13 +132,13 @@ void arm_cmplx_mult_cmplx_f16(
          */
         blkCnt = CMPLX_DIM * (numSamples & 7);
         while (blkCnt > 0) {
-            mve_pred16_t    p = vctp16q(blkCnt);
+            mve_pred16_t p = vctp16q(blkCnt);
             pSrcA += 8;
             pSrcB += 8;
 
             vecSrcA = vldrhq_z_f16(pSrcA, p);
             vecSrcB = vldrhq_z_f16(pSrcB, p);
-            vec_acc = vcmulq_m(vuninitializedq_f16(),vecSrcA, vecSrcB, p);
+            vec_acc = vcmulq_m(vuninitializedq_f16(), vecSrcA, vecSrcB, p);
             vec_acc = vcmlaq_rot90_m(vec_acc, vecSrcA, vecSrcB, p);
 
             vstrhq_p_f16(pDst, vec_acc, p);
@@ -156,12 +151,12 @@ void arm_cmplx_mult_cmplx_f16(
         blkCnt = numSamples * CMPLX_DIM;
 
         do {
-            mve_pred16_t    p = vctp16q(blkCnt);
+            mve_pred16_t p = vctp16q(blkCnt);
 
             vecSrcA = vldrhq_z_f16(pSrcA, p);
             vecSrcB = vldrhq_z_f16(pSrcB, p);
 
-            vec_acc = vcmulq_m(vuninitializedq_f16(),vecSrcA, vecSrcB, p);
+            vec_acc = vcmulq_m(vuninitializedq_f16(), vecSrcA, vecSrcB, p);
             vec_acc = vcmlaq_rot90_m(vec_acc, vecSrcA, vecSrcB, p);
             vstrhq_p_f16(pDst, vec_acc, p);
             pDst += 8;
@@ -173,94 +168,84 @@ void arm_cmplx_mult_cmplx_f16(
             pSrcA += 8;
             pSrcB += 8;
             blkCnt -= 8;
-        }
-        while (blkCnt > 0);
+        } while (blkCnt > 0);
     }
-
 }
 
 
 #else
-void arm_cmplx_mult_cmplx_f16(
-  const float16_t * pSrcA,
-  const float16_t * pSrcB,
-        float16_t * pDst,
-        uint32_t numSamples)
-{
-    uint32_t blkCnt;                               /* Loop counter */
-    _Float16 a, b, c, d;  /* Temporary variables to store real and imaginary values */
+void arm_cmplx_mult_cmplx_f16(const float16_t* pSrcA, const float16_t* pSrcB, float16_t* pDst, uint32_t numSamples) {
+    uint32_t blkCnt;     /* Loop counter */
+    _Float16 a, b, c, d; /* Temporary variables to store real and imaginary values */
 
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = numSamples >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = numSamples >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C[2 * i    ] = A[2 * i] * B[2 * i    ] - A[2 * i + 1] * B[2 * i + 1]. */
-    /* C[2 * i + 1] = A[2 * i] * B[2 * i + 1] + A[2 * i + 1] * B[2 * i    ]. */
+    while (blkCnt > 0U) {
+        /* C[2 * i    ] = A[2 * i] * B[2 * i    ] - A[2 * i + 1] * B[2 * i + 1]. */
+        /* C[2 * i + 1] = A[2 * i] * B[2 * i + 1] + A[2 * i + 1] * B[2 * i    ]. */
 
-    a = *pSrcA++;
-    b = *pSrcA++;
-    c = *pSrcB++;
-    d = *pSrcB++;
-    /* store result in destination buffer. */
-    *pDst++ = (a * c) - (b * d);
-    *pDst++ = (a * d) + (b * c);
+        a = *pSrcA++;
+        b = *pSrcA++;
+        c = *pSrcB++;
+        d = *pSrcB++;
+        /* store result in destination buffer. */
+        *pDst++ = (a * c) - (b * d);
+        *pDst++ = (a * d) + (b * c);
 
-    a = *pSrcA++;
-    b = *pSrcA++;
-    c = *pSrcB++;
-    d = *pSrcB++;
-    *pDst++ = (a * c) - (b * d);
-    *pDst++ = (a * d) + (b * c);
+        a       = *pSrcA++;
+        b       = *pSrcA++;
+        c       = *pSrcB++;
+        d       = *pSrcB++;
+        *pDst++ = (a * c) - (b * d);
+        *pDst++ = (a * d) + (b * c);
 
-    a = *pSrcA++;
-    b = *pSrcA++;
-    c = *pSrcB++;
-    d = *pSrcB++;
-    *pDst++ = (a * c) - (b * d);
-    *pDst++ = (a * d) + (b * c);
+        a       = *pSrcA++;
+        b       = *pSrcA++;
+        c       = *pSrcB++;
+        d       = *pSrcB++;
+        *pDst++ = (a * c) - (b * d);
+        *pDst++ = (a * d) + (b * c);
 
-    a = *pSrcA++;
-    b = *pSrcA++;
-    c = *pSrcB++;
-    d = *pSrcB++;
-    *pDst++ = (a * c) - (b * d);
-    *pDst++ = (a * d) + (b * c);
+        a       = *pSrcA++;
+        b       = *pSrcA++;
+        c       = *pSrcB++;
+        d       = *pSrcB++;
+        *pDst++ = (a * c) - (b * d);
+        *pDst++ = (a * d) + (b * c);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = numSamples % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = numSamples % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = numSamples;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = numSamples;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C[2 * i    ] = A[2 * i] * B[2 * i    ] - A[2 * i + 1] * B[2 * i + 1]. */
-    /* C[2 * i + 1] = A[2 * i] * B[2 * i + 1] + A[2 * i + 1] * B[2 * i    ]. */
+    while (blkCnt > 0U) {
+        /* C[2 * i    ] = A[2 * i] * B[2 * i    ] - A[2 * i + 1] * B[2 * i + 1]. */
+        /* C[2 * i + 1] = A[2 * i] * B[2 * i + 1] + A[2 * i + 1] * B[2 * i    ]. */
 
-    a = *pSrcA++;
-    b = *pSrcA++;
-    c = *pSrcB++;
-    d = *pSrcB++;
+        a = *pSrcA++;
+        b = *pSrcA++;
+        c = *pSrcB++;
+        d = *pSrcB++;
 
-    /* store result in destination buffer. */
-    *pDst++ = (a * c) - (b * d);
-    *pDst++ = (a * d) + (b * c);
+        /* store result in destination buffer. */
+        *pDst++ = (a * c) - (b * d);
+        *pDst++ = (a * d) + (b * c);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 

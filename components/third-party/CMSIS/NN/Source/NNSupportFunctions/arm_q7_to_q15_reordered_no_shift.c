@@ -74,10 +74,9 @@
  *
  */
 
-void arm_q7_to_q15_reordered_no_shift(const q7_t *pSrc, q15_t *pDst, uint32_t blockSize)
-{
-    const q7_t *pIn = pSrc; /* Src pointer */
-    uint32_t blkCnt;        /* loop counter */
+void arm_q7_to_q15_reordered_no_shift(const q7_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+    const q7_t* pIn = pSrc; /* Src pointer */
+    uint32_t    blkCnt;     /* loop counter */
 
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
     q31_t in;
@@ -90,8 +89,7 @@ void arm_q7_to_q15_reordered_no_shift(const q7_t *pSrc, q15_t *pDst, uint32_t bl
 
     /* First part of the processing with loop unrolling.  Compute 4 outputs at a time.
      ** a second loop below computes the remaining 1 to 3 samples. */
-    while (blkCnt > 0u)
-    {
+    while (blkCnt > 0u) {
         /* C = (q15_t) A << 8 */
         /* convert from q7 to q15 and then store the results in the destination buffer */
         in = arm_nn_read_q7x4_ia(&pIn);
@@ -103,11 +101,11 @@ void arm_q7_to_q15_reordered_no_shift(const q7_t *pSrc, q15_t *pDst, uint32_t bl
         in2 = __SXTB16(in);
 
 #ifndef ARM_MATH_BIG_ENDIAN
-        arm_nn_write_q7x4_ia((q7_t **)&pDst, in2);
-        arm_nn_write_q7x4_ia((q7_t **)&pDst, in1);
+        arm_nn_write_q7x4_ia((q7_t**)&pDst, in2);
+        arm_nn_write_q7x4_ia((q7_t**)&pDst, in1);
 #else
-        arm_nn_write_q7x4_ia((q7_t **)&pDst, in1);
-        arm_nn_write_q7x4_ia((q7_t **)&pDst, in2);
+        arm_nn_write_q7x4_ia((q7_t**)&pDst, in1);
+        arm_nn_write_q7x4_ia((q7_t**)&pDst, in2);
 #endif
 
         /* Decrement the loop counter */
@@ -127,8 +125,7 @@ void arm_q7_to_q15_reordered_no_shift(const q7_t *pSrc, q15_t *pDst, uint32_t bl
 
 #endif /* #ifndef ARM_MATH_CM0_FAMILY */
 
-    while (blkCnt > 0u)
-    {
+    while (blkCnt > 0u) {
         /* C = (q15_t) A << 8 */
         /* convert from q7 to q15 and then store the results in the destination buffer */
         *pDst++ = (q15_t)*pIn++;

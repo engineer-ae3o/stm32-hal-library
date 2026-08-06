@@ -44,31 +44,29 @@
  *
  */
 
-int8_t *arm_nn_mat_mul_core_4x_s8(const int32_t row_elements,
-                                  const int32_t offset,
-                                  const int8_t *row_base,
-                                  const int8_t *col_base_ref,
-                                  const int32_t out_ch,
-                                  const cmsis_nn_conv_params *conv_params,
-                                  const cmsis_nn_per_channel_quant_params *quant_params,
-                                  const int32_t *bias,
-                                  int8_t *output)
-{
+int8_t* arm_nn_mat_mul_core_4x_s8(const int32_t                            row_elements,
+                                  const int32_t                            offset,
+                                  const int8_t*                            row_base,
+                                  const int8_t*                            col_base_ref,
+                                  const int32_t                            out_ch,
+                                  const cmsis_nn_conv_params*              conv_params,
+                                  const cmsis_nn_per_channel_quant_params* quant_params,
+                                  const int32_t*                           bias,
+                                  int8_t*                                  output) {
 
 #if defined(ARM_MATH_MVEI)
-    for (int i = 0; i < out_ch; i++)
-    {
+    for (int i = 0; i < out_ch; i++) {
         int32_t acc_n0 = 0;
         int32_t acc_n1 = 0;
         int32_t acc_n2 = 0;
         int32_t acc_n3 = 0;
 
-        const int8_t *ip_row_0 = row_base;
-        const int8_t *ip_row_1 = row_base + offset;
-        const int8_t *ip_row_2 = row_base + (2 * offset);
-        const int8_t *ip_row_3 = row_base + (3 * offset);
-        const int8_t *col_base = col_base_ref + i * row_elements;
-        int32_t sum_tmp = 0;
+        const int8_t* ip_row_0 = row_base;
+        const int8_t* ip_row_1 = row_base + offset;
+        const int8_t* ip_row_2 = row_base + (2 * offset);
+        const int8_t* ip_row_3 = row_base + (3 * offset);
+        const int8_t* col_base = col_base_ref + i * row_elements;
+        int32_t       sum_tmp  = 0;
 
         __ASM volatile("   vldrb.8         q0, [%[col]], #16     \n"
                        "   wlstp.8         lr, %[cnt], 1f       \n"
@@ -84,24 +82,26 @@ int8_t *arm_nn_mat_mul_core_4x_s8(const int32_t row_elements,
                        "   vmladava.s8     %[out3], q0, q4      \n"
                        "   vldrb.8         q0, [%[col]], #16     \n"
                        "   letp            lr, 2b               \n"
-                       "1:                                      \n"
-                       : [col] "+r"(col_base),
-                         [sum] "+Te"(sum_tmp),
-                         [row0] "+r"(ip_row_0),
-                         [row1] "+r"(ip_row_1),
-                         [row2] "+r"(ip_row_2),
-                         [row3] "+r"(ip_row_3),
-                         [out0] "+Te"(acc_n0),
-                         [out1] "+Te"(acc_n1),
-                         [out2] "+Te"(acc_n2),
-                         [out3] "+Te"(acc_n3)
-                       : [cnt] "r"(row_elements)
-                       : "q0", "q1", "q2", "q3", "q4", "memory", "r14");
+                       "1:                                      \n" : [col] "+r"(col_base),
+                       [sum] "+Te"(sum_tmp),
+                       [row0] "+r"(ip_row_0),
+                       [row1] "+r"(ip_row_1),
+                       [row2] "+r"(ip_row_2),
+                       [row3] "+r"(ip_row_3),
+                       [out0] "+Te"(acc_n0),
+                       [out1] "+Te"(acc_n1),
+                       [out2] "+Te"(acc_n2),
+                       [out3] "+Te"(acc_n3) : [cnt] "r"(row_elements) : "q0",
+                       "q1",
+                       "q2",
+                       "q3",
+                       "q4",
+                       "memory",
+                       "r14");
 
         int32x4_t res = {acc_n0, acc_n1, acc_n2, acc_n3};
         sum_tmp *= conv_params->input_offset;
-        if (bias)
-        {
+        if (bias) {
             sum_tmp += bias[i];
         }
         res = vaddq_n_s32(res, sum_tmp);

@@ -33,7 +33,7 @@
   @ingroup groupTransforms
  */
 
- /**
+/**
   @addtogroup DCT4_IDCT4
   @{
  */
@@ -58,71 +58,64 @@
  */
 
 arm_status arm_dct4_init_q15(
-  arm_dct4_instance_q15 * S,
-  arm_rfft_instance_q15 * S_RFFT,
-  arm_cfft_radix4_instance_q15 * S_CFFT,
-  uint16_t N,
-  uint16_t Nby2,
-  q15_t normalize)
-{
-  /*  Initialise the default arm status */
-  arm_status status = ARM_MATH_SUCCESS;
+    arm_dct4_instance_q15* S, arm_rfft_instance_q15* S_RFFT, arm_cfft_radix4_instance_q15* S_CFFT, uint16_t N, uint16_t Nby2, q15_t normalize) {
+    /*  Initialise the default arm status */
+    arm_status status = ARM_MATH_SUCCESS;
 
-  /* Initialize the DCT4 length */
-  S->N = N;
+    /* Initialize the DCT4 length */
+    S->N = N;
 
-  /* Initialize the half of DCT4 length */
-  S->Nby2 = Nby2;
+    /* Initialize the half of DCT4 length */
+    S->Nby2 = Nby2;
 
-  /* Initialize the DCT4 Normalizing factor */
-  S->normalize = normalize;
+    /* Initialize the DCT4 Normalizing factor */
+    S->normalize = normalize;
 
-  /* Initialize Real FFT Instance */
-  S->pRfft = S_RFFT;
+    /* Initialize Real FFT Instance */
+    S->pRfft = S_RFFT;
 
-  /* Initialize Complex FFT Instance */
-  S->pCfft = S_CFFT;
+    /* Initialize Complex FFT Instance */
+    S->pCfft = S_CFFT;
 
-  switch (N)
-  {
-  #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q15_8192)
-    /* Initialize the table modifier values */
-  case 8192U:
-    S->pTwiddle = WeightsQ15_8192;
-    S->pCosFactor = cos_factorsQ15_8192;
-    break;
-  #endif
+    switch (N) {
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q15_8192)
+            /* Initialize the table modifier values */
+        case 8192U:
+            S->pTwiddle   = WeightsQ15_8192;
+            S->pCosFactor = cos_factorsQ15_8192;
+            break;
+#endif
 
-  #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q15_2048)
-  case 2048U:
-    S->pTwiddle = WeightsQ15_2048;
-    S->pCosFactor = cos_factorsQ15_2048;
-    break;
-  #endif
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q15_2048)
+        case 2048U:
+            S->pTwiddle   = WeightsQ15_2048;
+            S->pCosFactor = cos_factorsQ15_2048;
+            break;
+#endif
 
-  #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q15_512)
-  case 512U:
-    S->pTwiddle = WeightsQ15_512;
-    S->pCosFactor = cos_factorsQ15_512;
-    break;
-  #endif 
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q15_512)
+        case 512U:
+            S->pTwiddle   = WeightsQ15_512;
+            S->pCosFactor = cos_factorsQ15_512;
+            break;
+#endif
 
-  #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q15_128)
-  case 128U:
-    S->pTwiddle = WeightsQ15_128;
-    S->pCosFactor = cos_factorsQ15_128;
-    break;
-  #endif 
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q15_128)
+        case 128U:
+            S->pTwiddle   = WeightsQ15_128;
+            S->pCosFactor = cos_factorsQ15_128;
+            break;
+#endif
 
-  default:
-    status = ARM_MATH_ARGUMENT_ERROR;
-  }
+        default:
+            status = ARM_MATH_ARGUMENT_ERROR;
+    }
 
-  /* Initialize the RFFT/RIFFT */
-  arm_rfft_init_q15(S->pRfft, S->N, 0U, 1U);
+    /* Initialize the RFFT/RIFFT */
+    arm_rfft_init_q15(S->pRfft, S->N, 0U, 1U);
 
-  /* return the status of DCT4 Init function */
-  return (status);
+    /* return the status of DCT4 Init function */
+    return (status);
 }
 
 /**

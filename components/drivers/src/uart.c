@@ -1,27 +1,39 @@
 #include "stm32f411xe.h"
-#include "dma.h"
-#include "gpio.h"
-#include "uart.h"
+#include "drivers/gpio.h"
+#include "drivers/uart.h"
+#include "drivers/dma.h"
+#include "extra/common.h"
+
 
 // The 3 UART channels: ISRs called when the DMA is done
 // TX
 static dma_trans_done_cb_t s_dma_tx_done_cbs[3] = {};
 static void*               s_tx_args[3]         = {};
+
 // RX
 static dma_trans_done_cb_t s_dma_rx_done_cbs[3] = {};
 static void*               s_rx_args[3]         = {};
 
+
 // Mapping for the DMA channels for the 3 USART channels
 static const dma_stream_map_t s_uart_dma_map[3] = {
     // USART1
-    {.tx = {.controller = DMA2, .stream = DMA2_Stream7, .stream_no = 7, .irq_type = DMA2_Stream7_IRQn, .channel = 4},
-     .rx = {.controller = DMA2, .stream = DMA2_Stream2, .stream_no = 2, .irq_type = DMA2_Stream2_IRQn, .channel = 4}},
+    {
+        .tx = {.controller = DMA2, .stream = DMA2_Stream7, .stream_no = 7, .irq_type = DMA2_Stream7_IRQn, .channel = 4},
+        .rx = {.controller = DMA2, .stream = DMA2_Stream2, .stream_no = 2, .irq_type = DMA2_Stream2_IRQn, .channel = 4},
+    },
     // USART2
-    {.tx = {.controller = DMA1, .stream = DMA1_Stream6, .stream_no = 6, .irq_type = DMA1_Stream6_IRQn, .channel = 4},
-     .rx = {.controller = DMA1, .stream = DMA1_Stream5, .stream_no = 5, .irq_type = DMA1_Stream5_IRQn, .channel = 4}},
+    {
+        .tx = {.controller = DMA1, .stream = DMA1_Stream6, .stream_no = 6, .irq_type = DMA1_Stream6_IRQn, .channel = 4},
+        .rx = {.controller = DMA1, .stream = DMA1_Stream5, .stream_no = 5, .irq_type = DMA1_Stream5_IRQn, .channel = 4},
+    },
     // USART6: DMA not supported: Not enough streams to go round other peripherals
-    {.tx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
-     .rx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0}}};
+    {
+        .tx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+        .rx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+    },
+};
+
 
 // Helper
 static inline uint8_t get_index(const USART_TypeDef* handle) {
@@ -32,12 +44,11 @@ static inline uint8_t get_index(const USART_TypeDef* handle) {
     } else if (handle == USART6) {
         return 2U;
     } else {
-        return 0xFFU;
+        return 0xFF;
     }
 }
 
 static inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t idx) {
-
     if (!s_dma_tx_done_cbs[idx]) {
         return;
     }
@@ -64,7 +75,6 @@ static inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t i
 }
 
 static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
-
     if (!s_dma_rx_done_cbs[idx]) {
         return;
     }
@@ -79,7 +89,6 @@ static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
 
 // Public API
 hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable) {
-
     if (enable) {
         if (handle == USART1) {
             RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
@@ -120,16 +129,16 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Get the mantissa and the fractional parts of the uart clock divider
     const uint16_t mantissa = (uint16_t)uart_div;
-    const uint16_t fraction = (uint16_t)((uart_div - (float)mantissa) * config->over_sampling);
+    const uint16_t fraction = (uint16_t)((uart_div - (float)mantissa) * (float)config->over_sampling);
 
     // Set oversampling and baud rate divider
     // The fractional part can only be 3 bits if oversampling is 8
     if (config->over_sampling == 8) {
         handle->CR1 |= USART_CR1_OVER8;
-        handle->BRR = (mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x07U);
+        handle->BRR = (uint32_t)(mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x07U);
     } else if (config->over_sampling == 16) {
         handle->CR1 &= ~USART_CR1_OVER8;
-        handle->BRR = (mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x0FU);
+        handle->BRR = (uint32_t)(mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x0FU);
     } else {
         return HAL_INVALID_ARG;
     }
@@ -182,9 +191,8 @@ void uart_enable(USART_TypeDef* handle, bool enable) {
 }
 
 hal_err_t uart_dma_init(USART_TypeDef* handle) {
-
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
+    if (idx == 0xFF) {
         return HAL_INVALID_ARG;
     }
 
@@ -258,9 +266,8 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
 }
 
 hal_err_t uart_get_dma_stream(USART_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
-
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
+    if (idx == 0xFF) {
         return HAL_INVALID_ARG;
     }
 
@@ -286,10 +293,8 @@ void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) 
 }
 
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
-
-    // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
+    if (idx == 0xFF) {
         return HAL_INVALID_ARG;
     }
 
@@ -319,10 +324,8 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
 }
 
 hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
-
-    // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
+    if (idx == 0xFF) {
         return HAL_INVALID_ARG;
     }
 
@@ -354,8 +357,7 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len, d
 // DMA interrupts
 // USART1: TX
 void DMA2_Stream7_IRQHandler(void) {
-    hal_err_t ret =
-        dma_isr_helper(DMA2_Stream7, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7, DMA_HISR_HTIF7);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream7, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7, DMA_HISR_HTIF7);
     isr_tx_helper(USART1, ret, 0);
     // Enable USART DMA
     USART1->CR3 &= ~USART_CR3_DMAT;
@@ -363,24 +365,21 @@ void DMA2_Stream7_IRQHandler(void) {
 
 // USART1: RX
 void DMA2_Stream2_IRQHandler(void) {
-    hal_err_t ret =
-        dma_isr_helper(DMA2_Stream2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
     isr_rx_helper(ret, 0);
     USART1->CR3 &= ~USART_CR3_DMAR;
 }
 
 // USART2: TX
 void DMA1_Stream6_IRQHandler(void) {
-    hal_err_t ret =
-        dma_isr_helper(DMA1_Stream6, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
+    hal_err_t ret = dma_isr_helper(DMA1_Stream6, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
     isr_tx_helper(USART2, ret, 1);
     USART2->CR3 &= ~USART_CR3_DMAT;
 }
 
 // USART2: RX
 void DMA1_Stream5_IRQHandler(void) {
-    hal_err_t ret =
-        dma_isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
+    hal_err_t ret = dma_isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
     isr_rx_helper(ret, 1);
     USART2->CR3 &= ~USART_CR3_DMAR;
 }

@@ -1,4 +1,6 @@
-#include "log.h"
+#include "extra/tick.h"
+#include "extra/log.h"
+
 
 extern "C" {
 [[noreturn]] int main() {

@@ -56,35 +56,30 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_min_f16(
-  const float16_t * pSrc,
-  uint32_t blockSize,
-  float16_t * pResult,
-  uint32_t * pIndex)
-{
-    int32_t  blkCnt;           /* loop counters */
-    f16x8_t vecSrc;
-    float16_t const *pSrcVec;
-    f16x8_t curExtremValVec = vdupq_n_f16(F16_MAX);
-    float16_t minValue = F16_MAX;
-    uint32_t  idx = blockSize;
-    uint16x8_t indexVec;
-    uint16x8_t curExtremIdxVec;
-    mve_pred16_t p0;
+void arm_min_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, uint32_t* pIndex) {
+    int32_t          blkCnt; /* loop counters */
+    f16x8_t          vecSrc;
+    float16_t const* pSrcVec;
+    f16x8_t          curExtremValVec = vdupq_n_f16(F16_MAX);
+    float16_t        minValue        = F16_MAX;
+    uint32_t         idx             = blockSize;
+    uint16x8_t       indexVec;
+    uint16x8_t       curExtremIdxVec;
+    mve_pred16_t     p0;
 
-    indexVec = vidupq_u16((uint32_t)0, 1);
+    indexVec        = vidupq_u16((uint32_t)0, 1);
     curExtremIdxVec = vdupq_n_u16(0);
 
-    pSrcVec = (float16_t const *) pSrc;
-    blkCnt = blockSize >> 3;
-    while (blkCnt > 0)
-    {
-        vecSrc = vldrhq_f16(pSrcVec);  pSrcVec += 8;
+    pSrcVec = (float16_t const*)pSrc;
+    blkCnt  = blockSize >> 3;
+    while (blkCnt > 0) {
+        vecSrc = vldrhq_f16(pSrcVec);
+        pSrcVec += 8;
         /*
          * Get current min per lane and current index per lane
          * when a min is selected
          */
-        p0 = vcmpleq(vecSrc, curExtremValVec);
+        p0              = vcmpleq(vecSrc, curExtremValVec);
         curExtremValVec = vpselq(vecSrc, curExtremValVec, p0);
         curExtremIdxVec = vpselq(indexVec, curExtremIdxVec, p0);
 
@@ -99,15 +94,15 @@ void arm_min_f16(
      * (will be merged thru tail predication)
      */
     blkCnt = blockSize & 7;
-    if (blkCnt > 0)
-    {
-        vecSrc = vldrhq_f16(pSrcVec);  pSrcVec += 8;
+    if (blkCnt > 0) {
+        vecSrc = vldrhq_f16(pSrcVec);
+        pSrcVec += 8;
         p0 = vctp16q(blkCnt);
         /*
          * Get current min per lane and current index per lane
          * when a min is selected
          */
-        p0 = vcmpleq_m(vecSrc, curExtremValVec, p0);
+        p0              = vcmpleq_m(vecSrc, curExtremValVec, p0);
         curExtremValVec = vpselq(vecSrc, curExtremValVec, p0);
         curExtremIdxVec = vpselq(indexVec, curExtremIdxVec, p0);
     }
@@ -118,7 +113,7 @@ void arm_min_f16(
     /*
      * set index for lower values to min possible index
      */
-    p0 = vcmpleq(curExtremValVec, minValue);
+    p0       = vcmpleq(curExtremValVec, minValue);
     indexVec = vpselq(curExtremIdxVec, vdupq_n_u16(blockSize), p0);
     /*
      * Get min index which is thus for a min value
@@ -127,108 +122,96 @@ void arm_min_f16(
     /*
      * Save result
      */
-    *pIndex = idx;
+    *pIndex  = idx;
     *pResult = minValue;
 }
 
 #else
 
-void arm_min_f16(
-  const float16_t * pSrc,
-        uint32_t blockSize,
-        float16_t * pResult,
-        uint32_t * pIndex)
-{
-        float16_t minVal, out;                         /* Temporary variables to store the output value. */
-        uint32_t blkCnt, outIndex;                     /* Loop counter */
+void arm_min_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, uint32_t* pIndex) {
+    float16_t minVal, out;      /* Temporary variables to store the output value. */
+    uint32_t  blkCnt, outIndex; /* Loop counter */
 
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
-        uint32_t index;                                /* index of maximum value */
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+    uint32_t index; /* index of maximum value */
 #endif
 
-  /* Initialise index value to zero. */
-  outIndex = 0U;
+    /* Initialise index value to zero. */
+    outIndex = 0U;
 
-  /* Load first input value that act as reference value for comparision */
-  out = *pSrc++;
+    /* Load first input value that act as reference value for comparision */
+    out = *pSrc++;
 
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
-  /* Initialise index of maximum value. */
-  index = 0U;
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+    /* Initialise index of maximum value. */
+    index = 0U;
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = (blockSize - 1U) >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = (blockSize - 1U) >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* Initialize minVal to next consecutive values one by one */
-    minVal = *pSrc++;
+    while (blkCnt > 0U) {
+        /* Initialize minVal to next consecutive values one by one */
+        minVal = *pSrc++;
 
-    /* compare for the minimum value */
-    if ((_Float16)out > (_Float16)minVal)
-    {
-      /* Update the minimum value and it's index */
-      out = minVal;
-      outIndex = index + 1U;
+        /* compare for the minimum value */
+        if ((_Float16)out > (_Float16)minVal) {
+            /* Update the minimum value and it's index */
+            out      = minVal;
+            outIndex = index + 1U;
+        }
+
+        minVal = *pSrc++;
+        if ((_Float16)out > (_Float16)minVal) {
+            out      = minVal;
+            outIndex = index + 2U;
+        }
+
+        minVal = *pSrc++;
+        if ((_Float16)out > (_Float16)minVal) {
+            out      = minVal;
+            outIndex = index + 3U;
+        }
+
+        minVal = *pSrc++;
+        if ((_Float16)out > (_Float16)minVal) {
+            out      = minVal;
+            outIndex = index + 4U;
+        }
+
+        index += 4U;
+
+        /* Decrement loop counter */
+        blkCnt--;
     }
 
-    minVal = *pSrc++;
-    if ((_Float16)out > (_Float16)minVal)
-    {
-      out = minVal;
-      outIndex = index + 2U;
-    }
-
-    minVal = *pSrc++;
-    if ((_Float16)out > (_Float16)minVal)
-    {
-      out = minVal;
-      outIndex = index + 3U;
-    }
-
-    minVal = *pSrc++;
-    if ((_Float16)out > (_Float16)minVal)
-    {
-      out = minVal;
-      outIndex = index + 4U;
-    }
-
-    index += 4U;
-
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = (blockSize - 1U) % 4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = (blockSize - 1U) % 4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = (blockSize - 1U);
+    /* Initialize blkCnt with number of samples */
+    blkCnt = (blockSize - 1U);
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* Initialize minVal to the next consecutive values one by one */
-    minVal = *pSrc++;
+    while (blkCnt > 0U) {
+        /* Initialize minVal to the next consecutive values one by one */
+        minVal = *pSrc++;
 
-    /* compare for the minimum value */
-    if ((_Float16)out > (_Float16)minVal)
-    {
-      /* Update the minimum value and it's index */
-      out = minVal;
-      outIndex = blockSize - blkCnt;
+        /* compare for the minimum value */
+        if ((_Float16)out > (_Float16)minVal) {
+            /* Update the minimum value and it's index */
+            out      = minVal;
+            outIndex = blockSize - blkCnt;
+        }
+
+        /* Decrement loop counter */
+        blkCnt--;
     }
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
-  /* Store the minimum value and it's index into destination pointers */
-  *pResult = out;
-  *pIndex = outIndex;
+    /* Store the minimum value and it's index into destination pointers */
+    *pResult = out;
+    *pIndex  = outIndex;
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 
@@ -236,5 +219,4 @@ void arm_min_f16(
   @} end of Min group
  */
 
-#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */ 
-
+#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */

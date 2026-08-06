@@ -68,27 +68,21 @@
                    The state variables are updated after each block of data is processed; the coefficients are untouched.
  */
 
-void arm_biquad_cascade_df1_init_q15(
-        arm_biquad_casd_df1_inst_q15 * S,
-        uint8_t numStages,
-  const q15_t * pCoeffs,
-        q15_t * pState,
-        int8_t postShift)
-{
-  /* Assign filter stages */
-  S->numStages = numStages;
+void arm_biquad_cascade_df1_init_q15(arm_biquad_casd_df1_inst_q15* S, uint8_t numStages, const q15_t* pCoeffs, q15_t* pState, int8_t postShift) {
+    /* Assign filter stages */
+    S->numStages = numStages;
 
-  /* Assign postShift to be applied to the output */
-  S->postShift = postShift;
+    /* Assign postShift to be applied to the output */
+    S->postShift = postShift;
 
-  /* Assign coefficient pointer */
-  S->pCoeffs = pCoeffs;
+    /* Assign coefficient pointer */
+    S->pCoeffs = pCoeffs;
 
-  /* Clear state buffer and size is always 4 * numStages */
-  memset(pState, 0, (4U * (uint32_t) numStages) * sizeof(q15_t));
+    /* Clear state buffer and size is always 4 * numStages */
+    memset(pState, 0, (4U * (uint32_t)numStages) * sizeof(q15_t));
 
-  /* Assign state pointer */
-  S->pState = pState;
+    /* Assign state pointer */
+    S->pState = pState;
 }
 
 /**

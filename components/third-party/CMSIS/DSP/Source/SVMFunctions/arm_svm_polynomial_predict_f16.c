@@ -43,16 +43,14 @@ in the public headers.
 This function should at some point be moved in FastMath.
 
 */
-__STATIC_INLINE float16_t arm_exponent_f16(float16_t x, int32_t nb)
-{
+__STATIC_INLINE float16_t arm_exponent_f16(float16_t x, int32_t nb) {
     float16_t r = x;
-    nb --;
-    while(nb > 0)
-    {
+    nb--;
+    while (nb > 0) {
         r = (_Float16)r * (_Float16)x;
         nb--;
     }
-    return(r);
+    return (r);
 }
 #endif
 
@@ -60,8 +58,6 @@ __STATIC_INLINE float16_t arm_exponent_f16(float16_t x, int32_t nb)
  * @addtogroup polysvm
  * @{
  */
-
-
 
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
@@ -77,23 +73,19 @@ __STATIC_INLINE float16_t arm_exponent_f16(float16_t x, int32_t nb)
  * @return none.
  *
  */
-void arm_svm_polynomial_predict_f16(
-    const arm_svm_polynomial_instance_f16 *S,
-    const float16_t * in,
-    int32_t * pResult)
-{
-        /* inlined Matrix x Vector function interleaved with dot prod */
-    uint32_t        numRows = S->nbOfSupportVectors;
-    uint32_t        numCols = S->vectorDimension;
-    const float16_t *pSupport = S->supportVectors;
-    const float16_t *pSrcA = pSupport;
-    const float16_t *pInA0;
-    const float16_t *pInA1;
+void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S, const float16_t* in, int32_t* pResult) {
+    /* inlined Matrix x Vector function interleaved with dot prod */
+    uint32_t         numRows  = S->nbOfSupportVectors;
+    uint32_t         numCols  = S->vectorDimension;
+    const float16_t* pSupport = S->supportVectors;
+    const float16_t* pSrcA    = pSupport;
+    const float16_t* pInA0;
+    const float16_t* pInA1;
     uint32_t         row;
-    uint32_t         blkCnt;     /* loop counters */
-    const float16_t *pDualCoef = S->dualCoefficients;
-    _Float16       sum = S->intercept;
-    f16x8_t         vSum = vdupq_n_f16(0.0f);
+    uint32_t         blkCnt; /* loop counters */
+    const float16_t* pDualCoef = S->dualCoefficients;
+    _Float16         sum       = S->intercept;
+    f16x8_t          vSum      = vdupq_n_f16(0.0f);
 
     row = numRows;
 
@@ -103,8 +95,8 @@ void arm_svm_polynomial_predict_f16(
     while (row >= 4) {
         const float16_t *pInA2, *pInA3;
         float16_t const *pSrcA0Vec, *pSrcA1Vec, *pSrcA2Vec, *pSrcA3Vec, *pInVec;
-        f16x8_t         vecIn, acc0, acc1, acc2, acc3;
-        float16_t const *pSrcVecPtr = in;
+        f16x8_t          vecIn, acc0, acc1, acc2, acc3;
+        float16_t const* pSrcVecPtr = in;
 
         /*
          * Initialize the pointers to 4 consecutive MatrixA rows
@@ -132,7 +124,7 @@ void arm_svm_polynomial_predict_f16(
 
         blkCnt = numCols >> 3;
         while (blkCnt > 0U) {
-            f16x8_t         vecA;
+            f16x8_t vecA;
 
             vecIn = vld1q(pInVec);
             pInVec += 8;
@@ -157,33 +149,30 @@ void arm_svm_polynomial_predict_f16(
          */
         blkCnt = numCols & 7;
         if (blkCnt > 0U) {
-            mve_pred16_t    p0 = vctp16q(blkCnt);
-            f16x8_t         vecA;
+            mve_pred16_t p0 = vctp16q(blkCnt);
+            f16x8_t      vecA;
 
             vecIn = vldrhq_z_f16(pInVec, p0);
-            vecA = vldrhq_z_f16(pSrcA0Vec, p0);
-            acc0 = vfmaq(acc0, vecIn, vecA);
-            vecA = vldrhq_z_f16(pSrcA1Vec, p0);
-            acc1 = vfmaq(acc1, vecIn, vecA);
-            vecA = vldrhq_z_f16(pSrcA2Vec, p0);
-            acc2 = vfmaq(acc2, vecIn, vecA);
-            vecA = vldrhq_z_f16(pSrcA3Vec, p0);
-            acc3 = vfmaq(acc3, vecIn, vecA);
+            vecA  = vldrhq_z_f16(pSrcA0Vec, p0);
+            acc0  = vfmaq(acc0, vecIn, vecA);
+            vecA  = vldrhq_z_f16(pSrcA1Vec, p0);
+            acc1  = vfmaq(acc1, vecIn, vecA);
+            vecA  = vldrhq_z_f16(pSrcA2Vec, p0);
+            acc2  = vfmaq(acc2, vecIn, vecA);
+            vecA  = vldrhq_z_f16(pSrcA3Vec, p0);
+            acc3  = vfmaq(acc3, vecIn, vecA);
         }
         /*
          * Sum the partial parts
          */
-        f16x8_t         vtmp = vuninitializedq_f16();
-        vtmp = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
-        vtmp = vsetq_lane(vecAddAcrossF16Mve(acc1), vtmp, 1);
-        vtmp = vsetq_lane(vecAddAcrossF16Mve(acc2), vtmp, 2);
-        vtmp = vsetq_lane(vecAddAcrossF16Mve(acc3), vtmp, 3);
+        f16x8_t vtmp = vuninitializedq_f16();
+        vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
+        vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc1), vtmp, 1);
+        vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc2), vtmp, 2);
+        vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc3), vtmp, 3);
 
-        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef),
-                             arm_vec_exponent_f16
-                             (vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), 
-                                S->degree),vctp16q(4));
-        
+        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef), arm_vec_exponent_f16(vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree), vctp16q(4));
+
         pDualCoef += 4;
 
         pSrcA += numCols * 4;
@@ -198,8 +187,8 @@ void arm_svm_polynomial_predict_f16(
      */
     if (row >= 2) {
         float16_t const *pSrcA0Vec, *pSrcA1Vec, *pInVec;
-        f16x8_t         vecIn, acc0, acc1;
-        float16_t const *pSrcVecPtr = in;
+        f16x8_t          vecIn, acc0, acc1;
+        float16_t const* pSrcVecPtr = in;
 
         /*
          * Initialize the pointers to 2 consecutive MatrixA rows
@@ -213,14 +202,14 @@ void arm_svm_polynomial_predict_f16(
         /*
          * reset accumulators
          */
-        acc0 = vdupq_n_f16(0.0f);
-        acc1 = vdupq_n_f16(0.0f);
+        acc0      = vdupq_n_f16(0.0f);
+        acc1      = vdupq_n_f16(0.0f);
         pSrcA0Vec = pInA0;
         pSrcA1Vec = pInA1;
 
         blkCnt = numCols >> 3;
         while (blkCnt > 0U) {
-            f16x8_t         vecA;
+            f16x8_t vecA;
 
             vecIn = vld1q(pInVec);
             pInVec += 8;
@@ -239,36 +228,33 @@ void arm_svm_polynomial_predict_f16(
          */
         blkCnt = numCols & 7;
         if (blkCnt > 0U) {
-            mve_pred16_t    p0 = vctp16q(blkCnt);
-            f16x8_t         vecA;
+            mve_pred16_t p0 = vctp16q(blkCnt);
+            f16x8_t      vecA;
 
             vecIn = vldrhq_z_f16(pInVec, p0);
-            vecA = vldrhq_z_f16(pSrcA0Vec, p0);
-            acc0 = vfmaq(acc0, vecIn, vecA);
-            vecA = vldrhq_z_f16(pSrcA1Vec, p0);
-            acc1 = vfmaq(acc1, vecIn, vecA);
+            vecA  = vldrhq_z_f16(pSrcA0Vec, p0);
+            acc0  = vfmaq(acc0, vecIn, vecA);
+            vecA  = vldrhq_z_f16(pSrcA1Vec, p0);
+            acc1  = vfmaq(acc1, vecIn, vecA);
         }
         /*
          * Sum the partial parts
          */
-        f16x8_t         vtmp = vuninitializedq_f16();
-        vtmp = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
-        vtmp = vsetq_lane(vecAddAcrossF16Mve(acc1), vtmp, 1);
+        f16x8_t vtmp = vuninitializedq_f16();
+        vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
+        vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc1), vtmp, 1);
 
-        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef),
-                             arm_vec_exponent_f16
-                             (vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree), 
-                             vctp16q(2));
-        
+        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef), arm_vec_exponent_f16(vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree), vctp16q(2));
+
         pDualCoef += 2;
         pSrcA += numCols * 2;
         row -= 2;
     }
 
     if (row >= 1) {
-        f16x8_t         vecIn, acc0;
+        f16x8_t          vecIn, acc0;
         float16_t const *pSrcA0Vec, *pInVec;
-        float16_t const *pSrcVecPtr = in;
+        float16_t const* pSrcVecPtr = in;
         /*
          * Initialize the pointers to last MatrixA row
          */
@@ -286,7 +272,7 @@ void arm_svm_polynomial_predict_f16(
 
         blkCnt = numCols >> 3;
         while (blkCnt > 0U) {
-            f16x8_t         vecA;
+            f16x8_t vecA;
 
             vecIn = vld1q(pInVec);
             pInVec += 8;
@@ -302,26 +288,23 @@ void arm_svm_polynomial_predict_f16(
          */
         blkCnt = numCols & 7;
         if (blkCnt > 0U) {
-            mve_pred16_t    p0 = vctp16q(blkCnt);
-            f16x8_t         vecA;
+            mve_pred16_t p0 = vctp16q(blkCnt);
+            f16x8_t      vecA;
 
             vecIn = vldrhq_z_f16(pInVec, p0);
-            vecA = vldrhq_z_f16(pSrcA0Vec, p0);
-            acc0 = vfmaq(acc0, vecIn, vecA);
+            vecA  = vldrhq_z_f16(pSrcA0Vec, p0);
+            acc0  = vfmaq(acc0, vecIn, vecA);
         }
         /*
          * Sum the partial parts
          */
-        f16x8_t         vtmp = vuninitializedq_f16();
-        vtmp = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
-        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef),
-                             arm_vec_exponent_f16
-                             (vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree), 
-                             vctp16q(1));
+        f16x8_t vtmp = vuninitializedq_f16();
+        vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
+        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef), arm_vec_exponent_f16(vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree), vctp16q(1));
     }
     sum += (_Float16)vecAddAcrossF16Mve(vSum);
 
-    
+
     *pResult = S->classes[STEP(sum)];
 }
 
@@ -336,27 +319,21 @@ void arm_svm_polynomial_predict_f16(
  * @return none.
  *
  */
-void arm_svm_polynomial_predict_f16(
-    const arm_svm_polynomial_instance_f16 *S,
-    const float16_t * in,
-    int32_t * pResult)
-{
-    _Float16 sum=S->intercept;
-    _Float16 dot=0;
-    uint32_t i,j;
-    const float16_t *pSupport = S->supportVectors;
+void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S, const float16_t* in, int32_t* pResult) {
+    _Float16         sum = S->intercept;
+    _Float16         dot = 0;
+    uint32_t         i, j;
+    const float16_t* pSupport = S->supportVectors;
 
-    for(i=0; i < S->nbOfSupportVectors; i++)
-    {
-        dot=0;
-        for(j=0; j < S->vectorDimension; j++)
-        {
-            dot = (_Float16)dot + (_Float16)in[j]* (_Float16)*pSupport++;
+    for (i = 0; i < S->nbOfSupportVectors; i++) {
+        dot = 0;
+        for (j = 0; j < S->vectorDimension; j++) {
+            dot = (_Float16)dot + (_Float16)in[j] * (_Float16)*pSupport++;
         }
         sum += (_Float16)S->dualCoefficients[i] * (_Float16)arm_exponent_f16((_Float16)S->gamma * (_Float16)dot + (_Float16)S->coef0, S->degree);
     }
 
-    *pResult=S->classes[STEP(sum)];
+    *pResult = S->classes[STEP(sum)];
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 
@@ -365,5 +342,4 @@ void arm_svm_polynomial_predict_f16(
  * @} end of polysvm group
  */
 
-#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */ 
-
+#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */

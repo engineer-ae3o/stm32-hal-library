@@ -36,6 +36,3 @@
 #include "arm_linear_interp_q7.c"
 #include "arm_spline_interp_f32.c"
 #include "arm_spline_interp_init_f32.c"
-
-
-

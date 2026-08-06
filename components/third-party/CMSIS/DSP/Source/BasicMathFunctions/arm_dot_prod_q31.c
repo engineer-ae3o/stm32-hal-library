@@ -58,28 +58,22 @@
 
 #include "arm_helium_utils.h"
 
-void arm_dot_prod_q31(
-    const q31_t * pSrcA,
-    const q31_t * pSrcB,
-    uint32_t blockSize,
-    q63_t * result)
-{
-    uint32_t  blkCnt;           /* loop counters */
-    q31x4_t vecA;
-    q31x4_t vecB;
-    q63_t     sum = 0LL;
+void arm_dot_prod_q31(const q31_t* pSrcA, const q31_t* pSrcB, uint32_t blockSize, q63_t* result) {
+    uint32_t blkCnt; /* loop counters */
+    q31x4_t  vecA;
+    q31x4_t  vecB;
+    q63_t    sum = 0LL;
 
     /* Compute 4 outputs at a time */
     blkCnt = blockSize >> 2;
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /*
          * C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1]
          * Calculate dot product and then store the result in a temporary buffer.
          */
         vecA = vld1q(pSrcA);
         vecB = vld1q(pSrcB);
-        sum = vrmlaldavhaq(sum, vecA, vecB);
+        sum  = vrmlaldavhaq(sum, vecA, vecB);
         /*
          * Decrement the blockSize loop counter
          */
@@ -94,12 +88,11 @@ void arm_dot_prod_q31(
      * tail
      */
     blkCnt = blockSize & 3;
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         mve_pred16_t p0 = vctp32q(blkCnt);
-        vecA = vld1q(pSrcA);
-        vecB = vld1q(pSrcB);
-        sum = vrmlaldavhaq_p(sum, vecA, vecB, p0);
+        vecA            = vld1q(pSrcA);
+        vecB            = vld1q(pSrcB);
+        sum             = vrmlaldavhaq_p(sum, vecA, vecB, p0);
     }
 
     /*
@@ -112,60 +105,53 @@ void arm_dot_prod_q31(
 }
 
 #else
-void arm_dot_prod_q31(
-  const q31_t * pSrcA,
-  const q31_t * pSrcB,
-        uint32_t blockSize,
-        q63_t * result)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-        q63_t sum = 0;                                 /* Temporary return variable */
+void arm_dot_prod_q31(const q31_t* pSrcA, const q31_t* pSrcB, uint32_t blockSize, q63_t* result) {
+    uint32_t blkCnt;  /* Loop counter */
+    q63_t    sum = 0; /* Temporary return variable */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
+    while (blkCnt > 0U) {
+        /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
 
-    /* Calculate dot product and store result in a temporary buffer. */
-    sum += ((q63_t) *pSrcA++ * *pSrcB++) >> 14U;
+        /* Calculate dot product and store result in a temporary buffer. */
+        sum += ((q63_t)*pSrcA++ * *pSrcB++) >> 14U;
 
-    sum += ((q63_t) *pSrcA++ * *pSrcB++) >> 14U;
+        sum += ((q63_t)*pSrcA++ * *pSrcB++) >> 14U;
 
-    sum += ((q63_t) *pSrcA++ * *pSrcB++) >> 14U;
+        sum += ((q63_t)*pSrcA++ * *pSrcB++) >> 14U;
 
-    sum += ((q63_t) *pSrcA++ * *pSrcB++) >> 14U;
+        sum += ((q63_t)*pSrcA++ * *pSrcB++) >> 14U;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
+    while (blkCnt > 0U) {
+        /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
 
-    /* Calculate dot product and store result in a temporary buffer. */
-    sum += ((q63_t) *pSrcA++ * *pSrcB++) >> 14U;
+        /* Calculate dot product and store result in a temporary buffer. */
+        sum += ((q63_t)*pSrcA++ * *pSrcB++) >> 14U;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Store result in destination buffer in 16.48 format */
-  *result = sum;
+    /* Store result in destination buffer in 16.48 format */
+    *result = sum;
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

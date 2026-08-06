@@ -49,26 +49,21 @@
 
 #include "arm_helium_utils.h"
 
-static void arm_small_blk_max_q7(
-    const q7_t * pSrc,
-    uint16_t blockSize,
-    q7_t * pResult,
-    uint32_t * pIndex)
-{
-    int32_t        blkCnt;     /* loop counters */
-    q7x16_t        extremValVec = vdupq_n_s8(Q7_MIN);
-    q7_t           maxValue = Q7_MIN;
-    uint8x16_t     indexVec;
-    uint8x16_t     extremIdxVec;
-    mve_pred16_t   p0;
-    uint8_t        extremIdxArr[16];
+static void arm_small_blk_max_q7(const q7_t* pSrc, uint16_t blockSize, q7_t* pResult, uint32_t* pIndex) {
+    int32_t      blkCnt; /* loop counters */
+    q7x16_t      extremValVec = vdupq_n_s8(Q7_MIN);
+    q7_t         maxValue     = Q7_MIN;
+    uint8x16_t   indexVec;
+    uint8x16_t   extremIdxVec;
+    mve_pred16_t p0;
+    uint8_t      extremIdxArr[16];
 
     indexVec = vidupq_u8(0U, 1);
 
     blkCnt = blockSize;
     do {
-        mve_pred16_t    p = vctp8q(blkCnt);
-        q7x16_t         extremIdxVal = vld1q_z_s8(pSrc, p);
+        mve_pred16_t p            = vctp8q(blkCnt);
+        q7x16_t      extremIdxVal = vld1q_z_s8(pSrc, p);
         /*
          * Get current max per lane and current index per lane
          * when a max is selected
@@ -82,57 +77,46 @@ static void arm_small_blk_max_q7(
         indexVec += 16;
         pSrc += 16;
         blkCnt -= 16;
-    }
-    while (blkCnt > 0);
+    } while (blkCnt > 0);
 
 
     /* Get max value across the vector   */
     maxValue = vmaxvq(maxValue, extremValVec);
 
     /* set index for lower values to max possible index   */
-    p0 = vcmpgeq(extremValVec, maxValue);
+    p0           = vcmpgeq(extremValVec, maxValue);
     extremIdxVec = vld1q_u8(extremIdxArr);
 
     indexVec = vpselq(extremIdxVec, vdupq_n_u8(blockSize - 1), p0);
-    *pIndex = vminvq_u8(blockSize - 1, indexVec);
+    *pIndex  = vminvq_u8(blockSize - 1, indexVec);
     *pResult = maxValue;
 }
 
-void arm_max_q7(
-  const q7_t * pSrc,
-        uint32_t blockSize,
-        q7_t * pResult,
-        uint32_t * pIndex)
-{
-    int32_t   totalSize = blockSize;
+void arm_max_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult, uint32_t* pIndex) {
+    int32_t        totalSize  = blockSize;
     const uint16_t sub_blk_sz = UINT8_MAX + 1;
 
-    if (totalSize <= sub_blk_sz)
-    {
+    if (totalSize <= sub_blk_sz) {
         arm_small_blk_max_q7(pSrc, blockSize, pResult, pIndex);
-    }
-    else
-    {
-        uint32_t  curIdx = 0;
-        q7_t      curBlkExtr = Q7_MIN;
-        uint32_t  curBlkPos = 0;
-        uint32_t  curBlkIdx = 0;
+    } else {
+        uint32_t curIdx     = 0;
+        q7_t     curBlkExtr = Q7_MIN;
+        uint32_t curBlkPos  = 0;
+        uint32_t curBlkIdx  = 0;
         /*
          * process blocks of 255 elts
          */
-        while (totalSize >= sub_blk_sz)
-        {
-            const q7_t     *curSrc = pSrc;
+        while (totalSize >= sub_blk_sz) {
+            const q7_t* curSrc = pSrc;
 
             arm_small_blk_max_q7(curSrc, sub_blk_sz, pResult, pIndex);
-            if (*pResult > curBlkExtr)
-            {
+            if (*pResult > curBlkExtr) {
                 /*
                  * update partial extrema
                  */
                 curBlkExtr = *pResult;
-                curBlkPos = *pIndex;
-                curBlkIdx = curIdx;
+                curBlkPos  = *pIndex;
+                curBlkIdx  = curIdx;
             }
             curIdx++;
             pSrc += sub_blk_sz;
@@ -142,112 +126,99 @@ void arm_max_q7(
          * remainder
          */
         arm_small_blk_max_q7(pSrc, totalSize, pResult, pIndex);
-        if (*pResult > curBlkExtr)
-        {
+        if (*pResult > curBlkExtr) {
             curBlkExtr = *pResult;
-            curBlkPos = *pIndex;
-            curBlkIdx = curIdx;
+            curBlkPos  = *pIndex;
+            curBlkIdx  = curIdx;
         }
-        *pIndex = curBlkIdx * sub_blk_sz + curBlkPos;
+        *pIndex  = curBlkIdx * sub_blk_sz + curBlkPos;
         *pResult = curBlkExtr;
     }
 }
 #else
-void arm_max_q7(
-  const q7_t * pSrc,
-        uint32_t blockSize,
-        q7_t * pResult,
-        uint32_t * pIndex)
-{
-        q7_t maxVal, out;                              /* Temporary variables to store the output value. */
-        uint32_t blkCnt, outIndex;                     /* Loop counter */
+void arm_max_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult, uint32_t* pIndex) {
+    q7_t     maxVal, out;      /* Temporary variables to store the output value. */
+    uint32_t blkCnt, outIndex; /* Loop counter */
 
-#if defined (ARM_MATH_LOOPUNROLL)
-        uint32_t index;                                /* index of maximum value */
+#if defined(ARM_MATH_LOOPUNROLL)
+    uint32_t index; /* index of maximum value */
 #endif
 
-  /* Initialise index value to zero. */
-  outIndex = 0U;
-  /* Load first input value that act as reference value for comparision */
-  out = *pSrc++;
+    /* Initialise index value to zero. */
+    outIndex = 0U;
+    /* Load first input value that act as reference value for comparision */
+    out = *pSrc++;
 
-#if defined (ARM_MATH_LOOPUNROLL)
-  /* Initialise index of maximum value. */
-  index = 0U;
+#if defined(ARM_MATH_LOOPUNROLL)
+    /* Initialise index of maximum value. */
+    index = 0U;
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = (blockSize - 1U) >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = (blockSize - 1U) >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* Initialize maxVal to next consecutive values one by one */
-    maxVal = *pSrc++;
+    while (blkCnt > 0U) {
+        /* Initialize maxVal to next consecutive values one by one */
+        maxVal = *pSrc++;
 
-    /* compare for the maximum value */
-    if (out < maxVal)
-    {
-      /* Update the maximum value and it's index */
-      out = maxVal;
-      outIndex = index + 1U;
+        /* compare for the maximum value */
+        if (out < maxVal) {
+            /* Update the maximum value and it's index */
+            out      = maxVal;
+            outIndex = index + 1U;
+        }
+
+        maxVal = *pSrc++;
+        if (out < maxVal) {
+            out      = maxVal;
+            outIndex = index + 2U;
+        }
+
+        maxVal = *pSrc++;
+        if (out < maxVal) {
+            out      = maxVal;
+            outIndex = index + 3U;
+        }
+
+        maxVal = *pSrc++;
+        if (out < maxVal) {
+            out      = maxVal;
+            outIndex = index + 4U;
+        }
+
+        index += 4U;
+
+        /* Decrement loop counter */
+        blkCnt--;
     }
 
-    maxVal = *pSrc++;
-    if (out < maxVal)
-    {
-      out = maxVal;
-      outIndex = index + 2U;
-    }
-
-    maxVal = *pSrc++;
-    if (out < maxVal)
-    {
-      out = maxVal;
-      outIndex = index + 3U;
-    }
-
-    maxVal = *pSrc++;
-    if (out < maxVal)
-    {
-      out = maxVal;
-      outIndex = index + 4U;
-    }
-
-    index += 4U;
-
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = (blockSize - 1U) % 4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = (blockSize - 1U) % 4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = (blockSize - 1U);
+    /* Initialize blkCnt with number of samples */
+    blkCnt = (blockSize - 1U);
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* Initialize maxVal to the next consecutive values one by one */
-    maxVal = *pSrc++;
+    while (blkCnt > 0U) {
+        /* Initialize maxVal to the next consecutive values one by one */
+        maxVal = *pSrc++;
 
-    /* compare for the maximum value */
-    if (out < maxVal)
-    {
-      /* Update the maximum value and it's index */
-      out = maxVal;
-      outIndex = blockSize - blkCnt;
+        /* compare for the maximum value */
+        if (out < maxVal) {
+            /* Update the maximum value and it's index */
+            out      = maxVal;
+            outIndex = blockSize - blkCnt;
+        }
+
+        /* Decrement loop counter */
+        blkCnt--;
     }
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
-  /* Store the maximum value and it's index into destination pointers */
-  *pResult = out;
-  *pIndex = outIndex;
+    /* Store the maximum value and it's index into destination pointers */
+    *pResult = out;
+    *pIndex  = outIndex;
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

@@ -29,62 +29,57 @@
 #include "dsp/transform_functions.h"
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
-void stage_rfft_f32(
-  const arm_rfft_fast_instance_f32 * S,
-        float32_t * p,
-        float32_t * pOut)
-{
-        int32_t  k;                                /* Loop Counter */
-        float32_t twR, twI;                         /* RFFT Twiddle coefficients */
-  const float32_t * pCoeff = S->pTwiddleRFFT;       /* Points to RFFT Twiddle factors */
-        float32_t *pA = p;                          /* increasing pointer */
-        float32_t *pB = p;                          /* decreasing pointer */
-        float32_t xAR, xAI, xBR, xBI;               /* temporary variables */
-        float32_t t1a, t1b;                         /* temporary variables */
-        float32_t p0, p1, p2, p3;                   /* temporary variables */
+void stage_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut) {
+    int32_t          k;                        /* Loop Counter */
+    float32_t        twR, twI;                 /* RFFT Twiddle coefficients */
+    const float32_t* pCoeff = S->pTwiddleRFFT; /* Points to RFFT Twiddle factors */
+    float32_t*       pA     = p;               /* increasing pointer */
+    float32_t*       pB     = p;               /* decreasing pointer */
+    float32_t        xAR, xAI, xBR, xBI;       /* temporary variables */
+    float32_t        t1a, t1b;                 /* temporary variables */
+    float32_t        p0, p1, p2, p3;           /* temporary variables */
 
-        float32x4x2_t tw,xA,xB;
-        float32x4x2_t tmp1, tmp2, res;
+    float32x4x2_t tw, xA, xB;
+    float32x4x2_t tmp1, tmp2, res;
 
-        uint32x4_t     vecStridesFwd, vecStridesBkwd;
+    uint32x4_t vecStridesFwd, vecStridesBkwd;
 
-        vecStridesFwd = vidupq_u32((uint32_t)0, 2);
-        vecStridesBkwd = -vecStridesFwd;
+    vecStridesFwd  = vidupq_u32((uint32_t)0, 2);
+    vecStridesBkwd = -vecStridesFwd;
 
-        int blockCnt;
+    int blockCnt;
 
 
-   k = (S->Sint).fftLen - 1;
+    k = (S->Sint).fftLen - 1;
 
-   /* Pack first and last sample of the frequency domain together */
+    /* Pack first and last sample of the frequency domain together */
 
-   xBR = pB[0];
-   xBI = pB[1];
-   xAR = pA[0];
-   xAI = pA[1];
+    xBR = pB[0];
+    xBI = pB[1];
+    xAR = pA[0];
+    xAI = pA[1];
 
-   twR = *pCoeff++ ;
-   twI = *pCoeff++ ;
+    twR = *pCoeff++;
+    twI = *pCoeff++;
 
-   // U1 = XA(1) + XB(1); % It is real
-   t1a = xBR + xAR  ;
+    // U1 = XA(1) + XB(1); % It is real
+    t1a = xBR + xAR;
 
-   // U2 = XB(1) - XA(1); % It is imaginary
-   t1b = xBI + xAI  ;
+    // U2 = XB(1) - XA(1); % It is imaginary
+    t1b = xBI + xAI;
 
-   // real(tw * (xB - xA)) = twR * (xBR - xAR) - twI * (xBI - xAI);
-   // imag(tw * (xB - xA)) = twI * (xBR - xAR) + twR * (xBI - xAI);
-   *pOut++ = 0.5f * ( t1a + t1b );
-   *pOut++ = 0.5f * ( t1a - t1b );
+    // real(tw * (xB - xA)) = twR * (xBR - xAR) - twI * (xBI - xAI);
+    // imag(tw * (xB - xA)) = twI * (xBR - xAR) + twR * (xBI - xAI);
+    *pOut++ = 0.5f * (t1a + t1b);
+    *pOut++ = 0.5f * (t1a - t1b);
 
-   // XA(1) = 1/2*( U1 - imag(U2) +  i*( U1 +imag(U2) ));
-   pB  = p + 2*k;
-   pA += 2;
+    // XA(1) = 1/2*( U1 - imag(U2) +  i*( U1 +imag(U2) ));
+    pB = p + 2 * k;
+    pA += 2;
 
-   blockCnt = k >> 2;
-   while (blockCnt > 0)
-   {
-      /*
+    blockCnt = k >> 2;
+    while (blockCnt > 0) {
+        /*
          function X = my_split_rfft(X, ifftFlag)
          % X is a series of real numbers
          L  = length(X);
@@ -100,52 +95,51 @@ void stage_rfft_f32(
       */
 
 
-      xA = vld2q_f32(pA);
-      pA += 8;
+        xA = vld2q_f32(pA);
+        pA += 8;
 
-      xB = vld2q_f32(pB);
+        xB = vld2q_f32(pB);
 
-      xB.val[0] = vldrwq_gather_shifted_offset_f32(pB, vecStridesBkwd);
-      xB.val[1] = vldrwq_gather_shifted_offset_f32(&pB[1], vecStridesBkwd);
+        xB.val[0] = vldrwq_gather_shifted_offset_f32(pB, vecStridesBkwd);
+        xB.val[1] = vldrwq_gather_shifted_offset_f32(&pB[1], vecStridesBkwd);
 
-      xB.val[1] = vnegq_f32(xB.val[1]);
-      pB -= 8;
-
-
-      tw = vld2q_f32(pCoeff);
-      pCoeff += 8;
+        xB.val[1] = vnegq_f32(xB.val[1]);
+        pB -= 8;
 
 
-      tmp1.val[0] = vaddq_f32(xA.val[0],xB.val[0]);
-      tmp1.val[1] = vaddq_f32(xA.val[1],xB.val[1]);
-
-      tmp2.val[0] = vsubq_f32(xB.val[0],xA.val[0]);
-      tmp2.val[1] = vsubq_f32(xB.val[1],xA.val[1]);
-
-      res.val[0] = vmulq(tw.val[0], tmp2.val[0]);
-      res.val[0] = vfmsq(res.val[0],tw.val[1], tmp2.val[1]);
-
-      res.val[1] = vmulq(tw.val[0], tmp2.val[1]);
-      res.val[1] = vfmaq(res.val[1], tw.val[1], tmp2.val[0]);
-
-      res.val[0] = vaddq_f32(res.val[0],tmp1.val[0] );
-      res.val[1] = vaddq_f32(res.val[1],tmp1.val[1] );
-
-      res.val[0] = vmulq_n_f32(res.val[0], 0.5f);
-      res.val[1] = vmulq_n_f32(res.val[1], 0.5f);
+        tw = vld2q_f32(pCoeff);
+        pCoeff += 8;
 
 
-      vst2q_f32(pOut, res);
-      pOut += 8;
+        tmp1.val[0] = vaddq_f32(xA.val[0], xB.val[0]);
+        tmp1.val[1] = vaddq_f32(xA.val[1], xB.val[1]);
 
-    
-      blockCnt--;
-   } 
+        tmp2.val[0] = vsubq_f32(xB.val[0], xA.val[0]);
+        tmp2.val[1] = vsubq_f32(xB.val[1], xA.val[1]);
 
-   blockCnt = k & 3;
-   while (blockCnt > 0)
-   {
-      /*
+        res.val[0] = vmulq(tw.val[0], tmp2.val[0]);
+        res.val[0] = vfmsq(res.val[0], tw.val[1], tmp2.val[1]);
+
+        res.val[1] = vmulq(tw.val[0], tmp2.val[1]);
+        res.val[1] = vfmaq(res.val[1], tw.val[1], tmp2.val[0]);
+
+        res.val[0] = vaddq_f32(res.val[0], tmp1.val[0]);
+        res.val[1] = vaddq_f32(res.val[1], tmp1.val[1]);
+
+        res.val[0] = vmulq_n_f32(res.val[0], 0.5f);
+        res.val[1] = vmulq_n_f32(res.val[1], 0.5f);
+
+
+        vst2q_f32(pOut, res);
+        pOut += 8;
+
+
+        blockCnt--;
+    }
+
+    blockCnt = k & 3;
+    while (blockCnt > 0) {
+        /*
          function X = my_split_rfft(X, ifftFlag)
          % X is a series of real numbers
          L  = length(X);
@@ -160,199 +154,187 @@ void stage_rfft_f32(
          X = XA;
       */
 
-      xBI = pB[1];
-      xBR = pB[0];
-      xAR = pA[0];
-      xAI = pA[1];
+        xBI = pB[1];
+        xBR = pB[0];
+        xAR = pA[0];
+        xAI = pA[1];
 
-      twR = *pCoeff++;
-      twI = *pCoeff++;
+        twR = *pCoeff++;
+        twI = *pCoeff++;
 
-      t1a = xBR - xAR ;
-      t1b = xBI + xAI ;
+        t1a = xBR - xAR;
+        t1b = xBI + xAI;
 
-      // real(tw * (xB - xA)) = twR * (xBR - xAR) - twI * (xBI - xAI);
-      // imag(tw * (xB - xA)) = twI * (xBR - xAR) + twR * (xBI - xAI);
-      p0 = twR * t1a;
-      p1 = twI * t1a;
-      p2 = twR * t1b;
-      p3 = twI * t1b;
+        // real(tw * (xB - xA)) = twR * (xBR - xAR) - twI * (xBI - xAI);
+        // imag(tw * (xB - xA)) = twI * (xBR - xAR) + twR * (xBI - xAI);
+        p0 = twR * t1a;
+        p1 = twI * t1a;
+        p2 = twR * t1b;
+        p3 = twI * t1b;
 
-      *pOut++ = 0.5f * (xAR + xBR + p0 + p3 ); //xAR
-      *pOut++ = 0.5f * (xAI - xBI + p1 - p2 ); //xAI
+        *pOut++ = 0.5f * (xAR + xBR + p0 + p3); //xAR
+        *pOut++ = 0.5f * (xAI - xBI + p1 - p2); //xAI
 
-      pA += 2;
-      pB -= 2;
-      blockCnt--;
-   }
+        pA += 2;
+        pB -= 2;
+        blockCnt--;
+    }
 }
 
 /* Prepares data for inverse cfft */
-void merge_rfft_f32(
-  const arm_rfft_fast_instance_f32 * S,
-        float32_t * p,
-        float32_t * pOut)
-{
-        int32_t  k;                                /* Loop Counter */
-        float32_t twR, twI;                         /* RFFT Twiddle coefficients */
-  const float32_t *pCoeff = S->pTwiddleRFFT;        /* Points to RFFT Twiddle factors */
-        float32_t *pA = p;                          /* increasing pointer */
-        float32_t *pB = p;                          /* decreasing pointer */
-        float32_t xAR, xAI, xBR, xBI;               /* temporary variables */
-        float32_t t1a, t1b, r, s, t, u;             /* temporary variables */
+void merge_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut) {
+    int32_t          k;                        /* Loop Counter */
+    float32_t        twR, twI;                 /* RFFT Twiddle coefficients */
+    const float32_t* pCoeff = S->pTwiddleRFFT; /* Points to RFFT Twiddle factors */
+    float32_t*       pA     = p;               /* increasing pointer */
+    float32_t*       pB     = p;               /* decreasing pointer */
+    float32_t        xAR, xAI, xBR, xBI;       /* temporary variables */
+    float32_t        t1a, t1b, r, s, t, u;     /* temporary variables */
 
-        float32x4x2_t tw,xA,xB;
-        float32x4x2_t tmp1, tmp2, res;
-        uint32x4_t     vecStridesFwd, vecStridesBkwd;
+    float32x4x2_t tw, xA, xB;
+    float32x4x2_t tmp1, tmp2, res;
+    uint32x4_t    vecStridesFwd, vecStridesBkwd;
 
-        vecStridesFwd = vidupq_u32((uint32_t)0, 2);
-        vecStridesBkwd = -vecStridesFwd;
+    vecStridesFwd  = vidupq_u32((uint32_t)0, 2);
+    vecStridesBkwd = -vecStridesFwd;
 
-        int blockCnt;
-        
-
-   k = (S->Sint).fftLen - 1;
-
-   xAR = pA[0];
-   xAI = pA[1];
-
-   pCoeff += 2 ;
-
-   *pOut++ = 0.5f * ( xAR + xAI );
-   *pOut++ = 0.5f * ( xAR - xAI );
-
-   pB  =  p + 2*k ;
-   pA +=  2    ;
-
-   blockCnt = k >> 2;
-   while (blockCnt > 0)
-   {
-      /* G is half of the frequency complex spectrum */
-      //for k = 2:N
-      //    Xk(k) = 1/2 * (G(k) + conj(G(N-k+2)) + Tw(k)*( G(k) - conj(G(N-k+2))));
-      xA = vld2q_f32(pA);
-      pA += 8;
-
-      xB = vld2q_f32(pB);
-
-      xB.val[0] = vldrwq_gather_shifted_offset_f32(pB, vecStridesBkwd);
-      xB.val[1] = vldrwq_gather_shifted_offset_f32(&pB[1], vecStridesBkwd);
-
-      xB.val[1] = vnegq_f32(xB.val[1]);
-      pB -= 8;
+    int blockCnt;
 
 
-      tw = vld2q_f32(pCoeff);
-      tw.val[1] = vnegq_f32(tw.val[1]);
-      pCoeff += 8;
+    k = (S->Sint).fftLen - 1;
+
+    xAR = pA[0];
+    xAI = pA[1];
+
+    pCoeff += 2;
+
+    *pOut++ = 0.5f * (xAR + xAI);
+    *pOut++ = 0.5f * (xAR - xAI);
+
+    pB = p + 2 * k;
+    pA += 2;
+
+    blockCnt = k >> 2;
+    while (blockCnt > 0) {
+        /* G is half of the frequency complex spectrum */
+        //for k = 2:N
+        //    Xk(k) = 1/2 * (G(k) + conj(G(N-k+2)) + Tw(k)*( G(k) - conj(G(N-k+2))));
+        xA = vld2q_f32(pA);
+        pA += 8;
+
+        xB = vld2q_f32(pB);
+
+        xB.val[0] = vldrwq_gather_shifted_offset_f32(pB, vecStridesBkwd);
+        xB.val[1] = vldrwq_gather_shifted_offset_f32(&pB[1], vecStridesBkwd);
+
+        xB.val[1] = vnegq_f32(xB.val[1]);
+        pB -= 8;
 
 
-      tmp1.val[0] = vaddq_f32(xA.val[0],xB.val[0]);
-      tmp1.val[1] = vaddq_f32(xA.val[1],xB.val[1]);
-
-      tmp2.val[0] = vsubq_f32(xB.val[0],xA.val[0]);
-      tmp2.val[1] = vsubq_f32(xB.val[1],xA.val[1]);
-
-      res.val[0] = vmulq(tw.val[0], tmp2.val[0]);
-      res.val[0] = vfmsq(res.val[0],tw.val[1], tmp2.val[1]);
-
-      res.val[1] = vmulq(tw.val[0], tmp2.val[1]);
-      res.val[1] = vfmaq(res.val[1], tw.val[1], tmp2.val[0]);
-
-      res.val[0] = vaddq_f32(res.val[0],tmp1.val[0] );
-      res.val[1] = vaddq_f32(res.val[1],tmp1.val[1] );
-
-      res.val[0] = vmulq_n_f32(res.val[0], 0.5f);
-      res.val[1] = vmulq_n_f32(res.val[1], 0.5f);
+        tw        = vld2q_f32(pCoeff);
+        tw.val[1] = vnegq_f32(tw.val[1]);
+        pCoeff += 8;
 
 
-      vst2q_f32(pOut, res);
-      pOut += 8;
+        tmp1.val[0] = vaddq_f32(xA.val[0], xB.val[0]);
+        tmp1.val[1] = vaddq_f32(xA.val[1], xB.val[1]);
 
-    
-      blockCnt--;
-   }
+        tmp2.val[0] = vsubq_f32(xB.val[0], xA.val[0]);
+        tmp2.val[1] = vsubq_f32(xB.val[1], xA.val[1]);
 
-   blockCnt = k & 3;
-   while (blockCnt > 0)
-   {
-      /* G is half of the frequency complex spectrum */
-      //for k = 2:N
-      //    Xk(k) = 1/2 * (G(k) + conj(G(N-k+2)) + Tw(k)*( G(k) - conj(G(N-k+2))));
-      xBI =   pB[1]    ;
-      xBR =   pB[0]    ;
-      xAR =  pA[0];
-      xAI =  pA[1];
+        res.val[0] = vmulq(tw.val[0], tmp2.val[0]);
+        res.val[0] = vfmsq(res.val[0], tw.val[1], tmp2.val[1]);
 
-      twR = *pCoeff++;
-      twI = *pCoeff++;
+        res.val[1] = vmulq(tw.val[0], tmp2.val[1]);
+        res.val[1] = vfmaq(res.val[1], tw.val[1], tmp2.val[0]);
 
-      t1a = xAR - xBR ;
-      t1b = xAI + xBI ;
+        res.val[0] = vaddq_f32(res.val[0], tmp1.val[0]);
+        res.val[1] = vaddq_f32(res.val[1], tmp1.val[1]);
 
-      r = twR * t1a;
-      s = twI * t1b;
-      t = twI * t1a;
-      u = twR * t1b;
+        res.val[0] = vmulq_n_f32(res.val[0], 0.5f);
+        res.val[1] = vmulq_n_f32(res.val[1], 0.5f);
 
-      // real(tw * (xA - xB)) = twR * (xAR - xBR) - twI * (xAI - xBI);
-      // imag(tw * (xA - xB)) = twI * (xAR - xBR) + twR * (xAI - xBI);
-      *pOut++ = 0.5f * (xAR + xBR - r - s ); //xAR
-      *pOut++ = 0.5f * (xAI - xBI + t - u ); //xAI
 
-      pA += 2;
-      pB -= 2;
-      blockCnt--;
-   }
+        vst2q_f32(pOut, res);
+        pOut += 8;
 
+
+        blockCnt--;
+    }
+
+    blockCnt = k & 3;
+    while (blockCnt > 0) {
+        /* G is half of the frequency complex spectrum */
+        //for k = 2:N
+        //    Xk(k) = 1/2 * (G(k) + conj(G(N-k+2)) + Tw(k)*( G(k) - conj(G(N-k+2))));
+        xBI = pB[1];
+        xBR = pB[0];
+        xAR = pA[0];
+        xAI = pA[1];
+
+        twR = *pCoeff++;
+        twI = *pCoeff++;
+
+        t1a = xAR - xBR;
+        t1b = xAI + xBI;
+
+        r = twR * t1a;
+        s = twI * t1b;
+        t = twI * t1a;
+        u = twR * t1b;
+
+        // real(tw * (xA - xB)) = twR * (xAR - xBR) - twI * (xAI - xBI);
+        // imag(tw * (xA - xB)) = twI * (xAR - xBR) + twR * (xAI - xBI);
+        *pOut++ = 0.5f * (xAR + xBR - r - s); //xAR
+        *pOut++ = 0.5f * (xAI - xBI + t - u); //xAI
+
+        pA += 2;
+        pB -= 2;
+        blockCnt--;
+    }
 }
 #else
-void stage_rfft_f32(
-  const arm_rfft_fast_instance_f32 * S,
-        float32_t * p,
-        float32_t * pOut)
-{
-        int32_t  k;                                /* Loop Counter */
-        float32_t twR, twI;                         /* RFFT Twiddle coefficients */
-  const float32_t * pCoeff = S->pTwiddleRFFT;       /* Points to RFFT Twiddle factors */
-        float32_t *pA = p;                          /* increasing pointer */
-        float32_t *pB = p;                          /* decreasing pointer */
-        float32_t xAR, xAI, xBR, xBI;               /* temporary variables */
-        float32_t t1a, t1b;                         /* temporary variables */
-        float32_t p0, p1, p2, p3;                   /* temporary variables */
+void stage_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut) {
+    int32_t          k;                        /* Loop Counter */
+    float32_t        twR, twI;                 /* RFFT Twiddle coefficients */
+    const float32_t* pCoeff = S->pTwiddleRFFT; /* Points to RFFT Twiddle factors */
+    float32_t*       pA     = p;               /* increasing pointer */
+    float32_t*       pB     = p;               /* decreasing pointer */
+    float32_t        xAR, xAI, xBR, xBI;       /* temporary variables */
+    float32_t        t1a, t1b;                 /* temporary variables */
+    float32_t        p0, p1, p2, p3;           /* temporary variables */
 
 
-   k = (S->Sint).fftLen - 1;
+    k = (S->Sint).fftLen - 1;
 
-   /* Pack first and last sample of the frequency domain together */
+    /* Pack first and last sample of the frequency domain together */
 
-   xBR = pB[0];
-   xBI = pB[1];
-   xAR = pA[0];
-   xAI = pA[1];
+    xBR = pB[0];
+    xBI = pB[1];
+    xAR = pA[0];
+    xAI = pA[1];
 
-   twR = *pCoeff++ ;
-   twI = *pCoeff++ ;
+    twR = *pCoeff++;
+    twI = *pCoeff++;
 
 
-   // U1 = XA(1) + XB(1); % It is real
-   t1a = xBR + xAR  ;
+    // U1 = XA(1) + XB(1); % It is real
+    t1a = xBR + xAR;
 
-   // U2 = XB(1) - XA(1); % It is imaginary
-   t1b = xBI + xAI  ;
+    // U2 = XB(1) - XA(1); % It is imaginary
+    t1b = xBI + xAI;
 
-   // real(tw * (xB - xA)) = twR * (xBR - xAR) - twI * (xBI - xAI);
-   // imag(tw * (xB - xA)) = twI * (xBR - xAR) + twR * (xBI - xAI);
-   *pOut++ = 0.5f * ( t1a + t1b );
-   *pOut++ = 0.5f * ( t1a - t1b );
+    // real(tw * (xB - xA)) = twR * (xBR - xAR) - twI * (xBI - xAI);
+    // imag(tw * (xB - xA)) = twI * (xBR - xAR) + twR * (xBI - xAI);
+    *pOut++ = 0.5f * (t1a + t1b);
+    *pOut++ = 0.5f * (t1a - t1b);
 
-   // XA(1) = 1/2*( U1 - imag(U2) +  i*( U1 +imag(U2) ));
-   pB  = p + 2*k;
-   pA += 2;
+    // XA(1) = 1/2*( U1 - imag(U2) +  i*( U1 +imag(U2) ));
+    pB = p + 2 * k;
+    pA += 2;
 
-   do
-   {
-      /*
+    do {
+        /*
          function X = my_split_rfft(X, ifftFlag)
          % X is a series of real numbers
          L  = length(X);
@@ -367,92 +349,86 @@ void stage_rfft_f32(
          X = XA;
       */
 
-      xBI = pB[1];
-      xBR = pB[0];
-      xAR = pA[0];
-      xAI = pA[1];
+        xBI = pB[1];
+        xBR = pB[0];
+        xAR = pA[0];
+        xAI = pA[1];
 
-      twR = *pCoeff++;
-      twI = *pCoeff++;
+        twR = *pCoeff++;
+        twI = *pCoeff++;
 
-      t1a = xBR - xAR ;
-      t1b = xBI + xAI ;
+        t1a = xBR - xAR;
+        t1b = xBI + xAI;
 
-      // real(tw * (xB - xA)) = twR * (xBR - xAR) - twI * (xBI - xAI);
-      // imag(tw * (xB - xA)) = twI * (xBR - xAR) + twR * (xBI - xAI);
-      p0 = twR * t1a;
-      p1 = twI * t1a;
-      p2 = twR * t1b;
-      p3 = twI * t1b;
+        // real(tw * (xB - xA)) = twR * (xBR - xAR) - twI * (xBI - xAI);
+        // imag(tw * (xB - xA)) = twI * (xBR - xAR) + twR * (xBI - xAI);
+        p0 = twR * t1a;
+        p1 = twI * t1a;
+        p2 = twR * t1b;
+        p3 = twI * t1b;
 
-      *pOut++ = 0.5f * (xAR + xBR + p0 + p3 ); //xAR
-      *pOut++ = 0.5f * (xAI - xBI + p1 - p2 ); //xAI
+        *pOut++ = 0.5f * (xAR + xBR + p0 + p3); //xAR
+        *pOut++ = 0.5f * (xAI - xBI + p1 - p2); //xAI
 
 
-      pA += 2;
-      pB -= 2;
-      k--;
-   } while (k > 0);
+        pA += 2;
+        pB -= 2;
+        k--;
+    } while (k > 0);
 }
 
 /* Prepares data for inverse cfft */
-void merge_rfft_f32(
-  const arm_rfft_fast_instance_f32 * S,
-        float32_t * p,
-        float32_t * pOut)
-{
-        int32_t  k;                                /* Loop Counter */
-        float32_t twR, twI;                         /* RFFT Twiddle coefficients */
-  const float32_t *pCoeff = S->pTwiddleRFFT;        /* Points to RFFT Twiddle factors */
-        float32_t *pA = p;                          /* increasing pointer */
-        float32_t *pB = p;                          /* decreasing pointer */
-        float32_t xAR, xAI, xBR, xBI;               /* temporary variables */
-        float32_t t1a, t1b, r, s, t, u;             /* temporary variables */
+void merge_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut) {
+    int32_t          k;                        /* Loop Counter */
+    float32_t        twR, twI;                 /* RFFT Twiddle coefficients */
+    const float32_t* pCoeff = S->pTwiddleRFFT; /* Points to RFFT Twiddle factors */
+    float32_t*       pA     = p;               /* increasing pointer */
+    float32_t*       pB     = p;               /* decreasing pointer */
+    float32_t        xAR, xAI, xBR, xBI;       /* temporary variables */
+    float32_t        t1a, t1b, r, s, t, u;     /* temporary variables */
 
-   k = (S->Sint).fftLen - 1;
+    k = (S->Sint).fftLen - 1;
 
-   xAR = pA[0];
-   xAI = pA[1];
+    xAR = pA[0];
+    xAI = pA[1];
 
-   pCoeff += 2 ;
+    pCoeff += 2;
 
-   *pOut++ = 0.5f * ( xAR + xAI );
-   *pOut++ = 0.5f * ( xAR - xAI );
+    *pOut++ = 0.5f * (xAR + xAI);
+    *pOut++ = 0.5f * (xAR - xAI);
 
-   pB  =  p + 2*k ;
-   pA +=  2	   ;
+    pB = p + 2 * k;
+    pA += 2;
 
-   while (k > 0)
-   {
-      /* G is half of the frequency complex spectrum */
-      //for k = 2:N
-      //    Xk(k) = 1/2 * (G(k) + conj(G(N-k+2)) + Tw(k)*( G(k) - conj(G(N-k+2))));
-      xBI =   pB[1]    ;
-      xBR =   pB[0]    ;
-      xAR =  pA[0];
-      xAI =  pA[1];
+    while (k > 0) {
+        /* G is half of the frequency complex spectrum */
+        //for k = 2:N
+        //    Xk(k) = 1/2 * (G(k) + conj(G(N-k+2)) + Tw(k)*( G(k) - conj(G(N-k+2))));
+        xBI = pB[1];
+        xBR = pB[0];
+        xAR = pA[0];
+        xAI = pA[1];
 
-      twR = *pCoeff++;
-      twI = *pCoeff++;
+        twR = *pCoeff++;
+        twI = *pCoeff++;
 
-      t1a = xAR - xBR ;
-      t1b = xAI + xBI ;
+        t1a = xAR - xBR;
+        t1b = xAI + xBI;
 
-      r = twR * t1a;
-      s = twI * t1b;
-      t = twI * t1a;
-      u = twR * t1b;
+        r = twR * t1a;
+        s = twI * t1b;
+        t = twI * t1a;
+        u = twR * t1b;
 
-      // real(tw * (xA - xB)) = twR * (xAR - xBR) - twI * (xAI - xBI);
-      // imag(tw * (xA - xB)) = twI * (xAR - xBR) + twR * (xAI - xBI);
-      *pOut++ = 0.5f * (xAR + xBR - r - s ); //xAR
-      *pOut++ = 0.5f * (xAI - xBI + t - u ); //xAI
+        // real(tw * (xA - xB)) = twR * (xAR - xBR) - twI * (xAI - xBI);
+        // imag(tw * (xA - xB)) = twI * (xAR - xBR) + twR * (xAI - xBI);
+        *pOut++ = 0.5f * (xAR + xBR - r - s); //xAR
+        *pOut++ = 0.5f * (xAI - xBI + t - u); //xAI
 
-      pA += 2;
-      pB -= 2;
-      k--;
-   }
-
+        pA += 2;
+        pB -= 2;
+        k--;
+    }
 }
 
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
@@ -572,30 +548,22 @@ void merge_rfft_f32(
   @return        none
 */
 
-void arm_rfft_fast_f32(
-  const arm_rfft_fast_instance_f32 * S,
-  float32_t * p,
-  float32_t * pOut,
-  uint8_t ifftFlag)
-{
-   const arm_cfft_instance_f32 * Sint = &(S->Sint);
+void arm_rfft_fast_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut, uint8_t ifftFlag) {
+    const arm_cfft_instance_f32* Sint = &(S->Sint);
 
-   /* Calculation of Real FFT */
-   if (ifftFlag)
-   {
-      /*  Real FFT compression */
-      merge_rfft_f32(S, p, pOut);
-      /* Complex radix-4 IFFT process */
-      arm_cfft_f32( Sint, pOut, ifftFlag, 1);
-   }
-   else
-   {
-      /* Calculation of RFFT of input */
-      arm_cfft_f32( Sint, p, ifftFlag, 1);
+    /* Calculation of Real FFT */
+    if (ifftFlag) {
+        /*  Real FFT compression */
+        merge_rfft_f32(S, p, pOut);
+        /* Complex radix-4 IFFT process */
+        arm_cfft_f32(Sint, pOut, ifftFlag, 1);
+    } else {
+        /* Calculation of RFFT of input */
+        arm_cfft_f32(Sint, p, ifftFlag, 1);
 
-      /*  Real FFT extraction */
-      stage_rfft_f32(S, p, pOut);
-   }
+        /*  Real FFT extraction */
+        stage_rfft_f32(S, p, pOut);
+    }
 }
 
 /**

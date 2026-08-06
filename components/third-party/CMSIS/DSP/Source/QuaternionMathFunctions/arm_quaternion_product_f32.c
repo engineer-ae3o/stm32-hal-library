@@ -67,23 +67,18 @@
 
 #include "arm_helium_utils.h"
 
-void arm_quaternion_product_f32(const float32_t *qa, 
-    const float32_t *qb, 
-    float32_t *qr,
-    uint32_t nbQuaternions)
-{
-    static uint32_t patternA[4] = { 0, 1, 0, 1 };
-    static uint32_t patternB[4] = { 3, 2, 3, 2 };
-    static uint32_t patternC[4] = { 3, 2, 1, 0 };
-    static float32_t   signA[4] = { -1, -1, 1, 1 };
+void arm_quaternion_product_f32(const float32_t* qa, const float32_t* qb, float32_t* qr, uint32_t nbQuaternions) {
+    static uint32_t  patternA[4] = {0, 1, 0, 1};
+    static uint32_t  patternB[4] = {3, 2, 3, 2};
+    static uint32_t  patternC[4] = {3, 2, 1, 0};
+    static float32_t signA[4]    = {-1, -1, 1, 1};
 
-    uint32x4_t vecA = vld1q_u32(patternA);
-    uint32x4_t vecB = vld1q_u32(patternB);
-    uint32x4_t vecC = vld1q_u32(patternC);
-    f32x4_t vecSignA = vld1q_f32(signA);
+    uint32x4_t vecA     = vld1q_u32(patternA);
+    uint32x4_t vecB     = vld1q_u32(patternB);
+    uint32x4_t vecC     = vld1q_u32(patternC);
+    f32x4_t    vecSignA = vld1q_f32(signA);
 
-    while (nbQuaternions > 0U)
-    {
+    while (nbQuaternions > 0U) {
         f32x4_t vecTmpA, vecTmpB, vecAcc;
 
         vecTmpA = vldrwq_gather_shifted_offset_f32(qa, vecA);
@@ -127,20 +122,15 @@ void arm_quaternion_product_f32(const float32_t *qa,
 
 #else
 
-void arm_quaternion_product_f32(const float32_t *qa, 
-    const float32_t *qb, 
-    float32_t *qr,
-    uint32_t nbQuaternions)
-{
-   uint32_t i;
-   for(i=0; i < nbQuaternions; i++)
-   {
-     arm_quaternion_product_single_f32(qa, qb, qr);
+void arm_quaternion_product_f32(const float32_t* qa, const float32_t* qb, float32_t* qr, uint32_t nbQuaternions) {
+    uint32_t i;
+    for (i = 0; i < nbQuaternions; i++) {
+        arm_quaternion_product_single_f32(qa, qb, qr);
 
-     qa += 4;
-     qb += 4;
-     qr += 4;
-   }
+        qa += 4;
+        qb += 4;
+        qr += 4;
+    }
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 

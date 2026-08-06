@@ -39,18 +39,16 @@
  * @{
  */
 
-void arm_q7_to_q15_with_offset(const q7_t *src, q15_t *dst, uint32_t block_size, q15_t offset)
-{
+void arm_q7_to_q15_with_offset(const q7_t* src, q15_t* dst, uint32_t block_size, q15_t offset) {
     int block_cnt;
 
 #if defined(ARM_MATH_MVEI)
 
-    int16x8_t source;
+    int16x8_t       source;
     const int16x8_t source_offset = vdupq_n_s16(offset);
-    block_cnt = block_size / 8;
+    block_cnt                     = block_size / 8;
 
-    while (block_cnt > 0)
-    {
+    while (block_cnt > 0) {
         source = vldrbq_s16(src);
         source = vaddq_s16(source, source_offset);
         vstrhq_s16(dst, source);
@@ -74,8 +72,7 @@ void arm_q7_to_q15_with_offset(const q7_t *src, q15_t *dst, uint32_t block_size,
 
     /* First part of the processing with loop unrolling.  Compute 4 outputs at a time. */
     const q31_t offset_q15x2 = __PKHBT(offset, offset, 16);
-    while (block_cnt > 0)
-    {
+    while (block_cnt > 0) {
         /* convert from q7 to q15 and then store the results in the destination buffer */
         in_q7x4 = arm_nn_read_q7x4_ia(&src);
 
@@ -100,8 +97,7 @@ void arm_q7_to_q15_with_offset(const q7_t *src, q15_t *dst, uint32_t block_size,
     block_cnt = block_size;
 #endif
 
-    while (block_cnt > 0)
-    {
+    while (block_cnt > 0) {
         *dst++ = (q15_t)*src++ + offset;
 
         /* Decrement the loop counter */

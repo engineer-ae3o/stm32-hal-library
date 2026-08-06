@@ -58,38 +58,33 @@
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_biquad_cascade_df1_q15(
-  const arm_biquad_casd_df1_inst_q15 * S,
-  const q15_t * pSrc,
-        q15_t * pDst,
-        uint32_t blockSize)
-{
-    const q15_t    *pIn = pSrc; /*  input pointer initialization  */
-    q15_t          *pOut = pDst;        /*  output pointer initialization */
-    int             shift;
-    uint32_t        sample, stages = S->numStages;      /*  loop counters                 */
-    int             postShift = S->postShift;
-    q15x8_t         bCoeffs0, bCoeffs1, bCoeffs2, bCoeffs3;     /*  Coefficients vector           */
-    q15_t          *pState = S->pState; /*  pState pointer initialization */
-    q15x8_t         inVec0;
-    int64_t         acc;
-    const q15_t     *pCoeffs = S->pCoeffs;       /*  coeff pointer initialization  */
-    q31_t           out, out1;
+void arm_biquad_cascade_df1_q15(const arm_biquad_casd_df1_inst_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+    const q15_t* pIn  = pSrc; /*  input pointer initialization  */
+    q15_t*       pOut = pDst; /*  output pointer initialization */
+    int          shift;
+    uint32_t     sample, stages = S->numStages; /*  loop counters                 */
+    int          postShift = S->postShift;
+    q15x8_t      bCoeffs0, bCoeffs1, bCoeffs2, bCoeffs3; /*  Coefficients vector           */
+    q15_t*       pState = S->pState;                     /*  pState pointer initialization */
+    q15x8_t      inVec0;
+    int64_t      acc;
+    const q15_t* pCoeffs = S->pCoeffs; /*  coeff pointer initialization  */
+    q31_t        out, out1;
 
     shift = (15 - postShift) - 32;
 
     do {
-        q15_t           a2 = pCoeffs[5];
-        q15_t           a1 = pCoeffs[4];
+        q15_t a2 = pCoeffs[5];
+        q15_t a1 = pCoeffs[4];
 
-        bCoeffs0 = vdupq_n_s16(0);
-        bCoeffs0[0] = pCoeffs[3];       // b2
-        bCoeffs0[1] = pCoeffs[2];       // b1
-        bCoeffs0[2] = pCoeffs[0];       // b0
+        bCoeffs0    = vdupq_n_s16(0);
+        bCoeffs0[0] = pCoeffs[3]; // b2
+        bCoeffs0[1] = pCoeffs[2]; // b1
+        bCoeffs0[2] = pCoeffs[0]; // b0
 
-        uint32_t        zero = 0;
-        bCoeffs1 = bCoeffs0;
-        bCoeffs1 = vshlcq_s16(bCoeffs1, &zero, 16);
+        uint32_t zero = 0;
+        bCoeffs1      = bCoeffs0;
+        bCoeffs1      = vshlcq_s16(bCoeffs1, &zero, 16);
 
         bCoeffs2 = bCoeffs1;
         bCoeffs2 = vshlcq_s16(bCoeffs2, &zero, 16);
@@ -102,10 +97,8 @@ void arm_biquad_cascade_df1_q15(
         bCoeffs1[7] = a2;
         bCoeffs1[6] = a1;
 
-        bCoeffs2 =
-            vsetq_lane_s32(vgetq_lane_s32((q31x4_t) bCoeffs0, 3), (q31x4_t) bCoeffs2, 3);
-        bCoeffs3 =
-            vsetq_lane_s32(vgetq_lane_s32((q31x4_t) bCoeffs1, 3), (q31x4_t) bCoeffs3, 3);
+        bCoeffs2 = vsetq_lane_s32(vgetq_lane_s32((q31x4_t)bCoeffs0, 3), (q31x4_t)bCoeffs2, 3);
+        bCoeffs3 = vsetq_lane_s32(vgetq_lane_s32((q31x4_t)bCoeffs1, 3), (q31x4_t)bCoeffs3, 3);
 
 
         /* 2 first elements are garbage, will be updated with history */
@@ -117,28 +110,28 @@ void arm_biquad_cascade_df1_q15(
         inVec0[6] = pState[3];
         inVec0[7] = pState[2];
 
-        acc = vmlaldavq(bCoeffs0, inVec0);
-        acc = sqrshrl_sat48(acc, shift);
-        out1 = (q31_t) ((acc >> 32) & 0xffffffff);
+        acc  = vmlaldavq(bCoeffs0, inVec0);
+        acc  = sqrshrl_sat48(acc, shift);
+        out1 = (q31_t)((acc >> 32) & 0xffffffff);
 
         inVec0[6] = out1;
-        acc = vmlaldavq(bCoeffs1, inVec0);
-        acc = sqrshrl_sat48(acc, shift);
-        out = (q31_t) ((acc >> 32) & 0xffffffff);
+        acc       = vmlaldavq(bCoeffs1, inVec0);
+        acc       = sqrshrl_sat48(acc, shift);
+        out       = (q31_t)((acc >> 32) & 0xffffffff);
 
         inVec0[7] = out;
-        *pOut++ = (q15_t) out1;
-        *pOut++ = (q15_t) out;
+        *pOut++   = (q15_t)out1;
+        *pOut++   = (q15_t)out;
 
-        acc = vmlaldavq(bCoeffs2, inVec0);
-        acc = sqrshrl_sat48(acc, shift);
-        out1 = (q31_t) ((acc >> 32) & 0xffffffff);
+        acc  = vmlaldavq(bCoeffs2, inVec0);
+        acc  = sqrshrl_sat48(acc, shift);
+        out1 = (q31_t)((acc >> 32) & 0xffffffff);
 
 
         inVec0[6] = out1;
-        acc = vmlaldavq(bCoeffs3, inVec0);
-        acc = sqrshrl_sat48(acc, shift);
-        out = (q31_t) ((acc >> 32) & 0xffffffff);
+        acc       = vmlaldavq(bCoeffs3, inVec0);
+        acc       = sqrshrl_sat48(acc, shift);
+        out       = (q31_t)((acc >> 32) & 0xffffffff);
 
         /*
          * main loop
@@ -157,8 +150,8 @@ void arm_biquad_cascade_df1_q15(
             inVec0[7] = out;
 
             /* store */
-            *pOut++ = (q15_t) out1;
-            *pOut++ = (q15_t) out;
+            *pOut++ = (q15_t)out1;
+            *pOut++ = (q15_t)out;
 
             /*
              * in       { x0  x1  x2  x3  x4  x5  yn2  yn1 }
@@ -168,8 +161,8 @@ void arm_biquad_cascade_df1_q15(
              */
             acc = vmlaldavq(bCoeffs0, inVec0);
             /* shift + saturate to 16 bit */
-            acc = sqrshrl_sat48(acc, shift);
-            out1 = (q31_t) ((acc >> 32) & 0xffffffff);
+            acc       = sqrshrl_sat48(acc, shift);
+            out1      = (q31_t)((acc >> 32) & 0xffffffff);
             inVec0[6] = out1;
 
             /*
@@ -179,10 +172,10 @@ void arm_biquad_cascade_df1_q15(
              */
             acc = vmlaldavq(bCoeffs1, inVec0);
             acc = sqrshrl_sat48(acc, shift);
-            out = (q31_t) ((acc >> 32) & 0xffffffff);
+            out = (q31_t)((acc >> 32) & 0xffffffff);
 
-            *pOut++ = (q15_t) out1;
-            *pOut++ = (q15_t) out;
+            *pOut++ = (q15_t)out1;
+            *pOut++ = (q15_t)out;
 
 
             inVec0[7] = out;
@@ -191,9 +184,9 @@ void arm_biquad_cascade_df1_q15(
              *                         x
              * bCoeffs2 { 0   0   b2  b1  b0   0  a2  a1 }
              */
-            acc = vmlaldavq(bCoeffs2, inVec0);
-            acc = sqrshrl_sat48(acc, shift);
-            out1 = (q31_t) ((acc >> 32) & 0xffffffff);
+            acc       = vmlaldavq(bCoeffs2, inVec0);
+            acc       = sqrshrl_sat48(acc, shift);
+            out1      = (q31_t)((acc >> 32) & 0xffffffff);
             inVec0[6] = out1;
 
             /*
@@ -203,7 +196,7 @@ void arm_biquad_cascade_df1_q15(
              */
             acc = vmlaldavq(bCoeffs3, inVec0);
             acc = sqrshrl_sat48(acc, shift);
-            out = (q31_t) ((acc >> 32) & 0xffffffff);
+            out = (q31_t)((acc >> 32) & 0xffffffff);
 
             inVec0 = vld1q(pIn);
             pIn += 4;
@@ -212,35 +205,35 @@ void arm_biquad_cascade_df1_q15(
             sample--;
         }
 
-        *pOut++ = (q15_t) out1;
-        *pOut++ = (q15_t) out;
+        *pOut++ = (q15_t)out1;
+        *pOut++ = (q15_t)out;
 
         /*
          * Tail handling
          */
-        int32_t         loopRemainder = blockSize & 3;
+        int32_t loopRemainder = blockSize & 3;
 
         if (loopRemainder == 3) {
             inVec0[6] = out1;
             inVec0[7] = out;
 
-            acc = vmlaldavq(bCoeffs0, inVec0);
-            acc = sqrshrl_sat48(acc, shift);
-            out1 = (q31_t) ((acc >> 32) & 0xffffffff);
+            acc       = vmlaldavq(bCoeffs0, inVec0);
+            acc       = sqrshrl_sat48(acc, shift);
+            out1      = (q31_t)((acc >> 32) & 0xffffffff);
             inVec0[6] = out1;
 
             acc = vmlaldavq(bCoeffs1, inVec0);
             acc = sqrshrl_sat48(acc, shift);
-            out = (q31_t) ((acc >> 32) & 0xffffffff);
+            out = (q31_t)((acc >> 32) & 0xffffffff);
 
-            *pOut++ = (q15_t) out1;
-            *pOut++ = (q15_t) out;
+            *pOut++ = (q15_t)out1;
+            *pOut++ = (q15_t)out;
 
             inVec0[7] = out;
-            acc = vmlaldavq(bCoeffs2, inVec0);
-            acc = sqrshrl_sat48(acc, shift);
-            out1 = (q31_t) ((acc >> 32) & 0xffffffff);
-            *pOut++ = (q15_t) out1;
+            acc       = vmlaldavq(bCoeffs2, inVec0);
+            acc       = sqrshrl_sat48(acc, shift);
+            out1      = (q31_t)((acc >> 32) & 0xffffffff);
+            *pOut++   = (q15_t)out1;
 
             /* Store the updated state variables back into the pState array */
             pState[0] = vgetq_lane_s16(inVec0, 4);
@@ -252,17 +245,17 @@ void arm_biquad_cascade_df1_q15(
             inVec0[6] = out1;
             inVec0[7] = out;
 
-            acc = vmlaldavq(bCoeffs0, inVec0);
-            acc = sqrshrl_sat48(acc, shift);
-            out1 = (q31_t) ((acc >> 32) & 0xffffffff);
+            acc       = vmlaldavq(bCoeffs0, inVec0);
+            acc       = sqrshrl_sat48(acc, shift);
+            out1      = (q31_t)((acc >> 32) & 0xffffffff);
             inVec0[6] = out1;
 
             acc = vmlaldavq(bCoeffs1, inVec0);
             acc = sqrshrl_sat48(acc, shift);
-            out = (q31_t) ((acc >> 32) & 0xffffffff);
+            out = (q31_t)((acc >> 32) & 0xffffffff);
 
-            *pOut++ = (q15_t) out1;
-            *pOut++ = (q15_t) out;
+            *pOut++ = (q15_t)out1;
+            *pOut++ = (q15_t)out;
 
             /* Store the updated state variables back into the pState array */
             pState[0] = vgetq_lane_s16(inVec0, 3);
@@ -274,10 +267,10 @@ void arm_biquad_cascade_df1_q15(
             inVec0[6] = out1;
             inVec0[7] = out;
 
-            acc = vmlaldavq(bCoeffs0, inVec0);
-            acc = sqrshrl_sat48(acc, shift);
-            out1 = (q31_t) ((acc >> 32) & 0xffffffff);
-            *pOut++ = (q15_t) out1;
+            acc     = vmlaldavq(bCoeffs0, inVec0);
+            acc     = sqrshrl_sat48(acc, shift);
+            out1    = (q31_t)((acc >> 32) & 0xffffffff);
+            *pOut++ = (q15_t)out1;
 
             /* Store the updated state variables back into the pState array */
             pState[0] = vgetq_lane_s16(inVec0, 2);
@@ -306,310 +299,298 @@ void arm_biquad_cascade_df1_q15(
          * Reset to destination pointer
          */
         pOut = pDst;
-    }
-    while (--stages);
+    } while (--stages);
 }
 #else
-void arm_biquad_cascade_df1_q15(
-  const arm_biquad_casd_df1_inst_q15 * S,
-  const q15_t * pSrc,
-        q15_t * pDst,
-        uint32_t blockSize)
-{
+void arm_biquad_cascade_df1_q15(const arm_biquad_casd_df1_inst_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
 
 
-#if defined (ARM_MATH_DSP)
+#if defined(ARM_MATH_DSP)
 
-  const q15_t *pIn = pSrc;                             /* Source pointer */
-        q15_t *pOut = pDst;                            /* Destination pointer */
-        q31_t in;                                      /* Temporary variable to hold input value */
-        q31_t out;                                     /* Temporary variable to hold output value */
-        q31_t b0;                                      /* Temporary variable to hold bo value */
-        q31_t b1, a1;                                  /* Filter coefficients */
-        q31_t state_in, state_out;                     /* Filter state variables */
-        q31_t acc_l, acc_h;
-        q63_t acc;                                     /* Accumulator */
-        q15_t *pState = S->pState;                     /* State pointer */
-  const q15_t *pCoeffs = S->pCoeffs;                   /* Coefficient pointer */
-        int32_t lShift = (15 - (int32_t) S->postShift);       /* Post shift */
-        uint32_t sample, stage = (uint32_t) S->numStages;     /* Stage loop counter */
-        int32_t uShift = (32 - lShift);
+    const q15_t* pIn  = pSrc;         /* Source pointer */
+    q15_t*       pOut = pDst;         /* Destination pointer */
+    q31_t        in;                  /* Temporary variable to hold input value */
+    q31_t        out;                 /* Temporary variable to hold output value */
+    q31_t        b0;                  /* Temporary variable to hold bo value */
+    q31_t        b1, a1;              /* Filter coefficients */
+    q31_t        state_in, state_out; /* Filter state variables */
+    q31_t        acc_l, acc_h;
+    q63_t        acc;                                    /* Accumulator */
+    q15_t*       pState  = S->pState;                    /* State pointer */
+    const q15_t* pCoeffs = S->pCoeffs;                   /* Coefficient pointer */
+    int32_t      lShift  = (15 - (int32_t)S->postShift); /* Post shift */
+    uint32_t     sample, stage = (uint32_t)S->numStages; /* Stage loop counter */
+    int32_t      uShift = (32 - lShift);
 
-  do
-  {
-    /* Read the b0 and 0 coefficients using SIMD  */
-    b0 = read_q15x2_ia ((q15_t **) &pCoeffs);
+    do {
+        /* Read the b0 and 0 coefficients using SIMD  */
+        b0 = read_q15x2_ia((q15_t**)&pCoeffs);
 
-    /* Read the b1 and b2 coefficients using SIMD */
-    b1 = read_q15x2_ia ((q15_t **) &pCoeffs);
+        /* Read the b1 and b2 coefficients using SIMD */
+        b1 = read_q15x2_ia((q15_t**)&pCoeffs);
 
-    /* Read the a1 and a2 coefficients using SIMD */
-    a1 = read_q15x2_ia ((q15_t **) &pCoeffs);
+        /* Read the a1 and a2 coefficients using SIMD */
+        a1 = read_q15x2_ia((q15_t**)&pCoeffs);
 
-    /* Read the input state values from the state buffer:  x[n-1], x[n-2] */
-    state_in = read_q15x2_ia (&pState);
+        /* Read the input state values from the state buffer:  x[n-1], x[n-2] */
+        state_in = read_q15x2_ia(&pState);
 
-    /* Read the output state values from the state buffer:  y[n-1], y[n-2] */
-    state_out = read_q15x2_da (&pState);
+        /* Read the output state values from the state buffer:  y[n-1], y[n-2] */
+        state_out = read_q15x2_da(&pState);
 
-    /* Apply loop unrolling and compute 2 output values simultaneously. */
-    /*      The variable acc hold output values that are being computed:
+        /* Apply loop unrolling and compute 2 output values simultaneously. */
+        /*      The variable acc hold output values that are being computed:
      *
      *    acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2]
      *    acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2]
      */
-    sample = blockSize >> 1U;
+        sample = blockSize >> 1U;
 
-    /* First part of the processing with loop unrolling.  Compute 2 outputs at a time.
+        /* First part of the processing with loop unrolling.  Compute 2 outputs at a time.
      ** a second loop below computes the remaining 1 sample. */
-    while (sample > 0U)
-    {
+        while (sample > 0U) {
 
-      /* Read the input */
-      in = read_q15x2_ia ((q15_t **) &pIn);
+            /* Read the input */
+            in = read_q15x2_ia((q15_t**)&pIn);
 
-      /* out =  b0 * x[n] + 0 * 0 */
-      out = __SMUAD(b0, in);
+            /* out =  b0 * x[n] + 0 * 0 */
+            out = __SMUAD(b0, in);
 
-      /* acc +=  b1 * x[n-1] +  b2 * x[n-2] + out */
-      acc = __SMLALD(b1, state_in, out);
-      /* acc +=  a1 * y[n-1] +  a2 * y[n-2] */
-      acc = __SMLALD(a1, state_out, acc);
+            /* acc +=  b1 * x[n-1] +  b2 * x[n-2] + out */
+            acc = __SMLALD(b1, state_in, out);
+            /* acc +=  a1 * y[n-1] +  a2 * y[n-2] */
+            acc = __SMLALD(a1, state_out, acc);
 
-      /* The result is converted from 3.29 to 1.31 if postShift = 1, and then saturation is applied */
-      /* Calc lower part of acc */
-      acc_l = acc & 0xffffffff;
+            /* The result is converted from 3.29 to 1.31 if postShift = 1, and then saturation is applied */
+            /* Calc lower part of acc */
+            acc_l = acc & 0xffffffff;
 
-      /* Calc upper part of acc */
-      acc_h = (acc >> 32) & 0xffffffff;
+            /* Calc upper part of acc */
+            acc_h = (acc >> 32) & 0xffffffff;
 
-      /* Apply shift for lower part of acc and upper part of acc */
-      out = (uint32_t) acc_l >> lShift | acc_h << uShift;
+            /* Apply shift for lower part of acc and upper part of acc */
+            out = (uint32_t)acc_l >> lShift | acc_h << uShift;
 
-      out = __SSAT(out, 16);
+            out = __SSAT(out, 16);
 
-      /* Every time after the output is computed state should be updated. */
-      /* The states should be updated as:  */
-      /* Xn2 = Xn1 */
-      /* Xn1 = Xn  */
-      /* Yn2 = Yn1 */
-      /* Yn1 = acc */
-      /* x[n-N], x[n-N-1] are packed together to make state_in of type q31 */
-      /* y[n-N], y[n-N-1] are packed together to make state_out of type q31 */
+            /* Every time after the output is computed state should be updated. */
+            /* The states should be updated as:  */
+            /* Xn2 = Xn1 */
+            /* Xn1 = Xn  */
+            /* Yn2 = Yn1 */
+            /* Yn1 = acc */
+            /* x[n-N], x[n-N-1] are packed together to make state_in of type q31 */
+            /* y[n-N], y[n-N-1] are packed together to make state_out of type q31 */
 
-#ifndef  ARM_MATH_BIG_ENDIAN
-      state_in  = __PKHBT(in, state_in, 16);
-      state_out = __PKHBT(out, state_out, 16);
+#ifndef ARM_MATH_BIG_ENDIAN
+            state_in  = __PKHBT(in, state_in, 16);
+            state_out = __PKHBT(out, state_out, 16);
 #else
-      state_in  = __PKHBT(state_in >> 16, (in >> 16), 16);
-      state_out = __PKHBT(state_out >> 16, (out), 16);
+            state_in  = __PKHBT(state_in >> 16, (in >> 16), 16);
+            state_out = __PKHBT(state_out >> 16, (out), 16);
 #endif /* #ifndef  ARM_MATH_BIG_ENDIAN */
 
-      /* out =  b0 * x[n] + 0 * 0 */
-      out = __SMUADX(b0, in);
-      /* acc +=  b1 * x[n-1] +  b2 * x[n-2] + out */
-      acc = __SMLALD(b1, state_in, out);
-      /* acc +=  a1 * y[n-1] + a2 * y[n-2] */
-      acc = __SMLALD(a1, state_out, acc);
+            /* out =  b0 * x[n] + 0 * 0 */
+            out = __SMUADX(b0, in);
+            /* acc +=  b1 * x[n-1] +  b2 * x[n-2] + out */
+            acc = __SMLALD(b1, state_in, out);
+            /* acc +=  a1 * y[n-1] + a2 * y[n-2] */
+            acc = __SMLALD(a1, state_out, acc);
 
-      /* The result is converted from 3.29 to 1.31 if postShift = 1, and then saturation is applied */
-      /* Calc lower part of acc */
-      acc_l = acc & 0xffffffff;
+            /* The result is converted from 3.29 to 1.31 if postShift = 1, and then saturation is applied */
+            /* Calc lower part of acc */
+            acc_l = acc & 0xffffffff;
 
-      /* Calc upper part of acc */
-      acc_h = (acc >> 32) & 0xffffffff;
+            /* Calc upper part of acc */
+            acc_h = (acc >> 32) & 0xffffffff;
 
-      /* Apply shift for lower part of acc and upper part of acc */
-      out = (uint32_t) acc_l >> lShift | acc_h << uShift;
+            /* Apply shift for lower part of acc and upper part of acc */
+            out = (uint32_t)acc_l >> lShift | acc_h << uShift;
 
-      out = __SSAT(out, 16);
+            out = __SSAT(out, 16);
 
-      /* Store the output in the destination buffer. */
-#ifndef  ARM_MATH_BIG_ENDIAN
-      write_q15x2_ia (&pOut, __PKHBT(state_out, out, 16));
+            /* Store the output in the destination buffer. */
+#ifndef ARM_MATH_BIG_ENDIAN
+            write_q15x2_ia(&pOut, __PKHBT(state_out, out, 16));
 #else
-      write_q15x2_ia (&pOut, __PKHBT(out, state_out >> 16, 16));
+            write_q15x2_ia(&pOut, __PKHBT(out, state_out >> 16, 16));
 #endif /* #ifndef  ARM_MATH_BIG_ENDIAN */
 
-      /* Every time after the output is computed state should be updated. */
-      /* The states should be updated as:  */
-      /* Xn2 = Xn1 */
-      /* Xn1 = Xn  */
-      /* Yn2 = Yn1 */
-      /* Yn1 = acc */
-      /* x[n-N], x[n-N-1] are packed together to make state_in of type q31 */
-      /* y[n-N], y[n-N-1] are packed together to make state_out of type q31 */
-#ifndef  ARM_MATH_BIG_ENDIAN
-      state_in  = __PKHBT(in >> 16, state_in, 16);
-      state_out = __PKHBT(out, state_out, 16);
+            /* Every time after the output is computed state should be updated. */
+            /* The states should be updated as:  */
+            /* Xn2 = Xn1 */
+            /* Xn1 = Xn  */
+            /* Yn2 = Yn1 */
+            /* Yn1 = acc */
+            /* x[n-N], x[n-N-1] are packed together to make state_in of type q31 */
+            /* y[n-N], y[n-N-1] are packed together to make state_out of type q31 */
+#ifndef ARM_MATH_BIG_ENDIAN
+            state_in  = __PKHBT(in >> 16, state_in, 16);
+            state_out = __PKHBT(out, state_out, 16);
 #else
-      state_in  = __PKHBT(state_in >> 16, in, 16);
-      state_out = __PKHBT(state_out >> 16, out, 16);
+            state_in  = __PKHBT(state_in >> 16, in, 16);
+            state_out = __PKHBT(state_out >> 16, out, 16);
 #endif /* #ifndef  ARM_MATH_BIG_ENDIAN */
 
-      /* Decrement loop counter */
-      sample--;
-    }
+            /* Decrement loop counter */
+            sample--;
+        }
 
-    /* If the blockSize is not a multiple of 2, compute any remaining output samples here.
+        /* If the blockSize is not a multiple of 2, compute any remaining output samples here.
      ** No loop unrolling is used. */
 
-    if ((blockSize & 0x1U) != 0U)
-    {
-      /* Read the input */
-      in = *pIn++;
+        if ((blockSize & 0x1U) != 0U) {
+            /* Read the input */
+            in = *pIn++;
 
-      /* out =  b0 * x[n] + 0 * 0 */
-#ifndef  ARM_MATH_BIG_ENDIAN
-      out = __SMUAD(b0, in);
+            /* out =  b0 * x[n] + 0 * 0 */
+#ifndef ARM_MATH_BIG_ENDIAN
+            out = __SMUAD(b0, in);
 #else
-      out = __SMUADX(b0, in);
+            out = __SMUADX(b0, in);
 #endif /* #ifndef  ARM_MATH_BIG_ENDIAN */
 
-      /* acc =  b1 * x[n-1] + b2 * x[n-2] + out */
-      acc = __SMLALD(b1, state_in, out);
-      /* acc +=  a1 * y[n-1] + a2 * y[n-2] */
-      acc = __SMLALD(a1, state_out, acc);
+            /* acc =  b1 * x[n-1] + b2 * x[n-2] + out */
+            acc = __SMLALD(b1, state_in, out);
+            /* acc +=  a1 * y[n-1] + a2 * y[n-2] */
+            acc = __SMLALD(a1, state_out, acc);
 
-      /* The result is converted from 3.29 to 1.31 if postShift = 1, and then saturation is applied */
-      /* Calc lower part of acc */
-      acc_l = acc & 0xffffffff;
+            /* The result is converted from 3.29 to 1.31 if postShift = 1, and then saturation is applied */
+            /* Calc lower part of acc */
+            acc_l = acc & 0xffffffff;
 
-      /* Calc upper part of acc */
-      acc_h = (acc >> 32) & 0xffffffff;
+            /* Calc upper part of acc */
+            acc_h = (acc >> 32) & 0xffffffff;
 
-      /* Apply shift for lower part of acc and upper part of acc */
-      out = (uint32_t) acc_l >> lShift | acc_h << uShift;
+            /* Apply shift for lower part of acc and upper part of acc */
+            out = (uint32_t)acc_l >> lShift | acc_h << uShift;
 
-      out = __SSAT(out, 16);
+            out = __SSAT(out, 16);
 
-      /* Store the output in the destination buffer. */
-      *pOut++ = (q15_t) out;
+            /* Store the output in the destination buffer. */
+            *pOut++ = (q15_t)out;
 
-      /* Every time after the output is computed state should be updated. */
-      /* The states should be updated as:  */
-      /* Xn2 = Xn1 */
-      /* Xn1 = Xn  */
-      /* Yn2 = Yn1 */
-      /* Yn1 = acc */
-      /* x[n-N], x[n-N-1] are packed together to make state_in of type q31 */
-      /* y[n-N], y[n-N-1] are packed together to make state_out of type q31 */
-#ifndef  ARM_MATH_BIG_ENDIAN
-      state_in = __PKHBT(in, state_in, 16);
-      state_out = __PKHBT(out, state_out, 16);
+            /* Every time after the output is computed state should be updated. */
+            /* The states should be updated as:  */
+            /* Xn2 = Xn1 */
+            /* Xn1 = Xn  */
+            /* Yn2 = Yn1 */
+            /* Yn1 = acc */
+            /* x[n-N], x[n-N-1] are packed together to make state_in of type q31 */
+            /* y[n-N], y[n-N-1] are packed together to make state_out of type q31 */
+#ifndef ARM_MATH_BIG_ENDIAN
+            state_in  = __PKHBT(in, state_in, 16);
+            state_out = __PKHBT(out, state_out, 16);
 #else
-      state_in = __PKHBT(state_in >> 16, in, 16);
-      state_out = __PKHBT(state_out >> 16, out, 16);
+            state_in  = __PKHBT(state_in >> 16, in, 16);
+            state_out = __PKHBT(state_out >> 16, out, 16);
 #endif /* #ifndef  ARM_MATH_BIG_ENDIAN */
-    }
+        }
 
-    /* The first stage goes from the input wire to the output wire.  */
-    /* Subsequent numStages occur in-place in the output wire  */
-    pIn = pDst;
+        /* The first stage goes from the input wire to the output wire.  */
+        /* Subsequent numStages occur in-place in the output wire  */
+        pIn = pDst;
 
-    /* Reset the output pointer */
-    pOut = pDst;
+        /* Reset the output pointer */
+        pOut = pDst;
 
-    /* Store the updated state variables back into the state array */
-    write_q15x2_ia (&pState, state_in);
-    write_q15x2_ia (&pState, state_out);
+        /* Store the updated state variables back into the state array */
+        write_q15x2_ia(&pState, state_in);
+        write_q15x2_ia(&pState, state_out);
 
-    /* Decrement loop counter */
-    stage--;
+        /* Decrement loop counter */
+        stage--;
 
-  } while (stage > 0U);
+    } while (stage > 0U);
 
 #else
 
-  const q15_t *pIn = pSrc;                             /* Source pointer */
-        q15_t *pOut = pDst;                            /* Destination pointer */
-        q15_t b0, b1, b2, a1, a2;                      /* Filter coefficients */
-        q15_t Xn1, Xn2, Yn1, Yn2;                      /* Filter state variables */
-        q15_t Xn;                                      /* temporary input */
-        q63_t acc;                                     /* Accumulator */
-        int32_t shift = (15 - (int32_t) S->postShift); /* Post shift */
-        q15_t *pState = S->pState;                     /* State pointer */
-  const q15_t *pCoeffs = S->pCoeffs;                   /* Coefficient pointer */
-        uint32_t sample, stage = (uint32_t) S->numStages;     /* Stage loop counter */
+    const q15_t* pIn  = pSrc;                            /* Source pointer */
+    q15_t*       pOut = pDst;                            /* Destination pointer */
+    q15_t        b0, b1, b2, a1, a2;                     /* Filter coefficients */
+    q15_t        Xn1, Xn2, Yn1, Yn2;                     /* Filter state variables */
+    q15_t        Xn;                                     /* temporary input */
+    q63_t        acc;                                    /* Accumulator */
+    int32_t      shift   = (15 - (int32_t)S->postShift); /* Post shift */
+    q15_t*       pState  = S->pState;                    /* State pointer */
+    const q15_t* pCoeffs = S->pCoeffs;                   /* Coefficient pointer */
+    uint32_t     sample, stage = (uint32_t)S->numStages; /* Stage loop counter */
 
-  do
-  {
-    /* Reading the coefficients */
-    b0 = *pCoeffs++;
-    pCoeffs++;  // skip the 0 coefficient
-    b1 = *pCoeffs++;
-    b2 = *pCoeffs++;
-    a1 = *pCoeffs++;
-    a2 = *pCoeffs++;
+    do {
+        /* Reading the coefficients */
+        b0 = *pCoeffs++;
+        pCoeffs++; // skip the 0 coefficient
+        b1 = *pCoeffs++;
+        b2 = *pCoeffs++;
+        a1 = *pCoeffs++;
+        a2 = *pCoeffs++;
 
-    /* Reading the state values */
-    Xn1 = pState[0];
-    Xn2 = pState[1];
-    Yn1 = pState[2];
-    Yn2 = pState[3];
+        /* Reading the state values */
+        Xn1 = pState[0];
+        Xn2 = pState[1];
+        Yn1 = pState[2];
+        Yn2 = pState[3];
 
-    /* The variables acc holds the output value that is computed:
+        /* The variables acc holds the output value that is computed:
      *    acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2]
      */
 
-    sample = blockSize;
+        sample = blockSize;
 
-    while (sample > 0U)
-    {
-      /* Read the input */
-      Xn = *pIn++;
+        while (sample > 0U) {
+            /* Read the input */
+            Xn = *pIn++;
 
-      /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-      /* acc =  b0 * x[n] */
-      acc = (q31_t) b0 *Xn;
+            /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
+            /* acc =  b0 * x[n] */
+            acc = (q31_t)b0 * Xn;
 
-      /* acc +=  b1 * x[n-1] */
-      acc += (q31_t) b1 *Xn1;
-      /* acc +=  b[2] * x[n-2] */
-      acc += (q31_t) b2 *Xn2;
-      /* acc +=  a1 * y[n-1] */
-      acc += (q31_t) a1 *Yn1;
-      /* acc +=  a2 * y[n-2] */
-      acc += (q31_t) a2 *Yn2;
+            /* acc +=  b1 * x[n-1] */
+            acc += (q31_t)b1 * Xn1;
+            /* acc +=  b[2] * x[n-2] */
+            acc += (q31_t)b2 * Xn2;
+            /* acc +=  a1 * y[n-1] */
+            acc += (q31_t)a1 * Yn1;
+            /* acc +=  a2 * y[n-2] */
+            acc += (q31_t)a2 * Yn2;
 
-      /* The result is converted to 1.31  */
-      acc = __SSAT((acc >> shift), 16);
+            /* The result is converted to 1.31  */
+            acc = __SSAT((acc >> shift), 16);
 
-      /* Every time after the output is computed state should be updated. */
-      /* The states should be updated as:  */
-      /* Xn2 = Xn1 */
-      /* Xn1 = Xn  */
-      /* Yn2 = Yn1 */
-      /* Yn1 = acc */
-      Xn2 = Xn1;
-      Xn1 = Xn;
-      Yn2 = Yn1;
-      Yn1 = (q15_t) acc;
+            /* Every time after the output is computed state should be updated. */
+            /* The states should be updated as:  */
+            /* Xn2 = Xn1 */
+            /* Xn1 = Xn  */
+            /* Yn2 = Yn1 */
+            /* Yn1 = acc */
+            Xn2 = Xn1;
+            Xn1 = Xn;
+            Yn2 = Yn1;
+            Yn1 = (q15_t)acc;
 
-      /* Store the output in the destination buffer. */
-      *pOut++ = (q15_t) acc;
+            /* Store the output in the destination buffer. */
+            *pOut++ = (q15_t)acc;
 
-      /* decrement the loop counter */
-      sample--;
-    }
+            /* decrement the loop counter */
+            sample--;
+        }
 
-    /*  The first stage goes from the input buffer to the output buffer. */
-    /*  Subsequent stages occur in-place in the output buffer */
-    pIn = pDst;
+        /*  The first stage goes from the input buffer to the output buffer. */
+        /*  Subsequent stages occur in-place in the output buffer */
+        pIn = pDst;
 
-    /* Reset to destination pointer */
-    pOut = pDst;
+        /* Reset to destination pointer */
+        pOut = pDst;
 
-    /*  Store the updated state variables back into the pState array */
-    *pState++ = Xn1;
-    *pState++ = Xn2;
-    *pState++ = Yn1;
-    *pState++ = Yn2;
+        /*  Store the updated state variables back into the pState array */
+        *pState++ = Xn1;
+        *pState++ = Xn2;
+        *pState++ = Yn1;
+        *pState++ = Yn2;
 
-  } while (--stage);
+    } while (--stage);
 
 #endif /* #if defined (ARM_MATH_DSP) */
-
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

@@ -64,21 +64,19 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math_f16.h"
 
-float16_t arm_entropy_f16(const float16_t * pSrcA,uint32_t blockSize)
-{
-    uint32_t        blkCnt;
-    _Float16       accum=0.0f16,p;
+float16_t arm_entropy_f16(const float16_t* pSrcA, uint32_t blockSize) {
+    uint32_t blkCnt;
+    _Float16 accum = 0.0f16, p;
 
 
     blkCnt = blockSize;
 
-    f16x8_t         vSum = vdupq_n_f16(0.0f);
+    f16x8_t vSum = vdupq_n_f16(0.0f);
     /* Compute 4 outputs at a time */
     blkCnt = blockSize >> 3U;
 
-    while (blkCnt > 0U)
-    {
-        f16x8_t         vecIn = vld1q(pSrcA);
+    while (blkCnt > 0U) {
+        f16x8_t vecIn = vld1q(pSrcA);
 
         vSum = vaddq_f16(vSum, vmulq(vecIn, vlogq_f16(vecIn)));
 
@@ -87,20 +85,18 @@ float16_t arm_entropy_f16(const float16_t * pSrcA,uint32_t blockSize)
          * Advance vector source and destination pointers
          */
         pSrcA += 8;
-        blkCnt --;
+        blkCnt--;
     }
 
     accum = vecAddAcrossF16Mve(vSum);
 
     /* Tail */
     blkCnt = blockSize & 0x7;
-    while(blkCnt > 0)
-    {
-       p = *pSrcA++;
-       accum += p * (_Float16)logf((float32_t)p);
-       
-       blkCnt--;
-    
+    while (blkCnt > 0) {
+        p = *pSrcA++;
+        accum += p * (_Float16)logf((float32_t)p);
+
+        blkCnt--;
     }
 
     return (-accum);
@@ -108,27 +104,24 @@ float16_t arm_entropy_f16(const float16_t * pSrcA,uint32_t blockSize)
 
 #else
 
-float16_t arm_entropy_f16(const float16_t * pSrcA,uint32_t blockSize)
-{
-    const float16_t *pIn;
-    uint32_t blkCnt;
-    _Float16 accum, p;
- 
-    pIn = pSrcA;
+float16_t arm_entropy_f16(const float16_t* pSrcA, uint32_t blockSize) {
+    const float16_t* pIn;
+    uint32_t         blkCnt;
+    _Float16         accum, p;
+
+    pIn    = pSrcA;
     blkCnt = blockSize;
 
     accum = 0.0f;
 
-    while(blkCnt > 0)
-    {
-       p = *pIn++;
-       accum += p * (_Float16)logf((float32_t)p);
-       
-       blkCnt--;
-    
+    while (blkCnt > 0) {
+        p = *pIn++;
+        accum += p * (_Float16)logf((float32_t)p);
+
+        blkCnt--;
     }
 
-    return(-accum);
+    return (-accum);
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 
@@ -136,5 +129,4 @@ float16_t arm_entropy_f16(const float16_t * pSrcA,uint32_t blockSize)
  * @} end of Entropy group
  */
 
-#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */ 
-
+#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */

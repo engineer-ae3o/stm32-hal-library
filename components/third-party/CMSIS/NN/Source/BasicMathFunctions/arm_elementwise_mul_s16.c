@@ -46,18 +46,17 @@
  * @note   Refer header file for details.
  *
  */
-arm_status arm_elementwise_mul_s16(const int16_t *input_1_vect,
-                                   const int16_t *input_2_vect,
-                                   const int32_t input_1_offset,
-                                   const int32_t input_2_offset,
-                                   int16_t *output,
-                                   const int32_t out_offset,
-                                   const int32_t out_mult,
-                                   const int32_t out_shift,
-                                   const int32_t out_activation_min,
-                                   const int32_t out_activation_max,
-                                   const int32_t block_size)
-{
+arm_status arm_elementwise_mul_s16(const int16_t* input_1_vect,
+                                   const int16_t* input_2_vect,
+                                   const int32_t  input_1_offset,
+                                   const int32_t  input_2_offset,
+                                   int16_t*       output,
+                                   const int32_t  out_offset,
+                                   const int32_t  out_mult,
+                                   const int32_t  out_shift,
+                                   const int32_t  out_activation_min,
+                                   const int32_t  out_activation_max,
+                                   const int32_t  block_size) {
     (void)input_1_offset;
     (void)input_2_offset;
     (void)out_offset;
@@ -68,8 +67,7 @@ arm_status arm_elementwise_mul_s16(const int16_t *input_1_vect,
 
     loop_count = block_size;
 
-    while (loop_count > 0)
-    {
+    while (loop_count > 0) {
         /* C = A * B */
 
         input_1 = *input_1_vect++;

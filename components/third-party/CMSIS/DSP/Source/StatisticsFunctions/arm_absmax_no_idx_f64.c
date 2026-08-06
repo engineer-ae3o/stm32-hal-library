@@ -44,42 +44,33 @@
   @param[out]    pResult    maximum value returned here
   @return        none
  */
-void arm_absmax_no_idx_f64(
-  const float64_t * pSrc,
-        uint32_t blockSize,
-        float64_t * pResult)
-{
-        float64_t maxVal, out;                         /* Temporary variables to store the output value. */
-        uint32_t blkCnt;                     /* Loop counter */
+void arm_absmax_no_idx_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult) {
+    float64_t maxVal, out; /* Temporary variables to store the output value. */
+    uint32_t  blkCnt;      /* Loop counter */
 
 
+    /* Load first input value that act as reference value for comparision */
+    out = fabs(*pSrc++);
 
+    /* Initialize blkCnt with number of samples */
+    blkCnt = (blockSize - 1U);
 
+    while (blkCnt > 0U) {
+        /* Initialize maxVal to the next consecutive values one by one */
+        maxVal = fabs(*pSrc++);
 
-  /* Load first input value that act as reference value for comparision */
-  out = fabs(*pSrc++);
+        /* compare for the maximum value */
+        if (out < maxVal) {
+            /* Update the maximum value and it's index */
+            out = maxVal;
+        }
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = (blockSize - 1U);
-
-  while (blkCnt > 0U)
-  {
-    /* Initialize maxVal to the next consecutive values one by one */
-    maxVal = fabs(*pSrc++);
-
-    /* compare for the maximum value */
-    if (out < maxVal)
-    {
-      /* Update the maximum value and it's index */
-      out = maxVal;
+        /* Decrement loop counter */
+        blkCnt--;
     }
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
-  /* Store the maximum value and it's index into destination pointers */
-  *pResult = out;
+    /* Store the maximum value and it's index into destination pointers */
+    *pResult = out;
 }
 
 /**

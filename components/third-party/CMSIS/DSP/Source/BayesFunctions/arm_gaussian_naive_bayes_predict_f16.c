@@ -56,26 +56,24 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math_f16.h"
 
-uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_instance_f16 *S, 
-   const float16_t * in, 
-   float16_t *pOutputProbabilities,
-   float16_t *pBufferB
-   )
-{
+uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_instance_f16* S,
+                                              const float16_t*                             in,
+                                              float16_t*                                   pOutputProbabilities,
+                                              float16_t*                                   pBufferB) {
     uint32_t         nbClass;
-    const float16_t *pTheta = S->theta;
-    const float16_t *pSigma = S->sigma;
-    float16_t      *buffer = pOutputProbabilities;
-    const float16_t *pIn = in;
-    float16_t       result;
-    f16x8_t         vsigma;
-    _Float16       tmp;
-    f16x8_t         vacc1, vacc2;
-    uint32_t        index;
-    float16_t       *logclassPriors=pBufferB;
-    float16_t      *pLogPrior = logclassPriors;
+    const float16_t* pTheta = S->theta;
+    const float16_t* pSigma = S->sigma;
+    float16_t*       buffer = pOutputProbabilities;
+    const float16_t* pIn    = in;
+    float16_t        result;
+    f16x8_t          vsigma;
+    _Float16         tmp;
+    f16x8_t          vacc1, vacc2;
+    uint32_t         index;
+    float16_t*       logclassPriors = pBufferB;
+    float16_t*       pLogPrior      = logclassPriors;
 
-    arm_vlog_f16((float16_t *) S->classPriors, logclassPriors, S->numberOfClasses);
+    arm_vlog_f16((float16_t*)S->classPriors, logclassPriors, S->numberOfClasses);
 
     pTheta = S->theta;
     pSigma = S->sigma;
@@ -86,12 +84,12 @@ uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_ins
         vacc1 = vdupq_n_f16(0.0f16);
         vacc2 = vdupq_n_f16(0.0f16);
 
-        uint32_t         blkCnt =S->vectorDimension >> 3;
+        uint32_t blkCnt = S->vectorDimension >> 3;
         while (blkCnt > 0U) {
-            f16x8_t         vinvSigma, vtmp;
+            f16x8_t vinvSigma, vtmp;
 
             vsigma = vaddq_n_f16(vld1q(pSigma), S->epsilon);
-            vacc1 = vaddq(vacc1, vlogq_f16(vmulq_n_f16(vsigma, 2.0f16 * (_Float16)PI)));
+            vacc1  = vaddq(vacc1, vlogq_f16(vmulq_n_f16(vsigma, 2.0f16 * (_Float16)PI)));
 
             vinvSigma = vrecip_medprec_f16(vsigma);
 
@@ -109,12 +107,11 @@ uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_ins
 
         blkCnt = S->vectorDimension & 7;
         if (blkCnt > 0U) {
-            mve_pred16_t    p0 = vctp16q(blkCnt);
-            f16x8_t         vinvSigma, vtmp;
+            mve_pred16_t p0 = vctp16q(blkCnt);
+            f16x8_t      vinvSigma, vtmp;
 
             vsigma = vaddq_n_f16(vld1q(pSigma), S->epsilon);
-            vacc1 =
-                vaddq_m_f16(vacc1, vacc1, vlogq_f16(vmulq_n_f16(vsigma, 2.0f16 * (_Float16)PI)), p0);
+            vacc1  = vaddq_m_f16(vacc1, vacc1, vlogq_f16(vmulq_n_f16(vsigma, 2.0f16 * (_Float16)PI)), p0);
 
             vinvSigma = vrecip_medprec_f16(vsigma);
 
@@ -142,46 +139,43 @@ uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_ins
 
 #else
 
-uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_instance_f16 *S, 
-   const float16_t * in, 
-   float16_t *pOutputProbabilities,
-   float16_t *pBufferB)
-{
-    uint32_t nbClass;
-    uint32_t nbDim;
-    const float16_t *pPrior = S->classPriors;
-    const float16_t *pTheta = S->theta;
-    const float16_t *pSigma = S->sigma;
-    float16_t *buffer = pOutputProbabilities;
-    const float16_t *pIn=in;
-    float16_t result;
-    _Float16 sigma;
-    _Float16 tmp;
-    _Float16 acc1,acc2;
-    uint32_t index;
+uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_instance_f16* S,
+                                              const float16_t*                             in,
+                                              float16_t*                                   pOutputProbabilities,
+                                              float16_t*                                   pBufferB) {
+    uint32_t         nbClass;
+    uint32_t         nbDim;
+    const float16_t* pPrior = S->classPriors;
+    const float16_t* pTheta = S->theta;
+    const float16_t* pSigma = S->sigma;
+    float16_t*       buffer = pOutputProbabilities;
+    const float16_t* pIn    = in;
+    float16_t        result;
+    _Float16         sigma;
+    _Float16         tmp;
+    _Float16         acc1, acc2;
+    uint32_t         index;
     (void)pBufferB;
 
-    pTheta=S->theta;
-    pSigma=S->sigma;
+    pTheta = S->theta;
+    pSigma = S->sigma;
 
-    for(nbClass = 0; nbClass < S->numberOfClasses; nbClass++)
-    {
+    for (nbClass = 0; nbClass < S->numberOfClasses; nbClass++) {
 
-        
+
         pIn = in;
 
-        tmp = 0.0f16;
+        tmp  = 0.0f16;
         acc1 = 0.0f16;
         acc2 = 0.0f16;
-        for(nbDim = 0; nbDim < S->vectorDimension; nbDim++)
-        {
-           sigma = (_Float16)*pSigma + (_Float16)S->epsilon;
-           acc1 += (_Float16)logf(2.0f * PI * (float32_t)sigma);
-           acc2 += ((_Float16)*pIn - (_Float16)*pTheta) * ((_Float16)*pIn - (_Float16)*pTheta) / (_Float16)sigma;
+        for (nbDim = 0; nbDim < S->vectorDimension; nbDim++) {
+            sigma = (_Float16)*pSigma + (_Float16)S->epsilon;
+            acc1 += (_Float16)logf(2.0f * PI * (float32_t)sigma);
+            acc2 += ((_Float16)*pIn - (_Float16)*pTheta) * ((_Float16)*pIn - (_Float16)*pTheta) / (_Float16)sigma;
 
-           pIn++;
-           pTheta++;
-           pSigma++;
+            pIn++;
+            pTheta++;
+            pSigma++;
         }
 
         tmp = -0.5f16 * (_Float16)acc1;
@@ -192,9 +186,9 @@ uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_ins
         buffer++;
     }
 
-    arm_max_f16(pOutputProbabilities,S->numberOfClasses,&result,&index);
+    arm_max_f16(pOutputProbabilities, S->numberOfClasses, &result, &index);
 
-    return(index);
+    return (index);
 }
 
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
@@ -203,5 +197,4 @@ uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_ins
  * @} end of groupBayes group
  */
 
-#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */ 
-
+#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */

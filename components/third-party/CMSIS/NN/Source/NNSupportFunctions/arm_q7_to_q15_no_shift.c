@@ -55,10 +55,9 @@
  *
  */
 
-void arm_q7_to_q15_no_shift(const q7_t *pSrc, q15_t *pDst, uint32_t blockSize)
-{
-    const q7_t *pIn = pSrc;
-    uint32_t blkCnt;
+void arm_q7_to_q15_no_shift(const q7_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+    const q7_t* pIn = pSrc;
+    uint32_t    blkCnt;
 
 #if defined(ARM_MATH_DSP)
     q31_t in;
@@ -69,8 +68,7 @@ void arm_q7_to_q15_no_shift(const q7_t *pSrc, q15_t *pDst, uint32_t blockSize)
     blkCnt = blockSize >> 2u;
 
     /* First part of the processing with loop unrolling.  Compute 4 outputs at a time. */
-    while (blkCnt > 0u)
-    {
+    while (blkCnt > 0u) {
         in = arm_nn_read_q7x4_ia(&pIn);
 
         /* rotatate in by 8 and extend two q7_t values to q15_t values */
@@ -106,8 +104,7 @@ void arm_q7_to_q15_no_shift(const q7_t *pSrc, q15_t *pDst, uint32_t blockSize)
 
 #endif /* #ifndef ARM_MATH_CM0_FAMILY */
 
-    while (blkCnt > 0u)
-    {
+    while (blkCnt > 0u) {
         /* convert from q7 to q15 and then store the results in the destination buffer */
         *pDst++ = (q15_t)*pIn++;
 

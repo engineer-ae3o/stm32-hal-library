@@ -71,26 +71,24 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math_f16.h"
 
-float16_t arm_kullback_leibler_f16(const float16_t * pSrcA,const float16_t * pSrcB,uint32_t blockSize)
-{
+float16_t arm_kullback_leibler_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize) {
     uint32_t blkCnt;
-    _Float16 accum, pA,pB;
- 
-    
+    _Float16 accum, pA, pB;
+
+
     blkCnt = blockSize;
 
     accum = 0.0f16;
 
-    f16x8_t         vSum = vdupq_n_f16(0.0f16);
-    blkCnt = blockSize >> 3;
-    while(blkCnt > 0)
-    {
-        f16x8_t         vecA = vld1q(pSrcA);
-        f16x8_t         vecB = vld1q(pSrcB);
-        f16x8_t         vRatio;
+    f16x8_t vSum = vdupq_n_f16(0.0f16);
+    blkCnt       = blockSize >> 3;
+    while (blkCnt > 0) {
+        f16x8_t vecA = vld1q(pSrcA);
+        f16x8_t vecB = vld1q(pSrcB);
+        f16x8_t vRatio;
 
         vRatio = vdiv_f16(vecB, vecA);
-        vSum = vaddq_f16(vSum, vmulq(vecA, vlogq_f16(vRatio)));
+        vSum   = vaddq_f16(vSum, vmulq(vecA, vlogq_f16(vRatio)));
 
         /*
          * Decrement the blockSize loop counter
@@ -98,49 +96,44 @@ float16_t arm_kullback_leibler_f16(const float16_t * pSrcA,const float16_t * pSr
          */
         pSrcA += 8;
         pSrcB += 8;
-        blkCnt --;
+        blkCnt--;
     }
 
     accum = vecAddAcrossF16Mve(vSum);
 
     blkCnt = blockSize & 7;
-    while(blkCnt > 0)
-    {
-       pA = *pSrcA++;
-       pB = *pSrcB++;
-       accum += pA * (_Float16)logf((float32_t)pB / (float32_t)pA);
-       
-       blkCnt--;
-    
+    while (blkCnt > 0) {
+        pA = *pSrcA++;
+        pB = *pSrcB++;
+        accum += pA * (_Float16)logf((float32_t)pB / (float32_t)pA);
+
+        blkCnt--;
     }
 
-    return(-accum);
+    return (-accum);
 }
 
 #else
-float16_t arm_kullback_leibler_f16(const float16_t * pSrcA,const float16_t * pSrcB,uint32_t blockSize)
-{
+float16_t arm_kullback_leibler_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize) {
     const float16_t *pInA, *pInB;
-    uint32_t blkCnt;
-    _Float16 accum, pA,pB;
- 
-    pInA = pSrcA;
-    pInB = pSrcB;
+    uint32_t         blkCnt;
+    _Float16         accum, pA, pB;
+
+    pInA   = pSrcA;
+    pInB   = pSrcB;
     blkCnt = blockSize;
 
     accum = 0.0f;
 
-    while(blkCnt > 0)
-    {
-       pA = *pInA++;
-       pB = *pInB++;
-       accum += pA * (_Float16)logf((float32_t)pB / (float32_t)pA);
-       
-       blkCnt--;
-    
+    while (blkCnt > 0) {
+        pA = *pInA++;
+        pB = *pInB++;
+        accum += pA * (_Float16)logf((float32_t)pB / (float32_t)pA);
+
+        blkCnt--;
     }
 
-    return(-accum);
+    return (-accum);
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 
@@ -148,5 +141,4 @@ float16_t arm_kullback_leibler_f16(const float16_t * pSrcA,const float16_t * pSr
  * @} end of Kullback-Leibler group
  */
 
-#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */ 
-
+#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */

@@ -46,31 +46,25 @@
   @return        none
  */
 
-void arm_dot_prod_f64(
-  const float64_t * pSrcA,
-  const float64_t * pSrcB,
-        uint32_t blockSize,
-        float64_t * result)
-{
-  uint32_t blkCnt;                               /* Loop counter */
-  float64_t sum = 0.;                            /* Temporary return variable */
+void arm_dot_prod_f64(const float64_t* pSrcA, const float64_t* pSrcB, uint32_t blockSize, float64_t* result) {
+    uint32_t  blkCnt;   /* Loop counter */
+    float64_t sum = 0.; /* Temporary return variable */
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
-  while (blkCnt > 0U)
-  {
-    /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
+    while (blkCnt > 0U) {
+        /* C = A[0]* B[0] + A[1]* B[1] + A[2]* B[2] + .....+ A[blockSize-1]* B[blockSize-1] */
 
-    /* Calculate dot product and store result in a temporary buffer. */
-    sum += (*pSrcA++) * (*pSrcB++);
+        /* Calculate dot product and store result in a temporary buffer. */
+        sum += (*pSrcA++) * (*pSrcB++);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Store result in destination buffer */
-  *result = sum;
+    /* Store result in destination buffer */
+    *result = sum;
 }
 
 /**

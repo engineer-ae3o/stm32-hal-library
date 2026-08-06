@@ -146,6 +146,7 @@ endif()
 
 # Static analysis with cppcheck
 find_program(CPPCHECK cppcheck)
+find_program(CLANG_FORMAT clang-format)
 
 if (CPPCHECK)
 
@@ -170,5 +171,19 @@ add_custom_target(cppcheck
 else()
 
 message(WARNING "Cppcheck not found. Static analysis will not be available for this target.")
+
+endif()
+
+if(CLANG_FORMAT)
+
+add_custom_target(format
+    COMMAND git ls-files -- '*.c' '*.h' '*.cpp' '*.hpp' '*.cc' '*.cxx' | xargs -r ${CLANG_FORMAT} -i
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Formatting version controlled files...."
+)
+
+else()
+
+message(WARNING "clang-format not found. Formatting will not be availabe for this target.")
 
 endif()

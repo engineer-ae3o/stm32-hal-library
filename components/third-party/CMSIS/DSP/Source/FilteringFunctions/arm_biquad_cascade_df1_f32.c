@@ -164,25 +164,19 @@
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 #include "arm_helium_utils.h"
-void arm_biquad_cascade_df1_f32(
-  const arm_biquad_casd_df1_inst_f32 * S,
-  const float32_t * pSrc,
-  float32_t * pDst,
-  uint32_t blockSize)
-{
-    const float32_t *pIn = pSrc;              /*  source pointer            */
-    float32_t *pOut = pDst;             /*  destination pointer       */
-    float32_t *pState = S->pState;      /*  pState pointer            */
-    const float32_t *pCoeffs = S->pCoeffs;    /*  coefficient pointer       */
-    float32_t Xn1, Xn2, Yn1, Yn2;       /*  Filter pState variables   */
-    float32_t lastX, lastY;             /*  X,Y history for tail handling */
-    float32_t X0, X1, X2, X3;           /*  temporary input           */
-    f32x4_t coeffs;
-    f32x4_t accVec;                   /* accumultor vector */
-    uint32_t  sample, stage = S->numStages; /*  loop counters             */
+void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+    const float32_t* pIn     = pSrc;       /*  source pointer            */
+    float32_t*       pOut    = pDst;       /*  destination pointer       */
+    float32_t*       pState  = S->pState;  /*  pState pointer            */
+    const float32_t* pCoeffs = S->pCoeffs; /*  coefficient pointer       */
+    float32_t        Xn1, Xn2, Yn1, Yn2;   /*  Filter pState variables   */
+    float32_t        lastX, lastY;         /*  X,Y history for tail handling */
+    float32_t        X0, X1, X2, X3;       /*  temporary input           */
+    f32x4_t          coeffs;
+    f32x4_t          accVec;                       /* accumultor vector */
+    uint32_t         sample, stage = S->numStages; /*  loop counters             */
 
-    do
-    {
+    do {
         /*
          * Reading the pState values
          */
@@ -197,8 +191,7 @@ void arm_biquad_cascade_df1_f32(
          * First part of the processing with loop unrolling.  Compute 4 outputs at a time.
          * second loop below computes the remaining 1 to 3 samples.
          */
-        while (sample > 0U)
-        {
+        while (sample > 0U) {
             X0 = *pIn++;
             X1 = *pIn++;
             X2 = *pIn++;
@@ -251,8 +244,7 @@ void arm_biquad_cascade_df1_f32(
          * compute any remaining output samples here.
          */
         sample = blockSize & 0x3U;
-        if (sample)
-        {
+        if (sample) {
             /* save previous X, Y for modulo 1 length case */
             lastX = X3;
             lastY = Yn1;
@@ -286,32 +278,27 @@ void arm_biquad_cascade_df1_f32(
             coeffs = vld1q(&pCoeffs[28]);
             accVec = vfmaq(accVec, coeffs, Yn2);
 
-            if (sample == 1)
-            {
+            if (sample == 1) {
                 *pOut++ = vgetq_lane(accVec, 0);
-                Xn1 = X0;
-                Xn2 = lastX;
-                Yn1 = vgetq_lane(accVec, 0);
-                Yn2 = lastY;
-            }
-            else if (sample == 2)
-            {
+                Xn1     = X0;
+                Xn2     = lastX;
+                Yn1     = vgetq_lane(accVec, 0);
+                Yn2     = lastY;
+            } else if (sample == 2) {
                 *pOut++ = vgetq_lane(accVec, 0);
                 *pOut++ = vgetq_lane(accVec, 1);
-                Xn1 = X1;
-                Xn2 = X0;
-                Yn1 = vgetq_lane(accVec, 1);
-                Yn2 = vgetq_lane(accVec, 0);
-            }
-            else
-            {
+                Xn1     = X1;
+                Xn2     = X0;
+                Yn1     = vgetq_lane(accVec, 1);
+                Yn2     = vgetq_lane(accVec, 0);
+            } else {
                 *pOut++ = vgetq_lane(accVec, 0);
                 *pOut++ = vgetq_lane(accVec, 1);
                 *pOut++ = vgetq_lane(accVec, 2);
-                Xn1 = X2;
-                Xn2 = X1;
-                Yn1 = vgetq_lane(accVec, 2);
-                Yn2 = vgetq_lane(accVec, 1);
+                Xn1     = X2;
+                Xn2     = X1;
+                Yn1     = vgetq_lane(accVec, 2);
+                Yn2     = vgetq_lane(accVec, 1);
             }
         }
         /*
@@ -336,60 +323,53 @@ void arm_biquad_cascade_df1_f32(
          * decrement the loop counter
          */
         stage--;
-    }
-    while (stage > 0U);
+    } while (stage > 0U);
 }
 #else
-#if defined(ARM_MATH_NEON)  && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_biquad_cascade_df1_f32(
-  const arm_biquad_casd_df1_inst_f32 * S,
-  const float32_t * pSrc,
-  float32_t * pDst,
-  uint32_t blockSize)
-{
+#if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
+void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
 
-  const float32_t *pIn = pSrc;                         /*  source pointer            */
-  float32_t *pOut = pDst;                        /*  destination pointer       */
-  float32_t *pState = S->pState;                 /*  pState pointer            */
-  const float32_t *pCoeffs = S->pCoeffs;               /*  coefficient pointer       */
-  float32_t acc;                                 /*  Simulates the accumulator */
-  
-  uint32_t sample, stage = S->numStages;         /*  loop counters             */
+    const float32_t* pIn     = pSrc;       /*  source pointer            */
+    float32_t*       pOut    = pDst;       /*  destination pointer       */
+    float32_t*       pState  = S->pState;  /*  pState pointer            */
+    const float32_t* pCoeffs = S->pCoeffs; /*  coefficient pointer       */
+    float32_t        acc;                  /*  Simulates the accumulator */
 
-  float32x4_t Xn;
-  float32x2_t Yn;
-  float32x2_t a;
-  float32x4_t b;
-  
-  float32x4_t x,tmp;
-  float32x2_t t;
-  float32x2x2_t y;
+    uint32_t sample, stage = S->numStages; /*  loop counters             */
 
-  float32_t Xns;
+    float32x4_t Xn;
+    float32x2_t Yn;
+    float32x2_t a;
+    float32x4_t b;
 
-  while (stage > 0U)
-  {
-    /* Reading the coefficients */
-    Xn = vdupq_n_f32(0.0f);
+    float32x4_t   x, tmp;
+    float32x2_t   t;
+    float32x2x2_t y;
 
-    Xn = vsetq_lane_f32(pState[0],Xn,2);
-    Xn = vsetq_lane_f32(pState[1],Xn,3);
-    Yn = vset_lane_f32(pState[2],Yn,0);
-    Yn = vset_lane_f32(pState[3],Yn,1);
-  
-    b = vld1q_f32(pCoeffs);
-    b = vrev64q_f32(b);  
-    b = vcombine_f32(vget_high_f32(b), vget_low_f32(b));
+    float32_t Xns;
 
-    a = vld1_f32(pCoeffs + 3);
-    a = vrev64_f32(a);
-    b = vsetq_lane_f32(0.0f,b,0);
-    pCoeffs += 5;
-    
-    /* Reading the pState values */
-   
-    /* Apply loop unrolling and compute 4 output values simultaneously. */
-    /*      The variable acc hold output values that are being computed:
+    while (stage > 0U) {
+        /* Reading the coefficients */
+        Xn = vdupq_n_f32(0.0f);
+
+        Xn = vsetq_lane_f32(pState[0], Xn, 2);
+        Xn = vsetq_lane_f32(pState[1], Xn, 3);
+        Yn = vset_lane_f32(pState[2], Yn, 0);
+        Yn = vset_lane_f32(pState[3], Yn, 1);
+
+        b = vld1q_f32(pCoeffs);
+        b = vrev64q_f32(b);
+        b = vcombine_f32(vget_high_f32(b), vget_low_f32(b));
+
+        a = vld1_f32(pCoeffs + 3);
+        a = vrev64_f32(a);
+        b = vsetq_lane_f32(0.0f, b, 0);
+        pCoeffs += 5;
+
+        /* Reading the pState values */
+
+        /* Apply loop unrolling and compute 4 output values simultaneously. */
+        /*      The variable acc hold output values that are being computed:
      *
      *    acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2]
      *    acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2]
@@ -397,147 +377,135 @@ void arm_biquad_cascade_df1_f32(
      *    acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2]
      */
 
-    /* First part of the processing with loop unrolling.  Compute 4 outputs at a time.
+        /* First part of the processing with loop unrolling.  Compute 4 outputs at a time.
      ** a second loop below computes the remaining 1 to 3 samples. */
-    sample = blockSize >> 2U;
+        sample = blockSize >> 2U;
 
-    while (sample > 0U)
-    {
-      /* Read the first 4 inputs */
-      x = vld1q_f32(pIn);
+        while (sample > 0U) {
+            /* Read the first 4 inputs */
+            x = vld1q_f32(pIn);
 
-      pIn += 4;
+            pIn += 4;
 
-      tmp = vextq_f32(Xn, x, 1);
-      t = vmul_f32(vget_high_f32(b), vget_high_f32(tmp));
-      t = vmla_f32(t, vget_low_f32(b), vget_low_f32(tmp));
-      t = vmla_f32(t, a, Yn);
-      t = vpadd_f32(t, t);
-      Yn = vext_f32(Yn, t, 1);
+            tmp = vextq_f32(Xn, x, 1);
+            t   = vmul_f32(vget_high_f32(b), vget_high_f32(tmp));
+            t   = vmla_f32(t, vget_low_f32(b), vget_low_f32(tmp));
+            t   = vmla_f32(t, a, Yn);
+            t   = vpadd_f32(t, t);
+            Yn  = vext_f32(Yn, t, 1);
 
-      tmp = vextq_f32(Xn, x, 2);
-      t = vmul_f32(vget_high_f32(b), vget_high_f32(tmp));
-      t = vmla_f32(t, vget_low_f32(b), vget_low_f32(tmp));
-      t = vmla_f32(t, a, Yn);
-      t = vpadd_f32(t, t);
-      Yn = vext_f32(Yn, t, 1);
+            tmp = vextq_f32(Xn, x, 2);
+            t   = vmul_f32(vget_high_f32(b), vget_high_f32(tmp));
+            t   = vmla_f32(t, vget_low_f32(b), vget_low_f32(tmp));
+            t   = vmla_f32(t, a, Yn);
+            t   = vpadd_f32(t, t);
+            Yn  = vext_f32(Yn, t, 1);
 
-      y.val[0] = Yn;
+            y.val[0] = Yn;
 
-      tmp = vextq_f32(Xn, x, 3);
-      t = vmul_f32(vget_high_f32(b), vget_high_f32(tmp));
-      t = vmla_f32(t, vget_low_f32(b), vget_low_f32(tmp));
-      t = vmla_f32(t, a, Yn);
-      t = vpadd_f32(t, t);
-      Yn = vext_f32(Yn, t, 1);
+            tmp = vextq_f32(Xn, x, 3);
+            t   = vmul_f32(vget_high_f32(b), vget_high_f32(tmp));
+            t   = vmla_f32(t, vget_low_f32(b), vget_low_f32(tmp));
+            t   = vmla_f32(t, a, Yn);
+            t   = vpadd_f32(t, t);
+            Yn  = vext_f32(Yn, t, 1);
 
-      Xn = x;
-      t = vmul_f32(vget_high_f32(b), vget_high_f32(Xn));
-      t = vmla_f32(t, vget_low_f32(b), vget_low_f32(Xn));
-      t = vmla_f32(t, a, Yn);
-      t = vpadd_f32(t, t);
-      Yn = vext_f32(Yn, t, 1);
-      
-      y.val[1] = Yn;
+            Xn = x;
+            t  = vmul_f32(vget_high_f32(b), vget_high_f32(Xn));
+            t  = vmla_f32(t, vget_low_f32(b), vget_low_f32(Xn));
+            t  = vmla_f32(t, a, Yn);
+            t  = vpadd_f32(t, t);
+            Yn = vext_f32(Yn, t, 1);
 
-      tmp = vcombine_f32(y.val[0], y.val[1]);
+            y.val[1] = Yn;
 
-      /* Store the 4 outputs and increment the pointer */
-      vst1q_f32(pOut, tmp);
-      pOut += 4;
+            tmp = vcombine_f32(y.val[0], y.val[1]);
 
-      /* Decrement the loop counter */
-      sample--;
-    }
+            /* Store the 4 outputs and increment the pointer */
+            vst1q_f32(pOut, tmp);
+            pOut += 4;
 
-    
-    /* If the block size is not a multiple of 4, compute any remaining output samples here.
+            /* Decrement the loop counter */
+            sample--;
+        }
+
+
+        /* If the block size is not a multiple of 4, compute any remaining output samples here.
      ** No loop unrolling is used. */
-    sample = blockSize & 0x3U;
+        sample = blockSize & 0x3U;
 
-    while (sample > 0U)
-    {
-      /* Read the input */
-      Xns = *pIn++;
+        while (sample > 0U) {
+            /* Read the input */
+            Xns = *pIn++;
 
-      /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-      acc =  (vgetq_lane_f32(b, 1) * vgetq_lane_f32(Xn, 2)) 
-      + (vgetq_lane_f32(b, 2) * vgetq_lane_f32(Xn, 3)) 
-      + (vgetq_lane_f32(b, 3) * Xns) 
-      + (vget_lane_f32(a, 0) * vget_lane_f32(Yn, 0)) 
-      + (vget_lane_f32(a, 1) * vget_lane_f32(Yn, 1));
+            /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
+            acc = (vgetq_lane_f32(b, 1) * vgetq_lane_f32(Xn, 2)) + (vgetq_lane_f32(b, 2) * vgetq_lane_f32(Xn, 3)) + (vgetq_lane_f32(b, 3) * Xns) +
+                  (vget_lane_f32(a, 0) * vget_lane_f32(Yn, 0)) + (vget_lane_f32(a, 1) * vget_lane_f32(Yn, 1));
 
-      /* Store the result in the accumulator in the destination buffer. */
-      *pOut++ = acc;
+            /* Store the result in the accumulator in the destination buffer. */
+            *pOut++ = acc;
 
-      /* Every time after the output is computed state should be updated. */
-      /* The states should be updated as:    */
-      /* Xn2 = Xn1   */
-      /* Xn1 = Xn    */
-      /* Yn2 = Yn1   */
-      /* Yn1 = acc   */
-      Xn = vsetq_lane_f32(vgetq_lane_f32(Xn, 3),Xn,2);
-      Xn = vsetq_lane_f32(Xns,Xn,3);
-      Yn = vset_lane_f32(vget_lane_f32(Yn, 1),Yn,0);
-      Yn = vset_lane_f32(acc,Yn,1);
+            /* Every time after the output is computed state should be updated. */
+            /* The states should be updated as:    */
+            /* Xn2 = Xn1   */
+            /* Xn1 = Xn    */
+            /* Yn2 = Yn1   */
+            /* Yn1 = acc   */
+            Xn = vsetq_lane_f32(vgetq_lane_f32(Xn, 3), Xn, 2);
+            Xn = vsetq_lane_f32(Xns, Xn, 3);
+            Yn = vset_lane_f32(vget_lane_f32(Yn, 1), Yn, 0);
+            Yn = vset_lane_f32(acc, Yn, 1);
 
-      /* Decrement the loop counter */
-      sample--;
+            /* Decrement the loop counter */
+            sample--;
+        }
 
+        vst1q_f32(pState, vcombine_f32((vget_high_f32(Xn)), (Yn)));
+        pState += 4;
+        /*  Store the updated state variables back into the pState array */
+
+        /*  The first stage goes from the input buffer to the output buffer. */
+        /*  Subsequent numStages  occur in-place in the output buffer */
+        pIn = pDst;
+
+        /* Reset the output pointer */
+        pOut = pDst;
+
+        /* Decrement the loop counter */
+        stage--;
     }
-
-    vst1q_f32(pState,vcombine_f32((vget_high_f32(Xn)),(Yn)));
-    pState += 4;
-    /*  Store the updated state variables back into the pState array */
-   
-    /*  The first stage goes from the input buffer to the output buffer. */
-    /*  Subsequent numStages  occur in-place in the output buffer */
-    pIn = pDst;
-
-    /* Reset the output pointer */
-    pOut = pDst;
-
-    /* Decrement the loop counter */
-    stage--;
-  }
 }
 
 #else
-void arm_biquad_cascade_df1_f32(
-  const arm_biquad_casd_df1_inst_f32 * S,
-  const float32_t * pSrc,
-        float32_t * pDst,
-        uint32_t blockSize)
-{
-  const float32_t *pIn = pSrc;                         /* Source pointer */
-        float32_t *pOut = pDst;                        /* Destination pointer */
-        float32_t *pState = S->pState;                 /* pState pointer */
-  const float32_t *pCoeffs = S->pCoeffs;               /* Coefficient pointer */
-        float32_t acc;                                 /* Accumulator */
-        float32_t b0, b1, b2, a1, a2;                  /* Filter coefficients */
-        float32_t Xn1, Xn2, Yn1, Yn2;                  /* Filter pState variables */
-        float32_t Xn;                                  /* Temporary input */
-        uint32_t sample, stage = S->numStages;         /* Loop counters */
+void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+    const float32_t* pIn     = pSrc;               /* Source pointer */
+    float32_t*       pOut    = pDst;               /* Destination pointer */
+    float32_t*       pState  = S->pState;          /* pState pointer */
+    const float32_t* pCoeffs = S->pCoeffs;         /* Coefficient pointer */
+    float32_t        acc;                          /* Accumulator */
+    float32_t        b0, b1, b2, a1, a2;           /* Filter coefficients */
+    float32_t        Xn1, Xn2, Yn1, Yn2;           /* Filter pState variables */
+    float32_t        Xn;                           /* Temporary input */
+    uint32_t         sample, stage = S->numStages; /* Loop counters */
 
-  do
-  {
-    /* Reading the coefficients */
-    b0 = *pCoeffs++;
-    b1 = *pCoeffs++;
-    b2 = *pCoeffs++;
-    a1 = *pCoeffs++;
-    a2 = *pCoeffs++;
+    do {
+        /* Reading the coefficients */
+        b0 = *pCoeffs++;
+        b1 = *pCoeffs++;
+        b2 = *pCoeffs++;
+        a1 = *pCoeffs++;
+        a2 = *pCoeffs++;
 
-    /* Reading the pState values */
-    Xn1 = pState[0];
-    Xn2 = pState[1];
-    Yn1 = pState[2];
-    Yn2 = pState[3];
+        /* Reading the pState values */
+        Xn1 = pState[0];
+        Xn2 = pState[1];
+        Yn1 = pState[2];
+        Yn2 = pState[3];
 
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-    /* Apply loop unrolling and compute 4 output values simultaneously. */
-    /* Variable acc hold output values that are being computed:
+        /* Apply loop unrolling and compute 4 output values simultaneously. */
+        /* Variable acc hold output values that are being computed:
      *
      * acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2]
      * acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2]
@@ -545,135 +513,132 @@ void arm_biquad_cascade_df1_f32(
      * acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2]
      */
 
-    /* Loop unrolling: Compute 4 outputs at a time */
-    sample = blockSize >> 2U;
+        /* Loop unrolling: Compute 4 outputs at a time */
+        sample = blockSize >> 2U;
 
-    while (sample > 0U)
-    {
-      /* Read the first input */
-      Xn = *pIn++;
+        while (sample > 0U) {
+            /* Read the first input */
+            Xn = *pIn++;
 
-      /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-      Yn2 = (b0 * Xn) + (b1 * Xn1) + (b2 * Xn2) + (a1 * Yn1) + (a2 * Yn2);
+            /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
+            Yn2 = (b0 * Xn) + (b1 * Xn1) + (b2 * Xn2) + (a1 * Yn1) + (a2 * Yn2);
 
-      /* Store output in destination buffer. */
-      *pOut++ = Yn2;
+            /* Store output in destination buffer. */
+            *pOut++ = Yn2;
 
-      /* Every time after the output is computed state should be updated. */
-      /* The states should be updated as: */
-      /* Xn2 = Xn1 */
-      /* Xn1 = Xn  */
-      /* Yn2 = Yn1 */
-      /* Yn1 = acc */
+            /* Every time after the output is computed state should be updated. */
+            /* The states should be updated as: */
+            /* Xn2 = Xn1 */
+            /* Xn1 = Xn  */
+            /* Yn2 = Yn1 */
+            /* Yn1 = acc */
 
-      /* Read the second input */
-      Xn2 = *pIn++;
+            /* Read the second input */
+            Xn2 = *pIn++;
 
-      /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-      Yn1 = (b0 * Xn2) + (b1 * Xn) + (b2 * Xn1) + (a1 * Yn2) + (a2 * Yn1);
+            /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
+            Yn1 = (b0 * Xn2) + (b1 * Xn) + (b2 * Xn1) + (a1 * Yn2) + (a2 * Yn1);
 
-      /* Store output in destination buffer. */
-      *pOut++ = Yn1;
+            /* Store output in destination buffer. */
+            *pOut++ = Yn1;
 
-      /* Every time after the output is computed state should be updated. */
-      /* The states should be updated as: */
-      /* Xn2 = Xn1 */
-      /* Xn1 = Xn  */
-      /* Yn2 = Yn1 */
-      /* Yn1 = acc */
+            /* Every time after the output is computed state should be updated. */
+            /* The states should be updated as: */
+            /* Xn2 = Xn1 */
+            /* Xn1 = Xn  */
+            /* Yn2 = Yn1 */
+            /* Yn1 = acc */
 
-      /* Read the third input */
-      Xn1 = *pIn++;
+            /* Read the third input */
+            Xn1 = *pIn++;
 
-      /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-      Yn2 = (b0 * Xn1) + (b1 * Xn2) + (b2 * Xn) + (a1 * Yn1) + (a2 * Yn2);
+            /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
+            Yn2 = (b0 * Xn1) + (b1 * Xn2) + (b2 * Xn) + (a1 * Yn1) + (a2 * Yn2);
 
-      /* Store output in destination buffer. */
-      *pOut++ = Yn2;
+            /* Store output in destination buffer. */
+            *pOut++ = Yn2;
 
-      /* Every time after the output is computed state should be updated. */
-      /* The states should be updated as: */
-      /* Xn2 = Xn1 */
-      /* Xn1 = Xn  */
-      /* Yn2 = Yn1 */
-      /* Yn1 = acc */
+            /* Every time after the output is computed state should be updated. */
+            /* The states should be updated as: */
+            /* Xn2 = Xn1 */
+            /* Xn1 = Xn  */
+            /* Yn2 = Yn1 */
+            /* Yn1 = acc */
 
-      /* Read the forth input */
-      Xn = *pIn++;
+            /* Read the forth input */
+            Xn = *pIn++;
 
-      /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-      Yn1 = (b0 * Xn) + (b1 * Xn1) + (b2 * Xn2) + (a1 * Yn2) + (a2 * Yn1);
+            /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
+            Yn1 = (b0 * Xn) + (b1 * Xn1) + (b2 * Xn2) + (a1 * Yn2) + (a2 * Yn1);
 
-      /* Store output in destination buffer. */
-      *pOut++ = Yn1;
+            /* Store output in destination buffer. */
+            *pOut++ = Yn1;
 
-      /* Every time after the output is computed state should be updated. */
-      /* The states should be updated as: */
-      /* Xn2 = Xn1 */
-      /* Xn1 = Xn  */
-      /* Yn2 = Yn1 */
-      /* Yn1 = acc */
-      Xn2 = Xn1;
-      Xn1 = Xn;
+            /* Every time after the output is computed state should be updated. */
+            /* The states should be updated as: */
+            /* Xn2 = Xn1 */
+            /* Xn1 = Xn  */
+            /* Yn2 = Yn1 */
+            /* Yn1 = acc */
+            Xn2 = Xn1;
+            Xn1 = Xn;
 
-      /* decrement loop counter */
-      sample--;
-    }
+            /* decrement loop counter */
+            sample--;
+        }
 
-    /* Loop unrolling: Compute remaining outputs */
-    sample = blockSize & 0x3U;
+        /* Loop unrolling: Compute remaining outputs */
+        sample = blockSize & 0x3U;
 
 #else
 
-    /* Initialize blkCnt with number of samples */
-    sample = blockSize;
+        /* Initialize blkCnt with number of samples */
+        sample = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-    while (sample > 0U)
-    {
-      /* Read the input */
-      Xn = *pIn++;
+        while (sample > 0U) {
+            /* Read the input */
+            Xn = *pIn++;
 
-      /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-      acc = (b0 * Xn) + (b1 * Xn1) + (b2 * Xn2) + (a1 * Yn1) + (a2 * Yn2);
+            /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
+            acc = (b0 * Xn) + (b1 * Xn1) + (b2 * Xn2) + (a1 * Yn1) + (a2 * Yn2);
 
-      /* Store output in destination buffer. */
-      *pOut++ = acc;
+            /* Store output in destination buffer. */
+            *pOut++ = acc;
 
-      /* Every time after the output is computed state should be updated. */
-      /* The states should be updated as: */
-      /* Xn2 = Xn1 */
-      /* Xn1 = Xn  */
-      /* Yn2 = Yn1 */
-      /* Yn1 = acc */
-      Xn2 = Xn1;
-      Xn1 = Xn;
-      Yn2 = Yn1;
-      Yn1 = acc;
+            /* Every time after the output is computed state should be updated. */
+            /* The states should be updated as: */
+            /* Xn2 = Xn1 */
+            /* Xn1 = Xn  */
+            /* Yn2 = Yn1 */
+            /* Yn1 = acc */
+            Xn2 = Xn1;
+            Xn1 = Xn;
+            Yn2 = Yn1;
+            Yn1 = acc;
 
-      /* decrement loop counter */
-      sample--;
-    }
+            /* decrement loop counter */
+            sample--;
+        }
 
-    /* Store the updated state variables back into the pState array */
-    *pState++ = Xn1;
-    *pState++ = Xn2;
-    *pState++ = Yn1;
-    *pState++ = Yn2;
+        /* Store the updated state variables back into the pState array */
+        *pState++ = Xn1;
+        *pState++ = Xn2;
+        *pState++ = Yn1;
+        *pState++ = Yn2;
 
-    /* The first stage goes from the input buffer to the output buffer. */
-    /* Subsequent numStages occur in-place in the output buffer */
-    pIn = pDst;
+        /* The first stage goes from the input buffer to the output buffer. */
+        /* Subsequent numStages occur in-place in the output buffer */
+        pIn = pDst;
 
-    /* Reset output pointer */
-    pOut = pDst;
+        /* Reset output pointer */
+        pOut = pDst;
 
-    /* decrement loop counter */
-    stage--;
+        /* decrement loop counter */
+        stage--;
 
-  } while (stage > 0U);
-
+    } while (stage > 0U);
 }
 
 #endif /* #if defined(ARM_MATH_NEON) */

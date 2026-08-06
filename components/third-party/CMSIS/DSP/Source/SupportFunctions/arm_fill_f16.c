@@ -50,72 +50,60 @@
  */
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_fill_f16(
-  float16_t value,
-  float16_t * pDst,
-  uint32_t blockSize)
-{
-     do {
-        mve_pred16_t    p = vctp16q(blockSize);
+void arm_fill_f16(float16_t value, float16_t* pDst, uint32_t blockSize) {
+    do {
+        mve_pred16_t p = vctp16q(blockSize);
 
-        vstrhq_p_f16(pDst,
-            vdupq_m_n_f16(vuninitializedq_f16(), value, p), p);
+        vstrhq_p_f16(pDst, vdupq_m_n_f16(vuninitializedq_f16(), value, p), p);
         /*
          * Decrement the blockSize loop counter
          * Advance vector source and destination pointers
          */
         pDst += 8;
         blockSize -= 8;
-    }
-    while ((int32_t) blockSize > 0);
+    } while ((int32_t)blockSize > 0);
 }
 #else
-void arm_fill_f16(
-  float16_t value,
-  float16_t * pDst,
-  uint32_t blockSize)
-{
-  uint32_t blkCnt;                               /* Loop counter */
+void arm_fill_f16(float16_t value, float16_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = value */
+    while (blkCnt > 0U) {
+        /* C = value */
 
-    /* Fill value in destination buffer */
-    *pDst++ = value;
-    *pDst++ = value;
-    *pDst++ = value;
-    *pDst++ = value;
+        /* Fill value in destination buffer */
+        *pDst++ = value;
+        *pDst++ = value;
+        *pDst++ = value;
+        *pDst++ = value;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = value */
+    while (blkCnt > 0U) {
+        /* C = value */
 
-    /* Fill value in destination buffer */
-    *pDst++ = value;
+        /* Fill value in destination buffer */
+        *pDst++ = value;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 
@@ -123,5 +111,4 @@ void arm_fill_f16(
   @} end of Fill group
  */
 
-#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */ 
-
+#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */

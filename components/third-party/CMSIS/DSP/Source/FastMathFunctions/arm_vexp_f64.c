@@ -29,23 +29,18 @@
 #include "dsp/fast_math_functions.h"
 #include "arm_common_tables.h"
 
-void arm_vexp_f64(
-  const float64_t * pSrc,
-        float64_t * pDst,
-        uint32_t blockSize)
-{
-   uint32_t blkCnt; 
+void arm_vexp_f64(const float64_t* pSrc, float64_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt;
 
-   blkCnt = blockSize;
+    blkCnt = blockSize;
 
-   while (blkCnt > 0U)
-   {
-      /* C = log(A) */
-  
-      /* Calculate log and store result in destination buffer. */
-      *pDst++ = exp(*pSrc++);
-  
-      /* Decrement loop counter */
-      blkCnt--;
-   }
+    while (blkCnt > 0U) {
+        /* C = log(A) */
+
+        /* Calculate log and store result in destination buffer. */
+        *pDst++ = exp(*pSrc++);
+
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }

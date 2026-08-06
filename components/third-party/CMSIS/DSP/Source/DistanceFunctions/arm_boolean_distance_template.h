@@ -28,8 +28,6 @@
  */
 
 
-
-
 /**
  * @defgroup DISTANCEF Distance Functions
  *
@@ -46,9 +44,7 @@
  */
 
 
-
-
-#define _FUNC(A,B) A##B 
+#define _FUNC(A, B) A##B
 
 #define FUNC(EXT) _FUNC(arm_boolean_distance, EXT)
 
@@ -68,109 +64,108 @@
 
 #include "arm_common_tables.h"
 
-void FUNC(EXT)(const uint32_t *pA
-       , const uint32_t *pB
-       , uint32_t numberOfBools
+void FUNC(EXT)(const uint32_t* pA,
+               const uint32_t* pB,
+               uint32_t        numberOfBools
 #ifdef TT
-       , uint32_t *cTT
+               ,
+               uint32_t* cTT
 #endif
 #ifdef FF
-       , uint32_t *cFF
+               ,
+               uint32_t* cFF
 #endif
 #ifdef TF
-       , uint32_t *cTF
+               ,
+               uint32_t* cTF
 #endif
 #ifdef FT
-       , uint32_t *cFT
+               ,
+               uint32_t* cFT
 #endif
-       )
-{
+) {
 
 #ifdef TT
-    uint32_t _ctt=0;
+    uint32_t _ctt = 0;
 #endif
 #ifdef FF
-    uint32_t _cff=0;
+    uint32_t _cff = 0;
 #endif
 #ifdef TF
-    uint32_t _ctf=0;
+    uint32_t _ctf = 0;
 #endif
 #ifdef FT
-    uint32_t _cft=0;
+    uint32_t _cft = 0;
 #endif
-    uint32_t        a, b, ba, bb;
-    int shift;
-    const uint8_t  *pA8 = (const uint8_t *) pA;
-    const uint8_t  *pB8 = (const uint8_t *) pB;
+    uint32_t       a, b, ba, bb;
+    int            shift;
+    const uint8_t* pA8 = (const uint8_t*)pA;
+    const uint8_t* pB8 = (const uint8_t*)pB;
 
     /* handle vector blocks */
-    uint32_t         blkCnt = numberOfBools / 128;
-
+    uint32_t blkCnt = numberOfBools / 128;
 
 
     while (blkCnt > 0U) {
-        uint8x16_t      vecA = vld1q((const uint8_t *) pA8);
-        uint8x16_t      vecB = vld1q((const uint8_t *) pB8);
+        uint8x16_t vecA = vld1q((const uint8_t*)pA8);
+        uint8x16_t vecB = vld1q((const uint8_t*)pB8);
 
 #ifdef TT
-        uint8x16_t      vecTT = vecA & vecB;
-        vecTT = vldrbq_gather_offset_u8(hwLUT, vecTT);
+        uint8x16_t vecTT = vecA & vecB;
+        vecTT            = vldrbq_gather_offset_u8(hwLUT, vecTT);
         _ctt += vaddvq(vecTT);
 #endif
 #ifdef FF
-        uint8x16_t      vecFF = vmvnq(vecA) & vmvnq(vecB);
-        vecFF = vldrbq_gather_offset_u8(hwLUT, vecFF);
+        uint8x16_t vecFF = vmvnq(vecA) & vmvnq(vecB);
+        vecFF            = vldrbq_gather_offset_u8(hwLUT, vecFF);
         _cff += vaddvq(vecFF);
 #endif
 #ifdef TF
-        uint8x16_t      vecTF = vecA & vmvnq(vecB);
-        vecTF = vldrbq_gather_offset_u8(hwLUT, vecTF);
+        uint8x16_t vecTF = vecA & vmvnq(vecB);
+        vecTF            = vldrbq_gather_offset_u8(hwLUT, vecTF);
         _ctf += vaddvq(vecTF);
 #endif
 #ifdef FT
-        uint8x16_t      vecFT = vmvnq(vecA) & vecB;
-        vecFT = vldrbq_gather_offset_u8(hwLUT, vecFT);
+        uint8x16_t vecFT = vmvnq(vecA) & vecB;
+        vecFT            = vldrbq_gather_offset_u8(hwLUT, vecFT);
         _cft += vaddvq(vecFT);
 #endif
 
         pA8 += 16;
         pB8 += 16;
         blkCnt--;
-
     }
 
-    pA = (const uint32_t *)pA8;
-    pB = (const uint32_t *)pB8;
+    pA = (const uint32_t*)pA8;
+    pB = (const uint32_t*)pB8;
 
     blkCnt = numberOfBools & 0x7F;
-    while(blkCnt >= 32)
-    {
-       a = *pA++;
-       b = *pB++;
-       shift = 0;
-       while(shift < 32)
-       {
-          ba = a & 1;
-          bb = b & 1;
-          a = a >> 1;
-          b = b >> 1;
+    while (blkCnt >= 32) {
+        a     = *pA++;
+        b     = *pB++;
+        shift = 0;
+        while (shift < 32) {
+            ba = a & 1;
+            bb = b & 1;
+            a  = a >> 1;
+            b  = b >> 1;
 
 #ifdef TT
-          _ctt += (ba && bb);
+            _ctt += (ba && bb);
 #endif
 #ifdef FF
-          _cff += ((1 ^ ba) && (1 ^ bb));
+            _cff += ((1 ^ ba) && (1 ^ bb));
 #endif
 #ifdef TF
-          _ctf += (ba && (1 ^ bb));
+            _ctf += (ba && (1 ^ bb));
 #endif
 #ifdef FT
-          _cft += ((1 ^ ba) && bb);
+            _cft += ((1 ^ ba) && bb);
 #endif
-          shift ++;
-       }
+            shift++;
+        }
 
-       blkCnt -= 32;
+        blkCnt -= 32;
     }
 
     a = *pA++;
@@ -179,26 +174,25 @@ void FUNC(EXT)(const uint32_t *pA
     a = a >> (32 - blkCnt);
     b = b >> (32 - blkCnt);
 
-    while(blkCnt > 0)
-    {
-          ba = a & 1;
-          bb = b & 1;
-          a = a >> 1;
+    while (blkCnt > 0) {
+        ba = a & 1;
+        bb = b & 1;
+        a  = a >> 1;
 
-          b = b >> 1;
+        b = b >> 1;
 #ifdef TT
-          _ctt += (ba && bb);
+        _ctt += (ba && bb);
 #endif
 #ifdef FF
-          _cff += ((1 ^ ba) && (1 ^ bb));
+        _cff += ((1 ^ ba) && (1 ^ bb));
 #endif
 #ifdef TF
-          _ctf += (ba && (1 ^ bb));
+        _ctf += (ba && (1 ^ bb));
 #endif
 #ifdef FT
-          _cft += ((1 ^ ba) && bb);
+        _cft += ((1 ^ ba) && bb);
 #endif
-          blkCnt --;
+        blkCnt--;
     }
 
 #ifdef TT
@@ -219,38 +213,41 @@ void FUNC(EXT)(const uint32_t *pA
 #if defined(ARM_MATH_NEON)
 
 
-void FUNC(EXT)(const uint32_t *pA
-       , const uint32_t *pB
-       , uint32_t numberOfBools
+void FUNC(EXT)(const uint32_t* pA,
+               const uint32_t* pB,
+               uint32_t        numberOfBools
 #ifdef TT
-       , uint32_t *cTT
+               ,
+               uint32_t* cTT
 #endif
 #ifdef FF
-       , uint32_t *cFF
+               ,
+               uint32_t* cFF
 #endif
 #ifdef TF
-       , uint32_t *cTF
+               ,
+               uint32_t* cTF
 #endif
 #ifdef FT
-       , uint32_t *cFT
+               ,
+               uint32_t* cFT
 #endif
-       )
-{
+) {
 #ifdef TT
-    uint32_t _ctt=0;
+    uint32_t _ctt = 0;
 #endif
 #ifdef FF
-    uint32_t _cff=0;
+    uint32_t _cff = 0;
 #endif
 #ifdef TF
-    uint32_t _ctf=0;
+    uint32_t _ctf = 0;
 #endif
 #ifdef FT
-    uint32_t _cft=0;
+    uint32_t _cft = 0;
 #endif
-    uint32_t nbBoolBlock;
-    uint32_t a,b,ba,bb;
-    int shift;
+    uint32_t   nbBoolBlock;
+    uint32_t   a, b, ba, bb;
+    int        shift;
     uint32x4_t aV, bV;
 #ifdef TT
     uint32x4_t cttV;
@@ -295,67 +292,66 @@ void FUNC(EXT)(const uint32_t *pA
 #endif
 
     nbBoolBlock = numberOfBools >> 7;
-    while(nbBoolBlock > 0)
-    {
-       aV = vld1q_u32(pA);
-       bV = vld1q_u32(pB);
-       pA += 4;
-       pB += 4;
+    while (nbBoolBlock > 0) {
+        aV = vld1q_u32(pA);
+        bV = vld1q_u32(pB);
+        pA += 4;
+        pB += 4;
 
 #ifdef TT
-       cttV = vandq_u32(aV,bV);
+        cttV = vandq_u32(aV, bV);
 #endif
 #ifdef FF
-       cffV = vandq_u32(vmvnq_u32(aV),vmvnq_u32(bV));
+        cffV = vandq_u32(vmvnq_u32(aV), vmvnq_u32(bV));
 #endif
 #ifdef TF
-       ctfV = vandq_u32(aV,vmvnq_u32(bV));
+        ctfV = vandq_u32(aV, vmvnq_u32(bV));
 #endif
 #ifdef FT
-       cftV = vandq_u32(vmvnq_u32(aV),bV);
+        cftV = vandq_u32(vmvnq_u32(aV), bV);
 #endif
 
 #ifdef TT
-       tmp = vcntq_u8(vreinterpretq_u8_u32(cttV));
-       tmp2 = vpaddlq_u8(tmp);
-       tmp3 = vpaddlq_u16(tmp2);
-       tmp4 = vpaddlq_u32(tmp3);
-       tmp4tt = vaddq_u64(tmp4tt, tmp4);
+        tmp    = vcntq_u8(vreinterpretq_u8_u32(cttV));
+        tmp2   = vpaddlq_u8(tmp);
+        tmp3   = vpaddlq_u16(tmp2);
+        tmp4   = vpaddlq_u32(tmp3);
+        tmp4tt = vaddq_u64(tmp4tt, tmp4);
 #endif
 
 #ifdef FF
-       tmp = vcntq_u8(vreinterpretq_u8_u32(cffV));
-       tmp2 = vpaddlq_u8(tmp);
-       tmp3 = vpaddlq_u16(tmp2);
-       tmp4 = vpaddlq_u32(tmp3);
-       tmp4ff = vaddq_u64(tmp4ff, tmp4);
+        tmp    = vcntq_u8(vreinterpretq_u8_u32(cffV));
+        tmp2   = vpaddlq_u8(tmp);
+        tmp3   = vpaddlq_u16(tmp2);
+        tmp4   = vpaddlq_u32(tmp3);
+        tmp4ff = vaddq_u64(tmp4ff, tmp4);
 #endif
 
 #ifdef TF
-       tmp = vcntq_u8(vreinterpretq_u8_u32(ctfV));
-       tmp2 = vpaddlq_u8(tmp);
-       tmp3 = vpaddlq_u16(tmp2);
-       tmp4 = vpaddlq_u32(tmp3);
-       tmp4tf = vaddq_u64(tmp4tf, tmp4);
-#endif 
+        tmp    = vcntq_u8(vreinterpretq_u8_u32(ctfV));
+        tmp2   = vpaddlq_u8(tmp);
+        tmp3   = vpaddlq_u16(tmp2);
+        tmp4   = vpaddlq_u32(tmp3);
+        tmp4tf = vaddq_u64(tmp4tf, tmp4);
+#endif
 
 #ifdef FT
-       tmp = vcntq_u8(vreinterpretq_u8_u32(cftV));
-       tmp2 = vpaddlq_u8(tmp);
-       tmp3 = vpaddlq_u16(tmp2);
-       tmp4 = vpaddlq_u32(tmp3);
-       tmp4ft = vaddq_u64(tmp4ft, tmp4);
+        tmp    = vcntq_u8(vreinterpretq_u8_u32(cftV));
+        tmp2   = vpaddlq_u8(tmp);
+        tmp3   = vpaddlq_u16(tmp2);
+        tmp4   = vpaddlq_u32(tmp3);
+        tmp4ft = vaddq_u64(tmp4ft, tmp4);
 #endif
 
 
-       nbBoolBlock --;
+        nbBoolBlock--;
     }
 
 #ifdef TT
     _ctt += vgetq_lane_u64(tmp4tt, 0) + vgetq_lane_u64(tmp4tt, 1);
 #endif
 #ifdef FF
-    _cff +=vgetq_lane_u64(tmp4ff, 0) + vgetq_lane_u64(tmp4ff, 1);
+    _cff += vgetq_lane_u64(tmp4ff, 0) + vgetq_lane_u64(tmp4ff, 1);
 #endif
 #ifdef TF
     _ctf += vgetq_lane_u64(tmp4tf, 0) + vgetq_lane_u64(tmp4tf, 1);
@@ -365,34 +361,32 @@ void FUNC(EXT)(const uint32_t *pA
 #endif
 
     nbBoolBlock = numberOfBools & 0x7F;
-    while(nbBoolBlock >= 32)
-    {
-       a = *pA++;
-       b = *pB++;
-       shift = 0;
-       while(shift < 32)
-       {
-          ba = a & 1;
-          bb = b & 1;
-          a = a >> 1;
-          b = b >> 1;
+    while (nbBoolBlock >= 32) {
+        a     = *pA++;
+        b     = *pB++;
+        shift = 0;
+        while (shift < 32) {
+            ba = a & 1;
+            bb = b & 1;
+            a  = a >> 1;
+            b  = b >> 1;
 
 #ifdef TT
-          _ctt += (ba && bb);
+            _ctt += (ba && bb);
 #endif
 #ifdef FF
-          _cff += ((1 ^ ba) && (1 ^ bb));
+            _cff += ((1 ^ ba) && (1 ^ bb));
 #endif
 #ifdef TF
-          _ctf += (ba && (1 ^ bb));
+            _ctf += (ba && (1 ^ bb));
 #endif
 #ifdef FT
-          _cft += ((1 ^ ba) && bb);
+            _cft += ((1 ^ ba) && bb);
 #endif
-          shift ++;
-       }
+            shift++;
+        }
 
-       nbBoolBlock -= 32;
+        nbBoolBlock -= 32;
     }
 
     a = *pA++;
@@ -401,26 +395,25 @@ void FUNC(EXT)(const uint32_t *pA
     a = a >> (32 - nbBoolBlock);
     b = b >> (32 - nbBoolBlock);
 
-    while(nbBoolBlock > 0)
-    {
-          ba = a & 1;
-          bb = b & 1;
-          a = a >> 1;
+    while (nbBoolBlock > 0) {
+        ba = a & 1;
+        bb = b & 1;
+        a  = a >> 1;
 
-          b = b >> 1;
+        b = b >> 1;
 #ifdef TT
-          _ctt += (ba && bb);
+        _ctt += (ba && bb);
 #endif
 #ifdef FF
-          _cff += ((1 ^ ba) && (1 ^ bb));
+        _cff += ((1 ^ ba) && (1 ^ bb));
 #endif
 #ifdef TF
-          _ctf += (ba && (1 ^ bb));
+        _ctf += (ba && (1 ^ bb));
 #endif
 #ifdef FT
-          _cft += ((1 ^ ba) && bb);
+        _cft += ((1 ^ ba) && bb);
 #endif
-          nbBoolBlock --;
+        nbBoolBlock--;
     }
 
 #ifdef TT
@@ -439,66 +432,67 @@ void FUNC(EXT)(const uint32_t *pA
 
 #else
 
-void FUNC(EXT)(const uint32_t *pA
-       , const uint32_t *pB
-       , uint32_t numberOfBools
+void FUNC(EXT)(const uint32_t* pA,
+               const uint32_t* pB,
+               uint32_t        numberOfBools
 #ifdef TT
-       , uint32_t *cTT
+               ,
+               uint32_t* cTT
 #endif
 #ifdef FF
-       , uint32_t *cFF
+               ,
+               uint32_t* cFF
 #endif
 #ifdef TF
-       , uint32_t *cTF
+               ,
+               uint32_t* cTF
 #endif
 #ifdef FT
-       , uint32_t *cFT
+               ,
+               uint32_t* cFT
 #endif
-       )
-{
-  
-#ifdef TT
-    uint32_t _ctt=0;
-#endif
-#ifdef FF
-    uint32_t _cff=0;
-#endif
-#ifdef TF
-    uint32_t _ctf=0;
-#endif
-#ifdef FT
-    uint32_t _cft=0;
-#endif
-    uint32_t a,b,ba,bb;
-    int shift;
+) {
 
-    while(numberOfBools >= 32)
-    {
-       a = *pA++;
-       b = *pB++;
-       shift = 0;
-       while(shift < 32)
-       {
-          ba = a & 1;
-          bb = b & 1;
-          a = a >> 1;
-          b = b >> 1;
 #ifdef TT
-          _ctt += (ba && bb);
+    uint32_t _ctt = 0;
 #endif
 #ifdef FF
-          _cff += ((1 ^ ba) && (1 ^ bb));
+    uint32_t _cff = 0;
 #endif
 #ifdef TF
-          _ctf += (ba && (1 ^ bb));
+    uint32_t _ctf = 0;
 #endif
 #ifdef FT
-          _cft += ((1 ^ ba) && bb);
+    uint32_t _cft = 0;
 #endif
-          shift ++;
-       }
+    uint32_t a, b, ba, bb;
+    int      shift;
 
-       numberOfBools -= 32;
+    while (numberOfBools >= 32) {
+        a     = *pA++;
+        b     = *pB++;
+        shift = 0;
+        while (shift < 32) {
+            ba = a & 1;
+            bb = b & 1;
+            a  = a >> 1;
+            b  = b >> 1;
+#ifdef TT
+            _ctt += (ba && bb);
+#endif
+#ifdef FF
+            _cff += ((1 ^ ba) && (1 ^ bb));
+#endif
+#ifdef TF
+            _ctf += (ba && (1 ^ bb));
+#endif
+#ifdef FT
+            _cft += ((1 ^ ba) && bb);
+#endif
+            shift++;
+        }
+
+        numberOfBools -= 32;
     }
 
     a = *pA++;
@@ -507,26 +501,25 @@ void FUNC(EXT)(const uint32_t *pA
     a = a >> (32 - numberOfBools);
     b = b >> (32 - numberOfBools);
 
-    while(numberOfBools > 0)
-    {
-          ba = a & 1;
-          bb = b & 1;
-          a = a >> 1;
-          b = b >> 1;
+    while (numberOfBools > 0) {
+        ba = a & 1;
+        bb = b & 1;
+        a  = a >> 1;
+        b  = b >> 1;
 
 #ifdef TT
-          _ctt += (ba && bb);
+        _ctt += (ba && bb);
 #endif
 #ifdef FF
-          _cff += ((1 ^ ba) && (1 ^ bb));
+        _cff += ((1 ^ ba) && (1 ^ bb));
 #endif
 #ifdef TF
-          _ctf += (ba && (1 ^ bb));
+        _ctf += (ba && (1 ^ bb));
 #endif
 #ifdef FT
-          _cft += ((1 ^ ba) && bb);
+        _cft += ((1 ^ ba) && bb);
 #endif
-          numberOfBools --;
+        numberOfBools--;
     }
 
 #ifdef TT
@@ -535,7 +528,7 @@ void FUNC(EXT)(const uint32_t *pA
 #ifdef FF
     *cFF = _cff;
 #endif
-#ifdef TF 
+#ifdef TF
     *cTF = _ctf;
 #endif
 #ifdef FT

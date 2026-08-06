@@ -34,31 +34,31 @@
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_SIN_Q15)
 #include "arm_cos_q15.c"
-#endif 
+#endif
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_SIN_Q31)
 #include "arm_cos_q31.c"
-#endif 
+#endif
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_SIN_F32)
 #include "arm_sin_f32.c"
-#endif 
+#endif
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_SIN_Q15)
 #include "arm_sin_q15.c"
-#endif 
+#endif
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_SIN_Q31)
 #include "arm_sin_q31.c"
-#endif 
+#endif
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_SQRT_Q31)
 #include "arm_sqrt_q31.c"
-#endif 
+#endif
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_SQRT_Q15)
 #include "arm_sqrt_q15.c"
-#endif 
+#endif
 
 #endif
 

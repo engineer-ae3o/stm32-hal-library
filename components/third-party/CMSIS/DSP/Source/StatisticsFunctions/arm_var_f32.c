@@ -63,17 +63,13 @@
 
 #include "arm_helium_utils.h"
 
-void arm_var_f32(
-           const float32_t * pSrc,
-                 uint32_t blockSize,
-                 float32_t * pResult)
-{
-    uint32_t         blkCnt;     /* loop counters */
-    f32x4_t         vecSrc;
-    f32x4_t         sumVec = vdupq_n_f32(0.0f);
-    float32_t       fMean;
-    float32_t sum = 0.0f;                          /* accumulator */
-    float32_t in;                                  /* Temporary variable to store input value */
+void arm_var_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+    uint32_t  blkCnt; /* loop counters */
+    f32x4_t   vecSrc;
+    f32x4_t   sumVec = vdupq_n_f32(0.0f);
+    float32_t fMean;
+    float32_t sum = 0.0f; /* accumulator */
+    float32_t in;         /* Temporary variable to store input value */
 
     if (blockSize <= 1U) {
         *pResult = 0;
@@ -84,8 +80,7 @@ void arm_var_f32(
 
     /* Compute 4 outputs at a time */
     blkCnt = blockSize >> 2U;
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
 
         vecSrc = vldrwq_f32(pSrc);
         /*
@@ -94,7 +89,7 @@ void arm_var_f32(
         vecSrc = vsubq(vecSrc, fMean);
         sumVec = vfmaq(sumVec, vecSrc, vecSrc);
 
-        blkCnt --;
+        blkCnt--;
         pSrc += 4;
     }
 
@@ -104,186 +99,169 @@ void arm_var_f32(
      * tail
      */
     blkCnt = blockSize & 0x3;
-    while (blkCnt > 0U)
-    {
-       in = *pSrc++ - fMean;
-       sum += in * in;
+    while (blkCnt > 0U) {
+        in = *pSrc++ - fMean;
+        sum += in * in;
 
-       /* Decrement loop counter */
-       blkCnt--;
+        /* Decrement loop counter */
+        blkCnt--;
     }
-   
+
     /* Variance */
-    *pResult = sum / (float32_t) (blockSize - 1);
+    *pResult = sum / (float32_t)(blockSize - 1);
 }
 #else
 #if defined(ARM_MATH_NEON_EXPERIMENTAL) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_var_f32(
-           const float32_t * pSrc,
-                 uint32_t blockSize,
-                 float32_t * pResult)
-{
-  float32_t mean;
+void arm_var_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+    float32_t mean;
 
-  float32_t sum = 0.0f;                          /* accumulator */
-  float32_t in;                                  /* Temporary variable to store input value */
-  uint32_t blkCnt;                               /* loop counter */
+    float32_t sum = 0.0f; /* accumulator */
+    float32_t in;         /* Temporary variable to store input value */
+    uint32_t  blkCnt;     /* loop counter */
 
-  float32x4_t sumV = vdupq_n_f32(0.0f);                          /* Temporary result storage */
-  float32x2_t sumV2;
-  float32x4_t inV;
-  float32x4_t avg;
+    float32x4_t sumV = vdupq_n_f32(0.0f); /* Temporary result storage */
+    float32x2_t sumV2;
+    float32x4_t inV;
+    float32x4_t avg;
 
-  arm_mean_f32(pSrc,blockSize,&mean);
-  avg = vdupq_n_f32(mean);
+    arm_mean_f32(pSrc, blockSize, &mean);
+    avg = vdupq_n_f32(mean);
 
-  blkCnt = blockSize >> 2U;
+    blkCnt = blockSize >> 2U;
 
-  /* Compute 4 outputs at a time.
+    /* Compute 4 outputs at a time.
    ** a second loop below computes the remaining 1 to 3 samples. */
-  while (blkCnt > 0U)
-  {
-    /* C = A[0] * A[0] + A[1] * A[1] + A[2] * A[2] + ... + A[blockSize-1] * A[blockSize-1] */
-    /* Compute Power and then store the result in a temporary variable, sum. */
-    inV = vld1q_f32(pSrc);
-    inV = vsubq_f32(inV, avg);
-    sumV = vmlaq_f32(sumV, inV, inV);
-    pSrc += 4;
+    while (blkCnt > 0U) {
+        /* C = A[0] * A[0] + A[1] * A[1] + A[2] * A[2] + ... + A[blockSize-1] * A[blockSize-1] */
+        /* Compute Power and then store the result in a temporary variable, sum. */
+        inV  = vld1q_f32(pSrc);
+        inV  = vsubq_f32(inV, avg);
+        sumV = vmlaq_f32(sumV, inV, inV);
+        pSrc += 4;
 
-    /* Decrement the loop counter */
-    blkCnt--;
-  }
+        /* Decrement the loop counter */
+        blkCnt--;
+    }
 
-  sumV2 = vpadd_f32(vget_low_f32(sumV),vget_high_f32(sumV));
-  sum = vget_lane_f32(sumV2, 0) + vget_lane_f32(sumV2, 1);
+    sumV2 = vpadd_f32(vget_low_f32(sumV), vget_high_f32(sumV));
+    sum   = vget_lane_f32(sumV2, 0) + vget_lane_f32(sumV2, 1);
 
-  /* If the blockSize is not a multiple of 4, compute any remaining output samples here.
+    /* If the blockSize is not a multiple of 4, compute any remaining output samples here.
    ** No loop unrolling is used. */
-  blkCnt = blockSize % 0x4U;
+    blkCnt = blockSize % 0x4U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = A[0] * A[0] + A[1] * A[1] + A[2] * A[2] + ... + A[blockSize-1] * A[blockSize-1] */
-    /* compute power and then store the result in a temporary variable, sum. */
-    in = *pSrc++;
-    in = in - mean;
-    sum += in * in;
+    while (blkCnt > 0U) {
+        /* C = A[0] * A[0] + A[1] * A[1] + A[2] * A[2] + ... + A[blockSize-1] * A[blockSize-1] */
+        /* compute power and then store the result in a temporary variable, sum. */
+        in = *pSrc++;
+        in = in - mean;
+        sum += in * in;
 
-    /* Decrement the loop counter */
-    blkCnt--;
-  }
+        /* Decrement the loop counter */
+        blkCnt--;
+    }
 
-  /* Variance */
-  *pResult = sum / (float32_t)(blockSize - 1.0f);
-
+    /* Variance */
+    *pResult = sum / (float32_t)(blockSize - 1.0f);
 }
 
 #else
-void arm_var_f32(
-  const float32_t * pSrc,
-        uint32_t blockSize,
-        float32_t * pResult)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-        float32_t sum = 0.0f;                          /* Temporary result storage */
-        float32_t fSum = 0.0f;
-        float32_t fMean, fValue;
-  const float32_t * pInput = pSrc;
+void arm_var_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+    uint32_t         blkCnt;      /* Loop counter */
+    float32_t        sum  = 0.0f; /* Temporary result storage */
+    float32_t        fSum = 0.0f;
+    float32_t        fMean, fValue;
+    const float32_t* pInput = pSrc;
 
-  if (blockSize <= 1U)
-  {
-    *pResult = 0;
-    return;
-  }
+    if (blockSize <= 1U) {
+        *pResult = 0;
+        return;
+    }
 
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = (A[0] + A[1] + A[2] + ... + A[blockSize-1]) */
+    while (blkCnt > 0U) {
+        /* C = (A[0] + A[1] + A[2] + ... + A[blockSize-1]) */
 
-    sum += *pInput++;
-    sum += *pInput++;
-    sum += *pInput++;
-    sum += *pInput++;
+        sum += *pInput++;
+        sum += *pInput++;
+        sum += *pInput++;
+        sum += *pInput++;
 
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = (A[0] + A[1] + A[2] + ... + A[blockSize-1]) */
+    while (blkCnt > 0U) {
+        /* C = (A[0] + A[1] + A[2] + ... + A[blockSize-1]) */
 
-    sum += *pInput++;
+        sum += *pInput++;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* C = (A[0] + A[1] + A[2] + ... + A[blockSize-1]) / blockSize  */
-  fMean = sum / (float32_t) blockSize;
+    /* C = (A[0] + A[1] + A[2] + ... + A[blockSize-1]) / blockSize  */
+    fMean = sum / (float32_t)blockSize;
 
-  pInput = pSrc;
+    pInput = pSrc;
 
-#if defined (ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    fValue = *pInput++ - fMean;
-    fSum += fValue * fValue;
+    while (blkCnt > 0U) {
+        fValue = *pInput++ - fMean;
+        fSum += fValue * fValue;
 
-    fValue = *pInput++ - fMean;
-    fSum += fValue * fValue;
+        fValue = *pInput++ - fMean;
+        fSum += fValue * fValue;
 
-    fValue = *pInput++ - fMean;
-    fSum += fValue * fValue;
+        fValue = *pInput++ - fMean;
+        fSum += fValue * fValue;
 
-    fValue = *pInput++ - fMean;
-    fSum += fValue * fValue;
+        fValue = *pInput++ - fMean;
+        fSum += fValue * fValue;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    fValue = *pInput++ - fMean;
-    fSum += fValue * fValue;
+    while (blkCnt > 0U) {
+        fValue = *pInput++ - fMean;
+        fSum += fValue * fValue;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Variance */
-  *pResult = fSum / (float32_t)(blockSize - 1.0f);
+    /* Variance */
+    *pResult = fSum / (float32_t)(blockSize - 1.0f);
 }
 #endif /* #if defined(ARM_MATH_NEON) */
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */

@@ -143,26 +143,21 @@
  * @param[in]  blockSize  number of samples of output data.
  */
 
-void arm_spline_f32(
-        arm_spline_instance_f32 * S, 
-  const float32_t * xq,
-        float32_t * pDst,
-        uint32_t blockSize)
-{
-    const float32_t * x = S->x;
-    const float32_t * y = S->y;
-    int32_t n = S->n_x;
+void arm_spline_f32(arm_spline_instance_f32* S, const float32_t* xq, float32_t* pDst, uint32_t blockSize) {
+    const float32_t* x = S->x;
+    const float32_t* y = S->y;
+    int32_t          n = S->n_x;
 
     /* Coefficients (a==y for i<=n-1) */
-    float32_t * b = (S->coeffs);
-    float32_t * c = (S->coeffs)+(n-1);
-    float32_t * d = (S->coeffs)+(2*(n-1));    
+    float32_t* b = (S->coeffs);
+    float32_t* c = (S->coeffs) + (n - 1);
+    float32_t* d = (S->coeffs) + (2 * (n - 1));
 
-    const float32_t * pXq = xq;
-    int32_t blkCnt = (int32_t)blockSize;
-    int32_t blkCnt2;
-    int32_t i;
-    float32_t x_sc;
+    const float32_t* pXq    = xq;
+    int32_t          blkCnt = (int32_t)blockSize;
+    int32_t          blkCnt2;
+    int32_t          i;
+    float32_t        x_sc;
 
 #ifdef ARM_MATH_NEON
     float32x4_t xiv;
@@ -179,8 +174,7 @@ void arm_spline_f32(
 #endif
 
     /* Create output for x(i)<x<x(i+1) */
-    for (i=0; i<n-1; i++)
-    {
+    for (i = 0; i < n - 1; i++) {
 #ifdef ARM_MATH_NEON
         xiv = vdupq_n_f32(x[i]);
 
@@ -189,39 +183,37 @@ void arm_spline_f32(
         civ = vdupq_n_f32(c[i]);
         div = vdupq_n_f32(d[i]);
 
-        while( *(pXq+4) <= x[i+1] && blkCnt > 4 )
-        {
+        while (*(pXq + 4) <= x[i + 1] && blkCnt > 4) {
             /* Load [xq(k) xq(k+1) xq(k+2) xq(k+3)] */
             xqv = vld1q_f32(pXq);
-            pXq+=4;
-        
+            pXq += 4;
+
             /* Compute [xq(k)-x(i) xq(k+1)-x(i) xq(k+2)-x(i) xq(k+3)-x(i)] */
             diff = vsubq_f32(xqv, xiv);
             temp = diff;
-        
+
             /* y(i) = a(i) + ... */
             yv = aiv;
             /* ... + b(i)*(x-x(i)) + ... */
             yv = vmlaq_f32(yv, biv, temp);
             /* ... + c(i)*(x-x(i))^2 + ... */
             temp = vmulq_f32(temp, diff);
-            yv = vmlaq_f32(yv, civ, temp);
+            yv   = vmlaq_f32(yv, civ, temp);
             /* ... + d(i)*(x-x(i))^3 */
             temp = vmulq_f32(temp, diff);
-            yv = vmlaq_f32(yv, div, temp);
-        
+            yv   = vmlaq_f32(yv, div, temp);
+
             /* Store [y(k) y(k+1) y(k+2) y(k+3)] */
             vst1q_f32(pDst, yv);
-            pDst+=4;
-        
-            blkCnt-=4;
+            pDst += 4;
+
+            blkCnt -= 4;
         }
 #endif
-        while( *pXq <= x[i+1] && blkCnt > 0 )
-        {
+        while (*pXq <= x[i + 1] && blkCnt > 0) {
             x_sc = *pXq++;
 
-            *pDst = y[i]+b[i]*(x_sc-x[i])+c[i]*(x_sc-x[i])*(x_sc-x[i])+d[i]*(x_sc-x[i])*(x_sc-x[i])*(x_sc-x[i]);
+            *pDst = y[i] + b[i] * (x_sc - x[i]) + c[i] * (x_sc - x[i]) * (x_sc - x[i]) + d[i] * (x_sc - x[i]) * (x_sc - x[i]) * (x_sc - x[i]);
 
             pDst++;
             blkCnt--;
@@ -233,49 +225,48 @@ void arm_spline_f32(
     /* Compute 4 outputs at a time */
     blkCnt2 = blkCnt >> 2;
 
-    while(blkCnt2 > 0) 
-    { 
-        /* Load [xq(k) xq(k+1) xq(k+2) xq(k+3)] */ 
+    while (blkCnt2 > 0) {
+        /* Load [xq(k) xq(k+1) xq(k+2) xq(k+3)] */
         xqv = vld1q_f32(pXq);
-        pXq+=4;
-                                                         
+        pXq += 4;
+
         /* Compute [xq(k)-x(i) xq(k+1)-x(i) xq(k+2)-x(i) xq(k+3)-x(i)] */
         diff = vsubq_f32(xqv, xiv);
-        temp = diff; 
+        temp = diff;
 
-        /* y(i) = a(i) + ... */ 
-        yv = aiv; 
-        /* ... + b(i)*(x-x(i)) + ... */ 
+        /* y(i) = a(i) + ... */
+        yv = aiv;
+        /* ... + b(i)*(x-x(i)) + ... */
         yv = vmlaq_f32(yv, biv, temp);
         /* ... + c(i)*(x-x(i))^2 + ... */
         temp = vmulq_f32(temp, diff);
-        yv = vmlaq_f32(yv, civ, temp);
+        yv   = vmlaq_f32(yv, civ, temp);
         /* ... + d(i)*(x-x(i))^3 */
         temp = vmulq_f32(temp, diff);
-        yv = vmlaq_f32(yv, div, temp);
+        yv   = vmlaq_f32(yv, div, temp);
 
         /* Store [y(k) y(k+1) y(k+2) y(k+3)] */
         vst1q_f32(pDst, yv);
-        pDst+=4;
+        pDst += 4;
 
         blkCnt2--;
-    } 
+    }
 
     /* Tail */
-    blkCnt2 = blkCnt & 3;                                      
-#else                                                        
-    blkCnt2 = blkCnt;                                          
+    blkCnt2 = blkCnt & 3;
+#else
+    blkCnt2 = blkCnt;
 #endif
 
-    while(blkCnt2 > 0)                                       
-    { 
-        x_sc = *pXq++; 
-  
-        *pDst = y[i-1]+b[i-1]*(x_sc-x[i-1])+c[i-1]*(x_sc-x[i-1])*(x_sc-x[i-1])+d[i-1]*(x_sc-x[i-1])*(x_sc-x[i-1])*(x_sc-x[i-1]);
- 
-        pDst++; 
-        blkCnt2--;   
-    }   
+    while (blkCnt2 > 0) {
+        x_sc = *pXq++;
+
+        *pDst = y[i - 1] + b[i - 1] * (x_sc - x[i - 1]) + c[i - 1] * (x_sc - x[i - 1]) * (x_sc - x[i - 1]) +
+                d[i - 1] * (x_sc - x[i - 1]) * (x_sc - x[i - 1]) * (x_sc - x[i - 1]);
+
+        pDst++;
+        blkCnt2--;
+    }
 }
 
 /**

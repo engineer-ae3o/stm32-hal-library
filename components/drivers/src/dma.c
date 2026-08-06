@@ -1,8 +1,8 @@
 #include "stm32f411xe.h"
-#include "dma.h"
+#include "drivers/dma.h"
+
 
 hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
-
     if (enable) {
         if (controller == DMA1) {
             RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;

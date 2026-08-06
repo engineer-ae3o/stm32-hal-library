@@ -1,12 +1,15 @@
-#ifndef _PWM_H_
-#define _PWM_H_
+#ifndef PWM_H_
+#define PWM_H_
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _PWM_H_
+
+#endif // PWM_H_

@@ -47,41 +47,35 @@
  *
  */
 
-void arm_nn_activations_direct_q15(q15_t *data, uint16_t size, uint16_t int_width, arm_nn_activation_type type)
-{
-    uint16_t i = size;
-    q15_t *pIn = data;
-    q15_t *pOut = data;
-    uint16_t shift_size = 8 + 3 - int_width;
-    uint32_t bit_mask = 0x7FF >> int_width;
-    uint32_t full_frac = bit_mask + 1;
-    const q15_t *lookup_table;
+void arm_nn_activations_direct_q15(q15_t* data, uint16_t size, uint16_t int_width, arm_nn_activation_type type) {
+    uint16_t     i          = size;
+    q15_t*       pIn        = data;
+    q15_t*       pOut       = data;
+    uint16_t     shift_size = 8 + 3 - int_width;
+    uint32_t     bit_mask   = 0x7FF >> int_width;
+    uint32_t     full_frac  = bit_mask + 1;
+    const q15_t* lookup_table;
 
-    switch (type)
-    {
-    case ARM_SIGMOID:
-        lookup_table = sigmoidTable_q15;
-        break;
-    case ARM_TANH:
-    default:
-        lookup_table = tanhTable_q15;
-        break;
+    switch (type) {
+        case ARM_SIGMOID:
+            lookup_table = sigmoidTable_q15;
+            break;
+        case ARM_TANH:
+        default:
+            lookup_table = tanhTable_q15;
+            break;
     }
 
-    while (i)
-    {
+    while (i) {
         q15_t out;
-        q15_t in = *pIn++;
-        q15_t frac = (uint32_t)in & bit_mask;
+        q15_t in    = *pIn++;
+        q15_t frac  = (uint32_t)in & bit_mask;
         q15_t value = lookup_table[(uint8_t)(in >> shift_size)];
-        if ((in >> shift_size) != 0x7f)
-        {
+        if ((in >> shift_size) != 0x7f) {
             q15_t value2 = lookup_table[(uint8_t)(1 + ((uint8_t)(in >> shift_size)))];
             /* doing the interpolation here for better accuracy */
             out = ((q31_t)(full_frac - frac) * value + (q31_t)value2 * frac) >> shift_size;
-        }
-        else
-        {
+        } else {
             /* the largest positive value does not have a right side for linear interpolation */
             out = value;
         }

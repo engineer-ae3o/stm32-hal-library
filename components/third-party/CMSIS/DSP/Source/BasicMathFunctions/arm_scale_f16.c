@@ -77,13 +77,8 @@
 
 #include "arm_helium_utils.h"
 
-void arm_scale_f16(
-  const float16_t * pSrc,
-        float16_t scale,
-        float16_t * pDst,
-        uint32_t blockSize)
-{
-        uint32_t blkCnt;                               /* Loop counter */
+void arm_scale_f16(const float16_t* pSrc, float16_t scale, float16_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
     f16x8_t vec1;
     f16x8_t res;
@@ -91,19 +86,18 @@ void arm_scale_f16(
     /* Compute 4 outputs at a time */
     blkCnt = blockSize >> 3U;
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /* C = A + offset */
- 
+
         /* Add offset and then store the results in the destination buffer. */
         vec1 = vld1q(pSrc);
-        res = vmulq(vec1,scale);
+        res  = vmulq(vec1, scale);
         vst1q(pDst, res);
 
         /* Increment pointers */
         pSrc += 8;
         pDst += 8;
-        
+
         /* Decrement the loop counter */
         blkCnt--;
     }
@@ -111,69 +105,58 @@ void arm_scale_f16(
     /* Tail */
     blkCnt = blockSize & 0x7;
 
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         mve_pred16_t p0 = vctp16q(blkCnt);
-        vec1 = vld1q((float16_t const *) pSrc);
+        vec1            = vld1q((float16_t const*)pSrc);
         vstrhq_p(pDst, vmulq(vec1, scale), p0);
     }
-
-
 }
 
 #else
 #if defined(ARM_FLOAT16_SUPPORTED)
-void arm_scale_f16(
-  const float16_t *pSrc,
-        float16_t scale,
-        float16_t *pDst,
-        uint32_t blockSize)
-{
-  uint32_t blkCnt;                               /* Loop counter */
+void arm_scale_f16(const float16_t* pSrc, float16_t scale, float16_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = A * scale */
+    while (blkCnt > 0U) {
+        /* C = A * scale */
 
-    /* Scale input and store result in destination buffer. */
-    *pDst++ = (_Float16)(*pSrc++) * (_Float16)scale;
+        /* Scale input and store result in destination buffer. */
+        *pDst++ = (_Float16)(*pSrc++) * (_Float16)scale;
 
-    *pDst++ = (_Float16)(*pSrc++) * (_Float16)scale;
+        *pDst++ = (_Float16)(*pSrc++) * (_Float16)scale;
 
-    *pDst++ = (_Float16)(*pSrc++) * (_Float16)scale;
+        *pDst++ = (_Float16)(*pSrc++) * (_Float16)scale;
 
-    *pDst++ = (_Float16)(*pSrc++) * (_Float16)scale;
+        *pDst++ = (_Float16)(*pSrc++) * (_Float16)scale;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = A * scale */
+    while (blkCnt > 0U) {
+        /* C = A * scale */
 
-    /* Scale input and store result in destination buffer. */
-    *pDst++ = (_Float16)(*pSrc++) * (_Float16)scale;
+        /* Scale input and store result in destination buffer. */
+        *pDst++ = (_Float16)(*pSrc++) * (_Float16)scale;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */

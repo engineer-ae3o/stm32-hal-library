@@ -33,27 +33,19 @@
 
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
 
-static void scale_q31_to_q7_and_clamp(const q31_t *buffer,
-                                      q7_t *target,
-                                      int32_t length,
-                                      const int32_t count,
-                                      const int act_min,
-                                      const int act_max)
-{
+static void scale_q31_to_q7_and_clamp(const q31_t* buffer, q7_t* target, int32_t length, const int32_t count, const int act_min, const int act_max) {
     const int half_count = count / 2;
 
     // Prevent static code issue DIVIDE_BY_ZERO.
-    if (count == 0)
-    {
+    if (count == 0) {
         return;
     }
 
-    for (int i = 0; i < length; i++)
-    {
+    for (int i = 0; i < length; i++) {
         int32_t sum = buffer[i] > 0 ? (buffer[i] + half_count) : (buffer[i] - half_count);
-        sum = sum / count;
-        sum = MAX(sum, act_min);
-        sum = MIN(sum, act_max);
+        sum         = sum / count;
+        sum         = MAX(sum, act_min);
+        sum         = MIN(sum, act_max);
 
         target[i] = (q7_t)sum;
     }
@@ -78,73 +70,67 @@ static void scale_q31_to_q7_and_clamp(const q31_t *buffer,
 
 #if defined(ARM_MATH_MVEI)
 
-arm_status arm_avgpool_s8(const cmsis_nn_context *ctx,
-                          const cmsis_nn_pool_params *pool_params,
-                          const cmsis_nn_dims *input_dims,
-                          const q7_t *src,
-                          const cmsis_nn_dims *filter_dims,
-                          const cmsis_nn_dims *output_dims,
-                          q7_t *dst)
-{
+arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
+                          const cmsis_nn_pool_params* pool_params,
+                          const cmsis_nn_dims*        input_dims,
+                          const q7_t*                 src,
+                          const cmsis_nn_dims*        filter_dims,
+                          const cmsis_nn_dims*        output_dims,
+                          q7_t*                       dst) {
     (void)ctx;
-    const int32_t input_y = input_dims->h;
-    const int32_t input_x = input_dims->w;
+    const int32_t input_y  = input_dims->h;
+    const int32_t input_x  = input_dims->w;
     const int32_t output_y = output_dims->h;
     const int32_t output_x = output_dims->w;
     const int32_t stride_y = pool_params->stride.h;
     const int32_t stride_x = pool_params->stride.w;
     const int32_t kernel_y = filter_dims->h;
     const int32_t kernel_x = filter_dims->w;
-    const int32_t pad_y = pool_params->padding.h;
-    const int32_t pad_x = pool_params->padding.w;
-    const int32_t act_min = pool_params->activation.min;
-    const int32_t act_max = pool_params->activation.max;
-    const int32_t ch_src = input_dims->c;
+    const int32_t pad_y    = pool_params->padding.h;
+    const int32_t pad_x    = pool_params->padding.w;
+    const int32_t act_min  = pool_params->activation.min;
+    const int32_t act_max  = pool_params->activation.max;
+    const int32_t ch_src   = input_dims->c;
 
     int32_t i_x, i_y;
     int32_t k_x, k_y;
 
-    for (i_y = 0; i_y < output_y; i_y++)
-    {
-        for (i_x = 0; i_x < output_x; i_x++)
-        {
+    for (i_y = 0; i_y < output_y; i_y++) {
+        for (i_x = 0; i_x < output_x; i_x++) {
 
-            int32_t k_y_start, k_y_end;
-            int32_t k_x_start, k_x_end;
-            int32_t chCnt;
+            int32_t       k_y_start, k_y_end;
+            int32_t       k_x_start, k_x_end;
+            int32_t       chCnt;
             const int8_t *pTmp, *pTmpInner;
-            int8_t *pDst;
+            int8_t*       pDst;
 
             k_y_start = MAX(0, i_y * stride_y - pad_y);
-            k_y_end = MIN(i_y * stride_y - pad_y + kernel_y, input_y);
+            k_y_end   = MIN(i_y * stride_y - pad_y + kernel_y, input_y);
 
             k_x_start = MAX(0, i_x * stride_x - pad_x);
-            k_x_end = MIN(i_x * stride_x - pad_x + kernel_x, input_x);
+            k_x_end   = MIN(i_x * stride_x - pad_x + kernel_x, input_x);
 
             pTmp = src;
             pDst = &dst[ch_src * (i_x + i_y * output_x)];
 
             chCnt = ch_src >> 4;
-            while (chCnt > 0)
-            {
+            while (chCnt > 0) {
                 int32x4_t sumV1, sumV2, sumV3, sumV4;
 
                 int8x16_t tempV;
                 int16x8_t tempVLO, tempVHI;
                 int32x4_t tempVLOLO, tempVLOHI, tempVHILO, tempVHIHI;
-                int32_t count = 0;
+                int32_t   count = 0;
 
                 sumV1 = vdupq_n_s32(0);
                 sumV2 = vdupq_n_s32(0);
                 sumV3 = vdupq_n_s32(0);
                 sumV4 = vdupq_n_s32(0);
 
-                for (k_y = k_y_start; k_y < k_y_end; k_y++)
-                {
-                    for (k_x = k_x_start; k_x < k_x_end; k_x++)
-                    {
+                for (k_y = k_y_start; k_y < k_y_end; k_y++) {
+                    for (k_x = k_x_start; k_x < k_x_end; k_x++) {
                         pTmpInner = pTmp + (ch_src * (k_x + k_y * input_x));
-                        tempV = vldrbq_s8(pTmpInner);
+                        tempV     = vldrbq_s8(pTmpInner);
 
                         tempVLO = vmovlbq_s8(tempV);
                         tempVHI = vmovltq_s8(tempV);
@@ -165,8 +151,7 @@ arm_status arm_avgpool_s8(const cmsis_nn_context *ctx,
                 }
 
                 // Prevent static code issue DIVIDE_BY_ZERO.
-                if (count == 0)
-                {
+                if (count == 0) {
                     return ARM_MATH_ARGUMENT_ERROR;
                 }
 
@@ -219,23 +204,19 @@ arm_status arm_avgpool_s8(const cmsis_nn_context *ctx,
             }
 
             chCnt = ch_src & 0xF;
-            while (chCnt > 0)
-            {
-                int32_t sum = 0;
+            while (chCnt > 0) {
+                int32_t sum   = 0;
                 int32_t count = 0;
 
-                for (k_y = k_y_start; k_y < k_y_end; k_y++)
-                {
-                    for (k_x = k_x_start; k_x < k_x_end; k_x++)
-                    {
+                for (k_y = k_y_start; k_y < k_y_end; k_y++) {
+                    for (k_x = k_x_start; k_x < k_x_end; k_x++) {
                         sum += pTmp[ch_src * (k_x + k_y * input_x)];
                         count++;
                     }
                 }
 
                 // Prevent static code issue DIVIDE_BY_ZERO.
-                if (count == 0)
-                {
+                if (count == 0) {
                     return ARM_MATH_ARGUMENT_ERROR;
                 }
 
@@ -254,42 +235,38 @@ arm_status arm_avgpool_s8(const cmsis_nn_context *ctx,
 }
 
 #else
-arm_status arm_avgpool_s8(const cmsis_nn_context *ctx,
-                          const cmsis_nn_pool_params *pool_params,
-                          const cmsis_nn_dims *input_dims,
-                          const q7_t *src,
-                          const cmsis_nn_dims *filter_dims,
-                          const cmsis_nn_dims *output_dims,
-                          q7_t *dst)
-{
-    const int32_t input_y = input_dims->h;
-    const int32_t input_x = input_dims->w;
+arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
+                          const cmsis_nn_pool_params* pool_params,
+                          const cmsis_nn_dims*        input_dims,
+                          const q7_t*                 src,
+                          const cmsis_nn_dims*        filter_dims,
+                          const cmsis_nn_dims*        output_dims,
+                          q7_t*                       dst) {
+    const int32_t input_y  = input_dims->h;
+    const int32_t input_x  = input_dims->w;
     const int32_t output_y = output_dims->h;
     const int32_t output_x = output_dims->w;
     const int32_t stride_y = pool_params->stride.h;
     const int32_t stride_x = pool_params->stride.w;
     const int32_t kernel_y = filter_dims->h;
     const int32_t kernel_x = filter_dims->w;
-    const int32_t pad_y = pool_params->padding.h;
-    const int32_t pad_x = pool_params->padding.w;
-    const int32_t act_min = pool_params->activation.min;
-    const int32_t act_max = pool_params->activation.max;
-    const int32_t ch_src = input_dims->c;
+    const int32_t pad_y    = pool_params->padding.h;
+    const int32_t pad_x    = pool_params->padding.w;
+    const int32_t act_min  = pool_params->activation.min;
+    const int32_t act_max  = pool_params->activation.max;
+    const int32_t ch_src   = input_dims->c;
 
-    if (ctx->buf == NULL && arm_avgpool_s8_get_buffer_size(output_dims->w, input_dims->c))
-    {
+    if (ctx->buf == NULL && arm_avgpool_s8_get_buffer_size(output_dims->w, input_dims->c)) {
         return ARM_MATH_ARGUMENT_ERROR;
     }
-    q31_t *buffer = (q31_t *)ctx->buf;
+    q31_t* buffer = (q31_t*)ctx->buf;
 
 #if defined(ARM_MATH_DSP)
 
     /* Run the following code for CPU's with DSP extension
      */
-    for (int i_y = 0, idx_y = -pad_y; i_y < output_y; idx_y += stride_y, i_y++)
-    {
-        for (int i_x = 0, idx_x = -pad_x; i_x < output_x; idx_x += stride_x, i_x++)
-        {
+    for (int i_y = 0, idx_y = -pad_y; i_y < output_y; idx_y += stride_y, i_y++) {
+        for (int i_x = 0, idx_x = -pad_x; i_x < output_x; idx_x += stride_x, i_x++) {
             /* Condition for kernel start dimension:
                       (base_idx_<x,y> + kernel_<x,y>_start) >= 0 */
             const int32_t kernel_y_start = MAX(0, -idx_y);
@@ -302,23 +279,16 @@ arm_status arm_avgpool_s8(const cmsis_nn_context *ctx,
 
             int count = 0;
 
-            for (int k_y = kernel_y_start; k_y < kernel_y_end; k_y++)
-            {
-                for (int k_x = kernel_x_start; k_x < kernel_x_end; k_x++)
-                {
-                    const q7_t *start = src + ch_src * (k_x + idx_x + (k_y + idx_y) * input_x);
+            for (int k_y = kernel_y_start; k_y < kernel_y_end; k_y++) {
+                for (int k_x = kernel_x_start; k_x < kernel_x_end; k_x++) {
+                    const q7_t* start = src + ch_src * (k_x + idx_x + (k_y + idx_y) * input_x);
 
-                    if (count == 0)
-                    {
-                        for (int i = 0; i < ch_src; i++)
-                        {
+                    if (count == 0) {
+                        for (int i = 0; i < ch_src; i++) {
                             buffer[i] = start[i];
                         }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < ch_src; i++)
-                        {
+                    } else {
+                        for (int i = 0; i < ch_src; i++) {
                             buffer[i] = __QADD(start[i], buffer[i]);
                         }
                     }
@@ -327,8 +297,7 @@ arm_status arm_avgpool_s8(const cmsis_nn_context *ctx,
             }
 
             // Prevent static code issue DIVIDE_BY_ZERO.
-            if (count == 0)
-            {
+            if (count == 0) {
                 return ARM_MATH_ARGUMENT_ERROR;
             }
 
@@ -344,20 +313,14 @@ arm_status arm_avgpool_s8(const cmsis_nn_context *ctx,
     int16_t i_ch_in, i_x, i_y;
     int16_t k_x, k_y;
 
-    for (i_y = 0; i_y < output_y; i_y++)
-    {
-        for (i_x = 0; i_x < output_x; i_x++)
-        {
-            for (i_ch_in = 0; i_ch_in < ch_src; i_ch_in++)
-            {
-                int sum = 0;
+    for (i_y = 0; i_y < output_y; i_y++) {
+        for (i_x = 0; i_x < output_x; i_x++) {
+            for (i_ch_in = 0; i_ch_in < ch_src; i_ch_in++) {
+                int sum   = 0;
                 int count = 0;
-                for (k_y = i_y * stride_y - pad_y; k_y < i_y * stride_y - pad_y + kernel_y; k_y++)
-                {
-                    for (k_x = i_x * stride_x - pad_x; k_x < i_x * stride_x - pad_x + kernel_x; k_x++)
-                    {
-                        if (k_y >= 0 && k_x >= 0 && k_y < input_y && k_x < input_x)
-                        {
+                for (k_y = i_y * stride_y - pad_y; k_y < i_y * stride_y - pad_y + kernel_y; k_y++) {
+                    for (k_x = i_x * stride_x - pad_x; k_x < i_x * stride_x - pad_x + kernel_x; k_x++) {
+                        if (k_y >= 0 && k_x >= 0 && k_y < input_y && k_x < input_x) {
                             sum += src[i_ch_in + ch_src * (k_x + k_y * input_x)];
                             count++;
                         }
@@ -365,8 +328,7 @@ arm_status arm_avgpool_s8(const cmsis_nn_context *ctx,
                 }
 
                 // Prevent static code issue DIVIDE_BY_ZERO.
-                if (count == 0)
-                {
+                if (count == 0) {
                     return ARM_MATH_ARGUMENT_ERROR;
                 }
 
@@ -385,8 +347,7 @@ arm_status arm_avgpool_s8(const cmsis_nn_context *ctx,
 
 #endif /* ARM_MATH_MVEI */
 
-int32_t arm_avgpool_s8_get_buffer_size(const int output_x, const int ch_src)
-{
+int32_t arm_avgpool_s8_get_buffer_size(const int output_x, const int ch_src) {
     (void)output_x;
 
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)

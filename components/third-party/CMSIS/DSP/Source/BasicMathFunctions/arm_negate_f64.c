@@ -45,27 +45,21 @@
   @return        none
  */
 
-void arm_negate_f64(
-  const float64_t * pSrc,
-        float64_t * pDst,
-        uint32_t blockSize)
-{
-  uint32_t blkCnt;                               /* Loop counter */
+void arm_negate_f64(const float64_t* pSrc, float64_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
-  while (blkCnt > 0U)
-  {
-    /* C = -A */
+    while (blkCnt > 0U) {
+        /* C = -A */
 
-    /* Negate and store result in destination buffer. */
-    *pDst++ = -*pSrc++;
+        /* Negate and store result in destination buffer. */
+        *pDst++ = -*pSrc++;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 
 /**

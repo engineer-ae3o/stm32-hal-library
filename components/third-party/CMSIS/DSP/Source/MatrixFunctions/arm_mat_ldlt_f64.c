@@ -30,32 +30,29 @@
 #include <math.h>
 
 
+/// @private
+#define SWAP_ROWS_F64(A, i, j)                                                                                                                       \
+    {                                                                                                                                                \
+        int w;                                                                                                                                       \
+        for (w = 0; w < n; w++) {                                                                                                                    \
+            float64_t tmp;                                                                                                                           \
+            tmp          = A[i * n + w];                                                                                                             \
+            A[i * n + w] = A[j * n + w];                                                                                                             \
+            A[j * n + w] = tmp;                                                                                                                      \
+        }                                                                                                                                            \
+    }
 
 /// @private
-#define SWAP_ROWS_F64(A,i,j) \
-{                            \
-  int w;                     \
-  for(w=0;w < n; w++)        \
-  {                          \
-     float64_t tmp;          \
-     tmp = A[i*n + w];       \
-     A[i*n + w] = A[j*n + w];\
-     A[j*n + w] = tmp;       \
-  }                          \
-}
-
-/// @private
-#define SWAP_COLS_F64(A,i,j) \
-{                            \
-  int w;                     \
-  for(w=0;w < n; w++)        \
-  {                          \
-     float64_t tmp;          \
-     tmp = A[w*n + i];       \
-     A[w*n + i] = A[w*n + j];\
-     A[w*n + j] = tmp;       \
-  }                          \
-}
+#define SWAP_COLS_F64(A, i, j)                                                                                                                       \
+    {                                                                                                                                                \
+        int w;                                                                                                                                       \
+        for (w = 0; w < n; w++) {                                                                                                                    \
+            float64_t tmp;                                                                                                                           \
+            tmp          = A[w * n + i];                                                                                                             \
+            A[w * n + i] = A[w * n + j];                                                                                                             \
+            A[w * n + j] = tmp;                                                                                                                      \
+        }                                                                                                                                            \
+    }
 
 /**
   @ingroup groupMatrix
@@ -81,147 +78,117 @@
    *  Computes the LDL^t decomposition of a matrix A such that P A P^t = L D L^t.
    */
 
-arm_status arm_mat_ldlt_f64(
-  const arm_matrix_instance_f64 * pSrc,
-  arm_matrix_instance_f64 * pl,
-  arm_matrix_instance_f64 * pd,
-  uint16_t * pp)
-{
+arm_status arm_mat_ldlt_f64(const arm_matrix_instance_f64* pSrc, arm_matrix_instance_f64* pl, arm_matrix_instance_f64* pd, uint16_t* pp) {
 
-  arm_status status;                             /* status of matrix inverse */
- 
+    arm_status status; /* status of matrix inverse */
+
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
-  /* Check for matrix mismatch condition */
-  if ((pSrc->numRows != pSrc->numCols) ||
-      (pl->numRows != pl->numCols) ||
-      (pd->numRows != pd->numCols) ||
-      (pl->numRows != pd->numRows)   )
-  {
-    /* Set status as ARM_MATH_SIZE_MISMATCH */
-    status = ARM_MATH_SIZE_MISMATCH;
-  }
-  else
+    /* Check for matrix mismatch condition */
+    if ((pSrc->numRows != pSrc->numCols) || (pl->numRows != pl->numCols) || (pd->numRows != pd->numCols) || (pl->numRows != pd->numRows)) {
+        /* Set status as ARM_MATH_SIZE_MISMATCH */
+        status = ARM_MATH_SIZE_MISMATCH;
+    } else
 
 #endif /* #ifdef ARM_MATH_MATRIX_CHECK */
 
-  {
-
-    const int n=pSrc->numRows;
-    int fullRank = 1, diag,k;
-    float64_t *pA;
-
-    memset(pd->pData,0,sizeof(float64_t)*n*n);
-
-    memcpy(pl->pData,pSrc->pData,n*n*sizeof(float64_t));
-    pA = pl->pData;
-
-    for(k=0;k < n; k++)
     {
-      pp[k] = k;
+
+        const int  n        = pSrc->numRows;
+        int        fullRank = 1, diag, k;
+        float64_t* pA;
+
+        memset(pd->pData, 0, sizeof(float64_t) * n * n);
+
+        memcpy(pl->pData, pSrc->pData, n * n * sizeof(float64_t));
+        pA = pl->pData;
+
+        for (k = 0; k < n; k++) {
+            pp[k] = k;
+        }
+
+
+        for (k = 0; k < n; k++) {
+            /* Find pivot */
+            float64_t m = F64_MIN, a;
+            int       w, r, j = k;
+
+
+            for (r = k; r < n; r++) {
+                if (pA[r * n + r] > m) {
+                    m = pA[r * n + r];
+                    j = r;
+                }
+            }
+
+            if (j != k) {
+                SWAP_ROWS_F64(pA, k, j);
+                SWAP_COLS_F64(pA, k, j);
+            }
+
+
+            pp[k] = j;
+
+            a = pA[k * n + k];
+
+            if (fabs(a) < 1.0e-18) {
+
+                fullRank = 0;
+                break;
+            }
+
+            for (w = k + 1; w < n; w++) {
+                int x;
+                for (x = k + 1; x < n; x++) {
+                    pA[w * n + x] = pA[w * n + x] - pA[w * n + k] * pA[x * n + k] / a;
+                }
+            }
+
+            for (w = k + 1; w < n; w++) {
+                pA[w * n + k] = pA[w * n + k] / a;
+            }
+        }
+
+
+        diag = k;
+        if (!fullRank) {
+            diag--;
+            {
+                int row;
+                for (row = 0; row < n; row++) {
+                    int col;
+                    for (col = k; col < n; col++) {
+                        pl->pData[row * n + col] = 0.0;
+                    }
+                }
+            }
+        }
+
+        {
+            int row;
+            for (row = 0; row < n; row++) {
+                int col;
+                for (col = row + 1; col < n; col++) {
+                    pl->pData[row * n + col] = 0.0;
+                }
+            }
+        }
+
+        {
+            int d;
+            for (d = 0; d < diag; d++) {
+                pd->pData[d * n + d] = pl->pData[d * n + d];
+                pl->pData[d * n + d] = 1.0;
+            }
+        }
+
+        status = ARM_MATH_SUCCESS;
     }
 
 
-    for(k=0;k < n; k++)
-    {
-        /* Find pivot */
-        float64_t m=F64_MIN,a;
-        int w,r,j=k; 
-
-
-        for(r=k;r<n;r++)
-        {
-           if (pA[r*n+r] > m)
-           {
-             m = pA[r*n+r];
-             j = r;
-           }
-        }
-
-        if(j != k)
-        {
-          SWAP_ROWS_F64(pA,k,j);
-          SWAP_COLS_F64(pA,k,j);
-        }
-
-
-        pp[k] = j;
-
-        a = pA[k*n+k];
-
-        if (fabs(a) < 1.0e-18)
-        {
-
-            fullRank = 0;
-            break;
-        }
-
-        for(w=k+1;w<n;w++)
-        {
-          int x;
-          for(x=k+1;x<n;x++)
-          {
-             pA[w*n+x] = pA[w*n+x] - pA[w*n+k] * pA[x*n+k] / a;
-          }
-        }
-
-        for(w=k+1;w<n;w++)
-        {
-               pA[w*n+k] = pA[w*n+k] / a;
-        }
-
-        
-
-    }
-
-
-
-    diag=k;
-    if (!fullRank)
-    {
-      diag--;
-      {
-        int row;
-        for(row=0; row < n;row++)
-        {
-          int col;
-          for(col=k; col < n;col++)
-          {
-             pl->pData[row*n+col]=0.0;
-          }
-        }
-      }
-    }
-
-    {
-      int row;
-      for(row=0; row < n;row++)
-      {
-         int col;
-         for(col=row+1; col < n;col++)
-         {
-           pl->pData[row*n+col] = 0.0;
-         }
-      }
-    }
-
-    {
-      int d;
-      for(d=0; d < diag;d++)
-      {
-        pd->pData[d*n+d] = pl->pData[d*n+d];
-        pl->pData[d*n+d] = 1.0;
-      }
-    }
-  
-    status = ARM_MATH_SUCCESS;
-
-  }
-
-  
-  /* Return to application */
-  return (status);
+    /* Return to application */
+    return (status);
 }
 
 /**

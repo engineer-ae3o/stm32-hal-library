@@ -70,11 +70,10 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math_f16.h"
 
-float16_t arm_canberra_distance_f16(const float16_t *pA,const float16_t *pB, uint32_t blockSize)
-{
-    _Float16       accum = 0.0f16;
-    uint32_t         blkCnt;
-    f16x8_t         a, b, c, accumV;
+float16_t arm_canberra_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+    _Float16 accum = 0.0f16;
+    uint32_t blkCnt;
+    f16x8_t  a, b, c, accumV;
 
     accumV = vdupq_n_f16(0.0f);
 
@@ -98,8 +97,8 @@ float16_t arm_canberra_distance_f16(const float16_t *pA,const float16_t *pB, uin
          * Force result of a division by 0 to 0. It the behavior of the
          * sklearn canberra function.
          */
-        a = vdupq_m_n_f16(a, 0.0f, vcmpeqq(a, 0.0f));
-        c = vmulq(c, a);
+        a      = vdupq_m_n_f16(a, 0.0f, vcmpeqq(a, 0.0f));
+        c      = vmulq(c, a);
         accumV = vaddq(accumV, c);
 
         pA += 8;
@@ -109,7 +108,7 @@ float16_t arm_canberra_distance_f16(const float16_t *pA,const float16_t *pB, uin
 
     blkCnt = blockSize & 7;
     if (blkCnt > 0U) {
-        mve_pred16_t    p0 = vctp16q(blkCnt);
+        mve_pred16_t p0 = vctp16q(blkCnt);
 
         a = vldrhq_z_f16(pA, p0);
         b = vldrhq_z_f16(pB, p0);
@@ -129,8 +128,8 @@ float16_t arm_canberra_distance_f16(const float16_t *pA,const float16_t *pB, uin
          * Force result of a division by 0 to 0. It the behavior of the
          * sklearn canberra function.
          */
-        a = vdupq_m_n_f16(a, 0.0f, vcmpeqq(a, 0.0f));
-        c = vmulq(c, a);
+        a      = vdupq_m_n_f16(a, 0.0f, vcmpeqq(a, 0.0f));
+        c      = vmulq(c, a);
         accumV = vaddq_m(accumV, accumV, c, p0);
     }
 
@@ -141,24 +140,21 @@ float16_t arm_canberra_distance_f16(const float16_t *pA,const float16_t *pB, uin
 
 
 #else
-float16_t arm_canberra_distance_f16(const float16_t *pA,const float16_t *pB, uint32_t blockSize)
-{
-   _Float16 accum=0.0f, tmpA, tmpB,diff,sum;
+float16_t arm_canberra_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+    _Float16 accum = 0.0f, tmpA, tmpB, diff, sum;
 
-   while(blockSize > 0)
-   {
-      tmpA = *pA++;
-      tmpB = *pB++;
+    while (blockSize > 0) {
+        tmpA = *pA++;
+        tmpB = *pB++;
 
-      diff = fabsf((float32_t)((_Float16)tmpA - (_Float16)tmpB));
-      sum = (_Float16)fabsf((float32_t)tmpA) + (_Float16)fabsf((float32_t)tmpB);
-      if (((_Float16)tmpA != 0.0f16) || ((_Float16)tmpB != 0.0f16))
-      {
-         accum += ((_Float16)diff / (_Float16)sum);
-      }
-      blockSize --;
-   }
-   return(accum);
+        diff = fabsf((float32_t)((_Float16)tmpA - (_Float16)tmpB));
+        sum  = (_Float16)fabsf((float32_t)tmpA) + (_Float16)fabsf((float32_t)tmpB);
+        if (((_Float16)tmpA != 0.0f16) || ((_Float16)tmpB != 0.0f16)) {
+            accum += ((_Float16)diff / (_Float16)sum);
+        }
+        blockSize--;
+    }
+    return (accum);
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 
@@ -167,5 +163,4 @@ float16_t arm_canberra_distance_f16(const float16_t *pA,const float16_t *pB, uin
  * @} end of Canberra group
  */
 
-#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */ 
-
+#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */

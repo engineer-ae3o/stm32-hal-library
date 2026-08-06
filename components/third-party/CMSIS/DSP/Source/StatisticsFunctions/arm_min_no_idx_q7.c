@@ -49,24 +49,19 @@
 
 #include "arm_helium_utils.h"
 
-void arm_min_no_idx_q7(
-  const q7_t * pSrc,
-        uint32_t blockSize,
-        q7_t * pResult)
-{
-    int32_t  blkCnt;           /* loop counters */
-    q7x16_t vecSrc;
-    q7_t const *pSrcVec;
-    q7x16_t curExtremValVec = vdupq_n_s8(Q7_MAX);
-    q7_t minValue = Q7_MAX;
+void arm_min_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
+    int32_t      blkCnt; /* loop counters */
+    q7x16_t      vecSrc;
+    q7_t const*  pSrcVec;
+    q7x16_t      curExtremValVec = vdupq_n_s8(Q7_MAX);
+    q7_t         minValue        = Q7_MAX;
     mve_pred16_t p0;
 
 
-    pSrcVec = (q7_t const *) pSrc;
-    blkCnt = blockSize >> 4;
-    while (blkCnt > 0)
-    {
-        vecSrc = vld1q(pSrcVec); 
+    pSrcVec = (q7_t const*)pSrc;
+    blkCnt  = blockSize >> 4;
+    while (blkCnt > 0) {
+        vecSrc = vld1q(pSrcVec);
         pSrcVec += 16;
         /*
          * update per-lane min.
@@ -82,16 +77,15 @@ void arm_min_no_idx_q7(
      * (will be merged thru tail predication)
      */
     blkCnt = blockSize & 0xF;
-    if (blkCnt > 0)
-    {
-        vecSrc = vld1q(pSrcVec); 
+    if (blkCnt > 0) {
+        vecSrc = vld1q(pSrcVec);
         pSrcVec += 16;
         p0 = vctp8q(blkCnt);
         /*
          * Get current min per lane and current index per lane
          * when a min is selected
          */
-         curExtremValVec = vminq_m(curExtremValVec, vecSrc, curExtremValVec, p0);
+        curExtremValVec = vminq_m(curExtremValVec, vecSrc, curExtremValVec, p0);
     }
     /*
      * Get min value across the vector
@@ -101,38 +95,32 @@ void arm_min_no_idx_q7(
 }
 
 #else
-void arm_min_no_idx_q7(
-  const q7_t * pSrc,
-        uint32_t blockSize,
-        q7_t * pResult)
-{
-  q7_t minVal1, out;       /* Temporary variables to store the output value. */    
-  uint32_t blkCnt;              /* loop counter */                                  
-                                                                                    
-  /* Load first input value that act as reference value for comparision */          
-  out = *pSrc++;                                                                    
-                                                                                    
-  blkCnt = (blockSize - 1U);                                                        
-                                                                                    
-                                                                                    
-  while (blkCnt > 0U)                                                               
-  {                                                                                 
-    /* Initialize minVal to the next consecutive values one by one */               
-    minVal1 = *pSrc++;                                                              
-                                                                                    
-    /* compare for the minimum value */                                             
-    if (out > minVal1)                                                              
-    {                                                                               
-      /* Update the minimum value */                                                
-      out = minVal1;                                                                
-    }                                                                               
-                                                                                    
-    /* Decrement the loop counter */                                                
-    blkCnt--;                                                                       
-  }                                                                                 
-                                                                                    
-  /* Store the minimum value into destination pointer */                            
-  *pResult = out;
+void arm_min_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
+    q7_t     minVal1, out; /* Temporary variables to store the output value. */
+    uint32_t blkCnt;       /* loop counter */
+
+    /* Load first input value that act as reference value for comparision */
+    out = *pSrc++;
+
+    blkCnt = (blockSize - 1U);
+
+
+    while (blkCnt > 0U) {
+        /* Initialize minVal to the next consecutive values one by one */
+        minVal1 = *pSrc++;
+
+        /* compare for the minimum value */
+        if (out > minVal1) {
+            /* Update the minimum value */
+            out = minVal1;
+        }
+
+        /* Decrement the loop counter */
+        blkCnt--;
+    }
+
+    /* Store the minimum value into destination pointer */
+    *pResult = out;
 }
 
 #endif /* #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE) */

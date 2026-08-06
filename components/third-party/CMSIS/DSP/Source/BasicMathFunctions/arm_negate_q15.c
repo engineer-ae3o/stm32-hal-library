@@ -54,18 +54,13 @@
 
 #include "arm_helium_utils.h"
 
-void arm_negate_q15(
-    const q15_t  * pSrc,
-    q15_t  * pDst,
-    uint32_t blockSize)
-{
-    uint32_t  blkCnt;           /* loop counters */
-    q15x8_t vecSrc;
+void arm_negate_q15(const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* loop counters */
+    q15x8_t  vecSrc;
 
     /* Compute 8 outputs at a time */
     blkCnt = blockSize >> 3;
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /*
          * C = -A
          * Negate and then store the results in the destination buffer.
@@ -86,83 +81,75 @@ void arm_negate_q15(
      * tail
      */
     blkCnt = blockSize & 7;
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         mve_pred16_t p0 = vctp16q(blkCnt);
-        vecSrc = vld1q(pSrc);
+        vecSrc          = vld1q(pSrc);
         vstrhq_p(pDst, vqnegq(vecSrc), p0);
     }
 }
 
 #else
-void arm_negate_q15(
-  const q15_t * pSrc,
-        q15_t * pDst,
-        uint32_t blockSize)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-        q15_t in;                                      /* Temporary input variable */
+void arm_negate_q15(const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
+    q15_t    in;     /* Temporary input variable */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-#if defined (ARM_MATH_DSP)
-  q31_t in1;                                    /* Temporary input variables */
+#if defined(ARM_MATH_DSP)
+    q31_t in1; /* Temporary input variables */
 #endif
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = -A */
+    while (blkCnt > 0U) {
+        /* C = -A */
 
-#if defined (ARM_MATH_DSP)
-    /* Negate and store result in destination buffer (2 samples at a time). */
-    in1 = read_q15x2_ia (&pSrc);
-    write_q15x2_ia (&pDst, __QSUB16(0, in1));
+#if defined(ARM_MATH_DSP)
+        /* Negate and store result in destination buffer (2 samples at a time). */
+        in1 = read_q15x2_ia(&pSrc);
+        write_q15x2_ia(&pDst, __QSUB16(0, in1));
 
-    in1 = read_q15x2_ia (&pSrc);
-    write_q15x2_ia (&pDst, __QSUB16(0, in1));
+        in1 = read_q15x2_ia(&pSrc);
+        write_q15x2_ia(&pDst, __QSUB16(0, in1));
 #else
-    in = *pSrc++;
-    *pDst++ = (in == (q15_t) 0x8000) ? (q15_t) 0x7fff : -in;
+        in      = *pSrc++;
+        *pDst++ = (in == (q15_t)0x8000) ? (q15_t)0x7fff : -in;
 
-    in = *pSrc++;
-    *pDst++ = (in == (q15_t) 0x8000) ? (q15_t) 0x7fff : -in;
+        in      = *pSrc++;
+        *pDst++ = (in == (q15_t)0x8000) ? (q15_t)0x7fff : -in;
 
-    in = *pSrc++;
-    *pDst++ = (in == (q15_t) 0x8000) ? (q15_t) 0x7fff : -in;
+        in      = *pSrc++;
+        *pDst++ = (in == (q15_t)0x8000) ? (q15_t)0x7fff : -in;
 
-    in = *pSrc++;
-    *pDst++ = (in == (q15_t) 0x8000) ? (q15_t) 0x7fff : -in;
+        in      = *pSrc++;
+        *pDst++ = (in == (q15_t)0x8000) ? (q15_t)0x7fff : -in;
 #endif
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = -A */
+    while (blkCnt > 0U) {
+        /* C = -A */
 
-    /* Negate and store result in destination buffer. */
-    in = *pSrc++;
-    *pDst++ = (in == (q15_t) 0x8000) ? (q15_t) 0x7fff : -in;
+        /* Negate and store result in destination buffer. */
+        in      = *pSrc++;
+        *pDst++ = (in == (q15_t)0x8000) ? (q15_t)0x7fff : -in;
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

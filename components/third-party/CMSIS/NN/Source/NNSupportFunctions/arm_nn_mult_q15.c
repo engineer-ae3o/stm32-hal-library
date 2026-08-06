@@ -53,12 +53,10 @@
  * Results outside of the allowable Q15 range [0x8000 0x7FFF] will be saturated.
  */
 
-void arm_nn_mult_q15(q15_t *pSrcA, q15_t *pSrcB, q15_t *pDst, const uint16_t out_shift, uint32_t blockSize)
-{
+void arm_nn_mult_q15(q15_t* pSrcA, q15_t* pSrcB, q15_t* pDst, const uint16_t out_shift, uint32_t blockSize) {
     uint32_t blkCnt = blockSize; /* loop counters */
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /* C = A * B */
         /* Multiply the inputs and store the result in the destination buffer */
         *pDst++ = (q15_t)__SSAT(((q31_t)((q31_t)(*pSrcA++) * (*pSrcB++) + NN_ROUND(out_shift)) >> out_shift), 16);

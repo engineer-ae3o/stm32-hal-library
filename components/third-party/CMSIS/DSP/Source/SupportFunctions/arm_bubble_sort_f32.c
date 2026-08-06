@@ -57,45 +57,38 @@
    *               function, a memcpy of the source vector is performed
    */
 
-void arm_bubble_sort_f32(
-  const arm_sort_instance_f32 * S, 
-        float32_t * pSrc, 
-        float32_t * pDst, 
-        uint32_t blockSize)
-{
-    uint8_t dir = S->dir;
-    uint32_t i;
-    uint8_t swapped =1;
-    float32_t * pA;
-    float32_t temp;
+void arm_bubble_sort_f32(const arm_sort_instance_f32* S, float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+    uint8_t    dir = S->dir;
+    uint32_t   i;
+    uint8_t    swapped = 1;
+    float32_t* pA;
+    float32_t  temp;
 
-    if(pSrc != pDst) // out-of-place
+    if (pSrc != pDst) // out-of-place
     {
-	memcpy(pDst, pSrc, blockSize*sizeof(float32_t) );
-	pA = pDst;
+        memcpy(pDst, pSrc, blockSize * sizeof(float32_t));
+        pA = pDst;
+    } else {
+        pA = pSrc;
     }
-    else
-	pA = pSrc;
 
-    while(swapped==1) // If nothing has been swapped after one loop stop
+    while (swapped == 1) // If nothing has been swapped after one loop stop
     {
-	swapped=0;
+        swapped = 0;
 
-        for(i=0; i<blockSize-1; i++)
-	{
-	    if(dir==(pA[i]>pA[i+1]))
-	    {
-		// Swap
-		temp = pA[i];
-		pA[i] = pA[i+1];
-		pA[i+1] = temp;
+        for (i = 0; i < blockSize - 1; i++) {
+            if (dir == (pA[i] > pA[i + 1])) {
+                // Swap
+                temp      = pA[i];
+                pA[i]     = pA[i + 1];
+                pA[i + 1] = temp;
 
-		// Update flag
-		swapped = 1;
-	    }
-	}
+                // Update flag
+                swapped = 1;
+            }
+        }
 
-	blockSize--;
+        blockSize--;
     }
 }
 

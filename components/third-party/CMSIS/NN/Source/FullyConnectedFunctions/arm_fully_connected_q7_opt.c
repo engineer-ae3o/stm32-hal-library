@@ -125,32 +125,30 @@
  *
  */
 
-arm_status arm_fully_connected_q7_opt(const q7_t *pV,
-                                      const q7_t *pM,
+arm_status arm_fully_connected_q7_opt(const q7_t*    pV,
+                                      const q7_t*    pM,
                                       const uint16_t dim_vec,
                                       const uint16_t num_of_rows,
                                       const uint16_t bias_shift,
                                       const uint16_t out_shift,
-                                      const q7_t *bias,
-                                      q7_t *pOut,
-                                      q15_t *vec_buffer)
-{
+                                      const q7_t*    bias,
+                                      q7_t*          pOut,
+                                      q15_t*         vec_buffer) {
 
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
     /* Run the following code for Cortex-M4 and Cortex-M7 */
 
-    const q7_t *pB = pM;
-    q7_t *pO = pOut;
-    const q7_t *pBias = bias;
-    const q15_t *pA;
-    uint16_t rowCnt = num_of_rows >> 2;
+    const q7_t*  pB    = pM;
+    q7_t*        pO    = pOut;
+    const q7_t*  pBias = bias;
+    const q15_t* pA;
+    uint16_t     rowCnt = num_of_rows >> 2;
 
     arm_q7_to_q15_reordered_no_shift(pV, vec_buffer, dim_vec);
 
-    while (rowCnt)
-    {
+    while (rowCnt) {
 
-        q31_t sum = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+        q31_t sum  = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         q31_t sum2 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         q31_t sum3 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         q31_t sum4 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
@@ -162,65 +160,63 @@ arm_status arm_fully_connected_q7_opt(const q7_t *pV,
 #ifdef USE_INTRINSIC
 
 #ifndef ARM_MATH_BIG_ENDIAN
-        while (colCnt)
-        {
+        while (colCnt) {
             q31_t inM11, inM12, inM13, inM14;
             q31_t inV;
 
-            inV = arm_nn_read_q15x2_ia(&pA);
+            inV   = arm_nn_read_q15x2_ia(&pA);
             inM11 = arm_nn_read_q7x4_ia(&pB);
             inM12 = __SXTB16(__ROR(inM11, 8));
             inM11 = __SXTB16(inM11);
-            sum = __SMLAD(inM11, inV, sum);
-            sum2 = __SMLAD(inM12, inV, sum2);
+            sum   = __SMLAD(inM11, inV, sum);
+            sum2  = __SMLAD(inM12, inV, sum2);
             inM13 = arm_nn_read_q7x4_ia(&pB);
             inM14 = __SXTB16(__ROR(inM13, 8));
             inM13 = __SXTB16(inM13);
-            sum3 = __SMLAD(inM13, inV, sum3);
-            sum4 = __SMLAD(inM14, inV, sum4);
+            sum3  = __SMLAD(inM13, inV, sum3);
+            sum4  = __SMLAD(inM14, inV, sum4);
 
-            inV = arm_nn_read_q15x2_ia(&pA);
+            inV   = arm_nn_read_q15x2_ia(&pA);
             inM11 = arm_nn_read_q7x4_ia(&pB);
             inM12 = __SXTB16(__ROR(inM11, 8));
             inM11 = __SXTB16(inM11);
-            sum = __SMLAD(inM11, inV, sum);
-            sum2 = __SMLAD(inM12, inV, sum2);
+            sum   = __SMLAD(inM11, inV, sum);
+            sum2  = __SMLAD(inM12, inV, sum2);
             inM13 = arm_nn_read_q7x4_ia(&pB);
             inM14 = __SXTB16(__ROR(inM13, 8));
             inM13 = __SXTB16(inM13);
-            sum3 = __SMLAD(inM13, inV, sum3);
-            sum4 = __SMLAD(inM14, inV, sum4);
+            sum3  = __SMLAD(inM13, inV, sum3);
+            sum4  = __SMLAD(inM14, inV, sum4);
             colCnt--;
         }
 #else
-        while (colCnt)
-        {
+        while (colCnt) {
             q31_t inM11, inM12, inM13, inM14;
             q31_t inV;
 
-            inV = arm_nn_read_q15x2_ia(&pA);
+            inV   = arm_nn_read_q15x2_ia(&pA);
             inM11 = arm_nn_read_q7x4_ia(&pB);
             inM12 = __SXTB16(__ROR(inM11, 8));
             inM11 = __SXTB16(inM11);
-            sum = __SMLAD(inM12, inV, sum);
-            sum2 = __SMLAD(inM11, inV, sum2);
+            sum   = __SMLAD(inM12, inV, sum);
+            sum2  = __SMLAD(inM11, inV, sum2);
             inM13 = arm_nn_read_q7x4_ia(&pB);
             inM14 = __SXTB16(__ROR(inM13, 8));
             inM13 = __SXTB16(inM13);
-            sum3 = __SMLAD(inM14, inV, sum3);
-            sum4 = __SMLAD(inM13, inV, sum4);
+            sum3  = __SMLAD(inM14, inV, sum3);
+            sum4  = __SMLAD(inM13, inV, sum4);
 
-            inV = arm_nn_read_q15x2_ia(&pA);
+            inV   = arm_nn_read_q15x2_ia(&pA);
             inM11 = arm_nn_read_q7x4_ia(&pB);
             inM12 = __SXTB16(__ROR(inM11, 8));
             inM11 = __SXTB16(inM11);
-            sum = __SMLAD(inM12, inV, sum);
-            sum2 = __SMLAD(inM11, inV, sum2);
+            sum   = __SMLAD(inM12, inV, sum);
+            sum2  = __SMLAD(inM11, inV, sum2);
             inM13 = arm_nn_read_q7x4_ia(&pB);
             inM14 = __SXTB16(__ROR(inM13, 8));
             inM13 = __SXTB16(inM13);
-            sum3 = __SMLAD(inM14, inV, sum3);
-            sum4 = __SMLAD(inM13, inV, sum4);
+            sum3  = __SMLAD(inM14, inV, sum3);
+            sum4  = __SMLAD(inM13, inV, sum4);
             colCnt--;
         }
 #endif /* ARM_MATH_BIG_ENDIAN */
@@ -266,13 +262,8 @@ arm_status arm_fully_connected_q7_opt(const q7_t *pV,
                      "smlad %[sum4], r4, r2, %[sum4]\n"
                      "subs %[colCnt], #1\n"
                      "bne COL_LOOP_%=\n"
-                     : [ sum ] "+r"(sum),
-                       [ sum2 ] "+r"(sum2),
-                       [ sum3 ] "+r"(sum3),
-                       [ sum4 ] "+r"(sum4),
-                       [ pB ] "+r"(pB),
-                       [ pA ] "+r"(pA)
-                     : [ colCnt ] "r"(colCnt)
+                     : [sum] "+r"(sum), [sum2] "+r"(sum2), [sum3] "+r"(sum3), [sum4] "+r"(sum4), [pB] "+r"(pB), [pA] "+r"(pA)
+                     : [colCnt] "r"(colCnt)
                      : "r0", "r1", "r2", "r3", "r4");
 #else
         asm volatile("COL_LOOP_%=:\n"
@@ -304,26 +295,20 @@ arm_status arm_fully_connected_q7_opt(const q7_t *pV,
                      "smlad %[sum4], r4, r3, %[sum4]\n"
                      "subs %[colCnt], #1\n"
                      "bne COL_LOOP_%=\n"
-                     : [ sum ] "+r"(sum),
-                       [ sum2 ] "+r"(sum2),
-                       [ sum3 ] "+r"(sum3),
-                       [ sum4 ] "+r"(sum4),
-                       [ pB ] "+r"(pB),
-                       [ pA ] "+r"(pA)
-                     : [ colCnt ] "r"(colCnt)
+                     : [sum] "+r"(sum), [sum2] "+r"(sum2), [sum3] "+r"(sum3), [sum4] "+r"(sum4), [pB] "+r"(pB), [pA] "+r"(pA)
+                     : [colCnt] "r"(colCnt)
                      : "r0", "r1", "r2", "r3", "r4");
 #endif /* ARM_MATH_BIG_ENDIAN */
 
 #endif /* USE_INTRINSIC */
 
         colCnt = dim_vec & 0x3;
-        while (colCnt)
-        {
-            q15_t inV = *pA++;
-            q7_t inM = *pB++;
-            q7_t inM2 = *pB++;
-            q7_t inM3 = *pB++;
-            q7_t inM4 = *pB++;
+        while (colCnt) {
+            q15_t inV  = *pA++;
+            q7_t  inM  = *pB++;
+            q7_t  inM2 = *pB++;
+            q7_t  inM3 = *pB++;
+            q7_t  inM4 = *pB++;
 
             sum += inV * inM;
             sum2 += inV * inM2;
@@ -343,34 +328,31 @@ arm_status arm_fully_connected_q7_opt(const q7_t *pV,
     /* left-over part of the rows */
     rowCnt = num_of_rows & 0x3;
 
-    while (rowCnt)
-    {
-        q31_t sum = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+    while (rowCnt) {
+        q31_t    sum    = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         uint16_t colCnt = dim_vec >> 2;
 
         pA = vec_buffer;
 
-        while (colCnt)
-        {
+        while (colCnt) {
             q31_t inV1, inV2, inM11, inM12;
 
             pB = read_and_pad_reordered(pB, &inM11, &inM12);
 
             inV1 = arm_nn_read_q15x2_ia(&pA);
-            sum = __SMLAD(inV1, inM11, sum);
+            sum  = __SMLAD(inV1, inM11, sum);
 
             inV2 = arm_nn_read_q15x2_ia(&pA);
-            sum = __SMLAD(inV2, inM12, sum);
+            sum  = __SMLAD(inV2, inM12, sum);
 
             colCnt--;
         }
 
         /* left-over of the vector */
         colCnt = dim_vec & 0x3;
-        while (colCnt)
-        {
+        while (colCnt) {
             q15_t inV = *pA++;
-            q7_t inM = *pB++;
+            q7_t  inM = *pB++;
             sum += inV * inM;
             colCnt--;
         }
@@ -383,15 +365,14 @@ arm_status arm_fully_connected_q7_opt(const q7_t *pV,
 #else
     /* Run the following code as reference implementation for Cortex-M0 and Cortex-M3 */
     (void)vec_buffer;
-    uint16_t rowCnt = num_of_rows >> 2;
-    const q7_t *pB = pM;
-    const q7_t *pA;
-    q7_t *pO = pOut;
-    const q7_t *pBias = bias;
+    uint16_t    rowCnt = num_of_rows >> 2;
+    const q7_t* pB     = pM;
+    const q7_t* pA;
+    q7_t*       pO    = pOut;
+    const q7_t* pBias = bias;
 
-    while (rowCnt)
-    {
-        q31_t sum = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+    while (rowCnt) {
+        q31_t sum  = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         q31_t sum2 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         q31_t sum3 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         q31_t sum4 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
@@ -400,8 +381,7 @@ arm_status arm_fully_connected_q7_opt(const q7_t *pV,
 
         pA = pV;
 
-        while (colCnt)
-        {
+        while (colCnt) {
             q7_t inA1 = *pA++;
             q7_t inA3 = *pA++;
             q7_t inA2 = *pA++;
@@ -442,8 +422,7 @@ arm_status arm_fully_connected_q7_opt(const q7_t *pV,
             colCnt--;
         }
         colCnt = dim_vec & 0x3;
-        while (colCnt)
-        {
+        while (colCnt) {
             q7_t inA = *pA++;
             q7_t inB = *pB++;
             sum += inA * inB;
@@ -466,15 +445,13 @@ arm_status arm_fully_connected_q7_opt(const q7_t *pV,
 
     rowCnt = num_of_rows & 0x3;
 
-    while (rowCnt)
-    {
+    while (rowCnt) {
         int ip_out = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
 
         int j;
 
         pA = pV;
-        for (j = 0; j < dim_vec; j++)
-        {
+        for (j = 0; j < dim_vec; j++) {
             q7_t inA = *pA++;
             q7_t inB = *pB++;
             ip_out += inA * inB;

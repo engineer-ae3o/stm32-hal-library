@@ -52,17 +52,12 @@
 
 #include "arm_helium_utils.h"
 
-void arm_clip_f16(const float16_t * pSrc, 
-  float16_t * pDst, 
-  float16_t low, 
-  float16_t high, 
-  uint32_t numSamples)
-{
-    uint32_t  blkCnt;
-    f16x8_t curVec0, curVec1;
-    f16x8_t vecLow, vecHigh;
+void arm_clip_f16(const float16_t* pSrc, float16_t* pDst, float16_t low, float16_t high, uint32_t numSamples) {
+    uint32_t blkCnt;
+    f16x8_t  curVec0, curVec1;
+    f16x8_t  vecLow, vecHigh;
 
-    vecLow = vdupq_n_f16(low);
+    vecLow  = vdupq_n_f16(low);
     vecHigh = vdupq_n_f16(high);
 
     curVec0 = vld1q(pSrc);
@@ -73,8 +68,7 @@ void arm_clip_f16(const float16_t * pSrc,
      * stall free interleaving
      */
     blkCnt = numSamples >> 4;
-    while (blkCnt--)
-    {
+    while (blkCnt--) {
         curVec0 = vmaxnmq(curVec0, vecLow);
         curVec1 = vld1q(pSrc);
         pSrc += 8;
@@ -92,8 +86,7 @@ void arm_clip_f16(const float16_t * pSrc,
      * Tail handling
      */
     blkCnt = numSamples - ((numSamples >> 4) << 4);
-    if (blkCnt >= 8)
-    {
+    if (blkCnt >= 8) {
         curVec0 = vmaxnmq(curVec0, vecLow);
         curVec0 = vminnmq(curVec0, vecHigh);
         vst1q(pDst, curVec0);
@@ -102,11 +95,10 @@ void arm_clip_f16(const float16_t * pSrc,
         pSrc += 8;
     }
 
-    if (blkCnt > 0)
-    {
+    if (blkCnt > 0) {
         mve_pred16_t p0 = vctp16q(blkCnt & 7);
-        curVec0 = vmaxnmq(curVec0, vecLow);
-        curVec0 = vminnmq(curVec0, vecHigh);
+        curVec0         = vmaxnmq(curVec0, vecLow);
+        curVec0         = vminnmq(curVec0, vecHigh);
         vstrhq_p(pDst, curVec0, p0);
     }
 }
@@ -115,20 +107,15 @@ void arm_clip_f16(const float16_t * pSrc,
 
 #if defined(ARM_FLOAT16_SUPPORTED)
 
-void arm_clip_f16(const float16_t * pSrc, 
-  float16_t * pDst, 
-  float16_t low, 
-  float16_t high, 
-  uint32_t numSamples)
-{
-    for (uint32_t i = 0; i < numSamples; i++)
-    {                                        
-        if ((_Float16)pSrc[i] > (_Float16)high)                  
-            pDst[i] = high;                  
-        else if ((_Float16)pSrc[i] < (_Float16)low)              
-            pDst[i] = low;                   
-        else                                 
-            pDst[i] = pSrc[i];               
+void arm_clip_f16(const float16_t* pSrc, float16_t* pDst, float16_t low, float16_t high, uint32_t numSamples) {
+    for (uint32_t i = 0; i < numSamples; i++) {
+        if ((_Float16)pSrc[i] > (_Float16)high) {
+            pDst[i] = high;
+        } else if ((_Float16)pSrc[i] < (_Float16)low) {
+            pDst[i] = low;
+        } else {
+            pDst[i] = pSrc[i];
+        }
     }
 }
 #endif /* defined(ARM_FLOAT16_SUPPORTED */

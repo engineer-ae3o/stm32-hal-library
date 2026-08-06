@@ -71,70 +71,58 @@
  * dimension.
  */
 
-arm_status arm_convolve_HWC_q15_basic(const q15_t *Im_in,
+arm_status arm_convolve_HWC_q15_basic(const q15_t*   Im_in,
                                       const uint16_t dim_im_in,
                                       const uint16_t ch_im_in,
-                                      const q15_t *wt,
+                                      const q15_t*   wt,
                                       const uint16_t ch_im_out,
                                       const uint16_t dim_kernel,
                                       const uint16_t padding,
                                       const uint16_t stride,
-                                      const q15_t *bias,
+                                      const q15_t*   bias,
                                       const uint16_t bias_shift,
                                       const uint16_t out_shift,
-                                      q15_t *Im_out,
+                                      q15_t*         Im_out,
                                       const uint16_t dim_im_out,
-                                      q15_t *bufferA,
-                                      q7_t *bufferB)
-{
+                                      q15_t*         bufferA,
+                                      q7_t*          bufferB) {
     (void)bufferB;
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
     /* Run the following code for Cortex-M4 and Cortex-M7 */
 
     int16_t i_out_y, i_out_x, i_ker_y, i_ker_x;
 
-    uint16_t im2col_out_pixel_index = 0;
-    q15_t *pBuffer = bufferA;
-    q15_t *pOut = Im_out;
-    q15_t *im_buffer = bufferA;
-    const q15_t *pA;
-    int i;
+    uint16_t     im2col_out_pixel_index = 0;
+    q15_t*       pBuffer                = bufferA;
+    q15_t*       pOut                   = Im_out;
+    q15_t*       im_buffer              = bufferA;
+    const q15_t* pA;
+    int          i;
 
     /* This part implements the im2col function */
-    for (i_out_y = 0; i_out_y < dim_im_out; i_out_y++)
-    {
-        for (i_out_x = 0; i_out_x < dim_im_out; i_out_x++)
-        {
-            for (i_ker_y = i_out_y * stride - padding; i_ker_y < i_out_y * stride - padding + dim_kernel; i_ker_y++)
-            {
-                for (i_ker_x = i_out_x * stride - padding; i_ker_x < i_out_x * stride - padding + dim_kernel; i_ker_x++)
-                {
-                    if (i_ker_y < 0 || i_ker_y >= dim_im_in || i_ker_x < 0 || i_ker_x >= dim_im_in)
-                    {
+    for (i_out_y = 0; i_out_y < dim_im_out; i_out_y++) {
+        for (i_out_x = 0; i_out_x < dim_im_out; i_out_x++) {
+            for (i_ker_y = i_out_y * stride - padding; i_ker_y < i_out_y * stride - padding + dim_kernel; i_ker_y++) {
+                for (i_ker_x = i_out_x * stride - padding; i_ker_x < i_out_x * stride - padding + dim_kernel; i_ker_x++) {
+                    if (i_ker_y < 0 || i_ker_y >= dim_im_in || i_ker_x < 0 || i_ker_x >= dim_im_in) {
                         /* Filling 0 for out-of-bound paddings */
                         /* arm_fill_q15(0, pBuffer, ch_im_in); */
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
-                    }
-                    else
-                    {
+                    } else {
                         /* arm_copy_q15((q15_t *) Im_in + (i_ker_y * dim_im_in + i_ker_x) * ch_im_in, pBuffer,
                          * ch_im_in); */
-                        memcpy(pBuffer,
-                               (q15_t *)Im_in + (i_ker_y * dim_im_in + i_ker_x) * ch_im_in,
-                               sizeof(q15_t) * ch_im_in);
+                        memcpy(pBuffer, (q15_t*)Im_in + (i_ker_y * dim_im_in + i_ker_x) * ch_im_in, sizeof(q15_t) * ch_im_in);
                     }
                     pBuffer += ch_im_in;
                 }
             }
 
             pA = wt;
-            for (i = 0; i < ch_im_out; i++)
-            {
-                q31_t sum = ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
-                const q15_t *pB = im_buffer;
-                uint16_t colCnt = ch_im_in * dim_kernel * dim_kernel >> 2;
-                while (colCnt)
-                {
+            for (i = 0; i < ch_im_out; i++) {
+                q31_t        sum    = ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
+                const q15_t* pB     = im_buffer;
+                uint16_t     colCnt = ch_im_in * dim_kernel * dim_kernel >> 2;
+                while (colCnt) {
                     q31_t inA1 = arm_nn_read_q15x2_ia(&pA);
                     q31_t inB1 = arm_nn_read_q15x2_ia(&pB);
                     q31_t inA2 = arm_nn_read_q15x2_ia(&pA);
@@ -146,8 +134,7 @@ arm_status arm_convolve_HWC_q15_basic(const q15_t *Im_in,
                     colCnt--;
                 }
                 colCnt = ch_im_in * dim_kernel * dim_kernel & 0x3;
-                while (colCnt)
-                {
+                while (colCnt) {
                     q15_t inA1 = *pA++;
                     q15_t inB1 = *pB++;
                     sum += inA1 * inB1;
@@ -170,25 +157,18 @@ arm_status arm_convolve_HWC_q15_basic(const q15_t *Im_in,
     int conv_out;
     int in_row, in_col;
 
-    for (i = 0; i < ch_im_out; i++)
-    {
-        for (j = 0; j < dim_im_out; j++)
-        {
-            for (k = 0; k < dim_im_out; k++)
-            {
+    for (i = 0; i < ch_im_out; i++) {
+        for (j = 0; j < dim_im_out; j++) {
+            for (k = 0; k < dim_im_out; k++) {
                 conv_out = ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
-                for (m = 0; m < dim_kernel; m++)
-                {
-                    for (n = 0; n < dim_kernel; n++)
-                    {
+                for (m = 0; m < dim_kernel; m++) {
+                    for (n = 0; n < dim_kernel; n++) {
                         in_row = stride * j + m - padding;
                         in_col = stride * k + n - padding;
-                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in && in_col < dim_im_in)
-                        {
-                            for (l = 0; l < ch_im_in; l++)
-                            {
+                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in && in_col < dim_im_in) {
+                            for (l = 0; l < ch_im_in; l++) {
                                 conv_out += Im_in[(in_row * dim_im_in + in_col) * ch_im_in + l] *
-                                    wt[i * ch_im_in * dim_kernel * dim_kernel + (m * dim_kernel + n) * ch_im_in + l];
+                                            wt[i * ch_im_in * dim_kernel * dim_kernel + (m * dim_kernel + n) * ch_im_in + l];
                             }
                         }
                     }

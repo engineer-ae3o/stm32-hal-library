@@ -47,34 +47,32 @@
  *
  */
 
-arm_status arm_elementwise_mul_s8(const int8_t *input_1_vect,
-                                  const int8_t *input_2_vect,
+arm_status arm_elementwise_mul_s8(const int8_t* input_1_vect,
+                                  const int8_t* input_2_vect,
                                   const int32_t input_1_offset,
                                   const int32_t input_2_offset,
-                                  int8_t *output,
+                                  int8_t*       output,
                                   const int32_t out_offset,
                                   const int32_t out_mult,
                                   const int32_t out_shift,
                                   const int32_t out_activation_min,
                                   const int32_t out_activation_max,
-                                  const int32_t block_size)
-{
+                                  const int32_t block_size) {
 
     int32_t loop_count;
 #if defined(ARM_MATH_MVEI)
 
-    loop_count = (block_size + 3) / 4;
+    loop_count            = (block_size + 3) / 4;
     uint32_t num_elements = block_size;
 
-    for (int i = 0; i < loop_count; i++)
-    {
+    for (int i = 0; i < loop_count; i++) {
         mve_pred16_t p = vctp32q(num_elements);
 
         int32x4_t input_1 = vldrbq_z_s32(input_1_vect, p);
-        input_1 = vaddq_n_s32(input_1, input_1_offset);
+        input_1           = vaddq_n_s32(input_1, input_1_offset);
 
         int32x4_t input_2 = vldrbq_z_s32(input_2_vect, p);
-        input_2 = vaddq_n_s32(input_2, input_2_offset);
+        input_2           = vaddq_n_s32(input_2, input_2_offset);
 
         int32x4_t res_0 = vmulq_s32(input_1, input_2);
 
@@ -109,8 +107,7 @@ arm_status arm_elementwise_mul_s8(const int8_t *input_1_vect,
 
     loop_count = block_size >> 2;
 
-    while (loop_count > 0)
-    {
+    while (loop_count > 0) {
         /* 4 outputs are calculated in one loop. The order of calculation is follows the order of output sign extension
            intrinsic */
         input_1_vect = read_and_pad_reordered(input_1_vect, &b_1, &a_1);
@@ -131,7 +128,7 @@ arm_status arm_elementwise_mul_s8(const int8_t *input_1_vect,
 
         mul_res = MAX(mul_res, out_activation_min);
         mul_res = MIN(mul_res, out_activation_max);
-        r1 = (q7_t)mul_res;
+        r1      = (q7_t)mul_res;
 
         /* Mul 3 */
         input_1 = (int16_t)((b_1 >> 16U) & 0x0FFFFL);
@@ -141,7 +138,7 @@ arm_status arm_elementwise_mul_s8(const int8_t *input_1_vect,
         mul_res = arm_nn_requantize(mul_res, out_mult, out_shift) + out_offset;
         mul_res = MAX(mul_res, out_activation_min);
         mul_res = MIN(mul_res, out_activation_max);
-        r3 = (q7_t)mul_res;
+        r3      = (q7_t)mul_res;
 
         /* Mul 2 */
         input_1 = (int16_t)(a_1 & 0x0FFFFL);
@@ -151,7 +148,7 @@ arm_status arm_elementwise_mul_s8(const int8_t *input_1_vect,
         mul_res = arm_nn_requantize(mul_res, out_mult, out_shift) + out_offset;
         mul_res = MAX(mul_res, out_activation_min);
         mul_res = MIN(mul_res, out_activation_max);
-        r2 = (q7_t)mul_res;
+        r2      = (q7_t)mul_res;
 
         /* Mul 4 */
         input_1 = (int16_t)((a_1 >> 16U) & 0x0FFFFL);
@@ -161,7 +158,7 @@ arm_status arm_elementwise_mul_s8(const int8_t *input_1_vect,
         mul_res = arm_nn_requantize(mul_res, out_mult, out_shift) + out_offset;
         mul_res = MAX(mul_res, out_activation_min);
         mul_res = MIN(mul_res, out_activation_max);
-        r4 = (q7_t)mul_res;
+        r4      = (q7_t)mul_res;
 
         arm_nn_write_q7x4_ia(&output, PACK_Q7x4_32x1(r1, r2, r3, r4));
 
@@ -173,8 +170,7 @@ arm_status arm_elementwise_mul_s8(const int8_t *input_1_vect,
     loop_count = block_size;
 #endif
 
-    while (loop_count > 0)
-    {
+    while (loop_count > 0) {
         /* C = A * B */
 
         input_1 = *input_1_vect++ + input_1_offset;

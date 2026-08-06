@@ -60,23 +60,20 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_q15_to_f16(
-  const q15_t * pSrc,
-  float16_t * pDst,
-  uint32_t blockSize)
-{
-    int32_t  blkCnt;           /* loop counters */
-    q15x8_t vecDst;
-    q15_t const *pSrcVec;
+void arm_q15_to_f16(const q15_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+    int32_t      blkCnt; /* loop counters */
+    q15x8_t      vecDst;
+    q15_t const* pSrcVec;
 
-    pSrcVec = (q15_t const *) pSrc;
-    blkCnt = blockSize >> 3;
-    while (blkCnt > 0)
-    {
+    pSrcVec = (q15_t const*)pSrc;
+    blkCnt  = blockSize >> 3;
+    while (blkCnt > 0) {
         /* C = (float16_t) A / 32768 */
         /* convert from q15 to float and then store the results in the destination buffer */
-        vecDst = vld1q(pSrcVec);   pSrcVec += 8;
-        vstrhq(pDst, vcvtq_n_f16_s16(vecDst, 15));  pDst += 8;
+        vecDst = vld1q(pSrcVec);
+        pSrcVec += 8;
+        vstrhq(pDst, vcvtq_n_f16_s16(vecDst, 15));
+        pDst += 8;
         /*
          * Decrement the blockSize loop counter
          */
@@ -87,63 +84,56 @@ void arm_q15_to_f16(
      * (will be merged thru tail predication)
      */
     blkCnt = blockSize & 7;
-    if (blkCnt > 0)
-    {
+    if (blkCnt > 0) {
         mve_pred16_t p0 = vctp16q(blkCnt);
-        vecDst = vld1q(pSrcVec);   pSrcVec += 8;
+        vecDst          = vld1q(pSrcVec);
+        pSrcVec += 8;
         vstrhq_p(pDst, vcvtq_n_f16_s16(vecDst, 15), p0);
     }
 }
 #else
 
-void arm_q15_to_f16(
-  const q15_t * pSrc,
-        float16_t * pDst,
-        uint32_t blockSize)
-{
-        uint32_t blkCnt;                               /* Loop counter */
-  const q15_t *pIn = pSrc;                             /* Source pointer */
+void arm_q15_to_f16(const q15_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+    uint32_t     blkCnt;     /* Loop counter */
+    const q15_t* pIn = pSrc; /* Source pointer */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = (float16_t) A / 32768 */
+    while (blkCnt > 0U) {
+        /* C = (float16_t) A / 32768 */
 
-    /* Convert from q15 to float and store result in destination buffer */
-    *pDst++ = ((_Float16) * pIn++ / 32768.0f16);
-    *pDst++ = ((_Float16) * pIn++ / 32768.0f16);
-    *pDst++ = ((_Float16) * pIn++ / 32768.0f16);
-    *pDst++ = ((_Float16) * pIn++ / 32768.0f16);
+        /* Convert from q15 to float and store result in destination buffer */
+        *pDst++ = ((_Float16)*pIn++ / 32768.0f16);
+        *pDst++ = ((_Float16)*pIn++ / 32768.0f16);
+        *pDst++ = ((_Float16)*pIn++ / 32768.0f16);
+        *pDst++ = ((_Float16)*pIn++ / 32768.0f16);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = (float16_t) A / 32768 */
+    while (blkCnt > 0U) {
+        /* C = (float16_t) A / 32768 */
 
-    /* Convert from q15 to float and store result in destination buffer */
-    *pDst++ = ((_Float16) *pIn++ / 32768.0f16);
+        /* Convert from q15 to float and store result in destination buffer */
+        *pDst++ = ((_Float16)*pIn++ / 32768.0f16);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */
 
@@ -151,5 +141,4 @@ void arm_q15_to_f16(
   @} end of q15_to_x group
  */
 
-#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */ 
-
+#endif /* #if defined(ARM_FLOAT16_SUPPORTED) */

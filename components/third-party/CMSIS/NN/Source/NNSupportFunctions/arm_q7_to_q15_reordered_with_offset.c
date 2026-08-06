@@ -47,8 +47,7 @@
  *
  */
 
-void arm_q7_to_q15_reordered_with_offset(const q7_t *src, q15_t *dst, uint32_t block_size, q15_t offset)
-{
+void arm_q7_to_q15_reordered_with_offset(const q7_t* src, q15_t* dst, uint32_t block_size, q15_t offset) {
 
 #if defined(ARM_MATH_DSP)
     uint32_t block_cnt;
@@ -62,8 +61,7 @@ void arm_q7_to_q15_reordered_with_offset(const q7_t *src, q15_t *dst, uint32_t b
 
     /* First part of the processing with loop unrolling. Compute 4 outputs at a time. */
     const q31_t offset_q15x2 = (q31_t)__PKHBT(offset, offset, 16);
-    while (block_cnt > 0u)
-    {
+    while (block_cnt > 0u) {
         /* convert from q7 to q15 and then store the results in the destination buffer */
         in_q7x4 = arm_nn_read_q7x4_ia(&src);
 
@@ -79,8 +77,7 @@ void arm_q7_to_q15_reordered_with_offset(const q7_t *src, q15_t *dst, uint32_t b
     /* Handle left over samples */
     block_cnt = block_size % 0x4u;
 
-    while (block_cnt > 0u)
-    {
+    while (block_cnt > 0u) {
         *dst++ = (q15_t)*src++ + offset;
 
         /* Decrement the loop counter */

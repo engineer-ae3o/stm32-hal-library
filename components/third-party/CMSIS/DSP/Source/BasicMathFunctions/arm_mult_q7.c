@@ -53,19 +53,13 @@
 
 #include "arm_helium_utils.h"
 
-void arm_mult_q7(
-    const q7_t * pSrcA,
-    const q7_t * pSrcB,
-    q7_t * pDst,
-    uint32_t blockSize)
-{
-    uint32_t  blkCnt;           /* loop counters */
-    q7x16_t vecA, vecB;
+void arm_mult_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* loop counters */
+    q7x16_t  vecA, vecB;
 
     /* Compute 16 outputs at a time */
     blkCnt = blockSize >> 4;
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         /*
          * C = A * B
          * Multiply the inputs and then store the results in the destination buffer.
@@ -80,86 +74,77 @@ void arm_mult_q7(
         /*
          * advance vector source and destination pointers
          */
-        pSrcA  += 16;
-        pSrcB  += 16;
-        pDst   += 16;
+        pSrcA += 16;
+        pSrcB += 16;
+        pDst += 16;
     }
     /*
      * tail
      */
     blkCnt = blockSize & 0xF;
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         mve_pred16_t p0 = vctp8q(blkCnt);
-        vecA = vld1q(pSrcA);
-        vecB = vld1q(pSrcB);
+        vecA            = vld1q(pSrcA);
+        vecB            = vld1q(pSrcB);
         vstrbq_p(pDst, vqdmulhq(vecA, vecB), p0);
     }
 }
 
 #else
-void arm_mult_q7(
-  const q7_t * pSrcA,
-  const q7_t * pSrcB,
-        q7_t * pDst,
-        uint32_t blockSize)
-{
-        uint32_t blkCnt;                               /* Loop counter */
+void arm_mult_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-#if defined (ARM_MATH_DSP)
-  q7_t out1, out2, out3, out4;                   /* Temporary output variables */
+#if defined(ARM_MATH_DSP)
+    q7_t out1, out2, out3, out4; /* Temporary output variables */
 #endif
 
-  /* Loop unrolling: Compute 4 outputs at a time */
-  blkCnt = blockSize >> 2U;
+    /* Loop unrolling: Compute 4 outputs at a time */
+    blkCnt = blockSize >> 2U;
 
-  while (blkCnt > 0U)
-  {
-    /* C = A * B */
+    while (blkCnt > 0U) {
+        /* C = A * B */
 
-#if defined (ARM_MATH_DSP)
-    /* Multiply inputs and store results in temporary variables */
-    out1 = (q7_t) __SSAT((((q15_t) (*pSrcA++) * (*pSrcB++)) >> 7), 8);
-    out2 = (q7_t) __SSAT((((q15_t) (*pSrcA++) * (*pSrcB++)) >> 7), 8);
-    out3 = (q7_t) __SSAT((((q15_t) (*pSrcA++) * (*pSrcB++)) >> 7), 8);
-    out4 = (q7_t) __SSAT((((q15_t) (*pSrcA++) * (*pSrcB++)) >> 7), 8);
+#if defined(ARM_MATH_DSP)
+        /* Multiply inputs and store results in temporary variables */
+        out1 = (q7_t)__SSAT((((q15_t)(*pSrcA++) * (*pSrcB++)) >> 7), 8);
+        out2 = (q7_t)__SSAT((((q15_t)(*pSrcA++) * (*pSrcB++)) >> 7), 8);
+        out3 = (q7_t)__SSAT((((q15_t)(*pSrcA++) * (*pSrcB++)) >> 7), 8);
+        out4 = (q7_t)__SSAT((((q15_t)(*pSrcA++) * (*pSrcB++)) >> 7), 8);
 
-    /* Pack and store result in destination buffer (in single write) */
-    write_q7x4_ia (&pDst, __PACKq7(out1, out2, out3, out4));
+        /* Pack and store result in destination buffer (in single write) */
+        write_q7x4_ia(&pDst, __PACKq7(out1, out2, out3, out4));
 #else
-    *pDst++ = (q7_t) __SSAT((((q15_t) (*pSrcA++) * (*pSrcB++)) >> 7), 8);
-    *pDst++ = (q7_t) __SSAT((((q15_t) (*pSrcA++) * (*pSrcB++)) >> 7), 8);
-    *pDst++ = (q7_t) __SSAT((((q15_t) (*pSrcA++) * (*pSrcB++)) >> 7), 8);
-    *pDst++ = (q7_t) __SSAT((((q15_t) (*pSrcA++) * (*pSrcB++)) >> 7), 8);
+        *pDst++ = (q7_t)__SSAT((((q15_t)(*pSrcA++) * (*pSrcB++)) >> 7), 8);
+        *pDst++ = (q7_t)__SSAT((((q15_t)(*pSrcA++) * (*pSrcB++)) >> 7), 8);
+        *pDst++ = (q7_t)__SSAT((((q15_t)(*pSrcA++) * (*pSrcB++)) >> 7), 8);
+        *pDst++ = (q7_t)__SSAT((((q15_t)(*pSrcA++) * (*pSrcB++)) >> 7), 8);
 #endif
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 
-  /* Loop unrolling: Compute remaining outputs */
-  blkCnt = blockSize % 0x4U;
+    /* Loop unrolling: Compute remaining outputs */
+    blkCnt = blockSize % 0x4U;
 
 #else
 
-  /* Initialize blkCnt with number of samples */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of samples */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* C = A * B */
+    while (blkCnt > 0U) {
+        /* C = A * B */
 
-    /* Multiply input and store result in destination buffer. */
-    *pDst++ = (q7_t) __SSAT((((q15_t) (*pSrcA++) * (*pSrcB++)) >> 7), 8);
+        /* Multiply input and store result in destination buffer. */
+        *pDst++ = (q7_t)__SSAT((((q15_t)(*pSrcA++) * (*pSrcB++)) >> 7), 8);
 
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
+        /* Decrement loop counter */
+        blkCnt--;
+    }
 }
 #endif /* defined(ARM_MATH_MVEI) */
 

@@ -304,7 +304,7 @@ __STATIC_FORCEINLINE uint8_t __CLZ(uint32_t value) {
     return __builtin_clz(value);
 }
 
-#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                     \
+#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                               \
      (defined(__ARM_ARCH_8M_MAIN__) && (__ARM_ARCH_8M_MAIN__ == 1)) || (defined(__ARM_ARCH_8M_BASE__) && (__ARM_ARCH_8M_BASE__ == 1)))
 /**
   \brief   LDR Exclusive (8 bit)
@@ -371,7 +371,7 @@ __STATIC_FORCEINLINE uint8_t __CLZ(uint32_t value) {
            (defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1)) || \
            (defined (__ARM_ARCH_8M_BASE__ ) && (__ARM_ARCH_8M_BASE__ == 1))    ) */
 
-#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                     \
+#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                               \
      (defined(__ARM_ARCH_8M_MAIN__) && (__ARM_ARCH_8M_MAIN__ == 1)))
 
 /**
@@ -924,7 +924,7 @@ __STATIC_FORCEINLINE void __TZ_set_PRIMASK_NS(uint32_t priMask) {
 }
 #endif
 
-#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                     \
+#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) || (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)) ||                               \
      (defined(__ARM_ARCH_8M_MAIN__) && (__ARM_ARCH_8M_MAIN__ == 1)))
 /**
   \brief   Enable FIQ
@@ -1509,18 +1509,18 @@ __STATIC_FORCEINLINE uint32_t __USADA8(uint32_t op1, uint32_t op2, uint32_t op3)
     return (result);
 }
 
-#define __SSAT16(ARG1, ARG2)                                                                                                               \
-    ({                                                                                                                                     \
-        int32_t __RES, __ARG1 = (ARG1);                                                                                                    \
-        __ASM("ssat16 %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1));                                                                 \
-        __RES;                                                                                                                             \
+#define __SSAT16(ARG1, ARG2)                                                                                                                         \
+    ({                                                                                                                                               \
+        int32_t __RES, __ARG1 = (ARG1);                                                                                                              \
+        __ASM("ssat16 %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1));                                                                           \
+        __RES;                                                                                                                                       \
     })
 
-#define __USAT16(ARG1, ARG2)                                                                                                               \
-    ({                                                                                                                                     \
-        uint32_t __RES, __ARG1 = (ARG1);                                                                                                   \
-        __ASM("usat16 %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1));                                                                 \
-        __RES;                                                                                                                             \
+#define __USAT16(ARG1, ARG2)                                                                                                                         \
+    ({                                                                                                                                               \
+        uint32_t __RES, __ARG1 = (ARG1);                                                                                                             \
+        __ASM("usat16 %0, %1, %2" : "=r"(__RES) : "I"(ARG2), "r"(__ARG1));                                                                           \
+        __RES;                                                                                                                                       \
     })
 
 __STATIC_FORCEINLINE uint32_t __UXTB16(uint32_t op1) {

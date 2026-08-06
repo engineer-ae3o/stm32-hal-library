@@ -54,13 +54,8 @@
   @return        none
  */
 
-void arm_and_u16(
-    const uint16_t * pSrcA,
-    const uint16_t * pSrcB,
-          uint16_t * pDst,
-          uint32_t blockSize)
-{
-    uint32_t blkCnt;      /* Loop counter */
+void arm_and_u16(const uint16_t* pSrcA, const uint16_t* pSrcB, uint16_t* pDst, uint32_t blockSize) {
+    uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
     uint16x8_t vecSrcA, vecSrcB;
@@ -68,16 +63,15 @@ void arm_and_u16(
     /* Compute 8 outputs at a time */
     blkCnt = blockSize >> 3;
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         vecSrcA = vld1q(pSrcA);
         vecSrcB = vld1q(pSrcB);
 
-        vst1q(pDst, vandq_u16(vecSrcA, vecSrcB) );
+        vst1q(pDst, vandq_u16(vecSrcA, vecSrcB));
 
         pSrcA += 8;
         pSrcB += 8;
-        pDst  += 8;
+        pDst += 8;
 
         /* Decrement the loop counter */
         blkCnt--;
@@ -86,11 +80,10 @@ void arm_and_u16(
     /* Tail */
     blkCnt = blockSize & 7;
 
-    if (blkCnt > 0U)
-    {
+    if (blkCnt > 0U) {
         mve_pred16_t p0 = vctp16q(blkCnt);
-        vecSrcA = vld1q(pSrcA);
-        vecSrcB = vld1q(pSrcB);
+        vecSrcA         = vld1q(pSrcA);
+        vecSrcB         = vld1q(pSrcB);
         vstrhq_p(pDst, vandq_u16(vecSrcA, vecSrcB), p0);
     }
 #else
@@ -100,16 +93,15 @@ void arm_and_u16(
     /* Compute 8 outputs at a time */
     blkCnt = blockSize >> 3U;
 
-    while (blkCnt > 0U)
-    {
+    while (blkCnt > 0U) {
         vecA = vld1q_u16(pSrcA);
         vecB = vld1q_u16(pSrcB);
 
-        vst1q_u16(pDst, vandq_u16(vecA, vecB) );
+        vst1q_u16(pDst, vandq_u16(vecA, vecB));
 
         pSrcA += 8;
         pSrcB += 8;
-        pDst  += 8;
+        pDst += 8;
 
         /* Decrement the loop counter */
         blkCnt--;
@@ -122,9 +114,8 @@ void arm_and_u16(
     blkCnt = blockSize;
 #endif
 
-    while (blkCnt > 0U)
-    {
-        *pDst++ = (*pSrcA++)&(*pSrcB++);
+    while (blkCnt > 0U) {
+        *pDst++ = (*pSrcA++) & (*pSrcB++);
 
         /* Decrement the loop counter */
         blkCnt--;

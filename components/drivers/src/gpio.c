@@ -1,8 +1,9 @@
-#include "gpio.h"
+#include "drivers/gpio.h"
+
 #include <stdint.h>
 
-hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
 
+hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
     if (enable) {
         if (port == GPIOA) {
             RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
@@ -105,7 +106,7 @@ void gpio_set_speed_mode(GPIO_TypeDef* port, uint8_t pin, gpio_speed_mode_t mode
 }
 
 void gpio_level_set(GPIO_TypeDef* port, uint8_t pin, bool level) {
-    (level) ? (port->BSRR = (0b1UL << pin)) : (port->BSRR = (0b1UL << (pin + 16)));
+    level ? (port->BSRR = (0b1UL << pin)) : (port->BSRR = (0b1UL << (pin + 16)));
 }
 
 void gpio_level_toggle(GPIO_TypeDef* port, uint8_t pin) {
@@ -147,7 +148,7 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_
 
     // Set external interrupt configuration register
     SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
-    SYSCFG->EXTICR[reg_idx] |= (port_code << bit_pos);
+    SYSCFG->EXTICR[reg_idx] |= (uint32_t)(port_code << bit_pos);
 
     // Extract rising and falling bits from edge variable
     const bool rising  = (uint8_t)edge & 0x1U;

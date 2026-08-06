@@ -49,8 +49,8 @@
 
 /* Note: __SHIFT is expected to be <=0 */
 
-arm_status arm_elementwise_add_s8(const int8_t *input_1_vect,
-                                  const int8_t *input_2_vect,
+arm_status arm_elementwise_add_s8(const int8_t* input_1_vect,
+                                  const int8_t* input_2_vect,
                                   const int32_t input_1_offset,
                                   const int32_t input_1_mult,
                                   const int32_t input_1_shift,
@@ -58,19 +58,17 @@ arm_status arm_elementwise_add_s8(const int8_t *input_1_vect,
                                   const int32_t input_2_mult,
                                   const int32_t input_2_shift,
                                   const int32_t left_shift,
-                                  int8_t *output,
+                                  int8_t*       output,
                                   const int32_t out_offset,
                                   const int32_t out_mult,
                                   const int32_t out_shift,
                                   const int32_t out_activation_min,
                                   const int32_t out_activation_max,
-                                  const int32_t block_size)
-{
+                                  const int32_t block_size) {
 #if defined(ARM_MATH_MVEI)
     int32_t count = block_size;
 
-    while (count > 0)
-    {
+    while (count > 0) {
         int32x4_t vect_1;
         int32x4_t vect_2;
 
@@ -121,8 +119,7 @@ arm_status arm_elementwise_add_s8(const int8_t *input_1_vect,
 
     loop_count = block_size >> 2;
 
-    while (loop_count > 0)
-    {
+    while (loop_count > 0) {
         /* 4 outputs are calculated in one loop. The order of calculation is follows the order of output sign extension
            intrinsic */
         input_1_vect = read_and_pad_reordered(input_1_vect, &b_1, &a_1);
@@ -147,7 +144,7 @@ arm_status arm_elementwise_add_s8(const int8_t *input_1_vect,
         sum += out_offset;
         sum = MAX(sum, out_activation_min);
         sum = MIN(sum, out_activation_max);
-        r1 = (q7_t)sum;
+        r1  = (q7_t)sum;
 
         /* Sum 3 */
         input_1 = ((b_1 >> 16) & 0x0FFFF) << left_shift;
@@ -161,7 +158,7 @@ arm_status arm_elementwise_add_s8(const int8_t *input_1_vect,
         sum += out_offset;
         sum = MAX(sum, out_activation_min);
         sum = MIN(sum, out_activation_max);
-        r3 = (q7_t)sum;
+        r3  = (q7_t)sum;
 
         /* Sum 2 */
         input_1 = (a_1 & 0x0FFFF) << left_shift;
@@ -175,7 +172,7 @@ arm_status arm_elementwise_add_s8(const int8_t *input_1_vect,
         sum += out_offset;
         sum = MAX(sum, out_activation_min);
         sum = MIN(sum, out_activation_max);
-        r2 = (q7_t)sum;
+        r2  = (q7_t)sum;
 
         /* Sum 4 */
         input_1 = ((a_1 >> 16) & 0x0FFFF) << left_shift;
@@ -189,7 +186,7 @@ arm_status arm_elementwise_add_s8(const int8_t *input_1_vect,
         sum += out_offset;
         sum = MAX(sum, out_activation_min);
         sum = MIN(sum, out_activation_max);
-        r4 = (q7_t)sum;
+        r4  = (q7_t)sum;
 
         arm_nn_write_q7x4_ia(&output, PACK_Q7x4_32x1(r1, r2, r3, r4));
 
@@ -201,8 +198,7 @@ arm_status arm_elementwise_add_s8(const int8_t *input_1_vect,
     loop_count = block_size;
 #endif
 
-    while (loop_count > 0)
-    {
+    while (loop_count > 0) {
         /* C = A + B */
 
         input_1 = (*input_1_vect++ + input_1_offset) << left_shift;

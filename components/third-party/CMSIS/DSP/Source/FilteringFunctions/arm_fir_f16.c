@@ -50,32 +50,30 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-#define FIR_F32_MAX_COEF_BLK        8
+#define FIR_F32_MAX_COEF_BLK 8
 
-#define FIR_F16_CORE(pSamples, c, NB_TAPS)                                 \
-        vecAcc0 = vdupq_n_f16(0.0f16);                                     \
-        for (int i = 0; i < NB_TAPS; i++) {                                \
-            vecIn0 = vld1q(&pSamples[i]);                                  \
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c[i]);                        \
-        }
+#define FIR_F16_CORE(pSamples, c, NB_TAPS)                                                                                                           \
+    vecAcc0 = vdupq_n_f16(0.0f16);                                                                                                                   \
+    for (int i = 0; i < NB_TAPS; i++) {                                                                                                              \
+        vecIn0  = vld1q(&pSamples[i]);                                                                                                               \
+        vecAcc0 = vfmaq(vecAcc0, vecIn0, c[i]);                                                                                                      \
+    }
 
 #define NB_TAPS 4
-__STATIC_INLINE void arm_fir_f16_1_4_mve(const arm_fir_instance_f16 * S, 
-    const float16_t * __restrict pSrc, 
-    float16_t * __restrict pDst, uint32_t blockSize)
-{
-    float16_t      *pState = S->pState;     /* State pointer */
-    const float16_t *pCoeffs = S->pCoeffs;  /* Coefficient pointer */
-    float16_t      *pStateCur;              /* Points to the current sample of the state */
-    const float16_t *pSamples;              /* Temporary pointer to the sample buffer */
-    float16_t      *pOutput;                /* Temporary pointer to the output buffer */
-    const float16_t *pTempSrc;              /* Temporary pointer to the source data */
-    float16_t      *pTempDest;              /* Temporary pointer to the destination buffer */
-    uint32_t        numTaps = S->numTaps;   /* Number of filter coefficients in the filter */
-    int32_t         blkCnt;
-    float16x8_t         vecIn0;
-    float16x8_t         vecAcc0;
-    float16_t       c[NB_TAPS];
+__STATIC_INLINE void
+arm_fir_f16_1_4_mve(const arm_fir_instance_f16* S, const float16_t* __restrict pSrc, float16_t* __restrict pDst, uint32_t blockSize) {
+    float16_t*       pState  = S->pState;  /* State pointer */
+    const float16_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float16_t*       pStateCur;            /* Points to the current sample of the state */
+    const float16_t* pSamples;             /* Temporary pointer to the sample buffer */
+    float16_t*       pOutput;              /* Temporary pointer to the output buffer */
+    const float16_t* pTempSrc;             /* Temporary pointer to the source data */
+    float16_t*       pTempDest;            /* Temporary pointer to the destination buffer */
+    uint32_t         numTaps = S->numTaps; /* Number of filter coefficients in the filter */
+    int32_t          blkCnt;
+    float16x8_t      vecIn0;
+    float16x8_t      vecAcc0;
+    float16_t        c[NB_TAPS];
 
 
     /*
@@ -89,10 +87,11 @@ __STATIC_INLINE void arm_fir_f16_1_4_mve(const arm_fir_instance_f16 * S,
      */
     pSamples = pState;
     pTempSrc = pSrc;
-    pOutput = pDst;
+    pOutput  = pDst;
 
-    for (int i = 0; i < NB_TAPS; i++)
+    for (int i = 0; i < NB_TAPS; i++) {
         c[i] = pCoeffs[i];
+    }
 
     blkCnt = blockSize >> 3;
     while (blkCnt > 0) {
@@ -114,9 +113,8 @@ __STATIC_INLINE void arm_fir_f16_1_4_mve(const arm_fir_instance_f16 * S,
     }
 
     blkCnt = blockSize & 7;
-    if (blkCnt)
-    {
-        mve_pred16_t    p0 = vctp16q(blkCnt);
+    if (blkCnt) {
+        mve_pred16_t p0 = vctp16q(blkCnt);
 
         vst1q(pStateCur, vld1q(pTempSrc));
         pStateCur += 8;
@@ -130,7 +128,7 @@ __STATIC_INLINE void arm_fir_f16_1_4_mve(const arm_fir_instance_f16 * S,
     /*
      * Copy the samples back into the history buffer start
      */
-    pTempSrc = &pState[blockSize];
+    pTempSrc  = &pState[blockSize];
     pTempDest = pState;
 
     blkCnt = numTaps >> 3;
@@ -142,30 +140,27 @@ __STATIC_INLINE void arm_fir_f16_1_4_mve(const arm_fir_instance_f16 * S,
     }
     blkCnt = numTaps & 7;
     if (blkCnt > 0) {
-        mve_pred16_t    p0 = vctp16q(blkCnt);
+        mve_pred16_t p0 = vctp16q(blkCnt);
         vstrhq_p_f16(pTempDest, vld1q(pTempSrc), p0);
     }
-
 }
 #undef NB_TAPS
 
 #define NB_TAPS 8
-__STATIC_INLINE void arm_fir_f16_5_8_mve(const arm_fir_instance_f16 * S, 
-    const float16_t * __restrict pSrc, 
-    float16_t * __restrict pDst, uint32_t blockSize)
-{
-    float16_t      *pState = S->pState;     /* State pointer */
-    const float16_t *pCoeffs = S->pCoeffs;  /* Coefficient pointer */
-    float16_t      *pStateCur;              /* Points to the current sample of the state */
-    const float16_t *pSamples;              /* Temporary pointer to the sample buffer */
-    float16_t      *pOutput;                /* Temporary pointer to the output buffer */
-    const float16_t *pTempSrc;              /* Temporary pointer to the source data */
-    float16_t      *pTempDest;              /* Temporary pointer to the destination buffer */
-    uint32_t        numTaps = S->numTaps;   /* Number of filter coefficients in the filter */
-    int32_t         blkCnt;
-    float16x8_t         vecIn0;
-    float16x8_t         vecAcc0;
-    float16_t       c[NB_TAPS];
+__STATIC_INLINE void
+arm_fir_f16_5_8_mve(const arm_fir_instance_f16* S, const float16_t* __restrict pSrc, float16_t* __restrict pDst, uint32_t blockSize) {
+    float16_t*       pState  = S->pState;  /* State pointer */
+    const float16_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float16_t*       pStateCur;            /* Points to the current sample of the state */
+    const float16_t* pSamples;             /* Temporary pointer to the sample buffer */
+    float16_t*       pOutput;              /* Temporary pointer to the output buffer */
+    const float16_t* pTempSrc;             /* Temporary pointer to the source data */
+    float16_t*       pTempDest;            /* Temporary pointer to the destination buffer */
+    uint32_t         numTaps = S->numTaps; /* Number of filter coefficients in the filter */
+    int32_t          blkCnt;
+    float16x8_t      vecIn0;
+    float16x8_t      vecAcc0;
+    float16_t        c[NB_TAPS];
 
 
     /*
@@ -179,10 +174,11 @@ __STATIC_INLINE void arm_fir_f16_5_8_mve(const arm_fir_instance_f16 * S,
      */
     pSamples = pState;
     pTempSrc = pSrc;
-    pOutput = pDst;
+    pOutput  = pDst;
 
-    for (int i = 0; i < NB_TAPS; i++)
+    for (int i = 0; i < NB_TAPS; i++) {
         c[i] = pCoeffs[i];
+    }
 
     blkCnt = blockSize >> 3;
     while (blkCnt > 0) {
@@ -204,9 +200,8 @@ __STATIC_INLINE void arm_fir_f16_5_8_mve(const arm_fir_instance_f16 * S,
     }
 
     blkCnt = blockSize & 7;
-    if (blkCnt)
-    {
-        mve_pred16_t    p0 = vctp16q(blkCnt);
+    if (blkCnt) {
+        mve_pred16_t p0 = vctp16q(blkCnt);
 
         vst1q(pStateCur, vld1q(pTempSrc));
         pStateCur += 8;
@@ -220,7 +215,7 @@ __STATIC_INLINE void arm_fir_f16_5_8_mve(const arm_fir_instance_f16 * S,
     /*
      * Copy the samples back into the history buffer start
      */
-    pTempSrc = &pState[blockSize];
+    pTempSrc  = &pState[blockSize];
     pTempDest = pState;
 
     blkCnt = numTaps >> 3;
@@ -232,29 +227,24 @@ __STATIC_INLINE void arm_fir_f16_5_8_mve(const arm_fir_instance_f16 * S,
     }
     blkCnt = numTaps & 7;
     if (blkCnt > 0) {
-        mve_pred16_t    p0 = vctp16q(blkCnt);
+        mve_pred16_t p0 = vctp16q(blkCnt);
         vstrhq_p_f16(pTempDest, vld1q(pTempSrc), p0);
     }
-
 }
 #undef NB_TAPS
 
-void arm_fir_f16(const arm_fir_instance_f16 * S, 
-  const float16_t * pSrc, 
-  float16_t * pDst, 
-  uint32_t blockSize)
-{
-    float16_t *pRefStatePtr = S->pState + ROUND_UP(blockSize, 8);
-    float16_t *pState = pRefStatePtr ;      /* State pointer */
-    const float16_t *pCoeffs = S->pCoeffs;      /* Coefficient pointer */
-    const float16_t *pSamples;  /* Temporary pointer to the sample buffer */
-    float16_t      *pOutput;    /* Temporary pointer to the output buffer */
-    const float16_t *pTempSrc;  /* Temporary pointer to the source data */
-    float16_t      *pTempDest;  /* Temporary pointer to the destination buffer */
-    uint32_t        numTaps = S->numTaps;       /* Number of filter coefficients in the filter */
-    uint32_t        blkCnt;
-    float16_t       c0, c1, c2, c3;
-    float16_t       c4, c5, c6, c7;
+void arm_fir_f16(const arm_fir_instance_f16* S, const float16_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+    float16_t*       pRefStatePtr = S->pState + ROUND_UP(blockSize, 8);
+    float16_t*       pState       = pRefStatePtr; /* State pointer */
+    const float16_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */
+    const float16_t* pSamples;                    /* Temporary pointer to the sample buffer */
+    float16_t*       pOutput;                     /* Temporary pointer to the output buffer */
+    const float16_t* pTempSrc;                    /* Temporary pointer to the source data */
+    float16_t*       pTempDest;                   /* Temporary pointer to the destination buffer */
+    uint32_t         numTaps = S->numTaps;        /* Number of filter coefficients in the filter */
+    uint32_t         blkCnt;
+    float16_t        c0, c1, c2, c3;
+    float16_t        c4, c5, c6, c7;
 
     /*
      * [1 to 8 taps] specialized routines
@@ -267,49 +257,49 @@ void arm_fir_f16(const arm_fir_instance_f16 * S,
         return;
     }
 
-    pTempSrc = pSrc;
+    pTempSrc  = pSrc;
     pTempDest = &(pState[(numTaps - 1u)]);
-    int             cnt = blockSize;
+    int cnt   = blockSize;
     do {
-        mve_pred16_t    p0 = vctp16q(cnt);
+        mve_pred16_t p0 = vctp16q(cnt);
         vstrhq_p_f16(pTempDest, vld1q(pTempSrc), p0);
         pTempDest += 8;
         pTempSrc += 8;
         cnt -= 8;
     } while (cnt > 0);
 
-    float16_t      *partial_accu_ptr = S->pState;
+    float16_t* partial_accu_ptr = S->pState;
 
     pSamples = pState;
-    c0 = *pCoeffs++;
-    c1 = *pCoeffs++;
-    c2 = *pCoeffs++;
-    c3 = *pCoeffs++;
-    c4 = *pCoeffs++;
-    c5 = *pCoeffs++;
-    c6 = *pCoeffs++;
-    c7 = *pCoeffs++;
+    c0       = *pCoeffs++;
+    c1       = *pCoeffs++;
+    c2       = *pCoeffs++;
+    c3       = *pCoeffs++;
+    c4       = *pCoeffs++;
+    c5       = *pCoeffs++;
+    c6       = *pCoeffs++;
+    c7       = *pCoeffs++;
 
     cnt = blockSize >> 3;
     while (cnt > 0) {
-        float16x8_t     vecAcc0;
-        float16x8_t     vecIn0;
+        float16x8_t vecAcc0;
+        float16x8_t vecIn0;
 
-        vecIn0 = vld1q(pSamples);
+        vecIn0  = vld1q(pSamples);
         vecAcc0 = vmulq(vecIn0, c0);
-        vecIn0 = vld1q(&pSamples[1]);
+        vecIn0  = vld1q(&pSamples[1]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c1);
-        vecIn0 = vld1q(&pSamples[2]);
+        vecIn0  = vld1q(&pSamples[2]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c2);
-        vecIn0 = vld1q(&pSamples[3]);
+        vecIn0  = vld1q(&pSamples[3]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c3);
-        vecIn0 = vld1q(&pSamples[4]);
+        vecIn0  = vld1q(&pSamples[4]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c4);
-        vecIn0 = vld1q(&pSamples[5]);
+        vecIn0  = vld1q(&pSamples[5]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c5);
-        vecIn0 = vld1q(&pSamples[6]);
+        vecIn0  = vld1q(&pSamples[6]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c6);
-        vecIn0 = vld1q(&pSamples[7]);
+        vecIn0  = vld1q(&pSamples[7]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c7);
         pSamples += 8;
         vst1q(partial_accu_ptr, vecAcc0);
@@ -319,33 +309,33 @@ void arm_fir_f16(const arm_fir_instance_f16 * S,
 
     cnt = blockSize & 7;
     if (cnt > 0) {
-        float16x8_t     vecAcc0;
-        float16x8_t     vecIn0;
+        float16x8_t vecAcc0;
+        float16x8_t vecIn0;
 
         mve_pred16_t p0 = vctp16q(cnt);
 
 
-        vecIn0 = vld1q(pSamples);
+        vecIn0  = vld1q(pSamples);
         vecAcc0 = vmulq(vecIn0, c0);
-        vecIn0 = vld1q(&pSamples[1]);
+        vecIn0  = vld1q(&pSamples[1]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c1);
-        vecIn0 = vld1q(&pSamples[2]);
+        vecIn0  = vld1q(&pSamples[2]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c2);
-        vecIn0 = vld1q(&pSamples[3]);
+        vecIn0  = vld1q(&pSamples[3]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c3);
-        vecIn0 = vld1q(&pSamples[4]);
+        vecIn0  = vld1q(&pSamples[4]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c4);
-        vecIn0 = vld1q(&pSamples[5]);
+        vecIn0  = vld1q(&pSamples[5]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c5);
-        vecIn0 = vld1q(&pSamples[6]);
+        vecIn0  = vld1q(&pSamples[6]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c6);
-        vecIn0 = vld1q(&pSamples[7]);
+        vecIn0  = vld1q(&pSamples[7]);
         vecAcc0 = vfmaq(vecAcc0, vecIn0, c7);
-        vstrhq_p_f16(partial_accu_ptr, vecAcc0,p0);
+        vstrhq_p_f16(partial_accu_ptr, vecAcc0, p0);
     }
 
-    int             localTaps = numTaps - FIR_F32_MAX_COEF_BLK;
-    int             sample_offset = FIR_F32_MAX_COEF_BLK;
+    int localTaps     = numTaps - FIR_F32_MAX_COEF_BLK;
+    int sample_offset = FIR_F32_MAX_COEF_BLK;
     while (localTaps > FIR_F32_MAX_COEF_BLK) {
         c0 = *pCoeffs++;
         c1 = *pCoeffs++;
@@ -357,28 +347,28 @@ void arm_fir_f16(const arm_fir_instance_f16 * S,
         c7 = *pCoeffs++;
 
         partial_accu_ptr = S->pState;
-        pSamples = pState + sample_offset;
-        int  cnt = blockSize >> 3;
+        pSamples         = pState + sample_offset;
+        int cnt          = blockSize >> 3;
         while (cnt > 0) {
-            float16x8_t     vecAcc0;
-            float16x8_t     vecIn0;
+            float16x8_t vecAcc0;
+            float16x8_t vecIn0;
 
 
-            vecIn0 = vld1q(pSamples);
+            vecIn0  = vld1q(pSamples);
             vecAcc0 = vmulq(vecIn0, c0);
-            vecIn0 = vld1q(&pSamples[1]);
+            vecIn0  = vld1q(&pSamples[1]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c1);
-            vecIn0 = vld1q(&pSamples[2]);
+            vecIn0  = vld1q(&pSamples[2]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c2);
-            vecIn0 = vld1q(&pSamples[3]);
+            vecIn0  = vld1q(&pSamples[3]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c3);
-            vecIn0 = vld1q(&pSamples[4]);
+            vecIn0  = vld1q(&pSamples[4]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c4);
-            vecIn0 = vld1q(&pSamples[5]);
+            vecIn0  = vld1q(&pSamples[5]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c5);
-            vecIn0 = vld1q(&pSamples[6]);
+            vecIn0  = vld1q(&pSamples[6]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c6);
-            vecIn0 = vld1q(&pSamples[7]);
+            vecIn0  = vld1q(&pSamples[7]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c7);
             pSamples += 8;
             vecAcc0 += vld1q_f16(partial_accu_ptr);
@@ -389,29 +379,29 @@ void arm_fir_f16(const arm_fir_instance_f16 * S,
 
         cnt = blockSize & 7;
         if (cnt > 0) {
-            float16x8_t     vecAcc0;
-            float16x8_t     vecIn0;
+            float16x8_t vecAcc0;
+            float16x8_t vecIn0;
 
             mve_pred16_t p0 = vctp16q(cnt);
 
-            vecIn0 = vld1q(pSamples);
+            vecIn0  = vld1q(pSamples);
             vecAcc0 = vmulq(vecIn0, c0);
-            vecIn0 = vld1q(&pSamples[1]);
+            vecIn0  = vld1q(&pSamples[1]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c1);
-            vecIn0 = vld1q(&pSamples[2]);
+            vecIn0  = vld1q(&pSamples[2]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c2);
-            vecIn0 = vld1q(&pSamples[3]);
+            vecIn0  = vld1q(&pSamples[3]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c3);
-            vecIn0 = vld1q(&pSamples[4]);
+            vecIn0  = vld1q(&pSamples[4]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c4);
-            vecIn0 = vld1q(&pSamples[5]);
+            vecIn0  = vld1q(&pSamples[5]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c5);
-            vecIn0 = vld1q(&pSamples[6]);
+            vecIn0  = vld1q(&pSamples[6]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c6);
-            vecIn0 = vld1q(&pSamples[7]);
+            vecIn0  = vld1q(&pSamples[7]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c7);
             vecAcc0 += vld1q_f16(partial_accu_ptr);
-            vstrhq_p_f16(partial_accu_ptr, vecAcc0,p0);
+            vstrhq_p_f16(partial_accu_ptr, vecAcc0, p0);
         }
 
         localTaps -= FIR_F32_MAX_COEF_BLK;
@@ -421,40 +411,40 @@ void arm_fir_f16(const arm_fir_instance_f16 * S,
     pSamples = pState + sample_offset;
 
     if (localTaps > 4) {
-        c0 = *pCoeffs++;
-        c1 = *pCoeffs++;
-        c2 = *pCoeffs++;
-        c3 = *pCoeffs++;
-        c4 = *pCoeffs++;
-        c5 = *pCoeffs++;
-        c6 = *pCoeffs++;
-        c7 = *pCoeffs++;
+        c0      = *pCoeffs++;
+        c1      = *pCoeffs++;
+        c2      = *pCoeffs++;
+        c3      = *pCoeffs++;
+        c4      = *pCoeffs++;
+        c5      = *pCoeffs++;
+        c6      = *pCoeffs++;
+        c7      = *pCoeffs++;
         pOutput = pDst;
 
         partial_accu_ptr = S->pState;
-        cnt = blockSize >> 3;
+        cnt              = blockSize >> 3;
         while (cnt > 0) {
-            float16x8_t     vecAcc0;
-            float16x8_t     vecIn0;
+            float16x8_t vecAcc0;
+            float16x8_t vecIn0;
 
-            vecIn0 = vld1q(pSamples);
+            vecIn0  = vld1q(pSamples);
             vecAcc0 = vmulq(vecIn0, c0);
-            vecIn0 = vld1q(&pSamples[1]);
+            vecIn0  = vld1q(&pSamples[1]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c1);
-            vecIn0 = vld1q(&pSamples[2]);
+            vecIn0  = vld1q(&pSamples[2]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c2);
-            vecIn0 = vld1q(&pSamples[3]);
+            vecIn0  = vld1q(&pSamples[3]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c3);
-            vecIn0 = vld1q(&pSamples[4]);
+            vecIn0  = vld1q(&pSamples[4]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c4);
-            vecIn0 = vld1q(&pSamples[5]);
+            vecIn0  = vld1q(&pSamples[5]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c5);
-            vecIn0 = vld1q(&pSamples[6]);
+            vecIn0  = vld1q(&pSamples[6]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c6);
-            vecIn0 = vld1q(&pSamples[7]);
+            vecIn0  = vld1q(&pSamples[7]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c7);
             pSamples += 8;
-            float16x8_t     pap = vld1q_f16(partial_accu_ptr);
+            float16x8_t pap = vld1q_f16(partial_accu_ptr);
             vst1q(pOutput, vecAcc0 + pap);
             cnt--;
             partial_accu_ptr += 8;
@@ -463,55 +453,55 @@ void arm_fir_f16(const arm_fir_instance_f16 * S,
 
         cnt = blockSize & 7;
         if (cnt > 0) {
-            float16x8_t     vecAcc0;
-            float16x8_t     vecIn0;
+            float16x8_t vecAcc0;
+            float16x8_t vecIn0;
 
             mve_pred16_t p0 = vctp16q(cnt);
 
-            vecIn0 = vld1q(pSamples);
-            vecAcc0 = vmulq(vecIn0, c0);
-            vecIn0 = vld1q(&pSamples[1]);
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c1);
-            vecIn0 = vld1q(&pSamples[2]);
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c2);
-            vecIn0 = vld1q(&pSamples[3]);
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c3);
-            vecIn0 = vld1q(&pSamples[4]);
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c4);
-            vecIn0 = vld1q(&pSamples[5]);
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c5);
-            vecIn0 = vld1q(&pSamples[6]);
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c6);
-            vecIn0 = vld1q(&pSamples[7]);
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c7);
-            float16x8_t     pap = vld1q_f16(partial_accu_ptr);
+            vecIn0          = vld1q(pSamples);
+            vecAcc0         = vmulq(vecIn0, c0);
+            vecIn0          = vld1q(&pSamples[1]);
+            vecAcc0         = vfmaq(vecAcc0, vecIn0, c1);
+            vecIn0          = vld1q(&pSamples[2]);
+            vecAcc0         = vfmaq(vecAcc0, vecIn0, c2);
+            vecIn0          = vld1q(&pSamples[3]);
+            vecAcc0         = vfmaq(vecAcc0, vecIn0, c3);
+            vecIn0          = vld1q(&pSamples[4]);
+            vecAcc0         = vfmaq(vecAcc0, vecIn0, c4);
+            vecIn0          = vld1q(&pSamples[5]);
+            vecAcc0         = vfmaq(vecAcc0, vecIn0, c5);
+            vecIn0          = vld1q(&pSamples[6]);
+            vecAcc0         = vfmaq(vecAcc0, vecIn0, c6);
+            vecIn0          = vld1q(&pSamples[7]);
+            vecAcc0         = vfmaq(vecAcc0, vecIn0, c7);
+            float16x8_t pap = vld1q_f16(partial_accu_ptr);
             vstrhq_p_f16(pOutput, vecAcc0 + pap, p0);
             pOutput += cnt;
         }
 
     } else {
-        c0 = *pCoeffs++;
-        c1 = *pCoeffs++;
-        c2 = *pCoeffs++;
-        c3 = *pCoeffs++;
+        c0      = *pCoeffs++;
+        c1      = *pCoeffs++;
+        c2      = *pCoeffs++;
+        c3      = *pCoeffs++;
         pOutput = pDst;
 
         partial_accu_ptr = S->pState;
-        cnt = blockSize >> 3;
+        cnt              = blockSize >> 3;
         while (cnt > 0) {
-            float16x8_t     vecAcc0;
-            float16x8_t     vecIn0;
+            float16x8_t vecAcc0;
+            float16x8_t vecIn0;
 
-            vecIn0 = vld1q(pSamples);
+            vecIn0  = vld1q(pSamples);
             vecAcc0 = vmulq(vecIn0, c0);
-            vecIn0 = vld1q(&pSamples[1]);
+            vecIn0  = vld1q(&pSamples[1]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c1);
-            vecIn0 = vld1q(&pSamples[2]);
+            vecIn0  = vld1q(&pSamples[2]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c2);
-            vecIn0 = vld1q(&pSamples[3]);
+            vecIn0  = vld1q(&pSamples[3]);
             vecAcc0 = vfmaq(vecAcc0, vecIn0, c3);
             pSamples += 8;
-            float16x8_t     pap = vld1q_f16(partial_accu_ptr);
+            float16x8_t pap = vld1q_f16(partial_accu_ptr);
             vst1q(pOutput, vecAcc0 + pap);
             cnt--;
             partial_accu_ptr += 8;
@@ -520,20 +510,20 @@ void arm_fir_f16(const arm_fir_instance_f16 * S,
 
         cnt = blockSize & 7;
         if (cnt > 0) {
-            float16x8_t     vecAcc0;
-            float16x8_t     vecIn0;
+            float16x8_t vecAcc0;
+            float16x8_t vecIn0;
 
             mve_pred16_t p0 = vctp16q(cnt);
 
-            vecIn0 = vld1q(pSamples);
-            vecAcc0 = vmulq(vecIn0, c0);
-            vecIn0 = vld1q(&pSamples[1]);
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c1);
-            vecIn0 = vld1q(&pSamples[2]);
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c2);
-            vecIn0 = vld1q(&pSamples[3]);
-            vecAcc0 = vfmaq(vecAcc0, vecIn0, c3);
-            float16x8_t     pap = vld1q_f16(partial_accu_ptr);
+            vecIn0          = vld1q(pSamples);
+            vecAcc0         = vmulq(vecIn0, c0);
+            vecIn0          = vld1q(&pSamples[1]);
+            vecAcc0         = vfmaq(vecAcc0, vecIn0, c1);
+            vecIn0          = vld1q(&pSamples[2]);
+            vecAcc0         = vfmaq(vecAcc0, vecIn0, c2);
+            vecIn0          = vld1q(&pSamples[3]);
+            vecAcc0         = vfmaq(vecAcc0, vecIn0, c3);
+            float16x8_t pap = vld1q_f16(partial_accu_ptr);
             vstrhq_p_f16(pOutput, vecAcc0 + pap, p0);
             pOutput += cnt;
         }
@@ -542,7 +532,7 @@ void arm_fir_f16(const arm_fir_instance_f16 * S,
     /*
      * Copy the samples back into the history buffer start
      */
-    pTempSrc = &pState[blockSize];
+    pTempSrc  = &pState[blockSize];
     pTempDest = pState;
 
     blkCnt = numTaps >> 3;
@@ -554,41 +544,36 @@ void arm_fir_f16(const arm_fir_instance_f16 * S,
     }
     blkCnt = numTaps & 7;
     if (blkCnt > 0U) {
-        mve_pred16_t    p0 = vctp16q(blkCnt);
+        mve_pred16_t p0 = vctp16q(blkCnt);
         vstrhq_p_f16(pTempDest, vld1q(pTempSrc), p0);
     }
 }
 
 #else
 
-void arm_fir_f16(
-  const arm_fir_instance_f16 * S,
-  const float16_t * pSrc,
-        float16_t * pDst,
-        uint32_t blockSize)
-{
-        float16_t *pState = S->pState;                 /* State pointer */
-  const float16_t *pCoeffs = S->pCoeffs;               /* Coefficient pointer */
-        float16_t *pStateCurnt;                        /* Points to the current sample of the state */
-        float16_t *px;                                 /* Temporary pointer for state buffer */
-  const float16_t *pb;                                 /* Temporary pointer for coefficient buffer */
-        _Float16 acc0;                                /* Accumulator */
-        uint32_t numTaps = S->numTaps;                 /* Number of filter coefficients in the filter */
-        uint32_t i, tapCnt, blkCnt;                    /* Loop counters */
+void arm_fir_f16(const arm_fir_instance_f16* S, const float16_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+    float16_t*       pState  = S->pState;  /* State pointer */
+    const float16_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float16_t*       pStateCurnt;          /* Points to the current sample of the state */
+    float16_t*       px;                   /* Temporary pointer for state buffer */
+    const float16_t* pb;                   /* Temporary pointer for coefficient buffer */
+    _Float16         acc0;                 /* Accumulator */
+    uint32_t         numTaps = S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t         i, tapCnt, blkCnt;    /* Loop counters */
 
-#if defined (ARM_MATH_LOOPUNROLL)
-        _Float16 acc1, acc2, acc3, acc4, acc5, acc6, acc7;     /* Accumulators */
-        _Float16 x0, x1, x2, x3, x4, x5, x6, x7;               /* Temporary variables to hold state values */
-        _Float16 c0;                                           /* Temporary variable to hold coefficient value */
+#if defined(ARM_MATH_LOOPUNROLL)
+    _Float16 acc1, acc2, acc3, acc4, acc5, acc6, acc7; /* Accumulators */
+    _Float16 x0, x1, x2, x3, x4, x5, x6, x7;           /* Temporary variables to hold state values */
+    _Float16 c0;                                       /* Temporary variable to hold coefficient value */
 #endif
 
-  /* S->pState points to state array which contains previous frame (numTaps - 1) samples */
-  /* pStateCurnt points to the location where the new input data should be written */
-  pStateCurnt = &(S->pState[(numTaps - 1U)]);
+    /* S->pState points to state array which contains previous frame (numTaps - 1) samples */
+    /* pStateCurnt points to the location where the new input data should be written */
+    pStateCurnt = &(S->pState[(numTaps - 1U)]);
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 8 output values simultaneously.
+    /* Loop unrolling: Compute 8 output values simultaneously.
    * The variables acc0 ... acc7 hold output values that are being computed:
    *
    *    acc0 =  b[numTaps-1] * x[n-numTaps-1] + b[numTaps-2] * x[n-numTaps-2] + b[numTaps-3] * x[n-numTaps-3] +...+ b[0] * x[0]
@@ -597,339 +582,331 @@ void arm_fir_f16(
    *    acc3 =  b[numTaps-1] * x[n-numTaps+2] + b[numTaps-2] * x[n-numTaps+1] + b[numTaps-3] * x[n-numTaps]   +...+ b[0] * x[3]
    */
 
-  blkCnt = blockSize >> 3U;
+    blkCnt = blockSize >> 3U;
 
-  while (blkCnt > 0U)
-  {
-    /* Copy 4 new input samples into the state buffer. */
-    *pStateCurnt++ = *pSrc++;
-    *pStateCurnt++ = *pSrc++;
-    *pStateCurnt++ = *pSrc++;
-    *pStateCurnt++ = *pSrc++;
+    while (blkCnt > 0U) {
+        /* Copy 4 new input samples into the state buffer. */
+        *pStateCurnt++ = *pSrc++;
+        *pStateCurnt++ = *pSrc++;
+        *pStateCurnt++ = *pSrc++;
+        *pStateCurnt++ = *pSrc++;
 
-    /* Set all accumulators to zero */
-    acc0 = 0.0f;
-    acc1 = 0.0f;
-    acc2 = 0.0f;
-    acc3 = 0.0f;
-    acc4 = 0.0f;
-    acc5 = 0.0f;
-    acc6 = 0.0f;
-    acc7 = 0.0f;
+        /* Set all accumulators to zero */
+        acc0 = 0.0f;
+        acc1 = 0.0f;
+        acc2 = 0.0f;
+        acc3 = 0.0f;
+        acc4 = 0.0f;
+        acc5 = 0.0f;
+        acc6 = 0.0f;
+        acc7 = 0.0f;
 
-    /* Initialize state pointer */
-    px = pState;
+        /* Initialize state pointer */
+        px = pState;
 
-    /* Initialize coefficient pointer */
-    pb = pCoeffs;
+        /* Initialize coefficient pointer */
+        pb = pCoeffs;
 
-    /* This is separated from the others to avoid
+        /* This is separated from the others to avoid
      * a call to __aeabi_memmove which would be slower
      */
-    *pStateCurnt++ = *pSrc++;
-    *pStateCurnt++ = *pSrc++;
-    *pStateCurnt++ = *pSrc++;
-    *pStateCurnt++ = *pSrc++;
+        *pStateCurnt++ = *pSrc++;
+        *pStateCurnt++ = *pSrc++;
+        *pStateCurnt++ = *pSrc++;
+        *pStateCurnt++ = *pSrc++;
 
-    /* Read the first 7 samples from the state buffer:  x[n-numTaps], x[n-numTaps-1], x[n-numTaps-2] */
-    x0 = *px++;
-    x1 = *px++;
-    x2 = *px++;
-    x3 = *px++;
-    x4 = *px++;
-    x5 = *px++;
-    x6 = *px++;
+        /* Read the first 7 samples from the state buffer:  x[n-numTaps], x[n-numTaps-1], x[n-numTaps-2] */
+        x0 = *px++;
+        x1 = *px++;
+        x2 = *px++;
+        x3 = *px++;
+        x4 = *px++;
+        x5 = *px++;
+        x6 = *px++;
 
-    /* Loop unrolling: process 8 taps at a time. */
-    tapCnt = numTaps >> 3U;
+        /* Loop unrolling: process 8 taps at a time. */
+        tapCnt = numTaps >> 3U;
 
-    while (tapCnt > 0U)
-    {
-      /* Read the b[numTaps-1] coefficient */
-      c0 = *(pb++);
+        while (tapCnt > 0U) {
+            /* Read the b[numTaps-1] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-3] sample */
-      x7 = *(px++);
+            /* Read x[n-numTaps-3] sample */
+            x7 = *(px++);
 
-      /* acc0 +=  b[numTaps-1] * x[n-numTaps] */
-      acc0 += x0 * c0;
+            /* acc0 +=  b[numTaps-1] * x[n-numTaps] */
+            acc0 += x0 * c0;
 
-      /* acc1 +=  b[numTaps-1] * x[n-numTaps-1] */
-      acc1 += x1 * c0;
+            /* acc1 +=  b[numTaps-1] * x[n-numTaps-1] */
+            acc1 += x1 * c0;
 
-      /* acc2 +=  b[numTaps-1] * x[n-numTaps-2] */
-      acc2 += x2 * c0;
+            /* acc2 +=  b[numTaps-1] * x[n-numTaps-2] */
+            acc2 += x2 * c0;
 
-      /* acc3 +=  b[numTaps-1] * x[n-numTaps-3] */
-      acc3 += x3 * c0;
+            /* acc3 +=  b[numTaps-1] * x[n-numTaps-3] */
+            acc3 += x3 * c0;
 
-      /* acc4 +=  b[numTaps-1] * x[n-numTaps-4] */
-      acc4 += x4 * c0;
+            /* acc4 +=  b[numTaps-1] * x[n-numTaps-4] */
+            acc4 += x4 * c0;
 
-      /* acc1 +=  b[numTaps-1] * x[n-numTaps-5] */
-      acc5 += x5 * c0;
+            /* acc1 +=  b[numTaps-1] * x[n-numTaps-5] */
+            acc5 += x5 * c0;
 
-      /* acc2 +=  b[numTaps-1] * x[n-numTaps-6] */
-      acc6 += x6 * c0;
+            /* acc2 +=  b[numTaps-1] * x[n-numTaps-6] */
+            acc6 += x6 * c0;
 
-      /* acc3 +=  b[numTaps-1] * x[n-numTaps-7] */
-      acc7 += x7 * c0;
+            /* acc3 +=  b[numTaps-1] * x[n-numTaps-7] */
+            acc7 += x7 * c0;
 
-      /* Read the b[numTaps-2] coefficient */
-      c0 = *(pb++);
+            /* Read the b[numTaps-2] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-4] sample */
-      x0 = *(px++);
+            /* Read x[n-numTaps-4] sample */
+            x0 = *(px++);
 
-      /* Perform the multiply-accumulate */
-      acc0 += x1 * c0;
-      acc1 += x2 * c0;
-      acc2 += x3 * c0;
-      acc3 += x4 * c0;
-      acc4 += x5 * c0;
-      acc5 += x6 * c0;
-      acc6 += x7 * c0;
-      acc7 += x0 * c0;
+            /* Perform the multiply-accumulate */
+            acc0 += x1 * c0;
+            acc1 += x2 * c0;
+            acc2 += x3 * c0;
+            acc3 += x4 * c0;
+            acc4 += x5 * c0;
+            acc5 += x6 * c0;
+            acc6 += x7 * c0;
+            acc7 += x0 * c0;
 
-      /* Read the b[numTaps-3] coefficient */
-      c0 = *(pb++);
+            /* Read the b[numTaps-3] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-5] sample */
-      x1 = *(px++);
+            /* Read x[n-numTaps-5] sample */
+            x1 = *(px++);
 
-      /* Perform the multiply-accumulates */
-      acc0 += x2 * c0;
-      acc1 += x3 * c0;
-      acc2 += x4 * c0;
-      acc3 += x5 * c0;
-      acc4 += x6 * c0;
-      acc5 += x7 * c0;
-      acc6 += x0 * c0;
-      acc7 += x1 * c0;
+            /* Perform the multiply-accumulates */
+            acc0 += x2 * c0;
+            acc1 += x3 * c0;
+            acc2 += x4 * c0;
+            acc3 += x5 * c0;
+            acc4 += x6 * c0;
+            acc5 += x7 * c0;
+            acc6 += x0 * c0;
+            acc7 += x1 * c0;
 
-      /* Read the b[numTaps-4] coefficient */
-      c0 = *(pb++);
+            /* Read the b[numTaps-4] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-6] sample */
-      x2 = *(px++);
+            /* Read x[n-numTaps-6] sample */
+            x2 = *(px++);
 
-      /* Perform the multiply-accumulates */
-      acc0 += x3 * c0;
-      acc1 += x4 * c0;
-      acc2 += x5 * c0;
-      acc3 += x6 * c0;
-      acc4 += x7 * c0;
-      acc5 += x0 * c0;
-      acc6 += x1 * c0;
-      acc7 += x2 * c0;
+            /* Perform the multiply-accumulates */
+            acc0 += x3 * c0;
+            acc1 += x4 * c0;
+            acc2 += x5 * c0;
+            acc3 += x6 * c0;
+            acc4 += x7 * c0;
+            acc5 += x0 * c0;
+            acc6 += x1 * c0;
+            acc7 += x2 * c0;
 
-      /* Read the b[numTaps-4] coefficient */
-      c0 = *(pb++);
+            /* Read the b[numTaps-4] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-6] sample */
-      x3 = *(px++);
-      /* Perform the multiply-accumulates */
-      acc0 += x4 * c0;
-      acc1 += x5 * c0;
-      acc2 += x6 * c0;
-      acc3 += x7 * c0;
-      acc4 += x0 * c0;
-      acc5 += x1 * c0;
-      acc6 += x2 * c0;
-      acc7 += x3 * c0;
+            /* Read x[n-numTaps-6] sample */
+            x3 = *(px++);
+            /* Perform the multiply-accumulates */
+            acc0 += x4 * c0;
+            acc1 += x5 * c0;
+            acc2 += x6 * c0;
+            acc3 += x7 * c0;
+            acc4 += x0 * c0;
+            acc5 += x1 * c0;
+            acc6 += x2 * c0;
+            acc7 += x3 * c0;
 
-      /* Read the b[numTaps-4] coefficient */
-      c0 = *(pb++);
+            /* Read the b[numTaps-4] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-6] sample */
-      x4 = *(px++);
+            /* Read x[n-numTaps-6] sample */
+            x4 = *(px++);
 
-      /* Perform the multiply-accumulates */
-      acc0 += x5 * c0;
-      acc1 += x6 * c0;
-      acc2 += x7 * c0;
-      acc3 += x0 * c0;
-      acc4 += x1 * c0;
-      acc5 += x2 * c0;
-      acc6 += x3 * c0;
-      acc7 += x4 * c0;
+            /* Perform the multiply-accumulates */
+            acc0 += x5 * c0;
+            acc1 += x6 * c0;
+            acc2 += x7 * c0;
+            acc3 += x0 * c0;
+            acc4 += x1 * c0;
+            acc5 += x2 * c0;
+            acc6 += x3 * c0;
+            acc7 += x4 * c0;
 
-      /* Read the b[numTaps-4] coefficient */
-      c0 = *(pb++);
+            /* Read the b[numTaps-4] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-6] sample */
-      x5 = *(px++);
+            /* Read x[n-numTaps-6] sample */
+            x5 = *(px++);
 
-      /* Perform the multiply-accumulates */
-      acc0 += x6 * c0;
-      acc1 += x7 * c0;
-      acc2 += x0 * c0;
-      acc3 += x1 * c0;
-      acc4 += x2 * c0;
-      acc5 += x3 * c0;
-      acc6 += x4 * c0;
-      acc7 += x5 * c0;
+            /* Perform the multiply-accumulates */
+            acc0 += x6 * c0;
+            acc1 += x7 * c0;
+            acc2 += x0 * c0;
+            acc3 += x1 * c0;
+            acc4 += x2 * c0;
+            acc5 += x3 * c0;
+            acc6 += x4 * c0;
+            acc7 += x5 * c0;
 
-      /* Read the b[numTaps-4] coefficient */
-      c0 = *(pb++);
+            /* Read the b[numTaps-4] coefficient */
+            c0 = *(pb++);
 
-      /* Read x[n-numTaps-6] sample */
-      x6 = *(px++);
+            /* Read x[n-numTaps-6] sample */
+            x6 = *(px++);
 
-      /* Perform the multiply-accumulates */
-      acc0 += x7 * c0;
-      acc1 += x0 * c0;
-      acc2 += x1 * c0;
-      acc3 += x2 * c0;
-      acc4 += x3 * c0;
-      acc5 += x4 * c0;
-      acc6 += x5 * c0;
-      acc7 += x6 * c0;
+            /* Perform the multiply-accumulates */
+            acc0 += x7 * c0;
+            acc1 += x0 * c0;
+            acc2 += x1 * c0;
+            acc3 += x2 * c0;
+            acc4 += x3 * c0;
+            acc5 += x4 * c0;
+            acc6 += x5 * c0;
+            acc7 += x6 * c0;
 
-      /* Decrement loop counter */
-      tapCnt--;
+            /* Decrement loop counter */
+            tapCnt--;
+        }
+
+        /* Loop unrolling: Compute remaining outputs */
+        tapCnt = numTaps % 0x8U;
+
+        while (tapCnt > 0U) {
+            /* Read coefficients */
+            c0 = *(pb++);
+
+            /* Fetch 1 state variable */
+            x7 = *(px++);
+
+            /* Perform the multiply-accumulates */
+            acc0 += x0 * c0;
+            acc1 += x1 * c0;
+            acc2 += x2 * c0;
+            acc3 += x3 * c0;
+            acc4 += x4 * c0;
+            acc5 += x5 * c0;
+            acc6 += x6 * c0;
+            acc7 += x7 * c0;
+
+            /* Reuse the present sample states for next sample */
+            x0 = x1;
+            x1 = x2;
+            x2 = x3;
+            x3 = x4;
+            x4 = x5;
+            x5 = x6;
+            x6 = x7;
+
+            /* Decrement loop counter */
+            tapCnt--;
+        }
+
+        /* Advance the state pointer by 8 to process the next group of 8 samples */
+        pState = pState + 8;
+
+        /* The results in the 8 accumulators, store in the destination buffer. */
+        *pDst++ = acc0;
+        *pDst++ = acc1;
+        *pDst++ = acc2;
+        *pDst++ = acc3;
+        *pDst++ = acc4;
+        *pDst++ = acc5;
+        *pDst++ = acc6;
+        *pDst++ = acc7;
+
+
+        /* Decrement loop counter */
+        blkCnt--;
     }
 
-    /* Loop unrolling: Compute remaining outputs */
-    tapCnt = numTaps % 0x8U;
-
-    while (tapCnt > 0U)
-    {
-      /* Read coefficients */
-      c0 = *(pb++);
-
-      /* Fetch 1 state variable */
-      x7 = *(px++);
-
-      /* Perform the multiply-accumulates */
-      acc0 += x0 * c0;
-      acc1 += x1 * c0;
-      acc2 += x2 * c0;
-      acc3 += x3 * c0;
-      acc4 += x4 * c0;
-      acc5 += x5 * c0;
-      acc6 += x6 * c0;
-      acc7 += x7 * c0;
-
-      /* Reuse the present sample states for next sample */
-      x0 = x1;
-      x1 = x2;
-      x2 = x3;
-      x3 = x4;
-      x4 = x5;
-      x5 = x6;
-      x6 = x7;
-
-      /* Decrement loop counter */
-      tapCnt--;
-    }
-
-    /* Advance the state pointer by 8 to process the next group of 8 samples */
-    pState = pState + 8;
-
-    /* The results in the 8 accumulators, store in the destination buffer. */
-    *pDst++ = acc0;
-    *pDst++ = acc1;
-    *pDst++ = acc2;
-    *pDst++ = acc3;
-    *pDst++ = acc4;
-    *pDst++ = acc5;
-    *pDst++ = acc6;
-    *pDst++ = acc7;
-
-
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
-  /* Loop unrolling: Compute remaining output samples */
-  blkCnt = blockSize % 0x8U;
+    /* Loop unrolling: Compute remaining output samples */
+    blkCnt = blockSize % 0x8U;
 
 #else
 
-  /* Initialize blkCnt with number of taps */
-  blkCnt = blockSize;
+    /* Initialize blkCnt with number of taps */
+    blkCnt = blockSize;
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  while (blkCnt > 0U)
-  {
-    /* Copy one sample at a time into state buffer */
-    *pStateCurnt++ = *pSrc++;
+    while (blkCnt > 0U) {
+        /* Copy one sample at a time into state buffer */
+        *pStateCurnt++ = *pSrc++;
 
-    /* Set the accumulator to zero */
-    acc0 = 0.0f;
+        /* Set the accumulator to zero */
+        acc0 = 0.0f;
 
-    /* Initialize state pointer */
-    px = pState;
+        /* Initialize state pointer */
+        px = pState;
 
-    /* Initialize Coefficient pointer */
-    pb = pCoeffs;
+        /* Initialize Coefficient pointer */
+        pb = pCoeffs;
 
-    i = numTaps;
+        i = numTaps;
 
-    /* Perform the multiply-accumulates */
-    while (i > 0U)
-    {
-      /* acc =  b[numTaps-1] * x[n-numTaps-1] + b[numTaps-2] * x[n-numTaps-2] + b[numTaps-3] * x[n-numTaps-3] +...+ b[0] * x[0] */
-      acc0 += (_Float16)*px++ * (_Float16)*pb++;
+        /* Perform the multiply-accumulates */
+        while (i > 0U) {
+            /* acc =  b[numTaps-1] * x[n-numTaps-1] + b[numTaps-2] * x[n-numTaps-2] + b[numTaps-3] * x[n-numTaps-3] +...+ b[0] * x[0] */
+            acc0 += (_Float16)*px++ * (_Float16)*pb++;
 
-      i--;
+            i--;
+        }
+
+        /* Store result in destination buffer. */
+        *pDst++ = acc0;
+
+        /* Advance state pointer by 1 for the next sample */
+        pState = pState + 1U;
+
+        /* Decrement loop counter */
+        blkCnt--;
     }
 
-    /* Store result in destination buffer. */
-    *pDst++ = acc0;
-
-    /* Advance state pointer by 1 for the next sample */
-    pState = pState + 1U;
-
-    /* Decrement loop counter */
-    blkCnt--;
-  }
-
-  /* Processing is complete.
+    /* Processing is complete.
      Now copy the last numTaps - 1 samples to the start of the state buffer.
      This prepares the state buffer for the next function call. */
 
-  /* Points to the start of the state buffer */
-  pStateCurnt = S->pState;
+    /* Points to the start of the state buffer */
+    pStateCurnt = S->pState;
 
-#if defined (ARM_MATH_LOOPUNROLL)
+#if defined(ARM_MATH_LOOPUNROLL)
 
-  /* Loop unrolling: Compute 4 taps at a time */
-  tapCnt = (numTaps - 1U) >> 2U;
+    /* Loop unrolling: Compute 4 taps at a time */
+    tapCnt = (numTaps - 1U) >> 2U;
 
-  /* Copy data */
-  while (tapCnt > 0U)
-  {
-    *pStateCurnt++ = *pState++;
-    *pStateCurnt++ = *pState++;
-    *pStateCurnt++ = *pState++;
-    *pStateCurnt++ = *pState++;
+    /* Copy data */
+    while (tapCnt > 0U) {
+        *pStateCurnt++ = *pState++;
+        *pStateCurnt++ = *pState++;
+        *pStateCurnt++ = *pState++;
+        *pStateCurnt++ = *pState++;
 
-    /* Decrement loop counter */
-    tapCnt--;
-  }
+        /* Decrement loop counter */
+        tapCnt--;
+    }
 
-  /* Calculate remaining number of copies */
-  tapCnt = (numTaps - 1U) % 0x4U;
+    /* Calculate remaining number of copies */
+    tapCnt = (numTaps - 1U) % 0x4U;
 
 #else
 
-  /* Initialize tapCnt with number of taps */
-  tapCnt = (numTaps - 1U);
+    /* Initialize tapCnt with number of taps */
+    tapCnt = (numTaps - 1U);
 
 #endif /* #if defined (ARM_MATH_LOOPUNROLL) */
 
-  /* Copy remaining data */
-  while (tapCnt > 0U)
-  {
-    *pStateCurnt++ = *pState++;
+    /* Copy remaining data */
+    while (tapCnt > 0U) {
+        *pStateCurnt++ = *pState++;
 
-    /* Decrement loop counter */
-    tapCnt--;
-  }
-
+        /* Decrement loop counter */
+        tapCnt--;
+    }
 }
 
 #endif /* #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) */

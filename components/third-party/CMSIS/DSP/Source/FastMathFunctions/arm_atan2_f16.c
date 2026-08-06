@@ -26,7 +26,7 @@
  * limitations under the License.
  */
 
-#include "dsp/fast_math_functions_f16.h"        
+#include "dsp/fast_math_functions_f16.h"
 
 #if defined(ARM_FLOAT16_SUPPORTED)
 
@@ -44,54 +44,41 @@ atan for argument between in [0, 1.0]
 
 #define ATAN2_NB_COEFS_F16 5
 
-static const float16_t atan2_coefs_f16[ATAN2_NB_COEFS_F16]={0.f16
-,1.f16
-,0.f16
-,-0.367f16
-,0.152f16
-};
+static const float16_t atan2_coefs_f16[ATAN2_NB_COEFS_F16] = {0.f16, 1.f16, 0.f16, -0.367f16, 0.152f16};
 
-__STATIC_FORCEINLINE float16_t arm_atan_limited_f16(float16_t x)
-{
-    float16_t res=atan2_coefs_f16[ATAN2_NB_COEFS_F16-1];
-    int i=1;
-    for(i=1;i<ATAN2_NB_COEFS_F16;i++)
-    {
-        res = (_Float16)x*(_Float16)res + (_Float16)atan2_coefs_f16[ATAN2_NB_COEFS_F16-1-i];
+__STATIC_FORCEINLINE float16_t arm_atan_limited_f16(float16_t x) {
+    float16_t res = atan2_coefs_f16[ATAN2_NB_COEFS_F16 - 1];
+    int       i   = 1;
+    for (i = 1; i < ATAN2_NB_COEFS_F16; i++) {
+        res = (_Float16)x * (_Float16)res + (_Float16)atan2_coefs_f16[ATAN2_NB_COEFS_F16 - 1 - i];
     }
 
 
-    return(res);
+    return (res);
 }
 
-__STATIC_FORCEINLINE float16_t arm_atan_f16(float16_t x)
-{
-   int sign=0;
-   float16_t res=0.0f16;
+__STATIC_FORCEINLINE float16_t arm_atan_f16(float16_t x) {
+    int       sign = 0;
+    float16_t res  = 0.0f16;
 
-   if ((_Float16)x < 0.0f16)
-   {
-      sign=1;
-      x=-(_Float16)x;
-   }
+    if ((_Float16)x < 0.0f16) {
+        sign = 1;
+        x    = -(_Float16)x;
+    }
 
-   if ((_Float16)x > 1.0f16)
-   {
-      x = 1.0f16 / (_Float16)x;
-      res = (_Float16)PI16HALF - (_Float16)arm_atan_limited_f16(x);
-   }
-   else
-   {
-     res += (_Float16)arm_atan_limited_f16(x);
-   }
+    if ((_Float16)x > 1.0f16) {
+        x   = 1.0f16 / (_Float16)x;
+        res = (_Float16)PI16HALF - (_Float16)arm_atan_limited_f16(x);
+    } else {
+        res += (_Float16)arm_atan_limited_f16(x);
+    }
 
 
-   if (sign)
-   {
-     res = -(_Float16)res;
-   }
+    if (sign) {
+        res = -(_Float16)res;
+    }
 
-   return(res);
+    return (res);
 }
 
 /**
@@ -116,53 +103,38 @@ __STATIC_FORCEINLINE float16_t arm_atan_f16(float16_t x)
                    and compute the right angle.
 
 */
-arm_status arm_atan2_f16(float16_t y,float16_t x,float16_t *result)
-{
-    if ((_Float16)x > 0.0f16)
-    {
-        *result=arm_atan_f16((_Float16)y/(_Float16)x);
-        return(ARM_MATH_SUCCESS);
+arm_status arm_atan2_f16(float16_t y, float16_t x, float16_t* result) {
+    if ((_Float16)x > 0.0f16) {
+        *result = arm_atan_f16((_Float16)y / (_Float16)x);
+        return (ARM_MATH_SUCCESS);
     }
-    if ((_Float16)x < 0.0f16)
-    {
-        if ((_Float16)y > 0.0f16)
-        {
-           *result=(_Float16)arm_atan_f16((_Float16)y/(_Float16)x) + (_Float16)PIF16;
-        }
-        else if ((_Float16)y < 0.0f16)
-        {
-           *result=(_Float16)arm_atan_f16((_Float16)y/(_Float16)x) - (_Float16)PIF16;
-        }
-        else
-        {
-            if (signbit(y))
-            {
-               *result= -(_Float16)PIF16;
-            }
-            else
-            {
-               *result= PIF16;
+    if ((_Float16)x < 0.0f16) {
+        if ((_Float16)y > 0.0f16) {
+            *result = (_Float16)arm_atan_f16((_Float16)y / (_Float16)x) + (_Float16)PIF16;
+        } else if ((_Float16)y < 0.0f16) {
+            *result = (_Float16)arm_atan_f16((_Float16)y / (_Float16)x) - (_Float16)PIF16;
+        } else {
+            if (signbit(y)) {
+                *result = -(_Float16)PIF16;
+            } else {
+                *result = PIF16;
             }
         }
-        return(ARM_MATH_SUCCESS);
+        return (ARM_MATH_SUCCESS);
     }
-    if ((_Float16)x == 0.0f16)
-    {
-        if ((_Float16)y > 0.0f16)
-        {
-            *result=PI16HALF;
-            return(ARM_MATH_SUCCESS);
+    if ((_Float16)x == 0.0f16) {
+        if ((_Float16)y > 0.0f16) {
+            *result = PI16HALF;
+            return (ARM_MATH_SUCCESS);
         }
-        if ((_Float16)y < 0.0f16)
-        {
-            *result=-(_Float16)PI16HALF;
-            return(ARM_MATH_SUCCESS);
+        if ((_Float16)y < 0.0f16) {
+            *result = -(_Float16)PI16HALF;
+            return (ARM_MATH_SUCCESS);
         }
     }
-    
 
-    return(ARM_MATH_NANINF);
 
+    return (ARM_MATH_NANINF);
 }
 
 #endif /* #if defined(ARM_FLOAT16_SUPPORTED) */
