@@ -13,13 +13,10 @@ set(SRCS
     src/wwdg.c
     src/iwdg.c
     src/timer.c
-    src/syscalls.c
 )
 
 set(INC
-    inc/
-    ../third-party/o1heap/
-    ../third-party/RTT/RTT/
+    ../
     ../third-party/CMSIS/Include/
     ../third-party/CMSIS/Core/Include/
     ../third-party/CMSIS/Device/ST/STM32F4xx/Include/

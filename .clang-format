@@ -21,8 +21,8 @@ SpacesInParentheses: false
 SpacesInSquareBrackets: false
 SpaceAfterTemplateKeyword: false
 BreakAfterAttributes: Never
-SeparateDefinitionBlocks: Always
-MaxEmptyLinesToKeep: 5
+SeparateDefinitionBlocks: Leave
+MaxEmptyLinesToKeep: 2
 
 NamespaceIndentation: All
 IndentExternBlock: NoIndent

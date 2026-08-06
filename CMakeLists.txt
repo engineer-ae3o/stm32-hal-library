@@ -75,6 +75,7 @@ if (BUILD_TESTS)
 
 # Process all components
 add_subdirectory(components/test/)
+add_subdirectory(components/extra/)
 add_subdirectory(components/drivers/)
 add_subdirectory(components/third-party/RTT/)
 add_subdirectory(components/third-party/Unity/)
@@ -82,7 +83,7 @@ add_subdirectory(components/third-party/o1heap/)
 
 # Build an executable only if building with tests. 
 add_executable(${EXE_ELF_NAME} test_main.cpp startup.s)
-target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers rtt o1heap)
+target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers extra rtt o1heap)
 target_compile_definitions(${EXE_ELF_NAME} PUBLIC STM32F411xE)
 
 # The tests are C++
@@ -103,14 +104,15 @@ add_custom_command(
 
 else()
 
-# Leave tests out entirely
+# Leave the tests out
+add_subdirectory(components/extra/)
 add_subdirectory(components/drivers/)
 add_subdirectory(components/third-party/RTT/)
+add_subdirectory(components/third-party/Unity/)
 add_subdirectory(components/third-party/o1heap/)
 
 # Only produce a static library.
 add_library(${LIB_ELF_NAME} STATIC startup.s)
-target_link_libraries(${LIB_ELF_NAME} PUBLIC drivers rtt o1heap)
 target_compile_definitions(${LIB_ELF_NAME} PUBLIC STM32F411xE)
 
 # The core library is C
@@ -120,12 +122,14 @@ set_target_properties(${LIB_ELF_NAME} PROPERTIES
     C_EXTENSIONS ON
 )
 
-# No point in getting the disassembly of a static library. Just produce an archive of relevant components
+# No point in getting the disassembly of a static library. Just produce an archive of the relevant components
 add_custom_command(
     TARGET ${LIB_ELF_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "CREATE $<TARGET_FILE:${LIB_ELF_NAME}>.tmp.a" > combine.mri
     COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:${LIB_ELF_NAME}>" >> combine.mri
     COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:drivers>" >> combine.mri
+    COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:extra>" >> combine.mri
+    COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:unity>" >> combine.mri
     COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:rtt>" >> combine.mri
     COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:o1heap>" >> combine.mri
     COMMAND ${CMAKE_COMMAND} -E echo "SAVE" >> combine.mri

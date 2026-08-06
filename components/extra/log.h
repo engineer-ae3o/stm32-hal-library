@@ -2,8 +2,13 @@
 #define _LOG_H_
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include "SEGGER_RTT.h"
-#include "common.h"
+#include "extra/tick.h"
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -69,7 +74,7 @@ inline void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...)
     SEGGER_RTT_WriteString(0, esc_code);
 
     // Write the timestamp and tag
-    SEGGER_RTT_printf(0, "(%ums) [%s]: ", get_tick_ms(), tag);
+    SEGGER_RTT_printf(0, "(%ums) [%s]: ", ticks_since_boot_ms(), tag);
 
     // Print the actual log message
     va_list args;
@@ -86,6 +91,11 @@ inline void log_isr(const char* esc_code, const char* str) {
     SEGGER_RTT_WriteString(0, str);
     SEGGER_RTT_WriteString(0, "\r\n" ESC_TEXT_RESET);
 }
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif // _LOG_H_
