@@ -1,4 +1,7 @@
 #include "test/runner.hpp"
+#include "extra/heap.h"
+#include "extra/log.h"
+
 
 extern "C" {
 [[noreturn]] int main() {
@@ -6,6 +9,7 @@ extern "C" {
     test::runner();
 
     // Halt once tests are finished since nothing else to do.
+    LOGI("Main", "Done with all tests. Halting...");
     while (true);
 }
 }

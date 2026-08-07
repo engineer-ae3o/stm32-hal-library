@@ -14,9 +14,9 @@ __attribute__((constructor)) static void tick_init(void) {
     // Enable TIM2 clock
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 
-    // Configure TIM2 for 1ms interrupts at 100MHz
+    // Configure TIM2 for 1ms (1kHz) interrupts at 100MHz
     // Prescaler: 100MHz / 100 = 1MHz, so a PSC of 100 - 1 = 99
-    // Auto reload: 1kHz, so an ARR of 1000 - 1 = 999
+    // Auto reload: we need 1kHz, so an ARR of 1000 - 1 = 999
     TIM2->PSC = 99;
     TIM2->ARR = 999;
     TIM2->EGR = TIM_EGR_UG;

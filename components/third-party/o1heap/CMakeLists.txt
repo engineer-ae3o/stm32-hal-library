@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 4.0)
 
 add_library(o1heap STATIC o1heap.c)
-target_include_directories(o1heap PUBLIC .)
+target_include_directories(o1heap PUBLIC
+    ./
+    ../../
+    ../CMSIS/Device/ST/STM32F4xx/Include/
+    ../CMSIS/Include/
+    ../CMSIS/Core/Include/
+)
 
 set_target_properties(o1heap PROPERTIES
     C_STANDARD 23

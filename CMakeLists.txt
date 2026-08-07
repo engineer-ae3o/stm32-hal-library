@@ -17,7 +17,7 @@ project(${CMAKE_PROJECT_NAME})
 enable_language(C CXX ASM)
 
 set(EXE_NAME f411-hal)
-set(LIB_ELF_NAME "${EXE_NAME}") # CMake already appends .a automatically
+set(LIB_ELF_NAME "${EXE_NAME}") # CMake appends .a automatically
 set(EXE_ASM_NAME "${EXE_NAME}.s")
 set(EXE_ELF_NAME "${EXE_NAME}.elf")
 set(EXE_BIN_NAME "${EXE_NAME}.bin")
@@ -70,6 +70,7 @@ if(BUILD_TESTS AND CMAKE_BUILD_TYPE STREQUAL "Release")
         "or build Debug if you need the test suite.")
 endif()
 
+set(DEFINES STM32F411xE __ARM_ARCH_7M__=1 __ARM_ARCH_7EM__=1 RTT_USE_ASM=1)
 
 if (BUILD_TESTS)
 
@@ -84,8 +85,9 @@ add_subdirectory(components/third-party/o1heap/)
 # Build an executable only if building with tests. 
 add_executable(${EXE_ELF_NAME} test_main.cpp stm32f411_startup.s)
 target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers extra rtt o1heap)
-target_compile_definitions(${EXE_ELF_NAME} PUBLIC STM32F411xE)
-target_link_options(${EXE_ELF_NAME} PRIVATE -Wl,--no-warn-rwx-segments)
+target_compile_definitions(${EXE_ELF_NAME} PUBLIC ${DEFINES})
+target_link_options(${EXE_ELF_NAME} PUBLIC -Wl,--no-warn-rwx-segments -Wl,--gc-sections)
+target_compile_options(${EXE_ELF_NAME} PUBLIC -fdata-sections -ffunction-sections)
 
 # The tests are C++
 set_target_properties(${EXE_ELF_NAME} PROPERTIES
@@ -94,7 +96,7 @@ set_target_properties(${EXE_ELF_NAME} PROPERTIES
     CXX_EXTENSIONS ON
 )
 
-# Get the .bin file, the disassembly as well as print the space occupied by the executable
+# Get the .bin file, the disassembly as well as print the size of the executable
 add_custom_command(
     TARGET ${EXE_ELF_NAME} POST_BUILD
     COMMENT "Building tests..."
@@ -114,7 +116,7 @@ add_subdirectory(components/third-party/o1heap/)
 
 # Only produce a static library.
 add_library(${LIB_ELF_NAME} STATIC stm32f411_startup.s)
-target_compile_definitions(${LIB_ELF_NAME} PUBLIC STM32F411xE)
+target_compile_definitions(${LIB_ELF_NAME} PUBLIC ${DEFINES})
 
 # The core library is C
 set_target_properties(${LIB_ELF_NAME} PROPERTIES

@@ -39,7 +39,7 @@
 *      Up-buffer channel 1: SystemView.
 */
 #ifndef SEGGER_RTT_MAX_NUM_UP_BUFFERS
-#define SEGGER_RTT_MAX_NUM_UP_BUFFERS (2)
+#define SEGGER_RTT_MAX_NUM_UP_BUFFERS (1)
 #endif
 /*********************************************************************
 *
@@ -72,7 +72,7 @@
 *    messages.
 */
 #ifndef BUFFER_SIZE_UP
-#define BUFFER_SIZE_UP (512)
+#define BUFFER_SIZE_UP (64)
 #endif
 
 /*********************************************************************
@@ -88,7 +88,7 @@
 *    (from host) input.
 */
 #ifndef BUFFER_SIZE_DOWN
-#define BUFFER_SIZE_DOWN (512)
+#define BUFFER_SIZE_DOWN (32)
 #endif
 
 /*********************************************************************
@@ -110,7 +110,7 @@
 *    Size of temporary buffer for RTT printf bulk-send.
 */
 #ifndef SEGGER_RTT_PRINTF_BUFFER_SIZE
-#define SEGGER_RTT_PRINTF_BUFFER_SIZE (512u)
+#define SEGGER_RTT_PRINTF_BUFFER_SIZE (128)
 #endif
 
 /*********************************************************************
@@ -126,7 +126,7 @@
 *       such as on Cortex-A devices with MMU.
 */
 #ifndef SEGGER_RTT_MEMCPY_USE_BYTELOOP
-#define SEGGER_RTT_MEMCPY_USE_BYTELOOP 0 // 0: Use memcpy/SEGGER_RTT_MEMCPY, 1: Use a simple byte-loop
+#define SEGGER_RTT_MEMCPY_USE_BYTELOOP 1 // 0: Use memcpy/SEGGER_RTT_MEMCPY, 1: Use a simple byte-loop
 #endif
 //
 // Example definition of SEGGER_RTT_MEMCPY to external memcpy with GCC toolchains and Cortex-A targets
