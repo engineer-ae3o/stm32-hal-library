@@ -77,6 +77,7 @@ bool check_heap_state(void) {
 void get_heap_stats(heap_info_t* info) {
     O1HeapDiagnostics diagnostics = o1heapGetDiagnostics(s_heap_handle);
 
+    ASSERT(info);
     info->max_capacity        = diagnostics.capacity;
     info->allocated_size      = diagnostics.allocated;
     info->peak_allocated_size = diagnostics.peak_allocated;
