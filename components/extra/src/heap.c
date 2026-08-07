@@ -17,13 +17,13 @@ static const char* TAG = "O1heap";
 
 // The heap should be initialized and created before main runs. Only one heap is needed
 __attribute__((constructor)) static void init() {
-    LOGI(TAG, "Initializing the heap.");
+    LOGI_ISR("Initializing the heap.");
 
     static alignas(O1HEAP_ALIGNMENT) uint8_t s_heap_buffer[HEAP_SIZE_BYTES] = {};
 
     s_heap_handle = o1heapInit(s_heap_buffer, sizeof(s_heap_buffer));
     if (s_heap_handle == NULL) {
-        LOGE(TAG, "Failed to create the heap (%u bytes). Halting.", sizeof(s_heap_buffer));
+        LOGE_ISR("Failed to initialize the heap. Halting.");
         PANIC();
     }
 }
@@ -94,6 +94,6 @@ void print_heap_stats(void) {
     LOGI(TAG, "Amount of heap allocated: %u bytes", info.allocated_size);
     LOGI(TAG, "Highest size allocated since boot: %u bytes", info.peak_allocated_size);
     LOGI(TAG, "Largest requested size from heap: %u bytes", info.peak_request_size);
-    LOGI(TAG, "Number of times an allocation request failed to be completed: %u bytes", info.out_of_mem_count);
+    LOGI(TAG, "Number of times an allocation request failed to be completed: %u", info.out_of_mem_count);
     LOGI(TAG, "Number of allocations: %u", info.num_of_allocations);
 }

@@ -12,7 +12,7 @@
             "description": "Debug build with the Unity test suite compiled in",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/debug-tests",
-            "toolchainFile": "${sourceDir}/toolchain.cmake",
+            "toolchainFile": "${sourceDir}/gcc_toolchain.cmake",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "BUILD_TESTS": "ON"
@@ -24,7 +24,7 @@
             "description": "Debug build without the Unity test suite",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/debug",
-            "toolchainFile": "${sourceDir}/toolchain.cmake",
+            "toolchainFile": "${sourceDir}/gcc_toolchain.cmake",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "BUILD_TESTS": "OFF"
@@ -36,7 +36,7 @@
             "description": "Release build; tests are not permitted in Release, see CMakeLists.txt",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/release",
-            "toolchainFile": "${sourceDir}/toolchain.cmake",
+            "toolchainFile": "${sourceDir}/gcc_toolchain.cmake",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "BUILD_TESTS": "OFF"

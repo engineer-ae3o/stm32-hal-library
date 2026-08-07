@@ -10,15 +10,18 @@ set(SRCS
     src/pwm.cpp
     src/adc.cpp
     src/dma.cpp
+    src/heap.cpp
     src/gpio.cpp
     src/uart.cpp
     src/wwdg.cpp
     src/iwdg.cpp
     src/timer.cpp
+    src/runner.cpp
 )
 
 set(INC
     ../
+    ../third-party/o1heap/
     ../third-party/Unity/src/
     ../third-party/CMSIS/Include/
     ../third-party/CMSIS/Core/Include/

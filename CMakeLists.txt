@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 4.0)
 
 # Add default toolchain file if one not added yet
 if(NOT CMAKE_TOOLCHAIN_FILE)
-    set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/toolchain.cmake)
+    set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/gcc_toolchain.cmake)
 endif()
 
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
@@ -46,7 +46,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 
 
 # Set linker flags
-set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/stm32411-linker.ld")
+set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/stm32411_linker.ld")
 set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${EXE_MAP_NAME} -Wl,--cref \
                             -Wl,--gc-sections --specs=nano.specs")
 
@@ -82,7 +82,7 @@ add_subdirectory(components/third-party/Unity/)
 add_subdirectory(components/third-party/o1heap/)
 
 # Build an executable only if building with tests. 
-add_executable(${EXE_ELF_NAME} test_main.cpp startup.s)
+add_executable(${EXE_ELF_NAME} test_main.cpp stm32f411_startup.s)
 target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers extra rtt o1heap)
 target_compile_definitions(${EXE_ELF_NAME} PUBLIC STM32F411xE)
 target_link_options(${EXE_ELF_NAME} PRIVATE -Wl,--no-warn-rwx-segments)
@@ -113,7 +113,7 @@ add_subdirectory(components/third-party/Unity/)
 add_subdirectory(components/third-party/o1heap/)
 
 # Only produce a static library.
-add_library(${LIB_ELF_NAME} STATIC startup.s)
+add_library(${LIB_ELF_NAME} STATIC stm32f411_startup.s)
 target_compile_definitions(${LIB_ELF_NAME} PUBLIC STM32F411xE)
 
 # The core library is C
