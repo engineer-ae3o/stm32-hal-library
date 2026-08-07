@@ -1,4 +1,5 @@
 #include "stm32f411xe.h"
+#include "extra/common.h"
 #include "extra/tick.h"
 #include "extra/log.h"
 
@@ -7,7 +8,7 @@
 
 // Initialize the tick timer before main runs
 __attribute__((constructor)) static void tick_init(void) {
-    LOGI_ISR("Initializing the tick timer");
+    LOGI_ISR("Initializing TIM2 as the tick timer source");
 
     // Configure TIM2 as our tick source
     // Enable TIM2 clock
@@ -26,6 +27,22 @@ __attribute__((constructor)) static void tick_init(void) {
     // Configure NVIC settings for TIM2
     NVIC_SetPriority(TIM2_IRQn, 15);
     NVIC_EnableIRQ(TIM2_IRQn);
+
+#ifdef USE_DWT_CYCCNT
+    const bool is_dwt_cycnt_supported = ((DWT->CTRL >> 25) & 1U) == 0;
+    if (!is_dwt_cycnt_supported) {
+        LOGW_ISR("The cycle counter on the data watchpoint and tracing subsystem not supported on given target.");
+        LOGI_ISR("Profiling facilities and delay_us(...) will not be available.");
+        return;
+    } else {
+        LOGI_ISR("The cycle counter on the data watchpoint and tracing subsystem fully supported.");
+    }
+
+    // Enable the DWT->CYCCNT counter
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+#endif
 }
 
 // The tick counter
@@ -43,15 +60,4 @@ void TIM2_IRQHandler(void) {
         TIM2->SR &= ~TIM_SR_UIF;
         atomic_fetch_add_explicit(&s_tick_counter_ms, 1, memory_order_relaxed);
     }
-}
-
-// Polling delay accurate to the milisecond
-void delay_ms(uint32_t ms) {
-    uint32_t start = ticks_since_boot_ms();
-    while ((ticks_since_boot_ms() - start) < ms);
-}
-
-// Polling delay accurate to the microsecond
-void delay_us(uint32_t us) {
-    (void)us;
 }

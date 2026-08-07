@@ -17,7 +17,7 @@ static const char* TAG = "O1heap";
 
 // The heap should be initialized and created before main runs. Only one heap is needed
 __attribute__((constructor)) static void init() {
-    LOGI_ISR("Initializing the heap");
+    LOGI(TAG, "Initializing the heap.");
 
     static alignas(O1HEAP_ALIGNMENT) uint8_t s_heap_buffer[HEAP_SIZE_BYTES] = {};
 

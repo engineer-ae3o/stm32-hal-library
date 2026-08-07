@@ -15,7 +15,9 @@ extern "C" {
 
 
 // Set the log level to any appropriate log level
+#ifndef LOG_LEVEL
 #define LOG_LEVEL LOG_LEVEL_INFO
+#endif
 
 
 // The LOGx macros are the standard logging functions, take in variadic arguments

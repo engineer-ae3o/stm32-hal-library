@@ -36,6 +36,7 @@ extern "C" {
 #define HEAP_SIZE_BYTES (32 * 1024)
 
 #define RTT_BUFFER_INDEX 0
+#define USE_DWT_CYCCNT
 
 #define REBOOT() restart(__PRETTY_FUNCTION__, __FILE__, __LINE__)
 #define PANIC() panic(__PRETTY_FUNCTION__, __FILE__, __LINE__)
