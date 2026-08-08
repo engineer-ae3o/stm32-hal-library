@@ -1,7 +1,7 @@
 #include "stm32f411xe.h"
-#include "extra/common.h"
-#include "extra/tick.h"
-#include "extra/log.h"
+#include "utils/common.h"
+#include "utils/tick.h"
+#include "utils/log.h"
 
 #include <stdatomic.h>
 

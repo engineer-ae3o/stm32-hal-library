@@ -8,8 +8,8 @@ extern "C" {
 
 
 #include "stm32f411xe.h"
-#include "extra/log.h"
-#include "extra/err.h"
+#include "utils/log.h"
+#include "utils/err.h"
 
 #include <stdint.h>
 
@@ -43,7 +43,7 @@ extern "C" {
 
 
 // Heap size
-#define HEAP_SIZE_BYTES (48 * 1024)
+#define HEAP_SIZE_BYTES (32 * 1024)
 
 
 // RTT buffer index for logging. Controls the output buffer

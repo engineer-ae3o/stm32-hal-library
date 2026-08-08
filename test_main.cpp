@@ -1,6 +1,6 @@
 #include "test/runner.hpp"
-#include "extra/heap.h"
-#include "extra/log.h"
+#include "utils/heap.h"
+#include "utils/log.h"
 
 
 extern "C" {

@@ -9,7 +9,7 @@ extern "C" {
 
 #include "stm32f411xe.h"
 #include "drivers/dma.h"
-#include "extra/err.h"
+#include "utils/err.h"
 
 #include <stddef.h>
 #include <stdint.h>

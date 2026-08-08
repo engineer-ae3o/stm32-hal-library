@@ -34,7 +34,7 @@ extern "C" {
 #define O1HEAP_ALIGNMENT (sizeof(void*) * 2U)
 
 // Custom assert
-#include "extra/common.h"
+#include "utils/common.h"
 #define O1HEAP_ASSERT(x) ASSERT(x)
 
 /// The definition is private, so the user code can only operate on pointers. This is done to enforce encapsulation.

@@ -1,7 +1,7 @@
-#include "extra/common.h"
-#include "extra/tick.h"
+#include "utils/common.h"
+#include "utils/tick.h"
 #include "SEGGER_RTT.h"
-#include "extra/log.h"
+#include "utils/log.h"
 
 #include <stdarg.h>
 

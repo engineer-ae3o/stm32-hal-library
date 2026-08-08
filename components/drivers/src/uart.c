@@ -2,7 +2,7 @@
 #include "drivers/gpio.h"
 #include "drivers/uart.h"
 #include "drivers/dma.h"
-#include "extra/common.h"
+#include "utils/common.h"
 
 
 // The 3 UART channels: ISRs called when the DMA is done

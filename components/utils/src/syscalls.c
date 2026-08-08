@@ -1,6 +1,6 @@
 #include "stm32f411xe.h"
-#include "extra/common.h"
-#include "extra/log.h"
+#include "utils/common.h"
+#include "utils/log.h"
 
 #include "SEGGER_RTT.h"
 

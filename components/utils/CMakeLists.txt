@@ -19,10 +19,10 @@ set(INC
 )
 
 # Create library
-add_library(extra STATIC ${SRCS})
-target_include_directories(extra PUBLIC ${INC})
+add_library(utils STATIC ${SRCS})
+target_include_directories(utils PUBLIC ${INC})
 
-set_target_properties(extra PROPERTIES
+set_target_properties(utils PROPERTIES
     C_STANDARD 23
     C_STANDARD_REQUIRED ON
     C_EXTENSIONS ON
