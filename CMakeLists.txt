@@ -132,6 +132,7 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:${LIB_ELF_NAME}>" >> combine.mri
     COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:drivers>" >> combine.mri
     COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:utils>" >> combine.mri
+    COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:printf>" >> combine.mri
     COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:unity>" >> combine.mri
     COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:rtt>" >> combine.mri
     COMMAND ${CMAKE_COMMAND} -E echo "ADDLIB $<TARGET_FILE:o1heap>" >> combine.mri

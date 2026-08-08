@@ -69,6 +69,9 @@ extern "C" {
 #define LOCK_RELEASE() __enable_irq()
 
 
+#define FMT_STR_BUF_SIZE 128
+
+
 [[noreturn]] void panic(const char* function, const char* file, uint32_t line);
 
 [[noreturn]] void restart(const char* function, const char* file, uint32_t line);

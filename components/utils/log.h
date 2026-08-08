@@ -74,13 +74,13 @@ extern "C" {
 // Not to be used directly
 __attribute__((format(printf, 3, 4))) void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...);
 
-void log_str(const char* esc_code, const char* str);
+void log_str(const char* esc_code, const char* msg);
 
 
 #define ESC_TEXT_GREEN "\x1B[92m I "
 #define ESC_TEXT_YELLOW "\x1B[93m W "
 #define ESC_TEXT_RED "\x1B[91m E "
-#define ESC_TEXT_RESET "\r\n\x1B[0m"
+#define ESC_TEXT_RESET "\x1B[0m"
 
 
 #ifdef __cplusplus

@@ -39,7 +39,7 @@
 *      Up-buffer channel 1: SystemView.
 */
 #ifndef SEGGER_RTT_MAX_NUM_UP_BUFFERS
-#define SEGGER_RTT_MAX_NUM_UP_BUFFERS (1)
+#define SEGGER_RTT_MAX_NUM_UP_BUFFERS (2)
 #endif
 /*********************************************************************
 *
@@ -72,7 +72,7 @@
 *    messages.
 */
 #ifndef BUFFER_SIZE_UP
-#define BUFFER_SIZE_UP (64)
+#define BUFFER_SIZE_UP (128)
 #endif
 
 /*********************************************************************
@@ -88,7 +88,7 @@
 *    (from host) input.
 */
 #ifndef BUFFER_SIZE_DOWN
-#define BUFFER_SIZE_DOWN (32)
+#define BUFFER_SIZE_DOWN (128)
 #endif
 
 /*********************************************************************
@@ -99,7 +99,7 @@
 *    RTT Mode for channel 0.
 */
 #ifndef SEGGER_RTT_MODE_DEFAULT
-#define SEGGER_RTT_MODE_DEFAULT SEGGER_RTT_MODE_NO_BLOCK_SKIP
+#define SEGGER_RTT_MODE_DEFAULT SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL
 #endif
 
 /*********************************************************************

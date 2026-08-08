@@ -8,7 +8,7 @@
 
 // Initialize the tick timer before main runs
 __attribute__((constructor)) static void tick_init(void) {
-    LOGI_ISR("Initializing TIM2 as the tick timer source");
+    LOGI_ISR("Initializing TIM2 as the tick timer source.");
 
     // Configure TIM2 as our tick source
     // Enable TIM2 clock
@@ -32,10 +32,10 @@ __attribute__((constructor)) static void tick_init(void) {
     const bool is_dwt_cycnt_supported = ((DWT->CTRL >> 25) & 1U) == 0;
     if (!is_dwt_cycnt_supported) {
         LOGW_ISR("The cycle counter on the data watchpoint and tracing subsystem not supported on given target.");
-        LOGI_ISR("Profiling facilities and delay_us(...) will not be available.");
+        LOGI_ISR("Profiling facilities and the delay_us(...) function will not be available.");
         return;
     } else {
-        LOGI_ISR("The cycle counter on the data watchpoint and tracing subsystem fully supported.");
+        LOGI_ISR("The cycle counter on the data watchpoint and tracing subsystem supported.");
     }
 
     // Enable the DWT->CYCCNT counter

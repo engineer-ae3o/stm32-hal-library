@@ -1,8 +1,7 @@
 #include "stm32f411xe.h"
 #include "utils/common.h"
-#include "utils/log.h"
-
 #include "SEGGER_RTT.h"
+#include "utils/log.h"
 
 #include <errno.h>
 #include <stddef.h>
@@ -227,7 +226,7 @@ int _read(int fd, void* buf, size_t count) {
 
 _ssize_t _write(int fd, const void* buf, size_t len) {
     (void)fd;
-    return (_ssize_t)SEGGER_RTT_Write(0, buf, len);
+    return (_ssize_t)SEGGER_RTT_Write(RTT_BUFFER_INDEX, buf, len);
 }
 
 int _kill(pid_t pid, int sig) {
