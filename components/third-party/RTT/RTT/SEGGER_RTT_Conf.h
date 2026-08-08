@@ -72,7 +72,7 @@
 *    messages.
 */
 #ifndef BUFFER_SIZE_UP
-#define BUFFER_SIZE_UP (128)
+#define BUFFER_SIZE_UP (768)
 #endif
 
 /*********************************************************************
@@ -88,7 +88,7 @@
 *    (from host) input.
 */
 #ifndef BUFFER_SIZE_DOWN
-#define BUFFER_SIZE_DOWN (128)
+#define BUFFER_SIZE_DOWN (BUFFER_SIZE_UP)
 #endif
 
 /*********************************************************************
@@ -110,7 +110,7 @@
 *    Size of temporary buffer for RTT printf bulk-send.
 */
 #ifndef SEGGER_RTT_PRINTF_BUFFER_SIZE
-#define SEGGER_RTT_PRINTF_BUFFER_SIZE (128)
+#define SEGGER_RTT_PRINTF_BUFFER_SIZE (32)
 #endif
 
 /*********************************************************************

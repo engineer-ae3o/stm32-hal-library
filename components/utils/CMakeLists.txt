@@ -12,6 +12,7 @@ set(SRCS
 set(INC
     ../
     ../third-party/o1heap/
+    ../third-party/printf/
     ../third-party/RTT/RTT/
     ../third-party/CMSIS/Include/
     ../third-party/CMSIS/Core/Include/

@@ -13,13 +13,14 @@ namespace {
         uint32_t shortest_time_cycles = UINT32_MAX, longest_time_cycles = 0;
 
         std::array<uint32_t, 100> log_time_samples{};
-        for (auto& sample : log_time_samples) {
+        for (uint32_t i = 0; auto& sample : log_time_samples) {
             prof_start();
-            LOGI("Profile_Logs", "Typical log message. Lets do this as well: %d, %d, %u. Even more stuff. Long enough", 3, 4, 5);
+            LOGI("Profile_Logs", "Typical log message. Lets do this as well: %d, %d, %u. Even more stuff. Long enough. Iteration: %lu", 3, 4, 5, i);
             sample = prof_end();
 
             shortest_time_cycles = std::min(shortest_time_cycles, sample);
             longest_time_cycles  = std::max(longest_time_cycles, sample);
+            i++;
         }
 
         uint64_t total_time     = std::accumulate(log_time_samples.begin(), log_time_samples.end(), 0ULL);

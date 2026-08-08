@@ -2,6 +2,7 @@
 #include "utils/common.h"
 #include "SEGGER_RTT.h"
 #include "utils/log.h"
+#include "printf.h"
 
 #include <errno.h>
 #include <stddef.h>
@@ -257,4 +258,9 @@ int _isatty(int fd) {
     (void)fd;
     errno = EBADF;
     return 0;
+}
+
+// Needed by the printf library
+void putchar_(char c) {
+    SEGGER_RTT_PutChar(RTT_BUFFER_INDEX, c);
 }

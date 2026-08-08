@@ -80,11 +80,12 @@ add_subdirectory(components/utils/)
 add_subdirectory(components/drivers/)
 add_subdirectory(components/third-party/RTT/)
 add_subdirectory(components/third-party/Unity/)
+add_subdirectory(components/third-party/printf/)
 add_subdirectory(components/third-party/o1heap/)
 
 # Build an executable only if building with tests. 
 add_executable(${EXE_ELF_NAME} test_main.cpp stm32f411_startup.s)
-target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers utils rtt o1heap)
+target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers utils rtt o1heap printf)
 target_compile_definitions(${EXE_ELF_NAME} PUBLIC ${DEFINES})
 target_link_options(${EXE_ELF_NAME} PUBLIC -Wl,--no-warn-rwx-segments -Wl,--gc-sections)
 target_compile_options(${EXE_ELF_NAME} PUBLIC -fdata-sections -ffunction-sections)
@@ -112,6 +113,7 @@ add_subdirectory(components/utils/)
 add_subdirectory(components/drivers/)
 add_subdirectory(components/third-party/RTT/)
 add_subdirectory(components/third-party/Unity/)
+add_subdirectory(components/third-party/printf/)
 add_subdirectory(components/third-party/o1heap/)
 
 # Only produce a static library.
