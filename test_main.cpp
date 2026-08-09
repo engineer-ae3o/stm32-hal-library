@@ -10,14 +10,17 @@
 namespace {
 
     void profile_logging() {
+        constexpr uint32_t LOG_FREQ_HZ = 40;
+        constexpr uint32_t SAMPLE_SIZE = 1'000;
+
         uint32_t shortest_time_cycles = UINT32_MAX, longest_time_cycles = 0;
 
-        std::array<uint32_t, 100> log_time_samples{};
+        std::array<uint32_t, SAMPLE_SIZE> log_time_samples{};
         for (uint32_t i = 0; auto& sample : log_time_samples) {
             prof_start();
             LOGI("Profile_Logs",
-                 "Typical log. Lets also do this: %d,%d,%d. Even more stuff. Add a format string as well. %s long enough. Iteration: %lu",
-                 3,
+                 "Typical log. Lets also do this: %.3f,%d,%d. Even more stuff. Add a format string as well. %s long enough. Iteration: %lu",
+                 3.0,
                  4,
                  5,
                  "This should be",
@@ -28,12 +31,12 @@ namespace {
             longest_time_cycles  = std::max(longest_time_cycles, sample);
             i++;
 
-            // Adding a small delay. Normal operation won't log anywhere near this frequency
-            delay_us(25'000);
+            // Adding a small delay. Normal operation won't log anywhere near this frequency.
+            delay_us(1'000'000U / LOG_FREQ_HZ);
         }
 
-        uint64_t total_cycles   = std::accumulate(log_time_samples.begin(), log_time_samples.end(), 0ULL);
-        uint32_t average_cycles = static_cast<uint32_t>(total_cycles / log_time_samples.size());
+        const uint64_t total_cycles   = std::accumulate(log_time_samples.begin(), log_time_samples.end(), 0ULL);
+        const uint32_t average_cycles = static_cast<uint32_t>(total_cycles / log_time_samples.size());
 
         // Total time for all rounds
         LOGI("Profile_Logs", "Total time taken: %llu cycles", total_cycles);
