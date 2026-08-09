@@ -11,7 +11,7 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 
 
 # Create project
-set(CMAKE_PROJECT_NAME f411-hal-library)
+set(CMAKE_PROJECT_NAME f4-hal-library)
 
 project(${CMAKE_PROJECT_NAME})
 enable_language(C CXX ASM)

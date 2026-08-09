@@ -27,21 +27,13 @@ void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...) {
     // Append the escape reset code and a newline, clamped to remaining space
     size_t remaining = sizeof(full_string) - final_string_size;
     size_t reset_len = sizeof(ESC_TEXT_RESET "\r\n") - 1;
+
     if (reset_len >= remaining) {
         reset_len = remaining > 0 ? remaining - 1 : 0;
     }
+
     memcpy(full_string + final_string_size, ESC_TEXT_RESET "\r\n", reset_len);
     final_string_size += reset_len;
 
-    LOCK_ACQUIRE();
-    SEGGER_RTT_Write(RTT_BUFFER_INDEX, full_string, final_string_size);
-    LOCK_RELEASE();
-}
-
-void log_str(const char* esc_code, const char* msg) {
-    LOCK_ACQUIRE();
-    SEGGER_RTT_WriteString(RTT_BUFFER_INDEX, esc_code);
-    SEGGER_RTT_WriteString(RTT_BUFFER_INDEX, msg);
-    SEGGER_RTT_WriteString(RTT_BUFFER_INDEX, ESC_TEXT_RESET "\r\n");
-    LOCK_RELEASE();
+    SEGGER_RTT_WriteNoLock(RTT_BUFFER_INDEX, full_string, final_string_size);
 }

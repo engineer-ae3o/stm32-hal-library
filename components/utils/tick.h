@@ -41,9 +41,14 @@ uint32_t ticks_since_boot_ms(void);
 #define prof_end() (DWT->CYCCNT - s_prof_start)
 
 // Convert from cycles to time.
-#define cycles_to_ns(cycles) (((uint64_t)(cycles) * 1'000'000'000ULL) / SystemCoreClock)
-#define cycles_to_us(cycles) (((uint64_t)(cycles) * 1'000'000ULL) / SystemCoreClock)
-#define cycles_to_ms(cycles) (((uint64_t)(cycles) * 1'000ULL) / SystemCoreClock)
+#define cycles_to_us(cycles) ((uint64_t)(cycles) * 1'000'000ULL / SystemCoreClock)
+#define cycles_to_us_frac(cycles) (((uint64_t)(cycles) * 1'000'000'000ULL / SystemCoreClock) % 1'000ULL)
+
+#define cycles_to_ms(cycles) ((uint64_t)(cycles) * 1'000ULL / SystemCoreClock)
+#define cycles_to_ms_frac(cycles) (((uint64_t)(cycles) * 1'000'000ULL / SystemCoreClock) % 1'000ULL)
+
+#define cycles_to_ss(cycles) ((uint64_t)(cycles) / SystemCoreClock)
+#define cycles_to_ss_frac(cycles) (((uint64_t)(cycles) * 1'000ULL / SystemCoreClock) % 1'000ULL)
 
 
 #ifdef __cplusplus

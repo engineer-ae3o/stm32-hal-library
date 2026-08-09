@@ -82,6 +82,9 @@ void system_init(void) {
 
     // Enable exceptions on divide by 0 and unaligned trapping
     SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk);
+
+    // Initialize SEGGER RTT
+    SEGGER_RTT_Init();
 }
 
 // Fault Handlers

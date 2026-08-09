@@ -12,6 +12,9 @@
             "type": "cortex-debug",
             "device": "STM32F411",
             "servertype": "openocd",
+            "openOCDLaunchCommands": [
+                "adapter speed 8000"
+            ],
             "liveWatch": {
                 "enabled": true,
                 "samplesPerSecond": 4
@@ -27,6 +30,7 @@
             "rttConfig": {
                 "enabled": true,
                 "address": "auto",
+                "polling_interval": 10,
                 "decoders": [
                     {
                         "label": "RTT Log",

@@ -39,7 +39,7 @@
 *      Up-buffer channel 1: SystemView.
 */
 #ifndef SEGGER_RTT_MAX_NUM_UP_BUFFERS
-#define SEGGER_RTT_MAX_NUM_UP_BUFFERS (2)
+#define SEGGER_RTT_MAX_NUM_UP_BUFFERS (1)
 #endif
 /*********************************************************************
 *
@@ -56,7 +56,7 @@
 *    The number of up- and down-buffers may differ.
 */
 #ifndef SEGGER_RTT_MAX_NUM_DOWN_BUFFERS
-#define SEGGER_RTT_MAX_NUM_DOWN_BUFFERS (SEGGER_RTT_MAX_NUM_UP_BUFFERS)
+#define SEGGER_RTT_MAX_NUM_DOWN_BUFFERS (1)
 #endif
 
 /*********************************************************************
@@ -72,7 +72,7 @@
 *    messages.
 */
 #ifndef BUFFER_SIZE_UP
-#define BUFFER_SIZE_UP (768)
+#define BUFFER_SIZE_UP (6 * 1024)
 #endif
 
 /*********************************************************************
@@ -88,7 +88,7 @@
 *    (from host) input.
 */
 #ifndef BUFFER_SIZE_DOWN
-#define BUFFER_SIZE_DOWN (BUFFER_SIZE_UP)
+#define BUFFER_SIZE_DOWN (1)
 #endif
 
 /*********************************************************************
@@ -97,6 +97,10 @@
 *
 *  Description
 *    RTT Mode for channel 0.
+*  Modes are:
+*   SEGGER_RTT_MODE_NO_BLOCK_SKIP
+*   SEGGER_RTT_MODE_NO_BLOCK_TRIM
+*   SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL
 */
 #ifndef SEGGER_RTT_MODE_DEFAULT
 #define SEGGER_RTT_MODE_DEFAULT SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL
@@ -110,7 +114,7 @@
 *    Size of temporary buffer for RTT printf bulk-send.
 */
 #ifndef SEGGER_RTT_PRINTF_BUFFER_SIZE
-#define SEGGER_RTT_PRINTF_BUFFER_SIZE (32)
+#define SEGGER_RTT_PRINTF_BUFFER_SIZE (1)
 #endif
 
 /*********************************************************************
