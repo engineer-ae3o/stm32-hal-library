@@ -1,5 +1,4 @@
 #include "test/runner.hpp"
-#include "utils/heap.h"
 #include "utils/tick.h"
 #include "utils/log.h"
 #include "o1heap.h"
@@ -95,15 +94,17 @@ namespace profile {
             return rng_state;
         };
 
+        // Produce a pseudo random number in the range of [MIN_ALLOC - MAX_ALLOC]
         auto rand_size = [&] {
             return MIN_ALLOC + (xorshift32() % (MAX_ALLOC - MIN_ALLOC));
         };
 
         std::array<void*, POOL_SIZE> pool{};
-        // Prime the pool so we're immediately operating on a fragmented, non-empty heap.
+        // Prime the pool so when we start the profiling, we operating on a fragmented, non empty heap.
         for (auto& ptr : pool) {
             // cppcheck-suppress useStlAlgorithm
             ptr = o1heapAllocate(heap, rand_size());
+            ASSERT(ptr != nullptr);
         }
 
         std::array<uint32_t, SAMPLE_SIZE> alloc_samples{};
@@ -112,7 +113,7 @@ namespace profile {
         uint32_t alloc_min = UINT32_MAX, alloc_max = 0;
         uint32_t free_min = UINT32_MAX, free_max = 0;
 
-        for (uint32_t i = 0; i < SAMPLE_SIZE; ++i) {
+        for (uint32_t i = 0; i < SAMPLE_SIZE; i++) {
             // Free a pseudo random slot (not the one we're about to fill). This keeps
             // fragmentation churning instead of settling into a stable pattern.
             uint32_t victim = xorshift32() % POOL_SIZE;
@@ -126,7 +127,7 @@ namespace profile {
             free_min = std::min(free_min, free_samples[i]);
             free_max = std::max(free_max, free_samples[i]);
 
-            // Allocation
+            // Reallocate the memory back into the slot that was just freed, but with a different size.
             const size_t request_size = rand_size();
 
             __disable_irq();
@@ -135,12 +136,10 @@ namespace profile {
             alloc_samples[i] = prof_end();
             __enable_irq();
 
+            ASSERT(pool[victim] != nullptr);
+
             alloc_min = std::min(alloc_min, alloc_samples[i]);
             alloc_max = std::max(alloc_max, alloc_samples[i]);
-
-            if (pool[victim] == nullptr) {
-                LOGI(TAG, "OOM at iteration %lu, request size = %zu bytes — arena too small for this churn pattern", i, request_size);
-            }
         }
 
         const uint64_t alloc_total = std::accumulate(alloc_samples.begin(), alloc_samples.end(), 0ULL);
@@ -182,7 +181,7 @@ namespace profile {
         LOGI(TAG, "[Free] Longest (WCET) time: %llu.%03lluus", cycles_to_us(free_max), cycles_to_us_frac(free_max));
         LOGI(TAG, "[Free] Longest (WCET) time: %llu.%03llums", cycles_to_ms(free_max), cycles_to_ms_frac(free_max));
 
-        // Clean up remaining live allocations
+        // Clean up the remaining live allocations from the start
         for (auto* ptr : pool) {
             o1heapFree(heap, ptr);
         }

@@ -5,6 +5,7 @@ set(SRCS
     src/err.c
     src/heap.c
     src/tick.c
+    src/random.c
     src/common.c
     src/syscalls.c
 )
