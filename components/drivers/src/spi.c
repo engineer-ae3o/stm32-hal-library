@@ -6,13 +6,11 @@
 
 
 // The 5 SPI instances: ISRs called when the DMA is done
-// TX
 static dma_trans_done_cb_t s_dma_tx_done_cbs[5] = {};
-static void*               s_tx_args[5]         = {};
-
-// RX
 static dma_trans_done_cb_t s_dma_rx_done_cbs[5] = {};
-static void*               s_rx_args[5]         = {};
+
+static void* s_tx_args[5] = {};
+static void* s_rx_args[5] = {};
 
 
 // Mapping for the DMA channels for the 5 SPI channels
@@ -130,24 +128,23 @@ hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable) {
         } else {
             return HAL_INVALID_ARG;
         }
-        goto done;
-    }
 
-    if (handle == SPI1) {
-        RCC->APB2ENR &= ~RCC_APB2ENR_SPI1EN;
-    } else if (handle == SPI2) {
-        RCC->APB1ENR &= ~RCC_APB1ENR_SPI2EN;
-    } else if (handle == SPI3) {
-        RCC->APB1ENR &= ~RCC_APB1ENR_SPI3EN;
-    } else if (handle == SPI4) {
-        RCC->APB2ENR &= ~RCC_APB2ENR_SPI4EN;
-    } else if (handle == SPI5) {
-        RCC->APB2ENR &= ~RCC_APB2ENR_SPI5EN;
     } else {
-        return HAL_INVALID_ARG;
+        if (handle == SPI1) {
+            RCC->APB2ENR &= ~RCC_APB2ENR_SPI1EN;
+        } else if (handle == SPI2) {
+            RCC->APB1ENR &= ~RCC_APB1ENR_SPI2EN;
+        } else if (handle == SPI3) {
+            RCC->APB1ENR &= ~RCC_APB1ENR_SPI3EN;
+        } else if (handle == SPI4) {
+            RCC->APB2ENR &= ~RCC_APB2ENR_SPI4EN;
+        } else if (handle == SPI5) {
+            RCC->APB2ENR &= ~RCC_APB2ENR_SPI5EN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
     }
 
-done:
     __DSB();
     return HAL_OK;
 }
@@ -320,11 +317,11 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
 
     // Enable DMA stream interrupts
-    NVIC_EnableIRQ(s_spi_dma_map[idx].tx.irq_type);
     NVIC_SetPriority(s_spi_dma_map[idx].tx.irq_type, SPI_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(s_spi_dma_map[idx].tx.irq_type);
 
-    NVIC_EnableIRQ(s_spi_dma_map[idx].rx.irq_type);
     NVIC_SetPriority(s_spi_dma_map[idx].rx.irq_type, SPI_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(s_spi_dma_map[idx].rx.irq_type);
 
     return HAL_OK;
 }
@@ -358,21 +355,21 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
             // Write data
             handle->DR = buf[i];
 
-            // Poll till data has been transferred out
+            // Poll till the data has been transferred out
             uint32_t timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_TXE) && (--timeout));
             if (timeout == 0) {
                 return HAL_TIMEOUT;
             }
 
-            // Poll till data has been received
+            // Poll till the data has been received
             timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
                 return HAL_TIMEOUT;
             }
 
-            // Read data and discard
+            // Read the data register and discard the value
             (void)handle->DR;
         }
 
@@ -398,7 +395,7 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
                 return HAL_TIMEOUT;
             }
 
-            // Read data and discard
+            // Read the data register and discard the value
             (void)handle->DR;
         }
     }
@@ -436,14 +433,14 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
             // Write dummy data
             handle->DR = 0x00UL;
 
-            // Poll till data has been transferred out
+            // Poll till the data has been transferred out
             uint32_t timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_TXE) && (--timeout));
             if (timeout == 0) {
                 return HAL_TIMEOUT;
             }
 
-            // Poll till data has been received
+            // Poll till the data has been received
             timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
@@ -522,14 +519,14 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
                 return HAL_TIMEOUT;
             }
 
-            // Poll till data has been received
+            // Poll till the data has been received
             timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
                 return HAL_TIMEOUT;
             }
 
-            // Finally, read data
+            // Finally, read the data register
             rx_buf[i] = (uint16_t)handle->DR;
         }
 
@@ -549,14 +546,14 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
                 return HAL_TIMEOUT;
             }
 
-            // Wait till data has been received
+            // Wait till the data has been received
             timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
                 return HAL_TIMEOUT;
             }
 
-            // Finally, read data
+            // Finally, read the data register
             rx_buf[i] = (uint8_t)handle->DR;
         }
     }

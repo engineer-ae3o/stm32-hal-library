@@ -20,26 +20,25 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
         } else {
             return HAL_INVALID_ARG;
         }
-        goto done;
-    }
 
-    if (port == GPIOA) {
-        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOAEN;
-    } else if (port == GPIOB) {
-        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOBEN;
-    } else if (port == GPIOC) {
-        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOCEN;
-    } else if (port == GPIOD) {
-        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIODEN;
-    } else if (port == GPIOE) {
-        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOEEN;
-    } else if (port == GPIOH) {
-        RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOHEN;
     } else {
-        return HAL_INVALID_ARG;
+        if (port == GPIOA) {
+            RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOAEN;
+        } else if (port == GPIOB) {
+            RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOBEN;
+        } else if (port == GPIOC) {
+            RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOCEN;
+        } else if (port == GPIOD) {
+            RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIODEN;
+        } else if (port == GPIOE) {
+            RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOEEN;
+        } else if (port == GPIOH) {
+            RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOHEN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
     }
 
-done:
     __DSB();
     return HAL_OK;
 }
@@ -110,10 +109,8 @@ void gpio_level_set(GPIO_TypeDef* port, uint8_t pin, bool level) {
 }
 
 void gpio_level_toggle(GPIO_TypeDef* port, uint8_t pin) {
-    // There is no atomic gpio toggle on the F411, so if user wants
-    // an atomic toggle, they should keep track of the state and use
-    // `gpio_level_set`, or disable interrupts before using this
-    port->ODR ^= (0b1UL << pin);
+    //
+    gpio_level_set(port, pin, !gpio_get_level(port, pin));
 }
 
 bool gpio_get_level(GPIO_TypeDef* port, uint8_t pin) {
@@ -150,13 +147,13 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_
     SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
     SYSCFG->EXTICR[reg_idx] |= (uint32_t)(port_code << bit_pos);
 
-    // Extract rising and falling bits from edge variable
-    const bool rising  = (uint8_t)edge & 0x1U;
-    const bool falling = ((uint8_t)edge >> 0b1U) & 0x1U;
-
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(0b1UL << pin);
     EXTI->FTSR &= ~(0b1UL << pin);
+
+    // Extract rising and falling bits from edge variable
+    const bool rising  = (uint8_t)edge & 0x1U;
+    const bool falling = ((uint8_t)edge >> 0b1U) & 0x1U;
 
     // Set interrupts edge registers if enabled
     if (rising) {
@@ -166,11 +163,11 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_
         EXTI->FTSR |= (0b1UL << pin);
     }
 
-    // Unmask interrupts for pin
+    // Unmask interrupts for the pin
     EXTI->IMR |= (0b1UL << pin);
 
-    // Clear interrupt flag
-    EXTI->PR |= (0b1UL << pin);
+    // Clear the interrupt flag
+    EXTI->PR = (0b1UL << pin);
 
     return HAL_OK;
 }
@@ -190,6 +187,6 @@ void gpio_clear_interrupt(GPIO_TypeDef*, uint8_t pin) {
     // Clear interrupt flag
     EXTI->PR |= (0b1UL << pin);
 
-    // Mask interrupts for pin
+    // Mask interrupts for the pin
     EXTI->IMR &= ~(0b1UL << pin);
 }

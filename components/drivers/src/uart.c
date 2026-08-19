@@ -6,14 +6,11 @@
 
 
 // The 3 UART channels: ISRs called when the DMA is done
-// TX
 static dma_trans_done_cb_t s_dma_tx_done_cbs[3] = {};
-static void*               s_tx_args[3]         = {};
-
-// RX
 static dma_trans_done_cb_t s_dma_rx_done_cbs[3] = {};
-static void*               s_rx_args[3]         = {};
 
+static void* s_tx_args[3] = {};
+static void* s_rx_args[3] = {};
 
 // Mapping for the DMA channels for the 3 USART channels
 static const dma_stream_map_t s_uart_dma_map[3] = {
@@ -99,20 +96,19 @@ hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable) {
         } else {
             return HAL_INVALID_ARG;
         }
-        goto done;
-    }
 
-    if (handle == USART1) {
-        RCC->APB2ENR &= ~RCC_APB2ENR_USART1EN;
-    } else if (handle == USART2) {
-        RCC->APB1ENR &= ~RCC_APB1ENR_USART2EN;
-    } else if (handle == USART6) {
-        RCC->APB2ENR &= ~RCC_APB2ENR_USART6EN;
     } else {
-        return HAL_INVALID_ARG;
+        if (handle == USART1) {
+            RCC->APB2ENR &= ~RCC_APB2ENR_USART1EN;
+        } else if (handle == USART2) {
+            RCC->APB1ENR &= ~RCC_APB1ENR_USART2EN;
+        } else if (handle == USART6) {
+            RCC->APB2ENR &= ~RCC_APB2ENR_USART6EN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
     }
 
-done:
     __DSB();
     return HAL_OK;
 }
@@ -256,11 +252,11 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     dma_set_addresses(rx_stream, &handle->DR, NULL, NULL);
 
     // Enable DMA stream interrupts
-    NVIC_EnableIRQ(s_uart_dma_map[idx].tx.irq_type);
     NVIC_SetPriority(s_uart_dma_map[idx].tx.irq_type, UART_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(s_uart_dma_map[idx].tx.irq_type);
 
-    NVIC_EnableIRQ(s_uart_dma_map[idx].rx.irq_type);
     NVIC_SetPriority(s_uart_dma_map[idx].rx.irq_type, UART_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(s_uart_dma_map[idx].rx.irq_type);
 
     return HAL_OK;
 }
@@ -278,9 +274,9 @@ hal_err_t uart_get_dma_stream(USART_TypeDef* handle, DMA_Stream_TypeDef** tx, DM
 }
 
 void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
-    // Check if the data register is empty
+    // Wait till the data register is empty
     while (!(handle->SR & USART_SR_TXE));
-    // Put byte in data register
+    // Put the byte in the data register
     handle->DR = byte;
 }
 
@@ -288,7 +284,7 @@ void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) 
     for (size_t i = 0U; i < len; i++) {
         uart_transmit_byte(handle, data[i]);
     }
-    // Wait till all bytes have been full transmitted
+    // Wait till all bytes have been fully transmitted
     while (!(handle->SR & USART_SR_TC));
 }
 

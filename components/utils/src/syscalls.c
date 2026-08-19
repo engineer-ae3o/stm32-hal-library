@@ -27,7 +27,7 @@ void system_init(void) {
     __DSB();
     __ISB();
 
-    // Set flash latency, enable I and D caches, as well as enable instruction prefetching
+    // Set flash latency, enable I and D caches, as well as the instruction prefetch buffer
     FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS | FLASH_ACR_PRFTEN);
 
     // Disable the PLLs
@@ -40,19 +40,19 @@ void system_init(void) {
     PWR->CR |= PWR_CR_VOS;
 
 #ifdef USE_HSE
-    // Enable HSE
+    // Enable the HSE
     RCC->CR |= RCC_CR_HSEON;
     while (!(RCC->CR & RCC_CR_HSERDY));
 
-    // Configure PLL
+    // Configure the PLL
     RCC->PLLCFGR = (HSE_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSE) |
                    (4 << RCC_PLLCFGR_PLLQ_Pos);
 #else
-    // Enable HSI
+    // Enable the HSI
     RCC->CR |= RCC_CR_HSION;
     while (!(RCC->CR & RCC_CR_HSIRDY));
 
-    // Configure PLL
+    // Configure the PLL
     RCC->PLLCFGR = (HSI_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSI) |
                    (4 << RCC_PLLCFGR_PLLQ_Pos);
 #endif
@@ -64,7 +64,7 @@ void system_init(void) {
     RCC->CR |= RCC_CR_PLLON;
     while (!(RCC->CR & RCC_CR_PLLRDY));
 
-    // Switch to PLL
+    // Switch to the PLL
     RCC->CFGR |= RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
 
@@ -114,7 +114,7 @@ __attribute__((naked)) void UsageFault_Handler(void) {
 
 // Fault state dumps
 [[noreturn]] void hard_fault_dump(const unsigned int* frame) {
-    LOGE("CPU Exception", "Hard fault. All operation is halted.");
+    LOGE("CPU Exception", "Hard fault.");
 
     const unsigned int r0   = frame[0];
     const unsigned int r1   = frame[1];
@@ -143,7 +143,7 @@ __attribute__((naked)) void UsageFault_Handler(void) {
 }
 
 [[noreturn]] void bus_fault_dump(const unsigned int* frame) {
-    LOGE("CPU Exception", "Bus fault. All operation is halted.");
+    LOGE("CPU Exception", "Bus fault.");
 
     const unsigned int r0   = frame[0];
     const unsigned int r1   = frame[1];
@@ -172,7 +172,7 @@ __attribute__((naked)) void UsageFault_Handler(void) {
 }
 
 [[noreturn]] void usage_fault_dump(const unsigned int* frame) {
-    LOGE("CPU Exception", "Usage fault. All operation is halted.");
+    LOGE("CPU Exception", "Usage fault.");
 
     const unsigned int r0   = frame[0];
     const unsigned int r1   = frame[1];
@@ -223,9 +223,8 @@ int _read(int fd, void* buf, size_t count) {
 
 [[noreturn]] void _exit(int status) {
     (void)status;
-    LOGE("Error", "Exit is called. All operation is halted.");
-    __asm volatile("bkpt #0");
-    while (true);
+    LOGE("Exit", "_exit() is called.");
+    PANIC();
 }
 
 _ssize_t _write(int fd, const void* buf, size_t len) {

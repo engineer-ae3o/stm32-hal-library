@@ -20,7 +20,7 @@ void iwdg_start(uint32_t reload_val_s) {
         actual_reload_val = 0xFFFU;
     }
 
-    // Set prescaler of 256: 3 bits
+    // Set a prescaler of 256: 3 bits
     IWDG->PR &= ~0b111U;
     IWDG->PR |= (prescaler & 0b111U);
 

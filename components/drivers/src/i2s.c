@@ -26,19 +26,21 @@ typedef struct {
 // The table assumes an audio input PLL of 76.8MHz
 // Modify that and everything breaks. It also encodes
 // the bit for ODD and the SPI_I2SPR_MCKOE bit
-static constexpr prescaler_mck_t s_prescaler_table_76_8mhz[] = {
-    [(uint8_t)I2S_FREQ_8kHz]   = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [(uint8_t)I2S_FREQ_16kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [(uint8_t)I2S_FREQ_22kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [(uint8_t)I2S_FREQ_32kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [(uint8_t)I2S_FREQ_44kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [(uint8_t)I2S_FREQ_48kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [(uint8_t)I2S_FREQ_96kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [(uint8_t)I2S_FREQ_192kHz] = {.prescaler = 0U, .prescaler_with_mck = 0U},
+// TODO: Compute the prescaler table
+static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
+    [I2S_FREQ_8kHz]   = {.prescaler = 0U, .prescaler_with_mck = 0U},
+    [I2S_FREQ_16kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
+    [I2S_FREQ_22kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
+    [I2S_FREQ_32kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
+    [I2S_FREQ_44kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
+    [I2S_FREQ_48kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
+    [I2S_FREQ_96kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
+    [I2S_FREQ_192kHz] = {.prescaler = 0U, .prescaler_with_mck = 0U},
 };
 
 
-// Mapping for the DMA channels for the 5 I2S channels
+// Mapping for the DMA channels for the 5 I2S channels. This is the
+// same table as SPI. This is because they are the same peripheral.
 static const dma_stream_map_t s_i2s_dma_map[5] = {
     // I2S1: DMA not supported: Not enough streams to go round other peripherals
     {
@@ -97,7 +99,7 @@ void i2s_pll_init(void) {
 
     // Divide the HSE or HSI clock by its value in MHz to get a Vco of 1MHz regardless of its value
     RCC->PLLI2SCFGR &= ~(RCC_PLLI2SCFGR_PLLI2SM | RCC_PLLI2SCFGR_PLLI2SN | RCC_PLLI2SCFGR_PLLI2SR);
-    RCC->PLLI2SCFGR |= (clock_mhz << RCC_PLLI2SCFGR_PLLI2SM_Pos) | // PLLI2SM of val: Divides HSE or HSI by val to get a 1MHz Vco
+    RCC->PLLI2SCFGR |= (clock_mhz << RCC_PLLI2SCFGR_PLLI2SM_Pos) | // PLLI2SM of val: Divides either the HSE or HSI by val to get a 1MHz Vco
                        (384UL << RCC_PLLI2SCFGR_PLLI2SN_Pos) |     // PLLI2SN of 384: Multiplies Vco by 384 to get 384MHz
                        (5UL << RCC_PLLI2SCFGR_PLLI2SR_Pos);        // PLLI2SR of 5: Divides the 384MHz Vco by 5 to get us 76.8MHz
 
@@ -124,24 +126,23 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
         } else {
             return HAL_INVALID_ARG;
         }
-        goto done;
-    }
 
-    if (handle == I2S1) {
-        RCC->APB2ENR &= ~RCC_APB2ENR_SPI1EN;
-    } else if (handle == I2S2) {
-        RCC->APB1ENR &= ~RCC_APB1ENR_SPI2EN;
-    } else if (handle == I2S3) {
-        RCC->APB1ENR &= ~RCC_APB1ENR_SPI3EN;
-    } else if (handle == I2S4) {
-        RCC->APB2ENR &= ~RCC_APB2ENR_SPI4EN;
-    } else if (handle == I2S5) {
-        RCC->APB2ENR &= ~RCC_APB2ENR_SPI5EN;
     } else {
-        return HAL_INVALID_ARG;
+        if (handle == I2S1) {
+            RCC->APB2ENR &= ~RCC_APB2ENR_SPI1EN;
+        } else if (handle == I2S2) {
+            RCC->APB1ENR &= ~RCC_APB1ENR_SPI2EN;
+        } else if (handle == I2S3) {
+            RCC->APB1ENR &= ~RCC_APB1ENR_SPI3EN;
+        } else if (handle == I2S4) {
+            RCC->APB2ENR &= ~RCC_APB2ENR_SPI4EN;
+        } else if (handle == I2S5) {
+            RCC->APB2ENR &= ~RCC_APB2ENR_SPI5EN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
     }
 
-done:
     __DSB();
     return HAL_OK;
 }

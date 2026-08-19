@@ -1,5 +1,6 @@
 #include "stm32f411xe.h"
 #include "drivers/dma.h"
+#include "utils/common.h"
 
 
 hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
@@ -11,24 +12,22 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
         } else {
             return HAL_INVALID_ARG;
         }
-        goto done;
-    }
 
-    if (controller == DMA1) {
-        RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;
-    } else if (controller == DMA2) {
-        RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA2EN;
     } else {
-        return HAL_INVALID_ARG;
+        if (controller == DMA1) {
+            RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;
+        } else if (controller == DMA2) {
+            RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA2EN;
+        } else {
+            return HAL_INVALID_ARG;
+        }
     }
 
-done:
     __DSB();
     return HAL_OK;
 }
 
 hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream) {
-
     uint32_t flags = 0;
     switch (stream) {
         case 0:
@@ -70,7 +69,7 @@ hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream) {
 
 hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {
     stream->CR |= DMA_SxCR_EN;
-    uint32_t timeout = 1'000U;
+    uint32_t timeout = TIMEOUT_CYCLES;
     while (!(stream->CR & DMA_SxCR_EN) && (--timeout));
     if (timeout == 0) {
         return HAL_TIMEOUT;
@@ -80,7 +79,7 @@ hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {
 
 hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
     stream->CR &= ~DMA_SxCR_EN;
-    uint32_t timeout = 1'000U;
+    uint32_t timeout = TIMEOUT_CYCLES;
     while ((stream->CR & DMA_SxCR_EN) && (--timeout));
     if (timeout == 0) {
         return HAL_TIMEOUT;

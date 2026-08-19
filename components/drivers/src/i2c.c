@@ -25,6 +25,7 @@ hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
         } else {
             return HAL_INVALID_ARG;
         }
+
     } else {
         if (handle == I2C1) {
             RCC->APB1ENR &= ~RCC_APB1ENR_I2C1EN;
@@ -148,7 +149,7 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, s
         return HAL_I2C_ARBITRATION_LOST;
     }
 
-    // No need to call `send_stop()` as `rx_trans()` already does
+    // No need to call send_stop() as rx_trans() already does
     return rx_trans(handle, addr, data, len);
 }
 
@@ -175,8 +176,7 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t
         return HAL_I2C_ARBITRATION_LOST;
     }
 
-    // Start RX transaction
-    // No need to call `send_stop()` as `rx_trans()` already does
+    // Start the RX transaction
     return rx_trans(handle, addr, rx_data, rx_len);
 }
 

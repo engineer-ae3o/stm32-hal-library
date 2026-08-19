@@ -12,10 +12,7 @@ extern "C" {
 #include <stdint.h>
 
 
-void timer_init(TIM_TypeDef* timer, uint16_t prescaler);
-void timer_set_reload_value(TIM_TypeDef* timer, uint32_t value);
-void timer_start(TIM_TypeDef* timer);
-void timer_end(TIM_TypeDef* timer);
+// TODO
 
 
 #ifdef __cplusplus

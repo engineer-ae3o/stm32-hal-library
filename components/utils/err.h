@@ -10,7 +10,7 @@ extern "C" {
 #include <stdint.h>
 
 
-typedef enum hal_err_t : uint8_t {
+typedef enum : uint8_t {
     // Success
     HAL_OK = 0,
 
