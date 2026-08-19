@@ -14,19 +14,25 @@ extern "C" {
 #include <stdbool.h>
 
 
-typedef enum : uint8_t { ADC_RESOLUTION_6_BITS = 0, ADC_RESOLUTION_8_BITS, ADC_RESOLUTION_10_BITS, ADC_RESOLUTION_12_BITS } adc_resolution_t;
+typedef enum : uint8_t {
+    ADC_RESOLUTION_6_BITS = 0,
+    ADC_RESOLUTION_8_BITS,
+    ADC_RESOLUTION_10_BITS,
+    ADC_RESOLUTION_12_BITS,
+} adc_resolution_t;
 
 typedef struct {
     adc_resolution_t resolution;
     uint8_t          prescaler;
-
 } adc_config_t;
 
 void adc_clk_enable(bool enable);
+
+void adc_init(const adc_config_t* config);
 void adc_power_on(bool on);
 
-void                adc_init(const adc_config_t* config);
-hal_err_t           adc_dma_init(void);
+hal_err_t adc_dma_init(void);
+
 DMA_Stream_TypeDef* adc_get_dma_stream(void);
 
 // Polling oneshot function: Returns 1 sample

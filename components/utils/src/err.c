@@ -22,6 +22,6 @@ const char* err_code_lut[] = {
 };
 
 const char* hal_err_to_string(hal_err_t err) {
-    ASSERT(err > (sizeof(err_code_lut) / sizeof(err_code_lut[0])));
+    ASSERT(err < (sizeof(err_code_lut) / sizeof(err_code_lut[0])));
     return err_code_lut[err];
 }

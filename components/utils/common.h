@@ -46,7 +46,7 @@ extern "C" {
 #define HEAP_SIZE_BYTES (32 * 1024)
 
 
-// RTT buffer index for logging. Controls the output buffer
+// RTT buffer for logging. Controls the output buffer parameter
 #define RTT_BUFFER_INDEX 0
 
 
@@ -56,14 +56,7 @@ extern "C" {
 
 #define REBOOT() restart(__PRETTY_FUNCTION__, __FILE__, __LINE__)
 #define PANIC() panic(__PRETTY_FUNCTION__, __FILE__, __LINE__)
-
-#if defined(DEBUG)
-#define ASSERT(cond) assert_check(cond, #cond, __PRETTY_FUNCTION__, __FILE__, __LINE__)
-#elif defined(NDEBUG)
-#define ASSERT(cond)
-#else
-#error "Invalid debug configuration"
-#endif
+#define ASSERT(cond) assert_check((cond), #cond, __PRETTY_FUNCTION__, __FILE__, __LINE__)
 
 #define LOCK_ACQUIRE() __disable_irq()
 #define LOCK_RELEASE() __enable_irq()

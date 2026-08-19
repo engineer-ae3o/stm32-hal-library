@@ -127,9 +127,6 @@ SECTIONS
         libgcc.a ( * )
     }
 
-    /* Get address of end of flash partition */
-    lfs_start = ORIGIN(FLASH) + LENGTH(FLASH);
-
     .ARM.attributes 0 :
     {
         *(.ARM.attributes)

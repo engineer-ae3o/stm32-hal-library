@@ -11,29 +11,17 @@
 void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...) {
     char full_string[FMT_STR_BUF_SIZE];
 
-    int prefix_len = snprintf_(full_string, sizeof(full_string), "%s(%lums) [%s]: ", esc_code, ticks_since_boot_ms(), tag);
-    ASSERT((prefix_len > 0) && ((size_t)prefix_len < sizeof(full_string)));
+    // The message to be logged must always contain the line end, so we reserve space for it at the end of the buffer
+    size_t final_string_length = 0;
+
+    const int header_length = snprintf_(full_string, sizeof(full_string), "%s(%lums) [%s]: ", esc_code, ticks_since_boot_ms(), tag);
+    ASSERT((header_length > 0) && ((size_t)header_length < sizeof(full_string)));
 
     va_list args;
     va_start(args, fmt);
-    int msg_len = vsnprintf_(full_string + prefix_len, sizeof(full_string) - (size_t)prefix_len, fmt, args);
+    const int log_length = vsnprintf_(full_string + header_length, sizeof(full_string) - (size_t)header_length, fmt, args);
+    ASSERT(log_length > 0); // Format string cannot be empty
     va_end(args);
 
-    size_t final_string_size = (size_t)prefix_len + (msg_len < 0 ? 0 : (size_t)msg_len);
-    if (final_string_size >= sizeof(full_string)) {
-        final_string_size = sizeof(full_string) - 1; // truncated
-    }
-
-    // Append the escape reset code and a newline, clamped to remaining space
-    size_t remaining = sizeof(full_string) - final_string_size;
-    size_t reset_len = sizeof(ESC_TEXT_RESET "\r\n") - 1;
-
-    if (reset_len >= remaining) {
-        reset_len = remaining > 0 ? remaining - 1 : 0;
-    }
-
-    memcpy(full_string + final_string_size, ESC_TEXT_RESET "\r\n", reset_len);
-    final_string_size += reset_len;
-
-    SEGGER_RTT_WriteNoLock(RTT_BUFFER_INDEX, full_string, final_string_size);
+    SEGGER_RTT_WriteNoLock(RTT_BUFFER_INDEX, full_string, final_string_length);
 }

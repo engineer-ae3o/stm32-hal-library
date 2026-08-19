@@ -79,28 +79,25 @@ typedef void (*dma_trans_done_cb_t)(void* arg, hal_err_t error);
         // Clear DMA TC interrupt bit
         *irq_clr_rg = tc;
     }
+
     // Transfer error
-    else if (*irq_sta_rg & te) {
+    if (*irq_sta_rg & te) {
         // Clear DMA TE interrupt bit
         *irq_clr_rg = te;
         error       = HAL_DMA_TE;
     }
+
     // Direct mode error
-    else if (*irq_sta_rg & dme) {
+    if (*irq_sta_rg & dme) {
         // Clear DMA DME interrupt bit
         *irq_clr_rg = dme;
         error       = HAL_DMA_DME;
     }
+
     // Half transfer complete
-    else if (*irq_sta_rg & ht) {
+    if (*irq_sta_rg & ht) {
         // Clear DMA HT interrupt bit
         *irq_clr_rg = ht;
-    }
-    // Should be unreachable, but default catch-all
-    else {
-        // Clear DMA TC, DME, TE and HTE interrupt bits
-        *irq_clr_rg = (tc | te | dme | ht);
-        error       = HAL_DMA_ERR_UNKNOWN;
     }
 
     // Return if the stream is in circular mode or half transfer,

@@ -12,18 +12,24 @@ extern "C" {
 
 #include <stdint.h>
 
-typedef enum : uint8_t { GPIO_LOW_SPEED = 0x00U, GPIO_MEDIUM_SPEED = 0x01U, GPIO_FAST_SPEED = 0x02U, GPIO_HIGH_SPEED = 0x03U } gpio_speed_mode_t;
 
 typedef enum : uint8_t {
-    GPIO_NO_EDGE                 = 0x00U,
-    GPIO_RISING_EDGE_ONLY        = 0x01U,
-    GPIO_FALLING_EDGE_ONLY       = 0x02U,
-    GPIO_RISING_AND_FALLING_EDGE = 0x03U
+    GPIO_LOW_SPEED = 0,
+    GPIO_MEDIUM_SPEED,
+    GPIO_FAST_SPEED,
+    GPIO_HIGH_SPEED,
+} gpio_speed_mode_t;
+
+typedef enum : uint8_t {
+    GPIO_NO_EDGE = 0,
+    GPIO_RISING_EDGE_ONLY,
+    GPIO_FALLING_EDGE_ONLY,
+    GPIO_RISING_AND_FALLING_EDGE,
 } gpio_edge_trigger_t;
 
 typedef enum : uint8_t {
-    GPIO_PUSH_PULL  = 0x00U,
-    GPIO_OPEN_DRAIN = 0x01U,
+    GPIO_PUSH_PULL = 0,
+    GPIO_OPEN_DRAIN,
 } gpio_output_type_t;
 
 hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable);

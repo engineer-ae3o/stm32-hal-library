@@ -55,6 +55,8 @@ __attribute__((format(printf, 3, 4))) void log_fmt(const char* esc_code, const c
 #define ESC_TEXT_RED "\x1B[91m E "
 #define ESC_TEXT_RESET "\x1B[0m"
 
+#define LINE_END (ESC_TEXT_RESET "\r\n")
+
 
 #ifdef __cplusplus
 }

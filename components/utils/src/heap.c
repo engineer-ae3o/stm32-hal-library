@@ -30,7 +30,7 @@ __attribute__((constructor)) static void init() {
 
 // Public API
 void* lib_malloc(size_t size) {
-    if (size == 0 || size > HEAP_SIZE_BYTES) {
+    if (size == 0 || size >= HEAP_SIZE_BYTES) {
         return NULL;
     }
     void* ptr = o1heapAllocate(s_heap_handle, size);
@@ -41,7 +41,7 @@ void* lib_malloc(size_t size) {
 }
 
 void* lib_calloc(size_t nmemb, size_t size) {
-    if (size == 0 || size > HEAP_SIZE_BYTES) {
+    if (size == 0 || size >= HEAP_SIZE_BYTES || nmemb == 0 || nmemb >= HEAP_SIZE_BYTES) {
         return NULL;
     }
     void* ptr = o1heapAllocate(s_heap_handle, nmemb * size);
@@ -60,6 +60,9 @@ void* lib_realloc(void* old, size_t new_size) {
         lib_free(old);
         return NULL;
     }
+    if (new_size >= HEAP_SIZE_BYTES) {
+        return NULL;
+    }
     return o1heapReallocate(s_heap_handle, old, new_size);
 }
 
@@ -75,25 +78,25 @@ bool check_heap_state(void) {
 }
 
 void get_heap_stats(heap_info_t* info) {
-    O1HeapDiagnostics diagnostics = o1heapGetDiagnostics(s_heap_handle);
-
     ASSERT(info);
-    info->max_capacity        = diagnostics.capacity;
-    info->allocated_size      = diagnostics.allocated;
-    info->peak_allocated_size = diagnostics.peak_allocated;
-    info->peak_request_size   = diagnostics.peak_request_size;
-    info->out_of_mem_count    = (size_t)diagnostics.oom_count;
-    info->num_of_allocations  = s_num_of_allocations;
+
+    O1HeapDiagnostics diagnostics = o1heapGetDiagnostics(s_heap_handle);
+    info->max_capacity            = diagnostics.capacity;
+    info->allocated_size          = diagnostics.allocated;
+    info->peak_allocated_size     = diagnostics.peak_allocated;
+    info->peak_request_size       = diagnostics.peak_request_size;
+    info->out_of_mem_count        = (size_t)diagnostics.oom_count;
+    info->num_of_allocations      = s_num_of_allocations;
 }
 
 void print_heap_stats(void) {
-    heap_info_t info = {};
+    heap_info_t info;
     get_heap_stats(&info);
 
-    LOGI(TAG, "Max heap capacity: %u bytes", info.max_capacity);
-    LOGI(TAG, "Amount of heap allocated: %u bytes", info.allocated_size);
-    LOGI(TAG, "Highest size allocated since boot: %u bytes", info.peak_allocated_size);
-    LOGI(TAG, "Largest requested size from heap: %u bytes", info.peak_request_size);
-    LOGI(TAG, "Number of times an allocation request failed to be completed: %u", info.out_of_mem_count);
-    LOGI(TAG, "Number of allocations: %u", info.num_of_allocations);
+    LOGI(TAG, "Max heap capacity: %zubytes", info.max_capacity);
+    LOGI(TAG, "Size of heap used: %zubytes", info.allocated_size);
+    LOGI(TAG, "Highest size allocated since boot: %zubytes", info.peak_allocated_size);
+    LOGI(TAG, "Largest requested size from heap: %zubytes", info.peak_request_size);
+    LOGI(TAG, "Number of failed allocation requests: %zu", info.out_of_mem_count);
+    LOGI(TAG, "Number of allocations: %zu", info.num_of_allocations);
 }

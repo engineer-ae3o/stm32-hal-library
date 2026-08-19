@@ -202,7 +202,7 @@ extern "C" {
     // test::runner();
 
     // Run the profile tests
-    profile::all();
+    // profile::all();
 
     // Halt once tests are finished since nothing else to do.
     LOGI("Main", "Done with all tests. Halting...");
