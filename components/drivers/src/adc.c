@@ -24,6 +24,7 @@ void adc_clk_enable(bool enable) {
     } else {
         RCC->APB2ENR &= ~RCC_APB2ENR_ADC1EN;
     }
+
     __DSB();
 }
 
@@ -39,7 +40,6 @@ void adc_init(const adc_config_t* config) {
 }
 
 hal_err_t adc_dma_init(void) {
-
     hal_err_t ret = dmax_clk_enable(ADC_DMA_CONTROLLER, true);
     if (ret != HAL_OK) {
         return ret;
@@ -65,8 +65,8 @@ hal_err_t adc_dma_init(void) {
     dma_set_per_mem_size(ADC_DMA_STREAM, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
 
     // Enable DMA stream interrupts
-    NVIC_EnableIRQ(ADC_DMA_IRQ_TYPE);
     NVIC_SetPriority(ADC_DMA_IRQ_TYPE, ADC_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(ADC_DMA_IRQ_TYPE);
 
     return HAL_OK;
 }
@@ -89,7 +89,6 @@ uint16_t adc_get_sample_oneshot(void) {
 }
 
 hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
-
     // Set memory address and length
     dma_set_addresses(ADC_DMA_STREAM, NULL, buf, NULL);
     dma_set_trans_length(ADC_DMA_STREAM, len);
@@ -105,7 +104,6 @@ hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t
 }
 
 hal_err_t adc_dbm_init(void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
-
     hal_err_t ret = dma_disable_stream(ADC_DMA_STREAM);
     if (ret != HAL_OK) {
         return ret;
@@ -129,7 +127,6 @@ hal_err_t adc_dbm_init(void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb
 }
 
 hal_err_t adc_dbm_deinit(void) {
-
     hal_err_t ret = dma_disable_stream(ADC_DMA_STREAM);
     if (ret != HAL_OK) {
         return ret;
@@ -167,4 +164,5 @@ void DMA2_Stream0_IRQHandler(void) {
 }
 
 void ADC_IRQHandler(void) {
+    // TODO
 }
