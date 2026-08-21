@@ -198,7 +198,7 @@ void UnityPrintIntNumberByStyle(const UNITY_INT number, const UNITY_DISPLAY_STYL
         /* printable characters plus CR & LF are printed */
         UNITY_OUTPUT_CHAR('\'');
         if ((number <= 126) && (number >= 32)) {
-            UNITY_OUTPUT_CHAR((int)number);
+            UNITY_OUTPUT_CHAR((char)number);
         }
         /* write escaped carriage returns */
         else if (number == 13) {

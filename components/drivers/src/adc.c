@@ -6,16 +6,15 @@
 
 
 // ADC DMA stream settings
-#define ADC_DMA_CONTROLLER DMA2
-#define ADC_DMA_STREAM DMA2_Stream0
-#define ADC_DMA_STREAM_NO 0U
-#define ADC_DMA_CHANNEL 0U
-#define ADC_DMA_IRQ_TYPE DMA2_Stream0_IRQn
+#define ADC_DMA_CONTROLLER (DMA2)
+#define ADC_DMA_STREAM (DMA2_Stream0)
+#define ADC_DMA_STREAM_NO (0)
+#define ADC_DMA_CHANNEL (0)
+#define ADC_DMA_IRQ_TYPE (DMA2_Stream0_IRQn)
 
 // To save user passed callback
 static dma_trans_done_cb_t s_dma_trans_done_cb = NULL;
-
-static void* s_arg = NULL;
+static void*               s_dma_trans_cb_arg  = NULL;
 
 // Public API
 void adc_clk_enable(bool enable) {
@@ -39,7 +38,6 @@ void adc_init(const adc_config_t* config) {
 }
 
 hal_err_t adc_dma_init(void) {
-
     hal_err_t ret = dmax_clk_enable(ADC_DMA_CONTROLLER, true);
     if (ret != HAL_OK) {
         return ret;
@@ -97,7 +95,7 @@ hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t
     // Save user passed callback
     if (callback) {
         s_dma_trans_done_cb = callback;
-        s_arg               = arg;
+        s_dma_trans_cb_arg  = arg;
     }
 
     // Enable stream
@@ -122,7 +120,7 @@ hal_err_t adc_dbm_init(void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb
     // Save user passed callback
     if (callback) {
         s_dma_trans_done_cb = callback;
-        s_arg               = arg;
+        s_dma_trans_cb_arg  = arg;
     }
 
     return HAL_OK;
@@ -154,16 +152,8 @@ void DMA2_Stream0_IRQHandler(void) {
 
     // Invoke user callback
     if (s_dma_trans_done_cb) {
-        s_dma_trans_done_cb(s_arg, ret);
+        s_dma_trans_done_cb(s_dma_trans_cb_arg, ret);
     }
-
-    // If in circular mode or dbm, return so as not to clear user callback
-    if (ADC_DMA_STREAM->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM)) {
-        return;
-    }
-
-    s_dma_trans_done_cb = NULL;
-    s_arg               = NULL;
 }
 
 void ADC_IRQHandler(void) {

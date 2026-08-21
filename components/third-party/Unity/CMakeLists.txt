@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 4.0)
 
-add_library(unity STATIC src/unity.c)
-target_include_directories(unity PUBLIC src/)
+add_library(unity STATIC unity.c)
+target_include_directories(unity PUBLIC .)
 
 set_target_properties(unity PROPERTIES
     C_STANDARD 23

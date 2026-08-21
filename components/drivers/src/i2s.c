@@ -9,9 +9,9 @@
 
 // Audio PLL check. To use a different PLL clock speed
 // provide a corresponding prescaler table, update the
-// #define in "common.h" and update this check
+// macro in "common.h" and this check
 #if AUDIO_PLL_HZ == 76'800'000UL
-#define prescaler_table s_prescaler_table_76_8mhz
+#define prescaler_table (s_prescaler_table_76_8mhz)
 #else
 #error "No pll table defined for used frequency"
 #endif
@@ -402,7 +402,7 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uin
     dma_set_addresses(stream, &handle->DR, buf_a, buf_b);
     dma_set_trans_length(stream, len);
 
-    // Write 0 to CT to ensure the DMA controller starts at `buf_a`
+    // Write 0 to CT to ensure the DMA controller starts at buf_a
     stream->CR &= ~DMA_SxCR_CT;
 
     // Save user passed callback

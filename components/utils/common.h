@@ -15,8 +15,8 @@ extern "C" {
 
 
 // Core clock and audio PLL frequencies
-#define CLOCK_SPEED_HZ 100'000'000
-#define AUDIO_PLL_HZ 76'800'000
+#define CLOCK_SPEED_HZ (100'000'000)
+#define AUDIO_PLL_HZ (76'800'000)
 
 
 // Use the HSE, not the HSI
@@ -28,18 +28,18 @@ extern "C" {
 
 
 // HSI and HSE clocks
-#define HSE_VALUE_MHZ 25
-#define HSI_VALUE_MHZ 16
+#define HSE_VALUE_MHZ (25)
+#define HSI_VALUE_MHZ (16)
 
 
 // At 100MHz, this is 100us: suitable for most use cases
-#define TIMEOUT_CYCLES 10'000
+#define TIMEOUT_CYCLES (10'000)
 
 // SPI DMA has the highest priority
-#define SPI_DMA_NVIC_IRQ_PRIORITY 6
-#define UART_DMA_NVIC_IRQ_PRIORITY 8
-#define I2S_DMA_NVIC_IRQ_PRIORITY 12
-#define ADC_DMA_NVIC_IRQ_PRIORITY 12
+#define SPI_DMA_NVIC_IRQ_PRIORITY (6)
+#define UART_DMA_NVIC_IRQ_PRIORITY (8)
+#define I2S_DMA_NVIC_IRQ_PRIORITY (12)
+#define ADC_DMA_NVIC_IRQ_PRIORITY (12)
 
 
 // Heap size
@@ -47,7 +47,7 @@ extern "C" {
 
 
 // RTT buffer for logging. Controls the output buffer parameter
-#define RTT_BUFFER_INDEX 0
+#define RTT_BUFFER_INDEX (0)
 
 
 // Use the cycle counter component
@@ -62,7 +62,7 @@ extern "C" {
 #define LOCK_RELEASE() __enable_irq()
 
 
-#define FMT_STR_BUF_SIZE 192
+#define FMT_STR_BUF_SIZE (192)
 
 
 [[noreturn]] void panic(const char* function, const char* file, uint32_t line);

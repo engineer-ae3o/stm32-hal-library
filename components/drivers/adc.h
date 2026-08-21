@@ -46,7 +46,7 @@ void adc_set_sequence(uint8_t sequence);
 
 // Double buffering API
 // @note These APIs are mutually exclusive with the DMA oneshot function
-// User should determine which buffer is free with `adc_dbm_get_filled_buffer()`
+// User should determine which buffer is free with adc_dbm_get_filled_buffer()
 hal_err_t adc_dbm_init(void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg);
 hal_err_t adc_dbm_deinit(void);
 
@@ -56,8 +56,8 @@ hal_err_t adc_dbm_deinit(void);
 hal_err_t adc_dbm_start(void);
 hal_err_t adc_dbm_stop(void);
 
-// @return `0x0` if buf_a is filled and the DMA controller has started filling buf_b,
-// `0x1` if buf_b is filled and buf_a is in use, and `0xFF` if an invalid arg is passed
+// @return 0x0 if buf_a is filled and the DMA controller has started filling buf_b,
+// 0x1 if buf_b is filled and buf_a is in use, and 0xFF if an invalid arg is passed
 uint32_t adc_dbm_get_filled_buffer(void);
 
 

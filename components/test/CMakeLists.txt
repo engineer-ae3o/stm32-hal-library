@@ -21,8 +21,7 @@ set(SRCS
 
 set(INC
     ../
-    ../third-party/o1heap/
-    ../third-party/Unity/src/
+    ../third-party/
     ../third-party/CMSIS/Include/
     ../third-party/CMSIS/Core/Include/
     ../third-party/CMSIS/Device/ST/STM32F4xx/Include/

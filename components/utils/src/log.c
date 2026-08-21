@@ -1,8 +1,8 @@
+#include "RTT/SEGGER_RTT.h"
+#include "printf/printf.h"
 #include "utils/common.h"
 #include "utils/tick.h"
-#include "SEGGER_RTT.h"
 #include "utils/log.h"
-#include "printf.h"
 
 #include <string.h>
 #include <stdarg.h>

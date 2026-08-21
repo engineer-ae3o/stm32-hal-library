@@ -1,8 +1,8 @@
 #include "stm32f411xe.h"
+#include "RTT/SEGGER_RTT.h"
+#include "printf/printf.h"
 #include "utils/common.h"
-#include "SEGGER_RTT.h"
 #include "utils/log.h"
-#include "printf.h"
 
 #include <errno.h>
 #include <stddef.h>

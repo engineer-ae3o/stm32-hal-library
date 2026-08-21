@@ -78,15 +78,15 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable);
 
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config);
 
-// @note This function should be called to enable the I2S peripheral after calling `i2s_master_transmit(...)`
-// or `i2s_master_receive(...)`, and immediately the user callback was invoked to disable the I2S peripheral
+// @note This function should be called to enable the I2S peripheral after calling i2s_master_transmit(...)
+// or i2s_master_receive(...), and immediately the user callback was invoked to disable the I2S peripheral
 void i2s_master_enable(I2S_TypeDef* handle, bool enable);
 
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle);
 hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx);
 
 // DMA backed transfers API. The user should only enable the I2S peripheral with
-// `i2s_master_enable(...)` after confirming that these functions return `HAL_OK`.
+// i2s_master_enable(...) after confirming that these functions return HAL_OK.
 // And then disable the peripheral after their callback was invoked. Also, when
 // double buffering, the user should disable the I2S peripheral when they want
 // to "pause" or stop the transfers, and not just when the isr is called.
@@ -96,7 +96,7 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len, dma_t
 // Double buffering API
 // @note These APIs are mutually exclusive with the DMA oneshot functions
 // @note Only data reception is supported. User should determine which
-// buffer is free with `i2s_master_dbm_get_filled_buffer()`
+// buffer is free with i2s_master_dbm_get_filled_buffer()
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg);
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);
 
@@ -110,8 +110,8 @@ hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);
 hal_err_t i2s_master_dbm_start(I2S_TypeDef* handle);
 hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle);
 
-// @return `0x0` if buf_a is filled and the DMA controller has started filling buf_b,
-// `0x1` if buf_b is filled and buf_a is in use, and `0xFF` if an invalid arg is passed
+// @return 0x0 if buf_a is filled and the DMA controller has started filling buf_b,
+// 0x1 if buf_b is filled and buf_a is in use, and 0xFF if an invalid arg is passed
 uint32_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle);
 
 

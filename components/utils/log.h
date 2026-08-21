@@ -8,15 +8,15 @@ extern "C" {
 
 
 // Debug logging levels
-#define LOG_LEVEL_INFO 3
-#define LOG_LEVEL_WARN 2
-#define LOG_LEVEL_ERROR 1
-#define LOG_LEVEL_NONE 0
+#define LOG_LEVEL_INFO (3)
+#define LOG_LEVEL_WARN (2)
+#define LOG_LEVEL_ERROR (1)
+#define LOG_LEVEL_NONE (0)
 
 
 // Set the log level to any appropriate log level
 #ifndef LOG_LEVEL
-#define LOG_LEVEL LOG_LEVEL_INFO
+#define LOG_LEVEL (LOG_LEVEL_INFO)
 #endif
 
 

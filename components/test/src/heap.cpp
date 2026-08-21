@@ -1,5 +1,5 @@
-#include "o1heap.h"
-#include "unity.h"
+#include "o1heap/o1heap.h"
+#include "Unity/unity.h"
 
 #include "utils/common.h"
 #include "utils/heap.h"
@@ -36,7 +36,7 @@ namespace test::heap {
     void invalid_arg_guards() {
         assert_heap_clean();
 
-        // Malloc 0 or > HEAP_SIZE
+        // Malloc allocation sizes must be within 0 - HEAP_SIZE
         TEST_ASSERT_NULL(lib_malloc(0));
         TEST_ASSERT_NULL(lib_malloc(HEAP_SIZE_BYTES + 1));
 
@@ -45,7 +45,7 @@ namespace test::heap {
         TEST_ASSERT_NULL(lib_calloc(100, 0));
         TEST_ASSERT_NULL(lib_calloc(HEAP_SIZE_BYTES, 2));
 
-        // Freeing NULL must be safe
+        // Freeing nullptr should be safe
         lib_free(nullptr);
 
         assert_heap_clean();
@@ -61,7 +61,7 @@ namespace test::heap {
         auto* ptr = static_cast<uint8_t*>(lib_calloc(ELEM_COUNT, ELEM_SIZE));
         TEST_ASSERT_NOT_NULL(ptr);
 
-        // Verify memory is completely zeroed
+        // Verify the memory is completely zeroed
         const bool is_zeroed = std::all_of(ptr, ptr + TOTAL, [](uint8_t b) {
             return b == 0;
         });
@@ -75,7 +75,7 @@ namespace test::heap {
         assert_heap_clean();
 
         // 1. realloc(nullptr, size) acts as malloc
-        constexpr size_t INITIAL_SIZE = 128 - 8;
+        constexpr size_t INITIAL_SIZE = 128 - O1HEAP_ALIGNMENT;
         auto*            ptr          = static_cast<uint8_t*>(lib_realloc(nullptr, INITIAL_SIZE));
         TEST_ASSERT_NOT_NULL(ptr);
 
@@ -83,7 +83,7 @@ namespace test::heap {
         std::memset(ptr, 0xEE, INITIAL_SIZE);
 
         // 2. Expand allocation
-        constexpr size_t EXPANDED_SIZE = 512 - 8;
+        constexpr size_t EXPANDED_SIZE = 512 - O1HEAP_ALIGNMENT;
         auto*            expanded_ptr  = static_cast<uint8_t*>(lib_realloc(ptr, EXPANDED_SIZE));
         TEST_ASSERT_NOT_NULL(expanded_ptr);
 
@@ -93,8 +93,8 @@ namespace test::heap {
         });
         TEST_ASSERT_TRUE(preserved);
 
-        // 3. realloc to oversized request should fail and return NULL without freeing original block
-        auto* failed_ptr = lib_realloc(expanded_ptr, HEAP_SIZE_BYTES + 100);
+        // 3. realloc to oversized request should fail and return null without freeing or modifying the original block
+        auto* failed_ptr = lib_realloc(expanded_ptr, HEAP_SIZE_BYTES + 2);
         TEST_ASSERT_NULL(failed_ptr);
 
         // Original block must still be valid
@@ -110,35 +110,45 @@ namespace test::heap {
     void max_capacity_packing_efficiency() {
         assert_heap_clean();
 
-        // Optimal packing pattern verified earlier: 51 x 504B + 6 x 1016B = 32,256 B
+        // Optimal packing pattern verified earlier: (51 x 504B) + (6 x 1016B) = 32,256 B (for a 32kB heap)
         // A header is O1HEAP_ALIGNMENT bytes
         std::array<void*, 51> small_ptrs{};
         std::array<void*, 6>  large_ptrs{};
 
-        for (auto& p : small_ptrs) {
-            p = lib_malloc(512 - O1HEAP_ALIGNMENT);
-            TEST_ASSERT_NOT_NULL(p);
+        // The sizes each allocation will take up
+        constexpr size_t small_size = 512;
+        constexpr size_t big_size   = 1024;
+
+        // Each allocation takes the requested size, then the header which is of size O1HEAP_ALIGNMENT bytes
+        constexpr size_t size_to_alloc_small = small_size - O1HEAP_ALIGNMENT;
+        constexpr size_t size_to_alloc_big   = big_size - O1HEAP_ALIGNMENT;
+
+        constexpr size_t total_alloc_size = (small_ptrs.size() * small_size) + (large_ptrs.size() * big_size);
+
+        for (auto& ptr : small_ptrs) {
+            ptr = lib_malloc(size_to_alloc_small);
+            TEST_ASSERT_NOT_NULL(ptr);
         }
 
-        for (auto& p : large_ptrs) {
-            p = lib_malloc(1024 - O1HEAP_ALIGNMENT);
-            TEST_ASSERT_NOT_NULL(p);
+        for (auto& ptr : large_ptrs) {
+            ptr = lib_malloc(size_to_alloc_big);
+            TEST_ASSERT_NOT_NULL(ptr);
         }
 
         heap_info_t info{};
         get_heap_stats(&info);
 
-        TEST_ASSERT_EQUAL(32256, info.allocated_size);
-        TEST_ASSERT_EQUAL(57, info.num_of_allocations);
-        TEST_ASSERT_EQUAL(1016, info.peak_request_size);
+        TEST_ASSERT_EQUAL(total_alloc_size, info.allocated_size);
+        TEST_ASSERT_EQUAL(small_ptrs.size() + large_ptrs.size(), info.num_of_allocations);
+        TEST_ASSERT_EQUAL(std::max(size_to_alloc_small, size_to_alloc_big), info.peak_request_size);
         TEST_ASSERT_EQUAL(0, info.out_of_mem_count);
 
         // Cleanup
-        for (auto& p : small_ptrs) {
-            lib_free(p);
+        for (auto& ptr : small_ptrs) {
+            lib_free(ptr);
         }
-        for (auto& p : large_ptrs) {
-            lib_free(p);
+        for (auto& ptr : large_ptrs) {
+            lib_free(ptr);
         }
 
         assert_heap_clean();
@@ -147,7 +157,7 @@ namespace test::heap {
     void oom_counter_and_power_of_two_penalty() {
         assert_heap_clean();
 
-        // 512-byte allocations without subtracting header forces 1024-byte bins
+        // 512 byte allocations without subtracting header forces 1024 byte bins
         std::array<void*, 35> ptrs{};
         size_t                allocated_count = 0;
 
@@ -183,7 +193,7 @@ namespace test::heap {
         // Profile sequential allocations across changing heap states
         for (size_t i = 0; i < ROUNDS; i++) {
             prof_start();
-            ptrs[i]         = lib_malloc(256 - 8);
+            ptrs[i]         = lib_malloc(256 - O1HEAP_ALIGNMENT);
             alloc_cycles[i] = prof_end();
 
             TEST_ASSERT_NOT_NULL(ptrs[i]);
@@ -206,8 +216,8 @@ namespace test::heap {
         const uint32_t avg_free          = static_cast<uint32_t>(total_free_cycles / ROUNDS);
 
         LOGI(TAG, "--- O1HEAP BENCHMARK RESULTS (%zu rounds) ---", ROUNDS);
-        LOGI(TAG, "lib_malloc: Min = %lu cyc | Avg = %lu cyc | Max = %lu cyc", *min_alloc, avg_alloc, *max_alloc);
-        LOGI(TAG, "lib_free  : Min = %lu cyc | Avg = %lu cyc | Max = %lu cyc", *min_free, avg_free, *max_free);
+        LOGI(TAG, "lib_malloc: Min = %lu cycles | Avg = %lu cycles | Max = %lu cycles", *min_alloc, avg_alloc, *max_alloc);
+        LOGI(TAG, "lib_free  : Min = %lu cycles | Avg = %lu cycles | Max = %lu cycles", *min_free, avg_free, *max_free);
 
         // Verify O(1) determinism: Max cycle time must not diverge wildly from Min cycle time
         TEST_ASSERT_INT_WITHIN(100, *min_alloc, *max_alloc);

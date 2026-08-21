@@ -658,7 +658,7 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     return dma_enable_stream(rx_stream);
 }
 
-// To be used by `i2s.c`
+// To be used only by i2s.c
 void spi_master_register_callback(dma_trans_done_cb_t cb, void* arg, uint8_t idx, bool tx) {
     if (tx) {
         s_dma_tx_done_cbs[idx] = cb;
