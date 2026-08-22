@@ -9,6 +9,7 @@ const char* err_code_lut[] = {
     [HAL_ERR_INVALID_ARG]             = "HAL_ERR_INVALID_ARG",
     [HAL_ERR_INVALID_STATE]           = "HAL_ERR_INVALID_STATE",
     [HAL_ERR_TIMEOUT]                 = "HAL_ERR_TIMEOUT",
+    [HAL_ERR_NOT_DONE]                = "HAL_ERR_NOT_DONE",
     [HAL_ERR_NOT_FOUND]               = "HAL_ERR_NOT_FOUND",
     [HAL_ERR_TX]                      = "HAL_ERR_TX",
     [HAL_ERR_RX]                      = "HAL_ERR_RX",

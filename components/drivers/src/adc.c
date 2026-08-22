@@ -20,6 +20,9 @@ static void*               s_dma_trans_cb_arg  = NULL;
 static adc_injected_done_cb_t s_injected_done_cb  = NULL;
 static void*                  s_injected_done_arg = NULL;
 
+static adc_awdg_isr_t s_analog_wdg_cb  = NULL;
+static void*          s_analog_wdg_arg = NULL;
+
 
 // Public API
 void adc_clk_enable(bool enable) {
@@ -97,15 +100,23 @@ void adc_injected_mode_deinit(void) {
 }
 
 hal_err_t adc_injected_mode_start_conv(const adc_channel_t* channels, size_t num_of_channels, adc_injected_done_cb_t cb, void* arg) {
-    if (channels == NULL || num_of_channels > MAX_INJECTED_CHANNELS || num_of_channels == 0) {
+    if (channels == NULL || num_of_channels == 0 || num_of_channels > MAX_INJECTED_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Single conversion mode
     if (num_of_channels == 1) {
+        // Single conversion mode
         ADC1->CR2 |= ADC_CR2_JSWSTART;
+    } else {
+        // Enable scan mode if we have more than one channel
+        ADC1->CR2 |= ADC_CR1_SCAN;
     }
 
+    // Enable interrupts for the injected mode and set the number of channels in the [0:1] bit positions of the JSQR register
+    ADC1->CR1 |= ADC_CR1_JEOCIE;
+    ADC1->JSQR |= (num_of_channels & 0b11);
+
+    // Save user callback
     if (cb) {
         s_injected_done_cb  = cb;
         s_injected_done_arg = arg;
@@ -119,8 +130,9 @@ hal_err_t adc_injected_mode_get_result(uint16_t* buffer, size_t num_of_channels)
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (ADC1->SR & ADC_SR_JEOC) {
-        return HAL_ERR_NOT_FOUND;
+    // If the JEOC bit is not set, conversion is not yet done
+    if (!(ADC1->SR & ADC_SR_JEOC)) {
+        return HAL_ERR_NOT_DONE;
     }
 
     switch (num_of_channels) {
@@ -150,18 +162,83 @@ hal_err_t adc_injected_mode_get_result(uint16_t* buffer, size_t num_of_channels)
 }
 
 
+// For use of control of the analog watchdog
+hal_err_t adc_analog_wdg_start(uint16_t min_volt, uint16_t max_volt, bool monitor_regular, bool monitor_injected, adc_awdg_isr_t cb, void* arg) {
+    if ((cb == NULL) || (min_volt >= max_volt)) {
+        // The use of interrupts is effectively mandatory as that's the
+        // only way for the watchdog to inform the caller of a violation
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    // Clear the AWDSGL bit since the monitoring is not only on an single channel
+    // and clear all state before modifying any of the bits in the register(s)
+    ADC1->CR1 &= ~(ADC_CR1_AWDSGL | ADC_CR1_AWDEN | ADC_CR1_JAWDEN | ADC_CR1_AWDIE);
+
+    if (monitor_regular && monitor_injected) {
+        // Enable monitoring on all channels
+        ADC1->CR1 |= (ADC_CR1_AWDEN | ADC_CR1_JAWDEN);
+    } else if (monitor_injected) {
+        // Enable monitoring on only the injected channels
+        ADC1->CR1 |= ADC_CR1_JAWDEN;
+    } else if (monitor_regular) {
+        // Enable monitoring on only the regular channels
+        ADC1->CR1 |= ADC_CR1_AWDEN;
+    } else {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    // Set the voltage thresholds
+    ADC1->HTR = max_volt & 0xFFFU; // Only the lower 12 bits are used
+    ADC1->LTR = min_volt & 0xFFFU; // Only the lower 12 bits are used
+
+    // Save the user passed callback
+    s_analog_wdg_cb  = cb;
+    s_analog_wdg_arg = arg;
+
+    // Enable the analog watchdog interrupt
+    ADC1->CR1 |= ADC_CR1_AWDIE;
+
+    return HAL_OK;
+}
+
+void adc_analog_wdg_stop(void) {
+    // Clear the user passed callback
+    s_analog_wdg_cb  = NULL;
+    s_analog_wdg_arg = NULL;
+
+    // Clear the voltage thresholds
+    ADC1->HTR = 0;
+    ADC1->LTR = 0;
+
+    // Disable the analog watchdog interrupt and disable monitoring on all channels
+    ADC1->CR1 &= ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
+}
+
+
 // Interrupt handlers
 void ADC_IRQHandler(void) {
-    // Invoke user cb once the ADC sampling on the injected group is complete
-    if (s_injected_done_cb) {
-        s_injected_done_cb(s_injected_done_arg);
-        s_injected_done_cb  = NULL;
-        s_injected_done_arg = NULL;
+    // Check if end of conversion for the injected mode is reached
+    if (ADC1->SR & ADC_SR_JEOC) {
+        // Invoke user callback once the ADC sampling on the injected group is complete
+        if (s_injected_done_cb) {
+            s_injected_done_cb(s_injected_done_arg);
+            // Clear user passed callbcak simce this is a one-off event
+            s_injected_done_cb  = NULL;
+            s_injected_done_arg = NULL;
+        }
+    }
+
+    // Check if the AWD bit is set. This means the analog watchdog has fired an interrupt
+    if (ADC1->SR & ADC_SR_AWD) {
+        if (s_analog_wdg_cb) {
+            s_analog_wdg_cb(s_analog_wdg_arg);
+            // The callback isn't cleared since this is not one-off. To clear, call adc_analog_wdg_stop()
+        }
     }
 }
 
 void DMA2_Stream0_IRQHandler(void) {
-    // Invoke user cb once the ADC sampling and DMA transfer on the regular group is complete
+    // Invoke user callback once the ADC sampling and DMA transfer on the regular group is complete
     if (s_dma_trans_done_cb) {
         s_dma_trans_done_cb(s_dma_trans_cb_arg, HAL_OK);
         s_dma_trans_done_cb = NULL;

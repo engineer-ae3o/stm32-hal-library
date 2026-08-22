@@ -73,6 +73,13 @@ hal_err_t adc_injected_mode_start_conv(const adc_channel_t* channels, size_t num
 hal_err_t adc_injected_mode_get_result(uint16_t* buffer, size_t num_of_channels);
 
 
+// Analog watchdog control
+typedef void (*adc_awdg_isr_t)(void* arg);
+
+hal_err_t adc_analog_wdg_start(uint16_t min_volt, uint16_t max_volt, bool monitor_regular, bool monitor_injected, adc_awdg_isr_t cb, void* arg);
+void      adc_analog_wdg_stop(void);
+
+
 #ifdef __cplusplus
 }
 #endif

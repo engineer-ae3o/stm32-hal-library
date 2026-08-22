@@ -21,6 +21,7 @@ typedef enum : uint8_t {
     HAL_ERR_INVALID_ARG,
     HAL_ERR_INVALID_STATE,
     HAL_ERR_TIMEOUT,
+    HAL_ERR_NOT_DONE,
     HAL_ERR_NOT_FOUND,
 
     // Generic Transfer and Reception failures
