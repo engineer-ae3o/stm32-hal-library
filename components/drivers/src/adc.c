@@ -31,6 +31,7 @@ void adc_clk_enable(bool enable) {
     } else {
         RCC->APB2ENR &= ~RCC_APB2ENR_ADC1EN;
     }
+
     __DSB();
 }
 

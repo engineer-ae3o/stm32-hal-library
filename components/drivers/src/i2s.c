@@ -311,11 +311,11 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
 
     // Enable DMA stream interrupts
-    NVIC_EnableIRQ(s_i2s_dma_map[idx].tx.irq_type);
     NVIC_SetPriority(s_i2s_dma_map[idx].tx.irq_type, I2S_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(s_i2s_dma_map[idx].tx.irq_type);
 
-    NVIC_EnableIRQ(s_i2s_dma_map[idx].rx.irq_type);
     NVIC_SetPriority(s_i2s_dma_map[idx].rx.irq_type, I2S_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(s_i2s_dma_map[idx].rx.irq_type);
 
     return HAL_OK;
 }
