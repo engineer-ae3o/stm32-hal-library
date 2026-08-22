@@ -44,9 +44,11 @@ extern "C" {
 
 // ADC values to use the internal temperature sensor. Gotten from the datasheet
 #if defined(STM32F411xE)
-#define AVERAGE_SLOPE 2.5F
-#define VSENSE_AT_25C 0.76F
-#define MIN_SAMPLING_TIME_US 10U
+#define TEMP_SENSOR_AVERAGE_SLOPE 2.5F
+#define TEMP_SENSOR_VSENSE_AT_25C 0.76F
+#define TEMP_SENSOR_MIN_SAMPLING_TIME_US 10U
+#define TEMP_SENSOR_STARUP_TIME_US 10U
+
 #else
 #error "No V_sense and Avg_Slope defined for the given target. Refer to the datasheet for your specific chip and add these values"
 #endif

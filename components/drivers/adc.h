@@ -43,13 +43,6 @@ typedef enum : uint8_t {
     ADC_CHANNEL_15, // PC5
 } adc_ext_channel_t;
 
-// Internal channels
-typedef enum : uint8_t {
-    ADC_CHANNEL_TEMP = 16, // Temperature sensor
-    ADC_CHANNEL_VREF = 17, // V_refint
-    ADC_CHANNEL_VBAT = 18, // V_bat
-} adc_int_channel_t;
-
 
 #define MAX_REGULAR_CHANNELS (16)
 #define MAX_INJECTED_CHANNELS (4)
@@ -74,8 +67,8 @@ hal_err_t adc_injected_mode_get_result(uint16_t* buffer, size_t num_of_channels)
 
 // For operation of the internal channels. Only oneshot and regular group are supported
 hal_err_t get_v_bat(uint16_t* v_bat);
-hal_err_t get_v_ref_int(uint16_t* v_ref);
 hal_err_t get_temperature(uint16_t* temperature);
+hal_err_t get_v_ref_internal(uint16_t* v_ref_int);
 
 // Analog watchdog control
 typedef void (*adc_awdg_isr_t)(void* arg);

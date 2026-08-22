@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "utils/common.h"
 #include "drivers/adc.h"
+#include "utils/tick.h"
 #include "utils/err.h"
 
 #include <stddef.h>
@@ -22,6 +23,17 @@ static void*                  s_injected_done_arg = NULL;
 
 static adc_awdg_isr_t s_analog_wdg_cb  = NULL;
 static void*          s_analog_wdg_arg = NULL;
+
+
+// Helper macro
+#define POLL_TILL_CONV_DONE()                                                                                                                        \
+    do {                                                                                                                                             \
+        uint32_t timeout_cycles = TIMEOUT_CYCLES;                                                                                                    \
+        while (!(ADC1->SR & ADC_SR_EOC) && --timeout_cycles);                                                                                        \
+        if (timeout_cycles == 0) {                                                                                                                   \
+            return HAL_ERR_TIMEOUT;                                                                                                                  \
+        }                                                                                                                                            \
+    } while (0)
 
 
 // Public API
@@ -61,7 +73,6 @@ void adc_configure_sample_time(uint8_t cycles) {
     (void)cycles;
 }
 
-
 // For use with the regular group
 hal_err_t adc_regular_mode_get_oneshot(adc_ext_channel_t channel, uint16_t* data) {
     if (data == NULL) {
@@ -99,7 +110,6 @@ hal_err_t adc_regular_mode_start_conv(const adc_ext_channel_t* channels, size_t 
 
     return HAL_OK;
 }
-
 
 // For use with the injected group
 hal_err_t adc_injected_mode_start_conv(const adc_ext_channel_t* channels, size_t num_of_channels, adc_injected_done_cb_t cb, void* arg) {
@@ -164,82 +174,92 @@ hal_err_t adc_injected_mode_get_result(uint16_t* buffer, size_t num_of_channels)
     return HAL_OK;
 }
 
-
 // For use with the internal channels
+// The internal channels
+typedef enum : uint8_t {
+    ADC_CHANNEL_TEMP = 16, // Temperature sensor
+    ADC_CHANNEL_VREF = 17, // V_refint
+    ADC_CHANNEL_VBAT = 18, // V_bat
+} adc_int_channel_t;
+
+
 hal_err_t get_v_bat(uint16_t* v_bat) {
-    // Set the channel
-    // TODO: set the channel
+    if (v_bat == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
 
-    // Wake the temperature sensor
-    ADC->CCR |= ADC_CCR_TSVREFE;
+    // Set the channel
+    // TODO: Set ADC_CHANNEL_VBAT as the channel
+
+    // Switch to V_bat so the ADC can measure it
+    ADC->CCR |= ADC_CCR_VBATE;
 
     // Start the conversion
     ADC1->CR2 |= ADC_CR2_SWSTART;
 
-    // Poll till the conversion is done, that is, until the EOC bit is set
-    uint32_t timeout_cycles = TIMEOUT_CYCLES;
-    while (!(ADC1->SR & ADC_SR_EOC) && --timeout_cycles);
-    if (timeout_cycles == 0) {
-        return HAL_ERR_TIMEOUT;
-    }
+    // Poll till the conversion is complete
+    POLL_TILL_CONV_DONE();
 
-    // Calculate the temperature
-    *v_bat = (uint16_t)(((float)ADC1->DR - VSENSE_AT_25C) / AVERAGE_SLOPE) + 25;
+    // Get V_bat: The ADC only ever sees V_bat / 4 so we have to multiply by 4 to get the actual V_bat
+    *v_bat = (uint16_t)(ADC1->DR * 4);
 
-    // Put the temperature sensor to sleep
-    ADC->CCR &= ~ADC_CCR_TSVREFE;
-
-    return HAL_OK;
-}
-
-hal_err_t get_v_ref_int(uint16_t* v_ref) {
-    // Set the channel
-    // TODO: set the channel
-
-    // Wake the temperature sensor
-    ADC->CCR |= ADC_CCR_TSVREFE;
-
-    // Start the conversion
-    ADC1->CR2 |= ADC_CR2_SWSTART;
-
-    // Poll till the conversion is done, that is, until the EOC bit is set
-    uint32_t timeout_cycles = TIMEOUT_CYCLES;
-    while (!(ADC1->SR & ADC_SR_EOC) && --timeout_cycles);
-    if (timeout_cycles == 0) {
-        return HAL_ERR_TIMEOUT;
-    }
-
-    // Calculate the temperature
-    *v_ref = (uint16_t)(((float)ADC1->DR - VSENSE_AT_25C) / AVERAGE_SLOPE) + 25;
-
-    // Put the temperature sensor to sleep
-    ADC->CCR &= ~ADC_CCR_TSVREFE;
+    // Disconnect V_bat once done
+    ADC->CCR &= ~ADC_CCR_VBATE;
 
     return HAL_OK;
 }
 
 hal_err_t get_temperature(uint16_t* temperature) {
-    // Set the channel
-    // TODO: set the channel
+    if (temperature == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
 
-    // Wake the temperature sensor
-    ADC->CCR |= ADC_CCR_TSVREFE;
+    // Set the channel
+    // TODO: Set ADC_CHANNEL_TEMP as the channel
+
+    // Set a sampling time greater than MIN_SAMPLING_TIME_US
+    // TODO: Set the sampling time
+
+    // Wake the temperature sensor if it's not already powered on
+    if (!(ADC->CCR & ADC_CCR_TSVREFE)) {
+        ADC->CCR |= ADC_CCR_TSVREFE;
+        delay_us(TEMP_SENSOR_STARUP_TIME_US);
+    }
 
     // Start the conversion
     ADC1->CR2 |= ADC_CR2_SWSTART;
 
-    // Poll till the conversion is done, that is, until the EOC bit is set
-    uint32_t timeout_cycles = TIMEOUT_CYCLES;
-    while (!(ADC1->SR & ADC_SR_EOC) && --timeout_cycles);
-    if (timeout_cycles == 0) {
-        return HAL_ERR_TIMEOUT;
-    }
+    // Poll till the conversion is complete
+    POLL_TILL_CONV_DONE();
 
     // Calculate the temperature
-    *temperature = (uint16_t)(((float)ADC1->DR - VSENSE_AT_25C) / AVERAGE_SLOPE) + 25;
+    *temperature = (uint16_t)(((float)ADC1->DR - TEMP_SENSOR_VSENSE_AT_25C) / TEMP_SENSOR_AVERAGE_SLOPE) + 25;
 
-    // Put the temperature sensor to sleep
-    ADC->CCR &= ~ADC_CCR_TSVREFE;
+    return HAL_OK;
+}
+
+hal_err_t get_v_ref_internal(uint16_t* v_ref_int) {
+    if (v_ref_int == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    // Set the channel
+    // TODO: Set ADC_CHANNEL_VREF as the channel
+
+    // The TSVREFE bit also enables measurement of VREFINT
+    if (!(ADC->CCR & ADC_CCR_TSVREFE)) {
+        ADC->CCR |= ADC_CCR_TSVREFE;
+        delay_us(TEMP_SENSOR_STARUP_TIME_US);
+    }
+
+    // Start the conversion
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+
+    // Poll till the conversion is complete
+    POLL_TILL_CONV_DONE();
+
+    // Get V_ref
+    *v_ref_int = (uint16_t)ADC1->DR;
 
     return HAL_OK;
 }
