@@ -46,15 +46,22 @@ void adc_configure_analog_clk(uint8_t prescaler) {
     (void)prescaler;
 }
 
+void adc_configure_sample_time(uint8_t cycles) {
+    (void)cycles;
+}
+
+void adc_enable_nvic_irq(void) {
+    NVIC_SetPriority(ADC_IRQn, ADC_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(ADC_IRQn);
+}
+
+void adc_disable_nvic_irq(void) {
+    NVIC_DisableIRQ(ADC_IRQn);
+}
+
 
 // For use with the regular group
-void adc_regular_mode_init(void) {
-}
-
-void adc_regular_mode_deinit(void) {
-}
-
-hal_err_t adc_regular_mode_get_oneshot(adc_channel_t channel, uint16_t* data) {
+hal_err_t adc_regular_mode_get_oneshot(adc_ext_channel_t channel, uint16_t* data) {
     if (data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -62,26 +69,26 @@ hal_err_t adc_regular_mode_get_oneshot(adc_channel_t channel, uint16_t* data) {
     // Set the channel
     (void)channel;
 
-    // Start the conversion
+    // Start the conversion and disable continuous conversion mode since we are only sampling a single channel
+    ADC1->CR2 &= ~ADC_CR2_CONT;
     ADC1->CR2 |= ADC_CR2_SWSTART;
 
-    // Poll till conversion done
-    uint32_t timeout = TIMEOUT_CYCLES;
-    while (ADC1->SR & ADC_SR_EOC && timeout--);
-
-    if (timeout == 0) {
+    // Poll till the conversion is done, that is, until the EOC bit is set
+    uint32_t timeout_cycles = TIMEOUT_CYCLES;
+    while (!(ADC1->SR & ADC_SR_EOC) && --timeout_cycles);
+    if (timeout_cycles == 0) {
         return HAL_ERR_TIMEOUT;
     }
 
-    // Get the result
+    // Get the final result
     *data = (uint16_t)ADC1->DR;
-
     return HAL_OK;
 }
 
-hal_err_t adc_regular_mode_start_conv(const adc_channel_t* channels, size_t num_of_channels, dma_trans_done_cb_t cb, void* arg) {
-    (void)channels;
-    (void)num_of_channels;
+hal_err_t adc_regular_mode_start_conv(const adc_ext_channel_t* channels, size_t num_of_channels, dma_trans_done_cb_t cb, void* arg) {
+    if (channels == NULL || num_of_channels == 0 || num_of_channels > MAX_INJECTED_CHANNELS) {
+        return HAL_ERR_INVALID_ARG;
+    }
 
     if (cb) {
         s_dma_trans_done_cb = cb;
@@ -93,13 +100,7 @@ hal_err_t adc_regular_mode_start_conv(const adc_channel_t* channels, size_t num_
 
 
 // For use with the injected group
-void adc_injected_mode_init(void) {
-}
-
-void adc_injected_mode_deinit(void) {
-}
-
-hal_err_t adc_injected_mode_start_conv(const adc_channel_t* channels, size_t num_of_channels, adc_injected_done_cb_t cb, void* arg) {
+hal_err_t adc_injected_mode_start_conv(const adc_ext_channel_t* channels, size_t num_of_channels, adc_injected_done_cb_t cb, void* arg) {
     if (channels == NULL || num_of_channels == 0 || num_of_channels > MAX_INJECTED_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -162,6 +163,85 @@ hal_err_t adc_injected_mode_get_result(uint16_t* buffer, size_t num_of_channels)
 }
 
 
+// For use with the internal channels
+hal_err_t get_v_bat(uint16_t* v_bat) {
+    // Set the channel
+    // TODO: set the channel
+
+    // Wake the temperature sensor
+    ADC->CCR |= ADC_CCR_TSVREFE;
+
+    // Start the conversion
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+
+    // Poll till the conversion is done, that is, until the EOC bit is set
+    uint32_t timeout_cycles = TIMEOUT_CYCLES;
+    while (!(ADC1->SR & ADC_SR_EOC) && --timeout_cycles);
+    if (timeout_cycles == 0) {
+        return HAL_ERR_TIMEOUT;
+    }
+
+    // Calculate the temperature
+    *v_bat = (uint16_t)(((float)ADC1->DR - VSENSE_AT_25C) / AVERAGE_SLOPE) + 25;
+
+    // Put the temperature sensor to sleep
+    ADC->CCR &= ~ADC_CCR_TSVREFE;
+
+    return HAL_OK;
+}
+
+hal_err_t get_v_ref_int(uint16_t* v_ref) {
+    // Set the channel
+    // TODO: set the channel
+
+    // Wake the temperature sensor
+    ADC->CCR |= ADC_CCR_TSVREFE;
+
+    // Start the conversion
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+
+    // Poll till the conversion is done, that is, until the EOC bit is set
+    uint32_t timeout_cycles = TIMEOUT_CYCLES;
+    while (!(ADC1->SR & ADC_SR_EOC) && --timeout_cycles);
+    if (timeout_cycles == 0) {
+        return HAL_ERR_TIMEOUT;
+    }
+
+    // Calculate the temperature
+    *v_ref = (uint16_t)(((float)ADC1->DR - VSENSE_AT_25C) / AVERAGE_SLOPE) + 25;
+
+    // Put the temperature sensor to sleep
+    ADC->CCR &= ~ADC_CCR_TSVREFE;
+
+    return HAL_OK;
+}
+
+hal_err_t get_temperature(uint16_t* temperature) {
+    // Set the channel
+    // TODO: set the channel
+
+    // Wake the temperature sensor
+    ADC->CCR |= ADC_CCR_TSVREFE;
+
+    // Start the conversion
+    ADC1->CR2 |= ADC_CR2_SWSTART;
+
+    // Poll till the conversion is done, that is, until the EOC bit is set
+    uint32_t timeout_cycles = TIMEOUT_CYCLES;
+    while (!(ADC1->SR & ADC_SR_EOC) && --timeout_cycles);
+    if (timeout_cycles == 0) {
+        return HAL_ERR_TIMEOUT;
+    }
+
+    // Calculate the temperature
+    *temperature = (uint16_t)(((float)ADC1->DR - VSENSE_AT_25C) / AVERAGE_SLOPE) + 25;
+
+    // Put the temperature sensor to sleep
+    ADC->CCR &= ~ADC_CCR_TSVREFE;
+
+    return HAL_OK;
+}
+
 // For use of control of the analog watchdog
 hal_err_t adc_analog_wdg_start(uint16_t min_volt, uint16_t max_volt, bool monitor_regular, bool monitor_injected, adc_awdg_isr_t cb, void* arg) {
     if ((cb == NULL) || (min_volt >= max_volt)) {
@@ -198,6 +278,11 @@ hal_err_t adc_analog_wdg_start(uint16_t min_volt, uint16_t max_volt, bool monito
     // Enable the analog watchdog interrupt
     ADC1->CR1 |= ADC_CR1_AWDIE;
 
+    // Enable the ADC interrupt with the NVIC if it hadn't been enabled before
+    if (NVIC_GetEnableIRQ(ADC_IRQn) == 0) {
+        adc_enable_nvic_irq();
+    }
+
     return HAL_OK;
 }
 
@@ -231,8 +316,9 @@ void ADC_IRQHandler(void) {
     // Check if the AWD bit is set. This means the analog watchdog has fired an interrupt
     if (ADC1->SR & ADC_SR_AWD) {
         if (s_analog_wdg_cb) {
+            // Invoke the user callback since the analog watchdog has fired an interrupt
             s_analog_wdg_cb(s_analog_wdg_arg);
-            // The callback isn't cleared since this is not one-off. To clear, call adc_analog_wdg_stop()
+            // The callback isn't cleared since this is not a one-off event. To clear, call adc_analog_wdg_stop()
         }
     }
 }

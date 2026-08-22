@@ -1,4 +1,5 @@
 #include "test/runner.hpp"
+#include "utils/common.h"
 #include "utils/tick.h"
 #include "utils/log.h"
 #include "o1heap.h"

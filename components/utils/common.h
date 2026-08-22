@@ -36,10 +36,20 @@ extern "C" {
 #define TIMEOUT_CYCLES (10'000)
 
 // SPI DMA has the highest priority
-#define SPI_DMA_NVIC_IRQ_PRIORITY (6)
+#define SPI_DMA_NVIC_IRQ_PRIORITY (14)
 #define UART_DMA_NVIC_IRQ_PRIORITY (8)
 #define I2S_DMA_NVIC_IRQ_PRIORITY (12)
-#define ADC_DMA_NVIC_IRQ_PRIORITY (12)
+#define ADC_DMA_NVIC_IRQ_PRIORITY (4)
+
+
+// ADC values to use the internal temperature sensor. Gotten from the datasheet
+#if defined(STM32F411xE)
+#define AVERAGE_SLOPE 2.5F
+#define VSENSE_AT_25C 0.76F
+#define MIN_SAMPLING_TIME_US 10U
+#else
+#error "No V_sense and Avg_Slope defined for the given target. Refer to the datasheet for your specific chip and add these values"
+#endif
 
 
 // Heap size

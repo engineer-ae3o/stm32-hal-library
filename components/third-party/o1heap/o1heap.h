@@ -33,9 +33,7 @@ extern "C" {
 /// The guaranteed alignment depends on the platform pointer width.
 #define O1HEAP_ALIGNMENT (sizeof(void*) * 2U)
 
-// Custom assert
-#include "utils/common.h"
-#define O1HEAP_ASSERT(x) ASSERT(x)
+#define O1HEAP_ASSERT(x) assert(x)
 
 /// The definition is private, so the user code can only operate on pointers. This is done to enforce encapsulation.
 typedef struct O1HeapInstance O1HeapInstance;

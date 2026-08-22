@@ -27,9 +27,12 @@ set(INC
     ../third-party/CMSIS/Device/ST/STM32F4xx/Include/
 )
 
+set(DEFINES STM32F411xE __ARM_ARCH_7M__=1 __ARM_ARCH_7EM__=1 RTT_USE_ASM=1)
+
 # Create library
 add_library(tests STATIC ${SRCS})
 target_include_directories(tests PUBLIC ${INC})
+target_compile_definitions(tests PUBLIC ${DEFINES})
 
 set_target_properties(tests PROPERTIES
     CXX_STANDARD 23
