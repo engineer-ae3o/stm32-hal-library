@@ -43,7 +43,7 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
 };
 
 // Helpers
-static inline uint8_t get_index(const SPI_TypeDef* handle) {
+static __attribute__((__always_inline__)) inline uint8_t get_index(const SPI_TypeDef* handle) {
     if (handle == SPI1) {
         return 0;
     } else if (handle == SPI2) {
@@ -59,7 +59,7 @@ static inline uint8_t get_index(const SPI_TypeDef* handle) {
     }
 }
 
-static inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx) {
+static __attribute__((__always_inline__)) inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx) {
     if (!s_dma_tx_done_cbs[idx]) {
         return;
     }
@@ -73,7 +73,7 @@ static inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx
         uint32_t timeout = TIMEOUT_CYCLES;
         while (!(handle->SR & SPI_SR_TXE) && (--timeout));
         if (timeout == 0) {
-            ret = HAL_SPI_TXE_FAILED_TO_SET;
+            ret = HAL_ERR_SPI_TXE_FAILED_TO_SET;
         }
     }
 
@@ -83,7 +83,7 @@ static inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx
         uint32_t timeout = TIMEOUT_CYCLES;
         while ((handle->SR & SPI_SR_BSY) && (--timeout));
         if (timeout == 0) {
-            ret = HAL_SPI_BSY_FAILED_TO_CLEAR;
+            ret = HAL_ERR_SPI_BSY_FAILED_TO_CLEAR;
         }
     }
 
@@ -97,7 +97,7 @@ static inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx
     }
 }
 
-static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
+static __attribute__((__always_inline__)) inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
     if (!s_dma_rx_done_cbs[idx]) {
         return;
     }
@@ -126,7 +126,7 @@ hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable) {
         } else if (handle == SPI5) {
             RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
 
     } else {
@@ -141,7 +141,7 @@ hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable) {
         } else if (handle == SPI5) {
             RCC->APB2ENR &= ~RCC_APB2ENR_SPI5EN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
     }
 
@@ -167,7 +167,7 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     } else if (handle == SPI5) {
         alt_val = 6;
     } else {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     if (config->use_miso) {
@@ -252,7 +252,7 @@ void spi_master_enable(SPI_TypeDef* handle, bool enable) {
 hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // TX mapping
@@ -329,7 +329,7 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
 hal_err_t spi_master_get_dma_stream(SPI_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     *tx = s_spi_dma_map[idx].tx.stream;
@@ -342,7 +342,7 @@ hal_err_t spi_master_get_dma_stream(SPI_TypeDef* handle, DMA_Stream_TypeDef** tx
 hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t len) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     const bool is_16bit_data = handle->CR1 & SPI_CR1_DFF;
@@ -359,14 +359,14 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
             uint32_t timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_TXE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Poll till the data has been received
             timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Read the data register and discard the value
@@ -385,14 +385,14 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
             uint32_t timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_TXE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Wait till data has been received
             timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Read the data register and discard the value
@@ -405,13 +405,13 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
     uint32_t timeout = TIMEOUT_CYCLES;
     while (!(handle->SR & SPI_SR_TXE) && (--timeout));
     if (timeout == 0) {
-        return HAL_TIMEOUT;
+        return HAL_ERR_TIMEOUT;
     }
     // BSY bit
     timeout = TIMEOUT_CYCLES;
     while ((handle->SR & SPI_SR_BSY) && (--timeout));
     if (timeout == 0) {
-        return HAL_TIMEOUT;
+        return HAL_ERR_TIMEOUT;
     }
 
     return HAL_OK;
@@ -420,7 +420,7 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
 hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     const bool is_16bit_data = handle->CR1 & SPI_CR1_DFF;
@@ -437,14 +437,14 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
             uint32_t timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_TXE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Poll till the data has been received
             timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Read data
@@ -463,14 +463,14 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
             uint32_t timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_TXE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Wait till data has been received
             timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Read data
@@ -483,13 +483,13 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
     uint32_t timeout = TIMEOUT_CYCLES;
     while (!(handle->SR & SPI_SR_TXE) && (--timeout));
     if (timeout == 0) {
-        return HAL_TIMEOUT;
+        return HAL_ERR_TIMEOUT;
     }
     // BSY bit
     timeout = TIMEOUT_CYCLES;
     while ((handle->SR & SPI_SR_BSY) && (--timeout));
     if (timeout == 0) {
-        return HAL_TIMEOUT;
+        return HAL_ERR_TIMEOUT;
     }
 
     return HAL_OK;
@@ -498,7 +498,7 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
 hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t len) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     const bool is_16bit_data = handle->CR1 & SPI_CR1_DFF;
@@ -516,14 +516,14 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
             uint32_t timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_TXE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Poll till the data has been received
             timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Finally, read the data register
@@ -543,14 +543,14 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
             uint32_t timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_TXE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Wait till the data has been received
             timeout = TIMEOUT_CYCLES;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
-                return HAL_TIMEOUT;
+                return HAL_ERR_TIMEOUT;
             }
 
             // Finally, read the data register
@@ -563,13 +563,13 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
     uint32_t timeout = TIMEOUT_CYCLES;
     while (!(handle->SR & SPI_SR_TXE) && (--timeout));
     if (timeout == 0) {
-        return HAL_TIMEOUT;
+        return HAL_ERR_TIMEOUT;
     }
     // BSY bit
     timeout = TIMEOUT_CYCLES;
     while ((handle->SR & SPI_SR_BSY) && (--timeout));
     if (timeout == 0) {
-        return HAL_TIMEOUT;
+        return HAL_ERR_TIMEOUT;
     }
 
     return HAL_OK;
@@ -580,7 +580,7 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Save user passed cb
@@ -604,7 +604,7 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t len, 
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Save user passed cb
@@ -628,7 +628,7 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Save user passed cb

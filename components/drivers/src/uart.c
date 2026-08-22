@@ -1,8 +1,8 @@
 #include "stm32f411xe.h"
 #include "drivers/gpio.h"
 #include "drivers/uart.h"
-#include "drivers/dma.h"
 #include "utils/common.h"
+#include "drivers/dma.h"
 
 
 // The 3 UART channels: ISRs called when the DMA is done
@@ -33,7 +33,7 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
 
 
 // Helper
-static inline uint8_t get_index(const USART_TypeDef* handle) {
+static __attribute__((__always_inline__)) inline uint8_t get_index(const USART_TypeDef* handle) {
     if (handle == USART1) {
         return 0U;
     } else if (handle == USART2) {
@@ -45,7 +45,7 @@ static inline uint8_t get_index(const USART_TypeDef* handle) {
     }
 }
 
-static inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t idx) {
+static __attribute__((__always_inline__)) inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t idx) {
     if (!s_dma_tx_done_cbs[idx]) {
         return;
     }
@@ -59,7 +59,7 @@ static inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t i
         uint32_t timeout = TIMEOUT_CYCLES;
         while (!(handle->SR & USART_SR_TC) && (--timeout));
         if (timeout == 0) {
-            ret = HAL_UART_TC_FAILED_TO_SET;
+            ret = HAL_ERR_UART_TC_FAILED_TO_SET;
         }
     }
 
@@ -71,7 +71,7 @@ static inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t i
     s_tx_args[idx]         = NULL;
 }
 
-static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
+static __attribute__((__always_inline__)) inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
     if (!s_dma_rx_done_cbs[idx]) {
         return;
     }
@@ -94,7 +94,7 @@ hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable) {
         } else if (handle == USART6) {
             RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
 
     } else {
@@ -105,7 +105,7 @@ hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable) {
         } else if (handle == USART6) {
             RCC->APB2ENR &= ~RCC_APB2ENR_USART6EN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
     }
 
@@ -136,7 +136,7 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         handle->CR1 &= ~USART_CR1_OVER8;
         handle->BRR = (uint32_t)(mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x0FU);
     } else {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Initialize GPIO pins for UART
@@ -189,7 +189,7 @@ void uart_enable(USART_TypeDef* handle, bool enable) {
 hal_err_t uart_dma_init(USART_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // TX mapping
@@ -264,7 +264,7 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
 hal_err_t uart_get_dma_stream(USART_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     *tx = s_uart_dma_map[idx].tx.stream;
@@ -291,7 +291,7 @@ void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t len) 
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Save user passed callback
@@ -322,7 +322,7 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
 hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFF) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Save user passed callback

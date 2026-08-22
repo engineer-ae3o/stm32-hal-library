@@ -10,7 +10,7 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
         } else if (controller == DMA2) {
             RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
 
     } else {
@@ -19,7 +19,7 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
         } else if (controller == DMA2) {
             RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA2EN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
     }
 
@@ -55,7 +55,7 @@ hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream) {
             flags = (DMA_HISR_TCIF7 | DMA_HISR_HTIF7 | DMA_HISR_TEIF7 | DMA_HISR_DMEIF7 | DMA_HISR_FEIF7);
             break;
         default:
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
     }
 
     if (stream <= 3) {
@@ -72,7 +72,7 @@ hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {
     uint32_t timeout = TIMEOUT_CYCLES;
     while (!(stream->CR & DMA_SxCR_EN) && (--timeout));
     if (timeout == 0) {
-        return HAL_TIMEOUT;
+        return HAL_ERR_TIMEOUT;
     }
     return HAL_OK;
 }
@@ -82,7 +82,7 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
     uint32_t timeout = TIMEOUT_CYCLES;
     while ((stream->CR & DMA_SxCR_EN) && (--timeout));
     if (timeout == 0) {
-        return HAL_TIMEOUT;
+        return HAL_ERR_TIMEOUT;
     }
     return HAL_OK;
 }

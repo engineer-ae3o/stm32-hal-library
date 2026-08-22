@@ -10,7 +10,7 @@
 // Audio PLL check. To use a different PLL clock speed
 // provide a corresponding prescaler table, update the
 // macro in "common.h" and this check
-#if AUDIO_PLL_HZ == 76'800'000UL
+#if AUDIO_PLL_HZ == 76'800'000L
 #define prescaler_table (s_prescaler_table_76_8mhz)
 #else
 #error "No pll table defined for used frequency"
@@ -28,14 +28,14 @@ typedef struct {
 // the bit for ODD and the SPI_I2SPR_MCKOE bit
 // TODO: Compute the prescaler table
 static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
-    [I2S_FREQ_8kHz]   = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [I2S_FREQ_16kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [I2S_FREQ_22kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [I2S_FREQ_32kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [I2S_FREQ_44kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [I2S_FREQ_48kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [I2S_FREQ_96kHz]  = {.prescaler = 0U, .prescaler_with_mck = 0U},
-    [I2S_FREQ_192kHz] = {.prescaler = 0U, .prescaler_with_mck = 0U},
+    [I2S_FREQ_8kHz]   = {.prescaler = 0, .prescaler_with_mck = 0},
+    [I2S_FREQ_16kHz]  = {.prescaler = 0, .prescaler_with_mck = 0},
+    [I2S_FREQ_22kHz]  = {.prescaler = 0, .prescaler_with_mck = 0},
+    [I2S_FREQ_32kHz]  = {.prescaler = 0, .prescaler_with_mck = 0},
+    [I2S_FREQ_44kHz]  = {.prescaler = 0, .prescaler_with_mck = 0},
+    [I2S_FREQ_48kHz]  = {.prescaler = 0, .prescaler_with_mck = 0},
+    [I2S_FREQ_96kHz]  = {.prescaler = 0, .prescaler_with_mck = 0},
+    [I2S_FREQ_192kHz] = {.prescaler = 0, .prescaler_with_mck = 0},
 };
 
 
@@ -70,7 +70,7 @@ static const dma_stream_map_t s_i2s_dma_map[5] = {
 };
 
 // Helper
-static inline uint8_t get_index(const I2S_TypeDef* handle) {
+static __attribute__((__always_inline__)) inline uint8_t get_index(const I2S_TypeDef* handle) {
     if (handle == I2S1) {
         return 0;
     } else if (handle == I2S2) {
@@ -124,7 +124,7 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
         } else if (handle == I2S5) {
             RCC->APB2ENR |= RCC_APB2ENR_SPI5EN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
 
     } else {
@@ -139,7 +139,7 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
         } else if (handle == I2S5) {
             RCC->APB2ENR &= ~RCC_APB2ENR_SPI5EN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
     }
 
@@ -165,7 +165,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     } else if (handle == I2S5) {
         alt_val = 6U;
     } else {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // MCK
@@ -249,7 +249,7 @@ void i2s_master_enable(I2S_TypeDef* handle, bool enable) {
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // TX mapping
@@ -323,7 +323,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
 hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     *tx = s_i2s_dma_map[idx].tx.stream;
@@ -335,7 +335,7 @@ hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx
 hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Save user passed callback
@@ -363,7 +363,7 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len
 hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Save user passed callback
@@ -387,7 +387,7 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len, dma_t
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
@@ -416,7 +416,7 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uin
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
@@ -435,7 +435,7 @@ hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle) {
 hal_err_t i2s_master_dbm_start(I2S_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
     return dma_enable_stream(s_i2s_dma_map[idx].rx.stream);
 }
@@ -443,7 +443,7 @@ hal_err_t i2s_master_dbm_start(I2S_TypeDef* handle) {
 hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
     return dma_disable_stream(s_i2s_dma_map[idx].rx.stream);
 }
@@ -461,5 +461,5 @@ uint32_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle) {
     // 0 represents buf_a, and 1 buf_b. If the bit
     // is 0, that means buf_a is currently being used
     // by the DMA controller buf_b is filled and free
-    return (stream->CR & DMA_SxCR_CT) ? 0x0U : 0x1U;
+    return (stream->CR & DMA_SxCR_CT) ? 0x0 : 0x1U;
 }

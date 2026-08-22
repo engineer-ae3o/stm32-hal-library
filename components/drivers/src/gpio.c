@@ -18,7 +18,7 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
         } else if (port == GPIOH) {
             RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
 
     } else {
@@ -35,7 +35,7 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
         } else if (port == GPIOH) {
             RCC->AHB1ENR &= ~RCC_AHB1ENR_GPIOHEN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
     }
 
@@ -71,7 +71,7 @@ hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, uint8_t pin, uint8_t a
         port->AFR[1] &= ~(0xFUL << ((pin - 8) * 4UL));
         port->AFR[1] |= ((alt_val & 0xFUL) << ((pin - 8) * 4UL));
     } else {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     return HAL_OK;
@@ -109,7 +109,7 @@ void gpio_level_set(GPIO_TypeDef* port, uint8_t pin, bool level) {
 }
 
 void gpio_level_toggle(GPIO_TypeDef* port, uint8_t pin) {
-    //
+    // Read the level of the pin and then toggle it
     gpio_level_set(port, pin, !gpio_get_level(port, pin));
 }
 
@@ -137,7 +137,7 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_
     } else if (port == GPIOH) {
         port_code = 0b111U;
     } else {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Enable the SYSCFG clock

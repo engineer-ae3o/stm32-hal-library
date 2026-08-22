@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "utils/common.h"
 #include "drivers/adc.h"
+#include "utils/err.h"
 
 #include <stddef.h>
 
@@ -12,9 +13,13 @@
 #define ADC_DMA_CHANNEL (0)
 #define ADC_DMA_IRQ_TYPE (DMA2_Stream0_IRQn)
 
-// To save user passed callback
+// To save user passed callbacks
 static dma_trans_done_cb_t s_dma_trans_done_cb = NULL;
 static void*               s_dma_trans_cb_arg  = NULL;
+
+static adc_injected_done_cb_t s_injected_done_cb  = NULL;
+static void*                  s_injected_done_arg = NULL;
+
 
 // Public API
 void adc_clk_enable(bool enable) {
@@ -27,134 +32,139 @@ void adc_clk_enable(bool enable) {
 }
 
 void adc_power_on(bool on) {
-    ADC1->CR2 &= ~ADC_CR2_ADON;
     if (on) {
         ADC1->CR2 |= ADC_CR2_ADON;
+    } else {
+        ADC1->CR2 &= ~ADC_CR2_ADON;
     }
 }
 
-void adc_init(const adc_config_t* config) {
-    (void)config;
+void adc_configure_analog_clk(uint8_t prescaler) {
+    (void)prescaler;
 }
 
-hal_err_t adc_dma_init(void) {
-    hal_err_t ret = dmax_clk_enable(ADC_DMA_CONTROLLER, true);
-    if (ret != HAL_OK) {
-        return ret;
+
+// For use with the regular group
+void adc_regular_mode_init(void) {
+}
+
+void adc_regular_mode_deinit(void) {
+}
+
+hal_err_t adc_regular_mode_get_oneshot(adc_channel_t channel, uint16_t* data) {
+    if (data == NULL) {
+        return HAL_ERR_INVALID_ARG;
     }
 
-    // Disable DMA stream before configuring
-    ret = dma_disable_stream(ADC_DMA_STREAM);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    // Set the channel
+    (void)channel;
 
-    // Stream configuration
-    dma_clear_flags(ADC_DMA_CONTROLLER, ADC_DMA_STREAM_NO);
-    dma_set_channel(ADC_DMA_STREAM, ADC_DMA_CHANNEL);
-    dma_set_direct_mode(ADC_DMA_STREAM, true);
-    dma_set_direction(ADC_DMA_STREAM, DMA_DIR_P_M);
-    dma_set_flow_controller(ADC_DMA_STREAM, true);
-    dma_set_stream_priority(ADC_DMA_STREAM, DMA_PRIORITY_LOW);
-    dma_enable_circm_dbm(ADC_DMA_STREAM, false, false);
-    dma_set_increment(ADC_DMA_STREAM, false, true);
-    dma_enable_irqs(ADC_DMA_STREAM, true, true, false, true);
-    dma_set_addresses(ADC_DMA_STREAM, &ADC1->DR, NULL, NULL);
-    dma_set_per_mem_size(ADC_DMA_STREAM, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
-
-    // Enable DMA stream interrupts
-    NVIC_EnableIRQ(ADC_DMA_IRQ_TYPE);
-    NVIC_SetPriority(ADC_DMA_IRQ_TYPE, ADC_DMA_NVIC_IRQ_PRIORITY);
-
-    return HAL_OK;
-}
-
-DMA_Stream_TypeDef* adc_get_dma_stream(void) {
-    return ADC_DMA_STREAM;
-}
-
-uint16_t adc_get_sample_oneshot(void) {
-    // Disable continuous sampling
-    ADC1->CR2 &= ~ADC_CR2_CONT;
-
-    // Start a conversion
+    // Start the conversion
     ADC1->CR2 |= ADC_CR2_SWSTART;
 
-    // Poll till the end of conversion is reached
-    while (!(ADC1->SR & ADC_SR_EOC));
+    // Poll till conversion done
+    uint32_t timeout = TIMEOUT_CYCLES;
+    while (ADC1->SR & ADC_SR_EOC && timeout--);
 
-    return (uint16_t)ADC1->DR;
-}
-
-hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
-
-    // Set memory address and length
-    dma_set_addresses(ADC_DMA_STREAM, NULL, buf, NULL);
-    dma_set_trans_length(ADC_DMA_STREAM, len);
-
-    // Save user passed callback
-    if (callback) {
-        s_dma_trans_done_cb = callback;
-        s_dma_trans_cb_arg  = arg;
+    if (timeout == 0) {
+        return HAL_ERR_TIMEOUT;
     }
 
-    // Enable stream
-    return dma_enable_stream(ADC_DMA_STREAM);
+    // Get the result
+    *data = (uint16_t)ADC1->DR;
+
+    return HAL_OK;
 }
 
-hal_err_t adc_dbm_init(void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
+hal_err_t adc_regular_mode_start_conv(const adc_channel_t* channels, size_t num_of_channels, dma_trans_done_cb_t cb, void* arg) {
+    (void)channels;
+    (void)num_of_channels;
 
-    hal_err_t ret = dma_disable_stream(ADC_DMA_STREAM);
-    if (ret != HAL_OK) {
-        return ret;
-    }
-
-    // Configure stream
-    dma_enable_circm_dbm(ADC_DMA_STREAM, true, true);
-    dma_set_addresses(ADC_DMA_STREAM, &ADC1->DR, buf_a, buf_b);
-    dma_set_trans_length(ADC_DMA_STREAM, len);
-
-    // Write 0 to CT to ensure the DMA controller starts at buf_a
-    ADC_DMA_STREAM->CR &= ~DMA_SxCR_CT;
-
-    // Save user passed callback
-    if (callback) {
-        s_dma_trans_done_cb = callback;
+    if (cb) {
+        s_dma_trans_done_cb = cb;
         s_dma_trans_cb_arg  = arg;
     }
 
     return HAL_OK;
 }
 
-hal_err_t adc_dbm_deinit(void) {
 
-    hal_err_t ret = dma_disable_stream(ADC_DMA_STREAM);
-    if (ret != HAL_OK) {
-        return ret;
+// For use with the injected group
+void adc_injected_mode_init(void) {
+}
+
+void adc_injected_mode_deinit(void) {
+}
+
+hal_err_t adc_injected_mode_start_conv(const adc_channel_t* channels, size_t num_of_channels, adc_injected_done_cb_t cb, void* arg) {
+    if (channels == NULL || num_of_channels > MAX_INJECTED_CHANNELS || num_of_channels == 0) {
+        return HAL_ERR_INVALID_ARG;
     }
 
-    dma_enable_circm_dbm(ADC_DMA_STREAM, false, false);
-    dma_set_trans_length(ADC_DMA_STREAM, 0);
+    // Single conversion mode
+    if (num_of_channels == 1) {
+        ADC1->CR2 |= ADC_CR2_JSWSTART;
+    }
+
+    if (cb) {
+        s_injected_done_cb  = cb;
+        s_injected_done_arg = arg;
+    }
 
     return HAL_OK;
 }
 
-hal_err_t adc_dbm_start(void) {
-    return dma_enable_stream(ADC_DMA_STREAM);
+hal_err_t adc_injected_mode_get_result(uint16_t* buffer, size_t num_of_channels) {
+    if (buffer == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    if (ADC1->SR & ADC_SR_JEOC) {
+        return HAL_ERR_NOT_FOUND;
+    }
+
+    switch (num_of_channels) {
+        case 1:
+            buffer[0] = (uint16_t)ADC1->JDR1;
+            break;
+        case 2:
+            buffer[0] = (uint16_t)ADC1->JDR1;
+            buffer[1] = (uint16_t)ADC1->JDR2;
+            break;
+        case 3:
+            buffer[0] = (uint16_t)ADC1->JDR1;
+            buffer[1] = (uint16_t)ADC1->JDR2;
+            buffer[2] = (uint16_t)ADC1->JDR3;
+            break;
+        case 4:
+            buffer[0] = (uint16_t)ADC1->JDR1;
+            buffer[1] = (uint16_t)ADC1->JDR2;
+            buffer[2] = (uint16_t)ADC1->JDR3;
+            buffer[3] = (uint16_t)ADC1->JDR4;
+            break;
+        default:
+            return HAL_ERR_INVALID_ARG;
+    }
+
+    return HAL_OK;
 }
 
-hal_err_t adc_dbm_stop(void) {
-    return dma_disable_stream(ADC_DMA_STREAM);
+
+// Interrupt handlers
+void ADC_IRQHandler(void) {
+    // Invoke user cb once the ADC sampling on the injected group is complete
+    if (s_injected_done_cb) {
+        s_injected_done_cb(s_injected_done_arg);
+        s_injected_done_cb  = NULL;
+        s_injected_done_arg = NULL;
+    }
 }
 
 void DMA2_Stream0_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream0, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0, DMA_LISR_HTIF0);
-
-    // Invoke user callback
+    // Invoke user cb once the ADC sampling and DMA transfer on the regular group is complete
     if (s_dma_trans_done_cb) {
-        s_dma_trans_done_cb(s_dma_trans_cb_arg, ret);
+        s_dma_trans_done_cb(s_dma_trans_cb_arg, HAL_OK);
+        s_dma_trans_done_cb = NULL;
+        s_dma_trans_cb_arg  = NULL;
     }
-}
-
-void ADC_IRQHandler(void) {
 }

@@ -69,35 +69,34 @@ typedef struct {
 typedef void (*dma_trans_done_cb_t)(void* arg, hal_err_t error);
 
 // Helper to abstract checking and clearing of DMA irq flags
-[[maybe_unused]] static inline hal_err_t dma_isr_helper(
-    DMA_Stream_TypeDef* stream, volatile uint32_t* irq_clr_rg, volatile uint32_t* irq_sta_rg, uint32_t tc, uint32_t te, uint32_t dme, uint32_t ht) {
-
+__attribute__((__always_inline__)) inline hal_err_t dma_isr_helper(
+    DMA_Stream_TypeDef* stream, volatile uint32_t* irq_clr_reg, volatile uint32_t* irq_sta_reg, uint32_t tc, uint32_t te, uint32_t dme, uint32_t ht) {
     hal_err_t error = HAL_OK;
 
     // Transfer complete
-    if (*irq_sta_rg & tc) {
+    if (*irq_sta_reg & tc) {
         // Clear DMA TC interrupt bit
-        *irq_clr_rg = tc;
+        *irq_clr_reg = tc;
     }
 
     // Transfer error
-    if (*irq_sta_rg & te) {
+    if (*irq_sta_reg & te) {
         // Clear DMA TE interrupt bit
-        *irq_clr_rg = te;
-        error       = HAL_DMA_TE;
+        *irq_clr_reg = te;
+        error        = HAL_ERR_DMA_TE;
     }
 
     // Direct mode error
-    if (*irq_sta_rg & dme) {
+    if (*irq_sta_reg & dme) {
         // Clear DMA DME interrupt bit
-        *irq_clr_rg = dme;
-        error       = HAL_DMA_DME;
+        *irq_clr_reg = dme;
+        error        = HAL_ERR_DMA_DME;
     }
 
     // Half transfer complete
-    if (*irq_sta_rg & ht) {
+    if (*irq_sta_reg & ht) {
         // Clear DMA HT interrupt bit
-        *irq_clr_rg = ht;
+        *irq_clr_reg = ht;
     }
 
     // Return if the stream is in circular mode or half transfer,

@@ -6,8 +6,8 @@
 
 
 // Forward declarations
-static inline bool send_start(I2C_TypeDef* handle);
-static inline void send_stop(I2C_TypeDef* handle);
+static __attribute__((__always_inline__)) inline bool send_start(I2C_TypeDef* handle);
+static __attribute__((__always_inline__)) inline void send_stop(I2C_TypeDef* handle);
 
 static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t len);
 static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t len);
@@ -23,7 +23,7 @@ hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
         } else if (handle == I2C3) {
             RCC->APB1ENR |= RCC_APB1ENR_I2C3EN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
 
     } else {
@@ -34,7 +34,7 @@ hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
         } else if (handle == I2C3) {
             RCC->APB1ENR &= ~RCC_APB1ENR_I2C3EN;
         } else {
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
         }
     }
 
@@ -98,7 +98,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
         handle->CCR |= ((ccr & 0xFFFUL) << I2C_CCR_CCR_Pos);
 
     } else {
-        return HAL_INVALID_ARG;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Digital filter value
@@ -121,12 +121,12 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t len) {
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
-        return HAL_INVALID_STATE;
+        return HAL_ERR_INVALID_STATE;
     }
 
     // Start transaction
     if (!send_start(handle)) {
-        return HAL_I2C_ARBITRATION_LOST;
+        return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
     // Transmit bytes
@@ -141,12 +141,12 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* 
 hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t len) {
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
-        return HAL_INVALID_STATE;
+        return HAL_ERR_INVALID_STATE;
     }
 
     // Start transaction
     if (!send_start(handle)) {
-        return HAL_I2C_ARBITRATION_LOST;
+        return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
     // No need to call send_stop() as rx_trans() already does
@@ -156,12 +156,12 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, s
 hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t* tx_data, size_t tx_len, uint8_t* rx_data, size_t rx_len) {
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
-        return HAL_INVALID_STATE;
+        return HAL_ERR_INVALID_STATE;
     }
 
     // Start transaction
     if (!send_start(handle)) {
-        return HAL_I2C_ARBITRATION_LOST;
+        return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
     // Start TX transaction
@@ -173,7 +173,7 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t
 
     // Send a repeated start
     if (!send_start(handle)) {
-        return HAL_I2C_ARBITRATION_LOST;
+        return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
     // Start the RX transaction
@@ -181,7 +181,7 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t
 }
 
 // Helpers
-static inline bool send_start(I2C_TypeDef* handle) {
+static bool send_start(I2C_TypeDef* handle) {
     // Set start bit
     handle->CR1 |= I2C_CR1_START;
 
@@ -208,7 +208,7 @@ static inline bool send_start(I2C_TypeDef* handle) {
     return true;
 }
 
-static inline void send_stop(I2C_TypeDef* handle) {
+static void send_stop(I2C_TypeDef* handle) {
     handle->CR1 |= I2C_CR1_STOP;
 }
 
@@ -223,7 +223,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
         // Check all error flags since the success flag doesn't get set when there's an error
         if (handle->SR1 & I2C_SR1_AF) {
             handle->SR1 &= ~I2C_SR1_AF;
-            return HAL_I2C_DEVICE_NOT_FOUND;
+            return HAL_ERR_I2C_DEVICE_NOT_FOUND;
         }
         if (handle->SR1 & I2C_SR1_BERR) {
             handle->SR1 &= ~I2C_SR1_BERR;
@@ -231,7 +231,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
         }
         if (handle->SR1 & I2C_SR1_ARLO) {
             handle->SR1 &= ~I2C_SR1_ARLO;
-            return HAL_I2C_ARBITRATION_LOST;
+            return HAL_ERR_I2C_ARBITRATION_LOST;
         }
     }
 
@@ -252,7 +252,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
             // Check all error flags since the success flag doesn't get set when there's an error
             if (handle->SR1 & I2C_SR1_AF) {
                 handle->SR1 &= ~I2C_SR1_AF;
-                return HAL_TX_ERROR;
+                return HAL_ERR_TX;
             }
             if (handle->SR1 & I2C_SR1_BERR) {
                 handle->SR1 &= ~I2C_SR1_BERR;
@@ -260,13 +260,13 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
             }
             if (handle->SR1 & I2C_SR1_ARLO) {
                 handle->SR1 &= ~I2C_SR1_ARLO;
-                return HAL_I2C_ARBITRATION_LOST;
+                return HAL_ERR_I2C_ARBITRATION_LOST;
             }
         }
 
         // Return if the TXE bit still has not been set
         if (!(handle->SR1 & I2C_SR1_TXE) || (timeout == 0)) {
-            return HAL_TX_ERROR;
+            return HAL_ERR_TX;
         }
 
         // Transmit byte
@@ -279,7 +279,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
         // Check all error flags since the success flag doesn't get set when there's an error
         if (handle->SR1 & I2C_SR1_AF) {
             handle->SR1 &= ~I2C_SR1_AF;
-            return HAL_TX_ERROR;
+            return HAL_ERR_TX;
         }
         if (handle->SR1 & I2C_SR1_BERR) {
             handle->SR1 &= ~I2C_SR1_BERR;
@@ -287,13 +287,13 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
         }
         if (handle->SR1 & I2C_SR1_ARLO) {
             handle->SR1 &= ~I2C_SR1_ARLO;
-            return HAL_I2C_ARBITRATION_LOST;
+            return HAL_ERR_I2C_ARBITRATION_LOST;
         }
     }
 
     // Return if the BTF bit still has not been set
     if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
-        return HAL_TX_ERROR;
+        return HAL_ERR_TX;
     }
 
     return HAL_OK;
@@ -310,7 +310,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
         if (handle->SR1 & I2C_SR1_AF) {
             handle->SR1 &= ~I2C_SR1_AF;
             send_stop(handle);
-            return HAL_I2C_DEVICE_NOT_FOUND;
+            return HAL_ERR_I2C_DEVICE_NOT_FOUND;
         }
         if (handle->SR1 & I2C_SR1_BERR) {
             handle->SR1 &= ~I2C_SR1_BERR;
@@ -319,7 +319,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
         if (handle->SR1 & I2C_SR1_ARLO) {
             handle->SR1 &= ~I2C_SR1_ARLO;
             send_stop(handle);
-            return HAL_I2C_ARBITRATION_LOST;
+            return HAL_ERR_I2C_ARBITRATION_LOST;
         }
     }
 
@@ -342,7 +342,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
         // Not a valid case
         case 0:
             send_stop(handle);
-            return HAL_INVALID_ARG;
+            return HAL_ERR_INVALID_ARG;
 
         // When N == 1
         case 1:
@@ -366,13 +366,13 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                 }
                 if (handle->SR1 & I2C_SR1_ARLO) {
                     handle->SR1 &= ~I2C_SR1_ARLO;
-                    return HAL_I2C_ARBITRATION_LOST;
+                    return HAL_ERR_I2C_ARBITRATION_LOST;
                 }
             }
 
             // Return if the RXE bit still has not been set
             if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) {
-                return HAL_RX_ERROR;
+                return HAL_ERR_RX;
             }
 
             // Finally, read byte
@@ -405,14 +405,14 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                 if (handle->SR1 & I2C_SR1_ARLO) {
                     handle->SR1 &= ~I2C_SR1_ARLO;
                     send_stop(handle);
-                    return HAL_I2C_ARBITRATION_LOST;
+                    return HAL_ERR_I2C_ARBITRATION_LOST;
                 }
             }
 
             // Return if the BTF bit still has not been set
             if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
                 send_stop(handle);
-                return HAL_RX_ERROR;
+                return HAL_ERR_RX;
             }
 
             // Send stop now so the peripheral does this immediately after the transaction
@@ -444,14 +444,14 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                             if (handle->SR1 & I2C_SR1_ARLO) {
                                 handle->SR1 &= ~I2C_SR1_ARLO;
                                 send_stop(handle);
-                                return HAL_I2C_ARBITRATION_LOST;
+                                return HAL_ERR_I2C_ARBITRATION_LOST;
                             }
                         }
 
                         // Return if the BTF bit still has not been set
                         if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
                             send_stop(handle);
-                            return HAL_RX_ERROR;
+                            return HAL_ERR_RX;
                         }
 
                         // Clear the ACK bit so the peripheral sends a NACK after all reception has been completed
@@ -474,14 +474,14 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                             if (handle->SR1 & I2C_SR1_ARLO) {
                                 handle->SR1 &= ~I2C_SR1_ARLO;
                                 send_stop(handle);
-                                return HAL_I2C_ARBITRATION_LOST;
+                                return HAL_ERR_I2C_ARBITRATION_LOST;
                             }
                         }
 
                         // Return if the BTF bit still has not been set
                         if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
                             send_stop(handle);
-                            return HAL_RX_ERROR;
+                            return HAL_ERR_RX;
                         }
 
                         // Send stop now so the peripheral does this immediately after the transaction
@@ -509,14 +509,14 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                                 if (handle->SR1 & I2C_SR1_ARLO) {
                                     handle->SR1 &= ~I2C_SR1_ARLO;
                                     send_stop(handle);
-                                    return HAL_I2C_ARBITRATION_LOST;
+                                    return HAL_ERR_I2C_ARBITRATION_LOST;
                                 }
                             }
 
                             // Return if RXNE still isn't set
                             if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) {
                                 send_stop(handle);
-                                return HAL_RX_ERROR;
+                                return HAL_ERR_RX;
                             }
 
                             // Read byte

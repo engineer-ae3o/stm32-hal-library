@@ -136,7 +136,7 @@ __attribute__((naked)) void UsageFault_Handler(void) {
     LOGE("Fault", "PSR: 0x%X", psr);
     LOGE("Fault", "CFSR: 0x%X", cfsr);
 
-    __asm("bkpt #0");
+    __asm volatile("bkpt #0");
 
     // Halt manually if the debugger is not attached
     while (true);
@@ -165,7 +165,7 @@ __attribute__((naked)) void UsageFault_Handler(void) {
     LOGE("Fault", "CFSR: 0x%X", cfsr);
     LOGE("Fault", "BFAR: 0x%X", bfar);
 
-    __asm("bkpt #0");
+    __asm volatile("bkpt #0");
 
     // Halt manually if the debugger is not attached
     while (true);
@@ -192,7 +192,7 @@ __attribute__((naked)) void UsageFault_Handler(void) {
     LOGE("Fault", "PC: 0x%X", pc);
     LOGE("Fault", "CFSR: 0x%X", cfsr);
 
-    __asm("bkpt #0");
+    __asm volatile("bkpt #0");
 
     // Halt manually if the debugger is not attached
     while (true);

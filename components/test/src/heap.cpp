@@ -161,9 +161,9 @@ namespace test::heap {
         std::array<void*, 35> ptrs{};
         size_t                allocated_count = 0;
 
-        for (auto& p : ptrs) {
-            p = lib_malloc(512);
-            if (p != nullptr) {
+        for (auto& ptr : ptrs) {
+            ptr = lib_malloc(512);
+            if (ptr != nullptr) {
                 allocated_count++;
             }
         }
@@ -171,12 +171,12 @@ namespace test::heap {
         heap_info_t info{};
         get_heap_stats(&info);
 
-        // 32KiB heap fits exactly 31 x 1024-byte bins (after instance overhead)
+        // A 32kB heap fits exactly 31 x 1024byte bins (after the instance overhead)
         TEST_ASSERT_EQUAL(31, allocated_count);
         TEST_ASSERT_EQUAL(4, info.out_of_mem_count);
 
-        for (auto& p : ptrs) {
-            lib_free(p);
+        for (auto& ptr : ptrs) {
+            lib_free(ptr);
         }
 
         assert_heap_clean();
@@ -185,7 +185,8 @@ namespace test::heap {
     void profile_raw_allocation_cycles() {
         assert_heap_clean();
 
-        constexpr size_t             ROUNDS = 50;
+        constexpr uint32_t ROUNDS = 100;
+
         std::array<uint32_t, ROUNDS> alloc_cycles{};
         std::array<uint32_t, ROUNDS> free_cycles{};
         std::array<void*, ROUNDS>    ptrs{};
@@ -195,7 +196,6 @@ namespace test::heap {
             prof_start();
             ptrs[i]         = lib_malloc(256 - O1HEAP_ALIGNMENT);
             alloc_cycles[i] = prof_end();
-
             TEST_ASSERT_NOT_NULL(ptrs[i]);
         }
 
@@ -215,7 +215,7 @@ namespace test::heap {
         const uint64_t total_free_cycles = std::accumulate(free_cycles.begin(), free_cycles.end(), 0ULL);
         const uint32_t avg_free          = static_cast<uint32_t>(total_free_cycles / ROUNDS);
 
-        LOGI(TAG, "--- O1HEAP BENCHMARK RESULTS (%zu rounds) ---", ROUNDS);
+        LOGI(TAG, "--- O1HEAP BENCHMARK RESULTS (%lu rounds) ---", ROUNDS);
         LOGI(TAG, "lib_malloc: Min = %lu cycles | Avg = %lu cycles | Max = %lu cycles", *min_alloc, avg_alloc, *max_alloc);
         LOGI(TAG, "lib_free  : Min = %lu cycles | Avg = %lu cycles | Max = %lu cycles", *min_free, avg_free, *max_free);
 
@@ -226,12 +226,16 @@ namespace test::heap {
     }
 
     void all() {
+        LOGI(TAG, "Starting the tests on the heap allocation driver");
+
         RUN_TEST(invalid_arg_guards);
         RUN_TEST(calloc_zero_initialization);
         RUN_TEST(realloc_semantics_and_data_preservation);
         RUN_TEST(max_capacity_packing_efficiency);
         RUN_TEST(oom_counter_and_power_of_two_penalty);
         RUN_TEST(profile_raw_allocation_cycles);
+
+        LOGI(TAG, "Done with all tests on the heap allocation driver");
     }
 
 } // namespace test::heap

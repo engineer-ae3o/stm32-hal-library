@@ -6,7 +6,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdalign.h>
 
 
 // The heap
@@ -79,20 +78,18 @@ bool check_heap_state(void) {
 
 void get_heap_stats(heap_info_t* info) {
     ASSERT(info);
-
-    O1HeapDiagnostics diagnostics = o1heapGetDiagnostics(s_heap_handle);
-    info->max_capacity            = diagnostics.capacity;
-    info->allocated_size          = diagnostics.allocated;
-    info->peak_allocated_size     = diagnostics.peak_allocated;
-    info->peak_request_size       = diagnostics.peak_request_size;
-    info->out_of_mem_count        = (size_t)diagnostics.oom_count;
-    info->num_of_allocations      = s_num_of_allocations;
+    const O1HeapDiagnostics diagnostics = o1heapGetDiagnostics(s_heap_handle);
+    info->max_capacity                  = diagnostics.capacity;
+    info->allocated_size                = diagnostics.allocated;
+    info->peak_allocated_size           = diagnostics.peak_allocated;
+    info->peak_request_size             = diagnostics.peak_request_size;
+    info->out_of_mem_count              = (size_t)diagnostics.oom_count;
+    info->num_of_allocations            = s_num_of_allocations;
 }
 
 void print_heap_stats(void) {
     heap_info_t info;
     get_heap_stats(&info);
-
     LOGI(TAG, "Max heap capacity: %zubytes", info.max_capacity);
     LOGI(TAG, "Size of heap used: %zubytes", info.allocated_size);
     LOGI(TAG, "Highest size allocated since boot: %zubytes", info.peak_allocated_size);

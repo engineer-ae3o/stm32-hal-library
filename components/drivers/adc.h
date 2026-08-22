@@ -11,6 +11,7 @@ extern "C" {
 #include "drivers/dma.h"
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 
@@ -21,44 +22,55 @@ typedef enum : uint8_t {
     ADC_RESOLUTION_12_BITS,
 } adc_resolution_t;
 
-typedef struct {
-    adc_resolution_t resolution;
-    uint8_t          prescaler;
-} adc_config_t;
+typedef enum : uint8_t {
+    // External channels
+    ADC_CHANNEL_0,  // PA0
+    ADC_CHANNEL_1,  // PA1
+    ADC_CHANNEL_2,  // PA2
+    ADC_CHANNEL_3,  // PA3
+    ADC_CHANNEL_4,  // PA4
+    ADC_CHANNEL_5,  // PA5
+    ADC_CHANNEL_6,  // PA6
+    ADC_CHANNEL_7,  // PA7
+    ADC_CHANNEL_8,  // PB0
+    ADC_CHANNEL_9,  // PB1
+    ADC_CHANNEL_10, // PC0
+    ADC_CHANNEL_11, // PC1
+    ADC_CHANNEL_12, // PC2
+    ADC_CHANNEL_13, // PC3
+    ADC_CHANNEL_14, // PC4
+    ADC_CHANNEL_15, // PC5
+    // Internal channels
+    ADC_CHANNEL_16, // V_bat
+    ADC_CHANNEL_17, // V_refint
+    ADC_CHANNEL_18, // Internal temperature sensor
+} adc_channel_t;
+
+
+#define MAX_REGULAR_CHANNELS 16
+#define MAX_INJECTED_CHANNELS 4
+
 
 void adc_clk_enable(bool enable);
-
-void adc_init(const adc_config_t* config);
 void adc_power_on(bool on);
+void adc_configure_analog_clk(uint8_t prescaler);
 
-hal_err_t adc_dma_init(void);
 
-DMA_Stream_TypeDef* adc_get_dma_stream(void);
+// For operation with the ADC regular mode
+void      adc_regular_mode_init(void);
+void      adc_regular_mode_deinit(void);
+hal_err_t adc_regular_mode_get_oneshot(adc_channel_t channel, uint16_t* data);
+hal_err_t adc_regular_mode_start_conv(const adc_channel_t* channels, size_t num_of_channels, dma_trans_done_cb_t cb, void* arg);
+hal_err_t adc_regular_end_start_conv();
 
-// Polling oneshot function: Returns 1 sample
-uint16_t adc_get_sample_oneshot(void);
 
-// DMA backed oneshot API: Transfers N samples into user buffer
-hal_err_t adc_get_sample_continuous(void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg);
+// For operation with the ADC injected mode
+typedef void (*adc_injected_done_cb_t)(void* arg);
 
-void adc_set_threshold(uint8_t low, uint8_t high);
-void adc_set_sequence(uint8_t sequence);
-
-// Double buffering API
-// @note These APIs are mutually exclusive with the DMA oneshot function
-// User should determine which buffer is free with adc_dbm_get_filled_buffer()
-hal_err_t adc_dbm_init(void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg);
-hal_err_t adc_dbm_deinit(void);
-
-// When start is called, the DMA starts filling buffer A, and
-// then the isr is fired on completion, the starts filling B
-// @note Calling stop can cause the peripheral to drop samples
-hal_err_t adc_dbm_start(void);
-hal_err_t adc_dbm_stop(void);
-
-// @return 0x0 if buf_a is filled and the DMA controller has started filling buf_b,
-// 0x1 if buf_b is filled and buf_a is in use, and 0xFF if an invalid arg is passed
-uint32_t adc_dbm_get_filled_buffer(void);
+void      adc_injected_mode_init(void);
+void      adc_injected_mode_deinit(void);
+hal_err_t adc_injected_mode_start_conv(const adc_channel_t* channels, size_t num_of_channels, adc_injected_done_cb_t cb, void* arg);
+hal_err_t adc_injected_mode_get_result(uint16_t* buffer, size_t num_of_channels);
 
 
 #ifdef __cplusplus
