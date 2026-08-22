@@ -57,10 +57,10 @@ typedef enum : uint8_t {
 // General control of the ADC
 void adc_clk_enable(bool enable);
 void adc_power_on(bool on);
-void adc_configure_analog_clk(uint8_t prescaler);
-void adc_configure_sample_time(uint8_t cycles);
 void adc_enable_nvic_irq(void);
 void adc_disable_nvic_irq(void);
+void adc_configure_analog_clk(uint8_t prescaler);
+void adc_configure_sample_time(uint8_t cycles);
 
 // For operation with the ADC regular mode
 hal_err_t adc_regular_mode_get_oneshot(adc_ext_channel_t channel, uint16_t* data);

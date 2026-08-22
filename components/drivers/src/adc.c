@@ -31,7 +31,6 @@ void adc_clk_enable(bool enable) {
     } else {
         RCC->APB2ENR &= ~RCC_APB2ENR_ADC1EN;
     }
-
     __DSB();
 }
 
@@ -43,14 +42,6 @@ void adc_power_on(bool on) {
     }
 }
 
-void adc_configure_analog_clk(uint8_t prescaler) {
-    (void)prescaler;
-}
-
-void adc_configure_sample_time(uint8_t cycles) {
-    (void)cycles;
-}
-
 void adc_enable_nvic_irq(void) {
     NVIC_SetPriority(ADC_IRQn, ADC_DMA_NVIC_IRQ_PRIORITY);
     NVIC_EnableIRQ(ADC_IRQn);
@@ -58,6 +49,16 @@ void adc_enable_nvic_irq(void) {
 
 void adc_disable_nvic_irq(void) {
     NVIC_DisableIRQ(ADC_IRQn);
+}
+
+void adc_configure_analog_clk(uint8_t prescaler) {
+    // TODO: COnfigure the prescaler
+    (void)prescaler;
+}
+
+void adc_configure_sample_time(uint8_t cycles) {
+    // TODO: COnfigure the sample time
+    (void)cycles;
 }
 
 
