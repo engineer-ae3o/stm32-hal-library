@@ -71,7 +71,7 @@ namespace profile {
         // instead of rand() to avoid the overhead of libc.
         constexpr uint32_t ARENA_SIZE = 32 * 1024;
 
-        alignas(O1HEAP_ALIGNMENT) static std::array<uint8_t, ARENA_SIZE> arena{};
+        alignas(O1HEAP_ALIGNMENT) std::array<uint8_t, ARENA_SIZE> arena{};
 
         constexpr uint32_t SAMPLE_SIZE = 1'000;
         constexpr uint32_t POOL_SIZE   = 64; // Outstanding allocations kept live during the test
