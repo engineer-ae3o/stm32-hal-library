@@ -80,18 +80,15 @@ hal_err_t adc_regular_mode_get_oneshot(adc_ext_channel_t channel, uint16_t* data
     }
 
     // Set the channel
-    (void)channel;
+    ADC1->SQR1 |= channel;
+    ADC1->SQR1 |= channel;
 
     // Start the conversion and disable continuous conversion mode since we are only sampling a single channel
     ADC1->CR2 &= ~ADC_CR2_CONT;
     ADC1->CR2 |= ADC_CR2_SWSTART;
 
-    // Poll till the conversion is done, that is, until the EOC bit is set
-    uint32_t timeout_cycles = TIMEOUT_CYCLES;
-    while (!(ADC1->SR & ADC_SR_EOC) && --timeout_cycles);
-    if (timeout_cycles == 0) {
-        return HAL_ERR_TIMEOUT;
-    }
+    // Poll till the conversion is complete
+    POLL_TILL_CONV_DONE();
 
     // Get the final result
     *data = (uint16_t)ADC1->DR;
@@ -117,22 +114,22 @@ hal_err_t adc_injected_mode_start_conv(const adc_ext_channel_t* channels, size_t
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (num_of_channels == 1) {
-        // Single conversion mode
-        ADC1->CR2 |= ADC_CR2_JSWSTART;
-    } else {
-        // Enable scan mode if we have more than one channel
-        ADC1->CR2 |= ADC_CR1_SCAN;
+    // Save user callback
+    if (cb) {
+        s_injected_done_cb  = cb;
+        s_injected_done_arg = arg;
     }
 
     // Enable interrupts for the injected mode and set the number of channels in the [0:1] bit positions of the JSQR register
     ADC1->CR1 |= ADC_CR1_JEOCIE;
     ADC1->JSQR |= (num_of_channels & 0b11);
 
-    // Save user callback
-    if (cb) {
-        s_injected_done_cb  = cb;
-        s_injected_done_arg = arg;
+    if (num_of_channels == 1) {
+        // Single conversion mode
+        ADC1->CR2 |= ADC_CR2_JSWSTART;
+    } else {
+        // Enable scan mode if we have more than one channel
+        ADC1->CR2 |= ADC_CR1_SCAN;
     }
 
     return HAL_OK;
@@ -182,30 +179,31 @@ typedef enum : uint8_t {
     ADC_CHANNEL_VBAT = 18, // V_bat
 } adc_int_channel_t;
 
-
 hal_err_t get_v_bat(uint16_t* v_bat) {
     if (v_bat == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
     // Set the channel
-    // TODO: Set ADC_CHANNEL_VBAT as the channel
+    ADC1->SQR1 |= ADC_CHANNEL_VBAT;
+    ADC1->SQR1 |= ADC_CHANNEL_VBAT;
 
     // Switch to V_bat so the ADC can measure it
     ADC->CCR |= ADC_CCR_VBATE;
 
     // Start the conversion
+    ADC1->CR2 &= ~ADC_CR2_CONT;
     ADC1->CR2 |= ADC_CR2_SWSTART;
 
     // Poll till the conversion is complete
     POLL_TILL_CONV_DONE();
 
-    // Get V_bat: The ADC only ever sees V_bat / 4 so we have to multiply by 4 to get the actual V_bat
-    *v_bat = (uint16_t)(ADC1->DR * 4);
+    // Get V_bat: The ADC only ever sees (V_bat / VBAT_DIVIDER_RATIO) so
+    // we have to multiply by VBAT_DIVIDER_RATIO to get the actual V_bat
+    *v_bat = (uint16_t)(ADC1->DR * VBAT_DIVIDER_RATIO);
 
     // Disconnect V_bat once done
     ADC->CCR &= ~ADC_CCR_VBATE;
-
     return HAL_OK;
 }
 
@@ -215,7 +213,8 @@ hal_err_t get_temperature(uint16_t* temperature) {
     }
 
     // Set the channel
-    // TODO: Set ADC_CHANNEL_TEMP as the channel
+    ADC1->SQR1 |= ADC_CHANNEL_TEMP;
+    ADC1->SQR1 |= ADC_CHANNEL_TEMP;
 
     // Set a sampling time greater than MIN_SAMPLING_TIME_US
     // TODO: Set the sampling time
@@ -227,6 +226,7 @@ hal_err_t get_temperature(uint16_t* temperature) {
     }
 
     // Start the conversion
+    ADC1->CR2 &= ~ADC_CR2_CONT;
     ADC1->CR2 |= ADC_CR2_SWSTART;
 
     // Poll till the conversion is complete
@@ -234,7 +234,6 @@ hal_err_t get_temperature(uint16_t* temperature) {
 
     // Calculate the temperature
     *temperature = (uint16_t)(((float)ADC1->DR - TEMP_SENSOR_VSENSE_AT_25C) / TEMP_SENSOR_AVERAGE_SLOPE) + 25;
-
     return HAL_OK;
 }
 
@@ -244,7 +243,8 @@ hal_err_t get_v_ref_internal(uint16_t* v_ref_int) {
     }
 
     // Set the channel
-    // TODO: Set ADC_CHANNEL_VREF as the channel
+    ADC1->SQR1 |= ADC_CHANNEL_VREF;
+    ADC1->SQR1 |= ADC_CHANNEL_VREF;
 
     // The TSVREFE bit also enables measurement of VREFINT
     if (!(ADC->CCR & ADC_CCR_TSVREFE)) {
@@ -253,6 +253,7 @@ hal_err_t get_v_ref_internal(uint16_t* v_ref_int) {
     }
 
     // Start the conversion
+    ADC1->CR2 &= ~ADC_CR2_CONT;
     ADC1->CR2 |= ADC_CR2_SWSTART;
 
     // Poll till the conversion is complete
@@ -260,7 +261,6 @@ hal_err_t get_v_ref_internal(uint16_t* v_ref_int) {
 
     // Get V_ref
     *v_ref_int = (uint16_t)ADC1->DR;
-
     return HAL_OK;
 }
 
@@ -309,16 +309,16 @@ hal_err_t adc_analog_wdg_start(uint16_t min_volt, uint16_t max_volt, bool monito
 }
 
 void adc_analog_wdg_stop(void) {
-    // Clear the user passed callback
-    s_analog_wdg_cb  = NULL;
-    s_analog_wdg_arg = NULL;
+    // Disable the analog watchdog interrupt and disable monitoring on all channels
+    ADC1->CR1 &= ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
 
     // Clear the voltage thresholds
     ADC1->HTR = 0;
     ADC1->LTR = 0;
 
-    // Disable the analog watchdog interrupt and disable monitoring on all channels
-    ADC1->CR1 &= ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
+    // Clear the user passed callback
+    s_analog_wdg_cb  = NULL;
+    s_analog_wdg_arg = NULL;
 }
 
 

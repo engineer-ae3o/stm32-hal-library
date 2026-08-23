@@ -1,8 +1,8 @@
 #include "test/runner.hpp"
+#include "o1heap/o1heap.h"
 #include "utils/common.h"
 #include "utils/tick.h"
 #include "utils/log.h"
-#include "o1heap.h"
 
 #include <array>
 #include <cstdint>
@@ -199,11 +199,11 @@ namespace profile {
 
 extern "C" {
 [[noreturn]] int main() {
-    // Run all the tests
+    // Run all the hardware driver tests
     test::runner();
 
     // Run the profile tests
-    // profile::all();
+    profile::all();
 
     // Halt once tests are finished since nothing else to do.
     LOGI("Main", "Done with all tests. Halting...");

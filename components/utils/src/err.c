@@ -23,7 +23,9 @@ const char* err_code_lut[] = {
     [HAL_ERR_DMA_ERR_UNKNOWN]         = "HAL_ERR_DMA_ERR_UNKNOWN",
 };
 
+_Static_assert(HAL_ERR_COUNT == ARRAY_SIZE(err_code_lut));
+
 const char* hal_err_to_string(hal_err_t err) {
-    ASSERT(err < (sizeof(err_code_lut) / sizeof(err_code_lut[0])));
+    ASSERT(err < ARRAY_SIZE(err_code_lut));
     return err_code_lut[err];
 }

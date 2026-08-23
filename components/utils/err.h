@@ -43,6 +43,8 @@ typedef enum : uint8_t {
     HAL_ERR_DMA_TE,
     HAL_ERR_DMA_DME,
     HAL_ERR_DMA_ERR_UNKNOWN,
+
+    HAL_ERR_COUNT, // Sentinel value
 } hal_err_t;
 
 const char* hal_err_to_string(hal_err_t err);
