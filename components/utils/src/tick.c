@@ -29,14 +29,15 @@ __attribute__((constructor)) static void tick_init(void) {
     NVIC_EnableIRQ(TIM2_IRQn);
 
 #ifdef USE_DWT_CYCCNT
-    const bool is_dwt_cycnt_supported = ((DWT->CTRL >> 25) & 1U) == 0;
-    if (!is_dwt_cycnt_supported) {
+    // Check if the DWT->CYCCNT is supported on running microcontroller
+    if (((DWT->CTRL >> 25) & 1U) != 0) {
         LOGW("Tick", "The cycle counter on the data watchpoint and tracing subsystem not supported on given target.");
-        LOGI("Tick", "Profiling facilities and the delay_us(...) function will not be available.");
+        LOGW("Tick", "Profiling facilities and the delay_us(...) function will not be available.");
         return;
-    } else {
-        LOGI("Tick", "The cycle counter on the data watchpoint and tracing subsystem supported.");
     }
+
+    // The DWT->CYCCNT is supported
+    LOGI("Tick", "The cycle counter on the data watchpoint and tracing subsystem supported.");
 
     // Enable the DWT->CYCCNT counter
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;

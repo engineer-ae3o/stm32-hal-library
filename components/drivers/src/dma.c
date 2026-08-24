@@ -1,6 +1,6 @@
 #include "stm32f411xe.h"
-#include "drivers/dma.h"
 #include "utils/common.h"
+#include "drivers/dma.h"
 
 
 hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {

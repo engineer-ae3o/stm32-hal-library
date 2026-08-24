@@ -88,7 +88,7 @@ void system_init(void) {
 }
 
 // Provide a weak main function
-__attribute__((__weak__, __noreturn__)) int main(void) {
+__attribute__((__weak__, __noreturn__, __used__)) int main(void) {
     LOGE("Main", "Application failed to provide a main function. Using the weak stub instead");
     while (true) {
         __NOP();
@@ -121,7 +121,7 @@ __attribute__((__naked__)) void UsageFault_Handler(void) {
 }
 
 // Fault state dumps
-__attribute__((__weak__, __noreturn__)) void hard_fault_dump(const unsigned int* frame) {
+__attribute__((__weak__, __noreturn__, __used__)) void hard_fault_dump(const unsigned int* frame) {
     LOGE("CPU Exception", "Hard fault.");
 
     const unsigned int r0   = frame[0];
@@ -150,7 +150,7 @@ __attribute__((__weak__, __noreturn__)) void hard_fault_dump(const unsigned int*
     while (true);
 }
 
-__attribute__((__weak__, __noreturn__)) void bus_fault_dump(const unsigned int* frame) {
+__attribute__((__weak__, __noreturn__, __used__)) void bus_fault_dump(const unsigned int* frame) {
     LOGE("CPU Exception", "Bus fault.");
 
     const unsigned int r0   = frame[0];
@@ -179,7 +179,7 @@ __attribute__((__weak__, __noreturn__)) void bus_fault_dump(const unsigned int* 
     while (true);
 }
 
-__attribute__((__weak__, __noreturn__)) void usage_fault_dump(const unsigned int* frame) {
+__attribute__((__weak__, __noreturn__, __used__)) void usage_fault_dump(const unsigned int* frame) {
     LOGE("CPU Exception", "Usage fault.");
 
     const unsigned int r0   = frame[0];

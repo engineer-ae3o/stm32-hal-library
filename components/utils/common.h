@@ -42,8 +42,10 @@ extern "C" {
 #define ADC_DMA_NVIC_IRQ_PRIORITY (4)
 
 
-// ADC values to use the internal temperature sensor. Gotten from the datasheet
 #if defined(STM32F411xE)
+
+// ADC values to use the internal temperature sensor. Gotten from the datasheet
+#define NUM_OF_ADC_CONTROLLERS 1
 #define MAX_ADC_CLOCK_MHZ 36
 #define TEMP_SENSOR_AVERAGE_SLOPE 2.5F
 #define TEMP_SENSOR_VSENSE_AT_25C 0.76F
@@ -64,9 +66,8 @@ extern "C" {
 // RTT buffer for logging. Controls the output buffer parameter
 #define RTT_BUFFER_INDEX (0)
 
-
 // Use the cycle counter component
-#define USE_DWT_CYCCNT
+#define USE_DWT_CYCCNT 1
 
 
 #define REBOOT() restart(__PRETTY_FUNCTION__, __FILE__, __LINE__)
@@ -76,7 +77,7 @@ extern "C" {
 #define LOCK_ACQUIRE() __disable_irq()
 #define LOCK_RELEASE() __enable_irq()
 
-
+// Buffer size of format strings
 #define FMT_STR_BUF_SIZE (192)
 
 

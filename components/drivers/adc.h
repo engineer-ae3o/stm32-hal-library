@@ -44,21 +44,21 @@ typedef enum : uint8_t {
 } adc_resolution_t;
 
 typedef enum : uint8_t {
-    ADC_CLK_PRESCALER_2 = 0b00, // ADCCLK = APB2 / 2
-    ADC_CLK_PRESCALER_4 = 0b01, // ADCCLK = APB2 / 4
-    ADC_CLK_PRESCALER_6 = 0b10, // ADCCLK = APB2 / 6
-    ADC_CLK_PRESCALER_8 = 0b11, // ADCCLK = APB2 / 8
+    ADC_CLK_PRESCALER_2 = 0b00, // ADCCLK = (APB2 / 2)
+    ADC_CLK_PRESCALER_4 = 0b01, // ADCCLK = (APB2 / 4)
+    ADC_CLK_PRESCALER_6 = 0b10, // ADCCLK = (APB2 / 6)
+    ADC_CLK_PRESCALER_8 = 0b11, // ADCCLK = (APB2 / 8)
 } adc_prescaler_t;
 
 typedef enum : uint8_t {
-    ADC_SAMPLE_3_CYCLES   = 0b000, // ADC sampling cycles of 3 cycles
-    ADC_SAMPLE_15_CYCLES  = 0b001, // ADC sampling cycles of 15 cycles
-    ADC_SAMPLE_28_CYCLES  = 0b010, // ADC sampling cycles of 28 cycles
-    ADC_SAMPLE_56_CYCLES  = 0b011, // ADC sampling cycles of 56 cycles
-    ADC_SAMPLE_84_CYCLES  = 0b100, // ADC sampling cycles of 84 cycles
-    ADC_SAMPLE_112_CYCLES = 0b101, // ADC sampling cycles of 112 cycles
-    ADC_SAMPLE_144_CYCLES = 0b110, // ADC sampling cycles of 144 cycles
-    ADC_SAMPLE_480_CYCLES = 0b111, // ADC sampling cycles of 480 cycles
+    ADC_SAMPLE_3_CYCLES   = 0b000, // ADC sampling time is 3 cycles
+    ADC_SAMPLE_15_CYCLES  = 0b001, // ADC sampling time is 15 cycles
+    ADC_SAMPLE_28_CYCLES  = 0b010, // ADC sampling time is 28 cycles
+    ADC_SAMPLE_56_CYCLES  = 0b011, // ADC sampling time is 56 cycles
+    ADC_SAMPLE_84_CYCLES  = 0b100, // ADC sampling time is 84 cycles
+    ADC_SAMPLE_112_CYCLES = 0b101, // ADC sampling time is 112 cycles
+    ADC_SAMPLE_144_CYCLES = 0b110, // ADC sampling time is 144 cycles
+    ADC_SAMPLE_480_CYCLES = 0b111, // ADC sampling time is 480 cycles
 } adc_sample_cycles_t;
 
 typedef struct {
@@ -75,6 +75,7 @@ void adc_enable_nvic_irq(void);
 void adc_disable_nvic_irq(void);
 
 hal_err_t adc_configure_analog_clk(ADC_TypeDef* handle, const adc_clk_config_t* config);
+
 typedef void (*adc_callback_t)(void* arg);
 
 
@@ -82,13 +83,13 @@ typedef void (*adc_callback_t)(void* arg);
 #define MAX_REGULAR_CHANNELS (16)
 #define MAX_INJECTED_CHANNELS (4)
 
-// For operation with the ADC regular mode
-hal_err_t adc_regular_mode_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* data);
-hal_err_t adc_regular_mode_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t num, dma_trans_done_cb_t cb, void* arg);
+// For operation with the ADC regular group
+hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* data);
+hal_err_t adc_regular_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, dma_trans_done_cb_t cb, void* arg);
 
-// For operation with the ADC injected mode
-hal_err_t adc_injected_mode_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t num, adc_callback_t cb, void* arg);
-hal_err_t adc_injected_mode_get_result(ADC_TypeDef* handle, uint16_t* buffer, size_t num);
+// For operation with the ADC injected group
+hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, adc_callback_t cb, void* arg);
+hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* buffer, size_t size);
 
 // For operation of the internal channels. Only oneshot and regular group are supported
 hal_err_t get_v_bat(ADC_TypeDef* handle, uint16_t* v_bat);
