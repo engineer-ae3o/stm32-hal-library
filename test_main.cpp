@@ -1,6 +1,7 @@
 #include "test/runner.hpp"
 #include "o1heap/o1heap.h"
 #include "utils/common.h"
+#include "drivers/adc.h"
 #include "utils/tick.h"
 #include "utils/log.h"
 
@@ -198,7 +199,7 @@ namespace profile {
 } // namespace profile
 
 extern "C" {
-[[noreturn]] int main() {
+[[noreturn]] int main() { /**
     // Run all the hardware driver tests
     test::runner();
 
@@ -207,6 +208,29 @@ extern "C" {
 
     // Halt once tests are finished since nothing else to do.
     LOGI("Main", "Done with all tests. Halting...");
+    */
+
+    adc_clk_enable(ADC1, true);
+    adc_enable_nvic_irq();
+    adc_power_on(ADC1, true);
+
+    const adc_clk_config_t adc_clk_config = {
+        .resolution      = ADC_RES_8_BITS,
+        .clk_prescaler   = ADC_CLK_PRESCALER_4,
+        .sampling_cycles = ADC_SAMPLE_112_CYCLES,
+    };
+    ASSERT(adc_configure_analog_clk(ADC1, &adc_clk_config) == HAL_OK);
+
+    uint16_t channel_1 = 0, temperature = 0, vbat = 0, vrefint = 0;
+    ASSERT(adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_3, &channel_1) == HAL_OK);
+    ASSERT(adc_get_v_bat(ADC1, &vbat) == HAL_OK);
+    ASSERT(adc_get_v_ref_internal(ADC1, &vrefint) == HAL_OK);
+    ASSERT(adc_get_temperature(ADC1, &temperature) == HAL_OK);
+
+    LOGI("ADC", "PA3: %.3fV", (double)channel_1 / 256 * 3.3);
+    LOGI("ADC", "V_ref_int: %.3fV", (double)vrefint / 256 * 3.3);
+    LOGI("ADC", "V_bat: %.3fV", (double)vbat / 256 * 3.3);
+    LOGI("ADC", "Temperature: %uC", temperature);
 
     __asm volatile("bkpt #0");
     while (true);

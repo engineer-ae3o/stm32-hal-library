@@ -18,6 +18,7 @@ extern "C" {
 
 // External channels
 typedef enum : uint8_t {
+    // The external channels
     ADC_CHANNEL_0,  // PA0
     ADC_CHANNEL_1,  // PA1
     ADC_CHANNEL_2,  // PA2
@@ -34,6 +35,14 @@ typedef enum : uint8_t {
     ADC_CHANNEL_13, // PC3
     ADC_CHANNEL_14, // PC4
     ADC_CHANNEL_15, // PC5
+
+    // The internal channels
+    // They should not be used with any of regular or injected group
+    // API as they require extra steps for their measurements than what
+    // is needed for the external channels
+    ADC_CHANNEL_TEMP, // Temperature sensor
+    ADC_CHANNEL_VREF, // V_refint
+    ADC_CHANNEL_VBAT, // V_bat
 } adc_channels_t;
 
 typedef enum : uint8_t {
@@ -69,34 +78,37 @@ typedef struct {
 
 
 // General control of the ADC
-void adc_clk_enable(ADC_TypeDef* handle, bool enable);
-void adc_power_on(ADC_TypeDef* handle, bool on);
-void adc_enable_nvic_irq(void);
-void adc_disable_nvic_irq(void);
-
+void      adc_clk_enable(ADC_TypeDef* handle, bool enable);
+void      adc_power_on(ADC_TypeDef* handle, bool on);
+void      adc_enable_nvic_irq(void);
+void      adc_disable_nvic_irq(void);
 hal_err_t adc_configure_analog_clk(ADC_TypeDef* handle, const adc_clk_config_t* config);
-
-typedef void (*adc_callback_t)(void* arg);
 
 
 // Number of regular and injected channels supported by the ADC peripheral
 #define MAX_REGULAR_CHANNELS (16)
 #define MAX_INJECTED_CHANNELS (4)
 
-// For operation with the ADC regular group
+typedef void (*adc_callback_t)(void* arg);
+
+// For use with the external channels
+// The regular group
 hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* data);
 hal_err_t adc_regular_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, dma_trans_done_cb_t cb, void* arg);
 
-// For operation with the ADC injected group
+// The injected group
 hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, adc_callback_t cb, void* arg);
 hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* buffer, size_t size);
 
-// For operation of the internal channels. Only oneshot and regular group are supported
-hal_err_t get_v_bat(ADC_TypeDef* handle, uint16_t* v_bat);
-hal_err_t get_temperature(ADC_TypeDef* handle, uint16_t* temperature);
-hal_err_t get_v_ref_internal(ADC_TypeDef* handle, uint16_t* v_ref_int);
 
-// Analog watchdog control
+// For operation of the internal channels.
+// Only oneshot and conversion with the regular group are supported.
+hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_v_bat);
+hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_temp);
+hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_v_ref_int);
+
+
+// For control of the analog watchdog control
 hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, uint16_t min, uint16_t max, bool regular, bool injected, adc_callback_t cb, void* arg);
 hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle);
 

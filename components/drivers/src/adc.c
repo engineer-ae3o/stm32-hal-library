@@ -5,6 +5,7 @@
 #include "utils/err.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 
 // ADC DMA stream settings
@@ -126,13 +127,20 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Set the number of channels to be converted
+    // An L[3:0] value of 0b0000 means 1 channel/conversion, avalue of 0b0011 means 4
+    // conversions etc. Which is why 0b0000 is used despite the sampling being for 1 channel
+    handle->SQR1 &= ~ADC_SQR1_L;
+    handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
+
     // Set the channel
-    handle->SQR1 |= channel;
-    handle->SQR1 |= channel;
+    handle->SQR3 &= ~ADC_SQR3_SQ1;
+    handle->SQR3 |= (uint32_t)channel << ADC_SQR3_SQ1_Pos;
 
     // Disable continuous conversion and scan mode since we are sampling only one channel
+    // Then clear the EXTEN bit since the triggering is by software
     handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~ADC_CR2_CONT;
+    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN);
 
     // Start the conversion
     handle->CR2 |= ADC_CR2_SWSTART;
@@ -142,6 +150,7 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
 
     // Get the final result
     *data = (uint16_t)handle->DR;
+
     return HAL_OK;
 }
 
@@ -186,11 +195,19 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
     // Enable interrupts for the injected group when conversion is complete
     handle->CR1 |= ADC_CR1_JEOCIE;
 
-    // Set the number of channels in the [0:1] bit positions of the JSQR register
-    handle->JSQR |= (size & 0b11);
+    // Set the number of channels/conversions in the JL bit positions of the
+    // JSQR register. The JL bit positions are zero indexed. That is, 1 channel
+    // means a JL value of 0b00, 3 channels means a JL value of 0b10 etc.
+    handle->JSQR &= ~ADC_JSQR_JL;
+    handle->JSQR |= (((size - 1) & 0x3U) << ADC_JSQR_JL_Pos);
 
-    // Clear the JEXTEN bit since the triggering is from software
-    handle->CR2 &= ~ADC_CR2_JEXTEN;
+    // TODO: Set the channel sequence
+
+    // Clear all offsets registers since not used
+    handle->JOFR1 &= ~ADC_JOFR1_JOFFSET1;
+    handle->JOFR2 &= ~ADC_JOFR2_JOFFSET2;
+    handle->JOFR3 &= ~ADC_JOFR3_JOFFSET3;
+    handle->JOFR4 &= ~ADC_JOFR4_JOFFSET4;
 
     // Enable scan mode if we have more than one channel, but disable otherwise
     if (size > 1) {
@@ -199,6 +216,14 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
         handle->CR1 &= ~ADC_CR1_SCAN;
     }
 
+    // Clear the JEXTEN bit since the triggering is from software. Also,
+    // the JAUTO bit is cleared so the ADC interrupts any ongoing regular
+    // group conversion to perform this injected group conversion.
+    handle->CR2 &= ~ADC_CR2_JEXTEN;
+    handle->CR1 &= ~ADC_CR1_JAUTO;
+
+    // Start the conversion and return. The JEOC interrupt will fire
+    // when the ADC controller is finished with the conversion(s).
     handle->CR2 |= ADC_CR2_JSWSTART;
 
     return HAL_OK;
@@ -248,28 +273,26 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* buffer, s
 
 
 // For use with the internal channels
-typedef enum : uint8_t {
-    // The internal channels
-    ADC_CHANNEL_VBAT = 18, // V_bat
-    ADC_CHANNEL_VREF = 17, // V_refint
-    ADC_CHANNEL_TEMP = 16, // Temperature sensor
-} adc_int_channel_t;
-
-hal_err_t get_v_bat(ADC_TypeDef* handle, uint16_t* v_bat) {
-    if (v_bat == NULL) {
+hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_v_bat) {
+    if (raw_v_bat == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Set the number of channels to be converted
+    handle->SQR1 &= ~ADC_SQR1_L;
+    handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
+
     // Set the channel
-    handle->SQR1 |= ADC_CHANNEL_VBAT;
-    handle->SQR1 |= ADC_CHANNEL_VBAT;
+    handle->SQR3 &= ~ADC_SQR3_SQ1;
+    handle->SQR3 |= ADC_CHANNEL_VBAT << ADC_SQR3_SQ1_Pos;
 
     // Switch to V_bat so the ADC can measure it
     ADC->CCR |= ADC_CCR_VBATE;
 
     // Disable continuous conversion and scan mode since we are sampling only one channel
+    // Then clear the EXTEN bit since the triggering is by software
     handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~ADC_CR2_CONT;
+    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN);
 
     // Start the conversion
     handle->CR2 |= ADC_CR2_SWSTART;
@@ -281,34 +304,37 @@ hal_err_t get_v_bat(ADC_TypeDef* handle, uint16_t* v_bat) {
     // have to multiply by VBAT_DIVIDER_RATIO to get the actual V_bat. This
     // is done by the hardware because V_bat could exceed the operating voltage
     // range of the ADC, so it is divided so the ADC can function correctly
-    *v_bat = (uint16_t)(handle->DR * VBAT_DIVIDER_RATIO);
+    *raw_v_bat = (uint16_t)(handle->DR * VBAT_DIVIDER_RATIO);
 
     // Disconnect V_bat once done
     ADC->CCR &= ~ADC_CCR_VBATE;
+
     return HAL_OK;
 }
 
-hal_err_t get_temperature(ADC_TypeDef* handle, uint16_t* temperature) {
-    if (temperature == NULL) {
+hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_temp) {
+    if (raw_temp == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Set the number of channels to be converted
+    handle->SQR1 &= ~ADC_SQR1_L;
+    handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
+
     // Set the channel
-    handle->SQR1 |= ADC_CHANNEL_TEMP;
-    handle->SQR1 |= ADC_CHANNEL_TEMP;
+    handle->SQR3 &= ~ADC_SQR3_SQ1;
+    handle->SQR3 |= ADC_CHANNEL_TEMP << ADC_SQR3_SQ1_Pos;
 
-    // Set a sampling cycles greater than MIN_SAMPLING_TIME_US
-    // TODO: Set the sampling cycles
-
-    // Wake the temperature sensor if it's not already powered on
+    // Wake the raw_temp sensor if it's not already powered on
     if (!(ADC->CCR & ADC_CCR_TSVREFE)) {
         ADC->CCR |= ADC_CCR_TSVREFE;
         delay_us(TEMP_SENSOR_STARUP_TIME_US);
     }
 
     // Disable continuous conversion and scan mode since we are sampling only one channel
+    // Then clear the EXTEN bit since the triggering is by software
     handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~ADC_CR2_CONT;
+    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN);
 
     // Start the conversion
     handle->CR2 |= ADC_CR2_SWSTART;
@@ -316,19 +342,24 @@ hal_err_t get_temperature(ADC_TypeDef* handle, uint16_t* temperature) {
     // Poll till the conversion is complete
     POLL_TILL_CONV_DONE();
 
-    // Calculate the temperature
-    *temperature = (uint16_t)(((float)handle->DR - TEMP_SENSOR_VSENSE_AT_25C) / TEMP_SENSOR_AVERAGE_SLOPE) + 25;
+    // Get the raw value
+    *raw_temp = (uint16_t)handle->DR;
+
     return HAL_OK;
 }
 
-hal_err_t get_v_ref_internal(ADC_TypeDef* handle, uint16_t* v_ref_int) {
-    if (v_ref_int == NULL) {
+hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_v_ref_int) {
+    if (raw_v_ref_int == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Set the number of channels to be converted
+    handle->SQR1 &= ~ADC_SQR1_L;
+    handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
+
     // Set the channel
-    handle->SQR1 |= ADC_CHANNEL_VREF;
-    handle->SQR1 |= ADC_CHANNEL_VREF;
+    handle->SQR3 &= ~ADC_SQR3_SQ1;
+    handle->SQR3 |= ADC_CHANNEL_VREF << ADC_SQR3_SQ1_Pos;
 
     // The TSVREFE bit also enables measurement of VREFINT
     if (!(ADC->CCR & ADC_CCR_TSVREFE)) {
@@ -337,8 +368,9 @@ hal_err_t get_v_ref_internal(ADC_TypeDef* handle, uint16_t* v_ref_int) {
     }
 
     // Disable continuous conversion and scan mode since we are sampling only one channel
+    // Then clear the EXTEN bit since the triggering is by software
     handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~ADC_CR2_CONT;
+    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN);
 
     // Start the conversion
     handle->CR2 |= ADC_CR2_SWSTART;
@@ -347,7 +379,8 @@ hal_err_t get_v_ref_internal(ADC_TypeDef* handle, uint16_t* v_ref_int) {
     POLL_TILL_CONV_DONE();
 
     // Get V_ref
-    *v_ref_int = (uint16_t)handle->DR;
+    *raw_v_ref_int = (uint16_t)handle->DR;
+
     return HAL_OK;
 }
 
@@ -423,10 +456,14 @@ void ADC_IRQHandler(void) {
 
     // Check if end of conversion for the injected mode is reached
     if (ADC1->SR & ADC_SR_JEOC) {
-        // Invoke user callback once the ADC sampling on the injected group is complete
+        // Clear the JEOCIE bit so this interrupt doesn't fire again, since it has been serviced
+        ADC1->CR1 &= ~ADC_CR1_JEOCIE;
+
+        // Invoke the user callback once the ADC sampling on the injected group is complete
         if (s_injected_done_cb[0]) {
             s_injected_done_cb[0](s_injected_done_arg[0]);
-            // Clear user passed callback since this is a one-off event
+
+            // Clear the user passed callback since this is a one-off event
             s_injected_done_cb[0]  = NULL;
             s_injected_done_arg[0] = NULL;
         }
