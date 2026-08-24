@@ -57,7 +57,7 @@ void system_init(void) {
                    (4 << RCC_PLLCFGR_PLLQ_Pos);
 #endif
 
-    // Bus prescaler
+    // Bus prescaler: AHB = SystemCoreClock, APB1 = (SystemCoreClock / 2), APB2 = SystemCoreClock
     RCC->CFGR |= (RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1);
 
     // Enable the PLL
@@ -75,7 +75,7 @@ void system_init(void) {
     while (!(PWR->CSR & PWR_CSR_VOSRDY));
 
     // Update the system clock variable
-    SystemCoreClock = CLOCK_SPEED_HZ;
+    SystemCoreClock = MAX_CLOCK_SPEED_HZ;
 
     // Enable bus fault and usage fault exceptions
     SCB->SHCSR |= (SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);

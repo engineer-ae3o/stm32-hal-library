@@ -15,7 +15,7 @@ extern "C" {
 
 
 // Core clock and audio PLL frequencies
-#define CLOCK_SPEED_HZ (100'000'000)
+#define MAX_CLOCK_SPEED_HZ (100'000'000)
 #define AUDIO_PLL_HZ (76'800'000)
 
 

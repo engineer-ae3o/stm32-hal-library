@@ -16,13 +16,6 @@ extern "C" {
 #include <stdbool.h>
 
 
-typedef enum : uint8_t {
-    ADC_RESOLUTION_6_BITS = 0,
-    ADC_RESOLUTION_8_BITS,
-    ADC_RESOLUTION_10_BITS,
-    ADC_RESOLUTION_12_BITS,
-} adc_resolution_t;
-
 // External channels
 typedef enum : uint8_t {
     ADC_CHANNEL_0,  // PA0
@@ -41,39 +34,70 @@ typedef enum : uint8_t {
     ADC_CHANNEL_13, // PC3
     ADC_CHANNEL_14, // PC4
     ADC_CHANNEL_15, // PC5
-} adc_ext_channel_t;
+} adc_channels_t;
+
+typedef enum : uint8_t {
+    ADC_RES_6_BITS  = 0b11, // ADC resolution of 6 bits
+    ADC_RES_8_BITS  = 0b10, // ADC resolution of 8 bits
+    ADC_RES_10_BITS = 0b01, // ADC resolution of 10 bits
+    ADC_RES_12_BITS = 0b00, // ADC resolution of 12 bits
+} adc_resolution_t;
+
+typedef enum : uint8_t {
+    ADC_CLK_PRESCALER_2 = 0b00, // ADCCLK = APB2 / 2
+    ADC_CLK_PRESCALER_4 = 0b01, // ADCCLK = APB2 / 4
+    ADC_CLK_PRESCALER_6 = 0b10, // ADCCLK = APB2 / 6
+    ADC_CLK_PRESCALER_8 = 0b11, // ADCCLK = APB2 / 8
+} adc_prescaler_t;
+
+typedef enum : uint8_t {
+    ADC_SAMPLE_3_CYCLES   = 0b000, // ADC sampling cycles of 3 cycles
+    ADC_SAMPLE_15_CYCLES  = 0b001, // ADC sampling cycles of 15 cycles
+    ADC_SAMPLE_28_CYCLES  = 0b010, // ADC sampling cycles of 28 cycles
+    ADC_SAMPLE_56_CYCLES  = 0b011, // ADC sampling cycles of 56 cycles
+    ADC_SAMPLE_84_CYCLES  = 0b100, // ADC sampling cycles of 84 cycles
+    ADC_SAMPLE_112_CYCLES = 0b101, // ADC sampling cycles of 112 cycles
+    ADC_SAMPLE_144_CYCLES = 0b110, // ADC sampling cycles of 144 cycles
+    ADC_SAMPLE_480_CYCLES = 0b111, // ADC sampling cycles of 480 cycles
+} adc_sample_cycles_t;
+
+typedef struct {
+    adc_resolution_t    resolution;
+    adc_prescaler_t     clk_prescaler;
+    adc_sample_cycles_t sampling_cycles;
+} adc_clk_config_t;
 
 
+// General control of the ADC
+void adc_clk_enable(ADC_TypeDef* handle, bool enable);
+void adc_power_on(ADC_TypeDef* handle, bool on);
+void adc_enable_nvic_irq(void);
+void adc_disable_nvic_irq(void);
+
+hal_err_t adc_configure_analog_clk(ADC_TypeDef* handle, const adc_clk_config_t* config);
+typedef void (*adc_callback_t)(void* arg);
+
+
+// Number of regular and injected channels supported by the ADC peripheral
 #define MAX_REGULAR_CHANNELS (16)
 #define MAX_INJECTED_CHANNELS (4)
 
-// General control of the ADC
-void adc_clk_enable(bool enable);
-void adc_power_on(bool on);
-void adc_enable_nvic_irq(void);
-void adc_disable_nvic_irq(void);
-void adc_configure_analog_clk(uint8_t prescaler);
-void adc_configure_sample_time(uint8_t cycles);
-
 // For operation with the ADC regular mode
-hal_err_t adc_regular_mode_get_oneshot(adc_ext_channel_t channel, uint16_t* data);
-hal_err_t adc_regular_mode_start_conv(const adc_ext_channel_t* channels, size_t num_of_channels, dma_trans_done_cb_t cb, void* arg);
-hal_err_t adc_regular_end_start_conv();
+hal_err_t adc_regular_mode_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* data);
+hal_err_t adc_regular_mode_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t num, dma_trans_done_cb_t cb, void* arg);
 
 // For operation with the ADC injected mode
-typedef void (*adc_injected_done_cb_t)(void* arg);
-hal_err_t adc_injected_mode_start_conv(const adc_ext_channel_t* channels, size_t num_of_channels, adc_injected_done_cb_t cb, void* arg);
-hal_err_t adc_injected_mode_get_result(uint16_t* buffer, size_t num_of_channels);
+hal_err_t adc_injected_mode_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t num, adc_callback_t cb, void* arg);
+hal_err_t adc_injected_mode_get_result(ADC_TypeDef* handle, uint16_t* buffer, size_t num);
 
 // For operation of the internal channels. Only oneshot and regular group are supported
-hal_err_t get_v_bat(uint16_t* v_bat);
-hal_err_t get_temperature(uint16_t* temperature);
-hal_err_t get_v_ref_internal(uint16_t* v_ref_int);
+hal_err_t get_v_bat(ADC_TypeDef* handle, uint16_t* v_bat);
+hal_err_t get_temperature(ADC_TypeDef* handle, uint16_t* temperature);
+hal_err_t get_v_ref_internal(ADC_TypeDef* handle, uint16_t* v_ref_int);
 
 // Analog watchdog control
-typedef void (*adc_awdg_isr_t)(void* arg);
-hal_err_t adc_analog_wdg_start(uint16_t min_volt, uint16_t max_volt, bool monitor_regular, bool monitor_injected, adc_awdg_isr_t cb, void* arg);
-void      adc_analog_wdg_stop(void);
+hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, uint16_t min, uint16_t max, bool regular, bool injected, adc_callback_t cb, void* arg);
+hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle);
 
 
 #ifdef __cplusplus
