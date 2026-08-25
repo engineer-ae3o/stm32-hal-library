@@ -481,15 +481,21 @@ hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle) {
 }
 
 
-// For use to get the actual voltages read by the ADC
+// For use of getting the actual voltages read by the ADC
 hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
     if (vdda == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    uint16_t raw_temp = 0;
-    TRY(adc_get_v_ref_internal(handle, &raw_temp));
+    uint16_t raw_vref = 0;
+    TRY(adc_get_v_ref_internal(handle, &raw_vref));
 
+    // Read the V_refint calibraion value. It is stored at the address 0x1FFF7A2A
+    // It is the value of V_ref_int measured at V_dda = 3.3V and 30C
+    const uint16_t v_refint_cal = *(volatile uint16_t*)0x1FFF7A2AU;
+
+    // Calculate the actual VDDA from the calibration data
+    *vdda = (3.3F * (float)v_refint_cal) / (float)raw_vref;
 
     return HAL_OK;
 }
@@ -499,8 +505,25 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Get the V_ref_int and V_ref_int_calibration data
+    const uint16_t v_refint_cal = *(volatile uint16_t*)0x1FFF7A2AU;
+    uint16_t       v_ref_int    = 0;
+    TRY(adc_get_v_ref_internal(handle, &v_ref_int));
+
+    // Read the raw ADC temperature value next
     uint16_t raw_temp = 0;
     TRY(adc_get_temperature(handle, &raw_temp));
+
+    // Normalize the raw temperature sensor data read
+    const float normalized = ((float)v_refint_cal / (float)v_ref_int) * (float)raw_temp;
+
+    // Get the temperature calibration values from their locations in memory
+    // They represent the temperature values measured at 30C and 110C respectively when VDDA is 3.3V
+    const uint16_t temp_cal_1 = *(volatile uint16_t*)0x1FFF7A2CU;
+    const uint16_t temp_cal_2 = *(volatile uint16_t*)0x1FFF7A2EU;
+
+    // Get the temperature using linear interpolation with the calibration data at 110C and 30C
+    *temp_celsius = (((110.0F - 30.0F) / (float)(temp_cal_2 - temp_cal_1)) * (normalized - (float)temp_cal_1)) + 30.0F;
 
     return HAL_OK;
 }
@@ -514,8 +537,26 @@ hal_err_t adc_get_value(ADC_TypeDef* handle, uint16_t raw_data, adc_resolution_t
     float vdda = 0.0F;
     TRY(adc_get_vdda(handle, &vdda));
 
-    uint16_t reolution_value = 0;
-    switch (resolution) {}
+    uint16_t resolution_value = 0;
+    switch (resolution) {
+        case ADC_RES_6_BITS:
+            resolution_value = 6;
+            break;
+        case ADC_RES_8_BITS:
+            resolution_value = 8;
+            break;
+        case ADC_RES_10_BITS:
+            resolution_value = 10;
+            break;
+        case ADC_RES_12_BITS:
+            resolution_value = 12;
+            break;
+        default:
+            return HAL_ERR_INVALID_ARG;
+    }
+
+    // Calculate the final voltage
+    *voltage = (vdda * (float)raw_data) / (float)((1UL << resolution_value) - 1);
 
     return HAL_OK;
 }
@@ -538,10 +579,5 @@ void ADC_IRQHandler(void) {
 
 // DMA interrupt handler
 void DMA2_Stream0_IRQHandler(void) {
-    // Invoke user callback once the ADC sampling and DMA transfer on the regular group is complete
-    if (s_dma_trans_done_cb[0]) {
-        s_dma_trans_done_cb[0](s_dma_trans_cb_arg[0], HAL_OK);
-        s_dma_trans_done_cb[0] = NULL;
-        s_dma_trans_cb_arg[0]  = NULL;
-    }
+    // TODO: Handle DMA completion events for the continuous mode with the regular group
 }

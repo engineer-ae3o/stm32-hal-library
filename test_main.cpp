@@ -238,22 +238,22 @@ extern "C" {
 
 
     // Get the raw ADC data
-    uint16_t raw_channel_3 = 0, raw_temp = 0, raw_vbat = 0, raw_vrefint = 0;
-
-    ASSERT(adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_3, &raw_channel_3) == HAL_OK);
+    uint16_t raw_channel_3 = 0, raw_vbat = 0;
     ASSERT(adc_get_v_bat(ADC1, &raw_vbat) == HAL_OK);
-    ASSERT(adc_get_v_ref_internal(ADC1, &raw_vrefint) == HAL_OK);
-    ASSERT(adc_get_temperature(ADC1, &raw_temp) == HAL_OK);
+    ASSERT(adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_3, &raw_channel_3) == HAL_OK);
 
-    const float channel_3   = ADC_GET_FROM_RAW(raw_channel_3, 12, 3.3);
-    const float temperature = (ADC_GET_FROM_RAW(raw_temp, 12, 3.3) - TEMP_SENSOR_VSENSE_AT_25C) / TEMP_SENSOR_AVERAGE_SLOPE + 25;
-    const float vrefint     = ADC_GET_FROM_RAW(raw_vrefint, 12, 3.3);
-    const float vbat        = ADC_GET_FROM_RAW(raw_vbat, 12, 3.3);
+    // Get the converted voltages
+    float vdda = 0, temp_celsius = 0, channel_3 = 0, vbat = 0;
+    ASSERT(adc_get_vdda(ADC1, &vdda) == HAL_OK);
+    ASSERT(adc_get_temp_celsius(ADC1, &temp_celsius) == HAL_OK);
+    ASSERT(adc_get_value(ADC1, raw_vbat, ADC_RES_12_BITS, &vbat) == HAL_OK);
+    ASSERT(adc_get_value(ADC1, raw_channel_3, ADC_RES_12_BITS, &channel_3) == HAL_OK);
 
-    LOGI("ADC", "PA3: %.3fV", (double)channel_3);
-    LOGI("ADC", "V_ref_int: %.3fV", (double)vrefint);
+    // Log the data
     LOGI("ADC", "V_bat: %.3fV", (double)vbat);
-    LOGI("ADC", "Temperature: %fC", (double)temperature);
+    LOGI("ADC", "VDDA: %.3fV", (double)vdda);
+    LOGI("ADC", "PA3: %.3fV", (double)channel_3);
+    LOGI("ADC", "Temperature: %.3fC", (double)temp_celsius);
 
     __asm volatile("bkpt #0");
     while (true);

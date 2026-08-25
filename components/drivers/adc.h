@@ -82,9 +82,6 @@ typedef struct {
 } adc_config_t;
 
 
-#define ADC_GET_FROM_RAW(raw_data, resolution, voltage) ((float)(raw_data) * (float)(voltage) / (1ULL << (resolution)))
-
-
 // General control of the ADC
 void      adc_clk_enable(ADC_TypeDef* handle, bool enable);
 void      adc_power_on(ADC_TypeDef* handle, bool on);
