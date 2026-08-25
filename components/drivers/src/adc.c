@@ -27,17 +27,6 @@ static adc_callback_t s_analog_wdg_cb[NUM_OF_ADC_CONTROLLERS]  = {};
 static void*          s_analog_wdg_arg[NUM_OF_ADC_CONTROLLERS] = {};
 
 
-// Helper macro
-#define POLL_TILL_CONV_DONE()                                                                                                                        \
-    do {                                                                                                                                             \
-        uint32_t timeout_cycles = TIMEOUT_CYCLES;                                                                                                    \
-        while (!(handle->SR & ADC_SR_EOC) && --timeout_cycles);                                                                                      \
-        if (timeout_cycles == 0) {                                                                                                                   \
-            return HAL_ERR_TIMEOUT;                                                                                                                  \
-        }                                                                                                                                            \
-    } while (0)
-
-
 // Inline helpers
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(const ADC_TypeDef* handle) {
 #if defined(ADC1)
@@ -94,6 +83,36 @@ static void*          s_analog_wdg_arg[NUM_OF_ADC_CONTROLLERS] = {};
         // The AWDIE bit is left since the watchdog can still trigger an interrupt
         handle->SR &= ~ADC_SR_AWD;
     }
+}
+
+[[__gnu__::__always_inline__]] static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channels_t channel) {
+    // Set the number of channels to be converted
+    // An L[3:0] value of 0b0000 means 1 channel/conversion, a value of 0b0011 means 4
+    // conversions etc. Which is why 0b0000 is used despite the sampling being for 1 channel
+    handle->SQR1 &= ~ADC_SQR1_L;
+    handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
+
+    // Set the channel
+    handle->SQR3 &= ~ADC_SQR3_SQ1;
+    handle->SQR3 |= (uint32_t)channel << ADC_SQR3_SQ1_Pos;
+
+    // Disable continuous conversion and scan mode since we are sampling only one
+    // channel. Then clear the EXTEN bit since the triggering is by the software
+    handle->CR1 &= ~ADC_CR1_SCAN;
+    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN);
+
+    // Start the conversion
+    handle->CR2 |= ADC_CR2_SWSTART;
+
+    // Poll till the conversion is complete. That is, till the EOC bit is set
+    uint32_t timeout_cycles = TIMEOUT_CYCLES;
+    while (!(handle->SR & ADC_SR_EOC) && --timeout_cycles);
+    if (timeout_cycles == 0) {
+        return UINT16_MAX; // The max value of the ADC is 2^12 (4096). It is fine to use UINT16_MAX as an error sentinel
+    }
+
+    // Get the final result
+    return (uint16_t)handle->DR & 0xFFFU;
 }
 
 
@@ -178,30 +197,13 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Set the number of channels to be converted
-    // An L[3:0] value of 0b0000 means 1 channel/conversion, avalue of 0b0011 means 4
-    // conversions etc. Which is why 0b0000 is used despite the sampling being for 1 channel
-    handle->SQR1 &= ~ADC_SQR1_L;
-    handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
+    // Get the raw ADC data
+    const uint16_t raw = oneshot_regular_group(handle, channel);
+    if (raw == UINT16_MAX) {
+        return HAL_ERR_TIMEOUT;
+    }
 
-    // Set the channel
-    handle->SQR3 &= ~ADC_SQR3_SQ1;
-    handle->SQR3 |= (uint32_t)channel << ADC_SQR3_SQ1_Pos;
-
-    // Disable continuous conversion and scan mode since we are sampling only one channel
-    // Then clear the EXTEN bit since the triggering is by software
-    handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN);
-
-    // Start the conversion
-    handle->CR2 |= ADC_CR2_SWSTART;
-
-    // Poll till the conversion is complete
-    POLL_TILL_CONV_DONE();
-
-    // Get the final result
-    *raw_data = (uint16_t)handle->DR;
-
+    *raw_data = raw;
     return HAL_OK;
 }
 
@@ -214,8 +216,6 @@ hal_err_t adc_regular_group_start_conv(ADC_TypeDef* handle, const adc_channels_t
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
-
-    (void)handle;
 
     // TODO: Handle scanning and DMA setup for the regular group
 
@@ -350,37 +350,24 @@ hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Set the number of channels to be converted
-    handle->SQR1 &= ~ADC_SQR1_L;
-    handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
-
-    // Set the channel
-    handle->SQR3 &= ~ADC_SQR3_SQ1;
-    handle->SQR3 |= ADC_CHANNEL_VBAT << ADC_SQR3_SQ1_Pos;
-
-    // Switch to V_bat so the ADC can measure it
+    // Enable V_bat so the ADC can measure it
     ADC->CCR |= ADC_CCR_VBATE;
 
-    // Disable continuous conversion and scan mode since we are sampling only one channel
-    // Then clear the EXTEN bit since the triggering is by software
-    handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN);
+    // Get the raw ADC data
+    const uint16_t raw = oneshot_regular_group(handle, ADC_CHANNEL_VBAT);
 
-    // Start the conversion
-    handle->CR2 |= ADC_CR2_SWSTART;
-
-    // Poll till the conversion is complete
-    POLL_TILL_CONV_DONE();
-
-    // Get V_bat: The ADC only ever sees (V_bat / VBAT_DIVIDER_RATIO) so we
-    // have to multiply by VBAT_DIVIDER_RATIO to get the actual V_bat. This
-    // is done by the hardware because V_bat could exceed the operating voltage
-    // range of the ADC, so it is divided so the ADC can function correctly
-    *raw_data = (uint16_t)(handle->DR * VBAT_DIVIDER_RATIO);
-
-    // Disconnect V_bat once done
+    // Disconnect V_bat when done
     ADC->CCR &= ~ADC_CCR_VBATE;
 
+    if (raw == UINT16_MAX) {
+        return HAL_ERR_TIMEOUT;
+    }
+
+    // Get V_bat: The ADC only ever sees (V_bat / VBAT_DIVIDER_RATIO) so we
+    // have to multiply by VBAT_DIVIDER_RATIO to get the actual V_bat value.
+    // This is done by the hardware because V_bat could exceed the operating voltage
+    // range of the ADC, so it is divided so the ADC can function correctly
+    *raw_data = raw * VBAT_DIVIDER_RATIO;
     return HAL_OK;
 }
 
@@ -389,34 +376,20 @@ hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Set the number of channels to be converted
-    handle->SQR1 &= ~ADC_SQR1_L;
-    handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
-
-    // Set the channel
-    handle->SQR3 &= ~ADC_SQR3_SQ1;
-    handle->SQR3 |= ADC_CHANNEL_TEMP << ADC_SQR3_SQ1_Pos;
-
     // Wake the temperature sensor if it's not already powered on
     if (!(ADC->CCR & ADC_CCR_TSVREFE)) {
         ADC->CCR |= ADC_CCR_TSVREFE;
         delay_us(TEMP_SENSOR_STARUP_TIME_US);
     }
 
-    // Disable continuous conversion and scan mode since we are sampling only one channel
-    // Then clear the EXTEN bit since the triggering is by software
-    handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN);
-
-    // Start the conversion
-    handle->CR2 |= ADC_CR2_SWSTART;
-
-    // Poll till the conversion is complete
-    POLL_TILL_CONV_DONE();
+    // Get the raw ADC data
+    const uint16_t raw = oneshot_regular_group(handle, ADC_CHANNEL_TEMP);
+    if (raw == UINT16_MAX) {
+        return HAL_ERR_TIMEOUT;
+    }
 
     // Get the raw ADC value
-    *raw_data = (uint16_t)handle->DR;
-
+    *raw_data = raw;
     return HAL_OK;
 }
 
@@ -425,34 +398,20 @@ hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_data) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Set the number of channels to be converted
-    handle->SQR1 &= ~ADC_SQR1_L;
-    handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
-
-    // Set the channel
-    handle->SQR3 &= ~ADC_SQR3_SQ1;
-    handle->SQR3 |= ADC_CHANNEL_VREF << ADC_SQR3_SQ1_Pos;
-
     // The TSVREFE bit also enables measurement of VREFINT
     if (!(ADC->CCR & ADC_CCR_TSVREFE)) {
         ADC->CCR |= ADC_CCR_TSVREFE;
         delay_us(TEMP_SENSOR_STARUP_TIME_US);
     }
 
-    // Disable continuous conversion and scan mode since we are sampling only one channel
-    // Then clear the EXTEN bit since the triggering is by software
-    handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN);
+    // Get the raw ADC data
+    const uint16_t raw = oneshot_regular_group(handle, ADC_CHANNEL_VREF);
+    if (raw == UINT16_MAX) {
+        return HAL_ERR_TIMEOUT;
+    }
 
-    // Start the conversion
-    handle->CR2 |= ADC_CR2_SWSTART;
-
-    // Poll till the conversion is complete
-    POLL_TILL_CONV_DONE();
-
-    // Get V_ref
-    *raw_data = (uint16_t)handle->DR;
-
+    // Get the raw ADC value
+    *raw_data = raw;
     return HAL_OK;
 }
 
@@ -517,6 +476,46 @@ hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle) {
     // Clear the user passed callback
     s_analog_wdg_cb[idx]  = NULL;
     s_analog_wdg_arg[idx] = NULL;
+
+    return HAL_OK;
+}
+
+
+// For use to get the actual voltages read by the ADC
+hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
+    if (vdda == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    uint16_t raw_temp = 0;
+    TRY(adc_get_v_ref_internal(handle, &raw_temp));
+
+
+    return HAL_OK;
+}
+
+hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
+    if (temp_celsius == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    uint16_t raw_temp = 0;
+    TRY(adc_get_temperature(handle, &raw_temp));
+
+    return HAL_OK;
+}
+
+hal_err_t adc_get_value(ADC_TypeDef* handle, uint16_t raw_data, adc_resolution_t resolution, float* voltage) {
+    if (voltage == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    // Get the VDDA first
+    float vdda = 0.0F;
+    TRY(adc_get_vdda(handle, &vdda));
+
+    uint16_t reolution_value = 0;
+    switch (resolution) {}
 
     return HAL_OK;
 }

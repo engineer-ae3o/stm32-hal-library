@@ -15,9 +15,9 @@ extern "C" {
 
 
 typedef enum : uint8_t {
-    DMA_DIR_P_M = 0b00,
-    DMA_DIR_M_P = 0b01,
-    DMA_DIR_M_M = 0b10,
+    DMA_DIR_P_M = 0b00, // Peripheral to memory
+    DMA_DIR_M_P = 0b01, // Memory to peripheral
+    DMA_DIR_M_M = 0b10, // Memory to memory
 } dma_stream_dir_t;
 
 typedef enum : uint8_t {

@@ -121,6 +121,12 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, uint16_t min, uint16_t max, 
 hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle);
 
 
+// Get the actual voltage readings from the ADC
+hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda);
+hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius);
+hal_err_t adc_get_value(ADC_TypeDef* handle, uint16_t raw_data, adc_resolution_t resolution, float* voltage);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -226,7 +226,7 @@ extern "C" {
     adc_analog_wdg_start(
         ADC1,
         2,
-        235,
+        2048,
         true,
         true,
         [](void* arg) {
