@@ -1,6 +1,7 @@
 #include "test/runner.hpp"
 #include "o1heap/o1heap.h"
 #include "utils/common.h"
+#include "drivers/gpio.h"
 #include "drivers/adc.h"
 #include "utils/tick.h"
 #include "utils/log.h"
@@ -210,23 +211,24 @@ extern "C" {
     LOGI("Main", "Done with all tests. Halting...");
     */
 
-    adc_clk_enable(ADC1, true);
-    adc_enable_nvic_irq();
-    adc_power_on(ADC1, true);
+    adc_clk_configure(ADC_CLK_PRESCALER_4);
+    adc_enable_nvic_irq(true);
+    adc_power_on_temp_sensor(true);
 
     const adc_config_t adc_cfg = {
         .alignment       = ADC_RIGHT_ALIGN,
         .resolution      = ADC_RES_12_BITS,
-        .clk_prescaler   = ADC_CLK_PRESCALER_4,
-        .sampling_cycles = ADC_SAMPLE_112_CYCLES,
+        .sampling_cycles = ADC_SAMPLE_480_CYCLES,
     };
+    ASSERT(adcx_clk_enable(ADC1, true) == HAL_OK);
     ASSERT(adc_configure(ADC1, &adc_cfg) == HAL_OK);
+    ASSERT(adc_power_on(ADC1, true) == HAL_OK);
 
     // Configure the analog watchdog
     adc_analog_wdg_start(
         ADC1,
-        2,
-        2048,
+        0,
+        4095,
         true,
         true,
         [](void* arg) {
@@ -238,20 +240,26 @@ extern "C" {
 
 
     // Get the raw ADC data
-    uint16_t raw_channel_3 = 0, raw_vbat = 0;
+    ASSERT(gpiox_clk_enable(GPIOA, true) == HAL_OK);
+    gpio_set_analog(GPIOA, 3);
+
+    uint16_t raw_channel_3 = 0, raw_vbat = 0, raw_vref_int = 0;
     ASSERT(adc_get_v_bat(ADC1, &raw_vbat) == HAL_OK);
+    ASSERT(adc_get_v_ref_internal(ADC1, &raw_vref_int) == HAL_OK);
     ASSERT(adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_3, &raw_channel_3) == HAL_OK);
 
     // Get the converted voltages
-    float vdda = 0, temp_celsius = 0, channel_3 = 0, vbat = 0;
+    float vdda = 0, temp_celsius = 0, channel_3 = 0, vbat = 0, vref_int = 0;
     ASSERT(adc_get_vdda(ADC1, &vdda) == HAL_OK);
     ASSERT(adc_get_temp_celsius(ADC1, &temp_celsius) == HAL_OK);
-    ASSERT(adc_get_value(ADC1, raw_vbat, ADC_RES_12_BITS, &vbat) == HAL_OK);
-    ASSERT(adc_get_value(ADC1, raw_channel_3, ADC_RES_12_BITS, &channel_3) == HAL_OK);
+    ASSERT(adc_get_value_right_aligned(ADC1, raw_vref_int, ADC_RES_12_BITS, &vref_int) == HAL_OK);
+    ASSERT(adc_get_value_right_aligned(ADC1, raw_vbat, ADC_RES_12_BITS, &vbat) == HAL_OK);
+    ASSERT(adc_get_value_right_aligned(ADC1, raw_channel_3, ADC_RES_12_BITS, &channel_3) == HAL_OK);
 
     // Log the data
-    LOGI("ADC", "V_bat: %.3fV", (double)vbat);
     LOGI("ADC", "VDDA: %.3fV", (double)vdda);
+    LOGI("ADC", "V_bat: %.3fV", (double)vbat);
+    LOGI("ADC", "V_ref_int: %.3fV", (double)vref_int);
     LOGI("ADC", "PA3: %.3fV", (double)channel_3);
     LOGI("ADC", "Temperature: %.3fC", (double)temp_celsius);
 

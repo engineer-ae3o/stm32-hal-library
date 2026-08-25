@@ -3,7 +3,7 @@
 
 
 // Convert error codes to string
-const char* err_code_lut[] = {
+static const char* s_err_code_lut[] = {
     [HAL_OK]                          = "HAL_OK",
     [HAL_FAIL]                        = "HAL_FAIL",
     [HAL_ERR_INVALID_ARG]             = "HAL_ERR_INVALID_ARG",
@@ -23,9 +23,9 @@ const char* err_code_lut[] = {
     [HAL_ERR_DMA_ERR_UNKNOWN]         = "HAL_ERR_DMA_ERR_UNKNOWN",
 };
 
-_Static_assert(HAL_ERR_COUNT == ARRAY_SIZE(err_code_lut));
+_Static_assert(HAL_ERR_COUNT == ARRAY_SIZE(s_err_code_lut));
 
 const char* hal_err_to_string(hal_err_t err) {
-    ASSERT(err < ARRAY_SIZE(err_code_lut));
-    return err_code_lut[err];
+    ASSERT(err < ARRAY_SIZE(s_err_code_lut));
+    return s_err_code_lut[err];
 }

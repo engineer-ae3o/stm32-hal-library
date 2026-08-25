@@ -34,14 +34,6 @@ typedef enum : uint8_t {
     ADC_CHANNEL_13, // PC3
     ADC_CHANNEL_14, // PC4
     ADC_CHANNEL_15, // PC5
-
-    // The internal channels
-    // They should not be used with any of regular or injected group
-    // API as they require extra steps for their measurements than what
-    // is needed for the external channels
-    ADC_CHANNEL_TEMP, // Temperature sensor
-    ADC_CHANNEL_VREF, // V_refint
-    ADC_CHANNEL_VBAT, // V_bat
 } adc_channels_t;
 
 typedef enum : uint8_t {
@@ -77,23 +69,27 @@ typedef enum : uint8_t {
 typedef struct {
     adc_align_t         alignment;
     adc_resolution_t    resolution;
-    adc_prescaler_t     clk_prescaler;
     adc_sample_cycles_t sampling_cycles;
 } adc_config_t;
 
 
-// General control of the ADC
-void      adc_clk_enable(ADC_TypeDef* handle, bool enable);
-void      adc_power_on(ADC_TypeDef* handle, bool on);
-void      adc_enable_nvic_irq(void);
-void      adc_disable_nvic_irq(void);
+// Configure a specific ADC peripheral
+hal_err_t adcx_clk_enable(ADC_TypeDef* handle, bool enable);
 hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config);
+hal_err_t adc_power_on(ADC_TypeDef* handle, bool on);
+
+
+// General control of all the ADCs. These functions affect all the ADC peripheral instances
+void adc_clk_configure(adc_prescaler_t clk_prescaler);
+void adc_enable_nvic_irq(bool enable);
+void adc_power_on_temp_sensor(bool on);
 
 
 // Number of regular and injected channels supported by the ADC peripheral
 #define MAX_REGULAR_CHANNELS (16)
 #define MAX_INJECTED_CHANNELS (4)
 
+// Shape of all the non-DMA callbacks to be registered with this driver
 typedef void (*adc_callback_t)(void* arg);
 
 // For use with the external channels
@@ -108,20 +104,22 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data,
 
 // For operation of the internal channels.
 // Only oneshot and conversion with the regular group are supported.
+// These only return the raw ADC values. Pair with adc_get_value_right_aligned(...)
+// (if you use ADC_RIGHT_ALIGN) to get the actual voltages read by thr ADC.
 hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data);
 hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data);
 hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_data);
 
 
-// For control of the analog watchdog control
-hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, uint16_t min, uint16_t max, bool regular, bool injected, adc_callback_t cb, void* arg);
-hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle);
-
-
 // Get the actual voltage readings from the ADC
 hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda);
 hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius);
-hal_err_t adc_get_value(ADC_TypeDef* handle, uint16_t raw_data, adc_resolution_t resolution, float* voltage);
+hal_err_t adc_get_value_right_aligned(ADC_TypeDef* handle, uint16_t raw_data, adc_resolution_t resolution, float* voltage);
+
+
+// For control of the analog watchdog control
+hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, uint16_t min, uint16_t max, bool regular, bool injected, adc_callback_t cb, void* arg);
+hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle);
 
 
 #ifdef __cplusplus
