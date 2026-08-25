@@ -72,7 +72,13 @@ extern "C" {
 
 #define REBOOT() restart(__PRETTY_FUNCTION__, __FILE__, __LINE__)
 #define PANIC() panic(__PRETTY_FUNCTION__, __FILE__, __LINE__)
-#define ASSERT(cond) assert_check((cond), #cond, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#define ASSERT(cond)                                                                                                                                 \
+    do {                                                                                                                                             \
+        if (!(cond)) {                                                                                                                               \
+            LOGE("Assert", "Assert (%s) failed", #cond);                                                                                             \
+            PANIC();                                                                                                                                 \
+        }                                                                                                                                            \
+    } while (0)
 
 #define LOCK_ACQUIRE() __disable_irq()
 #define LOCK_RELEASE() __enable_irq()
@@ -82,10 +88,7 @@ extern "C" {
 
 
 [[noreturn]] void panic(const char* function, const char* file, uint32_t line);
-
 [[noreturn]] void restart(const char* function, const char* file, uint32_t line);
-
-void assert_check(bool cond, const char* msg, const char* function, const char* file, uint32_t line);
 
 
 // Macros to help with error propagation

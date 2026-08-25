@@ -143,7 +143,7 @@ hal_err_t adcx_clk_enable(ADC_TypeDef* handle, bool enable) {
 }
 
 hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
-    if (config == NULL) {
+    if (config == NULL || handle == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -180,6 +180,9 @@ hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
 }
 
 hal_err_t adc_power_on(ADC_TypeDef* handle, bool on) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
     if (on) {
         handle->CR2 |= ADC_CR2_ADON;
     } else {
@@ -217,7 +220,7 @@ void adc_power_on_temp_sensor(bool on) {
 
 // For use with the regular group and external channels
 hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* raw_data) {
-    if (raw_data == NULL) {
+    if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -232,7 +235,7 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
 }
 
 hal_err_t adc_regular_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, dma_trans_done_cb_t cb, void* arg) {
-    if (channels == NULL || size == 0 || size > MAX_REGULAR_CHANNELS) {
+    if (handle == NULL || channels == NULL || size == 0 || size > MAX_REGULAR_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -254,7 +257,7 @@ hal_err_t adc_regular_group_start_conv(ADC_TypeDef* handle, const adc_channels_t
 
 // For use with the injected group and external channels
 hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, adc_callback_t cb, void* arg) {
-    if (channels == NULL || size == 0 || size > MAX_INJECTED_CHANNELS) {
+    if (handle == NULL || channels == NULL || size == 0 || size > MAX_INJECTED_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -327,7 +330,7 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
 }
 
 hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data, size_t size) {
-    if (raw_data == NULL) {
+    if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -371,7 +374,7 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data,
 
 // For use with the internal channels. These only provide the raw ADC values. They all make use of the regular group
 hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data) {
-    if (raw_data == NULL) {
+    if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -403,7 +406,7 @@ hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data) {
 }
 
 hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data) {
-    if (raw_data == NULL) {
+    if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -430,7 +433,7 @@ hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data) {
 }
 
 hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_data) {
-    if (raw_data == NULL) {
+    if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -459,7 +462,7 @@ hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_data) {
 
 // For use of getting the actual voltages read by the ADC
 hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
-    if (vdda == NULL) {
+    if (handle == NULL || vdda == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -477,7 +480,7 @@ hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
 }
 
 hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
-    if (temp_celsius == NULL) {
+    if (handle == NULL || temp_celsius == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -505,7 +508,7 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
 }
 
 hal_err_t adc_get_value_right_aligned(ADC_TypeDef* handle, uint16_t raw_data, adc_resolution_t resolution, float* voltage) {
-    if (voltage == NULL) {
+    if (handle == NULL || voltage == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -540,7 +543,7 @@ hal_err_t adc_get_value_right_aligned(ADC_TypeDef* handle, uint16_t raw_data, ad
 
 // For use of control of the analog watchdog
 hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, uint16_t min, uint16_t max, bool regular, bool injected, adc_callback_t cb, void* arg) {
-    if ((cb == NULL) || (min >= max)) {
+    if (handle == NULL || cb == NULL || min >= max) {
         // The use of interrupts is effectively mandatory as that's the
         // only way for the watchdog to inform the caller of a violation
         return HAL_ERR_INVALID_ARG;

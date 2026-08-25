@@ -200,7 +200,8 @@ namespace profile {
 } // namespace profile
 
 extern "C" {
-[[noreturn]] int main() { /**
+[[noreturn]] int main() {
+    /**
     // Run all the hardware driver tests
     test::runner();
 
@@ -218,31 +219,31 @@ extern "C" {
     const adc_config_t adc_cfg = {
         .alignment       = ADC_RIGHT_ALIGN,
         .resolution      = ADC_RES_12_BITS,
-        .sampling_cycles = ADC_SAMPLE_480_CYCLES,
+        .sampling_cycles = ADC_SAMPLE_15_CYCLES,
     };
     ASSERT(adcx_clk_enable(ADC1, true) == HAL_OK);
     ASSERT(adc_configure(ADC1, &adc_cfg) == HAL_OK);
     ASSERT(adc_power_on(ADC1, true) == HAL_OK);
 
     // Configure the analog watchdog
-    adc_analog_wdg_start(
-        ADC1,
-        0,
-        4095,
-        true,
-        true,
-        [](void* arg) {
-            (void)arg;
-            LOGE("ADC_Wdt", "Voltage on an ADC channel past the valid range");
-            PANIC();
-        },
-        nullptr);
+    ASSERT(adc_analog_wdg_start(
+               ADC1,
+               0,
+               4095,
+               true,
+               true,
+               [](void* arg) {
+                   (void)arg;
+                   LOGE("ADC_WDG", "Voltage on an ADC channel past the valid range");
+                   PANIC();
+               },
+               nullptr) == HAL_OK);
 
-
-    // Get the raw ADC data
+    // Configure PA3 as analog since it is ADC channel 3
     ASSERT(gpiox_clk_enable(GPIOA, true) == HAL_OK);
     gpio_set_analog(GPIOA, 3);
 
+    // Get the raw ADC data
     uint16_t raw_channel_3 = 0, raw_vbat = 0, raw_vref_int = 0;
     ASSERT(adc_get_v_bat(ADC1, &raw_vbat) == HAL_OK);
     ASSERT(adc_get_v_ref_internal(ADC1, &raw_vref_int) == HAL_OK);
@@ -252,15 +253,15 @@ extern "C" {
     float vdda = 0, temp_celsius = 0, channel_3 = 0, vbat = 0, vref_int = 0;
     ASSERT(adc_get_vdda(ADC1, &vdda) == HAL_OK);
     ASSERT(adc_get_temp_celsius(ADC1, &temp_celsius) == HAL_OK);
-    ASSERT(adc_get_value_right_aligned(ADC1, raw_vref_int, ADC_RES_12_BITS, &vref_int) == HAL_OK);
     ASSERT(adc_get_value_right_aligned(ADC1, raw_vbat, ADC_RES_12_BITS, &vbat) == HAL_OK);
+    ASSERT(adc_get_value_right_aligned(ADC1, raw_vref_int, ADC_RES_12_BITS, &vref_int) == HAL_OK);
     ASSERT(adc_get_value_right_aligned(ADC1, raw_channel_3, ADC_RES_12_BITS, &channel_3) == HAL_OK);
 
     // Log the data
     LOGI("ADC", "VDDA: %.3fV", (double)vdda);
     LOGI("ADC", "V_bat: %.3fV", (double)vbat);
-    LOGI("ADC", "V_ref_int: %.3fV", (double)vref_int);
     LOGI("ADC", "PA3: %.3fV", (double)channel_3);
+    LOGI("ADC", "V_ref_int: %.3fV", (double)vref_int);
     LOGI("ADC", "Temperature: %.3fC", (double)temp_celsius);
 
     __asm volatile("bkpt #0");
