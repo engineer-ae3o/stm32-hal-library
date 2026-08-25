@@ -70,7 +70,7 @@ static const dma_stream_map_t s_i2s_dma_map[5] = {
 };
 
 // Helper
-static __attribute__((__always_inline__)) inline uint8_t get_index(const I2S_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline uint8_t get_index(const I2S_TypeDef* handle) {
     if (handle == I2S1) {
         return 0;
     } else if (handle == I2S2) {

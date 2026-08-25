@@ -6,8 +6,8 @@
 
 
 // Forward declarations
-static __attribute__((__always_inline__)) inline bool send_start(I2C_TypeDef* handle);
-static __attribute__((__always_inline__)) inline void send_stop(I2C_TypeDef* handle);
+[[__gnu__::__always_inline__]] static inline bool send_start(I2C_TypeDef* handle);
+[[__gnu__::__always_inline__]] static inline void send_stop(I2C_TypeDef* handle);
 
 static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t len);
 static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t len);

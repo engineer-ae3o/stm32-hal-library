@@ -33,7 +33,7 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
 
 
 // Helper
-static __attribute__((__always_inline__)) inline uint8_t get_index(const USART_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline uint8_t get_index(const USART_TypeDef* handle) {
     if (handle == USART1) {
         return 0U;
     } else if (handle == USART2) {
@@ -45,7 +45,7 @@ static __attribute__((__always_inline__)) inline uint8_t get_index(const USART_T
     }
 }
 
-static __attribute__((__always_inline__)) inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t idx) {
     if (!s_dma_tx_done_cbs[idx]) {
         return;
     }
@@ -71,7 +71,7 @@ static __attribute__((__always_inline__)) inline void isr_tx_helper(USART_TypeDe
     s_tx_args[idx]         = NULL;
 }
 
-static __attribute__((__always_inline__)) inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
     if (!s_dma_rx_done_cbs[idx]) {
         return;
     }

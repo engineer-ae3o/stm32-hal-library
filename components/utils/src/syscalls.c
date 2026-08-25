@@ -88,7 +88,7 @@ void system_init(void) {
 }
 
 // Provide a weak main function
-__attribute__((__weak__, __noreturn__, __used__)) int main(void) {
+[[__gnu__::__noreturn__, __gnu__::__weak__]] int main(void) {
     LOGE("Main", "Application failed to provide a main function. Using the weak stub instead");
     while (true) {
         __NOP();
@@ -96,7 +96,7 @@ __attribute__((__weak__, __noreturn__, __used__)) int main(void) {
 }
 
 // Fault Handlers
-__attribute__((__naked__)) void HardFault_Handler(void) {
+[[__gnu__::__naked__]] void HardFault_Handler(void) {
     __asm volatile("tst lr, #4\n"
                    "ite eq\n"
                    "mrseq r0, msp\n"
@@ -104,7 +104,7 @@ __attribute__((__naked__)) void HardFault_Handler(void) {
                    "b hard_fault_dump\n");
 }
 
-__attribute__((__naked__)) void BusFault_Handler(void) {
+[[__gnu__::__naked__]] void BusFault_Handler(void) {
     __asm volatile("tst lr, #4\n"
                    "ite eq\n"
                    "mrseq r0, msp\n"
@@ -112,7 +112,7 @@ __attribute__((__naked__)) void BusFault_Handler(void) {
                    "b bus_fault_dump\n");
 }
 
-__attribute__((__naked__)) void UsageFault_Handler(void) {
+[[__gnu__::__naked__]] void UsageFault_Handler(void) {
     __asm volatile("tst lr, #4\n"
                    "ite eq\n"
                    "mrseq r0, msp\n"
@@ -121,7 +121,7 @@ __attribute__((__naked__)) void UsageFault_Handler(void) {
 }
 
 // Fault state dumps
-__attribute__((__weak__, __noreturn__, __used__)) void hard_fault_dump(const unsigned int* frame) {
+[[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void hard_fault_dump(const unsigned int* frame) {
     LOGE("CPU Exception", "Hard fault.");
 
     const unsigned int r0   = frame[0];
@@ -150,7 +150,7 @@ __attribute__((__weak__, __noreturn__, __used__)) void hard_fault_dump(const uns
     while (true);
 }
 
-__attribute__((__weak__, __noreturn__, __used__)) void bus_fault_dump(const unsigned int* frame) {
+[[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void bus_fault_dump(const unsigned int* frame) {
     LOGE("CPU Exception", "Bus fault.");
 
     const unsigned int r0   = frame[0];
@@ -179,7 +179,7 @@ __attribute__((__weak__, __noreturn__, __used__)) void bus_fault_dump(const unsi
     while (true);
 }
 
-__attribute__((__weak__, __noreturn__, __used__)) void usage_fault_dump(const unsigned int* frame) {
+[[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void usage_fault_dump(const unsigned int* frame) {
     LOGE("CPU Exception", "Usage fault.");
 
     const unsigned int r0   = frame[0];
@@ -207,13 +207,13 @@ __attribute__((__weak__, __noreturn__, __used__)) void usage_fault_dump(const un
 }
 
 // Stub the syscalls needed by newlibc
-__attribute__((__weak__)) int _close(int fd) {
+[[__gnu__::__weak__]] int _close(int fd) {
     (void)fd;
     errno = EBADF;
     return -1;
 }
 
-__attribute__((__weak__)) off_t _lseek(int fd, off_t offset, int whence) {
+[[__gnu__::__weak__]] off_t _lseek(int fd, off_t offset, int whence) {
     (void)fd;
     (void)offset;
     (void)whence;
@@ -221,7 +221,7 @@ __attribute__((__weak__)) off_t _lseek(int fd, off_t offset, int whence) {
     return -1;
 }
 
-__attribute__((__weak__)) int _read(int fd, void* buf, size_t count) {
+[[__gnu__::__weak__]] int _read(int fd, void* buf, size_t count) {
     (void)fd;
     (void)buf;
     (void)count;
@@ -229,42 +229,42 @@ __attribute__((__weak__)) int _read(int fd, void* buf, size_t count) {
     return -1;
 }
 
-__attribute__((__weak__, __noreturn__)) void _exit(int status) {
+[[__gnu__::__weak__, __gnu__::__noreturn__]] void _exit(int status) {
     (void)status;
     LOGE("Exit", "_exit() is called.");
     PANIC();
 }
 
-__attribute__((__weak__)) _ssize_t _write(int fd, const void* buf, size_t len) {
+[[__gnu__::__weak__]] _ssize_t _write(int fd, const void* buf, size_t len) {
     (void)fd;
     return (_ssize_t)SEGGER_RTT_Write(RTT_BUFFER_INDEX, buf, len);
 }
 
-__attribute__((__weak__)) int _kill(pid_t pid, int sig) {
+[[__gnu__::__weak__]] int _kill(pid_t pid, int sig) {
     (void)pid;
     (void)sig;
     errno = ESRCH;
     return -1;
 }
 
-__attribute__((__weak__)) pid_t _getpid(void) {
+[[__gnu__::__weak__]] pid_t _getpid(void) {
     return -1;
 }
 
-__attribute__((__weak__)) caddr_t _sbrk(ptrdiff_t increment) {
+[[__gnu__::__weak__]] caddr_t _sbrk(ptrdiff_t increment) {
     (void)increment;
     errno = ENOMEM;
     return (caddr_t)-1;
 }
 
-__attribute__((__weak__)) int _fstat(int fd, struct stat* st) {
+[[__gnu__::__weak__]] int _fstat(int fd, struct stat* st) {
     (void)fd;
     (void)st;
     errno = EBADF;
     return -1;
 }
 
-__attribute__((__weak__)) int _isatty(int fd) {
+[[__gnu__::__weak__]] int _isatty(int fd) {
     (void)fd;
     errno = EBADF;
     return 0;

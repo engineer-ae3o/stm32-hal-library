@@ -168,6 +168,7 @@ add_custom_target(cppcheck
         --project=${CMAKE_BINARY_DIR}/compile_commands.json
         --file-filter=${CMAKE_SOURCE_DIR}/*.cpp
         --file-filter=${CMAKE_SOURCE_DIR}/components/drivers/**
+        --file-filter=${CMAKE_SOURCE_DIR}/components/utils/**
         --file-filter=${CMAKE_SOURCE_DIR}/components/test/**
         --output-file=${CMAKE_BINARY_DIR}/cppcheck_report.txt
         --checkers-report=${CMAKE_BINARY_DIR}/cppcheck_checks.txt

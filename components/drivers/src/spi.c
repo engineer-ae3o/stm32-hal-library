@@ -43,7 +43,7 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
 };
 
 // Helpers
-static __attribute__((__always_inline__)) inline uint8_t get_index(const SPI_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline uint8_t get_index(const SPI_TypeDef* handle) {
     if (handle == SPI1) {
         return 0;
     } else if (handle == SPI2) {
@@ -59,7 +59,7 @@ static __attribute__((__always_inline__)) inline uint8_t get_index(const SPI_Typ
     }
 }
 
-static __attribute__((__always_inline__)) inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx) {
     if (!s_dma_tx_done_cbs[idx]) {
         return;
     }
@@ -97,7 +97,7 @@ static __attribute__((__always_inline__)) inline void isr_tx_helper(SPI_TypeDef*
     }
 }
 
-static __attribute__((__always_inline__)) inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
     if (!s_dma_rx_done_cbs[idx]) {
         return;
     }

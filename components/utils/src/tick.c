@@ -7,7 +7,7 @@
 
 
 // Initialize the tick timer before main runs
-__attribute__((constructor)) static void tick_init(void) {
+[[__gnu__::__constructor__]] static void tick_init(void) {
     LOGI("Tick", "Initializing TIM2 as the tick timer source.");
 
     // Configure TIM2 as our tick source

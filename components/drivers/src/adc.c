@@ -17,7 +17,6 @@
 
 
 // To save user passed callbacks
-// For ADC1
 static dma_trans_done_cb_t s_dma_trans_done_cb[NUM_OF_ADC_CONTROLLERS] = {};
 static void*               s_dma_trans_cb_arg[NUM_OF_ADC_CONTROLLERS]  = {};
 
@@ -39,23 +38,66 @@ static void*          s_analog_wdg_arg[NUM_OF_ADC_CONTROLLERS] = {};
     } while (0)
 
 
-static __attribute__((__always_inline__)) inline uint8_t get_index(const ADC_TypeDef* handle) {
+// Inline helpers
+[[__gnu__::__always_inline__]] static inline uint8_t get_index(const ADC_TypeDef* handle) {
+#if defined(ADC1)
     if (handle == ADC1) {
         return 0U;
     }
-    // Uncomment if your mcu supports ADC2 and ADC3
-    /* else if (handle == ADC2) {
+#endif
+
+#if defined(ADC2)
+    if (handle == ADC2) {
         return 1U;
-    } else if (handle == ADC3) {
+    }
+#endif
+
+#if defined(ADC3)
+    if (handle == ADC3) {
         return 2U;
-    } */
-    else {
-        return 0xFFU;
+    }
+#endif
+
+    return 0xFFU;
+}
+
+[[__gnu__::__always_inline__]] static inline void adcx_isr_helper(ADC_TypeDef* handle) {
+    const uint8_t idx = get_index(handle);
+    // Assert since we can't return the error anywhere
+    ASSERT(idx != 0xFFU);
+
+    // Check if end of conversion for the injected mode is reached and if interrupts for the injected group are enabled
+    if ((handle->SR & ADC_SR_JEOC) && (handle->CR1 & ADC_CR1_JEOCIE)) {
+        // Invoke the user callback since the sampling on the injected group is complete
+        if (s_injected_done_cb[idx]) {
+            s_injected_done_cb[idx](s_injected_done_arg[idx]);
+
+            // Clear the user passed callback since this is a one-off event
+            s_injected_done_cb[idx]  = NULL;
+            s_injected_done_arg[idx] = NULL;
+        }
+
+        // Clear the JEOCIE and JEOC bits since the interrupt has been serviced
+        handle->SR &= ~ADC_SR_JEOC;
+        handle->CR1 &= ~ADC_CR1_JEOCIE;
+    }
+
+    // Check if the AWD bit is set and interrupts for the analog watchdog are enabled.
+    if ((handle->SR & ADC_SR_AWD) && (handle->CR1 & ADC_CR1_AWDIE)) {
+        // Invoke the user callback since the analog watchdog has fired an interrupt
+        if (s_analog_wdg_cb[idx]) {
+            s_analog_wdg_cb[idx](s_analog_wdg_arg[idx]);
+            // The callback isn't cleared since this is not a one-off event. To clear, call adc_analog_wdg_stop()
+        }
+
+        // Clear the AWD bit since the interrupt has already been serviced
+        // The AWDIE bit is left since the watchdog can still trigger an interrupt
+        handle->SR &= ~ADC_SR_AWD;
     }
 }
 
 
-// Public API
+// General ADC use
 void adc_clk_enable(ADC_TypeDef* handle, bool enable) {
     if (enable) {
         if (handle == ADC1) {
@@ -86,7 +128,7 @@ void adc_disable_nvic_irq(void) {
     NVIC_DisableIRQ(ADC_IRQn);
 }
 
-hal_err_t adc_configure_analog_clk(ADC_TypeDef* handle, const adc_clk_config_t* config) {
+hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
     if (config == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -106,7 +148,7 @@ hal_err_t adc_configure_analog_clk(ADC_TypeDef* handle, const adc_clk_config_t* 
     handle->SMPR2 &= ~(ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 | ADC_SMPR2_SMP4 | ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 |
                        ADC_SMPR2_SMP7 | ADC_SMPR2_SMP8 | ADC_SMPR2_SMP9);
 
-    const uint32_t time = (uint32_t)config->sampling_cycles;
+    const uint32_t time = config->sampling_cycles;
 
     // Apply the sample cycles to all channels
     handle->SMPR1 |= ((time << ADC_SMPR1_SMP10_Pos) | (time << ADC_SMPR1_SMP11_Pos) | (time << ADC_SMPR1_SMP12_Pos) | (time << ADC_SMPR1_SMP13_Pos) |
@@ -117,13 +159,22 @@ hal_err_t adc_configure_analog_clk(ADC_TypeDef* handle, const adc_clk_config_t* 
                       (time << ADC_SMPR2_SMP4_Pos) | (time << ADC_SMPR2_SMP5_Pos) | (time << ADC_SMPR2_SMP6_Pos) | (time << ADC_SMPR2_SMP7_Pos) |
                       (time << ADC_SMPR2_SMP8_Pos) | (time << ADC_SMPR2_SMP9_Pos));
 
+    // Set the data register alignment
+    if (config->alignment == ADC_RIGHT_ALIGN) {
+        handle->CR2 &= ~ADC_CR2_ALIGN;
+    } else if (config->alignment == ADC_LEFT_ALIGN) {
+        handle->CR2 |= ADC_CR2_ALIGN;
+    } else {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     return HAL_OK;
 }
 
 
 // For use with the regular group
-hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* data) {
-    if (data == NULL) {
+hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* raw_data) {
+    if (raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -149,7 +200,7 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
     POLL_TILL_CONV_DONE();
 
     // Get the final result
-    *data = (uint16_t)handle->DR;
+    *raw_data = (uint16_t)handle->DR;
 
     return HAL_OK;
 }
@@ -165,6 +216,8 @@ hal_err_t adc_regular_group_start_conv(ADC_TypeDef* handle, const adc_channels_t
     }
 
     (void)handle;
+
+    // TODO: Handle scanning and DMA setup for the regular group
 
     if (cb) {
         s_dma_trans_done_cb[idx] = cb;
@@ -198,10 +251,29 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
     // Set the number of channels/conversions in the JL bit positions of the
     // JSQR register. The JL bit positions are zero indexed. That is, 1 channel
     // means a JL value of 0b00, 3 channels means a JL value of 0b10 etc.
-    handle->JSQR &= ~ADC_JSQR_JL;
+    handle->JSQR &= ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 | ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
     handle->JSQR |= (((size - 1) & 0x3U) << ADC_JSQR_JL_Pos);
 
-    // TODO: Set the channel sequence
+    // Set the channel sequence in the JSQ register
+    // As per the TRM, there are only 4 injected channels, and they have to be filled from the last
+    // slot, that is, JSQ4. This is because all conversions in the injected group must end at JSQ4
+    switch (size) {
+        case 1:
+            handle->JSQR |= (uint32_t)(channels[0] << ADC_JSQR_JSQ4_Pos);
+            break;
+        case 2:
+            handle->JSQR |= (uint32_t)((channels[0] << ADC_JSQR_JSQ3_Pos) | (channels[1] << ADC_JSQR_JSQ4_Pos));
+            break;
+        case 3:
+            handle->JSQR |= (uint32_t)((channels[0] << ADC_JSQR_JSQ2_Pos) | (channels[1] << ADC_JSQR_JSQ3_Pos) | (channels[2] << ADC_JSQR_JSQ4_Pos));
+            break;
+        case 4:
+            handle->JSQR |= (uint32_t)((channels[0] << ADC_JSQR_JSQ1_Pos) | (channels[1] << ADC_JSQR_JSQ2_Pos) | (channels[2] << ADC_JSQR_JSQ3_Pos) |
+                                       (channels[3] << ADC_JSQR_JSQ4_Pos));
+            break;
+        default:
+            return HAL_ERR_INVALID_ARG;
+    };
 
     // Clear all offsets registers since not used
     handle->JOFR1 &= ~ADC_JOFR1_JOFFSET1;
@@ -229,8 +301,8 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
     return HAL_OK;
 }
 
-hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* buffer, size_t size) {
-    if (buffer == NULL) {
+hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data, size_t size) {
+    if (raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -247,22 +319,22 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* buffer, s
     // Read the injected group data registers. Can switch over them since only 4 data registers
     switch (size) {
         case 1:
-            buffer[0] = (uint16_t)handle->JDR1;
+            raw_data[0] = (uint16_t)handle->JDR1;
             break;
         case 2:
-            buffer[0] = (uint16_t)handle->JDR1;
-            buffer[1] = (uint16_t)handle->JDR2;
+            raw_data[0] = (uint16_t)handle->JDR1;
+            raw_data[1] = (uint16_t)handle->JDR2;
             break;
         case 3:
-            buffer[0] = (uint16_t)handle->JDR1;
-            buffer[1] = (uint16_t)handle->JDR2;
-            buffer[2] = (uint16_t)handle->JDR3;
+            raw_data[0] = (uint16_t)handle->JDR1;
+            raw_data[1] = (uint16_t)handle->JDR2;
+            raw_data[2] = (uint16_t)handle->JDR3;
             break;
         case 4:
-            buffer[0] = (uint16_t)handle->JDR1;
-            buffer[1] = (uint16_t)handle->JDR2;
-            buffer[2] = (uint16_t)handle->JDR3;
-            buffer[3] = (uint16_t)handle->JDR4;
+            raw_data[0] = (uint16_t)handle->JDR1;
+            raw_data[1] = (uint16_t)handle->JDR2;
+            raw_data[2] = (uint16_t)handle->JDR3;
+            raw_data[3] = (uint16_t)handle->JDR4;
             break;
         default:
             return HAL_ERR_INVALID_ARG;
@@ -273,8 +345,8 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* buffer, s
 
 
 // For use with the internal channels
-hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_v_bat) {
-    if (raw_v_bat == NULL) {
+hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data) {
+    if (raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -304,7 +376,7 @@ hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_v_bat) {
     // have to multiply by VBAT_DIVIDER_RATIO to get the actual V_bat. This
     // is done by the hardware because V_bat could exceed the operating voltage
     // range of the ADC, so it is divided so the ADC can function correctly
-    *raw_v_bat = (uint16_t)(handle->DR * VBAT_DIVIDER_RATIO);
+    *raw_data = (uint16_t)(handle->DR * VBAT_DIVIDER_RATIO);
 
     // Disconnect V_bat once done
     ADC->CCR &= ~ADC_CCR_VBATE;
@@ -312,8 +384,8 @@ hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_v_bat) {
     return HAL_OK;
 }
 
-hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_temp) {
-    if (raw_temp == NULL) {
+hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data) {
+    if (raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -325,7 +397,7 @@ hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_temp) {
     handle->SQR3 &= ~ADC_SQR3_SQ1;
     handle->SQR3 |= ADC_CHANNEL_TEMP << ADC_SQR3_SQ1_Pos;
 
-    // Wake the raw_temp sensor if it's not already powered on
+    // Wake the temperature sensor if it's not already powered on
     if (!(ADC->CCR & ADC_CCR_TSVREFE)) {
         ADC->CCR |= ADC_CCR_TSVREFE;
         delay_us(TEMP_SENSOR_STARUP_TIME_US);
@@ -342,14 +414,14 @@ hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_temp) {
     // Poll till the conversion is complete
     POLL_TILL_CONV_DONE();
 
-    // Get the raw value
-    *raw_temp = (uint16_t)handle->DR;
+    // Get the raw ADC value
+    *raw_data = (uint16_t)handle->DR;
 
     return HAL_OK;
 }
 
-hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_v_ref_int) {
-    if (raw_v_ref_int == NULL) {
+hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_data) {
+    if (raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -379,7 +451,7 @@ hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_v_ref_int) {
     POLL_TILL_CONV_DONE();
 
     // Get V_ref
-    *raw_v_ref_int = (uint16_t)handle->DR;
+    *raw_data = (uint16_t)handle->DR;
 
     return HAL_OK;
 }
@@ -452,34 +524,20 @@ hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle) {
 
 // Interrupt handlers
 void ADC_IRQHandler(void) {
-    // There's only ADC1 on the STM32F411. Add the right number of ISRs for the number of ADC peripherals your mcu supports
+#if defined(ADC1)
+    adcx_isr_helper(ADC1);
+#endif
 
-    // Check if end of conversion for the injected mode is reached
-    if (ADC1->SR & ADC_SR_JEOC) {
-        // Clear the JEOCIE bit so this interrupt doesn't fire again, since it has been serviced
-        ADC1->CR1 &= ~ADC_CR1_JEOCIE;
+#if defined(ADC2)
+    adcx_isr_helper(ADC2);
+#endif
 
-        // Invoke the user callback once the ADC sampling on the injected group is complete
-        if (s_injected_done_cb[0]) {
-            s_injected_done_cb[0](s_injected_done_arg[0]);
-
-            // Clear the user passed callback since this is a one-off event
-            s_injected_done_cb[0]  = NULL;
-            s_injected_done_arg[0] = NULL;
-        }
-    }
-
-    // Check if the AWD bit is set. This means the analog watchdog has fired an interrupt
-    if (ADC1->SR & ADC_SR_AWD) {
-        if (s_analog_wdg_cb[0]) {
-            // Invoke the user callback since the analog watchdog has fired an interrupt
-            s_analog_wdg_cb[0](s_analog_wdg_arg[0]);
-            // The callback isn't cleared since this is not a one-off event. To clear, call adc_analog_wdg_stop()
-        }
-    }
+#if defined(ADC3)
+    adcx_isr_helper(ADC3);
+#endif
 }
 
-// ADC1 DMA interrupt handler
+// DMA interrupt handler
 void DMA2_Stream0_IRQHandler(void) {
     // Invoke user callback once the ADC sampling and DMA transfer on the regular group is complete
     if (s_dma_trans_done_cb[0]) {

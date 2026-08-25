@@ -214,23 +214,46 @@ extern "C" {
     adc_enable_nvic_irq();
     adc_power_on(ADC1, true);
 
-    const adc_clk_config_t adc_clk_config = {
-        .resolution      = ADC_RES_8_BITS,
+    const adc_config_t adc_cfg = {
+        .alignment       = ADC_RIGHT_ALIGN,
+        .resolution      = ADC_RES_12_BITS,
         .clk_prescaler   = ADC_CLK_PRESCALER_4,
         .sampling_cycles = ADC_SAMPLE_112_CYCLES,
     };
-    ASSERT(adc_configure_analog_clk(ADC1, &adc_clk_config) == HAL_OK);
+    ASSERT(adc_configure(ADC1, &adc_cfg) == HAL_OK);
 
-    uint16_t channel_1 = 0, temperature = 0, vbat = 0, vrefint = 0;
-    ASSERT(adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_3, &channel_1) == HAL_OK);
-    ASSERT(adc_get_v_bat(ADC1, &vbat) == HAL_OK);
-    ASSERT(adc_get_v_ref_internal(ADC1, &vrefint) == HAL_OK);
-    ASSERT(adc_get_temperature(ADC1, &temperature) == HAL_OK);
+    // Configure the analog watchdog
+    adc_analog_wdg_start(
+        ADC1,
+        2,
+        235,
+        true,
+        true,
+        [](void* arg) {
+            (void)arg;
+            LOGE("ADC_Wdt", "Voltage on an ADC channel past the valid range");
+            PANIC();
+        },
+        nullptr);
 
-    LOGI("ADC", "PA3: %.3fV", (double)channel_1 / 256 * 3.3);
-    LOGI("ADC", "V_ref_int: %.3fV", (double)vrefint / 256 * 3.3);
-    LOGI("ADC", "V_bat: %.3fV", (double)vbat / 256 * 3.3);
-    LOGI("ADC", "Temperature: %uC", temperature);
+
+    // Get the raw ADC data
+    uint16_t raw_channel_3 = 0, raw_temp = 0, raw_vbat = 0, raw_vrefint = 0;
+
+    ASSERT(adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_3, &raw_channel_3) == HAL_OK);
+    ASSERT(adc_get_v_bat(ADC1, &raw_vbat) == HAL_OK);
+    ASSERT(adc_get_v_ref_internal(ADC1, &raw_vrefint) == HAL_OK);
+    ASSERT(adc_get_temperature(ADC1, &raw_temp) == HAL_OK);
+
+    const float channel_3   = ADC_GET_FROM_RAW(raw_channel_3, 12, 3.3);
+    const float temperature = (ADC_GET_FROM_RAW(raw_temp, 12, 3.3) - TEMP_SENSOR_VSENSE_AT_25C) / TEMP_SENSOR_AVERAGE_SLOPE + 25;
+    const float vrefint     = ADC_GET_FROM_RAW(raw_vrefint, 12, 3.3);
+    const float vbat        = ADC_GET_FROM_RAW(raw_vbat, 12, 3.3);
+
+    LOGI("ADC", "PA3: %.3fV", (double)channel_3);
+    LOGI("ADC", "V_ref_int: %.3fV", (double)vrefint);
+    LOGI("ADC", "V_bat: %.3fV", (double)vbat);
+    LOGI("ADC", "Temperature: %fC", (double)temperature);
 
     __asm volatile("bkpt #0");
     while (true);

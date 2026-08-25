@@ -69,7 +69,7 @@ typedef struct {
 typedef void (*dma_trans_done_cb_t)(void* arg, hal_err_t error);
 
 // Helper to abstract checking and clearing of DMA irq flags
-__attribute__((__always_inline__)) inline hal_err_t dma_isr_helper(
+[[__gnu__::__always_inline__]] inline hal_err_t dma_isr_helper(
     DMA_Stream_TypeDef* stream, volatile uint32_t* irq_clr_reg, volatile uint32_t* irq_sta_reg, uint32_t tc, uint32_t te, uint32_t dme, uint32_t ht) {
     hal_err_t error = HAL_OK;
 
