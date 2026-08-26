@@ -71,6 +71,12 @@ typedef struct {
     adc_sample_cycles_t sampling_cycles;
 } adc_config_t;
 
+typedef struct {
+    // The sequence of channels and the number of channels
+    const adc_channels_t* channels_sequence;
+    size_t                num_of_channels;
+} adc_channels_config_t;
+
 
 // Configure a specific ADC peripheral
 hal_err_t adcx_clk_enable(ADC_TypeDef* handle, bool enable);
@@ -97,23 +103,34 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
 
 // The regular group with continuous DMA mode
 typedef struct {
-    // The sequence of channels and the number of channels
-    const adc_channels_t* channels;
-    size_t                num_of_channels;
+    // The channels to be sampled
+    adc_channels_config_t channels;
+
     // The DMA buffer to store the samples
-    const uint16_t* dma_buffer1;
-    const uint16_t* dma_buffer2;
-    uint16_t        buf_size;
+    const uint16_t* buffer_1;
+    const uint16_t* buffer_2;
+    uint16_t        buffer_size;
+
     // DMA settings
-    bool use_double_buffers;
-    bool dma_wraparound_when_done;
+    bool use_double_buffers;       // Double buffering mode. Pretty straightforward
+    bool dma_wraparound_when_done; // This is only used when use_double_buffers is false. This tells the DMA controller
+                                   // to wrap around to the start of the buffer if it gets to the buffer end.
+
+    // The different callbacks to be registered. They determine what interrupts will be enabled.
+    struct {
+        void (*on_buffer_full)(void* arg, bool is_buf_1);       // Called when a buffer is filled
+        void (*on_transfer_error)(void* arg, bool is_buf_1);    // Called on a DMA transfer error
+        void (*on_direct_mode_error)(void* arg, bool is_buf_1); // Called when an error arose from the DMA direct mode
+        void (*on_data_overrun)(void* arg, bool is_buf_1);      // Called when the DMA is too slow to read and data is lost
+    } callbacks;
+
 } adc_continuous_config_t;
 
-hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config, dma_trans_done_cb_t cb, void* arg);
+hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config, void* arg);
 hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle);
 
 // The injected group with interrupts
-hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, adc_callback_t cb, void* arg);
+hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_config_t* channels, adc_callback_t cb, void* arg);
 hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data, size_t size);
 
 

@@ -229,7 +229,7 @@ void adc_power_on_temp_sensor(bool on) {
 }
 
 
-// For use with the regular group and external channels
+// For use with the regular group and external channels in polling oneshot mode
 hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* raw_data) {
     if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
@@ -245,9 +245,11 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
     return HAL_OK;
 }
 
-hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config, dma_trans_done_cb_t cb, void* arg) {
-    if (handle == NULL || config == NULL || config->channels == NULL || config->num_of_channels == 0 ||
-        config->num_of_channels > MAX_REGULAR_CHANNELS || config->dma_buffer1 == NULL) {
+
+// For use with the regular group and external channels in DMA continuous sampling mode
+hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config, void* arg) {
+    if (handle == NULL || config == NULL || config->channels.channels_sequence == NULL || config->channels.num_of_channels == 0 ||
+        config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -256,10 +258,12 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         return HAL_ERR_INVALID_ARG;
     }
 
-    // TODO: Set the channel sequence
+    // TODO: Set the channel length and sequence
+    (void)config->channels.channels_sequence;
+    (void)config->channels.num_of_channels;
 
     // Enable scan mode if we have more than one channel, but disable otherwise
-    if (config->num_of_channels > 1) {
+    if (config->channels.num_of_channels > 1) {
         handle->CR1 |= ADC_CR1_SCAN;
     } else {
         handle->CR1 &= ~ADC_CR1_SCAN;
@@ -287,28 +291,29 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     dma_set_direction(ADC_DMA_STREAM, DMA_DIR_P_M);
     dma_set_direct_mode(ADC_DMA_STREAM, true);
     dma_set_channel(ADC_DMA_STREAM, ADC_DMA_CHANNEL);
-    dma_set_trans_length(ADC_DMA_STREAM, config->buf_size);
     dma_set_increment(ADC_DMA_STREAM, false, true);
     dma_set_flow_controller(ADC_DMA_STREAM, true);
+    dma_set_trans_length(ADC_DMA_STREAM, config->buffer_size);
     dma_set_stream_priority(ADC_DMA_STREAM, DMA_PRIORITY_HIGH);
-    dma_enable_irqs(ADC_DMA_STREAM, true, true, false, true);
     dma_set_per_mem_size(ADC_DMA_STREAM, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
 
     if (config->use_double_buffers) {
+        if (config->buffer_2 == NULL) {
+            return HAL_ERR_INVALID_ARG;
+        }
         dma_enable_circm_dbm(ADC_DMA_STREAM, true, true);
-        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->dma_buffer1, config->dma_buffer2);
+        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->buffer_1, config->buffer_2);
     } else if (config->dma_wraparound_when_done) {
         dma_enable_circm_dbm(ADC_DMA_STREAM, true, false);
-        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->dma_buffer1, NULL);
+        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->buffer_1, NULL);
     } else {
         dma_enable_circm_dbm(ADC_DMA_STREAM, false, false);
-        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->dma_buffer1, NULL);
+        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->buffer_1, NULL);
     }
 
-    if (cb) {
-        s_dma_trans_done_cb[idx] = cb;
-        s_dma_trans_cb_arg[idx]  = arg;
-    }
+    // TODO: Handle the callback registration
+    (void)config->callbacks;
+    (void)arg;
 
     // Enable the DMA stream interrupts
     NVIC_SetPriority(ADC_DMA_IRQ_TYPE, ADC_DMA_NVIC_IRQ_PRIORITY);
@@ -333,7 +338,7 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
 
     // Clear all state and stop the conversion.
     handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_DMA);
+    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_SWSTART);
 
     // Clear the user callback
     s_dma_trans_done_cb[idx] = NULL;
@@ -343,9 +348,10 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
 }
 
 
-// For use with the injected group and external channels
-hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, adc_callback_t cb, void* arg) {
-    if (handle == NULL || channels == NULL || size == 0 || size > MAX_INJECTED_CHANNELS) {
+// For use with the injected group and external channels with interrupts
+hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_config_t* channels, adc_callback_t cb, void* arg) {
+    if (handle == NULL || channels->channels_sequence == NULL || channels->num_of_channels == 0 ||
+        channels->num_of_channels > MAX_INJECTED_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -368,24 +374,25 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
     // JSQR register. The JL bit positions are zero indexed. That is, 1 channel
     // means a JL value of 0b00, 3 channels means a JL value of 0b10 etc.
     handle->JSQR &= ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 | ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
-    handle->JSQR |= (((size - 1) & 0x3U) << ADC_JSQR_JL_Pos);
+    handle->JSQR |= (((channels->num_of_channels - 1) & 0x3U) << ADC_JSQR_JL_Pos);
 
     // Set the channel sequence in the JSQ register
     // As per the TRM, there are only 4 injected channels, and they have to be filled from the last
     // slot, that is, JSQ4. This is because all conversions in the injected group must end at JSQ4
-    switch (size) {
+    switch (channels->num_of_channels) {
         case 1:
-            handle->JSQR |= (uint32_t)(channels[0] << ADC_JSQR_JSQ4_Pos);
+            handle->JSQR |= (uint32_t)(channels->channels_sequence[0] << ADC_JSQR_JSQ4_Pos);
             break;
         case 2:
-            handle->JSQR |= (uint32_t)((channels[0] << ADC_JSQR_JSQ3_Pos) | (channels[1] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |= (uint32_t)((channels->channels_sequence[0] << ADC_JSQR_JSQ3_Pos) | (channels->channels_sequence[1] << ADC_JSQR_JSQ4_Pos));
             break;
         case 3:
-            handle->JSQR |= (uint32_t)((channels[0] << ADC_JSQR_JSQ2_Pos) | (channels[1] << ADC_JSQR_JSQ3_Pos) | (channels[2] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |= (uint32_t)((channels->channels_sequence[0] << ADC_JSQR_JSQ2_Pos) | (channels->channels_sequence[1] << ADC_JSQR_JSQ3_Pos) |
+                                       (channels->channels_sequence[2] << ADC_JSQR_JSQ4_Pos));
             break;
         case 4:
-            handle->JSQR |= (uint32_t)((channels[0] << ADC_JSQR_JSQ1_Pos) | (channels[1] << ADC_JSQR_JSQ2_Pos) | (channels[2] << ADC_JSQR_JSQ3_Pos) |
-                                       (channels[3] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |= (uint32_t)((channels->channels_sequence[0] << ADC_JSQR_JSQ1_Pos) | (channels->channels_sequence[1] << ADC_JSQR_JSQ2_Pos) |
+                                       (channels->channels_sequence[2] << ADC_JSQR_JSQ3_Pos) | (channels->channels_sequence[3] << ADC_JSQR_JSQ4_Pos));
             break;
         default:
             return HAL_ERR_INVALID_ARG;
@@ -398,7 +405,7 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
     handle->JOFR4 &= ~ADC_JOFR4_JOFFSET4;
 
     // Enable scan mode if we have more than one channel, but disable otherwise
-    if (size > 1) {
+    if (channels->num_of_channels > 1) {
         handle->CR1 |= ADC_CR1_SCAN;
     } else {
         handle->CR1 &= ~ADC_CR1_SCAN;
