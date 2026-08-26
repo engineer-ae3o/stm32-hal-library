@@ -1,6 +1,6 @@
-#include "drivers/dma.h"
 #include "stm32f411xe.h"
 #include "utils/common.h"
+#include "drivers/dma.h"
 #include "drivers/adc.h"
 #include "utils/tick.h"
 #include "utils/err.h"
@@ -108,10 +108,11 @@ static void*          s_analog_wdg_arg[NUM_OF_ADC_CONTROLLERS] = {};
     handle->SQR3 &= ~ADC_SQR3_SQ1;
     handle->SQR3 |= (uint32_t)channel << ADC_SQR3_SQ1_Pos;
 
-    // Disable continuous conversion and scan mode since we are sampling only one
-    // channel. Then clear the EXTEN bit since the triggering is by the software
-    handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN);
+    // Disable continuous and discontinuous conversions and scan mode since we are sampling
+    // only one channel. Then clear the EXTEN bit since the triggering is by software. We
+    // also disable the end of conversion interrupt and DMA mode since we are polling here.
+    handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_DISCEN | ADC_CR1_EOCIE);
+    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA);
 
     // Start the conversion
     handle->CR2 |= ADC_CR2_SWSTART;
@@ -120,7 +121,9 @@ static void*          s_analog_wdg_arg[NUM_OF_ADC_CONTROLLERS] = {};
     uint32_t timeout_cycles = TIMEOUT_CYCLES;
     while (!(handle->SR & ADC_SR_EOC) && --timeout_cycles);
     if (timeout_cycles == 0) {
-        return UINT16_MAX; // The max value of the ADC is 2^12 (4096). It is fine to use UINT16_MAX as an error sentinel value
+        // The max value of the ADC is 2^12 - 1 (4095). It is
+        // safe to use UINT16_MAX as an error sentinel value.
+        return UINT16_MAX;
     }
 
     // Get the final result
@@ -192,6 +195,7 @@ hal_err_t adc_power_on(ADC_TypeDef* handle, bool on) {
     }
     if (on) {
         handle->CR2 |= ADC_CR2_ADON;
+        delay_us(ADC_STARUP_TIME_US);
     } else {
         handle->CR2 &= ~ADC_CR2_ADON;
     }
@@ -252,10 +256,25 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (cb) {
-        s_dma_trans_done_cb[idx] = cb;
-        s_dma_trans_cb_arg[idx]  = arg;
+    // TODO: Set the channel sequence
+
+    // Enable scan mode if we have more than one channel, but disable otherwise
+    if (config->num_of_channels > 1) {
+        handle->CR1 |= ADC_CR1_SCAN;
+    } else {
+        handle->CR1 &= ~ADC_CR1_SCAN;
     }
+
+    // Enable ADC continuous sampling and DMA mode
+    handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);
+
+    // Clear the EXTEN bit since we are triggering the conversion manually with the SWSTART bit
+    handle->CR2 &= ~ADC_CR2_EXTEN;
+
+    // Disable the ADC end of conversion interrupt since the DMA controller
+    // will trigger its own interrupt when our buffer is filled. Discontinuous
+    // mode is also disabled since it's not being used.
+    handle->CR1 &= ~(ADC_CR1_EOCIE | ADC_CR1_DISCEN);
 
     // Enable the DMA clock and disable the stream
     TRY(dmax_clk_enable(ADC_DMA_CONTROLLER, true));
@@ -286,11 +305,22 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->dma_buffer1, NULL);
     }
 
-    // Enable DMA stream interrupts
+    if (cb) {
+        s_dma_trans_done_cb[idx] = cb;
+        s_dma_trans_cb_arg[idx]  = arg;
+    }
+
+    // Enable the DMA stream interrupts
     NVIC_SetPriority(ADC_DMA_IRQ_TYPE, ADC_DMA_NVIC_IRQ_PRIORITY);
     NVIC_EnableIRQ(ADC_DMA_IRQ_TYPE);
 
-    return dma_enable_stream(ADC_DMA_STREAM);
+    // Enable the DMA stream after all DMA configuration is complete
+    TRY(dma_enable_stream(ADC_DMA_STREAM));
+
+    // Start the conversion
+    handle->CR2 |= ADC_CR2_SWSTART;
+
+    return HAL_OK;
 }
 
 hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
@@ -301,7 +331,11 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
 
     TRY(dma_disable_stream(ADC_DMA_STREAM));
 
-    // Clear user callback
+    // Clear all state and stop the conversion.
+    handle->CR1 &= ~ADC_CR1_SCAN;
+    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_DMA);
+
+    // Clear the user callback
     s_dma_trans_done_cb[idx] = NULL;
     s_dma_trans_cb_arg[idx]  = NULL;
 
