@@ -20,6 +20,7 @@ typedef enum : uint8_t {
     // More specific errors
     HAL_ERR_INVALID_ARG,
     HAL_ERR_INVALID_STATE,
+    HAL_ERR_NOT_SUPPORTED,
     HAL_ERR_TIMEOUT,
     HAL_ERR_NOT_DONE,
     HAL_ERR_NOT_FOUND,

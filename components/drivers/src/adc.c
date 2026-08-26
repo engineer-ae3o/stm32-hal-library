@@ -7,14 +7,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
-
-// ADC DMA stream settings
-#define ADC_DMA_CONTROLLER (DMA2)
-#define ADC_DMA_STREAM (DMA2_Stream0)
-#define ADC_DMA_STREAM_NO (0)
-#define ADC_DMA_CHANNEL (0)
-#define ADC_DMA_IRQ_TYPE (DMA2_Stream0_IRQn)
 
 // The internal channels
 #define ADC_CHANNEL_TEMP (16U) // Temperature sensor
@@ -23,14 +17,23 @@
 
 
 // To save user passed callbacks
-static dma_trans_done_cb_t s_dma_trans_done_cb[NUM_OF_ADC_CONTROLLERS] = {};
-static void*               s_dma_trans_cb_arg[NUM_OF_ADC_CONTROLLERS]  = {};
+static adc_dma_callbacks_t s_continuous_mode_callbacks[NUM_OF_ADC_CONTROLLERS] = {};
 
 static adc_callback_t s_injected_done_cb[NUM_OF_ADC_CONTROLLERS]  = {};
 static void*          s_injected_done_arg[NUM_OF_ADC_CONTROLLERS] = {};
 
 static adc_callback_t s_analog_wdg_cb[NUM_OF_ADC_CONTROLLERS]  = {};
 static void*          s_analog_wdg_arg[NUM_OF_ADC_CONTROLLERS] = {};
+
+
+// Mapping for the DMA channels for the ADC peripheral instances
+static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
+    // ADC1
+    {
+        .tx = {.controller = DMA2, .stream = DMA2_Stream0, .stream_no = 0, .irq_type = DMA2_Stream0_IRQn, .channel = 0},
+        .rx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+    },
+};
 
 
 // Inline helpers
@@ -95,6 +98,14 @@ static void*          s_analog_wdg_arg[NUM_OF_ADC_CONTROLLERS] = {};
         // The AWDIE bit is left since the watchdog can still trigger an interrupt
         handle->SR &= ~ADC_SR_AWD;
     }
+}
+
+[[__gnu__::__always_inline__]] static inline void adcx_dma_isr_helper(ADC_TypeDef* handle) {
+    const uint8_t idx = get_index(handle);
+    // Assert since we can't return the error anywhere
+    ASSERT(idx != 0xFFU);
+
+    // TODO: Handle calling of the user callback and clearing of the DMA interrupt flags
 }
 
 [[__gnu__::__always_inline__]] static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channels_t channel) {
@@ -247,7 +258,7 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
 
 
 // For use with the regular group and external channels in DMA continuous sampling mode
-hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config, void* arg) {
+hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config) {
     if (handle == NULL || config == NULL || config->channels.channels_sequence == NULL || config->channels.num_of_channels == 0 ||
         config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL) {
         return HAL_ERR_INVALID_ARG;
@@ -280,47 +291,57 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     // mode is also disabled since it's not being used.
     handle->CR1 &= ~(ADC_CR1_EOCIE | ADC_CR1_DISCEN);
 
+    // ADC DMA stream mapping
+    DMA_TypeDef*        adc_dma_controller = s_adc_dma_map[idx].tx.controller;
+    DMA_Stream_TypeDef* adc_dma_stream     = s_adc_dma_map[idx].tx.stream;
+    const uint8_t       adc_dma_channel    = s_adc_dma_map[idx].tx.channel;
+    const uint8_t       adc_dma_stream_no  = s_adc_dma_map[idx].tx.stream_no;
+    const IRQn_Type     adc_dma_irq_type   = s_adc_dma_map[idx].tx.irq_type;
+
+    if (adc_dma_controller == NULL || adc_dma_stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
     // Enable the DMA clock and disable the stream
-    TRY(dmax_clk_enable(ADC_DMA_CONTROLLER, true));
-    TRY(dma_disable_stream(ADC_DMA_STREAM));
+    TRY(dmax_clk_enable(adc_dma_controller, true));
+    TRY(dma_disable_stream(adc_dma_stream));
 
     // Clear the global DMA interrupt flags
-    TRY(dma_clear_flags(ADC_DMA_CONTROLLER, ADC_DMA_STREAM_NO));
+    TRY(dma_clear_flags(adc_dma_controller, adc_dma_stream_no));
 
     // Configuration of the DMA stream
-    dma_set_direction(ADC_DMA_STREAM, DMA_DIR_P_M);
-    dma_set_direct_mode(ADC_DMA_STREAM, true);
-    dma_set_channel(ADC_DMA_STREAM, ADC_DMA_CHANNEL);
-    dma_set_increment(ADC_DMA_STREAM, false, true);
-    dma_set_flow_controller(ADC_DMA_STREAM, true);
-    dma_set_trans_length(ADC_DMA_STREAM, config->buffer_size);
-    dma_set_stream_priority(ADC_DMA_STREAM, DMA_PRIORITY_HIGH);
-    dma_set_per_mem_size(ADC_DMA_STREAM, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
+    dma_set_direction(adc_dma_stream, DMA_DIR_P_M);
+    dma_set_direct_mode(adc_dma_stream, true);
+    dma_set_channel(adc_dma_stream, adc_dma_channel);
+    dma_set_increment(adc_dma_stream, false, true);
+    dma_set_flow_controller(adc_dma_stream, true);
+    dma_set_trans_length(adc_dma_stream, config->buffer_size);
+    dma_set_stream_priority(adc_dma_stream, DMA_PRIORITY_HIGH);
+    dma_set_per_mem_size(adc_dma_stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
 
     if (config->use_double_buffers) {
         if (config->buffer_2 == NULL) {
             return HAL_ERR_INVALID_ARG;
         }
-        dma_enable_circm_dbm(ADC_DMA_STREAM, true, true);
-        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->buffer_1, config->buffer_2);
+        dma_enable_circm_dbm(adc_dma_stream, true, true);
+        dma_set_addresses(adc_dma_stream, &handle->DR, config->buffer_1, config->buffer_2);
     } else if (config->dma_wraparound_when_done) {
-        dma_enable_circm_dbm(ADC_DMA_STREAM, true, false);
-        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->buffer_1, NULL);
+        dma_enable_circm_dbm(adc_dma_stream, true, false);
+        dma_set_addresses(adc_dma_stream, &handle->DR, config->buffer_1, NULL);
     } else {
-        dma_enable_circm_dbm(ADC_DMA_STREAM, false, false);
-        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->buffer_1, NULL);
+        dma_enable_circm_dbm(adc_dma_stream, false, false);
+        dma_set_addresses(adc_dma_stream, &handle->DR, config->buffer_1, NULL);
     }
 
     // TODO: Handle the callback registration
-    (void)config->callbacks;
-    (void)arg;
+    s_continuous_mode_callbacks[idx] = config->callbacks;
 
     // Enable the DMA stream interrupts
-    NVIC_SetPriority(ADC_DMA_IRQ_TYPE, ADC_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(ADC_DMA_IRQ_TYPE);
+    NVIC_SetPriority(adc_dma_irq_type, ADC_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(adc_dma_irq_type);
 
     // Enable the DMA stream after all DMA configuration is complete
-    TRY(dma_enable_stream(ADC_DMA_STREAM));
+    TRY(dma_enable_stream(adc_dma_stream));
 
     // Start the conversion
     handle->CR2 |= ADC_CR2_SWSTART;
@@ -334,15 +355,26 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    TRY(dma_disable_stream(ADC_DMA_STREAM));
-
     // Clear all state and stop the conversion.
     handle->CR1 &= ~ADC_CR1_SCAN;
     handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_SWSTART);
 
-    // Clear the user callback
-    s_dma_trans_done_cb[idx] = NULL;
-    s_dma_trans_cb_arg[idx]  = NULL;
+    // ADC DMA stream mapping
+    DMA_TypeDef*        adc_dma_controller = s_adc_dma_map[idx].tx.controller;
+    DMA_Stream_TypeDef* adc_dma_stream     = s_adc_dma_map[idx].tx.stream;
+    const uint8_t       adc_dma_stream_no  = s_adc_dma_map[idx].tx.stream_no;
+
+    if (adc_dma_controller == NULL || adc_dma_stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Then disable the stream, disable all interrupts and clear the interrupt flags
+    TRY(dma_disable_stream(adc_dma_stream));
+    TRY(dma_clear_flags(adc_dma_controller, adc_dma_stream_no));
+    dma_enable_irqs(adc_dma_stream, false, false, false, false);
+
+    // Clear all user passed callbacks
+    memset(&s_continuous_mode_callbacks, 0, sizeof(s_continuous_mode_callbacks));
 
     return HAL_OK;
 }
@@ -424,8 +456,8 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
     return HAL_OK;
 }
 
-hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data, size_t size) {
-    if (handle == NULL || raw_data == NULL) {
+hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data_buffer, size_t buffer_size) {
+    if (handle == NULL || raw_data_buffer == NULL || buffer_size == 0 || buffer_size > MAX_INJECTED_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -440,24 +472,24 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data,
     }
 
     // Read the injected group data registers. Can switch over them since only 4 data registers
-    switch (size) {
+    switch (buffer_size) {
         case 1:
-            raw_data[0] = (uint16_t)handle->JDR1;
+            raw_data_buffer[0] = (uint16_t)handle->JDR1;
             break;
         case 2:
-            raw_data[0] = (uint16_t)handle->JDR1;
-            raw_data[1] = (uint16_t)handle->JDR2;
+            raw_data_buffer[0] = (uint16_t)handle->JDR1;
+            raw_data_buffer[1] = (uint16_t)handle->JDR2;
             break;
         case 3:
-            raw_data[0] = (uint16_t)handle->JDR1;
-            raw_data[1] = (uint16_t)handle->JDR2;
-            raw_data[2] = (uint16_t)handle->JDR3;
+            raw_data_buffer[0] = (uint16_t)handle->JDR1;
+            raw_data_buffer[1] = (uint16_t)handle->JDR2;
+            raw_data_buffer[2] = (uint16_t)handle->JDR3;
             break;
         case 4:
-            raw_data[0] = (uint16_t)handle->JDR1;
-            raw_data[1] = (uint16_t)handle->JDR2;
-            raw_data[2] = (uint16_t)handle->JDR3;
-            raw_data[3] = (uint16_t)handle->JDR4;
+            raw_data_buffer[0] = (uint16_t)handle->JDR1;
+            raw_data_buffer[1] = (uint16_t)handle->JDR2;
+            raw_data_buffer[2] = (uint16_t)handle->JDR3;
+            raw_data_buffer[3] = (uint16_t)handle->JDR4;
             break;
         default:
             return HAL_ERR_INVALID_ARG;
@@ -718,5 +750,15 @@ void ADC_IRQHandler(void) {
 
 // DMA interrupt handler
 void DMA2_Stream0_IRQHandler(void) {
-    // TODO: Handle DMA completion events for the continuous mode with the regular group
+#if defined(ADC1)
+    adcx_dma_isr_helper(ADC1);
+#endif
+
+#if defined(ADC2)
+    adcx_dma_isr_helper(ADC2);
+#endif
+
+#if defined(ADC3)
+    adcx_dma_isr_helper(ADC3);
+#endif
 }

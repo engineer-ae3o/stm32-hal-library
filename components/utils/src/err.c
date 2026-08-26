@@ -8,6 +8,7 @@ static const char* s_err_code_lut[] = {
     [HAL_FAIL]                        = "HAL_FAIL",
     [HAL_ERR_INVALID_ARG]             = "HAL_ERR_INVALID_ARG",
     [HAL_ERR_INVALID_STATE]           = "HAL_ERR_INVALID_STATE",
+    [HAL_ERR_NOT_SUPPORTED]           = "HAL_ERR_NOT_SUPPORTED",
     [HAL_ERR_TIMEOUT]                 = "HAL_ERR_TIMEOUT",
     [HAL_ERR_NOT_DONE]                = "HAL_ERR_NOT_DONE",
     [HAL_ERR_NOT_FOUND]               = "HAL_ERR_NOT_FOUND",

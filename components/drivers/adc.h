@@ -77,6 +77,38 @@ typedef struct {
     size_t                num_of_channels;
 } adc_channels_config_t;
 
+typedef struct {
+    void (*on_buffer_full)(void* arg, bool is_buf_1); // Called when a buffer is filled
+    void* on_buffer_full_arg;
+
+    void (*on_transfer_error)(void* arg, bool is_buf_1); // Called on a DMA transfer error
+    void* on_transfer_error_arg;
+
+    void (*on_direct_mode_error)(void* arg, bool is_buf_1); // Called when an error arose from the DMA direct mode
+    void* on_direct_mode_error_arg;
+
+    void (*on_data_overrun)(void* arg, bool is_buf_1); // Called when the DMA is too slow to read and data is lost
+    void* on_data_overrun_arg;
+} adc_dma_callbacks_t;
+
+typedef struct {
+    // The channels to be sampled
+    adc_channels_config_t channels;
+
+    // The DMA buffer to store the samples
+    const uint16_t* buffer_1;
+    const uint16_t* buffer_2;
+    uint16_t        buffer_size;
+
+    // DMA settings
+    bool use_double_buffers;       // Double buffering mode. Pretty straightforward
+    bool dma_wraparound_when_done; // This is only used when use_double_buffers is false. This tells the DMA controller
+                                   // to wrap around to the start of the buffer if it gets to the buffer end.
+
+    // The different callbacks to be registered. They determine what interrupts will be enabled.
+    adc_dma_callbacks_t callbacks;
+} adc_continuous_config_t;
+
 
 // Configure a specific ADC peripheral
 hal_err_t adcx_clk_enable(ADC_TypeDef* handle, bool enable);
@@ -102,36 +134,12 @@ typedef void (*adc_callback_t)(void* arg);
 hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* raw_data);
 
 // The regular group with continuous DMA mode
-typedef struct {
-    // The channels to be sampled
-    adc_channels_config_t channels;
-
-    // The DMA buffer to store the samples
-    const uint16_t* buffer_1;
-    const uint16_t* buffer_2;
-    uint16_t        buffer_size;
-
-    // DMA settings
-    bool use_double_buffers;       // Double buffering mode. Pretty straightforward
-    bool dma_wraparound_when_done; // This is only used when use_double_buffers is false. This tells the DMA controller
-                                   // to wrap around to the start of the buffer if it gets to the buffer end.
-
-    // The different callbacks to be registered. They determine what interrupts will be enabled.
-    struct {
-        void (*on_buffer_full)(void* arg, bool is_buf_1);       // Called when a buffer is filled
-        void (*on_transfer_error)(void* arg, bool is_buf_1);    // Called on a DMA transfer error
-        void (*on_direct_mode_error)(void* arg, bool is_buf_1); // Called when an error arose from the DMA direct mode
-        void (*on_data_overrun)(void* arg, bool is_buf_1);      // Called when the DMA is too slow to read and data is lost
-    } callbacks;
-
-} adc_continuous_config_t;
-
-hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config, void* arg);
+hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config);
 hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle);
 
 // The injected group with interrupts
 hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_config_t* channels, adc_callback_t cb, void* arg);
-hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data, size_t size);
+hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data_buffer, size_t buffer_size);
 
 
 // For operation of the internal channels.
