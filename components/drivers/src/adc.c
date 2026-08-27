@@ -292,56 +292,58 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     handle->CR1 &= ~(ADC_CR1_EOCIE | ADC_CR1_DISCEN);
 
     // ADC DMA stream mapping
-    DMA_TypeDef*        adc_dma_controller = s_adc_dma_map[idx].tx.controller;
-    DMA_Stream_TypeDef* adc_dma_stream     = s_adc_dma_map[idx].tx.stream;
-    const uint8_t       adc_dma_channel    = s_adc_dma_map[idx].tx.channel;
-    const uint8_t       adc_dma_stream_no  = s_adc_dma_map[idx].tx.stream_no;
-    const IRQn_Type     adc_dma_irq_type   = s_adc_dma_map[idx].tx.irq_type;
+    DMA_TypeDef*        controller = s_adc_dma_map[idx].tx.controller;
+    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].tx.stream;
+    const uint8_t       channel    = s_adc_dma_map[idx].tx.channel;
+    const uint8_t       stream_no  = s_adc_dma_map[idx].tx.stream_no;
+    const IRQn_Type     irq_type   = s_adc_dma_map[idx].tx.irq_type;
 
-    if (adc_dma_controller == NULL || adc_dma_stream == NULL) {
+    if (controller == NULL || stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
     // Enable the DMA clock and disable the stream
-    TRY(dmax_clk_enable(adc_dma_controller, true));
-    TRY(dma_disable_stream(adc_dma_stream));
+    TRY(dmax_clk_enable(controller, true));
+    TRY(dma_disable_stream(stream));
 
     // Clear the global DMA interrupt flags
-    TRY(dma_clear_flags(adc_dma_controller, adc_dma_stream_no));
+    TRY(dma_clear_flags(controller, stream_no));
 
     // Configuration of the DMA stream
-    dma_set_direction(adc_dma_stream, DMA_DIR_P_M);
-    dma_set_direct_mode(adc_dma_stream, true);
-    dma_set_channel(adc_dma_stream, adc_dma_channel);
-    dma_set_increment(adc_dma_stream, false, true);
-    dma_set_flow_controller(adc_dma_stream, true);
-    dma_set_trans_length(adc_dma_stream, config->buffer_size);
-    dma_set_stream_priority(adc_dma_stream, DMA_PRIORITY_HIGH);
-    dma_set_per_mem_size(adc_dma_stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
+    dma_set_direction(stream, DMA_DIR_P_M);
+    dma_set_direct_mode(stream, true);
+    dma_set_channel(stream, channel);
+    dma_set_increment(stream, false, true);
+    dma_set_flow_controller(stream, true);
+    dma_set_trans_length(stream, config->buffer_size);
+    dma_set_stream_priority(stream, DMA_PRIORITY_HIGH);
+    dma_set_per_mem_size(stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
 
     if (config->use_double_buffers) {
         if (config->buffer_2 == NULL) {
             return HAL_ERR_INVALID_ARG;
         }
-        dma_enable_circm_dbm(adc_dma_stream, true, true);
-        dma_set_addresses(adc_dma_stream, &handle->DR, config->buffer_1, config->buffer_2);
+        dma_enable_circm_dbm(stream, true, true);
+        dma_set_addresses(stream, &handle->DR, config->buffer_1, config->buffer_2);
+        // Clear the CT bit in the CR register to ensure the DMA controller starts at the first buffer
+        stream->CR &= ~DMA_SxCR_CT;
     } else if (config->dma_wraparound_when_done) {
-        dma_enable_circm_dbm(adc_dma_stream, true, false);
-        dma_set_addresses(adc_dma_stream, &handle->DR, config->buffer_1, NULL);
+        dma_enable_circm_dbm(stream, true, false);
+        dma_set_addresses(stream, &handle->DR, config->buffer_1, NULL);
     } else {
-        dma_enable_circm_dbm(adc_dma_stream, false, false);
-        dma_set_addresses(adc_dma_stream, &handle->DR, config->buffer_1, NULL);
+        dma_enable_circm_dbm(stream, false, false);
+        dma_set_addresses(stream, &handle->DR, config->buffer_1, NULL);
     }
 
     // TODO: Handle the callback registration
     s_continuous_mode_callbacks[idx] = config->callbacks;
 
     // Enable the DMA stream interrupts
-    NVIC_SetPriority(adc_dma_irq_type, ADC_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(adc_dma_irq_type);
+    NVIC_SetPriority(irq_type, ADC_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(irq_type);
 
     // Enable the DMA stream after all DMA configuration is complete
-    TRY(dma_enable_stream(adc_dma_stream));
+    TRY(dma_enable_stream(stream));
 
     // Start the conversion
     handle->CR2 |= ADC_CR2_SWSTART;
@@ -360,18 +362,18 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
     handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_SWSTART);
 
     // ADC DMA stream mapping
-    DMA_TypeDef*        adc_dma_controller = s_adc_dma_map[idx].tx.controller;
-    DMA_Stream_TypeDef* adc_dma_stream     = s_adc_dma_map[idx].tx.stream;
-    const uint8_t       adc_dma_stream_no  = s_adc_dma_map[idx].tx.stream_no;
+    DMA_TypeDef*        controller = s_adc_dma_map[idx].tx.controller;
+    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].tx.stream;
+    const uint8_t       stream_no  = s_adc_dma_map[idx].tx.stream_no;
 
-    if (adc_dma_controller == NULL || adc_dma_stream == NULL) {
+    if (controller == NULL || stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
     // Then disable the stream, disable all interrupts and clear the interrupt flags
-    TRY(dma_disable_stream(adc_dma_stream));
-    TRY(dma_clear_flags(adc_dma_controller, adc_dma_stream_no));
-    dma_enable_irqs(adc_dma_stream, false, false, false, false);
+    TRY(dma_disable_stream(stream));
+    TRY(dma_clear_flags(controller, stream_no));
+    dma_enable_irqs(stream, false, false, false, false);
 
     // Clear all user passed callbacks
     memset(&s_continuous_mode_callbacks, 0, sizeof(s_continuous_mode_callbacks));
