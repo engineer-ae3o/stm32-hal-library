@@ -1,3 +1,4 @@
+#include "drivers/dma.h"
 #include "stm32f411xe.h"
 #include "utils/common.h"
 #include "drivers/adc.h"
@@ -240,8 +241,9 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
     return HAL_OK;
 }
 
-hal_err_t adc_regular_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, dma_trans_done_cb_t cb, void* arg) {
-    if (handle == NULL || channels == NULL || size == 0 || size > MAX_REGULAR_CHANNELS) {
+hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config, dma_trans_done_cb_t cb, void* arg) {
+    if (handle == NULL || config == NULL || config->channels == NULL || config->num_of_channels == 0 ||
+        config->num_of_channels > MAX_REGULAR_CHANNELS || config->dma_buffer1 == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -250,12 +252,58 @@ hal_err_t adc_regular_group_start_conv(ADC_TypeDef* handle, const adc_channels_t
         return HAL_ERR_INVALID_ARG;
     }
 
-    // TODO: Handle scanning and DMA setup for the regular group
-
     if (cb) {
         s_dma_trans_done_cb[idx] = cb;
         s_dma_trans_cb_arg[idx]  = arg;
     }
+
+    // Enable the DMA clock and disable the stream
+    TRY(dmax_clk_enable(ADC_DMA_CONTROLLER, true));
+    TRY(dma_disable_stream(ADC_DMA_STREAM));
+
+    // Clear the global DMA interrupt flags
+    TRY(dma_clear_flags(ADC_DMA_CONTROLLER, ADC_DMA_STREAM_NO));
+
+    // Configuration of the DMA stream
+    dma_set_direction(ADC_DMA_STREAM, DMA_DIR_P_M);
+    dma_set_direct_mode(ADC_DMA_STREAM, true);
+    dma_set_channel(ADC_DMA_STREAM, ADC_DMA_CHANNEL);
+    dma_set_trans_length(ADC_DMA_STREAM, config->buf_size);
+    dma_set_increment(ADC_DMA_STREAM, false, true);
+    dma_set_flow_controller(ADC_DMA_STREAM, true);
+    dma_set_stream_priority(ADC_DMA_STREAM, DMA_PRIORITY_HIGH);
+    dma_enable_irqs(ADC_DMA_STREAM, true, true, false, true);
+    dma_set_per_mem_size(ADC_DMA_STREAM, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
+
+    if (config->use_double_buffers) {
+        dma_enable_circm_dbm(ADC_DMA_STREAM, true, true);
+        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->dma_buffer1, config->dma_buffer2);
+    } else if (config->dma_wraparound_when_done) {
+        dma_enable_circm_dbm(ADC_DMA_STREAM, true, false);
+        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->dma_buffer1, NULL);
+    } else {
+        dma_enable_circm_dbm(ADC_DMA_STREAM, false, false);
+        dma_set_addresses(ADC_DMA_STREAM, &handle->DR, config->dma_buffer1, NULL);
+    }
+
+    // Enable DMA stream interrupts
+    NVIC_SetPriority(ADC_DMA_IRQ_TYPE, ADC_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(ADC_DMA_IRQ_TYPE);
+
+    return dma_enable_stream(ADC_DMA_STREAM);
+}
+
+hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    TRY(dma_disable_stream(ADC_DMA_STREAM));
+
+    // Clear user callback
+    s_dma_trans_done_cb[idx] = NULL;
+    s_dma_trans_cb_arg[idx]  = NULL;
 
     return HAL_OK;
 }

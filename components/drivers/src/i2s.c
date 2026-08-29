@@ -72,17 +72,17 @@ static const dma_stream_map_t s_i2s_dma_map[5] = {
 // Helper
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(const I2S_TypeDef* handle) {
     if (handle == I2S1) {
-        return 0;
+        return 0U;
     } else if (handle == I2S2) {
-        return 1;
+        return 1U;
     } else if (handle == I2S3) {
-        return 2;
+        return 2U;
     } else if (handle == I2S4) {
-        return 3;
+        return 3U;
     } else if (handle == I2S5) {
-        return 4;
+        return 4U;
     } else {
-        return 0xFF;
+        return 0xFFU;
     }
 }
 
@@ -148,11 +148,8 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
 }
 
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config) {
-    // Configure GPIO pins
-    hal_err_t ret = gpiox_clk_enable(config->gpio_port, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    // Configure the GPIO pins
+    TRY(gpiox_clk_enable(config->gpio_port, true));
 
     // Alternate function value selection for the GPIOs
     uint8_t alt_val = 0;
@@ -170,20 +167,14 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 
     // MCK
     if (config->use_mck) {
-        ret = gpio_set_alternate_function(config->gpio_port, config->mck, alt_val);
-        if (ret != HAL_OK) {
-            return ret;
-        }
+        TRY(gpio_set_alternate_function(config->gpio_port, config->mck, alt_val));
         gpio_enable_pullup(config->gpio_port, config->mck, true);
         gpio_set_speed_mode(config->gpio_port, config->mck, GPIO_MEDIUM_SPEED);
         gpio_set_output_type(config->gpio_port, config->mck, GPIO_PUSH_PULL);
     }
 
     // SD pin: Can be input or output
-    ret = gpio_set_alternate_function(config->gpio_port, config->sd, alt_val);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sd, alt_val));
     gpio_enable_pullup(config->gpio_port, config->sd, true);
     gpio_set_speed_mode(config->gpio_port, config->sd, GPIO_MEDIUM_SPEED);
     // Only set output type as push pull when we are driving, that is, in TX mode
@@ -192,19 +183,13 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     }
 
     // WS pin
-    ret = gpio_set_alternate_function(config->gpio_port, config->ws, alt_val);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpio_set_alternate_function(config->gpio_port, config->ws, alt_val));
     gpio_enable_pullup(config->gpio_port, config->ws, true);
     gpio_set_speed_mode(config->gpio_port, config->ws, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->ws, GPIO_PUSH_PULL);
 
     // SCK pin
-    ret = gpio_set_alternate_function(config->gpio_port, config->sck, alt_val);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sck, alt_val));
     gpio_enable_pullup(config->gpio_port, config->sck, true);
     gpio_set_speed_mode(config->gpio_port, config->sck, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->sck, GPIO_PUSH_PULL);
@@ -262,24 +247,15 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     DMA_Stream_TypeDef* rx_stream     = s_i2s_dma_map[idx].rx.stream;
     uint8_t             rx_channel    = s_i2s_dma_map[idx].rx.channel;
 
-    hal_err_t ret = dmax_clk_enable(tx_controller, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
-    ret = dmax_clk_enable(rx_controller, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    // Enable the DMA clock and disable the DMA streams
+    TRY(dmax_clk_enable(tx_controller, true));
+    TRY(dma_disable_stream(tx_stream));
+    TRY(dmax_clk_enable(rx_controller, true));
+    TRY(dma_disable_stream(rx_stream));
 
-    // Disable DMA stream before configuring
-    ret = dma_disable_stream(tx_stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
-    ret = dma_disable_stream(rx_stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    // Clear the global DMA interrupt flags
+    TRY(dma_clear_flags(tx_controller, s_i2s_dma_map[idx].tx.stream_no));
+    TRY(dma_clear_flags(rx_controller, s_i2s_dma_map[idx].rx.stream_no));
 
     // TX stream configuration
     dma_clear_flags(tx_controller, s_i2s_dma_map[idx].tx.stream_no);
@@ -393,10 +369,7 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uin
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
     len                        = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (len * 2) : len;
 
-    hal_err_t ret = dma_disable_stream(stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(dma_disable_stream(stream));
 
     dma_enable_circm_dbm(stream, true, true);
     dma_set_addresses(stream, &handle->DR, buf_a, buf_b);
@@ -421,10 +394,7 @@ hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle) {
 
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
 
-    hal_err_t ret = dma_disable_stream(stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(dma_disable_stream(stream));
 
     dma_enable_circm_dbm(stream, false, false);
     dma_set_trans_length(stream, 0);

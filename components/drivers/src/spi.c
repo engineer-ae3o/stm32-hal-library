@@ -160,10 +160,7 @@ hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable) {
 
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config) {
     // Configure the GPIO pins
-    hal_err_t ret = gpiox_clk_enable(config->gpio_port, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpiox_clk_enable(config->gpio_port, true));
 
     // Alternate function value selection for the GPIOs
     uint8_t alt_val = 0;
@@ -180,29 +177,20 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     }
 
     if (config->use_miso) {
-        ret = gpio_set_alternate_function(config->gpio_port, config->miso, alt_val);
-        if (ret != HAL_OK) {
-            return ret;
-        }
+        TRY(gpio_set_alternate_function(config->gpio_port, config->miso, alt_val));
         gpio_enable_pullup(config->gpio_port, config->miso, true);
         gpio_set_speed_mode(config->gpio_port, config->miso, GPIO_HIGH_SPEED);
         // MISO cannot be configured as push pull or open drain
     }
 
     if (config->use_mosi) {
-        ret = gpio_set_alternate_function(config->gpio_port, config->mosi, alt_val);
-        if (ret != HAL_OK) {
-            return ret;
-        }
+        TRY(gpio_set_alternate_function(config->gpio_port, config->mosi, alt_val));
         gpio_enable_pullup(config->gpio_port, config->mosi, true);
         gpio_set_speed_mode(config->gpio_port, config->mosi, GPIO_HIGH_SPEED);
         gpio_set_output_type(config->gpio_port, config->miso, GPIO_PUSH_PULL);
     }
 
-    ret = gpio_set_alternate_function(config->gpio_port, config->sclk, alt_val);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sclk, alt_val));
     gpio_set_speed_mode(config->gpio_port, config->sclk, GPIO_HIGH_SPEED);
     gpio_set_output_type(config->gpio_port, config->sclk, GPIO_PUSH_PULL);
 
@@ -267,31 +255,22 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     // TX mapping
     DMA_TypeDef*        tx_controller = s_spi_dma_map[idx].tx.controller;
     DMA_Stream_TypeDef* tx_stream     = s_spi_dma_map[idx].tx.stream;
-    uint8_t             tx_channel    = s_spi_dma_map[idx].tx.channel;
+    const uint8_t       tx_channel    = s_spi_dma_map[idx].tx.channel;
 
     // RX mapping
     DMA_TypeDef*        rx_controller = s_spi_dma_map[idx].rx.controller;
     DMA_Stream_TypeDef* rx_stream     = s_spi_dma_map[idx].rx.stream;
-    uint8_t             rx_channel    = s_spi_dma_map[idx].rx.channel;
+    const uint8_t       rx_channel    = s_spi_dma_map[idx].rx.channel;
 
-    hal_err_t ret = dmax_clk_enable(tx_controller, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
-    ret = dmax_clk_enable(rx_controller, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    // Enable the DMA clock and disable the DMA streams
+    TRY(dmax_clk_enable(tx_controller, true));
+    TRY(dma_disable_stream(tx_stream));
+    TRY(dmax_clk_enable(rx_controller, true));
+    TRY(dma_disable_stream(rx_stream));
 
-    // Disable DMA stream before configuring
-    ret = dma_disable_stream(tx_stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
-    ret = dma_disable_stream(rx_stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    // Clear the global DMA interrupt flags
+    TRY(dma_clear_flags(tx_controller, s_spi_dma_map[idx].tx.stream_no));
+    TRY(dma_clear_flags(rx_controller, s_spi_dma_map[idx].rx.stream_no));
 
     // TX stream configuration
     dma_clear_flags(tx_controller, s_spi_dma_map[idx].tx.stream_no);
@@ -661,10 +640,7 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     dma_set_trans_length(rx_stream, len);
 
     // Enable DMA TX and RX streams
-    hal_err_t ret = dma_enable_stream(tx_stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(dma_enable_stream(tx_stream));
 
     return dma_enable_stream(rx_stream);
 }

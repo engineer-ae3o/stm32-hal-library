@@ -15,9 +15,8 @@ extern "C" {
 #include <stddef.h>
 
 
-// External channels
+// External ADC channels
 typedef enum : uint8_t {
-    // The external channels
     ADC_CHANNEL_0,  // PA0
     ADC_CHANNEL_1,  // PA1
     ADC_CHANNEL_2,  // PA2
@@ -93,16 +92,27 @@ void adc_power_on_temp_sensor(bool on);
 typedef void (*adc_callback_t)(void* arg);
 
 // For use with the external channels
-// The regular group
-typedef struct {
-    const void* dma_buffer;
-    uint16_t    buf_size;
-} adc_t;
-
+// The regular group with oneshot polling mode
 hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* raw_data);
-hal_err_t adc_regular_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, dma_trans_done_cb_t cb, void* arg);
 
-// The injected group
+// The regular group with continuous DMA mode
+typedef struct {
+    // The sequence of channels and the number of channels
+    const adc_channels_t* channels;
+    size_t                num_of_channels;
+    // The DMA buffer to store the samples
+    const uint16_t* dma_buffer1;
+    const uint16_t* dma_buffer2;
+    uint16_t        buf_size;
+    // DMA settings
+    bool use_double_buffers;
+    bool dma_wraparound_when_done;
+} adc_continuous_config_t;
+
+hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config, dma_trans_done_cb_t cb, void* arg);
+hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle);
+
+// The injected group with interrupts
 hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, adc_callback_t cb, void* arg);
 hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data, size_t size);
 
