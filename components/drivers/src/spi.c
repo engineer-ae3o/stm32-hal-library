@@ -35,10 +35,10 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
         .tx = {.controller = DMA2, .stream = DMA2_Stream1, .stream_no = 1, .irq_type = DMA2_Stream1_IRQn, .channel = 4},
         .rx = {.controller = DMA2, .stream = DMA2_Stream4, .stream_no = 4, .irq_type = DMA2_Stream4_IRQn, .channel = 4},
     },
-    // SPI5
+    // SPI5: DMA not supported: Not enough streams to go round other peripherals
     {
-        .tx = {.controller = DMA2, .stream = DMA2_Stream6, .stream_no = 6, .irq_type = DMA2_Stream6_IRQn, .channel = 7},
-        .rx = {.controller = DMA2, .stream = DMA2_Stream3, .stream_no = 3, .irq_type = DMA2_Stream3_IRQn, .channel = 2},
+        .tx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+        .rx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
     },
 };
 
@@ -107,13 +107,13 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     }
 
     // Save the user callback so we can clear it's global array position
-    dma_trans_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
-    void*               local_arg = s_tx_args[idx];
+    dma_trans_done_cb_t local_cb  = s_dma_rx_done_cbs[idx];
+    void*               local_arg = s_rx_args[idx];
 
     // Only clear the user callback if not in circular mode
-    if (!(s_spi_dma_map[idx].tx.stream->CR & DMA_SxCR_CIRC)) {
-        s_dma_tx_done_cbs[idx] = NULL;
-        s_tx_args[idx]         = NULL;
+    if (!(s_spi_dma_map[idx].rx.stream->CR & DMA_SxCR_CIRC)) {
+        s_dma_rx_done_cbs[idx] = NULL;
+        s_rx_args[idx]         = NULL;
     }
 
     // Finally, invoke the user callback

@@ -1,5 +1,5 @@
-#ifndef RTC_H_
-#define RTC_H_
+#ifndef CRC_H_
+#define CRC_H_
 
 
 #ifdef __cplusplus
@@ -15,4 +15,4 @@ extern "C" {
 #endif
 
 
-#endif // RTC_H_
+#endif // CRC_H_

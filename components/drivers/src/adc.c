@@ -383,9 +383,9 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
 
 
 // For use with the injected group and external channels with interrupts
-hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_config_t* channels, adc_callback_t cb, void* arg) {
-    if (handle == NULL || channels->channels_sequence == NULL || channels->num_of_channels == 0 ||
-        channels->num_of_channels > MAX_INJECTED_CHANNELS) {
+hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_group_config_t* config) {
+    if (handle == NULL || config == NULL || config->channels.channels_sequence == NULL || config->channels.num_of_channels == 0 ||
+        config->channels.num_of_channels > MAX_INJECTED_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -394,10 +394,10 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (cb) {
+    if (config->on_conv_complete) {
         // Save the user passed callback
-        s_injected_done_cb[idx]  = cb;
-        s_injected_done_arg[idx] = arg;
+        s_injected_done_cb[idx]  = config->on_conv_complete;
+        s_injected_done_arg[idx] = config->arg;
 
         // Enable interrupts for the injected group on conversion
         // completion only if the user passed in a callback.
@@ -408,25 +408,29 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
     // JSQR register. The JL bit positions are zero indexed. That is, 1 channel
     // means a JL value of 0b00, 3 channels means a JL value of 0b10 etc.
     handle->JSQR &= ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 | ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
-    handle->JSQR |= (((channels->num_of_channels - 1) & 0x3U) << ADC_JSQR_JL_Pos);
+    handle->JSQR |= (((config->channels.num_of_channels - 1) & 0x3U) << ADC_JSQR_JL_Pos);
 
     // Set the channel sequence in the JSQ register
     // As per the TRM, there are only 4 injected channels, and they have to be filled from the last
     // slot, that is, JSQ4. This is because all conversions in the injected group must end at JSQ4
-    switch (channels->num_of_channels) {
+    switch (config->channels.num_of_channels) {
         case 1:
-            handle->JSQR |= (uint32_t)(channels->channels_sequence[0] << ADC_JSQR_JSQ4_Pos);
+            handle->JSQR |= (uint32_t)(config->channels.channels_sequence[0] << ADC_JSQR_JSQ4_Pos);
             break;
         case 2:
-            handle->JSQR |= (uint32_t)((channels->channels_sequence[0] << ADC_JSQR_JSQ3_Pos) | (channels->channels_sequence[1] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |= (uint32_t)((config->channels.channels_sequence[0] << ADC_JSQR_JSQ3_Pos) |
+                                       (config->channels.channels_sequence[1] << ADC_JSQR_JSQ4_Pos));
             break;
         case 3:
-            handle->JSQR |= (uint32_t)((channels->channels_sequence[0] << ADC_JSQR_JSQ2_Pos) | (channels->channels_sequence[1] << ADC_JSQR_JSQ3_Pos) |
-                                       (channels->channels_sequence[2] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |= (uint32_t)((config->channels.channels_sequence[0] << ADC_JSQR_JSQ2_Pos) |
+                                       (config->channels.channels_sequence[1] << ADC_JSQR_JSQ3_Pos) |
+                                       (config->channels.channels_sequence[2] << ADC_JSQR_JSQ4_Pos));
             break;
         case 4:
-            handle->JSQR |= (uint32_t)((channels->channels_sequence[0] << ADC_JSQR_JSQ1_Pos) | (channels->channels_sequence[1] << ADC_JSQR_JSQ2_Pos) |
-                                       (channels->channels_sequence[2] << ADC_JSQR_JSQ3_Pos) | (channels->channels_sequence[3] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |= (uint32_t)((config->channels.channels_sequence[0] << ADC_JSQR_JSQ1_Pos) |
+                                       (config->channels.channels_sequence[1] << ADC_JSQR_JSQ2_Pos) |
+                                       (config->channels.channels_sequence[2] << ADC_JSQR_JSQ3_Pos) |
+                                       (config->channels.channels_sequence[3] << ADC_JSQR_JSQ4_Pos));
             break;
         default:
             return HAL_ERR_INVALID_ARG;
@@ -439,7 +443,7 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_channels_
     handle->JOFR4 &= ~ADC_JOFR4_JOFFSET4;
 
     // Enable scan mode if we have more than one channel, but disable otherwise
-    if (channels->num_of_channels > 1) {
+    if (config->channels.num_of_channels > 1) {
         handle->CR1 |= ADC_CR1_SCAN;
     } else {
         handle->CR1 &= ~ADC_CR1_SCAN;
@@ -671,8 +675,8 @@ hal_err_t adc_get_value_right_aligned(ADC_TypeDef* handle, uint16_t raw_data, ad
 
 
 // For use of control of the analog watchdog
-hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, uint16_t min, uint16_t max, bool regular, bool injected, adc_callback_t cb, void* arg) {
-    if (handle == NULL || cb == NULL || min >= max) {
+hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_t* config) {
+    if (handle == NULL || config == NULL || config->on_thresholds_violated == NULL || config->min_adc_value >= config->max_adc_value) {
         // The use of interrupts is effectively mandatory as that's the
         // only way for the watchdog to inform the caller of a violation
         return HAL_ERR_INVALID_ARG;
@@ -685,15 +689,15 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, uint16_t min, uint16_t max, 
 
     // Clear the AWDSGL bit since the monitoring is not only on an single channel
     // and clear all state before modifying any of the bits in the register(s)
-    handle->CR1 &= ~(ADC_CR1_AWDSGL | ADC_CR1_AWDEN | ADC_CR1_JAWDEN | ADC_CR1_AWDIE);
+    handle->CR1 &= ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
 
-    if (regular && injected) {
+    if (config->monitor_regular_channels && config->monitor_injected_channels) {
         // Enable monitoring on all channels
         handle->CR1 |= (ADC_CR1_AWDEN | ADC_CR1_JAWDEN);
-    } else if (injected) {
+    } else if (config->monitor_injected_channels) {
         // Enable monitoring on only the injected channels
         handle->CR1 |= ADC_CR1_JAWDEN;
-    } else if (regular) {
+    } else if (config->monitor_regular_channels) {
         // Enable monitoring on only the regular channels
         handle->CR1 |= ADC_CR1_AWDEN;
     } else {
@@ -701,14 +705,15 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, uint16_t min, uint16_t max, 
     }
 
     // Set the voltage thresholds
-    handle->HTR = max & 0xFFFU; // Only the lower 12 bits are used
-    handle->LTR = min & 0xFFFU; // Only the lower 12 bits are used
+    handle->HTR = config->max_adc_value & 0xFFFU; // Only the lower 12 bits are used
+    handle->LTR = config->min_adc_value & 0xFFFU; // Only the lower 12 bits are used
 
     // Save the user passed callback
-    s_analog_wdg_cb[idx]  = cb;
-    s_analog_wdg_arg[idx] = arg;
+    s_analog_wdg_cb[idx]  = config->on_thresholds_violated;
+    s_analog_wdg_arg[idx] = config->arg;
 
-    // Enable the analog watchdog interrupt
+    // Enable the analog watchdog interrupt and clear any pending interrupts
+    handle->SR &= ~ADC_SR_AWD;
     handle->CR1 |= ADC_CR1_AWDIE;
 
     return HAL_OK;
@@ -722,10 +727,11 @@ hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle) {
 
     // Disable the analog watchdog interrupt and disable monitoring on all channels
     handle->CR1 &= ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
+    handle->SR &= ~ADC_SR_AWD;
 
     // Clear the voltage thresholds
-    handle->HTR = 0;
-    handle->LTR = 0;
+    handle->HTR |= ADC_HTR_HT;  // Set to highest value possible
+    handle->LTR &= ~ADC_LTR_LT; // Set to lowest value possible
 
     // Clear the user passed callback
     s_analog_wdg_cb[idx]  = NULL;

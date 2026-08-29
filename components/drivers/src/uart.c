@@ -81,12 +81,12 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     }
 
     // Save the user callback so we can clear it's global array position
-    dma_trans_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
-    void*               local_arg = s_tx_args[idx];
+    dma_trans_done_cb_t local_cb  = s_dma_rx_done_cbs[idx];
+    void*               local_arg = s_rx_args[idx];
 
     // Clear the user passed callback since this is a one-off event
-    s_dma_tx_done_cbs[idx] = NULL;
-    s_tx_args[idx]         = NULL;
+    s_dma_rx_done_cbs[idx] = NULL;
+    s_rx_args[idx]         = NULL;
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
