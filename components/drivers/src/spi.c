@@ -708,15 +708,3 @@ void DMA2_Stream4_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA2_Stream4, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4, DMA_HISR_HTIF4);
     isr_rx_helper(ret, 3);
 }
-
-// SPI5: TX
-void DMA2_Stream6_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream6, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
-    isr_tx_helper(SPI5, ret, 4);
-}
-
-// SPI5: RX
-void DMA2_Stream3_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream3, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF3, DMA_LISR_TEIF3, DMA_LISR_DMEIF3, DMA_LISR_HTIF3);
-    isr_rx_helper(ret, 4);
-}

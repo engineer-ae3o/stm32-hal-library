@@ -2,6 +2,7 @@
 #include "o1heap/o1heap.h"
 #include "utils/common.h"
 #include "drivers/gpio.h"
+#include "drivers/crc.h"
 #include "drivers/adc.h"
 #include "utils/tick.h"
 #include "utils/log.h"
@@ -200,7 +201,7 @@ namespace profile {
 } // namespace profile
 
 extern "C" {
-[[noreturn]] int main() {
+int main() {
     /**
     // Run all the hardware driver tests
     test::runner();
@@ -216,7 +217,7 @@ extern "C" {
     adc_enable_nvic_irq(true);
     adc_power_on_temp_sensor(true);
 
-    const adc_config_t adc_cfg = {
+    constexpr adc_config_t adc_cfg = {
         .alignment       = ADC_RIGHT_ALIGN,
         .resolution      = ADC_RES_12_BITS,
         .sampling_cycles = ADC_SAMPLE_15_CYCLES,
@@ -226,18 +227,20 @@ extern "C" {
     ASSERT(adc_power_on(ADC1, true) == HAL_OK);
 
     // Configure the analog watchdog
-    ASSERT(adc_analog_wdg_start(
-               ADC1,
-               0,
-               4095,
-               true,
-               true,
-               [](void* arg) {
-                   (void)arg;
-                   LOGE("ADC_WDG", "Voltage on an ADC channel past the valid range");
-                   PANIC();
-               },
-               nullptr) == HAL_OK);
+    constexpr adc_analog_wdg_config_t awdg_config = {
+        .min_adc_value             = 0,
+        .max_adc_value             = 4095,
+        .monitor_regular_channels  = true,
+        .monitor_injected_channels = true,
+        .on_thresholds_violated =
+            [](void* arg) {
+                (void)arg;
+                LOGE("ADC_WDG", "Voltage on an ADC channel past the valid range");
+                PANIC();
+            },
+        .arg = nullptr,
+    };
+    ASSERT(adc_analog_wdg_start(ADC1, &awdg_config) == HAL_OK);
 
     // Configure PA3 as analog since it is ADC channel 3
     ASSERT(gpiox_clk_enable(GPIOA, true) == HAL_OK);
@@ -264,7 +267,15 @@ extern "C" {
     LOGI("ADC", "V_ref_int: %.3fV", (double)vref_int);
     LOGI("ADC", "Temperature: %.3fC", (double)temp_celsius);
 
-    __asm volatile("bkpt #0");
-    while (true);
+    crc_clk_enable(true);
+
+    constexpr auto buffer = std::array{1UL, 2UL, 3UL, 4UL, 5UL, 6UL, 7UL, 8UL, 9UL};
+    uint32_t       crc32  = 0;
+
+    ASSERT(crc_get(buffer.data(), buffer.size(), &crc32) == HAL_OK);
+    LOGI("CRC32", "CRC32 checksum of data = %lu", crc32);
+    LOGI("CRC32", "CRC32 checksum of data = 0x%X", (size_t)crc32);
+
+    HALT();
 }
 }

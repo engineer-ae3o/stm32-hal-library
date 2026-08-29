@@ -39,7 +39,8 @@ extern "C" {
 #define SPI_DMA_NVIC_IRQ_PRIORITY (14)
 #define UART_DMA_NVIC_IRQ_PRIORITY (8)
 #define I2S_DMA_NVIC_IRQ_PRIORITY (12)
-#define ADC_DMA_NVIC_IRQ_PRIORITY (4)
+#define ADC_DMA_NVIC_IRQ_PRIORITY (7)
+#define CRC_DMA_NVIC_IRQ_PRIORITY (6)
 
 
 #if defined(STM32F411xE)
@@ -69,6 +70,12 @@ extern "C" {
 
 // Use the cycle counter component
 #define USE_DWT_CYCCNT 1
+
+#define HALT()                                                                                                                                       \
+    do {                                                                                                                                             \
+        __BKPT(0);                                                                                                                                   \
+        while (true);                                                                                                                                \
+    } while (0)
 
 
 #define REBOOT() restart(__PRETTY_FUNCTION__, __FILE__, __LINE__)
