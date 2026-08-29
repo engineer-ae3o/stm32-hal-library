@@ -59,6 +59,26 @@ static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
     return 0xFFU;
 }
 
+[[__gnu__::__always_inline__]] static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
+    if (regular) {
+        handle->SR &= ~ADC_SR_EOC;
+        handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM);
+        handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART | ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
+        handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
+        handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
+        handle->SQR3 &= ~(ADC_SQR3_SQ1 | ADC_SQR3_SQ2 | ADC_SQR3_SQ3 | ADC_SQR3_SQ4 | ADC_SQR3_SQ5 | ADC_SQR3_SQ6);
+    } else if (injected) {
+        handle->SR &= ~ADC_SR_JEOC;
+        handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_JDISCEN | ADC_CR1_JEOCIE | ADC_CR1_JAUTO);
+        handle->CR2 &= ~(ADC_CR2_JEXTEN | ADC_CR2_JSWSTART | ADC_CR2_JEXTSEL);
+        handle->JSQR &= ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 | ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
+        handle->JOFR1 &= ~ADC_JOFR1_JOFFSET1;
+        handle->JOFR2 &= ~ADC_JOFR2_JOFFSET2;
+        handle->JOFR3 &= ~ADC_JOFR3_JOFFSET3;
+        handle->JOFR4 &= ~ADC_JOFR4_JOFFSET4;
+    }
+}
+
 [[__gnu__::__always_inline__]] static inline void adcx_isr_helper(ADC_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     // Assert since we can't return the error anywhere
@@ -109,21 +129,16 @@ static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
 }
 
 [[__gnu__::__always_inline__]] static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channels_t channel) {
+    // Clear all stale state before proceeding
+    clear_state(handle, true, false);
+
     // Set the number of channels to be converted
     // An L[3:0] value of 0b0000 means 1 channel/conversion, a value of 0b0011 means 4
     // conversions etc. Which is why 0b0000 is used despite the sampling being for 1 channel
-    handle->SQR1 &= ~ADC_SQR1_L;
     handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
 
     // Set the channel
-    handle->SQR3 &= ~ADC_SQR3_SQ1;
     handle->SQR3 |= (uint32_t)channel << ADC_SQR3_SQ1_Pos;
-
-    // Disable continuous and discontinuous conversions and scan mode since we are sampling
-    // only one channel. Then clear the EXTEN bit since the triggering is by software. We
-    // also disable the end of conversion interrupt and DMA mode since we are polling here.
-    handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_DISCEN | ADC_CR1_EOCIE);
-    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA);
 
     // Start the conversion
     handle->CR2 |= ADC_CR2_SWSTART;
@@ -269,27 +284,20 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Clear all stale state before proceeding
+    clear_state(handle, true, false);
+
     // TODO: Set the channel length and sequence
     (void)config->channels.channels_sequence;
     (void)config->channels.num_of_channels;
 
-    // Enable scan mode if we have more than one channel, but disable otherwise
+    // Enable scan mode if we have more than one channel
     if (config->channels.num_of_channels > 1) {
         handle->CR1 |= ADC_CR1_SCAN;
-    } else {
-        handle->CR1 &= ~ADC_CR1_SCAN;
     }
 
     // Enable ADC continuous sampling and DMA mode
     handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);
-
-    // Clear the EXTEN bit since we are triggering the conversion manually with the SWSTART bit
-    handle->CR2 &= ~ADC_CR2_EXTEN;
-
-    // Disable the ADC end of conversion interrupt since the DMA controller
-    // will trigger its own interrupt when our buffer is filled. Discontinuous
-    // mode is also disabled since it's not being used.
-    handle->CR1 &= ~(ADC_CR1_EOCIE | ADC_CR1_DISCEN);
 
     // ADC DMA stream mapping
     DMA_TypeDef*        controller = s_adc_dma_map[idx].tx.controller;
@@ -345,8 +353,7 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     // Enable the DMA stream after all DMA configuration is complete
     TRY(dma_enable_stream(stream));
 
-    // Start the conversion
-    handle->CR2 |= ADC_CR2_SWSTART;
+    // TODO: Handle the various means by which the conversion could be triggered
 
     return HAL_OK;
 }
@@ -357,9 +364,8 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Clear all state and stop the conversion.
-    handle->CR1 &= ~ADC_CR1_SCAN;
-    handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_SWSTART);
+    // Stop the conversion by clearing the necessary bits
+    clear_state(handle, true, false);
 
     // ADC DMA stream mapping
     DMA_TypeDef*        controller = s_adc_dma_map[idx].tx.controller;
@@ -393,6 +399,9 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
+
+    // Clear all stale state before proceeding
+    clear_state(handle, true, false);
 
     if (config->on_conv_complete) {
         // Save the user passed callback

@@ -1,0 +1,200 @@
+#ifndef ADC_TYPES_H_
+#define ADC_TYPES_H_
+
+
+#include <stdint.h>
+#include <stddef.h>
+
+
+// Number of regular and injected channels supported by the ADC peripheral
+#define MAX_REGULAR_CHANNELS (16)
+#define MAX_INJECTED_CHANNELS (4)
+
+
+// Shape of all callbacks passed to the ADC driver
+typedef void (*adc_callback_t)(void* arg);
+typedef void (*adc_cont_done_cb_t)(void* arg, bool is_buf_1);
+
+
+// External ADC channels
+typedef enum : uint8_t {
+    ADC_CHANNEL_0,  // PA0
+    ADC_CHANNEL_1,  // PA1
+    ADC_CHANNEL_2,  // PA2
+    ADC_CHANNEL_3,  // PA3
+    ADC_CHANNEL_4,  // PA4
+    ADC_CHANNEL_5,  // PA5
+    ADC_CHANNEL_6,  // PA6
+    ADC_CHANNEL_7,  // PA7
+    ADC_CHANNEL_8,  // PB0
+    ADC_CHANNEL_9,  // PB1
+    ADC_CHANNEL_10, // PC0
+    ADC_CHANNEL_11, // PC1
+    ADC_CHANNEL_12, // PC2
+    ADC_CHANNEL_13, // PC3
+    ADC_CHANNEL_14, // PC4
+    ADC_CHANNEL_15, // PC5
+} adc_channels_t;
+
+
+//
+typedef enum : uint8_t {
+    ADC_RES_6_BITS  = 0b11, // ADC resolution of 6 bits
+    ADC_RES_8_BITS  = 0b10, // ADC resolution of 8 bits
+    ADC_RES_10_BITS = 0b01, // ADC resolution of 10 bits
+    ADC_RES_12_BITS = 0b00, // ADC resolution of 12 bits
+} adc_resolution_t;
+
+
+// Prescaler to divide the clock of the APB2 bus to feed the ADCCLK
+typedef enum : uint8_t {
+    ADC_CLK_PRESCALER_2 = 0b00, // ADCCLK = (APB2 / 2)
+    ADC_CLK_PRESCALER_4 = 0b01, // ADCCLK = (APB2 / 4)
+    ADC_CLK_PRESCALER_6 = 0b10, // ADCCLK = (APB2 / 6)
+    ADC_CLK_PRESCALER_8 = 0b11, // ADCCLK = (APB2 / 8)
+} adc_prescaler_t;
+
+
+// The number of ADCCLK clock cycles that a conversion lasts. This only
+// affects the external channels. The internal channels require a much
+// longer sampling time than the internal channels. Those all use 480 cycles.
+typedef enum : uint8_t {
+    ADC_SAMPLE_3_CYCLES   = 0b000, // ADC sampling time is 3 cycles
+    ADC_SAMPLE_15_CYCLES  = 0b001, // ADC sampling time is 15 cycles
+    ADC_SAMPLE_28_CYCLES  = 0b010, // ADC sampling time is 28 cycles
+    ADC_SAMPLE_56_CYCLES  = 0b011, // ADC sampling time is 56 cycles
+    ADC_SAMPLE_84_CYCLES  = 0b100, // ADC sampling time is 84 cycles
+    ADC_SAMPLE_112_CYCLES = 0b101, // ADC sampling time is 112 cycles
+    ADC_SAMPLE_144_CYCLES = 0b110, // ADC sampling time is 144 cycles
+    ADC_SAMPLE_480_CYCLES = 0b111, // ADC sampling time is 480 cycles
+} adc_sample_cycles_t;
+
+
+// How the data will be aligned in the data register after conversion
+typedef enum : uint8_t {
+    ADC_RIGHT_ALIGN = 0b0,
+    ADC_LEFT_ALIGN  = 0b1,
+} adc_align_t;
+
+
+// The various trigger sources for channels in the regular group
+typedef enum : uint8_t {
+    REG_TRIGGER_TIM1_CH1     = 0b0000,
+    REG_TRIGGER_TIM1_CH2     = 0b0001,
+    REG_TRIGGER_TIM1_CH3     = 0b0010,
+    REG_TRIGGER_TIM2_CH2     = 0b0011,
+    REG_TRIGGER_TIM2_CH3     = 0b0100,
+    REG_TRIGGER_TIM2_CH4     = 0b0101,
+    REG_TRIGGER_TIM2_TRGO    = 0b0110,
+    REG_TRIGGER_TIM3_CH1     = 0b0111,
+    REG_TRIGGER_TIM3_TRGO    = 0b1000,
+    REG_TRIGGER_TIM4_CH4     = 0b1001,
+    REG_TRIGGER_TIM5_CH1     = 0b1010,
+    REG_TRIGGER_TIM5_CH2     = 0b1011,
+    REG_TRIGGER_TIM5_CH3     = 0b1100,
+    REG_TRIGGER_SOFTWARE     = 0b1101,
+    REG_TRIGGER_EXTI_LINE_11 = 0b1111,
+} adc_regular_group_trigger_t;
+
+
+// The various trigger sources for channels in the injected group
+typedef enum : uint8_t {
+    INJ_TRIGGER_TIM1_CH4     = 0b0000,
+    INJ_TRIGGER_TIM1_TRGO    = 0b0001,
+    INJ_TRIGGER_TIM2_CH1     = 0b0010,
+    INJ_TRIGGER_TIM2_TRGO    = 0b0011,
+    INJ_TRIGGER_TIM3_CH2     = 0b0100,
+    INJ_TRIGGER_TIM3_CH4     = 0b0101,
+    INJ_TRIGGER_TIM4_CH1     = 0b0110,
+    INJ_TRIGGER_TIM4_CH2     = 0b0111,
+    INJ_TRIGGER_TIM4_CH3     = 0b1000,
+    INJ_TRIGGER_TIM4_TRGO    = 0b1001,
+    INJ_TRIGGER_TIM5_CH4     = 0b1010,
+    INJ_TRIGGER_TIM5_TRGO    = 0b1011,
+    INJ_TRIGGER_SOFTWARE     = 0b1101,
+    INJ_TRIGGER_EXTI_LINE_15 = 0b1111,
+} adc_injected_group_trigger_t;
+
+
+// Configure a given ADC peripheral instance
+typedef struct {
+    adc_align_t         alignment;
+    adc_resolution_t    resolution;
+    adc_sample_cycles_t sampling_cycles;
+} adc_config_t;
+
+
+// The sequence of channels and the number of channels
+typedef struct {
+    const adc_channels_t* channels_sequence;
+    size_t                num_of_channels;
+} adc_channels_config_t;
+
+
+// The various
+typedef struct {
+    adc_cont_done_cb_t on_buffer_full;       // Called when a buffer is filled
+    adc_cont_done_cb_t on_transfer_error;    // Called on a DMA transfer error
+    adc_cont_done_cb_t on_direct_mode_error; // Called when an error arose from the DMA direct mode
+    adc_cont_done_cb_t on_data_overrun;      // Called when the DMA is too slow to read and data is lost
+    // User data to be passed to the callbacks
+    void* arg;
+} adc_dma_callbacks_t;
+
+
+// Configure a conversion in the regular group with continuous DMA sampling
+typedef struct {
+    // The channel sequence and the trigger source
+    adc_channels_config_t       channels;
+    adc_regular_group_trigger_t trigger;
+
+    // The buffer(s) to store the samples
+    const uint16_t* buffer_1;
+    const uint16_t* buffer_2;
+    uint16_t        buffer_size;
+
+    // The different callbacks to be registered. They determine what interrupts will be enabled.
+    adc_dma_callbacks_t callbacks;
+
+    // DMA settings
+    bool use_double_buffers;       // Double buffering mode. Pretty straightforward
+    bool dma_wraparound_when_done; // This is only used when use_double_buffers is false. This tells the DMA controller
+                                   // to wrap around to the start of the buffer if it gets to the end of the buffer.
+} adc_continuous_config_t;
+
+
+// Configure a conversion in the injected group
+typedef struct {
+    // The channel sequence and the trigger source
+    adc_channels_config_t        channels;
+    adc_injected_group_trigger_t trigger;
+
+    // The sample offsets to be fed to the offset registers
+    uint16_t offset_1;
+    uint16_t offset_2;
+    uint16_t offset_3;
+    uint16_t offset_4;
+
+    // Called when conversion is finished. Pretty straightforward
+    adc_callback_t on_conv_complete;
+    void*          arg;
+} adc_injected_group_config_t;
+
+
+// Configure the analog watchdog to use for monitoring the voltages on the given channels
+typedef struct {
+    // The thresholds to use to monitor the regular and/or injected groups
+    uint16_t min_adc_value;
+    uint16_t max_adc_value;
+
+    // Whether or not to monitor the regular and/or injected groups
+    bool monitor_regular_channels;
+    bool monitor_injected_channels;
+
+    // Called when any of the values in min_adc_value and max_adc_value are violated
+    adc_callback_t on_thresholds_violated;
+    void*          arg;
+} adc_analog_wdg_config_t;
+
+
+#endif // ADC_TYPES_H_
