@@ -64,11 +64,16 @@ static void*          s_analog_wdg_arg[NUM_OF_ADC_CONTROLLERS] = {};
     if ((handle->SR & ADC_SR_JEOC) && (handle->CR1 & ADC_CR1_JEOCIE)) {
         // Invoke the user callback since the sampling on the injected group is complete
         if (s_injected_done_cb[idx]) {
-            s_injected_done_cb[idx](s_injected_done_arg[idx]);
+            // Save the user callback so we can clear it's global array position
+            adc_callback_t local_cb  = s_injected_done_cb[idx];
+            void*          local_arg = s_injected_done_arg[idx];
 
             // Clear the user passed callback since this is a one-off event
             s_injected_done_cb[idx]  = NULL;
             s_injected_done_arg[idx] = NULL;
+
+            // Finally, invoke the user callback
+            local_cb(local_arg);
         }
 
         // Clear the JEOCIE and JEOC bits since the interrupt has been serviced
@@ -80,8 +85,9 @@ static void*          s_analog_wdg_arg[NUM_OF_ADC_CONTROLLERS] = {};
     if ((handle->SR & ADC_SR_AWD) && (handle->CR1 & ADC_CR1_AWDIE)) {
         // Invoke the user callback since the analog watchdog has fired an interrupt
         if (s_analog_wdg_cb[idx]) {
+            // The callback isn't cleared since this is not a one-off
+            // event. To clear, adc_analog_wdg_stop() should be used.
             s_analog_wdg_cb[idx](s_analog_wdg_arg[idx]);
-            // The callback isn't cleared since this is not a one-off event. To clear, call adc_analog_wdg_stop()
         }
 
         // Clear the AWD bit since the interrupt has already been serviced
@@ -151,7 +157,7 @@ hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
     handle->CR1 &= ~ADC_CR1_RES;
     handle->CR1 |= ((uint32_t)config->resolution << ADC_CR1_RES_Pos);
 
-    // Set the sampling cycles for all internal channels
+    // Set the sampling cycles for all external channels
     // Clear all the bit positions first
     handle->SMPR1 &= ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15);
     handle->SMPR2 &= ~(ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 | ADC_SMPR2_SMP4 | ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 |
@@ -159,7 +165,7 @@ hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
 
     const uint32_t time = config->sampling_cycles;
 
-    // Apply the sample cycles to all internal channels
+    // Apply the sample cycles to all external channels
     handle->SMPR1 |= ((time << ADC_SMPR1_SMP10_Pos) | (time << ADC_SMPR1_SMP11_Pos) | (time << ADC_SMPR1_SMP12_Pos) | (time << ADC_SMPR1_SMP13_Pos) |
                       (time << ADC_SMPR1_SMP14_Pos) | (time << ADC_SMPR1_SMP15_Pos));
 

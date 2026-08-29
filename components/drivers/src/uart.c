@@ -63,12 +63,16 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
         }
     }
 
-    // Invoke user callback
-    s_dma_tx_done_cbs[idx](s_tx_args[idx], ret);
+    // Save the user callback so we can clear it's global array position
+    dma_trans_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
+    void*               local_arg = s_tx_args[idx];
 
-    // Clear user passed context
+    // Clear the user passed callback since this is a one-off event
     s_dma_tx_done_cbs[idx] = NULL;
     s_tx_args[idx]         = NULL;
+
+    // Finally, invoke the user callback
+    local_cb(local_arg, ret);
 }
 
 [[__gnu__::__always_inline__]] static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
@@ -76,12 +80,16 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
         return;
     }
 
-    // Invoke user callback
-    s_dma_rx_done_cbs[idx](s_rx_args[idx], ret);
+    // Save the user callback so we can clear it's global array position
+    dma_trans_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
+    void*               local_arg = s_tx_args[idx];
 
-    // Clear user passed context
-    s_dma_rx_done_cbs[idx] = NULL;
-    s_rx_args[idx]         = NULL;
+    // Clear the user passed callback since this is a one-off event
+    s_dma_tx_done_cbs[idx] = NULL;
+    s_tx_args[idx]         = NULL;
+
+    // Finally, invoke the user callback
+    local_cb(local_arg, ret);
 }
 
 // Public API
@@ -355,7 +363,6 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t len, d
 void DMA2_Stream7_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA2_Stream7, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7, DMA_HISR_HTIF7);
     isr_tx_helper(USART1, ret, 0);
-    // Enable USART DMA
     USART1->CR3 &= ~USART_CR3_DMAT;
 }
 

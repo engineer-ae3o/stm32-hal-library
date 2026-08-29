@@ -94,6 +94,11 @@ typedef void (*adc_callback_t)(void* arg);
 
 // For use with the external channels
 // The regular group
+typedef struct {
+    const void* dma_buffer;
+    uint16_t    buf_size;
+} adc_t;
+
 hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* raw_data);
 hal_err_t adc_regular_group_start_conv(ADC_TypeDef* handle, const adc_channels_t* channels, size_t size, dma_trans_done_cb_t cb, void* arg);
 

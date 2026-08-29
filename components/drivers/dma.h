@@ -61,8 +61,8 @@ typedef struct {
 } dma_map_t;
 
 typedef struct {
-    const dma_map_t tx;
-    const dma_map_t rx;
+    dma_map_t tx;
+    dma_map_t rx;
 } dma_stream_map_t;
 
 // Callback for DMA transmission and reception completion

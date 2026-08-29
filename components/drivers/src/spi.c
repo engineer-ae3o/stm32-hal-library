@@ -87,14 +87,18 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
         }
     }
 
-    // Invoke user cb
-    s_dma_tx_done_cbs[idx](s_tx_args[idx], ret);
+    // Save the user callback so we can clear it's global array position
+    dma_trans_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
+    void*               local_arg = s_tx_args[idx];
 
-    // Only clear user cb if not in circular mode
+    // Only clear the user callback if not in circular mode
     if (!(s_spi_dma_map[idx].tx.stream->CR & DMA_SxCR_CIRC)) {
         s_dma_tx_done_cbs[idx] = NULL;
         s_tx_args[idx]         = NULL;
     }
+
+    // Finally, invoke the user callback
+    local_cb(local_arg, ret);
 }
 
 [[__gnu__::__always_inline__]] static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
@@ -102,15 +106,20 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
         return;
     }
 
-    // Invoke user cb
-    s_dma_rx_done_cbs[idx](s_rx_args[idx], ret);
+    // Save the user callback so we can clear it's global array position
+    dma_trans_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
+    void*               local_arg = s_tx_args[idx];
 
-    // Only clear user cb if not in circular mode
-    if (!(s_spi_dma_map[idx].rx.stream->CR & DMA_SxCR_CIRC)) {
-        s_dma_rx_done_cbs[idx] = NULL;
-        s_rx_args[idx]         = NULL;
+    // Only clear the user callback if not in circular mode
+    if (!(s_spi_dma_map[idx].tx.stream->CR & DMA_SxCR_CIRC)) {
+        s_dma_tx_done_cbs[idx] = NULL;
+        s_tx_args[idx]         = NULL;
     }
+
+    // Finally, invoke the user callback
+    local_cb(local_arg, ret);
 }
+
 
 // Public API
 hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable) {
@@ -337,6 +346,7 @@ hal_err_t spi_master_get_dma_stream(SPI_TypeDef* handle, DMA_Stream_TypeDef** tx
 
     return HAL_OK;
 }
+
 
 // Polling API
 hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t len) {
@@ -575,6 +585,7 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
     return HAL_OK;
 }
 
+
 // DMA transfers API
 hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t len, dma_trans_done_cb_t cb, void* arg) {
     // Get index for DMA stream mapping
@@ -658,6 +669,7 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     return dma_enable_stream(rx_stream);
 }
 
+
 // To be used only by i2s.c
 void spi_master_register_callback(dma_trans_done_cb_t cb, void* arg, uint8_t idx, bool tx) {
     if (tx) {
@@ -668,6 +680,7 @@ void spi_master_register_callback(dma_trans_done_cb_t cb, void* arg, uint8_t idx
         s_rx_args[idx]         = arg;
     }
 }
+
 
 // DMA interrupts
 // SPI2: TX
