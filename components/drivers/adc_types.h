@@ -116,6 +116,15 @@ typedef enum : uint8_t {
 } adc_injected_group_trigger_t;
 
 
+// The polarities of the would be trigger source
+// It is ignored if the trigger is RG_TRIGGER_SOFTWARE or JG_TRIGGER_SOFTWARE
+typedef enum : uint8_t {
+    RISING_EDGE         = 0b01,
+    FALLING_EDGE        = 0b10,
+    RISING_FALLING_EDGE = 0b11,
+} adc_trigger_polarity_t;
+
+
 // Configure a given ADC peripheral instance
 typedef struct {
     adc_align_t         alignment;
@@ -131,7 +140,7 @@ typedef struct {
 } adc_channels_config_t;
 
 
-// The various
+// The various callbacks that can be registered when using continuous DMA sampling
 typedef struct {
     adc_cont_done_cb_t on_buffer_full;       // Called when a buffer is filled
     adc_cont_done_cb_t on_transfer_error;    // Called on a DMA transfer error
@@ -147,6 +156,7 @@ typedef struct {
     // The channel sequence and the trigger source
     adc_channels_config_t       channels;
     adc_regular_group_trigger_t trigger;
+    adc_trigger_polarity_t      trigger_polarity;
 
     // The buffer(s) to store the samples
     const uint16_t* buffer_1;
@@ -168,6 +178,7 @@ typedef struct {
     // The channel sequence and the trigger source
     adc_channels_config_t        channels;
     adc_injected_group_trigger_t trigger;
+    adc_trigger_polarity_t       trigger_polarity;
 
     // The sample offsets to be fed to the offset registers
     uint16_t offsets[MAX_INJECTED_CHANNELS];

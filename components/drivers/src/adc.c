@@ -17,6 +17,8 @@
 
 
 // To save user passed callbacks
+
+
 static adc_dma_callbacks_t s_continuous_mode_callbacks[NUM_OF_ADC_CONTROLLERS] = {};
 
 static adc_callback_t s_injected_done_cb[NUM_OF_ADC_CONTROLLERS]  = {};
@@ -37,7 +39,7 @@ static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
 
 
 // Inline helpers
-[[__gnu__::__always_inline__]] static inline uint8_t get_index(const ADC_TypeDef* handle) {
+static inline uint8_t get_index(const ADC_TypeDef* handle) {
 #if defined(ADC1)
     if (handle == ADC1) {
         return 0U;
@@ -59,27 +61,7 @@ static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
     return 0xFFU;
 }
 
-[[__gnu__::__always_inline__]] static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
-    if (regular) {
-        handle->SR &= ~ADC_SR_EOC;
-        handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE);
-        handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART | ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
-        handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
-        handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
-        handle->SQR3 &= ~(ADC_SQR3_SQ1 | ADC_SQR3_SQ2 | ADC_SQR3_SQ3 | ADC_SQR3_SQ4 | ADC_SQR3_SQ5 | ADC_SQR3_SQ6);
-    } else if (injected) {
-        handle->SR &= ~ADC_SR_JEOC;
-        handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_JDISCEN | ADC_CR1_JEOCIE | ADC_CR1_JAUTO);
-        handle->CR2 &= ~(ADC_CR2_JEXTEN | ADC_CR2_JSWSTART | ADC_CR2_JEXTSEL);
-        handle->JSQR &= ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 | ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
-        handle->JOFR1 &= ~ADC_JOFR1_JOFFSET1;
-        handle->JOFR2 &= ~ADC_JOFR2_JOFFSET2;
-        handle->JOFR3 &= ~ADC_JOFR3_JOFFSET3;
-        handle->JOFR4 &= ~ADC_JOFR4_JOFFSET4;
-    }
-}
-
-[[__gnu__::__always_inline__]] static inline void adcx_isr_helper(ADC_TypeDef* handle) {
+static inline void adcx_isr_helper(ADC_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     // Assert since we can't return the error anywhere
     ASSERT(idx != 0xFFU);
@@ -120,7 +102,7 @@ static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
     }
 }
 
-[[__gnu__::__always_inline__]] static inline void adcx_dma_isr_helper(ADC_TypeDef* handle) {
+static inline void adcx_dma_isr_helper(ADC_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     // Assert since we can't return the error anywhere
     ASSERT(idx != 0xFFU);
@@ -128,7 +110,27 @@ static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
     // TODO: Handle calling of the user callback and clearing of the DMA interrupt flags
 }
 
-[[__gnu__::__always_inline__]] static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channels_t channel) {
+static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
+    if (regular) {
+        handle->SR &= ~ADC_SR_EOC;
+        handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE);
+        handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART | ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
+        handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
+        handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
+        handle->SQR3 &= ~(ADC_SQR3_SQ1 | ADC_SQR3_SQ2 | ADC_SQR3_SQ3 | ADC_SQR3_SQ4 | ADC_SQR3_SQ5 | ADC_SQR3_SQ6);
+    } else if (injected) {
+        handle->SR &= ~ADC_SR_JEOC;
+        handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_JDISCEN | ADC_CR1_JEOCIE | ADC_CR1_JAUTO);
+        handle->CR2 &= ~(ADC_CR2_JEXTEN | ADC_CR2_JSWSTART | ADC_CR2_JEXTSEL);
+        handle->JSQR &= ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 | ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
+        handle->JOFR1 &= ~ADC_JOFR1_JOFFSET1;
+        handle->JOFR2 &= ~ADC_JOFR2_JOFFSET2;
+        handle->JOFR3 &= ~ADC_JOFR3_JOFFSET3;
+        handle->JOFR4 &= ~ADC_JOFR4_JOFFSET4;
+    }
+}
+
+static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channels_t channel) {
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
@@ -140,7 +142,7 @@ static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
     // Set the channel
     handle->SQR3 |= (uint32_t)channel << ADC_SQR3_SQ1_Pos;
 
-    // Start the conversion, and set the EOCS bit so that the EOC bit is set after a regular conversion
+    // Start the conversion, and set the EOCS bit so that the EOC bit is set after any regular conversion
     handle->CR2 |= (ADC_CR2_SWSTART | ADC_CR2_EOCS);
 
     // Poll till the conversion is complete. That is, till the EOC bit is set
@@ -287,10 +289,6 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
-    // TODO: Set the channel length and sequence
-    (void)config->channels.channels_sequence;
-    (void)config->channels.num_of_channels;
-
     // Enable scan mode if we have more than one channel
     if (config->channels.num_of_channels > 1) {
         handle->CR1 |= ADC_CR1_SCAN;
@@ -298,6 +296,10 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
 
     // Enable ADC continuous sampling and DMA mode
     handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS | ADC_CR2_EOCS);
+
+    // TODO: Set the channel length and sequence
+    (void)config->channels.channels_sequence;
+    (void)config->channels.num_of_channels;
 
     // ADC DMA stream mapping
     DMA_TypeDef*        controller = s_adc_dma_map[idx].tx.controller;
@@ -358,8 +360,12 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     TRY(dma_enable_stream(stream));
 
     if (config->trigger == RG_TRIGGER_SOFTWARE) {
-        // If the trigger is from software, set the SWSTART bit and return
+        // If the trigger is from software, set the SWSTART bit and return as that's all that's needed
         handle->CR2 |= ADC_CR2_SWSTART;
+    } else {
+        // Set the polarity of the trigger and the would be trigger source
+        handle->CR2 |= (uint32_t)(config->trigger_polarity << ADC_CR2_EXTEN_Pos);
+        handle->CR2 |= (uint32_t)(config->trigger << ADC_CR2_EXTSEL_Pos);
     }
 
     return HAL_OK;
@@ -415,16 +421,6 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
         handle->CR1 |= ADC_CR1_SCAN;
     }
 
-    if (config->on_conv_complete) {
-        // Save the user passed callback
-        s_injected_done_cb[idx]  = config->on_conv_complete;
-        s_injected_done_arg[idx] = config->arg;
-
-        // Enable interrupts for the injected group on conversion
-        // completion only if the user passed in a callback.
-        handle->CR1 |= ADC_CR1_JEOCIE;
-    }
-
     // Set the number of channels/conversions in the JL bit positions of the
     // JSQR register. The JL bit positions are zero indexed. That is, 1 channel
     // means a JL value of 0b00, 3 channels means a JL value of 0b10 etc.
@@ -466,9 +462,23 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
             return HAL_ERR_INVALID_ARG;
     }
 
+    if (config->on_conv_complete) {
+        // Save the user passed callback
+        s_injected_done_cb[idx]  = config->on_conv_complete;
+        s_injected_done_arg[idx] = config->arg;
+
+        // Enable interrupts for the injected group on conversion
+        // completion only if the user passed in a callback.
+        handle->CR1 |= ADC_CR1_JEOCIE;
+    }
+
     if (config->trigger == JG_TRIGGER_SOFTWARE) {
-        // If the trigger is from software, set the JSWSTART bit and return
+        // If the trigger is from software, set the JSWSTART bit and return as that's all that's needed
         handle->CR2 |= ADC_CR2_JSWSTART;
+    } else {
+        // Set the polarity of the trigger and the would be trigger source
+        handle->CR2 |= (uint32_t)(config->trigger_polarity << ADC_CR2_JEXTEN_Pos);
+        handle->CR2 |= (uint32_t)(config->trigger << ADC_CR2_JEXTSEL_Pos);
     }
 
     return HAL_OK;
