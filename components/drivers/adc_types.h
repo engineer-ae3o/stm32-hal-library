@@ -37,7 +37,7 @@ typedef enum : uint8_t {
 } adc_channels_t;
 
 
-//
+// The ADC resolution. Each extra resolution adds an extra ADCCLK cycles when sampling
 typedef enum : uint8_t {
     ADC_RES_6_BITS  = 0b11, // ADC resolution of 6 bits
     ADC_RES_8_BITS  = 0b10, // ADC resolution of 8 bits
@@ -79,40 +79,40 @@ typedef enum : uint8_t {
 
 // The various trigger sources for channels in the regular group
 typedef enum : uint8_t {
-    REG_TRIGGER_TIM1_CH1     = 0b0000,
-    REG_TRIGGER_TIM1_CH2     = 0b0001,
-    REG_TRIGGER_TIM1_CH3     = 0b0010,
-    REG_TRIGGER_TIM2_CH2     = 0b0011,
-    REG_TRIGGER_TIM2_CH3     = 0b0100,
-    REG_TRIGGER_TIM2_CH4     = 0b0101,
-    REG_TRIGGER_TIM2_TRGO    = 0b0110,
-    REG_TRIGGER_TIM3_CH1     = 0b0111,
-    REG_TRIGGER_TIM3_TRGO    = 0b1000,
-    REG_TRIGGER_TIM4_CH4     = 0b1001,
-    REG_TRIGGER_TIM5_CH1     = 0b1010,
-    REG_TRIGGER_TIM5_CH2     = 0b1011,
-    REG_TRIGGER_TIM5_CH3     = 0b1100,
-    REG_TRIGGER_SOFTWARE     = 0b1101,
-    REG_TRIGGER_EXTI_LINE_11 = 0b1111,
+    RG_TRIGGER_TIM1_CH1     = 0b0000,
+    RG_TRIGGER_TIM1_CH2     = 0b0001,
+    RG_TRIGGER_TIM1_CH3     = 0b0010,
+    RG_TRIGGER_TIM2_CH2     = 0b0011,
+    RG_TRIGGER_TIM2_CH3     = 0b0100,
+    RG_TRIGGER_TIM2_CH4     = 0b0101,
+    RG_TRIGGER_TIM2_TRGO    = 0b0110,
+    RG_TRIGGER_TIM3_CH1     = 0b0111,
+    RG_TRIGGER_TIM3_TRGO    = 0b1000,
+    RG_TRIGGER_TIM4_CH4     = 0b1001,
+    RG_TRIGGER_TIM5_CH1     = 0b1010,
+    RG_TRIGGER_TIM5_CH2     = 0b1011,
+    RG_TRIGGER_TIM5_CH3     = 0b1100,
+    RG_TRIGGER_SOFTWARE     = 0b1101,
+    RG_TRIGGER_EXTI_LINE_11 = 0b1111,
 } adc_regular_group_trigger_t;
 
 
 // The various trigger sources for channels in the injected group
 typedef enum : uint8_t {
-    INJ_TRIGGER_TIM1_CH4     = 0b0000,
-    INJ_TRIGGER_TIM1_TRGO    = 0b0001,
-    INJ_TRIGGER_TIM2_CH1     = 0b0010,
-    INJ_TRIGGER_TIM2_TRGO    = 0b0011,
-    INJ_TRIGGER_TIM3_CH2     = 0b0100,
-    INJ_TRIGGER_TIM3_CH4     = 0b0101,
-    INJ_TRIGGER_TIM4_CH1     = 0b0110,
-    INJ_TRIGGER_TIM4_CH2     = 0b0111,
-    INJ_TRIGGER_TIM4_CH3     = 0b1000,
-    INJ_TRIGGER_TIM4_TRGO    = 0b1001,
-    INJ_TRIGGER_TIM5_CH4     = 0b1010,
-    INJ_TRIGGER_TIM5_TRGO    = 0b1011,
-    INJ_TRIGGER_SOFTWARE     = 0b1101,
-    INJ_TRIGGER_EXTI_LINE_15 = 0b1111,
+    JG_TRIGGER_TIM1_CH4     = 0b0000,
+    JG_TRIGGER_TIM1_TRGO    = 0b0001,
+    JG_TRIGGER_TIM2_CH1     = 0b0010,
+    JG_TRIGGER_TIM2_TRGO    = 0b0011,
+    JG_TRIGGER_TIM3_CH2     = 0b0100,
+    JG_TRIGGER_TIM3_CH4     = 0b0101,
+    JG_TRIGGER_TIM4_CH1     = 0b0110,
+    JG_TRIGGER_TIM4_CH2     = 0b0111,
+    JG_TRIGGER_TIM4_CH3     = 0b1000,
+    JG_TRIGGER_TIM4_TRGO    = 0b1001,
+    JG_TRIGGER_TIM5_CH4     = 0b1010,
+    JG_TRIGGER_TIM5_TRGO    = 0b1011,
+    JG_TRIGGER_SOFTWARE     = 0b1101,
+    JG_TRIGGER_EXTI_LINE_15 = 0b1111,
 } adc_injected_group_trigger_t;
 
 
@@ -170,10 +170,7 @@ typedef struct {
     adc_injected_group_trigger_t trigger;
 
     // The sample offsets to be fed to the offset registers
-    uint16_t offset_1;
-    uint16_t offset_2;
-    uint16_t offset_3;
-    uint16_t offset_4;
+    uint16_t offsets[MAX_INJECTED_CHANNELS];
 
     // Called when conversion is finished. Pretty straightforward
     adc_callback_t on_conv_complete;

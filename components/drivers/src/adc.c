@@ -62,7 +62,7 @@ static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
 [[__gnu__::__always_inline__]] static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
     if (regular) {
         handle->SR &= ~ADC_SR_EOC;
-        handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM);
+        handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE);
         handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART | ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
         handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
         handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
@@ -140,8 +140,8 @@ static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
     // Set the channel
     handle->SQR3 |= (uint32_t)channel << ADC_SQR3_SQ1_Pos;
 
-    // Start the conversion
-    handle->CR2 |= ADC_CR2_SWSTART;
+    // Start the conversion, and set the EOCS bit so that the EOC bit is set after a regular conversion
+    handle->CR2 |= (ADC_CR2_SWSTART | ADC_CR2_EOCS);
 
     // Poll till the conversion is complete. That is, till the EOC bit is set
     uint32_t timeout_cycles = TIMEOUT_CYCLES;
@@ -297,7 +297,7 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     }
 
     // Enable ADC continuous sampling and DMA mode
-    handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);
+    handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS | ADC_CR2_EOCS);
 
     // ADC DMA stream mapping
     DMA_TypeDef*        controller = s_adc_dma_map[idx].tx.controller;
@@ -327,24 +327,28 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     dma_set_stream_priority(stream, DMA_PRIORITY_HIGH);
     dma_set_per_mem_size(stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
 
-    if (config->use_double_buffers) {
-        if (config->buffer_2 == NULL) {
-            return HAL_ERR_INVALID_ARG;
-        }
-        dma_enable_circm_dbm(stream, true, true);
-        dma_set_addresses(stream, &handle->DR, config->buffer_1, config->buffer_2);
-        // Clear the CT bit in the CR register to ensure the DMA controller starts at the first buffer
-        stream->CR &= ~DMA_SxCR_CT;
-    } else if (config->dma_wraparound_when_done) {
-        dma_enable_circm_dbm(stream, true, false);
-        dma_set_addresses(stream, &handle->DR, config->buffer_1, NULL);
-    } else {
-        dma_enable_circm_dbm(stream, false, false);
-        dma_set_addresses(stream, &handle->DR, config->buffer_1, NULL);
-    }
+    const bool  double_buffering = config->use_double_buffers;
+    const bool  circular_mode    = config->use_double_buffers || config->dma_wraparound_when_done;
+    const void* buffer_2         = config->use_double_buffers ? config->buffer_2 : NULL;
 
-    // TODO: Handle the callback registration
+    dma_enable_circm_dbm(stream, circular_mode, double_buffering);
+    dma_set_addresses(stream, &handle->DR, config->buffer_1, buffer_2);
+
+    // Clear the CT bit in the CR register to ensure the DMA controller starts at the first buffer
+    stream->CR &= ~DMA_SxCR_CT;
+
+    // Callback registration
     s_continuous_mode_callbacks[idx] = config->callbacks;
+    const bool transfer_error        = s_continuous_mode_callbacks[idx].on_transfer_error != NULL;
+    const bool direct_mode_error     = s_continuous_mode_callbacks[idx].on_direct_mode_error != NULL;
+    const bool transfer_complete     = s_continuous_mode_callbacks[idx].on_buffer_full != NULL;
+    const bool data_overrun          = s_continuous_mode_callbacks[idx].on_data_overrun != NULL;
+
+    // Enable the interrupts based on what callbacks were passed
+    dma_enable_irqs(stream, transfer_complete, transfer_error, false, direct_mode_error);
+    if (data_overrun) {
+        handle->CR1 |= ADC_CR1_OVRIE;
+    }
 
     // Enable the DMA stream interrupts
     NVIC_SetPriority(irq_type, ADC_DMA_NVIC_IRQ_PRIORITY);
@@ -353,7 +357,10 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     // Enable the DMA stream after all DMA configuration is complete
     TRY(dma_enable_stream(stream));
 
-    // TODO: Handle the various means by which the conversion could be triggered
+    if (config->trigger == RG_TRIGGER_SOFTWARE) {
+        // If the trigger is from software, set the SWSTART bit and return
+        handle->CR2 |= ADC_CR2_SWSTART;
+    }
 
     return HAL_OK;
 }
@@ -401,7 +408,12 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
     }
 
     // Clear all stale state before proceeding
-    clear_state(handle, true, false);
+    clear_state(handle, false, true);
+
+    // Enable scan mode if we have more than one channel
+    if (config->channels.num_of_channels > 1) {
+        handle->CR1 |= ADC_CR1_SCAN;
+    }
 
     if (config->on_conv_complete) {
         // Save the user passed callback
@@ -416,57 +428,48 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
     // Set the number of channels/conversions in the JL bit positions of the
     // JSQR register. The JL bit positions are zero indexed. That is, 1 channel
     // means a JL value of 0b00, 3 channels means a JL value of 0b10 etc.
-    handle->JSQR &= ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 | ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
     handle->JSQR |= (((config->channels.num_of_channels - 1) & 0x3U) << ADC_JSQR_JL_Pos);
 
-    // Set the channel sequence in the JSQ register
+    // Set the channel sequence in the JSQ register and the the offsets
     // As per the TRM, there are only 4 injected channels, and they have to be filled from the last
     // slot, that is, JSQ4. This is because all conversions in the injected group must end at JSQ4
     switch (config->channels.num_of_channels) {
         case 1:
             handle->JSQR |= (uint32_t)(config->channels.channels_sequence[0] << ADC_JSQR_JSQ4_Pos);
+            handle->JOFR1 |= (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
             break;
         case 2:
             handle->JSQR |= (uint32_t)((config->channels.channels_sequence[0] << ADC_JSQR_JSQ3_Pos) |
                                        (config->channels.channels_sequence[1] << ADC_JSQR_JSQ4_Pos));
+            handle->JOFR1 |= (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
+            handle->JOFR2 |= (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) & ADC_JOFR2_JOFFSET2;
             break;
         case 3:
             handle->JSQR |= (uint32_t)((config->channels.channels_sequence[0] << ADC_JSQR_JSQ2_Pos) |
                                        (config->channels.channels_sequence[1] << ADC_JSQR_JSQ3_Pos) |
                                        (config->channels.channels_sequence[2] << ADC_JSQR_JSQ4_Pos));
+            handle->JOFR1 |= (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
+            handle->JOFR2 |= (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) & ADC_JOFR2_JOFFSET2;
+            handle->JOFR3 |= (uint32_t)(config->offsets[2] << ADC_JOFR3_JOFFSET3_Pos) & ADC_JOFR3_JOFFSET3;
             break;
         case 4:
             handle->JSQR |= (uint32_t)((config->channels.channels_sequence[0] << ADC_JSQR_JSQ1_Pos) |
                                        (config->channels.channels_sequence[1] << ADC_JSQR_JSQ2_Pos) |
                                        (config->channels.channels_sequence[2] << ADC_JSQR_JSQ3_Pos) |
                                        (config->channels.channels_sequence[3] << ADC_JSQR_JSQ4_Pos));
+            handle->JOFR1 |= (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
+            handle->JOFR2 |= (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) & ADC_JOFR2_JOFFSET2;
+            handle->JOFR3 |= (uint32_t)(config->offsets[2] << ADC_JOFR3_JOFFSET3_Pos) & ADC_JOFR3_JOFFSET3;
+            handle->JOFR4 |= (uint32_t)(config->offsets[3] << ADC_JOFR4_JOFFSET4_Pos) & ADC_JOFR4_JOFFSET4;
             break;
         default:
             return HAL_ERR_INVALID_ARG;
     }
 
-    // Clear all offsets registers since not used
-    handle->JOFR1 &= ~ADC_JOFR1_JOFFSET1;
-    handle->JOFR2 &= ~ADC_JOFR2_JOFFSET2;
-    handle->JOFR3 &= ~ADC_JOFR3_JOFFSET3;
-    handle->JOFR4 &= ~ADC_JOFR4_JOFFSET4;
-
-    // Enable scan mode if we have more than one channel, but disable otherwise
-    if (config->channels.num_of_channels > 1) {
-        handle->CR1 |= ADC_CR1_SCAN;
-    } else {
-        handle->CR1 &= ~ADC_CR1_SCAN;
+    if (config->trigger == JG_TRIGGER_SOFTWARE) {
+        // If the trigger is from software, set the JSWSTART bit and return
+        handle->CR2 |= ADC_CR2_JSWSTART;
     }
-
-    // Clear the JEXTEN bit since the triggering is from software. Also,
-    // the JAUTO bit is cleared so the ADC interrupts any ongoing regular
-    // group conversion to perform this injected group conversion.
-    handle->CR2 &= ~ADC_CR2_JEXTEN;
-    handle->CR1 &= ~ADC_CR1_JAUTO;
-
-    // Start the conversion and return. The JEOC interrupt will fire
-    // when the ADC controller is finished with the conversion(s).
-    handle->CR2 |= ADC_CR2_JSWSTART;
 
     return HAL_OK;
 }
