@@ -16,25 +16,34 @@
 #define ADC_CHANNEL_VBAT (18U) // V_bat
 
 
-// To save user passed callbacks
+// User context
+typedef struct {
+    adc_dma_callbacks_t continuous_mode_callbacks;
 
+    adc_callback_t injected_done_cb;
+    void*          injected_done_arg;
 
-static adc_dma_callbacks_t s_continuous_mode_callbacks[NUM_OF_ADC_CONTROLLERS] = {};
+    adc_callback_t analog_wdg_cb;
+    void*          analog_wdg_arg;
+} adc_ctx_t;
 
-static adc_callback_t s_injected_done_cb[NUM_OF_ADC_CONTROLLERS]  = {};
-static void*          s_injected_done_arg[NUM_OF_ADC_CONTROLLERS] = {};
-
-static adc_callback_t s_analog_wdg_cb[NUM_OF_ADC_CONTROLLERS]  = {};
-static void*          s_analog_wdg_arg[NUM_OF_ADC_CONTROLLERS] = {};
+static adc_ctx_t s_adc_ctx[NUM_OF_ADC_CONTROLLERS] = {};
 
 
 // Mapping for the DMA channels for the ADC peripheral instances
-static const dma_stream_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
+static const dma_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
+#if defined(ADC1)
     // ADC1
-    {
-        .tx = {.controller = DMA2, .stream = DMA2_Stream0, .stream_no = 0, .irq_type = DMA2_Stream0_IRQn, .channel = 0},
-        .rx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
-    },
+    {.controller = DMA2, .stream = DMA2_Stream0, .stream_no = 0, .irq_type = DMA2_Stream0_IRQn, .channel = 0},
+#endif
+#if defined(ADC2)
+    // ADC2
+    {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+#endif
+#if defined(ADC3)
+    // ADC3
+    {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+#endif
 };
 
 
@@ -45,19 +54,16 @@ static inline uint8_t get_index(const ADC_TypeDef* handle) {
         return 0U;
     }
 #endif
-
 #if defined(ADC2)
     if (handle == ADC2) {
         return 1U;
     }
 #endif
-
 #if defined(ADC3)
     if (handle == ADC3) {
         return 2U;
     }
 #endif
-
     return 0xFFU;
 }
 
@@ -69,14 +75,14 @@ static inline void adcx_isr_helper(ADC_TypeDef* handle) {
     // Check if end of conversion for the injected mode is reached and if interrupts for the injected group are enabled
     if ((handle->SR & ADC_SR_JEOC) && (handle->CR1 & ADC_CR1_JEOCIE)) {
         // Invoke the user callback since the sampling on the injected group is complete
-        if (s_injected_done_cb[idx]) {
+        if (s_adc_ctx[idx].injected_done_cb) {
             // Save the user callback so we can clear it's global array position
-            adc_callback_t local_cb  = s_injected_done_cb[idx];
-            void*          local_arg = s_injected_done_arg[idx];
+            adc_callback_t local_cb  = s_adc_ctx[idx].injected_done_cb;
+            void*          local_arg = s_adc_ctx[idx].injected_done_arg;
 
             // Clear the user passed callback since this is a one-off event
-            s_injected_done_cb[idx]  = NULL;
-            s_injected_done_arg[idx] = NULL;
+            s_adc_ctx[idx].injected_done_cb  = NULL;
+            s_adc_ctx[idx].injected_done_arg = NULL;
 
             // Finally, invoke the user callback
             local_cb(local_arg);
@@ -90,10 +96,10 @@ static inline void adcx_isr_helper(ADC_TypeDef* handle) {
     // Check if the AWD bit is set and interrupts for the analog watchdog are enabled.
     if ((handle->SR & ADC_SR_AWD) && (handle->CR1 & ADC_CR1_AWDIE)) {
         // Invoke the user callback since the analog watchdog has fired an interrupt
-        if (s_analog_wdg_cb[idx]) {
+        if (s_adc_ctx[idx].analog_wdg_cb) {
             // The callback isn't cleared since this is not a one-off
             // event. To clear, adc_analog_wdg_stop() should be used.
-            s_analog_wdg_cb[idx](s_analog_wdg_arg[idx]);
+            s_adc_ctx[idx].analog_wdg_cb(s_adc_ctx[idx].analog_wdg_arg);
         }
 
         // Clear the AWD bit since the interrupt has already been serviced
@@ -113,14 +119,14 @@ static inline void adcx_dma_isr_helper(ADC_TypeDef* handle) {
 static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
     if (regular) {
         handle->SR &= ~ADC_SR_EOC;
-        handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE);
+        handle->CR1 &= ~(ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE);
         handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART | ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
         handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
         handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
         handle->SQR3 &= ~(ADC_SQR3_SQ1 | ADC_SQR3_SQ2 | ADC_SQR3_SQ3 | ADC_SQR3_SQ4 | ADC_SQR3_SQ5 | ADC_SQR3_SQ6);
     } else if (injected) {
         handle->SR &= ~ADC_SR_JEOC;
-        handle->CR1 &= ~(ADC_CR1_SCAN | ADC_CR1_JDISCEN | ADC_CR1_JEOCIE | ADC_CR1_JAUTO);
+        handle->CR1 &= ~(ADC_CR1_JDISCEN | ADC_CR1_JEOCIE | ADC_CR1_JAUTO);
         handle->CR2 &= ~(ADC_CR2_JEXTEN | ADC_CR2_JSWSTART | ADC_CR2_JEXTSEL);
         handle->JSQR &= ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 | ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
         handle->JOFR1 &= ~ADC_JOFR1_JOFFSET1;
@@ -289,24 +295,30 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
+    // Enable ADC continuous sampling and DMA mode
+    handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS | ADC_CR2_EOCS);
+
     // Enable scan mode if we have more than one channel
     if (config->channels.num_of_channels > 1) {
         handle->CR1 |= ADC_CR1_SCAN;
     }
 
-    // Enable ADC continuous sampling and DMA mode
-    handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS | ADC_CR2_EOCS);
+    // Set the number of channels/conversions in the L bit positions of the
+    // SQR1 register. The L bit positions are zero indexed. That is, 2 channels
+    // means an L value of 0b0001, 3 channels means an L value of 0b0010 etc.
+    handle->SQR1 |= ((config->channels.num_of_channels - 1) << ADC_SQR1_L_Pos) & ADC_SQR1_L;
 
-    // TODO: Set the channel length and sequence
-    (void)config->channels.channels_sequence;
-    (void)config->channels.num_of_channels;
+    for (size_t i = 0; i < config->channels.num_of_channels; i++) {
+        // TODO: Set the channel sequence
+        (void)config->channels.channels_sequence;
+    }
 
     // ADC DMA stream mapping
-    DMA_TypeDef*        controller = s_adc_dma_map[idx].tx.controller;
-    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].tx.stream;
-    const uint8_t       channel    = s_adc_dma_map[idx].tx.channel;
-    const uint8_t       stream_no  = s_adc_dma_map[idx].tx.stream_no;
-    const IRQn_Type     irq_type   = s_adc_dma_map[idx].tx.irq_type;
+    DMA_TypeDef*        controller = s_adc_dma_map[idx].controller;
+    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].stream;
+    const uint8_t       channel    = s_adc_dma_map[idx].channel;
+    const uint8_t       stream_no  = s_adc_dma_map[idx].stream_no;
+    const IRQn_Type     irq_type   = s_adc_dma_map[idx].irq_type;
 
     if (controller == NULL || stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
@@ -329,6 +341,10 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     dma_set_stream_priority(stream, DMA_PRIORITY_HIGH);
     dma_set_per_mem_size(stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
 
+    if (config->use_double_buffers && config->buffer_2 == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     const bool  double_buffering = config->use_double_buffers;
     const bool  circular_mode    = config->use_double_buffers || config->dma_wraparound_when_done;
     const void* buffer_2         = config->use_double_buffers ? config->buffer_2 : NULL;
@@ -340,11 +356,12 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     stream->CR &= ~DMA_SxCR_CT;
 
     // Callback registration
-    s_continuous_mode_callbacks[idx] = config->callbacks;
-    const bool transfer_error        = s_continuous_mode_callbacks[idx].on_transfer_error != NULL;
-    const bool direct_mode_error     = s_continuous_mode_callbacks[idx].on_direct_mode_error != NULL;
-    const bool transfer_complete     = s_continuous_mode_callbacks[idx].on_buffer_full != NULL;
-    const bool data_overrun          = s_continuous_mode_callbacks[idx].on_data_overrun != NULL;
+    s_adc_ctx[idx].continuous_mode_callbacks = config->callbacks;
+
+    const bool transfer_error    = s_adc_ctx[idx].continuous_mode_callbacks.on_transfer_error != NULL;
+    const bool direct_mode_error = s_adc_ctx[idx].continuous_mode_callbacks.on_direct_mode_error != NULL;
+    const bool transfer_complete = s_adc_ctx[idx].continuous_mode_callbacks.on_buffer_full != NULL;
+    const bool data_overrun      = s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun != NULL;
 
     // Enable the interrupts based on what callbacks were passed
     dma_enable_irqs(stream, transfer_complete, transfer_error, false, direct_mode_error);
@@ -381,9 +398,9 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
     clear_state(handle, true, false);
 
     // ADC DMA stream mapping
-    DMA_TypeDef*        controller = s_adc_dma_map[idx].tx.controller;
-    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].tx.stream;
-    const uint8_t       stream_no  = s_adc_dma_map[idx].tx.stream_no;
+    DMA_TypeDef*        controller = s_adc_dma_map[idx].controller;
+    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].stream;
+    const uint8_t       stream_no  = s_adc_dma_map[idx].stream_no;
 
     if (controller == NULL || stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
@@ -395,7 +412,7 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
     dma_enable_irqs(stream, false, false, false, false);
 
     // Clear all user passed callbacks
-    memset(&s_continuous_mode_callbacks, 0, sizeof(s_continuous_mode_callbacks));
+    memset(&s_adc_ctx[idx].continuous_mode_callbacks, 0, sizeof(s_adc_ctx[idx].continuous_mode_callbacks));
 
     return HAL_OK;
 }
@@ -424,7 +441,7 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
     // Set the number of channels/conversions in the JL bit positions of the
     // JSQR register. The JL bit positions are zero indexed. That is, 1 channel
     // means a JL value of 0b00, 3 channels means a JL value of 0b10 etc.
-    handle->JSQR |= (((config->channels.num_of_channels - 1) & 0x3U) << ADC_JSQR_JL_Pos);
+    handle->JSQR |= ((config->channels.num_of_channels - 1) << ADC_JSQR_JL_Pos) & ADC_JSQR_JL;
 
     // Set the channel sequence in the JSQ register and the the offsets
     // As per the TRM, there are only 4 injected channels, and they have to be filled from the last
@@ -464,8 +481,8 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
 
     if (config->on_conv_complete) {
         // Save the user passed callback
-        s_injected_done_cb[idx]  = config->on_conv_complete;
-        s_injected_done_arg[idx] = config->arg;
+        s_adc_ctx[idx].injected_done_cb  = config->on_conv_complete;
+        s_adc_ctx[idx].injected_done_arg = config->arg;
 
         // Enable interrupts for the injected group on conversion
         // completion only if the user passed in a callback.
@@ -731,8 +748,8 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_
     handle->LTR = config->min_adc_value & 0xFFFU; // Only the lower 12 bits are used
 
     // Save the user passed callback
-    s_analog_wdg_cb[idx]  = config->on_thresholds_violated;
-    s_analog_wdg_arg[idx] = config->arg;
+    s_adc_ctx[idx].analog_wdg_cb  = config->on_thresholds_violated;
+    s_adc_ctx[idx].analog_wdg_arg = config->arg;
 
     // Enable the analog watchdog interrupt and clear any pending interrupts
     handle->SR &= ~ADC_SR_AWD;
@@ -756,8 +773,8 @@ hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle) {
     handle->LTR &= ~ADC_LTR_LT; // Set to lowest value possible
 
     // Clear the user passed callback
-    s_analog_wdg_cb[idx]  = NULL;
-    s_analog_wdg_arg[idx] = NULL;
+    s_adc_ctx[idx].analog_wdg_cb  = NULL;
+    s_adc_ctx[idx].analog_wdg_arg = NULL;
 
     return HAL_OK;
 }
@@ -768,11 +785,9 @@ void ADC_IRQHandler(void) {
 #if defined(ADC1)
     adcx_isr_helper(ADC1);
 #endif
-
 #if defined(ADC2)
     adcx_isr_helper(ADC2);
 #endif
-
 #if defined(ADC3)
     adcx_isr_helper(ADC3);
 #endif
@@ -783,11 +798,9 @@ void DMA2_Stream0_IRQHandler(void) {
 #if defined(ADC1)
     adcx_dma_isr_helper(ADC1);
 #endif
-
 #if defined(ADC2)
     adcx_dma_isr_helper(ADC2);
 #endif
-
 #if defined(ADC3)
     adcx_dma_isr_helper(ADC3);
 #endif

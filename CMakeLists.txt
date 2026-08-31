@@ -73,7 +73,6 @@ endif()
 set(DEFINES STM32F411xE __ARM_ARCH_7M__=1 __ARM_ARCH_7EM__=1 RTT_USE_ASM=1)
 
 if (BUILD_TESTS)
-
 # Process all components
 add_subdirectory(components/test/)
 add_subdirectory(components/utils/)
@@ -105,10 +104,8 @@ add_custom_command(
     COMMAND ${CMAKE_OBJDUMP} -D -S ${EXE_ELF_NAME} > ${EXE_ASM_NAME}
     COMMAND ${CMAKE_SIZE} ${EXE_ELF_NAME}
 )
-
 else()
-
-# Leave the tests out
+# Leave the tests out completely
 add_subdirectory(components/utils/)
 add_subdirectory(components/drivers/)
 add_subdirectory(components/third-party/RTT/)
@@ -147,15 +144,27 @@ add_custom_command(
     COMMAND ${CMAKE_SIZE} "lib${LIB_ELF_NAME}.a"
     VERBATIM
 )
-
 endif()
 
-# Static analysis with cppcheck
+if (BUILD_TESTS)
+find_program(OPENOCD openocd)
+
+if (OPENOCD)
+add_custom_target(flash
+    COMMAND ${OPENOCD} -f interface/stlink.cfg -f target/stm32f4x.cfg -c "program ${EXE_ELF_NAME} verify reset exit"
+    COMMENT "Flashing tests into device"
+)
+else()
+message(WARNING "OpenOCD not found. Debugging and flashing will not be available for this target.")
+endif()
+endif()
+
+
 find_program(CPPCHECK cppcheck)
 find_program(CLANG_FORMAT clang-format)
 
-if (CPPCHECK)
 
+if (CPPCHECK)
 add_custom_target(cppcheck
     COMMAND mkdir -p ${CMAKE_BINARY_DIR}/.cppcheck
     COMMAND ${CPPCHECK} --enable=all
@@ -174,23 +183,16 @@ add_custom_target(cppcheck
         --checkers-report=${CMAKE_BINARY_DIR}/cppcheck_checks.txt
     COMMENT "Running static analysis..."
 )
-
 else()
-
 message(WARNING "Cppcheck not found. Static analysis will not be available for this target.")
-
 endif()
 
 if(CLANG_FORMAT)
-
 add_custom_target(format
     COMMAND git ls-files -- '*.c' '*.h' '*.cpp' '*.hpp' '*.cc' '*.cxx' | xargs -r ${CLANG_FORMAT} -i
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Formatting version controlled files...."
 )
-
 else()
-
 message(WARNING "clang-format not found. Formatting will not be availabe for this target.")
-
 endif()
