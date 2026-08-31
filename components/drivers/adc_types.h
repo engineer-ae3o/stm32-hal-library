@@ -14,6 +14,9 @@
 // Shape of all callbacks passed to the ADC driver
 typedef void (*adc_callback_t)(void* arg);
 typedef void (*adc_cont_done_cb_t)(void* arg, bool is_buf_1);
+typedef void (*adc_cont_err_cb_t)(void* arg, bool is_buf_1, uint16_t num_of_items_left);
+// arg is user passed in data. is_buf_1 represents whether the DMA controller is in the first buffer or not.
+// num_of_items_left is the number of elements that were remaining to be transmitted when the error occurred
 
 
 // External ADC channels
@@ -142,12 +145,17 @@ typedef struct {
 
 // The various callbacks that can be registered when using continuous DMA sampling
 typedef struct {
-    adc_cont_done_cb_t on_buffer_full;       // Called when a buffer is filled
-    adc_cont_done_cb_t on_transfer_error;    // Called on a DMA transfer error
-    adc_cont_done_cb_t on_direct_mode_error; // Called when an error arose from the DMA direct mode
-    adc_cont_done_cb_t on_data_overrun;      // Called when the DMA is too slow to read and data is lost
+    // Called when a buffer is filled
+    adc_cont_done_cb_t on_buffer_full;
+
+    // Error callbacks. The errors end the conversion.
+    // Use adc_regular_group_cont_start_conv(...) to restart the conversion.
+    adc_cont_err_cb_t on_transfer_error;    // Called on a DMA transfer error
+    adc_cont_err_cb_t on_direct_mode_error; // Called when an error arose from the DMA direct mode.
+    adc_cont_err_cb_t on_data_overrun;      // Called when the DMA is too slow to read and data is lost
+
     // User data to be passed to the callbacks
-    void* arg;
+    void* user;
 } adc_dma_callbacks_t;
 
 
