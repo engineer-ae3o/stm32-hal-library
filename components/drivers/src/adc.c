@@ -197,12 +197,14 @@ static inline void adcx_dma_isr_helper(ADC_TypeDef*       handle,
 static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
     if (regular) {
         handle->SR &= ~(ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR);
+        handle->SR &= ~(ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR);
         handle->CR1 &= ~(ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE);
         handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART | ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
         handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
         handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
         handle->SQR3 &= ~(ADC_SQR3_SQ1 | ADC_SQR3_SQ2 | ADC_SQR3_SQ3 | ADC_SQR3_SQ4 | ADC_SQR3_SQ5 | ADC_SQR3_SQ6);
     } else if (injected) {
+        handle->SR &= ~(ADC_SR_JEOC | ADC_SR_JSTRT);
         handle->SR &= ~(ADC_SR_JEOC | ADC_SR_JSTRT);
         handle->CR1 &= ~(ADC_CR1_JDISCEN | ADC_CR1_JEOCIE | ADC_CR1_JAUTO);
         handle->CR2 &= ~(ADC_CR2_JEXTEN | ADC_CR2_JSWSTART | ADC_CR2_JEXTSEL);
@@ -452,6 +454,16 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     dma_enable_circm_dbm(stream, circular_mode, double_buffering);
     dma_set_addresses(stream, &handle->DR, config->buffer_1, buffer_2);
 
+    // Enable ADC continuous sampling and DMA mode
+    // Set the DDS bit only if we are in circular mode so the ADC continues
+    // to send DMA requests even after the first buffer is filled.
+    if (circular_mode) {
+        handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS);
+    } else {
+        handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);
+    }
+
+    // Clear the CT bit to ensure the DMA controller starts at the first buffer
     // Enable ADC continuous sampling and DMA mode
     // Set the DDS bit only if we are in circular mode so the ADC continues
     // to send DMA requests even after the first buffer is filled.
