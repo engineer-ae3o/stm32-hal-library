@@ -77,8 +77,8 @@ static inline void adcx_isr_helper(ADC_TypeDef* handle) {
         // Invoke the user callback since the sampling on the injected group is complete
         if (s_adc_ctx[idx].injected_done_cb) {
             // Save the user callback so we can clear it's global array position
-            adc_callback_t local_cb  = s_adc_ctx[idx].injected_done_cb;
-            void*          local_arg = s_adc_ctx[idx].injected_done_arg;
+            const adc_callback_t local_cb  = s_adc_ctx[idx].injected_done_cb;
+            void* const          local_arg = s_adc_ctx[idx].injected_done_arg;
 
             // Clear the user passed callback since this is a one-off event
             s_adc_ctx[idx].injected_done_cb  = NULL;
@@ -112,8 +112,8 @@ static inline void adcx_isr_helper(ADC_TypeDef* handle) {
         // Invoke the user callback since there has been data overrun in the data register
         if (s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun) {
             // Save the user callback so we can clear it's global array position
-            adc_cont_err_cb_t local_cb  = s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun;
-            void*             local_arg = s_adc_ctx[idx].continuous_mode_callbacks.user;
+            const adc_cont_err_cb_t local_cb  = s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun;
+            void* const             local_arg = s_adc_ctx[idx].continuous_mode_callbacks.user;
 
             // Get the user paramters before clearing all state with adc_regular_group_cont_end_conv(...)
             DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
@@ -134,12 +134,61 @@ static inline void adcx_isr_helper(ADC_TypeDef* handle) {
     }
 }
 
-static inline void adcx_dma_isr_helper(ADC_TypeDef* handle) {
+static inline void adcx_dma_isr_helper(ADC_TypeDef*       handle,
+                                       volatile uint32_t* irq_clear_register,
+                                       volatile uint32_t* irq_status_register,
+                                       uint32_t           tc_mask,
+                                       uint32_t           te_mask,
+                                       uint32_t           dme_mask) {
     const uint8_t idx = get_index(handle);
-    // Assert since we can't return the error anywhere
     ASSERT(idx != 0xFFU);
 
-    // TODO: Handle calling of the user callback and clearing of the DMA interrupt flags
+    DMA_TypeDef*        controller = s_adc_dma_map[idx].controller;
+    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].stream;
+    ASSERT(controller && stream);
+
+    // If the CT bit is 0, that means the DMA controller is in the first buffer
+    const bool     is_buf_1          = (stream->CR & DMA_SxCR_CT) == 0;
+    const uint16_t num_of_items_left = (uint16_t)stream->NDTR;
+    void* const    local_arg         = s_adc_ctx[idx].continuous_mode_callbacks.user;
+
+    if (*irq_status_register & tc_mask) {
+        // Transfer complete. If in circular or double buffering mode, the DMA has either
+        // wrapped around in the same buffer or has switched to the second buffer respectively.
+        if (s_adc_ctx[idx].continuous_mode_callbacks.on_buffer_full) {
+            s_adc_ctx[idx].continuous_mode_callbacks.on_buffer_full(local_arg, is_buf_1);
+            // If we are not in circular or double buffering mode, end the conversion
+            if (!((stream->CR & DMA_SxCR_CIRC) || (stream->CR & DMA_SxCR_DBM))) {
+                ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
+            }
+        }
+        // Clear the TC flag. The DMA_HIFCR and DMA_LIFCR are write 1 to clear
+        *irq_clear_register |= tc_mask;
+    }
+
+    // Errors that end the conversion. Either a plain DMA transfer error or a direct mode error.
+    // Conversions can be restarted by the user if necessary in the callback.
+    if (*irq_status_register & te_mask) {
+        // Transfer error. End the conversion and invoke the user callback.
+        if (s_adc_ctx[idx].continuous_mode_callbacks.on_transfer_error) {
+            adc_cont_err_cb_t local_cb = s_adc_ctx[idx].continuous_mode_callbacks.on_transfer_error;
+            ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
+            local_cb(local_arg, is_buf_1, num_of_items_left);
+        }
+        // Clear the TE flag. The DMA_HIFCR and DMA_LIFCR are write 1 to clear
+        *irq_clear_register |= te_mask;
+    }
+
+    if (*irq_status_register & dme_mask) {
+        // Direct mode error. End the conversion and invoke the user callback.
+        if (s_adc_ctx[idx].continuous_mode_callbacks.on_direct_mode_error) {
+            adc_cont_err_cb_t local_cb = s_adc_ctx[idx].continuous_mode_callbacks.on_direct_mode_error;
+            ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
+            local_cb(local_arg, is_buf_1, num_of_items_left);
+        }
+        // Clear the DME flag. The DMA_HIFCR and DMA_LIFCR are write 1 to clear
+        *irq_clear_register |= dme_mask;
+    }
 }
 
 static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
@@ -825,15 +874,14 @@ void ADC_IRQHandler(void) {
 #endif
 }
 
-// DMA interrupt handler
 void DMA2_Stream0_IRQHandler(void) {
 #if defined(ADC1)
-    adcx_dma_isr_helper(ADC1);
+    adcx_dma_isr_helper(ADC1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0);
 #endif
 #if defined(ADC2)
-    adcx_dma_isr_helper(ADC2);
+    adcx_dma_isr_helper(ADC2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0);
 #endif
 #if defined(ADC3)
-    adcx_dma_isr_helper(ADC3);
+    adcx_dma_isr_helper(ADC3, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0);
 #endif
 }
