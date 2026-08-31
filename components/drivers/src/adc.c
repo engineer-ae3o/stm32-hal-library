@@ -31,7 +31,7 @@ static adc_ctx_t s_adc_ctx[NUM_OF_ADC_CONTROLLERS] = {};
 
 
 // Mapping for the DMA channels for the ADC peripheral instances
-static const dma_map_t s_adc_dma_map[NUM_OF_ADC_CONTROLLERS] = {
+static const dma_map_t s_adc_dma_map[] = {
 #if defined(ADC1)
     // ADC1
     {.controller = DMA2, .stream = DMA2_Stream0, .stream_no = 0, .irq_type = DMA2_Stream0_IRQn, .channel = 0},
@@ -106,6 +106,32 @@ static inline void adcx_isr_helper(ADC_TypeDef* handle) {
         // The AWDIE bit is left since the watchdog can still trigger an interrupt
         handle->SR &= ~ADC_SR_AWD;
     }
+
+    // Check if the OVR bit is set and interrupts for data overrun are enabled.
+    if ((handle->SR & ADC_SR_OVR) && (handle->CR1 & ADC_CR1_OVRIE)) {
+        // Invoke the user callback since there has been data overrun in the data register
+        if (s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun) {
+            // Save the user callback so we can clear it's global array position
+            adc_cont_err_cb_t local_cb  = s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun;
+            void*             local_arg = s_adc_ctx[idx].continuous_mode_callbacks.user;
+
+            // Get the user paramters before clearing all state with adc_regular_group_cont_end_conv(...)
+            DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
+            ASSERT(stream);
+
+            // If the CT bit is 0, that means the DMA controller is in the first buffer
+            const bool     is_buf_1          = (stream->CR & DMA_SxCR_CT) == 0;
+            const uint16_t num_of_items_left = (uint16_t)stream->NDTR;
+
+            // End the regular group conversion. The conversion can be restarted in the callback if necessary
+            ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
+
+            // Finally, invoke the user callback
+            local_cb(local_arg, is_buf_1, num_of_items_left);
+        }
+
+        // No need to clear ADC_SR_OVR and ADC_CR1_OVRIE since adc_regular_group_cont_end_conv(...) already does
+    }
 }
 
 static inline void adcx_dma_isr_helper(ADC_TypeDef* handle) {
@@ -118,14 +144,14 @@ static inline void adcx_dma_isr_helper(ADC_TypeDef* handle) {
 
 static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
     if (regular) {
-        handle->SR &= ~ADC_SR_EOC;
+        handle->SR &= ~(ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR);
         handle->CR1 &= ~(ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE);
         handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART | ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
         handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
         handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
         handle->SQR3 &= ~(ADC_SQR3_SQ1 | ADC_SQR3_SQ2 | ADC_SQR3_SQ3 | ADC_SQR3_SQ4 | ADC_SQR3_SQ5 | ADC_SQR3_SQ6);
     } else if (injected) {
-        handle->SR &= ~ADC_SR_JEOC;
+        handle->SR &= ~(ADC_SR_JEOC | ADC_SR_JSTRT);
         handle->CR1 &= ~(ADC_CR1_JDISCEN | ADC_CR1_JEOCIE | ADC_CR1_JAUTO);
         handle->CR2 &= ~(ADC_CR2_JEXTEN | ADC_CR2_JSWSTART | ADC_CR2_JEXTSEL);
         handle->JSQR &= ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 | ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
@@ -295,9 +321,6 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
-    // Enable ADC continuous sampling and DMA mode
-    handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS | ADC_CR2_EOCS);
-
     // Enable scan mode if we have more than one channel
     if (config->channels.num_of_channels > 1) {
         handle->CR1 |= ADC_CR1_SCAN;
@@ -352,7 +375,16 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     dma_enable_circm_dbm(stream, circular_mode, double_buffering);
     dma_set_addresses(stream, &handle->DR, config->buffer_1, buffer_2);
 
-    // Clear the CT bit in the CR register to ensure the DMA controller starts at the first buffer
+    // Enable ADC continuous sampling and DMA mode
+    // Set the DDS bit only if we are in circular mode so the ADC continues
+    // to send DMA requests even after the first buffer is filled.
+    if (circular_mode) {
+        handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS);
+    } else {
+        handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);
+    }
+
+    // Clear the CT bit to ensure the DMA controller starts at the first buffer
     stream->CR &= ~DMA_SxCR_CT;
 
     // Callback registration
