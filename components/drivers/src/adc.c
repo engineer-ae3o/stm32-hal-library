@@ -143,9 +143,12 @@ static inline void adcx_dma_isr_helper(ADC_TypeDef*       handle,
     const uint8_t idx = get_index(handle);
     ASSERT(idx != 0xFFU);
 
-    DMA_TypeDef*        controller = s_adc_dma_map[idx].controller;
-    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].stream;
-    ASSERT(controller && stream);
+    DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
+    if (stream == NULL) {
+        // If the stream is NULL, we simply return as it means that DMA is not supported on the given ADC instance.
+        // It is not a bug the like get_index(...) above which is why ASSERT(...) is used instead of returning there.
+        return;
+    }
 
     // If the CT bit is 0, that means the DMA controller is in the first buffer
     const bool     is_buf_1          = (stream->CR & DMA_SxCR_CT) == 0;
@@ -243,16 +246,41 @@ static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channels_t
 // General ADC use
 hal_err_t adcx_clk_enable(ADC_TypeDef* handle, bool enable) {
     if (enable) {
+#if defined(ADC1)
         if (handle == ADC1) {
             RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
-        } else {
+        }
+#endif
+#if defined(ADC2)
+        else if (handle == ADC2) {
+            RCC->APB2ENR |= RCC_APB2ENR_ADC2EN;
+        }
+#endif
+#if defined(ADC3)
+        else if (handle == ADC3) {
+            RCC->APB2ENR |= RCC_APB2ENR_ADC3EN;
+        }
+#endif
+        else {
             return HAL_ERR_INVALID_ARG;
         }
-
     } else {
+#if defined(ADC1)
         if (handle == ADC1) {
             RCC->APB2ENR &= ~RCC_APB2ENR_ADC1EN;
-        } else {
+        }
+#endif
+#if defined(ADC2)
+        else if (handle == ADC2) {
+            RCC->APB2ENR &= ~RCC_APB2ENR_ADC2EN;
+        }
+#endif
+#if defined(ADC3)
+        else if (handle == ADC3) {
+            RCC->APB2ENR &= ~RCC_APB2ENR_ADC3EN;
+        }
+#endif
+        else {
             return HAL_ERR_INVALID_ARG;
         }
     }
@@ -879,9 +907,9 @@ void DMA2_Stream0_IRQHandler(void) {
     adcx_dma_isr_helper(ADC1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0);
 #endif
 #if defined(ADC2)
-    adcx_dma_isr_helper(ADC2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0);
+    adcx_dma_isr_helper(ADC2, NULL, NULL, 0, 0, 0);
 #endif
 #if defined(ADC3)
-    adcx_dma_isr_helper(ADC3, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0);
+    adcx_dma_isr_helper(ADC3, NULL, NULL, 0, 0, 0);
 #endif
 }
