@@ -35,7 +35,7 @@ typedef enum : uint8_t {
     I2S_DATA_16_BITS_FRAME_32_BITS = 0b11,
     I2S_DATA_24_BITS_FRAME_32_BITS = 0b01,
     I2S_DATA_32_BITS_FRAME_32_BITS = 0b10,
-} i2s_data_frame_t;
+} i2s_frame_t;
 
 // Full duplex not supported
 typedef enum : uint8_t {
@@ -55,17 +55,15 @@ typedef enum : uint8_t {
 } i2s_freq_t;
 
 typedef struct {
-    i2s_dir_t  dir;
-    i2s_mode_t mode;
-    i2s_freq_t freq;
-
-    i2s_data_frame_t data_frame;
+    i2s_dir_t   dir;
+    i2s_mode_t  mode;
+    i2s_freq_t  freq;
+    i2s_frame_t frame;
 
     bool cpol;
     bool use_mck;
 
     uint8_t mck;
-
     uint8_t ws;
     uint8_t sd;
     uint8_t sck;
@@ -90,14 +88,14 @@ hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx
 // And then disable the peripheral after their callback was invoked. Also, when
 // double buffering, the user should disable the I2S peripheral when they want
 // to "pause" or stop the transfers, and not just when the isr is called.
-hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg);
-hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg);
+hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_trans_done_cb_t callback, void* arg);
+hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_trans_done_cb_t callback, void* arg);
 
 // Double buffering API
 // @note These APIs are mutually exclusive with the DMA oneshot functions
 // @note Only data reception is supported. User should determine which
 // buffer is free with i2s_master_dbm_get_filled_buffer()
-hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg);
+hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t size, dma_trans_done_cb_t callback, void* arg);
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);
 
 // @brief When start is called, the DMA starts filling buffer A,

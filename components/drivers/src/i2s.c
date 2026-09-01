@@ -2,6 +2,7 @@
 #include "drivers/gpio.h"
 #include "utils/common.h"
 #include "drivers/spi.h"
+#include "utils/err.h"
 #include "drivers/i2s.h"
 
 #include <stddef.h>
@@ -70,19 +71,19 @@ static const dma_stream_map_t s_i2s_dma_map[5] = {
 };
 
 // Helper
-static __attribute__((__always_inline__)) inline uint8_t get_index(const I2S_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline uint8_t get_index(const I2S_TypeDef* handle) {
     if (handle == I2S1) {
-        return 0;
+        return 0U;
     } else if (handle == I2S2) {
-        return 1;
+        return 1U;
     } else if (handle == I2S3) {
-        return 2;
+        return 2U;
     } else if (handle == I2S4) {
-        return 3;
+        return 3U;
     } else if (handle == I2S5) {
-        return 4;
+        return 4U;
     } else {
-        return 0xFF;
+        return 0xFFU;
     }
 }
 
@@ -148,11 +149,8 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
 }
 
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config) {
-    // Configure GPIO pins
-    hal_err_t ret = gpiox_clk_enable(config->gpio_port, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    // Configure the GPIO pins
+    TRY(gpiox_clk_enable(config->gpio_port, true));
 
     // Alternate function value selection for the GPIOs
     uint8_t alt_val = 0;
@@ -170,20 +168,14 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 
     // MCK
     if (config->use_mck) {
-        ret = gpio_set_alternate_function(config->gpio_port, config->mck, alt_val);
-        if (ret != HAL_OK) {
-            return ret;
-        }
+        TRY(gpio_set_alternate_function(config->gpio_port, config->mck, alt_val));
         gpio_enable_pullup(config->gpio_port, config->mck, true);
         gpio_set_speed_mode(config->gpio_port, config->mck, GPIO_MEDIUM_SPEED);
         gpio_set_output_type(config->gpio_port, config->mck, GPIO_PUSH_PULL);
     }
 
     // SD pin: Can be input or output
-    ret = gpio_set_alternate_function(config->gpio_port, config->sd, alt_val);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sd, alt_val));
     gpio_enable_pullup(config->gpio_port, config->sd, true);
     gpio_set_speed_mode(config->gpio_port, config->sd, GPIO_MEDIUM_SPEED);
     // Only set output type as push pull when we are driving, that is, in TX mode
@@ -192,19 +184,13 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     }
 
     // WS pin
-    ret = gpio_set_alternate_function(config->gpio_port, config->ws, alt_val);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpio_set_alternate_function(config->gpio_port, config->ws, alt_val));
     gpio_enable_pullup(config->gpio_port, config->ws, true);
     gpio_set_speed_mode(config->gpio_port, config->ws, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->ws, GPIO_PUSH_PULL);
 
     // SCK pin
-    ret = gpio_set_alternate_function(config->gpio_port, config->sck, alt_val);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sck, alt_val));
     gpio_enable_pullup(config->gpio_port, config->sck, true);
     gpio_set_speed_mode(config->gpio_port, config->sck, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->sck, GPIO_PUSH_PULL);
@@ -225,15 +211,15 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN);
 
     // Get frame size: It can only be 16 bits when the data is 16 bits
-    const uint32_t frame_size_mask = (config->data_frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 0 : SPI_I2SCFGR_CHLEN;
+    const uint32_t frame_size_mask = (config->frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 0 : SPI_I2SCFGR_CHLEN;
     const uint32_t cpol_mask       = (config->cpol) ? SPI_I2SCFGR_CKPOL : 0;
 
     // Apply user settings
-    handle->I2SCFGR |= (((uint32_t)config->dir << SPI_I2SCFGR_I2SCFG_Pos) |        // Direction: TX or RX in master mode
-                        ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos) |       // I2S standard: Phillips, left or right justified
-                        ((uint32_t)config->data_frame << SPI_I2SCFGR_DATLEN_Pos) | // Data length: 16, 24 or 32 bits
-                        frame_size_mask |                                          // Frame size: 16 or 32 bits
-                        cpol_mask);                                                // Clock polarity
+    handle->I2SCFGR |= (((uint32_t)config->dir << SPI_I2SCFGR_I2SCFG_Pos) |   // Direction: TX or RX in master mode
+                        ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos) |  // I2S standard: Phillips, left or right justified
+                        ((uint32_t)config->frame << SPI_I2SCFGR_DATLEN_Pos) | // Data length: 16, 24 or 32 bits
+                        frame_size_mask |                                     // Frame size: 16 or 32 bits
+                        cpol_mask);                                           // Clock polarity
 
     return HAL_OK;
 }
@@ -256,33 +242,32 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     DMA_TypeDef*        tx_controller = s_i2s_dma_map[idx].tx.controller;
     DMA_Stream_TypeDef* tx_stream     = s_i2s_dma_map[idx].tx.stream;
     uint8_t             tx_channel    = s_i2s_dma_map[idx].tx.channel;
+    const uint8_t       tx_stream_no  = s_i2s_dma_map[idx].tx.stream_no;
+    const IRQn_Type     tx_irq_type   = s_i2s_dma_map[idx].tx.irq_type;
 
     // RX mapping
     DMA_TypeDef*        rx_controller = s_i2s_dma_map[idx].rx.controller;
     DMA_Stream_TypeDef* rx_stream     = s_i2s_dma_map[idx].rx.stream;
     uint8_t             rx_channel    = s_i2s_dma_map[idx].rx.channel;
+    const uint8_t       rx_stream_no  = s_i2s_dma_map[idx].rx.stream_no;
+    const IRQn_Type     rx_irq_type   = s_i2s_dma_map[idx].rx.irq_type;
 
-    hal_err_t ret = dmax_clk_enable(tx_controller, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
-    ret = dmax_clk_enable(rx_controller, true);
-    if (ret != HAL_OK) {
-        return ret;
+    if (tx_controller == NULL || tx_stream == NULL || rx_controller == NULL || rx_stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Disable DMA stream before configuring
-    ret = dma_disable_stream(tx_stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
-    ret = dma_disable_stream(rx_stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    // Enable the DMA clock and disable the DMA streams
+    TRY(dmax_clk_enable(tx_controller, true));
+    TRY(dma_disable_stream(tx_stream));
+    TRY(dmax_clk_enable(rx_controller, true));
+    TRY(dma_disable_stream(rx_stream));
+
+    // Clear the global DMA interrupt flags
+    TRY(dma_clear_flags(tx_controller, tx_stream_no));
+    TRY(dma_clear_flags(rx_controller, rx_stream_no));
 
     // TX stream configuration
-    dma_clear_flags(tx_controller, s_i2s_dma_map[idx].tx.stream_no);
+    dma_clear_flags(tx_controller, tx_stream_no);
     dma_set_channel(tx_stream, tx_channel);
     dma_set_direct_mode(tx_stream, true);
     dma_set_direction(tx_stream, DMA_DIR_M_P);
@@ -291,11 +276,10 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     dma_enable_circm_dbm(tx_stream, false, false);
     dma_set_increment(tx_stream, false, true);
     dma_enable_irqs(tx_stream, true, true, false, true);
-    dma_set_addresses(tx_stream, &handle->DR, NULL, NULL);
     dma_set_per_mem_size(tx_stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
 
     // RX stream configuration
-    dma_clear_flags(rx_controller, s_i2s_dma_map[idx].rx.stream_no);
+    dma_clear_flags(rx_controller, rx_stream_no);
     dma_set_channel(rx_stream, rx_channel);
     dma_set_direct_mode(rx_stream, true);
     dma_set_direction(rx_stream, DMA_DIR_P_M);
@@ -304,18 +288,17 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     dma_enable_circm_dbm(rx_stream, false, false);
     dma_set_increment(rx_stream, false, true);
     dma_enable_irqs(rx_stream, true, true, false, true);
-    dma_set_addresses(rx_stream, &handle->DR, NULL, NULL);
     dma_set_per_mem_size(rx_stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
 
     // Enable I2S requests to DMA
     handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
 
     // Enable DMA stream interrupts
-    NVIC_SetPriority(s_i2s_dma_map[idx].tx.irq_type, I2S_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(s_i2s_dma_map[idx].tx.irq_type);
+    NVIC_SetPriority(tx_irq_type, I2S_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(tx_irq_type);
 
-    NVIC_SetPriority(s_i2s_dma_map[idx].rx.irq_type, I2S_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(s_i2s_dma_map[idx].rx.irq_type);
+    NVIC_SetPriority(rx_irq_type, I2S_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(rx_irq_type);
 
     return HAL_OK;
 }
@@ -332,80 +315,89 @@ hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx
     return HAL_OK;
 }
 
-hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_trans_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Save user passed callback
-    if (callback) {
-        spi_master_register_callback(callback, arg, idx, true);
-    }
-
     // TX mapping
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].tx.stream;
+    if (stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
 
     // If the data is 24 or 32 bits, we need two DMA transfers
     // Note that if the DATLEN bits are 0b00, that means 16 bit
     // data; 0b01 for 24 and 0b10 for 32. So a non zero value
     // from the DATLEN bits implies a transfer greater than 16 bits
-    len = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (len * 2) : len;
+    size = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (size * 2) : size;
 
-    // Set memory address and length
-    dma_set_addresses(stream, NULL, buf, NULL);
-    dma_set_trans_length(stream, len);
+    // Set the memory addresses and length
+    dma_set_addresses(stream, &handle->DR, buf, NULL);
+    dma_set_trans_length(stream, size);
+
+    // Save the user passed callback
+    if (callback) {
+        spi_master_register_callback(callback, arg, idx, true);
+    }
 
     // Enable DMA TX stream
     return dma_enable_stream(stream);
 }
 
-hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_trans_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Save user passed callback
+    // RX mapping
+    DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
+    if (stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    size = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (size * 2) : size;
+
+    // Set the memory addresses and length
+    dma_set_addresses(stream, &handle->DR, buf, NULL);
+    dma_set_trans_length(stream, size);
+
+    // Save the user passed callback
     if (callback) {
         spi_master_register_callback(callback, arg, idx, false);
     }
-
-    // RX mapping
-    DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
-    len                        = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (len * 2) : len;
-
-    // Set memory address and length
-    dma_set_addresses(stream, NULL, buf, NULL);
-    dma_set_trans_length(stream, len);
 
     // Enable DMA RX stream
     return dma_enable_stream(stream);
 }
 
 // Double buffering API
-hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t len, dma_trans_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t size, dma_trans_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
-    len                        = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (len * 2) : len;
-
-    hal_err_t ret = dma_disable_stream(stream);
-    if (ret != HAL_OK) {
-        return ret;
+    if (stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
+
+    // Get the size
+    size = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (size * 2) : size;
+
+    TRY(dma_disable_stream(stream));
 
     dma_enable_circm_dbm(stream, true, true);
     dma_set_addresses(stream, &handle->DR, buf_a, buf_b);
-    dma_set_trans_length(stream, len);
+    dma_set_trans_length(stream, size);
 
     // Write 0 to CT to ensure the DMA controller starts at buf_a
     stream->CR &= ~DMA_SxCR_CT;
 
-    // Save user passed callback
+    // Save the user passed callback
     if (callback) {
         spi_master_register_callback(callback, arg, idx, false);
     }
@@ -421,10 +413,7 @@ hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle) {
 
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
 
-    hal_err_t ret = dma_disable_stream(stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(dma_disable_stream(stream));
 
     dma_enable_circm_dbm(stream, false, false);
     dma_set_trans_length(stream, 0);

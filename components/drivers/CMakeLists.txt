@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 4.0)
 set(SRCS
     src/i2c.c
     src/i2s.c
-    src/rtc.c
+    src/crc.c
     src/spi.c
     src/pwm.c
     src/adc.c

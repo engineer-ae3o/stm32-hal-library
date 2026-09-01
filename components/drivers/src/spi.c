@@ -35,31 +35,31 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
         .tx = {.controller = DMA2, .stream = DMA2_Stream1, .stream_no = 1, .irq_type = DMA2_Stream1_IRQn, .channel = 4},
         .rx = {.controller = DMA2, .stream = DMA2_Stream4, .stream_no = 4, .irq_type = DMA2_Stream4_IRQn, .channel = 4},
     },
-    // SPI5
+    // SPI5: DMA not supported: Not enough streams to go round other peripherals
     {
-        .tx = {.controller = DMA2, .stream = DMA2_Stream6, .stream_no = 6, .irq_type = DMA2_Stream6_IRQn, .channel = 7},
-        .rx = {.controller = DMA2, .stream = DMA2_Stream3, .stream_no = 3, .irq_type = DMA2_Stream3_IRQn, .channel = 2},
+        .tx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+        .rx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
     },
 };
 
 // Helpers
-static __attribute__((__always_inline__)) inline uint8_t get_index(const SPI_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline uint8_t get_index(const SPI_TypeDef* handle) {
     if (handle == SPI1) {
-        return 0;
+        return 0U;
     } else if (handle == SPI2) {
-        return 1;
+        return 1U;
     } else if (handle == SPI3) {
-        return 2;
+        return 2U;
     } else if (handle == SPI4) {
-        return 3;
+        return 3U;
     } else if (handle == SPI5) {
-        return 4;
+        return 4U;
     } else {
-        return 0xFF;
+        return 0xFFU;
     }
 }
 
-static __attribute__((__always_inline__)) inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx) {
     if (!s_dma_tx_done_cbs[idx]) {
         return;
     }
@@ -87,30 +87,39 @@ static __attribute__((__always_inline__)) inline void isr_tx_helper(SPI_TypeDef*
         }
     }
 
-    // Invoke user cb
-    s_dma_tx_done_cbs[idx](s_tx_args[idx], ret);
+    // Save the user callback so we can clear it's global array position
+    dma_trans_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
+    void*               local_arg = s_tx_args[idx];
 
-    // Only clear user cb if not in circular mode
+    // Only clear the user callback if not in circular mode
     if (!(s_spi_dma_map[idx].tx.stream->CR & DMA_SxCR_CIRC)) {
         s_dma_tx_done_cbs[idx] = NULL;
         s_tx_args[idx]         = NULL;
     }
+
+    // Finally, invoke the user callback
+    local_cb(local_arg, ret);
 }
 
-static __attribute__((__always_inline__)) inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
     if (!s_dma_rx_done_cbs[idx]) {
         return;
     }
 
-    // Invoke user cb
-    s_dma_rx_done_cbs[idx](s_rx_args[idx], ret);
+    // Save the user callback so we can clear it's global array position
+    dma_trans_done_cb_t local_cb  = s_dma_rx_done_cbs[idx];
+    void*               local_arg = s_rx_args[idx];
 
-    // Only clear user cb if not in circular mode
+    // Only clear the user callback if not in circular mode
     if (!(s_spi_dma_map[idx].rx.stream->CR & DMA_SxCR_CIRC)) {
         s_dma_rx_done_cbs[idx] = NULL;
         s_rx_args[idx]         = NULL;
     }
+
+    // Finally, invoke the user callback
+    local_cb(local_arg, ret);
 }
+
 
 // Public API
 hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable) {
@@ -151,10 +160,7 @@ hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable) {
 
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config) {
     // Configure the GPIO pins
-    hal_err_t ret = gpiox_clk_enable(config->gpio_port, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpiox_clk_enable(config->gpio_port, true));
 
     // Alternate function value selection for the GPIOs
     uint8_t alt_val = 0;
@@ -171,29 +177,20 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     }
 
     if (config->use_miso) {
-        ret = gpio_set_alternate_function(config->gpio_port, config->miso, alt_val);
-        if (ret != HAL_OK) {
-            return ret;
-        }
+        TRY(gpio_set_alternate_function(config->gpio_port, config->miso, alt_val));
         gpio_enable_pullup(config->gpio_port, config->miso, true);
         gpio_set_speed_mode(config->gpio_port, config->miso, GPIO_HIGH_SPEED);
         // MISO cannot be configured as push pull or open drain
     }
 
     if (config->use_mosi) {
-        ret = gpio_set_alternate_function(config->gpio_port, config->mosi, alt_val);
-        if (ret != HAL_OK) {
-            return ret;
-        }
+        TRY(gpio_set_alternate_function(config->gpio_port, config->mosi, alt_val));
         gpio_enable_pullup(config->gpio_port, config->mosi, true);
         gpio_set_speed_mode(config->gpio_port, config->mosi, GPIO_HIGH_SPEED);
         gpio_set_output_type(config->gpio_port, config->miso, GPIO_PUSH_PULL);
     }
 
-    ret = gpio_set_alternate_function(config->gpio_port, config->sclk, alt_val);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sclk, alt_val));
     gpio_set_speed_mode(config->gpio_port, config->sclk, GPIO_HIGH_SPEED);
     gpio_set_output_type(config->gpio_port, config->sclk, GPIO_PUSH_PULL);
 
@@ -251,41 +248,39 @@ void spi_master_enable(SPI_TypeDef* handle, bool enable) {
 
 hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFF) {
+    if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
     // TX mapping
     DMA_TypeDef*        tx_controller = s_spi_dma_map[idx].tx.controller;
     DMA_Stream_TypeDef* tx_stream     = s_spi_dma_map[idx].tx.stream;
-    uint8_t             tx_channel    = s_spi_dma_map[idx].tx.channel;
+    const uint8_t       tx_channel    = s_spi_dma_map[idx].tx.channel;
+    const uint8_t       tx_stream_no  = s_spi_dma_map[idx].tx.stream_no;
+    const IRQn_Type     tx_irq_type   = s_spi_dma_map[idx].tx.irq_type;
 
     // RX mapping
     DMA_TypeDef*        rx_controller = s_spi_dma_map[idx].rx.controller;
     DMA_Stream_TypeDef* rx_stream     = s_spi_dma_map[idx].rx.stream;
-    uint8_t             rx_channel    = s_spi_dma_map[idx].rx.channel;
+    const uint8_t       rx_channel    = s_spi_dma_map[idx].rx.channel;
+    const uint8_t       rx_stream_no  = s_spi_dma_map[idx].rx.stream_no;
+    const IRQn_Type     rx_irq_type   = s_spi_dma_map[idx].rx.irq_type;
 
-    hal_err_t ret = dmax_clk_enable(tx_controller, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
-    ret = dmax_clk_enable(rx_controller, true);
-    if (ret != HAL_OK) {
-        return ret;
+    if (tx_controller == NULL || tx_stream == NULL || rx_controller == NULL || rx_stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Disable DMA stream before configuring
-    ret = dma_disable_stream(tx_stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
-    ret = dma_disable_stream(rx_stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    // Enable the DMA clock and disable the DMA streams
+    TRY(dmax_clk_enable(tx_controller, true));
+    TRY(dma_disable_stream(tx_stream));
+    TRY(dmax_clk_enable(rx_controller, true));
+    TRY(dma_disable_stream(rx_stream));
+
+    // Clear the global DMA interrupt flags
+    TRY(dma_clear_flags(tx_controller, tx_stream_no));
+    TRY(dma_clear_flags(rx_controller, rx_stream_no));
 
     // TX stream configuration
-    dma_clear_flags(tx_controller, s_spi_dma_map[idx].tx.stream_no);
     dma_set_channel(tx_stream, tx_channel);
     dma_set_direct_mode(tx_stream, true);
     dma_set_direction(tx_stream, DMA_DIR_M_P);
@@ -294,10 +289,8 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     dma_enable_circm_dbm(tx_stream, false, false);
     dma_set_increment(tx_stream, false, true);
     dma_enable_irqs(tx_stream, true, true, false, true);
-    dma_set_addresses(tx_stream, &handle->DR, NULL, NULL);
 
     // RX stream configuration
-    dma_clear_flags(rx_controller, s_spi_dma_map[idx].rx.stream_no);
     dma_set_channel(rx_stream, rx_channel);
     dma_set_direct_mode(rx_stream, true);
     dma_set_direction(rx_stream, DMA_DIR_P_M);
@@ -306,7 +299,6 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     dma_enable_circm_dbm(rx_stream, false, false);
     dma_set_increment(rx_stream, false, true);
     dma_enable_irqs(rx_stream, true, true, false, true);
-    dma_set_addresses(rx_stream, &handle->DR, NULL, NULL);
 
     // If the DFF bit in SPIx_CR1 is set, then it's a 16 bit transfer
     const dma_data_size_t dma_data_size = (handle->CR1 & SPI_CR1_DFF) ? DMA_SIZE_HWORD : DMA_SIZE_BYTE;
@@ -316,19 +308,19 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     // Enable SPI requests to DMA
     handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
 
-    // Enable DMA stream interrupts
-    NVIC_SetPriority(s_spi_dma_map[idx].tx.irq_type, SPI_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(s_spi_dma_map[idx].tx.irq_type);
+    // Enable the DMA stream interrupts
+    NVIC_SetPriority(tx_irq_type, SPI_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(tx_irq_type);
 
-    NVIC_SetPriority(s_spi_dma_map[idx].rx.irq_type, SPI_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(s_spi_dma_map[idx].rx.irq_type);
+    NVIC_SetPriority(rx_irq_type, SPI_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(rx_irq_type);
 
     return HAL_OK;
 }
 
 hal_err_t spi_master_get_dma_stream(SPI_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFF) {
+    if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -338,10 +330,11 @@ hal_err_t spi_master_get_dma_stream(SPI_TypeDef* handle, DMA_Stream_TypeDef** tx
     return HAL_OK;
 }
 
+
 // Polling API
-hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t len) {
+hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t size) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFF) {
+    if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -351,7 +344,7 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
         // Cast to appropriate type
         const uint16_t* buf = (const uint16_t*)data;
 
-        for (size_t i = 0; i < len; i++) {
+        for (size_t i = 0; i < size; i++) {
             // Write data
             handle->DR = buf[i];
 
@@ -377,7 +370,7 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
         // Cast to appropriate type
         const uint8_t* buf = (const uint8_t*)data;
 
-        for (size_t i = 0; i < len; i++) {
+        for (size_t i = 0; i < size; i++) {
             // Write data
             handle->DR = buf[i];
 
@@ -417,9 +410,9 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
     return HAL_OK;
 }
 
-hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
+hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t size) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFF) {
+    if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -429,7 +422,7 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
         // Cast to appropriate type
         uint16_t* buf = (uint16_t*)data;
 
-        for (size_t i = 0; i < len; i++) {
+        for (size_t i = 0; i < size; i++) {
             // Write dummy data
             handle->DR = 0x00UL;
 
@@ -455,7 +448,7 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
         // Cast to appropriate type
         uint8_t* buf = (uint8_t*)data;
 
-        for (size_t i = 0; i < len; i++) {
+        for (size_t i = 0; i < size; i++) {
             // Write dummy data
             handle->DR = 0x00UL;
 
@@ -495,9 +488,9 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t len) {
     return HAL_OK;
 }
 
-hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t len) {
+hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t size) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFF) {
+    if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -508,7 +501,7 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
         const uint16_t* tx_buf = (const uint16_t*)tx_data;
         uint16_t*       rx_buf = (uint16_t*)rx_data;
 
-        for (size_t i = 0; i < len; i++) {
+        for (size_t i = 0; i < size; i++) {
             // Write data
             handle->DR = tx_buf[i];
 
@@ -535,7 +528,7 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
         const uint8_t* tx_buf = (const uint8_t*)tx_data;
         uint8_t*       rx_buf = (uint8_t*)rx_data;
 
-        for (size_t i = 0; i < len; i++) {
+        for (size_t i = 0; i < size; i++) {
             // Write data
             handle->DR = tx_buf[i];
 
@@ -575,88 +568,97 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
     return HAL_OK;
 }
 
+
 // DMA transfers API
-hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t len, dma_trans_done_cb_t cb, void* arg) {
+hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t size, dma_trans_done_cb_t cb, void* arg) {
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFF) {
+    if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Save user passed cb
+    // TX mapping
+    DMA_Stream_TypeDef* stream = s_spi_dma_map[idx].tx.stream;
+    if (stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Set the memory address and transaction length
+    dma_set_addresses(stream, &handle->DR, data, NULL);
+    dma_set_trans_length(stream, size);
+
+    // Save the user passed callback
     if (cb) {
         s_dma_tx_done_cbs[idx] = cb;
         s_tx_args[idx]         = arg;
     }
 
-    // TX mapping
-    DMA_Stream_TypeDef* stream = s_spi_dma_map[idx].tx.stream;
-
-    // Set memory address and length
-    dma_set_addresses(stream, NULL, data, NULL);
-    dma_set_trans_length(stream, len);
-
-    // Enable DMA TX stream
+    // Enable the DMA TX stream
     return dma_enable_stream(stream);
 }
 
-hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t len, dma_trans_done_cb_t cb, void* arg) {
+hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size, dma_trans_done_cb_t cb, void* arg) {
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFF) {
+    if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Save user passed cb
+    // RX mapping
+    DMA_Stream_TypeDef* stream = s_spi_dma_map[idx].rx.stream;
+    if (stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Set the memory address and transaction length
+    dma_set_addresses(stream, &handle->DR, data, NULL);
+    dma_set_trans_length(stream, size);
+
+    // Save the user passed callback
     if (cb) {
         s_dma_rx_done_cbs[idx] = cb;
         s_rx_args[idx]         = arg;
     }
 
-    // RX mapping
-    DMA_Stream_TypeDef* stream = s_spi_dma_map[idx].rx.stream;
-
-    // Set memory address and length
-    dma_set_addresses(stream, NULL, data, NULL);
-    dma_set_trans_length(stream, len);
-
-    // Enable DMA RX stream
+    // Enable the DMA RX stream
     return dma_enable_stream(stream);
 }
 
-hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t len, dma_trans_done_cb_t cb, void* arg) {
+hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t size, dma_trans_done_cb_t cb, void* arg) {
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFF) {
+    if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Save user passed cb
+    // TX and RX mapping
+    DMA_Stream_TypeDef* tx_stream = s_spi_dma_map[idx].tx.stream;
+    DMA_Stream_TypeDef* rx_stream = s_spi_dma_map[idx].rx.stream;
+    if (tx_stream == NULL || rx_stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Set the memory address and transaction length
+    dma_set_addresses(tx_stream, &handle->DR, tx_data, NULL);
+    dma_set_trans_length(tx_stream, size);
+
+    dma_set_addresses(rx_stream, &handle->DR, rx_data, NULL);
+    dma_set_trans_length(rx_stream, size);
+
+    // Save the user passed callback
     if (cb) {
         // Save cb to the TX DMA irq only
         s_dma_tx_done_cbs[idx] = cb;
         s_tx_args[idx]         = arg;
     }
 
-    // TX and RX mapping
-    DMA_Stream_TypeDef* tx_stream = s_spi_dma_map[idx].tx.stream;
-    DMA_Stream_TypeDef* rx_stream = s_spi_dma_map[idx].rx.stream;
-
-    // Set memory address and length
-    dma_set_addresses(tx_stream, NULL, tx_data, NULL);
-    dma_set_trans_length(tx_stream, len);
-
-    dma_set_addresses(rx_stream, NULL, rx_data, NULL);
-    dma_set_trans_length(rx_stream, len);
-
     // Enable DMA TX and RX streams
-    hal_err_t ret = dma_enable_stream(tx_stream);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(dma_enable_stream(tx_stream));
+    TRY_WITH_FUNC(dma_enable_stream(rx_stream), dma_disable_stream(tx_stream));
 
-    return dma_enable_stream(rx_stream);
+    return HAL_OK;
 }
+
 
 // To be used only by i2s.c
 void spi_master_register_callback(dma_trans_done_cb_t cb, void* arg, uint8_t idx, bool tx) {
@@ -668,6 +670,7 @@ void spi_master_register_callback(dma_trans_done_cb_t cb, void* arg, uint8_t idx
         s_rx_args[idx]         = arg;
     }
 }
+
 
 // DMA interrupts
 // SPI2: TX
@@ -704,16 +707,4 @@ void DMA2_Stream1_IRQHandler(void) {
 void DMA2_Stream4_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA2_Stream4, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4, DMA_HISR_HTIF4);
     isr_rx_helper(ret, 3);
-}
-
-// SPI5: TX
-void DMA2_Stream6_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream6, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
-    isr_tx_helper(SPI5, ret, 4);
-}
-
-// SPI5: RX
-void DMA2_Stream3_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream3, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF3, DMA_LISR_TEIF3, DMA_LISR_DMEIF3, DMA_LISR_HTIF3);
-    isr_rx_helper(ret, 4);
 }

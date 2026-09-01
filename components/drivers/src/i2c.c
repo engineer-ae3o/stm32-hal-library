@@ -6,11 +6,11 @@
 
 
 // Forward declarations
-static __attribute__((__always_inline__)) inline bool send_start(I2C_TypeDef* handle);
-static __attribute__((__always_inline__)) inline void send_stop(I2C_TypeDef* handle);
+[[__gnu__::__always_inline__]] static inline bool send_start(I2C_TypeDef* handle);
+[[__gnu__::__always_inline__]] static inline void send_stop(I2C_TypeDef* handle);
 
-static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t len);
-static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t len);
+static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t size);
+static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t size);
 
 
 // Public API
@@ -45,21 +45,12 @@ hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
 hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config) {
     // Configure pins for I2C
     // Enable gpio channel clock
-    hal_err_t ret = gpiox_clk_enable(config->gpio_port, true);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpiox_clk_enable(config->gpio_port, true));
 
     // Set pins to alternate function for I2C
     // I2C uses an alternate function value of 0b100
-    ret = gpio_set_alternate_function(config->gpio_port, config->sda, 0b100U);
-    if (ret != HAL_OK) {
-        return ret;
-    }
-    ret = gpio_set_alternate_function(config->gpio_port, config->scl, 0b100U);
-    if (ret != HAL_OK) {
-        return ret;
-    }
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sda, 0b100U));
+    TRY(gpio_set_alternate_function(config->gpio_port, config->scl, 0b100U));
 
     // Set as open drain
     gpio_set_output_type(config->gpio_port, config->sda, GPIO_OPEN_DRAIN);
@@ -73,7 +64,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     gpio_enable_pullup(config->gpio_port, config->sda, config->use_pullup);
     gpio_enable_pullup(config->gpio_port, config->scl, config->use_pullup);
 
-    // Disable the I2C peripheral
+    // Disable the I2C peripheral before writing to any of its registers
     handle->CR1 &= ~I2C_CR1_PE;
 
     // I2C configuration
@@ -101,16 +92,13 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Digital filter value
-    const uint32_t digi_filt = 5;
-
     // Analog and digital noise filters
     handle->FLTR &= ~I2C_FLTR_ANOFF;
-    handle->FLTR |= (digi_filt << I2C_FLTR_DNF_Pos);
+    handle->FLTR |= (uint32_t)(config->digital_filter << I2C_FLTR_DNF_Pos);
 
     // Rise time
-    uint32_t trise_ns = (config->freq_type == I2C_400KHz) ? 300U : 1'000U;
-    handle->TRISE     = (((trise_ns * config->apb1_bus_freq_mhz) / 1000U) + digi_filt + 1);
+    const uint32_t trise_ns = (config->freq_type == I2C_400KHz) ? 300U : 1'000U;
+    handle->TRISE           = (((trise_ns * config->apb1_bus_freq_mhz) / 1000U) + config->digital_filter + 1);
 
     // Enable the I2C peripheral
     handle->CR1 |= I2C_CR1_PE;
@@ -118,39 +106,39 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     return HAL_OK;
 }
 
-hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t len) {
+hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t size) {
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_ERR_INVALID_STATE;
     }
 
-    // Start transaction
+    // Start the transaction
     if (!send_start(handle)) {
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
-    // Transmit bytes
-    hal_err_t ret = tx_trans(handle, addr, data, len);
+    // Transmit the data
+    hal_err_t ret = tx_trans(handle, addr, data, size);
 
-    // End transaction
+    // End the transaction regardless of an error or success
     send_stop(handle);
 
     return ret;
 }
 
-hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t len) {
+hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t size) {
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_ERR_INVALID_STATE;
     }
 
-    // Start transaction
+    // Start the transaction
     if (!send_start(handle)) {
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
     // No need to call send_stop() as rx_trans() already does
-    return rx_trans(handle, addr, data, len);
+    return rx_trans(handle, addr, data, size);
 }
 
 hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t* tx_data, size_t tx_len, uint8_t* rx_data, size_t rx_len) {
@@ -159,12 +147,12 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t
         return HAL_ERR_INVALID_STATE;
     }
 
-    // Start transaction
+    // Start the transaction
     if (!send_start(handle)) {
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
-    // Start TX transaction
+    // Start the transmission
     hal_err_t ret = tx_trans(handle, addr, tx_data, tx_len);
     if (ret != HAL_OK) {
         send_stop(handle);
@@ -212,7 +200,7 @@ static void send_stop(I2C_TypeDef* handle) {
     handle->CR1 |= I2C_CR1_STOP;
 }
 
-static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t len) {
+static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t size) {
     // Send addr and write bit
     // cppcheck-suppress badBitmaskCheck
     handle->DR = ((uint32_t)(addr << 1UL) | 0UL);
@@ -245,7 +233,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
     (void)handle->SR2;
 
     // Start transmission after receiving ACK
-    for (size_t i = 0U; i < len; i++) {
+    for (size_t i = 0U; i < size; i++) {
         // Wait for TXE
         timeout = TIMEOUT_CYCLES;
         while (!(handle->SR1 & I2C_SR1_TXE) && (--timeout)) {
@@ -299,7 +287,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
     return HAL_OK;
 }
 
-static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t len) {
+static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t size) {
     // Send addr and read bit
     handle->DR = ((uint32_t)(addr << 1UL) | 1UL);
 
@@ -334,11 +322,11 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
     handle->CR1 &= ~I2C_CR1_POS;
 
     // Start reception after receiving ACK
-    size_t remaining_bytes = len;
+    size_t remaining_bytes = size;
 
     // Data phase
     // Handle the cases for the different lengths
-    switch (len) {
+    switch (size) {
         // Not a valid case
         case 0:
             send_stop(handle);
@@ -458,7 +446,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                         handle->CR1 &= ~I2C_CR1_ACK;
 
                         // Get the third to the last byte
-                        data[len - remaining_bytes] = (uint8_t)handle->DR;
+                        data[size - remaining_bytes] = (uint8_t)handle->DR;
                         remaining_bytes--;
 
                         break;
@@ -488,8 +476,8 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                         send_stop(handle);
 
                         // Finally, read DR twice to get both remaining bytes
-                        data[len - remaining_bytes]     = (uint8_t)handle->DR;
-                        data[len - remaining_bytes + 1] = (uint8_t)handle->DR;
+                        data[size - remaining_bytes]     = (uint8_t)handle->DR;
+                        data[size - remaining_bytes + 1] = (uint8_t)handle->DR;
 
                         return HAL_OK;
 
@@ -499,7 +487,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                         (void)handle->SR2;
 
                         // Read RXE up until remaining_bytes is 3
-                        for (size_t i = 0; i < (len - 3); i++) {
+                        for (size_t i = 0; i < (size - 3); i++) {
                             timeout = TIMEOUT_CYCLES;
                             while (!(handle->SR1 & I2C_SR1_RXNE) && (--timeout)) {
                                 if (handle->SR1 & I2C_SR1_BERR) {

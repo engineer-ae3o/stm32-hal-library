@@ -15,7 +15,7 @@ extern "C" {
 
 
 // Core clock and audio PLL frequencies
-#define CLOCK_SPEED_HZ (100'000'000)
+#define MAX_CLOCK_SPEED_HZ (100'000'000)
 #define AUDIO_PLL_HZ (76'800'000)
 
 
@@ -39,14 +39,29 @@ extern "C" {
 #define SPI_DMA_NVIC_IRQ_PRIORITY (14)
 #define UART_DMA_NVIC_IRQ_PRIORITY (8)
 #define I2S_DMA_NVIC_IRQ_PRIORITY (12)
-#define ADC_DMA_NVIC_IRQ_PRIORITY (4)
+#define ADC_DMA_NVIC_IRQ_PRIORITY (7)
+#define CRC_DMA_NVIC_IRQ_PRIORITY (6)
 
+
+#if defined(STM32F411xE)
 
 // ADC values to use the internal temperature sensor. Gotten from the datasheet
-#if defined(STM32F411xE)
-#define AVERAGE_SLOPE 2.5F
-#define VSENSE_AT_25C 0.76F
-#define MIN_SAMPLING_TIME_US 10U
+#define NUM_OF_ADC_CONTROLLERS 1
+#define MAX_ADC_CLOCK_MHZ 36
+#define ADC_STARUP_TIME_US 4U
+#define VBAT_DIVIDER_RATIO 4U
+
+// Temperature snsor constants
+#define TEMP_SENSOR_AVERAGE_SLOPE 2.5F
+#define TEMP_SENSOR_VSENSE_AT_25C 0.76F
+#define TEMP_SENSOR_MIN_SAMPLING_TIME_US 10U
+#define TEMP_SENSOR_STARUP_TIME_US 10U
+
+// Calibration data for Vref_internal and the temperature sensor
+#define VREFINT_CALIB_VAL *(volatile uint16_t*)0x1FFF7A2AU
+#define TEMP_SENSOR_CALIB_30C *(volatile uint16_t*)0x1FFF7A2CU
+#define TEMP_SENSOR_CALIB_110C *(volatile uint16_t*)0x1FFF7A2EU
+
 #else
 #error "No V_sense and Avg_Slope defined for the given target. Refer to the datasheet for your specific chip and add these values"
 #endif
@@ -55,31 +70,40 @@ extern "C" {
 // Heap size
 #define HEAP_SIZE_BYTES (32 * 1024)
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 // RTT buffer for logging. Controls the output buffer parameter
 #define RTT_BUFFER_INDEX (0)
 
-
 // Use the cycle counter component
-#define USE_DWT_CYCCNT
+#define USE_DWT_CYCCNT 1
+
+#define HALT()                                                                                                                                       \
+    do {                                                                                                                                             \
+        __BKPT(0);                                                                                                                                   \
+        while (true);                                                                                                                                \
+    } while (0)
 
 
 #define REBOOT() restart(__PRETTY_FUNCTION__, __FILE__, __LINE__)
 #define PANIC() panic(__PRETTY_FUNCTION__, __FILE__, __LINE__)
-#define ASSERT(cond) assert_check((cond), #cond, __PRETTY_FUNCTION__, __FILE__, __LINE__)
+#define ASSERT(cond)                                                                                                                                 \
+    do {                                                                                                                                             \
+        if (!(cond)) {                                                                                                                               \
+            LOGE("Assert", "Assert (%s) failed", #cond);                                                                                             \
+            PANIC();                                                                                                                                 \
+        }                                                                                                                                            \
+    } while (0)
 
 #define LOCK_ACQUIRE() __disable_irq()
 #define LOCK_RELEASE() __enable_irq()
 
-
+// Buffer size of format strings
 #define FMT_STR_BUF_SIZE (192)
 
 
 [[noreturn]] void panic(const char* function, const char* file, uint32_t line);
-
 [[noreturn]] void restart(const char* function, const char* file, uint32_t line);
-
-void assert_check(bool cond, const char* msg, const char* function, const char* file, uint32_t line);
 
 
 // Macros to help with error propagation
