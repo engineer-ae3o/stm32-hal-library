@@ -10,12 +10,6 @@
 #include <string.h>
 
 
-// The internal channels
-#define ADC_CHANNEL_TEMP (16U) // Temperature sensor
-#define ADC_CHANNEL_VREF (17U) // V_refint
-#define ADC_CHANNEL_VBAT (18U) // V_bat
-
-
 // User context
 typedef struct {
     adc_dma_callbacks_t continuous_mode_callbacks;
@@ -75,16 +69,19 @@ static inline void adcx_isr_helper(ADC_TypeDef* handle) {
     // Check if end of conversion for the injected mode is reached and if interrupts for the injected group are enabled
     if ((handle->SR & ADC_SR_JEOC) && (handle->CR1 & ADC_CR1_JEOCIE)) {
         // Invoke the user callback since the sampling on the injected group is complete
-        if (s_adc_ctx[idx].injected_done_cb) {
-            // Save the user callback so we can clear it's global array position
-            const adc_callback_t local_cb  = s_adc_ctx[idx].injected_done_cb;
-            void* const          local_arg = s_adc_ctx[idx].injected_done_arg;
 
-            // Clear the user passed callback since this is a one-off event
-            s_adc_ctx[idx].injected_done_cb  = NULL;
-            s_adc_ctx[idx].injected_done_arg = NULL;
+        // Save the user callback so we can clear it's global array position
+        __disable_irq();
+        const adc_callback_t local_cb  = s_adc_ctx[idx].injected_done_cb;
+        void* const          local_arg = s_adc_ctx[idx].injected_done_arg;
 
-            // Finally, invoke the user callback
+        // Clear the user passed callback since this is a one-off event
+        s_adc_ctx[idx].injected_done_cb  = NULL;
+        s_adc_ctx[idx].injected_done_arg = NULL;
+        __enable_irq();
+
+        // Finally, invoke the user callback
+        if (local_cb) {
             local_cb(local_arg);
         }
 
@@ -96,10 +93,18 @@ static inline void adcx_isr_helper(ADC_TypeDef* handle) {
     // Check if the AWD bit is set and interrupts for the analog watchdog are enabled.
     if ((handle->SR & ADC_SR_AWD) && (handle->CR1 & ADC_CR1_AWDIE)) {
         // Invoke the user callback since the analog watchdog has fired an interrupt
-        if (s_adc_ctx[idx].analog_wdg_cb) {
-            // The callback isn't cleared since this is not a one-off
-            // event. To clear, adc_analog_wdg_stop() should be used.
-            s_adc_ctx[idx].analog_wdg_cb(s_adc_ctx[idx].analog_wdg_arg);
+
+        __disable_irq();
+        const adc_callback_t local_cb  = s_adc_ctx[idx].analog_wdg_cb;
+        void* const          local_arg = s_adc_ctx[idx].analog_wdg_arg;
+        __enable_irq();
+
+        // The callback isn't cleared since this is not a one-off
+        // event. To clear, adc_analog_wdg_stop() should be used.
+
+        // Finally, invoke the user callback
+        if (local_cb) {
+            local_cb(local_arg);
         }
 
         // Clear the AWD bit since the interrupt has already been serviced
@@ -109,24 +114,25 @@ static inline void adcx_isr_helper(ADC_TypeDef* handle) {
 
     // Check if the OVR bit is set and interrupts for data overrun are enabled.
     if ((handle->SR & ADC_SR_OVR) && (handle->CR1 & ADC_CR1_OVRIE)) {
-        // Invoke the user callback since there has been data overrun in the data register
-        if (s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun) {
-            // Save the user callback so we can clear it's global array position
-            const adc_cont_err_cb_t local_cb  = s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun;
-            void* const             local_arg = s_adc_ctx[idx].continuous_mode_callbacks.user;
+        // Save the user callback so it's global array position can be cleared safely
+        __disable_irq();
+        const adc_cont_err_cb_t local_cb  = s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun;
+        void* const             local_arg = s_adc_ctx[idx].continuous_mode_callbacks.user;
+        __enable_irq();
 
-            // Get the user paramters before clearing all state with adc_regular_group_cont_end_conv(...)
-            DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
-            ASSERT(stream);
+        // Get the user paramters before clearing all state with adc_regular_group_cont_end_conv(...)
+        DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
+        ASSERT(stream);
 
-            // If the CT bit is 0, that means the DMA controller is in the first buffer
-            const bool     is_buf_1          = (stream->CR & DMA_SxCR_CT) == 0;
-            const uint16_t num_of_items_left = (uint16_t)stream->NDTR;
+        // If the CT bit is 0, that means the DMA controller is in the first buffer
+        const bool     is_buf_1          = (stream->CR & DMA_SxCR_CT) == 0;
+        const uint16_t num_of_items_left = (uint16_t)stream->NDTR;
 
-            // End the regular group conversion. The conversion can be restarted in the callback if necessary
-            ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
+        // End the regular group conversion. The conversion can be restarted in the callback if necessary
+        ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
 
-            // Finally, invoke the user callback
+        // Finally, invoke the user callback
+        if (local_cb) {
             local_cb(local_arg, is_buf_1, num_of_items_left);
         }
 
@@ -153,18 +159,28 @@ static inline void adcx_dma_isr_helper(ADC_TypeDef*       handle,
     // If the CT bit is 0, that means the DMA controller is in the first buffer
     const bool     is_buf_1          = (stream->CR & DMA_SxCR_CT) == 0;
     const uint16_t num_of_items_left = (uint16_t)stream->NDTR;
-    void* const    local_arg         = s_adc_ctx[idx].continuous_mode_callbacks.user;
+
+    __disable_irq();
+    void* const local_arg = s_adc_ctx[idx].continuous_mode_callbacks.user;
+    __enable_irq();
 
     if (*irq_status_register & tc_mask) {
         // Transfer complete. If in circular or double buffering mode, the DMA has either
         // wrapped around in the same buffer or has switched to the second buffer respectively.
-        if (s_adc_ctx[idx].continuous_mode_callbacks.on_buffer_full) {
-            s_adc_ctx[idx].continuous_mode_callbacks.on_buffer_full(local_arg, is_buf_1);
-            // If we are not in circular or double buffering mode, end the conversion
-            if (!((stream->CR & DMA_SxCR_CIRC) || (stream->CR & DMA_SxCR_DBM))) {
-                ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
-            }
+
+        __disable_irq();
+        adc_cont_done_cb_t local_cb = s_adc_ctx[idx].continuous_mode_callbacks.on_buffer_full;
+        __enable_irq();
+
+        if (local_cb) {
+            local_cb(local_arg, is_buf_1);
         }
+
+        // If we are not in circular or double buffering mode, end the conversion
+        if (!(stream->CR & DMA_SxCR_CIRC) && !(stream->CR & DMA_SxCR_DBM)) {
+            ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
+        }
+
         // Clear the TC flag. The DMA_HIFCR and DMA_LIFCR are write 1 to clear
         *irq_clear_register |= tc_mask;
     }
@@ -173,22 +189,34 @@ static inline void adcx_dma_isr_helper(ADC_TypeDef*       handle,
     // Conversions can be restarted by the user if necessary in the callback.
     if (*irq_status_register & te_mask) {
         // Transfer error. End the conversion and invoke the user callback.
-        if (s_adc_ctx[idx].continuous_mode_callbacks.on_transfer_error) {
-            adc_cont_err_cb_t local_cb = s_adc_ctx[idx].continuous_mode_callbacks.on_transfer_error;
-            ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
+
+        __disable_irq();
+        const adc_cont_err_cb_t local_cb = s_adc_ctx[idx].continuous_mode_callbacks.on_transfer_error;
+        __enable_irq();
+
+        ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
+
+        if (local_cb) {
             local_cb(local_arg, is_buf_1, num_of_items_left);
         }
+
         // Clear the TE flag. The DMA_HIFCR and DMA_LIFCR are write 1 to clear
         *irq_clear_register |= te_mask;
     }
 
     if (*irq_status_register & dme_mask) {
         // Direct mode error. End the conversion and invoke the user callback.
-        if (s_adc_ctx[idx].continuous_mode_callbacks.on_direct_mode_error) {
-            adc_cont_err_cb_t local_cb = s_adc_ctx[idx].continuous_mode_callbacks.on_direct_mode_error;
-            ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
+
+        __disable_irq();
+        const adc_cont_err_cb_t local_cb = s_adc_ctx[idx].continuous_mode_callbacks.on_direct_mode_error;
+        __enable_irq();
+
+        ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
+
+        if (local_cb) {
             local_cb(local_arg, is_buf_1, num_of_items_left);
         }
+
         // Clear the DME flag. The DMA_HIFCR and DMA_LIFCR are write 1 to clear
         *irq_clear_register |= dme_mask;
     }
@@ -197,14 +225,12 @@ static inline void adcx_dma_isr_helper(ADC_TypeDef*       handle,
 static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
     if (regular) {
         handle->SR &= ~(ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR);
-        handle->SR &= ~(ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR);
         handle->CR1 &= ~(ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE);
         handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART | ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
         handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
         handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
         handle->SQR3 &= ~(ADC_SQR3_SQ1 | ADC_SQR3_SQ2 | ADC_SQR3_SQ3 | ADC_SQR3_SQ4 | ADC_SQR3_SQ5 | ADC_SQR3_SQ6);
     } else if (injected) {
-        handle->SR &= ~(ADC_SR_JEOC | ADC_SR_JSTRT);
         handle->SR &= ~(ADC_SR_JEOC | ADC_SR_JSTRT);
         handle->CR1 &= ~(ADC_CR1_JDISCEN | ADC_CR1_JEOCIE | ADC_CR1_JAUTO);
         handle->CR2 &= ~(ADC_CR2_JEXTEN | ADC_CR2_JSWSTART | ADC_CR2_JEXTSEL);
@@ -296,6 +322,15 @@ hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Set the data register alignment
+    if (config->alignment == ADC_RIGHT_ALIGN) {
+        handle->CR2 &= ~ADC_CR2_ALIGN;
+    } else if (config->alignment == ADC_LEFT_ALIGN) {
+        handle->CR2 |= ADC_CR2_ALIGN;
+    } else {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // Set the ADC resolution
     handle->CR1 &= ~ADC_CR1_RES;
     handle->CR1 |= ((uint32_t)config->resolution << ADC_CR1_RES_Pos);
@@ -315,15 +350,6 @@ hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
     handle->SMPR2 |= ((time << ADC_SMPR2_SMP0_Pos) | (time << ADC_SMPR2_SMP1_Pos) | (time << ADC_SMPR2_SMP2_Pos) | (time << ADC_SMPR2_SMP3_Pos) |
                       (time << ADC_SMPR2_SMP4_Pos) | (time << ADC_SMPR2_SMP5_Pos) | (time << ADC_SMPR2_SMP6_Pos) | (time << ADC_SMPR2_SMP7_Pos) |
                       (time << ADC_SMPR2_SMP8_Pos) | (time << ADC_SMPR2_SMP9_Pos));
-
-    // Set the data register alignment
-    if (config->alignment == ADC_RIGHT_ALIGN) {
-        handle->CR2 &= ~ADC_CR2_ALIGN;
-    } else if (config->alignment == ADC_LEFT_ALIGN) {
-        handle->CR2 |= ADC_CR2_ALIGN;
-    } else {
-        return HAL_ERR_INVALID_ARG;
-    }
 
     return HAL_OK;
 }
@@ -388,13 +414,25 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
 // For use with the regular group and external channels in DMA continuous sampling mode
 hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config) {
     if (handle == NULL || config == NULL || config->channels.channels_sequence == NULL || config->channels.num_of_channels == 0 ||
-        config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL) {
+        config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL ||
+        (config->use_double_buffers && config->buffer_2 == NULL)) {
         return HAL_ERR_INVALID_ARG;
     }
 
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
+    }
+
+    // ADC DMA stream mapping
+    DMA_TypeDef*        controller = s_adc_dma_map[idx].controller;
+    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].stream;
+    const uint8_t       channel    = s_adc_dma_map[idx].channel;
+    const uint8_t       stream_no  = s_adc_dma_map[idx].stream_no;
+    const IRQn_Type     irq_type   = s_adc_dma_map[idx].irq_type;
+
+    if (controller == NULL || stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
 
     // Clear all stale state before proceeding
@@ -415,17 +453,6 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         (void)config->channels.channels_sequence;
     }
 
-    // ADC DMA stream mapping
-    DMA_TypeDef*        controller = s_adc_dma_map[idx].controller;
-    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].stream;
-    const uint8_t       channel    = s_adc_dma_map[idx].channel;
-    const uint8_t       stream_no  = s_adc_dma_map[idx].stream_no;
-    const IRQn_Type     irq_type   = s_adc_dma_map[idx].irq_type;
-
-    if (controller == NULL || stream == NULL) {
-        return HAL_ERR_NOT_SUPPORTED;
-    }
-
     // Enable the DMA clock and disable the stream
     TRY(dmax_clk_enable(controller, true));
     TRY(dma_disable_stream(stream));
@@ -442,10 +469,6 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     dma_set_trans_length(stream, config->buffer_size);
     dma_set_stream_priority(stream, DMA_PRIORITY_HIGH);
     dma_set_per_mem_size(stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
-
-    if (config->use_double_buffers && config->buffer_2 == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
 
     const bool  double_buffering = config->use_double_buffers;
     const bool  circular_mode    = config->use_double_buffers || config->dma_wraparound_when_done;
@@ -464,31 +487,24 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     }
 
     // Clear the CT bit to ensure the DMA controller starts at the first buffer
-    // Enable ADC continuous sampling and DMA mode
-    // Set the DDS bit only if we are in circular mode so the ADC continues
-    // to send DMA requests even after the first buffer is filled.
-    if (circular_mode) {
-        handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS);
-    } else {
-        handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);
-    }
-
-    // Clear the CT bit to ensure the DMA controller starts at the first buffer
     stream->CR &= ~DMA_SxCR_CT;
 
     // Callback registration
-    s_adc_ctx[idx].continuous_mode_callbacks = config->callbacks;
-
-    const bool transfer_error    = s_adc_ctx[idx].continuous_mode_callbacks.on_transfer_error != NULL;
-    const bool direct_mode_error = s_adc_ctx[idx].continuous_mode_callbacks.on_direct_mode_error != NULL;
-    const bool transfer_complete = s_adc_ctx[idx].continuous_mode_callbacks.on_buffer_full != NULL;
-    const bool data_overrun      = s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun != NULL;
+    const bool transfer_error    = config->callbacks.on_transfer_error != NULL;
+    const bool direct_mode_error = config->callbacks.on_direct_mode_error != NULL;
+    const bool transfer_complete = config->callbacks.on_buffer_full != NULL;
+    const bool data_overrun      = config->callbacks.on_data_overrun != NULL;
 
     // Enable the interrupts based on what callbacks were passed
     dma_enable_irqs(stream, transfer_complete, transfer_error, false, direct_mode_error);
     if (data_overrun) {
         handle->CR1 |= ADC_CR1_OVRIE;
     }
+
+    // Copy the registered callbacks
+    __disable_irq();
+    s_adc_ctx[idx].continuous_mode_callbacks = config->callbacks;
+    __enable_irq();
 
     // Enable the DMA stream interrupts
     NVIC_SetPriority(irq_type, ADC_DMA_NVIC_IRQ_PRIORITY);
@@ -533,7 +549,9 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
     dma_enable_irqs(stream, false, false, false, false);
 
     // Clear all user passed callbacks
+    __disable_irq();
     memset(&s_adc_ctx[idx].continuous_mode_callbacks, 0, sizeof(s_adc_ctx[idx].continuous_mode_callbacks));
+    __enable_irq();
 
     return HAL_OK;
 }
@@ -601,9 +619,11 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
     }
 
     if (config->on_conv_complete) {
+        __disable_irq();
         // Save the user passed callback
         s_adc_ctx[idx].injected_done_cb  = config->on_conv_complete;
         s_adc_ctx[idx].injected_done_arg = config->arg;
+        __enable_irq();
 
         // Enable interrupts for the injected group on conversion
         // completion only if the user passed in a callback.
@@ -665,7 +685,11 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data_
 }
 
 
-// For use with the internal channels. These only provide the raw ADC values. They all make use of the regular group
+// For use with the internal channels. These only provide the raw ADC values. They all make use of the regular group.
+#define ADC_CHANNEL_TEMP (16U) // Temperature sensor
+#define ADC_CHANNEL_VREF (17U) // V_refint
+#define ADC_CHANNEL_VBAT (18U) // V_bat
+
 hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data) {
     if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
@@ -762,12 +786,11 @@ hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
     uint16_t raw_vref = 0;
     TRY(adc_get_v_ref_internal(handle, &raw_vref));
 
-    // Read the V_refint calibraion value. It is stored at the address 0x1FFF7A2A
+    // Get the V_refint calibraion value. It is stored at a specific address in memory
     // It is the value of V_ref_int measured at V_dda = 3.3V and 30C
-    const uint16_t v_refint_cal = *(volatile uint16_t*)0x1FFF7A2AU;
 
     // Calculate the actual VDDA from the calibration data
-    *vdda = (3.3F * (float)v_refint_cal) / (float)raw_vref;
+    *vdda = (3.3F * (float)VREFINT_CALIB_VAL) / (float)raw_vref;
 
     return HAL_OK;
 }
@@ -777,9 +800,8 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Get the V_ref_int and V_ref_int_calibration data
-    const uint16_t v_refint_cal = *(volatile uint16_t*)0x1FFF7A2AU;
-    uint16_t       v_ref_int    = 0;
+    // Get the raw V_ref_int
+    uint16_t v_ref_int = 0;
     TRY(adc_get_v_ref_internal(handle, &v_ref_int));
 
     // Read the raw ADC temperature value next
@@ -787,12 +809,12 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
     TRY(adc_get_temperature(handle, &raw_temp));
 
     // Normalize the raw temperature sensor data read
-    const float normalized = ((float)v_refint_cal / (float)v_ref_int) * (float)raw_temp;
+    const float normalized = ((float)VREFINT_CALIB_VAL / (float)v_ref_int) * (float)raw_temp;
 
     // Get the temperature calibration values from their locations in memory
     // They represent the temperature values measured at 30C and 110C respectively when VDDA is 3.3V
-    const uint16_t temp_cal_1 = *(volatile uint16_t*)0x1FFF7A2CU;
-    const uint16_t temp_cal_2 = *(volatile uint16_t*)0x1FFF7A2EU;
+    const uint16_t temp_cal_1 = TEMP_SENSOR_CALIB_30C;
+    const uint16_t temp_cal_2 = TEMP_SENSOR_CALIB_110C;
 
     // Get the temperature using linear interpolation with the calibration data at 110C and 30C
     *temp_celsius = (((110.0F - 30.0F) / (float)(temp_cal_2 - temp_cal_1)) * (normalized - (float)temp_cal_1)) + 30.0F;
@@ -869,8 +891,10 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_
     handle->LTR = config->min_adc_value & 0xFFFU; // Only the lower 12 bits are used
 
     // Save the user passed callback
+    __disable_irq();
     s_adc_ctx[idx].analog_wdg_cb  = config->on_thresholds_violated;
     s_adc_ctx[idx].analog_wdg_arg = config->arg;
+    __enable_irq();
 
     // Enable the analog watchdog interrupt and clear any pending interrupts
     handle->SR &= ~ADC_SR_AWD;
@@ -894,8 +918,10 @@ hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle) {
     handle->LTR &= ~ADC_LTR_LT; // Set to lowest value possible
 
     // Clear the user passed callback
+    __disable_irq();
     s_adc_ctx[idx].analog_wdg_cb  = NULL;
     s_adc_ctx[idx].analog_wdg_arg = NULL;
+    __enable_irq();
 
     return HAL_OK;
 }
@@ -914,14 +940,11 @@ void ADC_IRQHandler(void) {
 #endif
 }
 
+// DMA stream irq handlers
+// If the used chip supports ADC2 and/or ADC3, simply copy this for use with the
+// DMA stream to be used, and fill in the slot in the DMA stream map table above
+
+// ADC1
 void DMA2_Stream0_IRQHandler(void) {
-#if defined(ADC1)
     adcx_dma_isr_helper(ADC1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0);
-#endif
-#if defined(ADC2)
-    adcx_dma_isr_helper(ADC2, NULL, NULL, 0, 0, 0);
-#endif
-#if defined(ADC3)
-    adcx_dma_isr_helper(ADC3, NULL, NULL, 0, 0, 0);
-#endif
 }

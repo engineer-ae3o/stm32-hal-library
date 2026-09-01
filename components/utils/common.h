@@ -48,12 +48,19 @@ extern "C" {
 // ADC values to use the internal temperature sensor. Gotten from the datasheet
 #define NUM_OF_ADC_CONTROLLERS 1
 #define MAX_ADC_CLOCK_MHZ 36
+#define ADC_STARUP_TIME_US 4U
+#define VBAT_DIVIDER_RATIO 4U
+
+// Temperature snsor constants
 #define TEMP_SENSOR_AVERAGE_SLOPE 2.5F
 #define TEMP_SENSOR_VSENSE_AT_25C 0.76F
 #define TEMP_SENSOR_MIN_SAMPLING_TIME_US 10U
 #define TEMP_SENSOR_STARUP_TIME_US 10U
-#define ADC_STARUP_TIME_US 4U
-#define VBAT_DIVIDER_RATIO 4U
+
+// Calibration data for Vref_internal and the temperature sensor
+#define VREFINT_CALIB_VAL *(volatile uint16_t*)0x1FFF7A2AU
+#define TEMP_SENSOR_CALIB_30C *(volatile uint16_t*)0x1FFF7A2CU
+#define TEMP_SENSOR_CALIB_110C *(volatile uint16_t*)0x1FFF7A2EU
 
 #else
 #error "No V_sense and Avg_Slope defined for the given target. Refer to the datasheet for your specific chip and add these values"
