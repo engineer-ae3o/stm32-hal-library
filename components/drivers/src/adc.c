@@ -230,7 +230,8 @@ static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected)
         handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
         handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
         handle->SQR3 &= ~(ADC_SQR3_SQ1 | ADC_SQR3_SQ2 | ADC_SQR3_SQ3 | ADC_SQR3_SQ4 | ADC_SQR3_SQ5 | ADC_SQR3_SQ6);
-    } else if (injected) {
+    }
+    if (injected) {
         handle->SR &= ~(ADC_SR_JEOC | ADC_SR_JSTRT);
         handle->CR1 &= ~(ADC_CR1_JDISCEN | ADC_CR1_JEOCIE | ADC_CR1_JAUTO);
         handle->CR2 &= ~(ADC_CR2_JEXTEN | ADC_CR2_JSWSTART | ADC_CR2_JEXTSEL);
