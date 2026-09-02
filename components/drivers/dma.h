@@ -48,8 +48,8 @@ void dma_set_increment(DMA_Stream_TypeDef* stream, bool per_inc, bool mem_inc);
 void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler);
 void dma_set_stream_priority(DMA_Stream_TypeDef* stream, dma_priority_t priority);
 void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circ, bool ena_dbm);
-void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, bool hte, bool dme_mask);
 void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_data_size_t mem);
+void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, bool hte_mask, bool dme_mask);
 void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* p, const volatile void* m1, const volatile void* m2);
 
 // Utilities for mapping the peripherals instances to DMA streams
@@ -89,31 +89,36 @@ typedef void (*dma_trans_done_cb_t)(void* arg, hal_err_t error);
     // irq_clear_register is the DMA interrupt clear register. It is used to clear the
     // interrupt bit set in its corresponding status register. It is write 1 to clear a bit.
 
+    const uint32_t status_register = *irq_status_register;
+    uint32_t       clear_register  = 0;
+
     // Transfer complete
-    if (*irq_status_register & tc_mask) {
+    if (status_register & tc_mask) {
         // Clear DMA TC interrupt bit
-        *irq_clear_register |= tc_mask;
+        clear_register |= tc_mask;
     }
 
     // Transfer error
-    if (*irq_status_register & te_mask) {
+    if (status_register & te_mask) {
         // Clear DMA TE interrupt bit
-        *irq_clear_register |= te_mask;
+        clear_register |= te_mask;
         error = HAL_ERR_DMA_TE;
     }
 
     // Direct mode error
-    if (*irq_status_register & dme_mask) {
+    if (status_register & dme_mask) {
         // Clear DMA DME interrupt bit
-        *irq_clear_register |= dme_mask;
+        clear_register |= dme_mask;
         error = HAL_ERR_DMA_DME;
     }
 
     // Half transfer complete
-    if (*irq_status_register & ht_mask) {
+    if (status_register & ht_mask) {
         // Clear DMA HT interrupt bit
-        *irq_clear_register |= ht_mask;
+        clear_register |= ht_mask;
     }
+
+    *irq_clear_register = clear_register;
 
     // Return if the stream is in circular mode or half transfer,
     // so as not to disable the DMA strean. Everything else should

@@ -213,6 +213,8 @@ int main() {
     LOGI("Main", "Done with all tests. Halting...");
     */
 
+
+    // ADC peripheral
     adc_clk_configure(ADC_CLK_PRESCALER_4);
     adc_enable_nvic_irq(true);
     adc_power_on_temp_sensor(true);
@@ -267,12 +269,25 @@ int main() {
     LOGI("ADC", "V_ref_int: %.3fV", (double)vref_int);
     LOGI("ADC", "Temperature: %.3fC", (double)temp_celsius);
 
+
+    // CRC32 peripheral
     crc_clk_enable(true);
 
     constexpr auto buffer = std::array{1UL, 2UL, 3UL, 4UL, 5UL, 6UL, 7UL, 8UL, 9UL};
     uint32_t       crc32  = 0;
 
     ASSERT(crc_get(buffer.data(), buffer.size(), &crc32) == HAL_OK);
+    ASSERT(crc_get_dma(
+               buffer.data(),
+               buffer.size(),
+               [](void* arg, hal_err_t err, uint32_t crc_32) {
+                   UNUSED(arg);
+                   ASSERT(err == HAL_OK);
+                   LOGI("CRC32", "CRC32 checksum of data gotten with DMA = %lu", crc_32);
+                   LOGI("CRC32", "CRC32 checksum of data gotten with DMA = 0x%X", (size_t)crc_32);
+               },
+               nullptr) == HAL_OK);
+
     LOGI("CRC32", "CRC32 checksum of data = %lu", crc32);
     LOGI("CRC32", "CRC32 checksum of data = 0x%X", (size_t)crc32);
 
