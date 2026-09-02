@@ -35,12 +35,14 @@ extern "C" {
 // At 100MHz, this is 100us: suitable for most use cases
 #define TIMEOUT_CYCLES (10'000)
 
+#define UNUSED(x) (void)(x)
+
 // SPI DMA has the highest priority
-#define SPI_DMA_NVIC_IRQ_PRIORITY (14)
-#define UART_DMA_NVIC_IRQ_PRIORITY (8)
-#define I2S_DMA_NVIC_IRQ_PRIORITY (12)
-#define ADC_DMA_NVIC_IRQ_PRIORITY (7)
-#define CRC_DMA_NVIC_IRQ_PRIORITY (6)
+#define SPI_DMA_NVIC_IRQ_PRIORITY (6)
+#define UART_DMA_NVIC_IRQ_PRIORITY (10)
+#define I2S_DMA_NVIC_IRQ_PRIORITY (9)
+#define ADC_DMA_NVIC_IRQ_PRIORITY (8)
+#define CRC_DMA_NVIC_IRQ_PRIORITY (11)
 
 
 #if defined(STM32F411xE)
@@ -80,8 +82,10 @@ extern "C" {
 
 #define HALT()                                                                                                                                       \
     do {                                                                                                                                             \
-        __BKPT(0);                                                                                                                                   \
-        while (true);                                                                                                                                \
+        while (true) {                                                                                                                               \
+            __BKPT(0);                                                                                                                               \
+            __WFI();                                                                                                                                 \
+        }                                                                                                                                            \
     } while (0)
 
 
