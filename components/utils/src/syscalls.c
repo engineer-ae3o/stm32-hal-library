@@ -90,9 +90,7 @@ void system_init(void) {
 // Provide a weak main function
 [[__gnu__::__noreturn__, __gnu__::__weak__]] int main(void) {
     LOGE("Main", "Application failed to provide a main function. Using the weak stub instead");
-    while (true) {
-        __NOP();
-    }
+    HALT();
 }
 
 // Fault Handlers
@@ -144,10 +142,7 @@ void system_init(void) {
     LOGE("Fault", "PSR: 0x%X", psr);
     LOGE("Fault", "CFSR: 0x%X", cfsr);
 
-    __asm volatile("bkpt #0");
-
-    // Halt manually if the debugger is not attached
-    while (true);
+    HALT();
 }
 
 [[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void bus_fault_dump(const unsigned int* frame) {
@@ -173,10 +168,7 @@ void system_init(void) {
     LOGE("Fault", "CFSR: 0x%X", cfsr);
     LOGE("Fault", "BFAR: 0x%X", bfar);
 
-    __asm volatile("bkpt #0");
-
-    // Halt manually if the debugger is not attached
-    while (true);
+    HALT();
 }
 
 [[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void usage_fault_dump(const unsigned int* frame) {
@@ -200,10 +192,7 @@ void system_init(void) {
     LOGE("Fault", "PC: 0x%X", pc);
     LOGE("Fault", "CFSR: 0x%X", cfsr);
 
-    __asm volatile("bkpt #0");
-
-    // Halt manually if the debugger is not attached
-    while (true);
+    HALT();
 }
 
 // Stub the syscalls needed by newlibc

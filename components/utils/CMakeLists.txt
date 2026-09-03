@@ -6,7 +6,6 @@ set(SRCS
     src/heap.c
     src/tick.c
     src/random.c
-    src/common.c
     src/syscalls.c
 )
 

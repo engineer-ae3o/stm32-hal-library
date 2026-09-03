@@ -89,8 +89,18 @@ extern "C" {
     } while (0)
 
 
-#define REBOOT() restart(__PRETTY_FUNCTION__, __FILE__, __LINE__)
-#define PANIC() panic(__PRETTY_FUNCTION__, __FILE__, __LINE__)
+#define REBOOT()                                                                                                                                     \
+    do {                                                                                                                                             \
+        LOGI("Restart", "System reboot requested from %s (%s:%d)", __PRETTY_FUNCTION__, __FILE__, __LINE__);                                         \
+        NVIC_SystemReset();                                                                                                                          \
+    } while (0)
+
+#define PANIC()                                                                                                                                      \
+    do {                                                                                                                                             \
+        LOGE("Panic", "System ran into a fatal error from %s (%s:%d)", __PRETTY_FUNCTION__, __FILE__, __LINE__);                                     \
+        HALT();                                                                                                                                      \
+    } while (0)
+
 #define ASSERT(cond)                                                                                                                                 \
     do {                                                                                                                                             \
         if (!(cond)) {                                                                                                                               \
@@ -104,10 +114,6 @@ extern "C" {
 
 // Buffer size of format strings
 #define FMT_STR_BUF_SIZE (192)
-
-
-[[noreturn]] void panic(const char* function, const char* file, uint32_t line);
-[[noreturn]] void restart(const char* function, const char* file, uint32_t line);
 
 
 // Macros to help with error propagation

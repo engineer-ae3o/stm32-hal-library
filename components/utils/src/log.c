@@ -9,6 +9,7 @@
 
 
 void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...) {
+    ASSERT(esc_code && tag && fmt);
     char full_string[FMT_STR_BUF_SIZE];
 
     // The message to be logged must always contain the line end, so we reserve space for it at the end of the buffer.

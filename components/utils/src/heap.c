@@ -22,9 +22,11 @@ static const char* TAG = "O1heap";
 
     s_heap_handle = o1heapInit(s_heap_buffer, sizeof(s_heap_buffer));
     if (s_heap_handle == NULL) {
-        LOGE(TAG, "Failed to initialize the heap. Halting.");
+        LOGE(TAG, "Failed to initialize the heap.");
         PANIC();
     }
+
+    LOGI(TAG, "Heap initialized with a size of %zukB", sizeof(s_heap_buffer) / 1024);
 }
 
 // Public API
@@ -77,14 +79,15 @@ bool check_heap_state(void) {
 }
 
 void get_heap_stats(heap_info_t* info) {
-    ASSERT(info);
-    const O1HeapDiagnostics diagnostics = o1heapGetDiagnostics(s_heap_handle);
-    info->max_capacity                  = diagnostics.capacity;
-    info->allocated_size                = diagnostics.allocated;
-    info->peak_allocated_size           = diagnostics.peak_allocated;
-    info->peak_request_size             = diagnostics.peak_request_size;
-    info->out_of_mem_count              = (size_t)diagnostics.oom_count;
-    info->num_of_allocations            = s_num_of_allocations;
+    if (info) {
+        const O1HeapDiagnostics diagnostics = o1heapGetDiagnostics(s_heap_handle);
+        info->max_capacity                  = diagnostics.capacity;
+        info->allocated_size                = diagnostics.allocated;
+        info->peak_allocated_size           = diagnostics.peak_allocated;
+        info->peak_request_size             = diagnostics.peak_request_size;
+        info->out_of_mem_count              = (size_t)diagnostics.oom_count;
+        info->num_of_allocations            = s_num_of_allocations;
+    }
 }
 
 void print_heap_stats(void) {
