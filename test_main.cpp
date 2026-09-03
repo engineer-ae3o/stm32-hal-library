@@ -230,15 +230,19 @@ int main() {
 
     // Configure the analog watchdog
     constexpr adc_analog_wdg_config_t awdg_config = {
-        .min_adc_value             = 0,
-        .max_adc_value             = 4095,
+        .min_adc_value             = 800,
+        .max_adc_value             = 3072,
         .monitor_regular_channels  = true,
         .monitor_injected_channels = true,
         .on_thresholds_violated =
-            [](void* arg) {
-                (void)arg;
-                LOGE("ADC_WDG", "Voltage on an ADC channel past the valid range");
-                PANIC();
+            [](void*) {
+                constexpr const char* TAG = "ADC_WDG";
+                LOGE(TAG, "Voltage on an ADC channel past the valid range");
+                LOGI(TAG, "Value of ADC1 regular group data register: %lu", ADC1->DR);
+                LOGI(TAG, "Value of ADC1 first injected group data register: %lu", ADC1->JDR1);
+                LOGI(TAG, "Value of ADC1 second injected group data register: %lu", ADC1->JDR2);
+                LOGI(TAG, "Value of ADC1 third injected group data register: %lu", ADC1->JDR3);
+                LOGI(TAG, "Value of ADC1 fourth injected group data register: %lu", ADC1->JDR4);
             },
         .arg = nullptr,
     };
@@ -262,7 +266,6 @@ int main() {
     ASSERT(adc_get_value_right_aligned(ADC1, raw_vref_int, ADC_RES_12_BITS, &vref_int) == HAL_OK);
     ASSERT(adc_get_value_right_aligned(ADC1, raw_channel_3, ADC_RES_12_BITS, &channel_3) == HAL_OK);
 
-    // Log the data
     LOGI("ADC", "VDDA: %.3fV", (double)vdda);
     LOGI("ADC", "V_bat: %.3fV", (double)vbat);
     LOGI("ADC", "PA3: %.3fV", (double)channel_3);
@@ -283,8 +286,8 @@ int main() {
                [](void* arg, hal_err_t err, uint32_t crc_32) {
                    UNUSED(arg);
                    ASSERT(err == HAL_OK);
-                   LOGI("CRC32", "CRC32 checksum of data gotten with DMA = %lu", crc_32);
-                   LOGI("CRC32", "CRC32 checksum of data gotten with DMA = 0x%X", (size_t)crc_32);
+                   LOGI("CRC32_DMA", "CRC32 checksum of data = %lu", crc_32);
+                   LOGI("CRC32_DMA", "CRC32 checksum of data = 0x%X", (size_t)crc_32);
                },
                nullptr) == HAL_OK);
 

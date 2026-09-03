@@ -449,14 +449,10 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         }
     }
 
-    // Enable the DMA clock and disable the stream
-    TRY(dmax_clk_enable(controller, true));
-    TRY(dma_disable_stream(stream));
-
-    // Clear the global DMA interrupt flags
-    TRY(dma_clear_flags(controller, stream_no));
-
     // Configuration of the DMA stream
+    TRY(dmax_clk_enable(controller, true));
+    TRY(dma_clear_flags(controller, stream_no));
+    TRY(dma_disable_stream(stream));
     dma_set_direction(stream, DMA_DIR_P_M);
     dma_set_direct_mode(stream, true);
     dma_set_channel(stream, channel);

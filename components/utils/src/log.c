@@ -28,7 +28,7 @@ void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...) {
     va_end(args);
 
     // Get the actual length of the format string that was written and ignore the null terminator added
-    const int actual_log_length = total_log_length > size_remaining ? (size_remaining - 1) : total_log_length;
+    const int actual_log_length = total_log_length >= size_remaining ? (size_remaining - 1) : total_log_length;
 
     // Write the line end at the back of the buffer
     size_t final_string_length = (size_t)(header_length + actual_log_length);

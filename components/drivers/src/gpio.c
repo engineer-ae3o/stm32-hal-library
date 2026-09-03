@@ -44,8 +44,10 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
 }
 
 void gpio_set_output(GPIO_TypeDef* port, uint8_t pin) {
-    port->MODER &= ~(0b11UL << (pin * 2));
-    port->MODER |= (0b1UL << (pin * 2));
+    if (port) {
+        port->MODER &= ~(0b11UL << (pin * 2));
+        port->MODER |= (0b1UL << (pin * 2));
+    }
 }
 
 void gpio_set_input(GPIO_TypeDef* port, uint8_t pin) {
@@ -185,7 +187,7 @@ void gpio_clear_interrupt(GPIO_TypeDef*, uint8_t pin) {
     EXTI->FTSR &= ~(0b1UL << pin);
 
     // Clear interrupt flag
-    EXTI->PR |= (0b1UL << pin);
+    EXTI->PR = (0b1UL << pin);
 
     // Mask interrupts for the pin
     EXTI->IMR &= ~(0b1UL << pin);

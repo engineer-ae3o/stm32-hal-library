@@ -187,10 +187,11 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
         TRY(gpio_set_alternate_function(config->gpio_port, config->mosi, alt_val));
         gpio_enable_pullup(config->gpio_port, config->mosi, true);
         gpio_set_speed_mode(config->gpio_port, config->mosi, GPIO_HIGH_SPEED);
-        gpio_set_output_type(config->gpio_port, config->miso, GPIO_PUSH_PULL);
+        gpio_set_output_type(config->gpio_port, config->mosi, GPIO_PUSH_PULL);
     }
 
     TRY(gpio_set_alternate_function(config->gpio_port, config->sclk, alt_val));
+    gpio_enable_pullup(config->gpio_port, config->sclk, true);
     gpio_set_speed_mode(config->gpio_port, config->sclk, GPIO_HIGH_SPEED);
     gpio_set_output_type(config->gpio_port, config->sclk, GPIO_PUSH_PULL);
 
@@ -270,17 +271,10 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Enable the DMA clock and disable the DMA streams
-    TRY(dmax_clk_enable(tx_controller, true));
-    TRY(dma_disable_stream(tx_stream));
-    TRY(dmax_clk_enable(rx_controller, true));
-    TRY(dma_disable_stream(rx_stream));
-
-    // Clear the global DMA interrupt flags
-    TRY(dma_clear_flags(tx_controller, tx_stream_no));
-    TRY(dma_clear_flags(rx_controller, rx_stream_no));
-
     // TX stream configuration
+    TRY(dmax_clk_enable(tx_controller, true));
+    TRY(dma_clear_flags(tx_controller, tx_stream_no));
+    TRY(dma_disable_stream(tx_stream));
     dma_set_channel(tx_stream, tx_channel);
     dma_set_direct_mode(tx_stream, true);
     dma_set_direction(tx_stream, DMA_DIR_M_P);
@@ -291,6 +285,9 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     dma_enable_irqs(tx_stream, true, true, false, true);
 
     // RX stream configuration
+    TRY(dmax_clk_enable(rx_controller, true));
+    TRY(dma_clear_flags(rx_controller, rx_stream_no));
+    TRY(dma_disable_stream(rx_stream));
     dma_set_channel(rx_stream, rx_channel);
     dma_set_direct_mode(rx_stream, true);
     dma_set_direction(rx_stream, DMA_DIR_P_M);

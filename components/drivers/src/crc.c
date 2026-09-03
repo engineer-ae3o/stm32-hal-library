@@ -2,6 +2,7 @@
 #include "utils/common.h"
 #include "drivers/crc.h"
 #include "drivers/dma.h"
+#include "utils/err.h"
 
 
 // The DMA stream being used
@@ -12,8 +13,8 @@
 #define CRC_DMA_IRQ_TYPE DMA2_Stream5_IRQn
 
 // User data
-crc_dma_done_cb_t s_user_callback = NULL;
-void*             s_user_data     = NULL;
+static crc_dma_done_cb_t s_user_callback = NULL;
+static void*             s_user_data     = NULL;
 
 
 // Public API
@@ -48,20 +49,15 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, crc_dma_done_cb_t cb,
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Reset the CRC peripheral
-    CRC->CR |= CRC_CR_RESET;
-
-    s_user_callback = cb;
-    s_user_data     = arg;
-
-    // Enable the DMA clock and disable the DMA streams
-    TRY(dmax_clk_enable(CRC_DMA_CONTROLLER, true));
-    TRY(dma_disable_stream(CRC_DMA_STREAM));
-
-    // Clear the global DMA interrupt flags
-    TRY(dma_clear_flags(CRC_DMA_CONTROLLER, CRC_DMA_STREAM_NO));
+    // If s_user_callback points to a valid address, a DMA transaction is still ongoing
+    if (s_user_callback) {
+        return HAL_ERR_INVALID_STATE;
+    }
 
     // Configuration
+    TRY(dmax_clk_enable(CRC_DMA_CONTROLLER, true));
+    TRY(dma_clear_flags(CRC_DMA_CONTROLLER, CRC_DMA_STREAM_NO));
+    TRY(dma_disable_stream(CRC_DMA_STREAM));
     dma_set_channel(CRC_DMA_STREAM, CRC_DMA_CHANNEL);
     dma_set_stream_priority(CRC_DMA_STREAM, DMA_PRIORITY_MEDIUM);
     dma_set_direction(CRC_DMA_STREAM, DMA_DIR_M_M);
@@ -77,6 +73,12 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, crc_dma_done_cb_t cb,
     // Enable the DMA stream interrupts
     NVIC_SetPriority(CRC_DMA_IRQ_TYPE, CRC_DMA_NVIC_IRQ_PRIORITY);
     NVIC_EnableIRQ(CRC_DMA_IRQ_TYPE);
+
+    // Reset the CRC peripheral
+    CRC->CR |= CRC_CR_RESET;
+
+    s_user_callback = cb;
+    s_user_data     = arg;
 
     return dma_enable_stream(CRC_DMA_STREAM);
 }

@@ -2,8 +2,8 @@
 #include "drivers/gpio.h"
 #include "utils/common.h"
 #include "drivers/spi.h"
-#include "utils/err.h"
 #include "drivers/i2s.h"
+#include "utils/err.h"
 
 #include <stddef.h>
 
@@ -14,7 +14,7 @@
 #if AUDIO_PLL_HZ == 76'800'000L
 #define prescaler_table (s_prescaler_table_76_8mhz)
 #else
-#error "No pll table defined for used frequency"
+#error "No pll table defined for used I2S PLL frequency"
 #endif
 
 
@@ -86,6 +86,7 @@ static const dma_stream_map_t s_i2s_dma_map[5] = {
         return 0xFFU;
     }
 }
+
 
 // Public API
 void i2s_pll_init(void) {
@@ -207,7 +208,6 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
     handle->I2SPR |= ((prescaler & 0x3FFUL) << SPI_I2SPR_I2SDIV_Pos);
 
-    // Clear used bits once in one read-modify-write op
     handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN);
 
     // Get frame size: It can only be 16 bits when the data is 16 bits
@@ -241,14 +241,14 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     // TX mapping
     DMA_TypeDef*        tx_controller = s_i2s_dma_map[idx].tx.controller;
     DMA_Stream_TypeDef* tx_stream     = s_i2s_dma_map[idx].tx.stream;
-    uint8_t             tx_channel    = s_i2s_dma_map[idx].tx.channel;
+    const uint8_t       tx_channel    = s_i2s_dma_map[idx].tx.channel;
     const uint8_t       tx_stream_no  = s_i2s_dma_map[idx].tx.stream_no;
     const IRQn_Type     tx_irq_type   = s_i2s_dma_map[idx].tx.irq_type;
 
     // RX mapping
     DMA_TypeDef*        rx_controller = s_i2s_dma_map[idx].rx.controller;
     DMA_Stream_TypeDef* rx_stream     = s_i2s_dma_map[idx].rx.stream;
-    uint8_t             rx_channel    = s_i2s_dma_map[idx].rx.channel;
+    const uint8_t       rx_channel    = s_i2s_dma_map[idx].rx.channel;
     const uint8_t       rx_stream_no  = s_i2s_dma_map[idx].rx.stream_no;
     const IRQn_Type     rx_irq_type   = s_i2s_dma_map[idx].rx.irq_type;
 
@@ -256,18 +256,10 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Enable the DMA clock and disable the DMA streams
-    TRY(dmax_clk_enable(tx_controller, true));
-    TRY(dma_disable_stream(tx_stream));
-    TRY(dmax_clk_enable(rx_controller, true));
-    TRY(dma_disable_stream(rx_stream));
-
-    // Clear the global DMA interrupt flags
-    TRY(dma_clear_flags(tx_controller, tx_stream_no));
-    TRY(dma_clear_flags(rx_controller, rx_stream_no));
-
     // TX stream configuration
-    dma_clear_flags(tx_controller, tx_stream_no);
+    TRY(dmax_clk_enable(tx_controller, true));
+    TRY(dma_clear_flags(tx_controller, tx_stream_no));
+    TRY(dma_disable_stream(tx_stream));
     dma_set_channel(tx_stream, tx_channel);
     dma_set_direct_mode(tx_stream, true);
     dma_set_direction(tx_stream, DMA_DIR_M_P);
@@ -279,7 +271,9 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     dma_set_per_mem_size(tx_stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
 
     // RX stream configuration
-    dma_clear_flags(rx_controller, rx_stream_no);
+    TRY(dmax_clk_enable(rx_controller, true));
+    TRY(dma_clear_flags(rx_controller, rx_stream_no));
+    TRY(dma_disable_stream(rx_stream));
     dma_set_channel(rx_stream, rx_channel);
     dma_set_direct_mode(rx_stream, true);
     dma_set_direction(rx_stream, DMA_DIR_P_M);
