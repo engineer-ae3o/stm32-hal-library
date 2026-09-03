@@ -3,16 +3,17 @@
 #include "drivers/uart.h"
 #include "utils/common.h"
 #include "drivers/dma.h"
+#include "utils/err.h"
 
 
-// The 3 UART channels: ISRs called when the DMA is done
+// The 3 UART peripheral instances: ISRs called when the DMA is done
 static dma_trans_done_cb_t s_dma_tx_done_cbs[3] = {};
 static dma_trans_done_cb_t s_dma_rx_done_cbs[3] = {};
 
 static void* s_tx_args[3] = {};
 static void* s_rx_args[3] = {};
 
-// Mapping for the DMA channels for the 3 USART channels
+// Mapping for the DMA channels for the 3 USART peripheral instances
 static const dma_stream_map_t s_uart_dma_map[3] = {
     // USART1
     {
@@ -53,7 +54,7 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     // Transfers require us to poll on the TC flag
     // even after data has been shifted out
 
-    // Poll till TC has been set
+    // Poll till the TC bit has been set
     // Skip polling if an error has occurred
     if (ret == HAL_OK) {
         uint32_t timeout = TIMEOUT_CYCLES;
@@ -71,11 +72,14 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     s_dma_tx_done_cbs[idx] = NULL;
     s_tx_args[idx]         = NULL;
 
+    // Disable UART DMA
+    handle->CR3 &= ~USART_CR3_DMAT;
+
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
 }
 
-[[__gnu__::__always_inline__]] static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_rx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t idx) {
     if (!s_dma_rx_done_cbs[idx]) {
         return;
     }
@@ -87,6 +91,9 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     // Clear the user passed callback since this is a one-off event
     s_dma_rx_done_cbs[idx] = NULL;
     s_rx_args[idx]         = NULL;
+
+    // Disable UART DMA
+    handle->CR3 &= ~USART_CR3_DMAR;
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
@@ -126,7 +133,7 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Disable the UART peripheral before modifying its peripherals
+    // Disable the UART peripheral before modifying its registers
     handle->CR1 &= ~USART_CR1_UE;
 
     // 8 bit UART and parity bit disabled
@@ -181,17 +188,19 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     return HAL_OK;
 }
 
-void uart_enable(USART_TypeDef* handle, bool enable) {
-    if (handle) {
-        if (enable) {
-            handle->CR1 |= (USART_CR1_TE | USART_CR1_RE);
-        } else {
-            handle->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
-        }
+hal_err_t uart_enable(USART_TypeDef* handle, bool enable) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
     }
+    if (enable) {
+        handle->CR1 |= (USART_CR1_TE | USART_CR1_RE);
+    } else {
+        handle->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
+    }
+    return HAL_OK;
 }
 
-hal_err_t uart_dma_init(USART_TypeDef* handle) {
+hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -220,7 +229,7 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     TRY(dma_clear_flags(tx_controller, tx_stream_no));
     TRY(dma_disable_stream(tx_stream));
     dma_set_channel(tx_stream, tx_channel);
-    dma_set_stream_priority(tx_stream, DMA_PRIORITY_MEDIUM);
+    dma_set_stream_priority(tx_stream, priority);
     dma_set_direction(tx_stream, DMA_DIR_M_P);
     dma_enable_irqs(tx_stream, true, true, false, true);
     dma_set_increment(tx_stream, false, true);
@@ -234,7 +243,7 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     TRY(dma_clear_flags(rx_controller, rx_stream_no));
     TRY(dma_disable_stream(rx_stream));
     dma_set_channel(rx_stream, rx_channel);
-    dma_set_stream_priority(rx_stream, DMA_PRIORITY_MEDIUM);
+    dma_set_stream_priority(rx_stream, priority);
     dma_set_direction(rx_stream, DMA_DIR_P_M);
     dma_enable_irqs(rx_stream, true, true, false, true);
     dma_set_increment(rx_stream, false, true);
@@ -253,27 +262,35 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     return HAL_OK;
 }
 
-void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
-    if (handle) {
-        // Wait till the data register is empty
-        while (!(handle->SR & USART_SR_TXE));
-        handle->DR = byte;
+hal_err_t uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
     }
+    // Wait till the data register is empty
+    while (!(handle->SR & USART_SR_TXE));
+    handle->DR = byte;
+    return HAL_OK;
 }
 
-void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t size) {
-    if (handle && data && size != 0) {
-        for (size_t i = 0U; i < size; i++) {
-            uart_transmit_byte(handle, data[i]);
-        }
-        // Wait till all bytes have been fully transmitted
-        while (!(handle->SR & USART_SR_TC));
+hal_err_t uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t size) {
+    if (handle == NULL || data == NULL || size == 0) {
+        return HAL_ERR_INVALID_ARG;
     }
+    for (size_t i = 0; i < size; i++) {
+        uart_transmit_byte(handle, data[i]);
+    }
+    // Wait till all bytes have been fully transmitted
+    while (!(handle->SR & USART_SR_TC));
+    return HAL_OK;
 }
 
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t size, dma_trans_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    if (data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -307,6 +324,10 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
         return HAL_ERR_INVALID_ARG;
     }
 
+    if (data == NULL || size == 0) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // RX mapping
     DMA_Stream_TypeDef* stream = s_uart_dma_map[idx].rx.stream;
     if (stream == NULL) {
@@ -335,27 +356,23 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
 // USART1: TX
 void DMA2_Stream7_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA2_Stream7, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7, DMA_HISR_HTIF7);
-    isr_tx_helper(USART1, ret, 0);
-    USART1->CR3 &= ~USART_CR3_DMAT;
+    isr_tx_helper(USART1, ret, get_index(USART1));
 }
 
 // USART1: RX
 void DMA2_Stream2_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
-    isr_rx_helper(ret, 0);
-    USART1->CR3 &= ~USART_CR3_DMAR;
+    isr_rx_helper(USART1, ret, get_index(USART1));
 }
 
 // USART2: TX
 void DMA1_Stream6_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA1_Stream6, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
-    isr_tx_helper(USART2, ret, 1);
-    USART2->CR3 &= ~USART_CR3_DMAT;
+    isr_tx_helper(USART2, ret, get_index(USART2));
 }
 
 // USART2: RX
 void DMA1_Stream5_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
-    isr_rx_helper(ret, 1);
-    USART2->CR3 &= ~USART_CR3_DMAR;
+    isr_rx_helper(USART2, ret, get_index(USART2));
 }

@@ -142,7 +142,7 @@ void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circ, bool ena_db
     }
 }
 
-void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc, bool te, bool hte, bool dme) {
+void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc, bool te, bool ht, bool dme) {
     stream->CR &= ~(DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_HTIE | DMA_SxCR_DMEIE);
     if (tc) {
         stream->CR |= DMA_SxCR_TCIE;
@@ -150,7 +150,7 @@ void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc, bool te, bool hte, boo
     if (te) {
         stream->CR |= DMA_SxCR_TEIE;
     }
-    if (hte) {
+    if (ht) {
         stream->CR |= DMA_SxCR_HTIE;
     }
     if (dme) {

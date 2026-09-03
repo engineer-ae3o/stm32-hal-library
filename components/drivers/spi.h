@@ -34,7 +34,7 @@ typedef struct {
 
 hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable);
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config);
-void      spi_master_enable(SPI_TypeDef* handle, bool enable);
+hal_err_t spi_master_enable(SPI_TypeDef* handle, bool enable);
 hal_err_t spi_master_dma_init(SPI_TypeDef* handle);
 
 // Polling API
@@ -46,9 +46,6 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
 hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t size, dma_trans_done_cb_t cb, void* arg);
 hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size, dma_trans_done_cb_t cb, void* arg);
 hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t size, dma_trans_done_cb_t cb, void* arg);
-
-// To be used by i2s.c. Not to be called directly from user application
-void spi_master_register_callback(dma_trans_done_cb_t cb, void* arg, uint8_t idx, bool tx);
 
 
 #ifdef __cplusplus

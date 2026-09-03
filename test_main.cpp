@@ -4,6 +4,7 @@
 #include "drivers/gpio.h"
 #include "drivers/crc.h"
 #include "drivers/adc.h"
+#include "drivers/i2s.h"
 #include "utils/tick.h"
 #include "utils/log.h"
 
@@ -213,6 +214,11 @@ int main() {
     LOGI("Main", "Done with all tests. Halting...");
     */
 
+    i2sx_clk_enable(I2S1, true);
+    i2s_master_init(I2S1, nullptr);
+    i2s_master_dma_init(I2S1);
+    i2s_master_enable(I2S1, true);
+    i2s_master_transmit(I2S1, nullptr, 0, nullptr, nullptr);
 
     // ADC peripheral
     adc_clk_configure(ADC_CLK_PRESCALER_4);

@@ -2,6 +2,7 @@
 #include "utils/err.h"
 
 #include <stdint.h>
+#include <stddef.h>
 
 
 hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
@@ -143,15 +144,11 @@ bool gpio_get_level(GPIO_TypeDef* port, uint8_t pin) {
 }
 
 hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_t edge) {
-    if (!port) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
     // Extract register index and bit position
     const uint8_t reg_idx = pin / 4;
     const uint8_t bit_pos = (pin % 4) * 4;
 
-    // Get port code from gpio port
+    // Get the port code from the gpio port
     uint8_t port_code = 0;
     if (port == GPIOA) {
         port_code = 0b000U;

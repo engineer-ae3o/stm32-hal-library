@@ -87,9 +87,12 @@ static const dma_stream_map_t s_i2s_dma_map[5] = {
     }
 }
 
+// Defined in spi.c. Used to pass DMA interrupt callbacks since the interrupt handlers are managed by the SPI driver
+extern void spi_master_register_callback(dma_trans_done_cb_t cb, void* arg, uint8_t idx, bool tx);
+
 
 // Public API
-void i2s_pll_init(void) {
+void i2s_pll_init_76_8mhz(void) {
     // Disable the audio PLL before setup
     RCC->CR &= ~RCC_CR_PLLI2SON;
 
@@ -101,7 +104,7 @@ void i2s_pll_init(void) {
 
     // Divide the HSE or HSI clock by its value in MHz to get a Vco of 1MHz regardless of its value
     RCC->PLLI2SCFGR &= ~(RCC_PLLI2SCFGR_PLLI2SM | RCC_PLLI2SCFGR_PLLI2SN | RCC_PLLI2SCFGR_PLLI2SR);
-    RCC->PLLI2SCFGR |= (clock_mhz << RCC_PLLI2SCFGR_PLLI2SM_Pos) | // PLLI2SM of val: Divides either the HSE or HSI by val to get a 1MHz Vco
+    RCC->PLLI2SCFGR |= (clock_mhz << RCC_PLLI2SCFGR_PLLI2SM_Pos) | // PLLI2SM of the main PLL: Divides either the HSE or the HSI to get a 1MHz Vco
                        (384UL << RCC_PLLI2SCFGR_PLLI2SN_Pos) |     // PLLI2SN of 384: Multiplies Vco by 384 to get 384MHz
                        (5UL << RCC_PLLI2SCFGR_PLLI2SR_Pos);        // PLLI2SR of 5: Divides the 384MHz Vco by 5 to get us 76.8MHz
 
@@ -228,14 +231,16 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     return HAL_OK;
 }
 
-void i2s_master_enable(I2S_TypeDef* handle, bool enable) {
-    if (handle) {
-        if (enable) {
-            handle->I2SCFGR |= SPI_I2SCFGR_I2SE;
-        } else {
-            handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
-        }
+hal_err_t i2s_master_enable(I2S_TypeDef* handle, bool enable) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
     }
+    if (enable) {
+        handle->I2SCFGR |= SPI_I2SCFGR_I2SE;
+    } else {
+        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
+    }
+    return HAL_OK;
 }
 
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
@@ -309,6 +314,10 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t siz
         return HAL_ERR_INVALID_ARG;
     }
 
+    if (buf == NULL || size == 0) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // TX mapping
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].tx.stream;
     if (stream == NULL) {
@@ -340,6 +349,10 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_
         return HAL_ERR_INVALID_ARG;
     }
 
+    if (buf == NULL || size == 0) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // RX mapping
     DMA_Stream_TypeDef* stream = s_i2s_dma_map[idx].rx.stream;
     if (stream == NULL) {
@@ -365,6 +378,10 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t size, dma_trans_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    if (buf_a == NULL || buf_b == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -425,7 +442,7 @@ hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle) {
     return dma_disable_stream(s_i2s_dma_map[idx].rx.stream);
 }
 
-uint32_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle) {
+uint8_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return 0xFFU;
@@ -438,5 +455,5 @@ uint32_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle) {
     // 0 represents buf_a, and 1 buf_b. If the bit
     // is 0, that means buf_a is currently being used
     // by the DMA controller buf_b is filled and free
-    return (stream->CR & DMA_SxCR_CT) ? 0x0 : 0x1U;
+    return (stream->CR & DMA_SxCR_CT) ? 0 : 1;
 }

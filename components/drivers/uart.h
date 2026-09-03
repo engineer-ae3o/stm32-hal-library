@@ -13,16 +13,15 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
-#include <stdbool.h>
 
 
 typedef enum : uint8_t {
     UART_OVER_SAMPLING_8  = 8,
     UART_OVER_SAMPLING_16 = 16,
-} uart_over_sampling_rate_t;
+} uart_over_sample_t;
 
 typedef struct {
-    uart_over_sampling_rate_t over_sampling;
+    uart_over_sample_t over_sampling;
 
     uint8_t       tx_pin;
     uint8_t       rx_pin;
@@ -34,12 +33,12 @@ typedef struct {
 
 hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable);
 hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config);
-void      uart_enable(USART_TypeDef* handle, bool enable);
-hal_err_t uart_dma_init(USART_TypeDef* handle);
+hal_err_t uart_enable(USART_TypeDef* handle, bool enable);
+hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority);
 
-// Polling API
-void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte);
-void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t size);
+// Polling TX API
+hal_err_t uart_transmit_byte(USART_TypeDef* handle, uint8_t byte);
+hal_err_t uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t size);
 
 // DMA transfer API
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t size, dma_trans_done_cb_t callback, void* arg);
