@@ -122,6 +122,10 @@ hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable) {
 }
 
 hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
+    if (handle == NULL || config == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // Disable the UART peripheral before modifying its peripherals
     handle->CR1 &= ~USART_CR1_UE;
 
@@ -137,10 +141,10 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Set oversampling and baud rate divider
     // The fractional part can only be 3 bits if oversampling is 8
-    if (config->over_sampling == 8) {
+    if (config->over_sampling == UART_OVER_SAMPLING_8) {
         handle->CR1 |= USART_CR1_OVER8;
         handle->BRR = (uint32_t)(mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x07U);
-    } else if (config->over_sampling == 16) {
+    } else if (config->over_sampling == UART_OVER_SAMPLING_16) {
         handle->CR1 &= ~USART_CR1_OVER8;
         handle->BRR = (uint32_t)(mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x0FU);
     } else {
@@ -178,10 +182,12 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 }
 
 void uart_enable(USART_TypeDef* handle, bool enable) {
-    if (enable) {
-        handle->CR1 |= (USART_CR1_TE | USART_CR1_RE);
-    } else {
-        handle->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
+    if (handle) {
+        if (enable) {
+            handle->CR1 |= (USART_CR1_TE | USART_CR1_RE);
+        } else {
+            handle->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
+        }
     }
 }
 
@@ -247,30 +253,22 @@ hal_err_t uart_dma_init(USART_TypeDef* handle) {
     return HAL_OK;
 }
 
-hal_err_t uart_get_dma_stream(USART_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    *tx = s_uart_dma_map[idx].tx.stream;
-    *rx = s_uart_dma_map[idx].rx.stream;
-
-    return HAL_OK;
-}
-
 void uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
-    // Wait till the data register is empty
-    while (!(handle->SR & USART_SR_TXE));
-    handle->DR = byte;
+    if (handle) {
+        // Wait till the data register is empty
+        while (!(handle->SR & USART_SR_TXE));
+        handle->DR = byte;
+    }
 }
 
 void uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t size) {
-    for (size_t i = 0U; i < size; i++) {
-        uart_transmit_byte(handle, data[i]);
+    if (handle && data && size != 0) {
+        for (size_t i = 0U; i < size; i++) {
+            uart_transmit_byte(handle, data[i]);
+        }
+        // Wait till all bytes have been fully transmitted
+        while (!(handle->SR & USART_SR_TC));
     }
-    // Wait till all bytes have been fully transmitted
-    while (!(handle->SR & USART_SR_TC));
 }
 
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t size, dma_trans_done_cb_t callback, void* arg) {

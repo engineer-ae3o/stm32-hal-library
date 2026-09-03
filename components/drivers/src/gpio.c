@@ -1,4 +1,5 @@
 #include "drivers/gpio.h"
+#include "utils/err.h"
 
 #include <stdint.h>
 
@@ -51,75 +52,101 @@ void gpio_set_output(GPIO_TypeDef* port, uint8_t pin) {
 }
 
 void gpio_set_input(GPIO_TypeDef* port, uint8_t pin) {
-    port->MODER &= ~(0b11UL << (pin * 2));
+    if (port) {
+        port->MODER &= ~(0b11UL << (pin * 2));
+    }
 }
 
 void gpio_set_analog(GPIO_TypeDef* port, uint8_t pin) {
-    // ORing in 0b11 gets us our desired value regardless of
-    // previous state, so it is redundant to clear it first
-    port->MODER |= (0b11UL << (pin * 2));
+    if (port) {
+        // ORing in 0b11 gets us our desired value regardless of
+        // previous state, so it is redundant to clear it first
+        port->MODER |= (0b11UL << (pin * 2));
+    }
 }
 
 hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, uint8_t pin, uint8_t alt_val) {
-    // Set the MODER for alternate mode
-    port->MODER &= ~(0b11UL << (pin * 2));
-    port->MODER |= (0b10UL << (pin * 2));
+    if (port) {
+        // Set the MODER for alternate mode
+        port->MODER &= ~(0b11UL << (pin * 2));
+        port->MODER |= (0b10UL << (pin * 2));
 
-    // Set the specified alternate function
-    if (pin <= 7) {
-        port->AFR[0] &= ~(0xFUL << (pin * 4UL));
-        port->AFR[0] |= ((alt_val & 0xFUL) << (pin * 4UL));
-    } else if (pin <= 15) {
-        port->AFR[1] &= ~(0xFUL << ((pin - 8) * 4UL));
-        port->AFR[1] |= ((alt_val & 0xFUL) << ((pin - 8) * 4UL));
-    } else {
-        return HAL_ERR_INVALID_ARG;
+        // Set the specified alternate function
+        if (pin <= 7) {
+            port->AFR[0] &= ~(0xFUL << (pin * 4UL));
+            port->AFR[0] |= ((alt_val & 0xFUL) << (pin * 4UL));
+        } else if (pin <= 15) {
+            port->AFR[1] &= ~(0xFUL << ((pin - 8) * 4UL));
+            port->AFR[1] |= ((alt_val & 0xFUL) << ((pin - 8) * 4UL));
+        } else {
+            return HAL_ERR_INVALID_ARG;
+        }
+
+        return HAL_OK;
     }
-
-    return HAL_OK;
+    return HAL_ERR_INVALID_ARG;
 }
 
 void gpio_enable_pullup(GPIO_TypeDef* port, uint8_t pin, bool enable) {
-    port->PUPDR &= ~(0b11UL << (pin * 2));
-    if (enable) {
-        port->PUPDR |= (0b1UL << (pin * 2));
+    if (port) {
+        port->PUPDR &= ~(0b11UL << (pin * 2));
+        if (enable) {
+            port->PUPDR |= (0b1UL << (pin * 2));
+        }
     }
 }
 
 void gpio_enable_pulldown(GPIO_TypeDef* port, uint8_t pin, bool enable) {
-    port->PUPDR &= ~(0b11UL << (pin * 2));
-    if (enable) {
-        port->PUPDR |= (0b10UL << (pin * 2));
+    if (port) {
+        port->PUPDR &= ~(0b11UL << (pin * 2));
+        if (enable) {
+            port->PUPDR |= (0b10UL << (pin * 2));
+        }
     }
 }
 
 void gpio_set_output_type(GPIO_TypeDef* port, uint8_t pin, gpio_output_type_t type) {
-    if ((uint8_t)type) {
-        port->OTYPER |= (1UL << pin);
-    } else {
-        port->OTYPER &= ~(1UL << pin);
+    if (port) {
+        if (type == GPIO_OPEN_DRAIN) {
+            port->OTYPER |= (1UL << pin);
+        } else if (type == GPIO_PUSH_PULL) {
+            port->OTYPER &= ~(1UL << pin);
+        }
     }
 }
 
 void gpio_set_speed_mode(GPIO_TypeDef* port, uint8_t pin, gpio_speed_mode_t mode) {
-    port->OSPEEDR &= ~(0b11UL << (pin * 2));
-    port->OSPEEDR |= ((uint32_t)mode << (pin * 2));
+    if (port) {
+        port->OSPEEDR &= ~(0b11UL << (pin * 2));
+        port->OSPEEDR |= ((uint32_t)mode << (pin * 2));
+    }
 }
 
 void gpio_level_set(GPIO_TypeDef* port, uint8_t pin, bool level) {
-    level ? (port->BSRR = (0b1UL << pin)) : (port->BSRR = (0b1UL << (pin + 16)));
+    if (port) {
+        level ? (port->BSRR = (0b1UL << pin)) : (port->BSRR = (0b1UL << (pin + 16)));
+    }
 }
 
 void gpio_level_toggle(GPIO_TypeDef* port, uint8_t pin) {
-    // Read the level of the pin and then toggle it
-    gpio_level_set(port, pin, !gpio_get_level(port, pin));
+    if (port) {
+        // Read the level of the pin and then toggle it
+        gpio_level_set(port, pin, !gpio_get_level(port, pin));
+    }
 }
 
 bool gpio_get_level(GPIO_TypeDef* port, uint8_t pin) {
+    if (!port) {
+        return false;
+    }
     return ((port->IDR >> pin) & 0x01U);
 }
 
 hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_t edge) {
+    if (!port) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // Extract register index and bit position
     const uint8_t reg_idx = pin / 4;
     const uint8_t bit_pos = (pin % 4) * 4;
@@ -174,21 +201,23 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_
     return HAL_OK;
 }
 
-void gpio_clear_interrupt(GPIO_TypeDef*, uint8_t pin) {
-    // Extract register index and bit position
-    const uint8_t reg_idx = pin / 4;
-    const uint8_t bit_pos = (pin % 4) * 4;
+void gpio_clear_interrupt(GPIO_TypeDef* port, uint8_t pin) {
+    if (port) {
+        // Extract register index and bit position
+        const uint8_t reg_idx = pin / 4;
+        const uint8_t bit_pos = (pin % 4) * 4;
 
-    // Clear external interrupt configuration register
-    SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
+        // Clear external interrupt configuration register
+        SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
 
-    // Clear both interrupt edge registers
-    EXTI->RTSR &= ~(0b1UL << pin);
-    EXTI->FTSR &= ~(0b1UL << pin);
+        // Clear both interrupt edge registers
+        EXTI->RTSR &= ~(0b1UL << pin);
+        EXTI->FTSR &= ~(0b1UL << pin);
 
-    // Clear interrupt flag
-    EXTI->PR = (0b1UL << pin);
+        // Clear interrupt flag
+        EXTI->PR = (0b1UL << pin);
 
-    // Mask interrupts for the pin
-    EXTI->IMR &= ~(0b1UL << pin);
+        // Mask interrupts for the pin
+        EXTI->IMR &= ~(0b1UL << pin);
+    }
 }

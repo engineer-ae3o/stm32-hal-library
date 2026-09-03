@@ -10,7 +10,6 @@ set(SRCS
     src/dma.c
     src/gpio.c
     src/uart.c
-    src/wwdg.c
     src/iwdg.c
     src/timer.c
 )

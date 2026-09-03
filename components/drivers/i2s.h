@@ -63,10 +63,10 @@ typedef struct {
     bool cpol;
     bool use_mck;
 
-    uint8_t mck;
-    uint8_t ws;
-    uint8_t sd;
-    uint8_t sck;
+    uint8_t mck_pin;
+    uint8_t ws_pin;
+    uint8_t sd_pin;
+    uint8_t sck_pin;
 
     GPIO_TypeDef* gpio_port;
 } i2s_master_config_t;
@@ -81,7 +81,6 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 void i2s_master_enable(I2S_TypeDef* handle, bool enable);
 
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle);
-hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx);
 
 // DMA backed transfers API. The user should only enable the I2S peripheral with
 // i2s_master_enable(...) after confirming that these functions return HAL_OK.

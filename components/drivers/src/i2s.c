@@ -150,6 +150,10 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
 }
 
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config) {
+    if (handle == NULL || config == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // Configure the GPIO pins
     TRY(gpiox_clk_enable(config->gpio_port, true));
 
@@ -169,32 +173,32 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 
     // MCK
     if (config->use_mck) {
-        TRY(gpio_set_alternate_function(config->gpio_port, config->mck, alt_val));
-        gpio_enable_pullup(config->gpio_port, config->mck, true);
-        gpio_set_speed_mode(config->gpio_port, config->mck, GPIO_MEDIUM_SPEED);
-        gpio_set_output_type(config->gpio_port, config->mck, GPIO_PUSH_PULL);
+        TRY(gpio_set_alternate_function(config->gpio_port, config->mck_pin, alt_val));
+        gpio_enable_pullup(config->gpio_port, config->mck_pin, true);
+        gpio_set_speed_mode(config->gpio_port, config->mck_pin, GPIO_MEDIUM_SPEED);
+        gpio_set_output_type(config->gpio_port, config->mck_pin, GPIO_PUSH_PULL);
     }
 
     // SD pin: Can be input or output
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sd, alt_val));
-    gpio_enable_pullup(config->gpio_port, config->sd, true);
-    gpio_set_speed_mode(config->gpio_port, config->sd, GPIO_MEDIUM_SPEED);
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sd_pin, alt_val));
+    gpio_enable_pullup(config->gpio_port, config->sd_pin, true);
+    gpio_set_speed_mode(config->gpio_port, config->sd_pin, GPIO_MEDIUM_SPEED);
     // Only set output type as push pull when we are driving, that is, in TX mode
     if (config->dir == I2S_DIR_HALF_DUPLEX_TX) {
-        gpio_set_output_type(config->gpio_port, config->sd, GPIO_PUSH_PULL);
+        gpio_set_output_type(config->gpio_port, config->sd_pin, GPIO_PUSH_PULL);
     }
 
     // WS pin
-    TRY(gpio_set_alternate_function(config->gpio_port, config->ws, alt_val));
-    gpio_enable_pullup(config->gpio_port, config->ws, true);
-    gpio_set_speed_mode(config->gpio_port, config->ws, GPIO_MEDIUM_SPEED);
-    gpio_set_output_type(config->gpio_port, config->ws, GPIO_PUSH_PULL);
+    TRY(gpio_set_alternate_function(config->gpio_port, config->ws_pin, alt_val));
+    gpio_enable_pullup(config->gpio_port, config->ws_pin, true);
+    gpio_set_speed_mode(config->gpio_port, config->ws_pin, GPIO_MEDIUM_SPEED);
+    gpio_set_output_type(config->gpio_port, config->ws_pin, GPIO_PUSH_PULL);
 
     // SCK pin
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sck, alt_val));
-    gpio_enable_pullup(config->gpio_port, config->sck, true);
-    gpio_set_speed_mode(config->gpio_port, config->sck, GPIO_MEDIUM_SPEED);
-    gpio_set_output_type(config->gpio_port, config->sck, GPIO_PUSH_PULL);
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sck_pin, alt_val));
+    gpio_enable_pullup(config->gpio_port, config->sck_pin, true);
+    gpio_set_speed_mode(config->gpio_port, config->sck_pin, GPIO_MEDIUM_SPEED);
+    gpio_set_output_type(config->gpio_port, config->sck_pin, GPIO_PUSH_PULL);
 
     // Disable the SPI and I2S peripheral before modifying its registers
     handle->CR1 &= ~SPI_CR1_SPE;
@@ -225,10 +229,12 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 }
 
 void i2s_master_enable(I2S_TypeDef* handle, bool enable) {
-    if (enable) {
-        handle->I2SCFGR |= SPI_I2SCFGR_I2SE;
-    } else {
-        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
+    if (handle) {
+        if (enable) {
+            handle->I2SCFGR |= SPI_I2SCFGR_I2SE;
+        } else {
+            handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
+        }
     }
 }
 
@@ -293,18 +299,6 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
 
     NVIC_SetPriority(rx_irq_type, I2S_DMA_NVIC_IRQ_PRIORITY);
     NVIC_EnableIRQ(rx_irq_type);
-
-    return HAL_OK;
-}
-
-hal_err_t i2s_master_get_dma_stream(I2S_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    *tx = s_i2s_dma_map[idx].tx.stream;
-    *rx = s_i2s_dma_map[idx].rx.stream;
 
     return HAL_OK;
 }

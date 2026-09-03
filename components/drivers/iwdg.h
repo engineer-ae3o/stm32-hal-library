@@ -10,7 +10,7 @@ extern "C" {
 #include <stdint.h>
 
 
-void iwdg_start(uint32_t reload_val_s);
+void iwdg_start(uint32_t reload_value_s);
 void iwdg_kick(void);
 
 

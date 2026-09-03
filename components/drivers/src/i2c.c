@@ -43,26 +43,30 @@ hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
 }
 
 hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config) {
+    if (handle == NULL || config == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // Configure pins for I2C
     // Enable gpio channel clock
     TRY(gpiox_clk_enable(config->gpio_port, true));
 
     // Set pins to alternate function for I2C
     // I2C uses an alternate function value of 0b100
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sda, 0b100U));
-    TRY(gpio_set_alternate_function(config->gpio_port, config->scl, 0b100U));
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sda_pin, 0b100U));
+    TRY(gpio_set_alternate_function(config->gpio_port, config->scl_pin, 0b100U));
 
     // Set as open drain
-    gpio_set_output_type(config->gpio_port, config->sda, GPIO_OPEN_DRAIN);
-    gpio_set_output_type(config->gpio_port, config->scl, GPIO_OPEN_DRAIN);
+    gpio_set_output_type(config->gpio_port, config->sda_pin, GPIO_OPEN_DRAIN);
+    gpio_set_output_type(config->gpio_port, config->scl_pin, GPIO_OPEN_DRAIN);
 
     // Speed mode
-    gpio_set_speed_mode(config->gpio_port, config->sda, GPIO_MEDIUM_SPEED);
-    gpio_set_speed_mode(config->gpio_port, config->scl, GPIO_MEDIUM_SPEED);
+    gpio_set_speed_mode(config->gpio_port, config->sda_pin, GPIO_MEDIUM_SPEED);
+    gpio_set_speed_mode(config->gpio_port, config->scl_pin, GPIO_MEDIUM_SPEED);
 
     // Pullups
-    gpio_enable_pullup(config->gpio_port, config->sda, config->use_pullup);
-    gpio_enable_pullup(config->gpio_port, config->scl, config->use_pullup);
+    gpio_enable_pullup(config->gpio_port, config->sda_pin, config->use_pullup);
+    gpio_enable_pullup(config->gpio_port, config->scl_pin, config->use_pullup);
 
     // Disable the I2C peripheral before writing to any of its registers
     handle->CR1 &= ~I2C_CR1_PE;
@@ -107,6 +111,10 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 }
 
 hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t size) {
+    if (handle == NULL || data == NULL || addr == 0 || size == 0) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_ERR_INVALID_STATE;
@@ -127,6 +135,10 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* 
 }
 
 hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t size) {
+    if (handle == NULL || data == NULL || addr == 0 || size == 0) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_ERR_INVALID_STATE;
@@ -142,6 +154,10 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, s
 }
 
 hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t* tx_data, size_t tx_len, uint8_t* rx_data, size_t rx_len) {
+    if (handle == NULL || addr == 0 || tx_data == NULL || tx_len == 0 || rx_data == NULL || rx_len == 0) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
         return HAL_ERR_INVALID_STATE;
@@ -174,8 +190,8 @@ static bool send_start(I2C_TypeDef* handle) {
     handle->CR1 |= I2C_CR1_START;
 
     // Poll the start bit in the SR1 register
-    uint32_t timeout = TIMEOUT_CYCLES;
-    while (!(handle->SR1 & I2C_SR1_SB) && (--timeout)) {
+    uint32_t timeout_cycles = TIMEOUT_CYCLES;
+    while (!(handle->SR1 & I2C_SR1_SB) && (--timeout_cycles)) {
         if (handle->SR1 & I2C_SR1_BERR) {
             handle->SR1 &= ~I2C_SR1_BERR;
             // Continue with the transfer as spurious bus errors don't corrupt the transaction
@@ -187,7 +203,7 @@ static bool send_start(I2C_TypeDef* handle) {
             return false;
         }
     }
-    if (!(handle->SR1 & I2C_SR1_SB) || (timeout == 0)) {
+    if (!(handle->SR1 & I2C_SR1_SB) || (timeout_cycles == 0)) {
         return false;
     }
 
@@ -206,8 +222,8 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
     handle->DR = ((uint32_t)(addr << 1UL) | 0UL);
 
     // Wait for ACK
-    uint32_t timeout = TIMEOUT_CYCLES;
-    while (!(handle->SR1 & I2C_SR1_ADDR) && (--timeout)) {
+    uint32_t timeout_cycles = TIMEOUT_CYCLES;
+    while (!(handle->SR1 & I2C_SR1_ADDR) && (--timeout_cycles)) {
         // Check all error flags since the success flag doesn't get set when there's an error
         if (handle->SR1 & I2C_SR1_AF) {
             handle->SR1 &= ~I2C_SR1_AF;
@@ -224,7 +240,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
     }
 
     // Return if the ADDR bit still hasn't been set
-    if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout == 0)) {
+    if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout_cycles == 0)) {
         return HAL_FAIL;
     }
 
@@ -235,8 +251,8 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
     // Start transmission after receiving ACK
     for (size_t i = 0U; i < size; i++) {
         // Wait for TXE
-        timeout = TIMEOUT_CYCLES;
-        while (!(handle->SR1 & I2C_SR1_TXE) && (--timeout)) {
+        timeout_cycles = TIMEOUT_CYCLES;
+        while (!(handle->SR1 & I2C_SR1_TXE) && (--timeout_cycles)) {
             // Check all error flags since the success flag doesn't get set when there's an error
             if (handle->SR1 & I2C_SR1_AF) {
                 handle->SR1 &= ~I2C_SR1_AF;
@@ -253,7 +269,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
         }
 
         // Return if the TXE bit still has not been set
-        if (!(handle->SR1 & I2C_SR1_TXE) || (timeout == 0)) {
+        if (!(handle->SR1 & I2C_SR1_TXE) || (timeout_cycles == 0)) {
             return HAL_ERR_TX;
         }
 
@@ -262,8 +278,8 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
     }
 
     // Wait till the last byte has been fully transmitted on the bus
-    timeout = TIMEOUT_CYCLES;
-    while (!(handle->SR1 & I2C_SR1_BTF) && (--timeout)) {
+    timeout_cycles = TIMEOUT_CYCLES;
+    while (!(handle->SR1 & I2C_SR1_BTF) && (--timeout_cycles)) {
         // Check all error flags since the success flag doesn't get set when there's an error
         if (handle->SR1 & I2C_SR1_AF) {
             handle->SR1 &= ~I2C_SR1_AF;
@@ -280,7 +296,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
     }
 
     // Return if the BTF bit still has not been set
-    if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
+    if (!(handle->SR1 & I2C_SR1_BTF) || (timeout_cycles == 0)) {
         return HAL_ERR_TX;
     }
 
@@ -292,8 +308,8 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
     handle->DR = ((uint32_t)(addr << 1UL) | 1UL);
 
     // Wait for ACK
-    uint32_t timeout = TIMEOUT_CYCLES;
-    while (!(handle->SR1 & I2C_SR1_ADDR) && (--timeout)) {
+    uint32_t timeout_cycles = TIMEOUT_CYCLES;
+    while (!(handle->SR1 & I2C_SR1_ADDR) && (--timeout_cycles)) {
         // Check all error flags since the success flag doesn't get set when there's an error
         if (handle->SR1 & I2C_SR1_AF) {
             handle->SR1 &= ~I2C_SR1_AF;
@@ -312,7 +328,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
     }
 
     // Return if the ADDR bit still hasn't been set
-    if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout == 0)) {
+    if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout_cycles == 0)) {
         send_stop(handle);
         return HAL_FAIL;
     }
@@ -345,8 +361,8 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
             send_stop(handle);
 
             // Wait for RXE
-            timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR1 & I2C_SR1_RXNE) && (--timeout)) {
+            timeout_cycles = TIMEOUT_CYCLES;
+            while (!(handle->SR1 & I2C_SR1_RXNE) && (--timeout_cycles)) {
                 // Check all error flags since the success flag doesn't get set when there's an error
                 if (handle->SR1 & I2C_SR1_BERR) {
                     handle->SR1 &= ~I2C_SR1_BERR;
@@ -359,7 +375,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
             }
 
             // Return if the RXE bit still has not been set
-            if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) {
+            if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout_cycles == 0)) {
                 return HAL_ERR_RX;
             }
 
@@ -384,8 +400,8 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
             (void)handle->SR2;
 
             // Wait till the both bytes have been fully received by the bus
-            timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR1 & I2C_SR1_BTF) && (--timeout)) {
+            timeout_cycles = TIMEOUT_CYCLES;
+            while (!(handle->SR1 & I2C_SR1_BTF) && (--timeout_cycles)) {
                 if (handle->SR1 & I2C_SR1_BERR) {
                     handle->SR1 &= ~I2C_SR1_BERR;
                     continue;
@@ -398,7 +414,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
             }
 
             // Return if the BTF bit still has not been set
-            if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
+            if (!(handle->SR1 & I2C_SR1_BTF) || (timeout_cycles == 0)) {
                 send_stop(handle);
                 return HAL_ERR_RX;
             }
@@ -423,8 +439,8 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                 switch (remaining_bytes) {
                     case 3:
                         // Wait till the BTF bit has been set
-                        timeout = TIMEOUT_CYCLES;
-                        while (!(handle->SR1 & I2C_SR1_BTF) && (--timeout)) {
+                        timeout_cycles = TIMEOUT_CYCLES;
+                        while (!(handle->SR1 & I2C_SR1_BTF) && (--timeout_cycles)) {
                             if (handle->SR1 & I2C_SR1_BERR) {
                                 handle->SR1 &= ~I2C_SR1_BERR;
                                 continue;
@@ -437,7 +453,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                         }
 
                         // Return if the BTF bit still has not been set
-                        if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
+                        if (!(handle->SR1 & I2C_SR1_BTF) || (timeout_cycles == 0)) {
                             send_stop(handle);
                             return HAL_ERR_RX;
                         }
@@ -453,8 +469,8 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
 
                     case 2:
                         // Wait till the BTF bit has been set, again
-                        timeout = TIMEOUT_CYCLES;
-                        while (!(handle->SR1 & I2C_SR1_BTF) && (--timeout)) {
+                        timeout_cycles = TIMEOUT_CYCLES;
+                        while (!(handle->SR1 & I2C_SR1_BTF) && (--timeout_cycles)) {
                             if (handle->SR1 & I2C_SR1_BERR) {
                                 handle->SR1 &= ~I2C_SR1_BERR;
                                 continue;
@@ -467,7 +483,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                         }
 
                         // Return if the BTF bit still has not been set
-                        if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
+                        if (!(handle->SR1 & I2C_SR1_BTF) || (timeout_cycles == 0)) {
                             send_stop(handle);
                             return HAL_ERR_RX;
                         }
@@ -488,8 +504,8 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
 
                         // Read RXE up until remaining_bytes is 3
                         for (size_t i = 0; i < (size - 3); i++) {
-                            timeout = TIMEOUT_CYCLES;
-                            while (!(handle->SR1 & I2C_SR1_RXNE) && (--timeout)) {
+                            timeout_cycles = TIMEOUT_CYCLES;
+                            while (!(handle->SR1 & I2C_SR1_RXNE) && (--timeout_cycles)) {
                                 if (handle->SR1 & I2C_SR1_BERR) {
                                     handle->SR1 &= ~I2C_SR1_BERR;
                                     continue;
@@ -502,7 +518,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size
                             }
 
                             // Return if RXNE still isn't set
-                            if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) {
+                            if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout_cycles == 0)) {
                                 send_stop(handle);
                                 return HAL_ERR_RX;
                             }

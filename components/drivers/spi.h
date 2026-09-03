@@ -17,18 +17,17 @@ extern "C" {
 
 
 typedef struct {
+    bool cpol;
+    bool cpha;
     bool use_miso;
     bool use_mosi;
     bool use_8bit_mode;
 
-    bool cpol;
-    bool cpha;
-
     uint8_t clk_divider;
 
-    uint8_t miso;
-    uint8_t mosi;
-    uint8_t sclk;
+    uint8_t miso_pin;
+    uint8_t mosi_pin;
+    uint8_t sclk_pin;
 
     GPIO_TypeDef* gpio_port;
 } spi_master_config_t;
@@ -37,7 +36,6 @@ hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable);
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config);
 void      spi_master_enable(SPI_TypeDef* handle, bool enable);
 hal_err_t spi_master_dma_init(SPI_TypeDef* handle);
-hal_err_t spi_master_get_dma_stream(SPI_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx);
 
 // Polling API
 hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t size);

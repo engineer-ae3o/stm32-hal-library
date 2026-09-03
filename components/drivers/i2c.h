@@ -25,8 +25,8 @@ typedef struct {
     uint8_t    digital_filter;
     i2c_freq_t freq_type;
 
-    uint8_t       sda;
-    uint8_t       scl;
+    uint8_t       sda_pin;
+    uint8_t       scl_pin;
     GPIO_TypeDef* gpio_port;
 } i2c_master_config_t;
 

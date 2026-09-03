@@ -159,6 +159,10 @@ hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable) {
 }
 
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config) {
+    if (handle == NULL || config == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // Configure the GPIO pins
     TRY(gpiox_clk_enable(config->gpio_port, true));
 
@@ -177,23 +181,23 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     }
 
     if (config->use_miso) {
-        TRY(gpio_set_alternate_function(config->gpio_port, config->miso, alt_val));
-        gpio_enable_pullup(config->gpio_port, config->miso, true);
-        gpio_set_speed_mode(config->gpio_port, config->miso, GPIO_HIGH_SPEED);
+        TRY(gpio_set_alternate_function(config->gpio_port, config->miso_pin, alt_val));
+        gpio_enable_pullup(config->gpio_port, config->miso_pin, true);
+        gpio_set_speed_mode(config->gpio_port, config->miso_pin, GPIO_HIGH_SPEED);
         // MISO cannot be configured as push pull or open drain
     }
 
     if (config->use_mosi) {
-        TRY(gpio_set_alternate_function(config->gpio_port, config->mosi, alt_val));
-        gpio_enable_pullup(config->gpio_port, config->mosi, true);
-        gpio_set_speed_mode(config->gpio_port, config->mosi, GPIO_HIGH_SPEED);
-        gpio_set_output_type(config->gpio_port, config->mosi, GPIO_PUSH_PULL);
+        TRY(gpio_set_alternate_function(config->gpio_port, config->mosi_pin, alt_val));
+        gpio_enable_pullup(config->gpio_port, config->mosi_pin, true);
+        gpio_set_speed_mode(config->gpio_port, config->mosi_pin, GPIO_HIGH_SPEED);
+        gpio_set_output_type(config->gpio_port, config->mosi_pin, GPIO_PUSH_PULL);
     }
 
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sclk, alt_val));
-    gpio_enable_pullup(config->gpio_port, config->sclk, true);
-    gpio_set_speed_mode(config->gpio_port, config->sclk, GPIO_HIGH_SPEED);
-    gpio_set_output_type(config->gpio_port, config->sclk, GPIO_PUSH_PULL);
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sclk_pin, alt_val));
+    gpio_enable_pullup(config->gpio_port, config->sclk_pin, true);
+    gpio_set_speed_mode(config->gpio_port, config->sclk_pin, GPIO_HIGH_SPEED);
+    gpio_set_output_type(config->gpio_port, config->sclk_pin, GPIO_PUSH_PULL);
 
     // Disable the SPI peripheral
     handle->CR1 &= ~SPI_CR1_SPE;
@@ -240,10 +244,12 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 }
 
 void spi_master_enable(SPI_TypeDef* handle, bool enable) {
-    if (enable) {
-        handle->CR1 |= SPI_CR1_SPE;
-    } else {
-        handle->CR1 &= ~SPI_CR1_SPE;
+    if (handle) {
+        if (enable) {
+            handle->CR1 |= SPI_CR1_SPE;
+        } else {
+            handle->CR1 &= ~SPI_CR1_SPE;
+        }
     }
 }
 
@@ -315,23 +321,10 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     return HAL_OK;
 }
 
-hal_err_t spi_master_get_dma_stream(SPI_TypeDef* handle, DMA_Stream_TypeDef** tx, DMA_Stream_TypeDef** rx) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    *tx = s_spi_dma_map[idx].tx.stream;
-    *rx = s_spi_dma_map[idx].rx.stream;
-
-    return HAL_OK;
-}
-
 
 // Polling API
 hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t size) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
+    if (handle == NULL || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -408,8 +401,7 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
 }
 
 hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t size) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
+    if (handle == NULL || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -486,8 +478,7 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t size) 
 }
 
 hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t size) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
+    if (handle == NULL || tx_data == NULL || rx_data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
