@@ -7,8 +7,8 @@
 
 
 // The 3 UART peripheral instances: ISRs called when the DMA is done
-static dma_trans_done_cb_t s_dma_tx_done_cbs[3] = {};
-static dma_trans_done_cb_t s_dma_rx_done_cbs[3] = {};
+static dma_done_cb_t s_dma_tx_done_cbs[3] = {};
+static dma_done_cb_t s_dma_rx_done_cbs[3] = {};
 
 static void* s_tx_args[3] = {};
 static void* s_rx_args[3] = {};
@@ -65,8 +65,8 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     }
 
     // Save the user callback so we can clear it's global array position
-    dma_trans_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
-    void*               local_arg = s_tx_args[idx];
+    const dma_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
+    void* const         local_arg = s_tx_args[idx];
 
     // Clear the user passed callback since this is a one-off event
     s_dma_tx_done_cbs[idx] = NULL;
@@ -85,8 +85,8 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     }
 
     // Save the user callback so we can clear it's global array position
-    dma_trans_done_cb_t local_cb  = s_dma_rx_done_cbs[idx];
-    void*               local_arg = s_rx_args[idx];
+    const dma_done_cb_t local_cb  = s_dma_rx_done_cbs[idx];
+    void* const         local_arg = s_rx_args[idx];
 
     // Clear the user passed callback since this is a one-off event
     s_dma_rx_done_cbs[idx] = NULL;
@@ -284,7 +284,7 @@ hal_err_t uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t 
     return HAL_OK;
 }
 
-hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t size, dma_trans_done_cb_t callback, void* arg) {
+hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -318,7 +318,7 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
     return HAL_OK;
 }
 
-hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, dma_trans_done_cb_t callback, void* arg) {
+hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;

@@ -47,10 +47,10 @@ void dma_set_direction(DMA_Stream_TypeDef* stream, dma_stream_dir_t dir);
 void dma_set_increment(DMA_Stream_TypeDef* stream, bool per_inc, bool mem_inc);
 void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler);
 void dma_set_stream_priority(DMA_Stream_TypeDef* stream, dma_priority_t priority);
-void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circ, bool ena_dbm);
+void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circm, bool ena_dbm);
 void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_data_size_t mem);
 void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, bool ht_mask, bool dme_mask);
-void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* p, const volatile void* m1, const volatile void* m2);
+void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, const volatile void* mem_0, const volatile void* mem_1);
 
 // Utilities for mapping the peripherals instances to DMA streams
 typedef struct {
@@ -67,7 +67,7 @@ typedef struct {
 } dma_stream_map_t;
 
 // Callback for DMA transmission and reception completion
-typedef void (*dma_trans_done_cb_t)(void* arg, hal_err_t error);
+typedef void (*dma_done_cb_t)(void* arg, hal_err_t error);
 
 // Helper to abstract checking and clearing of DMA irq flags
 [[__gnu__::__always_inline__]] inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream,

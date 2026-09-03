@@ -6,8 +6,8 @@
 
 
 // The 5 SPI instances: ISRs called when the DMA is done
-static dma_trans_done_cb_t s_dma_tx_done_cbs[5] = {};
-static dma_trans_done_cb_t s_dma_rx_done_cbs[5] = {};
+static dma_done_cb_t s_dma_tx_done_cbs[5] = {};
+static dma_done_cb_t s_dma_rx_done_cbs[5] = {};
 
 static void* s_tx_args[5] = {};
 static void* s_rx_args[5] = {};
@@ -88,8 +88,8 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     }
 
     // Save the user callback so we can clear it's global array position
-    dma_trans_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
-    void*               local_arg = s_tx_args[idx];
+    const dma_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
+    void* const         local_arg = s_tx_args[idx];
 
     // Only clear the user callback if not in circular mode
     if (!(s_spi_dma_map[idx].tx.stream->CR & DMA_SxCR_CIRC)) {
@@ -107,8 +107,8 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     }
 
     // Save the user callback so we can clear it's global array position
-    dma_trans_done_cb_t local_cb  = s_dma_rx_done_cbs[idx];
-    void*               local_arg = s_rx_args[idx];
+    const dma_done_cb_t local_cb  = s_dma_rx_done_cbs[idx];
+    void* const         local_arg = s_rx_args[idx];
 
     // Only clear the user callback if not in circular mode
     if (!(s_spi_dma_map[idx].rx.stream->CR & DMA_SxCR_CIRC)) {
@@ -560,7 +560,7 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
 
 
 // DMA transfers API
-hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t size, dma_trans_done_cb_t cb, void* arg) {
+hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t size, dma_done_cb_t cb, void* arg) {
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
@@ -591,7 +591,7 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
     return dma_enable_stream(stream);
 }
 
-hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size, dma_trans_done_cb_t cb, void* arg) {
+hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size, dma_done_cb_t cb, void* arg) {
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
@@ -622,7 +622,7 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size,
     return dma_enable_stream(stream);
 }
 
-hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t size, dma_trans_done_cb_t cb, void* arg) {
+hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t size, dma_done_cb_t cb, void* arg) {
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
@@ -663,7 +663,7 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
 
 
 // To be used only by i2s.c
-void spi_master_register_callback(dma_trans_done_cb_t cb, void* arg, uint8_t idx, bool tx) {
+void spi_master_register_callback(dma_done_cb_t cb, void* arg, uint8_t idx, bool tx) {
     if (tx) {
         s_dma_tx_done_cbs[idx] = cb;
         s_tx_args[idx]         = arg;

@@ -88,7 +88,7 @@ static const dma_stream_map_t s_i2s_dma_map[5] = {
 }
 
 // Defined in spi.c. Used to pass DMA interrupt callbacks since the interrupt handlers are managed by the SPI driver
-extern void spi_master_register_callback(dma_trans_done_cb_t cb, void* arg, uint8_t idx, bool tx);
+extern void spi_master_register_callback(dma_done_cb_t cb, void* arg, uint8_t idx, bool tx);
 
 
 // Public API
@@ -308,7 +308,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     return HAL_OK;
 }
 
-hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_trans_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -343,7 +343,7 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t siz
     return dma_enable_stream(stream);
 }
 
-hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_trans_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -375,7 +375,7 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_
 }
 
 // Double buffering API
-hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t size, dma_trans_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;

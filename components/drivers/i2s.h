@@ -87,14 +87,14 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle);
 // And then disable the peripheral after their callback was invoked. Also, when
 // double buffering, the user should disable the I2S peripheral when they want
 // to "pause" or stop the transfers, and not just when the isr is called.
-hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_trans_done_cb_t callback, void* arg);
-hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_trans_done_cb_t callback, void* arg);
+hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_done_cb_t callback, void* arg);
+hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_done_cb_t callback, void* arg);
 
 // Double buffering API
 // NOTE: These APIs are mutually exclusive with the DMA oneshot functions
 // NOTE: Only data reception is supported. User should determine which
 // buffer is free with i2s_master_dbm_get_filled_buffer()
-hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t size, dma_trans_done_cb_t callback, void* arg);
+hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t size, dma_done_cb_t callback, void* arg);
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);
 
 // When start is called, the DMA starts filling buffer A, and

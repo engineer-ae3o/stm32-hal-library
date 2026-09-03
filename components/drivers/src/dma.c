@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "utils/common.h"
 #include "drivers/dma.h"
+#include "utils/err.h"
 
 
 hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
@@ -28,6 +29,10 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
 }
 
 hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream) {
+    if (controller == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     uint32_t flags = 0;
     switch (stream) {
         case 0:
@@ -68,6 +73,9 @@ hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream) {
 }
 
 hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {
+    if (stream == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
     stream->CR |= DMA_SxCR_EN;
     uint32_t timeout = TIMEOUT_CYCLES;
     while (!(stream->CR & DMA_SxCR_EN) && (--timeout));
@@ -78,6 +86,9 @@ hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {
 }
 
 hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
+    if (stream == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
     stream->CR &= ~DMA_SxCR_EN;
     uint32_t timeout = TIMEOUT_CYCLES;
     while ((stream->CR & DMA_SxCR_EN) && (--timeout));
@@ -88,90 +99,95 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
 }
 
 void dma_set_channel(DMA_Stream_TypeDef* stream, uint8_t channel) {
-    stream->CR &= ~DMA_SxCR_CHSEL;
-    stream->CR |= ((channel & 0b111U) << DMA_SxCR_CHSEL_Pos);
+    if (stream) {
+        stream->CR = (stream->CR & ~DMA_SxCR_CHSEL) | ((channel & 0b111U) << DMA_SxCR_CHSEL_Pos);
+    }
 }
 
 void dma_set_direct_mode(DMA_Stream_TypeDef* stream, bool direct_mode) {
-    if (direct_mode) {
-        stream->FCR &= ~DMA_SxFCR_DMDIS;
-    } else {
-        stream->FCR |= DMA_SxFCR_DMDIS;
+    if (stream) {
+        if (direct_mode) {
+            stream->FCR &= ~DMA_SxFCR_DMDIS;
+        } else {
+            stream->FCR |= DMA_SxFCR_DMDIS;
+        }
     }
 }
 
 void dma_set_trans_length(DMA_Stream_TypeDef* stream, uint16_t length) {
-    stream->NDTR = length;
+    if (stream) {
+        stream->NDTR = length;
+    }
 }
 
 void dma_set_direction(DMA_Stream_TypeDef* stream, dma_stream_dir_t dir) {
-    stream->CR &= ~DMA_SxCR_DIR;
-    stream->CR |= ((uint32_t)dir << DMA_SxCR_DIR_Pos);
+    if (stream) {
+        stream->CR = (stream->CR & ~DMA_SxCR_DIR) | ((uint32_t)dir << DMA_SxCR_DIR_Pos);
+    }
 }
 
 void dma_set_increment(DMA_Stream_TypeDef* stream, bool per_inc, bool mem_inc) {
-    stream->CR &= ~(DMA_SxCR_PINC | DMA_SxCR_MINC);
-    if (per_inc) {
-        stream->CR |= DMA_SxCR_PINC;
-    }
-    if (mem_inc) {
-        stream->CR |= DMA_SxCR_MINC;
+    if (stream) {
+        uint32_t mask = stream->CR & ~(DMA_SxCR_PINC | DMA_SxCR_MINC);
+        mask |= per_inc ? DMA_SxCR_PINC : 0;
+        mask |= mem_inc ? DMA_SxCR_MINC : 0;
+        stream->CR = mask;
     }
 }
 
 void dma_set_stream_priority(DMA_Stream_TypeDef* stream, dma_priority_t priority) {
-    stream->CR &= ~DMA_SxCR_PL;
-    stream->CR |= (((uint32_t)priority) << DMA_SxCR_PL_Pos);
+    if (stream) {
+        stream->CR = (stream->CR & ~DMA_SxCR_PL) | (((uint32_t)priority) << DMA_SxCR_PL_Pos);
+    }
 }
 
 void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler) {
-    if (dma_is_flow_ctrler) {
-        stream->CR &= ~DMA_SxCR_PFCTRL;
-        return;
+    if (stream) {
+        if (dma_is_flow_ctrler) {
+            stream->CR &= ~DMA_SxCR_PFCTRL;
+        } else {
+            stream->CR |= DMA_SxCR_PFCTRL;
+        }
     }
-    stream->CR |= DMA_SxCR_PFCTRL;
 }
 
-void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circ, bool ena_dbm) {
-    stream->CR &= ~(DMA_SxCR_CIRC | DMA_SxCR_DBM);
-    if (ena_circ) {
-        stream->CR |= DMA_SxCR_CIRC;
-    }
-    if (ena_dbm) {
-        stream->CR |= DMA_SxCR_DBM;
+void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circm, bool ena_dbm) {
+    if (stream) {
+        uint32_t mask = stream->CR & ~(DMA_SxCR_CIRC | DMA_SxCR_DBM);
+        mask |= ena_circm ? DMA_SxCR_CIRC : 0;
+        mask |= ena_dbm ? DMA_SxCR_DBM : 0;
+        stream->CR = mask;
     }
 }
 
 void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc, bool te, bool ht, bool dme) {
-    stream->CR &= ~(DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_HTIE | DMA_SxCR_DMEIE);
-    if (tc) {
-        stream->CR |= DMA_SxCR_TCIE;
-    }
-    if (te) {
-        stream->CR |= DMA_SxCR_TEIE;
-    }
-    if (ht) {
-        stream->CR |= DMA_SxCR_HTIE;
-    }
-    if (dme) {
-        stream->CR |= DMA_SxCR_DMEIE;
+    if (stream) {
+        uint32_t mask = stream->CR & ~(DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_HTIE | DMA_SxCR_DMEIE);
+        mask |= tc ? DMA_SxCR_TCIE : 0;
+        mask |= te ? DMA_SxCR_TEIE : 0;
+        mask |= ht ? DMA_SxCR_HTIE : 0;
+        mask |= dme ? DMA_SxCR_DMEIE : 0;
+        stream->CR = mask;
     }
 }
 
 void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_data_size_t mem) {
-    stream->CR &= ~(DMA_SxCR_PSIZE | DMA_SxCR_MSIZE);
-    stream->CR |= ((uint32_t)per << DMA_SxCR_PSIZE_Pos);
-    stream->CR |= ((uint32_t)mem << DMA_SxCR_MSIZE_Pos);
+    if (stream) {
+        stream->CR =
+            (stream->CR & ~(DMA_SxCR_PSIZE | DMA_SxCR_MSIZE)) | ((uint32_t)per << DMA_SxCR_PSIZE_Pos) | ((uint32_t)mem << DMA_SxCR_MSIZE_Pos);
+    }
 }
 
-void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* p, const volatile void* m1, const volatile void* m2) {
-    if (p) {
-        stream->PAR = (uint32_t)p;
-    }
-    if (m1) {
-        stream->M0AR = (uint32_t)m1;
-    }
-    if (m2) {
-        stream->M1AR = (uint32_t)m2;
+void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, const volatile void* mem_0, const volatile void* mem_1) {
+    if (stream) {
+        if (per) {
+            stream->PAR = (uint32_t)per;
+        }
+        if (mem_0) {
+            stream->M0AR = (uint32_t)mem_0;
+        }
+        if (mem_1) {
+            stream->M1AR = (uint32_t)mem_1;
+        }
     }
 }

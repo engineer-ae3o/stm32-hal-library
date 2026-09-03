@@ -43,9 +43,9 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t size);
 hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t size);
 
 // DMA transfer API
-hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t size, dma_trans_done_cb_t cb, void* arg);
-hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size, dma_trans_done_cb_t cb, void* arg);
-hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t size, dma_trans_done_cb_t cb, void* arg);
+hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t size, dma_done_cb_t cb, void* arg);
+hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size, dma_done_cb_t cb, void* arg);
+hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t size, dma_done_cb_t cb, void* arg);
 
 
 #ifdef __cplusplus

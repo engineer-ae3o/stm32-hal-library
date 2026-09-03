@@ -41,8 +41,8 @@ hal_err_t uart_transmit_byte(USART_TypeDef* handle, uint8_t byte);
 hal_err_t uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t size);
 
 // DMA transfer API
-hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t size, dma_trans_done_cb_t callback, void* arg);
-hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, dma_trans_done_cb_t callback, void* arg);
+hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t size, dma_done_cb_t callback, void* arg);
+hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, dma_done_cb_t callback, void* arg);
 
 
 #ifdef __cplusplus
