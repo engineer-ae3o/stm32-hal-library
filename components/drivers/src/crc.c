@@ -6,11 +6,13 @@
 
 
 // The DMA stream being used
-#define CRC_DMA_CONTROLLER DMA2
-#define CRC_DMA_STREAM DMA2_Stream5
-#define CRC_DMA_STREAM_NO 0
-#define CRC_DMA_CHANNEL 0
-#define CRC_DMA_IRQ_TYPE DMA2_Stream5_IRQn
+const dma_map_t s_crc_dma_map = {
+    .controller    = DMA2,
+    .stream        = DMA2_Stream5,
+    .nvic_irq_type = DMA2_Stream5_IRQn,
+    .stream_number = 5,
+    .channel       = 0,
+};
 
 // User data
 static crc_dma_done_cb_t s_user_callback = NULL;
@@ -54,25 +56,41 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, crc_dma_done_cb_t cb,
         return HAL_ERR_INVALID_STATE;
     }
 
-    // Configuration
-    TRY(dmax_clk_enable(CRC_DMA_CONTROLLER, true));
-    TRY(dma_clear_flags(CRC_DMA_CONTROLLER, CRC_DMA_STREAM_NO));
-    TRY(dma_disable_stream(CRC_DMA_STREAM));
-    dma_set_channel(CRC_DMA_STREAM, CRC_DMA_CHANNEL);
-    dma_set_stream_priority(CRC_DMA_STREAM, DMA_PRIORITY_MEDIUM);
-    dma_set_direction(CRC_DMA_STREAM, DMA_DIR_M_M);
-    dma_enable_irqs(CRC_DMA_STREAM, true, true, false, false);
-    dma_set_increment(CRC_DMA_STREAM, true, false);
-    dma_set_per_mem_size(CRC_DMA_STREAM, DMA_SIZE_WORD, DMA_SIZE_WORD);
-    dma_enable_circm_dbm(CRC_DMA_STREAM, false, false);
-    dma_set_flow_controller(CRC_DMA_STREAM, true);
-    dma_set_direct_mode(CRC_DMA_STREAM, false);
-    dma_set_addresses(CRC_DMA_STREAM, data, &CRC->DR, NULL);
-    dma_set_trans_length(CRC_DMA_STREAM, size);
+    // Configure and start the stream
+    const dma_stream_config_t stream_config = {
+        .deconfigure = false,
 
-    // Enable the DMA stream interrupts
-    NVIC_SetPriority(CRC_DMA_IRQ_TYPE, CRC_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(CRC_DMA_IRQ_TYPE);
+        .per_inc        = true,
+        .mem_inc        = false,
+        .tc_irq_enable  = true,
+        .ht_irq_enable  = false,
+        .te_irq_enable  = true,
+        .dme_irq_enable = false,
+
+        .enable_stream_after_config = false,
+
+        .mode            = DMA_MODE_FIFO,
+        .priority        = DMA_PRIORITY_LOW,
+        .direction       = DMA_DIR_M_M,
+        .per_data_size   = DMA_SIZE_WORD,
+        .mem_data_size   = DMA_SIZE_WORD,
+        .circular_mode   = DMA_NO_CIRCULAR,
+        .flow_controller = DMA_FLOW_CONTROLLER_DMA,
+
+        .channel     = s_crc_dma_map.channel,
+        .buffer_size = size,
+
+        .per_addr  = data,
+        .mem_buf_0 = &CRC->DR,
+        .mem_buf_1 = NULL,
+
+        .controller    = s_crc_dma_map.controller,
+        .stream_number = s_crc_dma_map.stream_number,
+
+        .nvic_irq_type     = s_crc_dma_map.nvic_irq_type,
+        .nvic_irq_priority = CRC_DMA_NVIC_IRQ_PRIORITY,
+    };
+    TRY(dma_configure_stream(s_crc_dma_map.stream, &stream_config));
 
     // Reset the CRC peripheral
     CRC->CR |= CRC_CR_RESET;
@@ -80,18 +98,11 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, crc_dma_done_cb_t cb,
     s_user_callback = cb;
     s_user_data     = arg;
 
-    return dma_enable_stream(CRC_DMA_STREAM);
+    return dma_enable_stream(s_crc_dma_map.stream);
 }
 
 dma_map_t crc_get_dma_stream_info() {
-    const dma_map_t info = {
-        .controller = CRC_DMA_CONTROLLER,
-        .stream     = CRC_DMA_STREAM,
-        .irq_type   = CRC_DMA_IRQ_TYPE,
-        .stream_no  = CRC_DMA_STREAM_NO,
-        .channel    = CRC_DMA_CHANNEL,
-    };
-    return info;
+    return s_crc_dma_map;
 }
 
 // DMA interrupt handler

@@ -28,13 +28,13 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
     return HAL_OK;
 }
 
-hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream) {
+hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint32_t stream_number) {
     if (controller == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
     uint32_t flags = 0;
-    switch (stream) {
+    switch (stream_number) {
         case 0:
             flags = (DMA_LISR_TCIF0 | DMA_LISR_HTIF0 | DMA_LISR_TEIF0 | DMA_LISR_DMEIF0 | DMA_LISR_FEIF0);
             break;
@@ -63,9 +63,9 @@ hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream) {
             return HAL_ERR_INVALID_ARG;
     }
 
-    if (stream <= 3) {
+    if (stream_number <= 3) {
         controller->LIFCR = flags;
-    } else if (stream <= 7) {
+    } else if (stream_number <= 7) {
         controller->HIFCR = flags;
     }
 
@@ -98,9 +98,76 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
     return HAL_OK;
 }
 
+hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_config_t* config) {
+    if (stream == NULL || config == NULL || config->controller == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    TRY(dmax_clk_enable(config->controller, true));
+    TRY(dma_clear_flags(config->controller, config->stream_number));
+    TRY(dma_disable_stream(stream));
+
+    stream->CR &= ~(DMA_SxCR_CHSEL | DMA_SxCR_MBURST | DMA_SxCR_PBURST | DMA_SxCR_CT | DMA_SxCR_DBM | DMA_SxCR_PL | DMA_SxCR_PINCOS | DMA_SxCR_MSIZE |
+                    DMA_SxCR_PSIZE | DMA_SxCR_MINC | DMA_SxCR_PINC | DMA_SxCR_CIRC | DMA_SxCR_DIR | DMA_SxCR_PFCTRL | DMA_SxCR_TCIE | DMA_SxCR_HTIE |
+                    DMA_SxCR_TEIE | DMA_SxCR_DMEIE);
+    stream->FCR &= ~(DMA_SxFCR_FEIE | DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);
+
+    if (config->deconfigure) {
+        stream->PAR  = 0;
+        stream->M0AR = 0;
+        stream->M1AR = 0;
+        stream->NDTR = 0;
+        NVIC_DisableIRQ(config->nvic_irq_type);
+        return HAL_OK;
+    }
+
+    uint32_t cr_mask = stream->CR;
+    cr_mask |= config->per_inc ? DMA_SxCR_PINC : 0;
+    cr_mask |= config->mem_inc ? DMA_SxCR_MINC : 0;
+    cr_mask |= config->tc_irq_enable ? DMA_SxCR_TCIE : 0;
+    cr_mask |= config->te_irq_enable ? DMA_SxCR_TEIE : 0;
+    cr_mask |= config->ht_irq_enable ? DMA_SxCR_HTIE : 0;
+    cr_mask |= config->dme_irq_enable ? DMA_SxCR_DMEIE : 0;
+    cr_mask |= (uint32_t)(config->priority << DMA_SxCR_PL_Pos) & DMA_SxCR_PL;
+    cr_mask |= (uint32_t)(config->direction << DMA_SxCR_DIR_Pos) & DMA_SxCR_DIR;
+    cr_mask |= (uint32_t)(config->channel << DMA_SxCR_CHSEL_Pos) & DMA_SxCR_CHSEL;
+    cr_mask |= (uint32_t)(config->per_data_size << DMA_SxCR_PSIZE_Pos) & DMA_SxCR_PSIZE;
+    cr_mask |= (uint32_t)(config->mem_data_size << DMA_SxCR_MSIZE_Pos) & DMA_SxCR_MSIZE;
+    cr_mask |= config->flow_controller == DMA_FLOW_CONTROLLER_DMA ? 0 : DMA_SxCR_PFCTRL;
+    if (config->circular_mode == DMA_MODE_DOUBLE_BUFFER) {
+        cr_mask |= (DMA_SxCR_DBM | DMA_SxCR_CIRC);
+    } else if (config->circular_mode == DMA_USE_CIRCULAR) {
+        cr_mask |= DMA_SxCR_CIRC;
+    }
+
+    stream->CR = cr_mask;
+    stream->FCR |= config->mode == DMA_MODE_DIRECT ? 0 : DMA_SxFCR_DMDIS;
+    stream->NDTR = config->buffer_size;
+
+    if (config->per_addr) {
+        stream->PAR = (uint32_t)config->per_addr;
+    }
+    if (config->mem_buf_0) {
+        stream->M0AR = (uint32_t)config->mem_buf_0;
+    }
+    if (config->mem_buf_1 && config->circular_mode == DMA_MODE_DOUBLE_BUFFER) {
+        stream->M1AR = (uint32_t)config->mem_buf_1;
+    }
+
+    NVIC_ClearPendingIRQ(config->nvic_irq_type);
+    NVIC_SetPriority(config->nvic_irq_type, config->nvic_irq_priority);
+    NVIC_EnableIRQ(config->nvic_irq_type);
+
+    if (config->enable_stream_after_config) {
+        TRY(dma_enable_stream(stream));
+    }
+
+    return HAL_OK;
+}
+
 void dma_set_channel(DMA_Stream_TypeDef* stream, uint8_t channel) {
     if (stream) {
-        stream->CR = (stream->CR & ~DMA_SxCR_CHSEL) | ((channel & 0b111U) << DMA_SxCR_CHSEL_Pos);
+        stream->CR = (stream->CR & ~DMA_SxCR_CHSEL) | ((uint32_t)(channel << DMA_SxCR_CHSEL_Pos) & DMA_SxCR_CHSEL);
     }
 }
 
@@ -120,7 +187,7 @@ void dma_set_trans_length(DMA_Stream_TypeDef* stream, uint16_t length) {
     }
 }
 
-void dma_set_direction(DMA_Stream_TypeDef* stream, dma_stream_dir_t dir) {
+void dma_set_direction(DMA_Stream_TypeDef* stream, dma_direction_t dir) {
     if (stream) {
         stream->CR = (stream->CR & ~DMA_SxCR_DIR) | ((uint32_t)dir << DMA_SxCR_DIR_Pos);
     }

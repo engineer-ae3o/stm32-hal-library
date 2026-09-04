@@ -17,28 +17,28 @@ static void* s_rx_args[5] = {};
 static const dma_stream_map_t s_spi_dma_map[5] = {
     // SPI1: DMA not supported: Not enough streams to go round other peripherals
     {
-        .tx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
-        .rx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+        .tx = {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
+        .rx = {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
     },
     // SPI2
     {
-        .tx = {.controller = DMA1, .stream = DMA1_Stream4, .stream_no = 4, .irq_type = DMA1_Stream4_IRQn, .channel = 0},
-        .rx = {.controller = DMA1, .stream = DMA1_Stream3, .stream_no = 3, .irq_type = DMA1_Stream3_IRQn, .channel = 0},
+        .tx = {.controller = DMA1, .stream = DMA1_Stream4, .stream_number = 4, .nvic_irq_type = DMA1_Stream4_IRQn, .channel = 0},
+        .rx = {.controller = DMA1, .stream = DMA1_Stream3, .stream_number = 3, .nvic_irq_type = DMA1_Stream3_IRQn, .channel = 0},
     },
     // SPI3
     {
-        .tx = {.controller = DMA1, .stream = DMA1_Stream7, .stream_no = 7, .irq_type = DMA1_Stream7_IRQn, .channel = 0},
-        .rx = {.controller = DMA1, .stream = DMA1_Stream2, .stream_no = 2, .irq_type = DMA1_Stream2_IRQn, .channel = 0},
+        .tx = {.controller = DMA1, .stream = DMA1_Stream7, .stream_number = 7, .nvic_irq_type = DMA1_Stream7_IRQn, .channel = 0},
+        .rx = {.controller = DMA1, .stream = DMA1_Stream2, .stream_number = 2, .nvic_irq_type = DMA1_Stream2_IRQn, .channel = 0},
     },
     // SPI4
     {
-        .tx = {.controller = DMA2, .stream = DMA2_Stream1, .stream_no = 1, .irq_type = DMA2_Stream1_IRQn, .channel = 4},
-        .rx = {.controller = DMA2, .stream = DMA2_Stream4, .stream_no = 4, .irq_type = DMA2_Stream4_IRQn, .channel = 4},
+        .tx = {.controller = DMA2, .stream = DMA2_Stream1, .stream_number = 1, .nvic_irq_type = DMA2_Stream1_IRQn, .channel = 4},
+        .rx = {.controller = DMA2, .stream = DMA2_Stream4, .stream_number = 4, .nvic_irq_type = DMA2_Stream4_IRQn, .channel = 4},
     },
     // SPI5: DMA not supported: Not enough streams to go round other peripherals
     {
-        .tx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
-        .rx = {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+        .tx = {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
+        .rx = {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
     },
 };
 
@@ -265,15 +265,15 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     DMA_TypeDef*        tx_controller = s_spi_dma_map[idx].tx.controller;
     DMA_Stream_TypeDef* tx_stream     = s_spi_dma_map[idx].tx.stream;
     const uint8_t       tx_channel    = s_spi_dma_map[idx].tx.channel;
-    const uint8_t       tx_stream_no  = s_spi_dma_map[idx].tx.stream_no;
-    const IRQn_Type     tx_irq_type   = s_spi_dma_map[idx].tx.irq_type;
+    const uint8_t       tx_stream_no  = s_spi_dma_map[idx].tx.stream_number;
+    const IRQn_Type     tx_irq_type   = s_spi_dma_map[idx].tx.nvic_irq_type;
 
     // RX mapping
     DMA_TypeDef*        rx_controller = s_spi_dma_map[idx].rx.controller;
     DMA_Stream_TypeDef* rx_stream     = s_spi_dma_map[idx].rx.stream;
     const uint8_t       rx_channel    = s_spi_dma_map[idx].rx.channel;
-    const uint8_t       rx_stream_no  = s_spi_dma_map[idx].rx.stream_no;
-    const IRQn_Type     rx_irq_type   = s_spi_dma_map[idx].rx.irq_type;
+    const uint8_t       rx_stream_no  = s_spi_dma_map[idx].rx.stream_number;
+    const IRQn_Type     rx_irq_type   = s_spi_dma_map[idx].rx.nvic_irq_type;
 
     if (tx_controller == NULL || tx_stream == NULL || rx_controller == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;

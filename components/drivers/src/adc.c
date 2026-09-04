@@ -28,15 +28,15 @@ static adc_ctx_t s_adc_ctx[NUM_OF_ADC_CONTROLLERS] = {};
 static const dma_map_t s_adc_dma_map[] = {
 #if defined(ADC1)
     // ADC1
-    {.controller = DMA2, .stream = DMA2_Stream0, .stream_no = 0, .irq_type = DMA2_Stream0_IRQn, .channel = 0},
+    {.controller = DMA2, .stream = DMA2_Stream0, .stream_number = 0, .nvic_irq_type = DMA2_Stream0_IRQn, .channel = 0},
 #endif
 #if defined(ADC2)
     // ADC2
-    {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+    {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
 #endif
 #if defined(ADC3)
     // ADC3
-    {.controller = NULL, .stream = NULL, .stream_no = 0, .irq_type = 0, .channel = 0},
+    {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
 #endif
 };
 
@@ -410,11 +410,11 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     }
 
     // ADC DMA stream mapping
-    DMA_TypeDef*        controller = s_adc_dma_map[idx].controller;
-    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].stream;
-    const uint8_t       channel    = s_adc_dma_map[idx].channel;
-    const uint8_t       stream_no  = s_adc_dma_map[idx].stream_no;
-    const IRQn_Type     irq_type   = s_adc_dma_map[idx].irq_type;
+    DMA_TypeDef*        controller    = s_adc_dma_map[idx].controller;
+    DMA_Stream_TypeDef* stream        = s_adc_dma_map[idx].stream;
+    const uint8_t       channel       = s_adc_dma_map[idx].channel;
+    const uint8_t       stream_number = s_adc_dma_map[idx].stream_number;
+    const IRQn_Type     nvic_irq_type = s_adc_dma_map[idx].nvic_irq_type;
 
     if (controller == NULL || stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
@@ -451,7 +451,7 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
 
     // Configuration of the DMA stream
     TRY(dmax_clk_enable(controller, true));
-    TRY(dma_clear_flags(controller, stream_no));
+    TRY(dma_clear_flags(controller, stream_number));
     TRY(dma_disable_stream(stream));
     dma_set_direction(stream, DMA_DIR_P_M);
     dma_set_direct_mode(stream, true);
@@ -499,8 +499,8 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     }
 
     // Enable the DMA stream interrupts
-    NVIC_SetPriority(irq_type, ADC_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(irq_type);
+    NVIC_SetPriority(nvic_irq_type, ADC_DMA_NVIC_IRQ_PRIORITY);
+    NVIC_EnableIRQ(nvic_irq_type);
 
     // Enable the DMA stream after all DMA configuration is complete
     TRY(dma_enable_stream(stream));
@@ -527,9 +527,9 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
     clear_state(handle, true, false);
 
     // ADC DMA stream mapping
-    DMA_TypeDef*        controller = s_adc_dma_map[idx].controller;
-    DMA_Stream_TypeDef* stream     = s_adc_dma_map[idx].stream;
-    const uint8_t       stream_no  = s_adc_dma_map[idx].stream_no;
+    DMA_TypeDef*        controller    = s_adc_dma_map[idx].controller;
+    DMA_Stream_TypeDef* stream        = s_adc_dma_map[idx].stream;
+    const uint8_t       stream_number = s_adc_dma_map[idx].stream_number;
 
     if (controller == NULL || stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
@@ -537,7 +537,7 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
 
     // Then disable the stream, disable all interrupts and clear the interrupt flags
     TRY(dma_disable_stream(stream));
-    TRY(dma_clear_flags(controller, stream_no));
+    TRY(dma_clear_flags(controller, stream_number));
     dma_enable_irqs(stream, false, false, false, false);
 
     // Clear all user passed callbacks

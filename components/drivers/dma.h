@@ -19,7 +19,7 @@ typedef enum : uint8_t {
     DMA_DIR_P_M = 0b00, // Peripheral to memory
     DMA_DIR_M_P = 0b01, // Memory to peripheral
     DMA_DIR_M_M = 0b10, // Memory to memory
-} dma_stream_dir_t;
+} dma_direction_t;
 
 typedef enum : uint8_t {
     DMA_PRIORITY_LOW       = 0b00,
@@ -34,16 +34,66 @@ typedef enum : uint8_t {
     DMA_SIZE_WORD  = 0b10, // Data size is a word (4 bytes)
 } dma_data_size_t;
 
+typedef enum : uint8_t {
+    DMA_MODE_FIFO,
+    DMA_MODE_DIRECT,
+} dma_direct_mode_t;
+
+typedef enum : uint8_t {
+    DMA_FLOW_CONTROLLER_DMA,        // The DMA controller is the flow controller
+    DMA_FLOW_CONTROLLER_PERIPHERAL, // The peripheral is the flow controller
+} dma_flow_control_t;
+
+typedef enum : uint8_t {
+    DMA_NO_CIRCULAR,
+    DMA_USE_CIRCULAR,
+    DMA_MODE_DOUBLE_BUFFER,
+} dma_circ_mode_t;
+
+typedef struct {
+    bool deconfigure; // Set to deinitialize the given stream
+
+    bool per_inc;
+    bool mem_inc;
+    bool tc_irq_enable;
+    bool ht_irq_enable;
+    bool te_irq_enable;
+    bool dme_irq_enable;
+    bool enable_stream_after_config;
+
+    dma_direct_mode_t  mode;
+    dma_priority_t     priority;
+    dma_direction_t    direction;
+    dma_data_size_t    per_data_size;
+    dma_data_size_t    mem_data_size;
+    dma_circ_mode_t    circular_mode;
+    dma_flow_control_t flow_controller;
+
+    uint8_t  channel;
+    uint16_t buffer_size;
+
+    const volatile void* per_addr;
+    const volatile void* mem_buf_0;
+    const volatile void* mem_buf_1;
+
+    DMA_TypeDef* controller;
+    uint32_t     stream_number;
+
+    IRQn_Type nvic_irq_type;
+    uint32_t  nvic_irq_priority;
+} dma_stream_config_t;
+
 hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable);
-hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint8_t stream);
+hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint32_t stream_number);
 
 hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream);
 hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream);
+hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_config_t* config);
 
 void dma_set_channel(DMA_Stream_TypeDef* stream, uint8_t channel);
 void dma_set_direct_mode(DMA_Stream_TypeDef* stream, bool direct_mode);
 void dma_set_trans_length(DMA_Stream_TypeDef* stream, uint16_t length);
-void dma_set_direction(DMA_Stream_TypeDef* stream, dma_stream_dir_t dir);
+void dma_set_direction(DMA_Stream_TypeDef* stream, dma_direction_t dir);
 void dma_set_increment(DMA_Stream_TypeDef* stream, bool per_inc, bool mem_inc);
 void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler);
 void dma_set_stream_priority(DMA_Stream_TypeDef* stream, dma_priority_t priority);
@@ -52,12 +102,13 @@ void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_d
 void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, bool ht_mask, bool dme_mask);
 void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, const volatile void* mem_0, const volatile void* mem_1);
 
+
 // Utilities for mapping the peripherals instances to DMA streams
 typedef struct {
     DMA_TypeDef*        controller;
     DMA_Stream_TypeDef* stream;
-    IRQn_Type           irq_type;
-    uint8_t             stream_no;
+    IRQn_Type           nvic_irq_type;
+    uint8_t             stream_number;
     uint8_t             channel;
 } dma_map_t;
 

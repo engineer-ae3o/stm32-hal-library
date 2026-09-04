@@ -289,8 +289,7 @@ int main() {
     ASSERT(crc_get_dma(
                buffer.data(),
                buffer.size(),
-               [](void* arg, hal_err_t err, uint32_t crc_32) {
-                   UNUSED(arg);
+               [](void*, hal_err_t err, uint32_t crc_32) {
                    ASSERT(err == HAL_OK);
                    LOGI("CRC32_DMA", "CRC32 checksum of data = %lu", crc_32);
                    LOGI("CRC32_DMA", "CRC32 checksum of data = 0x%X", (size_t)crc_32);
