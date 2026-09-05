@@ -7,11 +7,8 @@
 
 // The DMA stream being used
 const dma_map_t s_crc_dma_map = {
-    .controller    = DMA2,
-    .stream        = DMA2_Stream5,
-    .nvic_irq_type = DMA2_Stream5_IRQn,
-    .stream_number = 5,
-    .channel       = 0,
+    .stream  = DMA2_Stream5,
+    .channel = 0,
 };
 
 // User data
@@ -84,10 +81,6 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, crc_dma_done_cb_t cb,
         .mem_buf_0 = &CRC->DR,
         .mem_buf_1 = NULL,
 
-        .controller    = s_crc_dma_map.controller,
-        .stream_number = s_crc_dma_map.stream_number,
-
-        .nvic_irq_type     = s_crc_dma_map.nvic_irq_type,
         .nvic_irq_priority = CRC_DMA_NVIC_IRQ_PRIORITY,
     };
     TRY(dma_configure_stream(s_crc_dma_map.stream, &stream_config));

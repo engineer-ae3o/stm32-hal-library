@@ -28,15 +28,15 @@ static adc_ctx_t s_adc_ctx[NUM_OF_ADC_CONTROLLERS] = {};
 static const dma_map_t s_adc_dma_map[] = {
 #if defined(ADC1)
     // ADC1
-    {.controller = DMA2, .stream = DMA2_Stream0, .stream_number = 0, .nvic_irq_type = DMA2_Stream0_IRQn, .channel = 0},
+    {.stream = DMA2_Stream0, .channel = 0},
 #endif
 #if defined(ADC2)
     // ADC2
-    {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
+    {.stream = NULL, .channel = 0},
 #endif
 #if defined(ADC3)
     // ADC3
-    {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
+    {.stream = NULL, .channel = 0},
 #endif
 };
 
@@ -410,13 +410,10 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     }
 
     // ADC DMA stream mapping
-    DMA_TypeDef*        controller    = s_adc_dma_map[idx].controller;
-    DMA_Stream_TypeDef* stream        = s_adc_dma_map[idx].stream;
-    const uint8_t       channel       = s_adc_dma_map[idx].channel;
-    const uint8_t       stream_number = s_adc_dma_map[idx].stream_number;
-    const IRQn_Type     nvic_irq_type = s_adc_dma_map[idx].nvic_irq_type;
+    DMA_Stream_TypeDef* stream  = s_adc_dma_map[idx].stream;
+    const uint8_t       channel = s_adc_dma_map[idx].channel;
 
-    if (controller == NULL || stream == NULL) {
+    if (stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
@@ -514,18 +511,14 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         .circular_mode   = DMA_NO_CIRCULAR,
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
-        .channel     = channel,
-        .buffer_size = config->buffer_size,
+        .buffer_size       = config->buffer_size,
+        .channel           = channel,
+        .nvic_irq_priority = ADC_DMA_NVIC_IRQ_PRIORITY,
 
         .per_addr  = &handle->DR,
         .mem_buf_0 = &CRC->DR,
         .mem_buf_1 = NULL,
 
-        .controller    = controller,
-        .stream_number = stream_number,
-
-        .nvic_irq_type     = nvic_irq_type,
-        .nvic_irq_priority = ADC_DMA_NVIC_IRQ_PRIORITY,
     };
     TRY(dma_configure_stream(stream, &stream_config));
 
@@ -551,17 +544,13 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
     clear_state(handle, true, false);
 
     // ADC DMA stream mapping
-    DMA_TypeDef*        controller    = s_adc_dma_map[idx].controller;
-    DMA_Stream_TypeDef* stream        = s_adc_dma_map[idx].stream;
-    const uint8_t       stream_number = s_adc_dma_map[idx].stream_number;
+    DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
 
-    if (controller == NULL || stream == NULL) {
+    if (stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
     // Then disable the stream, disable all interrupts and clear the interrupt flags
-    TRY(dma_disable_stream(stream));
-    TRY(dma_clear_flags(controller, stream_number));
     dma_enable_irqs(stream, false, false, false, false);
 
     // Clear all user passed callbacks

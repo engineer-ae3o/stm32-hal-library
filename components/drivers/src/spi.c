@@ -17,28 +17,28 @@ static void* s_rx_args[5] = {};
 static const dma_stream_map_t s_spi_dma_map[5] = {
     // SPI1: DMA not supported: Not enough streams to go round other peripherals
     {
-        .tx = {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
-        .rx = {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
+        .tx = {.stream = NULL, .channel = 0},
+        .rx = {.stream = NULL, .channel = 0},
     },
     // SPI2
     {
-        .tx = {.controller = DMA1, .stream = DMA1_Stream4, .stream_number = 4, .nvic_irq_type = DMA1_Stream4_IRQn, .channel = 0},
-        .rx = {.controller = DMA1, .stream = DMA1_Stream3, .stream_number = 3, .nvic_irq_type = DMA1_Stream3_IRQn, .channel = 0},
+        .tx = {.stream = DMA1_Stream4, .channel = 0},
+        .rx = {.stream = DMA1_Stream3, .channel = 0},
     },
     // SPI3
     {
-        .tx = {.controller = DMA1, .stream = DMA1_Stream7, .stream_number = 7, .nvic_irq_type = DMA1_Stream7_IRQn, .channel = 0},
-        .rx = {.controller = DMA1, .stream = DMA1_Stream2, .stream_number = 2, .nvic_irq_type = DMA1_Stream2_IRQn, .channel = 0},
+        .tx = {.stream = DMA1_Stream7, .channel = 0},
+        .rx = {.stream = DMA1_Stream2, .channel = 0},
     },
     // SPI4
     {
-        .tx = {.controller = DMA2, .stream = DMA2_Stream1, .stream_number = 1, .nvic_irq_type = DMA2_Stream1_IRQn, .channel = 4},
-        .rx = {.controller = DMA2, .stream = DMA2_Stream4, .stream_number = 4, .nvic_irq_type = DMA2_Stream4_IRQn, .channel = 4},
+        .tx = {.stream = DMA2_Stream1, .channel = 4},
+        .rx = {.stream = DMA2_Stream4, .channel = 4},
     },
     // SPI5: DMA not supported: Not enough streams to go round other peripherals
     {
-        .tx = {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
-        .rx = {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
+        .tx = {.stream = NULL, .channel = 0},
+        .rx = {.stream = NULL, .channel = 0},
     },
 };
 
@@ -262,61 +262,19 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     }
 
     // TX mapping
-    DMA_TypeDef*        tx_controller = s_spi_dma_map[idx].tx.controller;
-    DMA_Stream_TypeDef* tx_stream     = s_spi_dma_map[idx].tx.stream;
-    const uint8_t       tx_channel    = s_spi_dma_map[idx].tx.channel;
-    const uint8_t       tx_stream_no  = s_spi_dma_map[idx].tx.stream_number;
-    const IRQn_Type     tx_irq_type   = s_spi_dma_map[idx].tx.nvic_irq_type;
+    DMA_Stream_TypeDef* tx_stream  = s_spi_dma_map[idx].tx.stream;
+    const uint8_t       tx_channel = s_spi_dma_map[idx].tx.channel;
 
     // RX mapping
-    DMA_TypeDef*        rx_controller = s_spi_dma_map[idx].rx.controller;
-    DMA_Stream_TypeDef* rx_stream     = s_spi_dma_map[idx].rx.stream;
-    const uint8_t       rx_channel    = s_spi_dma_map[idx].rx.channel;
-    const uint8_t       rx_stream_no  = s_spi_dma_map[idx].rx.stream_number;
-    const IRQn_Type     rx_irq_type   = s_spi_dma_map[idx].rx.nvic_irq_type;
+    DMA_Stream_TypeDef* rx_stream  = s_spi_dma_map[idx].rx.stream;
+    const uint8_t       rx_channel = s_spi_dma_map[idx].rx.channel;
 
-    if (tx_controller == NULL || tx_stream == NULL || rx_controller == NULL || rx_stream == NULL) {
+    if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
+
     // Configure and start the stream
-    const dma_stream_config_t stream_config = {
-        .deconfigure = false,
-
-        .per_inc        = true,
-        .mem_inc        = false,
-        .tc_irq_enable  = true,
-        .ht_irq_enable  = false,
-        .te_irq_enable  = true,
-        .dme_irq_enable = false,
-
-        .enable_stream_after_config = false,
-
-        .mode            = DMA_MODE_FIFO,
-        .priority        = DMA_PRIORITY_LOW,
-        .direction       = DMA_DIR_M_M,
-        .per_data_size   = DMA_SIZE_WORD,
-        .mem_data_size   = DMA_SIZE_WORD,
-        .circular_mode   = DMA_NO_CIRCULAR,
-        .flow_controller = DMA_FLOW_CONTROLLER_DMA,
-
-        .channel     = s_crc_dma_map.channel,
-        .buffer_size = size,
-
-        .per_addr  = data,
-        .mem_buf_0 = &CRC->DR,
-        .mem_buf_1 = NULL,
-
-        .controller    = s_crc_dma_map.controller,
-        .stream_number = s_crc_dma_map.stream_number,
-
-        .nvic_irq_type     = s_crc_dma_map.nvic_irq_type,
-        .nvic_irq_priority = CRC_DMA_NVIC_IRQ_PRIORITY,
-    };
-    TRY(dma_configure_stream(s_crc_dma_map.stream, &stream_config));
-
     // TX stream configuration
-    TRY(dmax_clk_enable(tx_controller, true));
-    TRY(dma_clear_flags(tx_controller, tx_stream_no));
     TRY(dma_disable_stream(tx_stream));
     dma_set_channel(tx_stream, tx_channel);
     dma_set_direct_mode(tx_stream, true);
@@ -328,8 +286,6 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     dma_enable_irqs(tx_stream, true, true, false, true);
 
     // RX stream configuration
-    TRY(dmax_clk_enable(rx_controller, true));
-    TRY(dma_clear_flags(rx_controller, rx_stream_no));
     TRY(dma_disable_stream(rx_stream));
     dma_set_channel(rx_stream, rx_channel);
     dma_set_direct_mode(rx_stream, true);
@@ -347,13 +303,6 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
 
     // Enable SPI requests to DMA
     handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
-
-    // Enable the DMA stream interrupts
-    NVIC_SetPriority(tx_irq_type, SPI_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(tx_irq_type);
-
-    NVIC_SetPriority(rx_irq_type, SPI_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(rx_irq_type);
 
     return HAL_OK;
 }

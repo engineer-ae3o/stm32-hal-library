@@ -17,18 +17,18 @@ static void* s_rx_args[3] = {};
 static const dma_stream_map_t s_uart_dma_map[3] = {
     // USART1
     {
-        .tx = {.controller = DMA2, .stream = DMA2_Stream7, .stream_number = 7, .nvic_irq_type = DMA2_Stream7_IRQn, .channel = 4},
-        .rx = {.controller = DMA2, .stream = DMA2_Stream2, .stream_number = 2, .nvic_irq_type = DMA2_Stream2_IRQn, .channel = 4},
+        .tx = {.stream = DMA2_Stream7, .channel = 4},
+        .rx = {.stream = DMA2_Stream2, .channel = 4},
     },
     // USART2
     {
-        .tx = {.controller = DMA1, .stream = DMA1_Stream6, .stream_number = 6, .nvic_irq_type = DMA1_Stream6_IRQn, .channel = 4},
-        .rx = {.controller = DMA1, .stream = DMA1_Stream5, .stream_number = 5, .nvic_irq_type = DMA1_Stream5_IRQn, .channel = 4},
+        .tx = {.stream = DMA1_Stream6, .channel = 4},
+        .rx = {.stream = DMA1_Stream5, .channel = 4},
     },
     // USART6: DMA not supported: Not enough streams to go round other peripherals
     {
-        .tx = {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
-        .rx = {.controller = NULL, .stream = NULL, .stream_number = 0, .nvic_irq_type = 0, .channel = 0},
+        .tx = {.stream = NULL, .channel = 0},
+        .rx = {.stream = NULL, .channel = 0},
     },
 };
 
@@ -207,26 +207,18 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
     }
 
     // TX mapping
-    DMA_TypeDef*        tx_controller = s_uart_dma_map[idx].tx.controller;
-    DMA_Stream_TypeDef* tx_stream     = s_uart_dma_map[idx].tx.stream;
-    const uint8_t       tx_channel    = s_uart_dma_map[idx].tx.channel;
-    const uint8_t       tx_stream_no  = s_uart_dma_map[idx].tx.stream_number;
-    const IRQn_Type     tx_irq_type   = s_uart_dma_map[idx].tx.nvic_irq_type;
+    DMA_Stream_TypeDef* tx_stream  = s_uart_dma_map[idx].tx.stream;
+    const uint8_t       tx_channel = s_uart_dma_map[idx].tx.channel;
 
     // RX mapping
-    DMA_TypeDef*        rx_controller = s_uart_dma_map[idx].rx.controller;
-    DMA_Stream_TypeDef* rx_stream     = s_uart_dma_map[idx].rx.stream;
-    const uint8_t       rx_channel    = s_uart_dma_map[idx].rx.channel;
-    const uint8_t       rx_stream_no  = s_uart_dma_map[idx].rx.stream_number;
-    const IRQn_Type     rx_irq_type   = s_uart_dma_map[idx].rx.nvic_irq_type;
+    DMA_Stream_TypeDef* rx_stream  = s_uart_dma_map[idx].rx.stream;
+    const uint8_t       rx_channel = s_uart_dma_map[idx].rx.channel;
 
-    if (tx_controller == NULL || tx_stream == NULL || rx_controller == NULL || rx_stream == NULL) {
+    if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
     // TX
-    TRY(dmax_clk_enable(tx_controller, true));
-    TRY(dma_clear_flags(tx_controller, tx_stream_no));
     TRY(dma_disable_stream(tx_stream));
     dma_set_channel(tx_stream, tx_channel);
     dma_set_stream_priority(tx_stream, priority);
@@ -239,8 +231,6 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
     dma_set_direct_mode(tx_stream, true);
 
     // RX
-    TRY(dmax_clk_enable(rx_controller, true));
-    TRY(dma_clear_flags(rx_controller, rx_stream_no));
     TRY(dma_disable_stream(rx_stream));
     dma_set_channel(rx_stream, rx_channel);
     dma_set_stream_priority(rx_stream, priority);
@@ -251,13 +241,6 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
     dma_enable_circm_dbm(rx_stream, false, false);
     dma_set_flow_controller(rx_stream, true);
     dma_set_direct_mode(rx_stream, true);
-
-    // Enable DMA stream interrupts
-    NVIC_SetPriority(tx_irq_type, UART_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(tx_irq_type);
-
-    NVIC_SetPriority(rx_irq_type, UART_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(rx_irq_type);
 
     return HAL_OK;
 }
