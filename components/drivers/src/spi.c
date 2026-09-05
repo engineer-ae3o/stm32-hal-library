@@ -7,15 +7,10 @@
 
 
 // The 5 SPI instances: ISRs called when the DMA is done
-static dma_done_cb_t s_dma_tx_done_cbs[5] = {};
-static dma_done_cb_t s_dma_rx_done_cbs[5] = {};
+static dma_stream_ctx_t s_dma_stream_ctx[5] = {};
 
-static void* s_tx_args[5] = {};
-static void* s_rx_args[5] = {};
-
-
-// Mapping for the DMA channels for the 5 SPI channels
-static const dma_stream_map_t s_spi_dma_map[5] = {
+// Mapping for the DMA streams to the 5 SPI peripheral instances
+static const dma_stream_map_t s_spi_dma_map[] = {
     // SPI1: DMA not supported: Not enough streams to go round other peripherals
     {
         .tx = {.stream = NULL, .channel = 0},
@@ -67,7 +62,7 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_spi_dma_map[idx].tx.stream);
 
-    if (!s_dma_tx_done_cbs[idx]) {
+    if (!s_dma_stream_ctx[idx].tx.callback) {
         return;
     }
 
@@ -95,13 +90,13 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     }
 
     // Save the user callback so we can clear it's global array position
-    const dma_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
-    void* const         local_arg = s_tx_args[idx];
+    const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].tx.callback;
+    void* const         local_arg = s_dma_stream_ctx[idx].tx.arg;
 
     // Only clear the user callback if not in circular mode
     if (!(s_spi_dma_map[idx].tx.stream->CR & DMA_SxCR_CIRC)) {
-        s_dma_tx_done_cbs[idx] = NULL;
-        s_tx_args[idx]         = NULL;
+        s_dma_stream_ctx[idx].tx.callback = NULL;
+        s_dma_stream_ctx[idx].tx.arg      = NULL;
     }
 
     // Finally, invoke the user callback
@@ -115,18 +110,18 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_spi_dma_map[idx].rx.stream);
 
-    if (!s_dma_rx_done_cbs[idx]) {
+    if (!s_dma_stream_ctx[idx].rx.callback) {
         return;
     }
 
     // Save the user callback so we can clear it's global array position
-    const dma_done_cb_t local_cb  = s_dma_rx_done_cbs[idx];
-    void* const         local_arg = s_rx_args[idx];
+    const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].rx.callback;
+    void* const         local_arg = s_dma_stream_ctx[idx].rx.arg;
 
     // Only clear the user callback if not in circular mode
     if (!(s_spi_dma_map[idx].rx.stream->CR & DMA_SxCR_CIRC)) {
-        s_dma_rx_done_cbs[idx] = NULL;
-        s_rx_args[idx]         = NULL;
+        s_dma_stream_ctx[idx].rx.callback = NULL;
+        s_dma_stream_ctx[idx].rx.arg      = NULL;
     }
 
     // Finally, invoke the user callback
@@ -580,8 +575,8 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
 
     // Save the user passed callback
     if (cb) {
-        s_dma_tx_done_cbs[idx] = cb;
-        s_tx_args[idx]         = arg;
+        s_dma_stream_ctx[idx].tx.callback = cb;
+        s_dma_stream_ctx[idx].tx.arg      = arg;
     }
 
     // Enable the DMA TX stream
@@ -611,8 +606,8 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size,
 
     // Save the user passed callback
     if (cb) {
-        s_dma_rx_done_cbs[idx] = cb;
-        s_rx_args[idx]         = arg;
+        s_dma_stream_ctx[idx].rx.callback = cb;
+        s_dma_stream_ctx[idx].rx.arg      = arg;
     }
 
     // Enable the DMA RX stream
@@ -646,9 +641,9 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
 
     // Save the user passed callback
     if (cb) {
-        // Save cb to the TX DMA irq only
-        s_dma_tx_done_cbs[idx] = cb;
-        s_tx_args[idx]         = arg;
+        // Save the callback to the TX DMA irq only
+        s_dma_stream_ctx[idx].tx.callback = cb;
+        s_dma_stream_ctx[idx].tx.arg      = arg;
     }
 
     // Enable DMA TX and RX streams
@@ -660,13 +655,13 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
 
 
 // To be used only by i2s.c
-void spi_master_register_callback(dma_done_cb_t cb, void* arg, uint8_t idx, bool tx) {
-    if (tx) {
-        s_dma_tx_done_cbs[idx] = cb;
-        s_tx_args[idx]         = arg;
+void spi_master_register_callback(dma_done_cb_t cb, void* arg, uint8_t idx, bool is_tx) {
+    if (is_tx) {
+        s_dma_stream_ctx[idx].tx.callback = cb;
+        s_dma_stream_ctx[idx].tx.arg      = arg;
     } else {
-        s_dma_rx_done_cbs[idx] = cb;
-        s_rx_args[idx]         = arg;
+        s_dma_stream_ctx[idx].rx.callback = cb;
+        s_dma_stream_ctx[idx].rx.arg      = arg;
     }
 }
 

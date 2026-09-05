@@ -57,11 +57,21 @@ typedef struct {
 typedef void (*dma_done_cb_t)(void* arg, hal_err_t error);
 
 typedef struct {
+    dma_done_cb_t callback;
+    void*         arg;
+} dma_ctx_t;
+
+typedef struct {
+    dma_ctx_t tx;
+    dma_ctx_t rx;
+} dma_stream_ctx_t;
+
+typedef struct {
     DMA_Stream_TypeDef* stream;
     DMA_TypeDef*        controller;
     uint32_t            stream_number;
     IRQn_Type           nvic_irq_type;
-} stream_info_t;
+} dma_stream_info_t;
 
 typedef struct {
     bool deconfigure;   // Set to deinitialize the given stream. All other fields are ignored if this is true

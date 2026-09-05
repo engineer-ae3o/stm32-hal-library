@@ -98,7 +98,7 @@ dma_map_t crc_get_dma_stream_info() {
 
 // DMA interrupt handler
 void DMA2_Stream5_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream5);
+    hal_err_t ret = dma_isr_helper(s_crc_dma_map.stream);
     if (s_user_callback) {
         if (ret == HAL_OK) {
             s_user_callback(s_user_data, HAL_OK, CRC->DR);

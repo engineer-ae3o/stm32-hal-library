@@ -21,7 +21,7 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable);
 hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream);
 hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream);
 hal_err_t dma_clear_stream_flags(DMA_Stream_TypeDef* stream);
-hal_err_t get_stream_info(DMA_Stream_TypeDef* stream, stream_info_t* stream_info);
+hal_err_t get_stream_info(DMA_Stream_TypeDef* stream, dma_stream_info_t* stream_info);
 hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_config_t* config);
 
 void dma_set_channel(DMA_Stream_TypeDef* stream, uint32_t channel);

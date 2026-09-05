@@ -33,7 +33,7 @@ hal_err_t dma_clear_stream_flags(DMA_Stream_TypeDef* stream) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    stream_info_t stream_info;
+    dma_stream_info_t stream_info;
     TRY(get_stream_info(stream, &stream_info));
 
     uint32_t flags = 0;
@@ -101,12 +101,12 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
     return HAL_OK;
 }
 
-hal_err_t get_stream_info(DMA_Stream_TypeDef* stream, stream_info_t* stream_info) {
+hal_err_t get_stream_info(DMA_Stream_TypeDef* stream, dma_stream_info_t* stream_info) {
     if (stream_info == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    static const stream_info_t stream_info_lut[] = {
+    static const dma_stream_info_t stream_info_lut[] = {
         {.stream = DMA1_Stream0, .controller = DMA1, .stream_number = 0, .nvic_irq_type = DMA1_Stream0_IRQn},
         {.stream = DMA1_Stream1, .controller = DMA1, .stream_number = 1, .nvic_irq_type = DMA1_Stream1_IRQn},
         {.stream = DMA1_Stream2, .controller = DMA1, .stream_number = 2, .nvic_irq_type = DMA1_Stream2_IRQn},
@@ -140,7 +140,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
         return HAL_ERR_INVALID_ARG;
     }
 
-    stream_info_t stream_info;
+    dma_stream_info_t stream_info;
     TRY(get_stream_info(stream, &stream_info));
 
     TRY(dmax_clk_enable(stream_info.controller, true));

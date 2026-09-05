@@ -58,7 +58,7 @@ static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
 
 // Defined in spi.c. Used to post DMA events or get info from spi.c since the I2S peripheral is from the SPI peripheral and share DMA streams
 extern void spi_master_get_dma_stream_map(dma_stream_map_t* map, uint32_t idx);
-extern void spi_master_register_callback(dma_done_cb_t cb, void* arg, uint8_t idx, bool tx);
+extern void spi_master_register_callback(dma_done_cb_t cb, void* arg, uint8_t idx, bool is_tx);
 
 
 // Public API

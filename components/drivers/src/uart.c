@@ -6,15 +6,11 @@
 #include "utils/err.h"
 
 
-// The 3 UART peripheral instances: ISRs called when the DMA is done
-static dma_done_cb_t s_dma_tx_done_cbs[3] = {};
-static dma_done_cb_t s_dma_rx_done_cbs[3] = {};
+// The 3 UaRT instances: ISRs called when the DMA is done
+static dma_stream_ctx_t s_dma_stream_ctx[3] = {};
 
-static void* s_tx_args[3] = {};
-static void* s_rx_args[3] = {};
-
-// Mapping for the DMA channels for the 3 USART peripheral instances
-static const dma_stream_map_t s_uart_dma_map[3] = {
+// Mapping for the DMA streams to the 3 UART peripheral instances
+static const dma_stream_map_t s_uart_dma_map[] = {
     // USART1
     {
         .tx = {.stream = DMA2_Stream7, .channel = 4},
@@ -53,7 +49,7 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].tx.stream);
 
-    if (!s_dma_tx_done_cbs[idx]) {
+    if (!s_dma_stream_ctx[idx].tx.callback) {
         return;
     }
 
@@ -71,12 +67,12 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     }
 
     // Save the user callback so we can clear it's global array position
-    const dma_done_cb_t local_cb  = s_dma_tx_done_cbs[idx];
-    void* const         local_arg = s_tx_args[idx];
+    const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].tx.callback;
+    void* const         local_arg = s_dma_stream_ctx[idx].tx.arg;
 
     // Clear the user passed callback since this is a one-off event
-    s_dma_tx_done_cbs[idx] = NULL;
-    s_tx_args[idx]         = NULL;
+    s_dma_stream_ctx[idx].tx.callback = NULL;
+    s_dma_stream_ctx[idx].tx.arg      = NULL;
 
     // Disable UART TX DMA
     handle->CR3 &= ~USART_CR3_DMAT;
@@ -92,17 +88,17 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].rx.stream);
 
-    if (!s_dma_rx_done_cbs[idx]) {
+    if (!s_dma_stream_ctx[idx].rx.callback) {
         return;
     }
 
     // Save the user callback so we can clear it's global array position
-    const dma_done_cb_t local_cb  = s_dma_rx_done_cbs[idx];
-    void* const         local_arg = s_rx_args[idx];
+    const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].rx.callback;
+    void* const         local_arg = s_dma_stream_ctx[idx].rx.arg;
 
     // Clear the user passed callback since this is a one-off event
-    s_dma_rx_done_cbs[idx] = NULL;
-    s_rx_args[idx]         = NULL;
+    s_dma_stream_ctx[idx].rx.callback = NULL;
+    s_dma_stream_ctx[idx].rx.arg      = NULL;
 
     // Disable UART RX DMA
     handle->CR3 &= ~USART_CR3_DMAR;
@@ -300,11 +296,11 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
 
     // Save the user passed callback
     if (callback) {
-        s_dma_tx_done_cbs[idx] = callback;
-        s_tx_args[idx]         = arg;
+        s_dma_stream_ctx[idx].tx.callback = callback;
+        s_dma_stream_ctx[idx].tx.arg      = arg;
     }
 
-    // Enable DMA TX stream
+    // Enable the DMA TX stream
     TRY(dma_enable_stream(stream));
 
     // Enable USART DMA
@@ -334,11 +330,11 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
 
     // Save the user passed callback
     if (callback) {
-        s_dma_rx_done_cbs[idx] = callback;
-        s_rx_args[idx]         = arg;
+        s_dma_stream_ctx[idx].rx.callback = callback;
+        s_dma_stream_ctx[idx].rx.arg      = arg;
     }
 
-    // Enable DMA RX stream
+    // Enable the DMA RX stream
     TRY(dma_enable_stream(stream));
 
     // Enable USART DMA
