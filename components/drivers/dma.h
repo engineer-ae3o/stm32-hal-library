@@ -69,28 +69,24 @@ typedef struct {
     dma_circ_mode_t    circular_mode;
     dma_flow_control_t flow_controller;
 
-    uint8_t  channel;
     uint16_t buffer_size;
+    uint32_t channel;
+    uint32_t nvic_irq_priority;
 
     const volatile void* per_addr;
     const volatile void* mem_buf_0;
     const volatile void* mem_buf_1;
 
-    DMA_TypeDef* controller;
-    uint32_t     stream_number;
-
-    IRQn_Type nvic_irq_type;
-    uint32_t  nvic_irq_priority;
 } dma_stream_config_t;
 
 hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable);
-hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint32_t stream_number);
 
 hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream);
 hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream);
+hal_err_t dma_clear_stream_flags(DMA_Stream_TypeDef* stream);
 hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_config_t* config);
 
-void dma_set_channel(DMA_Stream_TypeDef* stream, uint8_t channel);
+void dma_set_channel(DMA_Stream_TypeDef* stream, uint32_t channel);
 void dma_set_direct_mode(DMA_Stream_TypeDef* stream, bool direct_mode);
 void dma_set_trans_length(DMA_Stream_TypeDef* stream, uint16_t length);
 void dma_set_direction(DMA_Stream_TypeDef* stream, dma_direction_t dir);
@@ -105,10 +101,7 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
 
 // Utilities for mapping the peripherals instances to DMA streams
 typedef struct {
-    DMA_TypeDef*        controller;
     DMA_Stream_TypeDef* stream;
-    IRQn_Type           nvic_irq_type;
-    uint8_t             stream_number;
     uint8_t             channel;
 } dma_map_t;
 

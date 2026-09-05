@@ -4,6 +4,49 @@
 #include "utils/err.h"
 
 
+// Helper utilities
+typedef struct {
+    DMA_Stream_TypeDef* stream;
+    DMA_TypeDef*        controller;
+    uint32_t            stream_number;
+    IRQn_Type           nvic_irq_type;
+} stream_info_t;
+
+static inline hal_err_t get_stream_info(DMA_Stream_TypeDef* stream, stream_info_t* stream_info) {
+    if (stream_info == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    static const stream_info_t stream_info_lut[] = {
+        {.stream = DMA1_Stream0, .controller = DMA1, .stream_number = 0, .nvic_irq_type = DMA1_Stream0_IRQn},
+        {.stream = DMA1_Stream1, .controller = DMA1, .stream_number = 1, .nvic_irq_type = DMA1_Stream1_IRQn},
+        {.stream = DMA1_Stream2, .controller = DMA1, .stream_number = 2, .nvic_irq_type = DMA1_Stream2_IRQn},
+        {.stream = DMA1_Stream3, .controller = DMA1, .stream_number = 3, .nvic_irq_type = DMA1_Stream3_IRQn},
+        {.stream = DMA1_Stream4, .controller = DMA1, .stream_number = 4, .nvic_irq_type = DMA1_Stream4_IRQn},
+        {.stream = DMA1_Stream5, .controller = DMA1, .stream_number = 5, .nvic_irq_type = DMA1_Stream5_IRQn},
+        {.stream = DMA1_Stream6, .controller = DMA1, .stream_number = 6, .nvic_irq_type = DMA1_Stream6_IRQn},
+        {.stream = DMA1_Stream7, .controller = DMA1, .stream_number = 7, .nvic_irq_type = DMA1_Stream7_IRQn},
+        {.stream = DMA2_Stream0, .controller = DMA2, .stream_number = 0, .nvic_irq_type = DMA2_Stream0_IRQn},
+        {.stream = DMA2_Stream1, .controller = DMA2, .stream_number = 1, .nvic_irq_type = DMA2_Stream1_IRQn},
+        {.stream = DMA2_Stream2, .controller = DMA2, .stream_number = 2, .nvic_irq_type = DMA2_Stream2_IRQn},
+        {.stream = DMA2_Stream3, .controller = DMA2, .stream_number = 3, .nvic_irq_type = DMA2_Stream3_IRQn},
+        {.stream = DMA2_Stream4, .controller = DMA2, .stream_number = 4, .nvic_irq_type = DMA2_Stream4_IRQn},
+        {.stream = DMA2_Stream5, .controller = DMA2, .stream_number = 5, .nvic_irq_type = DMA2_Stream5_IRQn},
+        {.stream = DMA2_Stream6, .controller = DMA2, .stream_number = 6, .nvic_irq_type = DMA2_Stream6_IRQn},
+        {.stream = DMA2_Stream7, .controller = DMA2, .stream_number = 7, .nvic_irq_type = DMA2_Stream7_IRQn},
+    };
+
+    for (size_t i = 0; i < ARRAY_SIZE(stream_info_lut); i++) {
+        if (stream == stream_info_lut[i].stream) {
+            *stream_info = stream_info_lut[i];
+            return HAL_OK;
+        }
+    }
+
+    return HAL_ERR_INVALID_ARG;
+}
+
+
 hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
     if (enable) {
         if (controller == DMA1) {
@@ -28,13 +71,16 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
     return HAL_OK;
 }
 
-hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint32_t stream_number) {
-    if (controller == NULL) {
+hal_err_t dma_clear_stream_flags(DMA_Stream_TypeDef* stream) {
+    if (stream == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    stream_info_t stream_info;
+    TRY(get_stream_info(stream, &stream_info));
+
     uint32_t flags = 0;
-    switch (stream_number) {
+    switch (stream_info.stream_number) {
         case 0:
             flags = (DMA_LISR_TCIF0 | DMA_LISR_HTIF0 | DMA_LISR_TEIF0 | DMA_LISR_DMEIF0 | DMA_LISR_FEIF0);
             break;
@@ -63,10 +109,10 @@ hal_err_t dma_clear_flags(DMA_TypeDef* controller, uint32_t stream_number) {
             return HAL_ERR_INVALID_ARG;
     }
 
-    if (stream_number <= 3) {
-        controller->LIFCR = flags;
-    } else if (stream_number <= 7) {
-        controller->HIFCR = flags;
+    if (stream_info.stream_number <= 3) {
+        stream_info.controller->LIFCR = flags;
+    } else if (stream_info.stream_number <= 7) {
+        stream_info.controller->HIFCR = flags;
     }
 
     return HAL_OK;
@@ -99,12 +145,15 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
 }
 
 hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_config_t* config) {
-    if (stream == NULL || config == NULL || config->controller == NULL) {
+    if (stream == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    TRY(dmax_clk_enable(config->controller, true));
-    TRY(dma_clear_flags(config->controller, config->stream_number));
+    stream_info_t stream_info;
+    TRY(get_stream_info(stream, &stream_info));
+
+    TRY(dmax_clk_enable(stream_info.controller, true));
+    TRY(dma_clear_stream_flags(stream));
     TRY(dma_disable_stream(stream));
 
     stream->CR &= ~(DMA_SxCR_CHSEL | DMA_SxCR_MBURST | DMA_SxCR_PBURST | DMA_SxCR_CT | DMA_SxCR_DBM | DMA_SxCR_PL | DMA_SxCR_PINCOS | DMA_SxCR_MSIZE |
@@ -117,7 +166,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
         stream->M0AR = 0;
         stream->M1AR = 0;
         stream->NDTR = 0;
-        NVIC_DisableIRQ(config->nvic_irq_type);
+        NVIC_DisableIRQ(stream_info.nvic_irq_type);
         return HAL_OK;
     }
 
@@ -154,9 +203,9 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
         stream->M1AR = (uint32_t)config->mem_buf_1;
     }
 
-    NVIC_ClearPendingIRQ(config->nvic_irq_type);
-    NVIC_SetPriority(config->nvic_irq_type, config->nvic_irq_priority);
-    NVIC_EnableIRQ(config->nvic_irq_type);
+    NVIC_ClearPendingIRQ(stream_info.nvic_irq_type);
+    NVIC_SetPriority(stream_info.nvic_irq_type, config->nvic_irq_priority);
+    NVIC_EnableIRQ(stream_info.nvic_irq_type);
 
     if (config->enable_stream_after_config) {
         TRY(dma_enable_stream(stream));
@@ -165,7 +214,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     return HAL_OK;
 }
 
-void dma_set_channel(DMA_Stream_TypeDef* stream, uint8_t channel) {
+void dma_set_channel(DMA_Stream_TypeDef* stream, uint32_t channel) {
     if (stream) {
         stream->CR = (stream->CR & ~DMA_SxCR_CHSEL) | ((uint32_t)(channel << DMA_SxCR_CHSEL_Pos) & DMA_SxCR_CHSEL);
     }

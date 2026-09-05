@@ -450,9 +450,6 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     }
 
     // Configuration of the DMA stream
-    TRY(dmax_clk_enable(controller, true));
-    TRY(dma_clear_flags(controller, stream_number));
-    TRY(dma_disable_stream(stream));
     dma_set_direction(stream, DMA_DIR_P_M);
     dma_set_direct_mode(stream, true);
     dma_set_channel(stream, channel);
@@ -493,17 +490,44 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     __enable_irq();
 
     // Enable the interrupts based on what callbacks were passed
-    dma_enable_irqs(stream, transfer_complete, transfer_error, false, direct_mode_error);
     if (data_overrun) {
         handle->CR1 |= ADC_CR1_OVRIE;
     }
 
-    // Enable the DMA stream interrupts
-    NVIC_SetPriority(nvic_irq_type, ADC_DMA_NVIC_IRQ_PRIORITY);
-    NVIC_EnableIRQ(nvic_irq_type);
+    const dma_stream_config_t stream_config = {
+        .deconfigure = false,
 
-    // Enable the DMA stream after all DMA configuration is complete
-    TRY(dma_enable_stream(stream));
+        .per_inc        = false,
+        .mem_inc        = true,
+        .tc_irq_enable  = transfer_complete,
+        .ht_irq_enable  = false,
+        .te_irq_enable  = transfer_error,
+        .dme_irq_enable = direct_mode_error,
+
+        .enable_stream_after_config = true,
+
+        .mode            = DMA_MODE_FIFO,
+        .priority        = DMA_PRIORITY_LOW,
+        .direction       = DMA_DIR_P_M,
+        .per_data_size   = DMA_SIZE_HWORD,
+        .mem_data_size   = DMA_SIZE_HWORD,
+        .circular_mode   = DMA_NO_CIRCULAR,
+        .flow_controller = DMA_FLOW_CONTROLLER_DMA,
+
+        .channel     = channel,
+        .buffer_size = config->buffer_size,
+
+        .per_addr  = &handle->DR,
+        .mem_buf_0 = &CRC->DR,
+        .mem_buf_1 = NULL,
+
+        .controller    = controller,
+        .stream_number = stream_number,
+
+        .nvic_irq_type     = nvic_irq_type,
+        .nvic_irq_priority = ADC_DMA_NVIC_IRQ_PRIORITY,
+    };
+    TRY(dma_configure_stream(stream, &stream_config));
 
     if (config->trigger == RG_TRIGGER_SOFTWARE) {
         // If the trigger is from software, set the SWSTART bit and return as that's all that's needed

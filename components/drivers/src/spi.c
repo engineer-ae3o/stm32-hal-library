@@ -278,6 +278,41 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     if (tx_controller == NULL || tx_stream == NULL || rx_controller == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
+    // Configure and start the stream
+    const dma_stream_config_t stream_config = {
+        .deconfigure = false,
+
+        .per_inc        = true,
+        .mem_inc        = false,
+        .tc_irq_enable  = true,
+        .ht_irq_enable  = false,
+        .te_irq_enable  = true,
+        .dme_irq_enable = false,
+
+        .enable_stream_after_config = false,
+
+        .mode            = DMA_MODE_FIFO,
+        .priority        = DMA_PRIORITY_LOW,
+        .direction       = DMA_DIR_M_M,
+        .per_data_size   = DMA_SIZE_WORD,
+        .mem_data_size   = DMA_SIZE_WORD,
+        .circular_mode   = DMA_NO_CIRCULAR,
+        .flow_controller = DMA_FLOW_CONTROLLER_DMA,
+
+        .channel     = s_crc_dma_map.channel,
+        .buffer_size = size,
+
+        .per_addr  = data,
+        .mem_buf_0 = &CRC->DR,
+        .mem_buf_1 = NULL,
+
+        .controller    = s_crc_dma_map.controller,
+        .stream_number = s_crc_dma_map.stream_number,
+
+        .nvic_irq_type     = s_crc_dma_map.nvic_irq_type,
+        .nvic_irq_priority = CRC_DMA_NVIC_IRQ_PRIORITY,
+    };
+    TRY(dma_configure_stream(s_crc_dma_map.stream, &stream_config));
 
     // TX stream configuration
     TRY(dmax_clk_enable(tx_controller, true));
