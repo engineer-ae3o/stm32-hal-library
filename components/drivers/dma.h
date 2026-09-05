@@ -45,21 +45,21 @@ typedef enum : uint8_t {
 } dma_flow_control_t;
 
 typedef enum : uint8_t {
-    DMA_NO_CIRCULAR,
-    DMA_USE_CIRCULAR,
+    DMA_MODE_NO_CIRCULAR,
+    DMA_MODE_CIRCULAR,
     DMA_MODE_DOUBLE_BUFFER,
 } dma_circ_mode_t;
 
 typedef struct {
-    bool deconfigure; // Set to deinitialize the given stream
+    bool deconfigure;   // Set to deinitialize the given stream. All other fields are ignored if this is true
+    bool enable_stream; // Enable the DMA stream immediately after configuring it
 
-    bool per_inc;
-    bool mem_inc;
-    bool tc_irq_enable;
-    bool ht_irq_enable;
-    bool te_irq_enable;
-    bool dme_irq_enable;
-    bool enable_stream_after_config;
+    bool per_inc;        // Increment the peripheral address (or source address in memory to memory transfers)
+    bool mem_inc;        // Increment the memory address(es) (or destination address(es) in memory to memory transfers)
+    bool tc_irq_enable;  // Transfer complete interrupt enable
+    bool ht_irq_enable;  // Half transfer interrupt enable
+    bool te_irq_enable;  // Transfer error interrupt enable
+    bool dme_irq_enable; // Direct mode error interrupt enable
 
     dma_direct_mode_t  mode;
     dma_priority_t     priority;
@@ -76,7 +76,6 @@ typedef struct {
     const volatile void* per_addr;
     const volatile void* mem_buf_0;
     const volatile void* mem_buf_1;
-
 } dma_stream_config_t;
 
 hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable);

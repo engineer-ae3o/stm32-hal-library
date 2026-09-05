@@ -185,7 +185,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     cr_mask |= config->flow_controller == DMA_FLOW_CONTROLLER_DMA ? 0 : DMA_SxCR_PFCTRL;
     if (config->circular_mode == DMA_MODE_DOUBLE_BUFFER) {
         cr_mask |= (DMA_SxCR_DBM | DMA_SxCR_CIRC);
-    } else if (config->circular_mode == DMA_USE_CIRCULAR) {
+    } else if (config->circular_mode == DMA_MODE_CIRCULAR) {
         cr_mask |= DMA_SxCR_CIRC;
     }
 
@@ -207,7 +207,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     NVIC_SetPriority(stream_info.nvic_irq_type, config->nvic_irq_priority);
     NVIC_EnableIRQ(stream_info.nvic_irq_type);
 
-    if (config->enable_stream_after_config) {
+    if (config->enable_stream) {
         TRY(dma_enable_stream(stream));
     }
 

@@ -400,7 +400,7 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
 hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config) {
     if (handle == NULL || config == NULL || config->channels.channels_sequence == NULL || config->channels.num_of_channels == 0 ||
         config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL ||
-        (config->use_double_buffers && config->buffer_2 == NULL)) {
+        (config->circular_mode == DMA_MODE_DOUBLE_BUFFER && config->buffer_2 == NULL)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -446,27 +446,10 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         }
     }
 
-    // Configuration of the DMA stream
-    dma_set_direction(stream, DMA_DIR_P_M);
-    dma_set_direct_mode(stream, true);
-    dma_set_channel(stream, channel);
-    dma_set_increment(stream, false, true);
-    dma_set_flow_controller(stream, true);
-    dma_set_trans_length(stream, config->buffer_size);
-    dma_set_stream_priority(stream, DMA_PRIORITY_HIGH);
-    dma_set_per_mem_size(stream, DMA_SIZE_HWORD, DMA_SIZE_HWORD);
-
-    const bool  double_buffering = config->use_double_buffers;
-    const bool  circular_mode    = config->use_double_buffers || config->dma_wraparound_when_done;
-    const void* buffer_2         = config->use_double_buffers ? config->buffer_2 : NULL;
-
-    dma_enable_circm_dbm(stream, circular_mode, double_buffering);
-    dma_set_addresses(stream, &handle->DR, config->buffer_1, buffer_2);
-
     // Enable ADC continuous sampling and DMA mode
     // Set the DDS bit only if we are in circular mode so the ADC continues
     // to send DMA requests even after the first buffer is filled.
-    if (circular_mode) {
+    if (config->circular_mode == DMA_MODE_DOUBLE_BUFFER || config->circular_mode == DMA_MODE_CIRCULAR) {
         handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS);
     } else {
         handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);
@@ -475,40 +458,29 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     // Clear the CT bit to ensure the DMA controller starts at the first buffer
     stream->CR &= ~DMA_SxCR_CT;
 
-    // Callback registration
-    const bool transfer_error    = config->callbacks.on_transfer_error != NULL;
-    const bool direct_mode_error = config->callbacks.on_direct_mode_error != NULL;
-    const bool transfer_complete = config->callbacks.on_buffer_full != NULL;
-    const bool data_overrun      = config->callbacks.on_data_overrun != NULL;
-
-    // Copy the registered callbacks
-    __disable_irq();
-    s_adc_ctx[idx].continuous_mode_callbacks = config->callbacks;
-    __enable_irq();
-
     // Enable the interrupts based on what callbacks were passed
-    if (data_overrun) {
+    if (config->callbacks.on_data_overrun != NULL) {
         handle->CR1 |= ADC_CR1_OVRIE;
     }
 
+    // Configure the stream and enable the corresponding interrupts
     const dma_stream_config_t stream_config = {
-        .deconfigure = false,
+        .deconfigure   = false,
+        .enable_stream = true,
 
         .per_inc        = false,
         .mem_inc        = true,
-        .tc_irq_enable  = transfer_complete,
+        .tc_irq_enable  = config->callbacks.on_buffer_full != NULL,
         .ht_irq_enable  = false,
-        .te_irq_enable  = transfer_error,
-        .dme_irq_enable = direct_mode_error,
+        .te_irq_enable  = config->callbacks.on_transfer_error != NULL,
+        .dme_irq_enable = config->callbacks.on_direct_mode_error != NULL,
 
-        .enable_stream_after_config = true,
-
-        .mode            = DMA_MODE_FIFO,
+        .mode            = DMA_MODE_DIRECT,
         .priority        = DMA_PRIORITY_LOW,
         .direction       = DMA_DIR_P_M,
         .per_data_size   = DMA_SIZE_HWORD,
         .mem_data_size   = DMA_SIZE_HWORD,
-        .circular_mode   = DMA_NO_CIRCULAR,
+        .circular_mode   = config->circular_mode,
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = config->buffer_size,
@@ -516,12 +488,18 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         .nvic_irq_priority = ADC_DMA_NVIC_IRQ_PRIORITY,
 
         .per_addr  = &handle->DR,
-        .mem_buf_0 = &CRC->DR,
-        .mem_buf_1 = NULL,
+        .mem_buf_0 = config->buffer_1,
+        .mem_buf_1 = config->circular_mode == DMA_MODE_DOUBLE_BUFFER ? config->buffer_2 : NULL,
 
     };
     TRY(dma_configure_stream(stream, &stream_config));
 
+    // Copy the registered callbacks
+    __disable_irq();
+    s_adc_ctx[idx].continuous_mode_callbacks = config->callbacks;
+    __enable_irq();
+
+    // Finally, set the trigger source
     if (config->trigger == RG_TRIGGER_SOFTWARE) {
         // If the trigger is from software, set the SWSTART bit and return as that's all that's needed
         handle->CR2 |= ADC_CR2_SWSTART;
@@ -545,13 +523,14 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
 
     // ADC DMA stream mapping
     DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
-
     if (stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Then disable the stream, disable all interrupts and clear the interrupt flags
-    dma_enable_irqs(stream, false, false, false, false);
+    // Deinitialize the stream. This clears all DMA flags as well
+    dma_stream_config_t stream_config = {};
+    stream_config.deconfigure         = true;
+    TRY(dma_configure_stream(stream, &stream_config));
 
     // Clear all user passed callbacks
     __disable_irq();

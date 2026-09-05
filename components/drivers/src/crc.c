@@ -53,9 +53,10 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, crc_dma_done_cb_t cb,
         return HAL_ERR_INVALID_STATE;
     }
 
-    // Configure and start the stream
+    // Configure the DMA stream
     const dma_stream_config_t stream_config = {
-        .deconfigure = false,
+        .deconfigure   = false,
+        .enable_stream = false,
 
         .per_inc        = true,
         .mem_inc        = false,
@@ -64,24 +65,22 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, crc_dma_done_cb_t cb,
         .te_irq_enable  = true,
         .dme_irq_enable = false,
 
-        .enable_stream_after_config = false,
-
         .mode            = DMA_MODE_FIFO,
-        .priority        = DMA_PRIORITY_LOW,
+        .priority        = DMA_PRIORITY_MEDIUM,
         .direction       = DMA_DIR_M_M,
         .per_data_size   = DMA_SIZE_WORD,
         .mem_data_size   = DMA_SIZE_WORD,
-        .circular_mode   = DMA_NO_CIRCULAR,
+        .circular_mode   = DMA_MODE_NO_CIRCULAR,
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
-        .channel     = s_crc_dma_map.channel,
-        .buffer_size = size,
+        .buffer_size       = size,
+        .channel           = s_crc_dma_map.channel,
+        .nvic_irq_priority = CRC_DMA_NVIC_IRQ_PRIORITY,
 
         .per_addr  = data,
         .mem_buf_0 = &CRC->DR,
         .mem_buf_1 = NULL,
 
-        .nvic_irq_priority = CRC_DMA_NVIC_IRQ_PRIORITY,
     };
     TRY(dma_configure_stream(s_crc_dma_map.stream, &stream_config));
 
