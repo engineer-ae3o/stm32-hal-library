@@ -43,7 +43,7 @@ hal_err_t crc_get(const uint32_t* data, size_t size, uint32_t* crc32) {
     return HAL_OK;
 }
 
-hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, crc_dma_done_cb_t cb, void* arg) {
+hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, dma_priority_t priority, crc_dma_done_cb_t cb, void* arg) {
     if (data == NULL || size == 0 || cb == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -66,7 +66,7 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, crc_dma_done_cb_t cb,
         .dme_irq_enable = false,
 
         .mode            = DMA_MODE_FIFO,
-        .priority        = DMA_PRIORITY_MEDIUM,
+        .priority        = priority,
         .direction       = DMA_DIR_M_M,
         .per_data_size   = DMA_SIZE_WORD,
         .mem_data_size   = DMA_SIZE_WORD,
@@ -80,7 +80,6 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, crc_dma_done_cb_t cb,
         .per_addr  = data,
         .mem_buf_0 = &CRC->DR,
         .mem_buf_1 = NULL,
-
     };
     TRY(dma_configure_stream(s_crc_dma_map.stream, &stream_config));
 
@@ -99,7 +98,7 @@ dma_map_t crc_get_dma_stream_info() {
 
 // DMA interrupt handler
 void DMA2_Stream5_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream5, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
+    hal_err_t ret = dma_isr_helper(DMA2_Stream5);
     if (s_user_callback) {
         if (ret == HAL_OK) {
             s_user_callback(s_user_data, HAL_OK, CRC->DR);

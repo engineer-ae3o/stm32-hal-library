@@ -46,7 +46,13 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     }
 }
 
-[[__gnu__::__always_inline__]] static inline void isr_tx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_tx_helper(USART_TypeDef* handle) {
+    const uint8_t idx = get_index(handle);
+    ASSERT(idx != 0xFFU);
+
+    // Clear any flags that were set and get the error status
+    hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].tx.stream);
+
     if (!s_dma_tx_done_cbs[idx]) {
         return;
     }
@@ -72,14 +78,20 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     s_dma_tx_done_cbs[idx] = NULL;
     s_tx_args[idx]         = NULL;
 
-    // Disable UART DMA
+    // Disable UART TX DMA
     handle->CR3 &= ~USART_CR3_DMAT;
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
 }
 
-[[__gnu__::__always_inline__]] static inline void isr_rx_helper(USART_TypeDef* handle, hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_rx_helper(USART_TypeDef* handle) {
+    const uint8_t idx = get_index(handle);
+    ASSERT(idx != 0xFFU);
+
+    // Clear any flags that were set and get the error status
+    hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].rx.stream);
+
     if (!s_dma_rx_done_cbs[idx]) {
         return;
     }
@@ -92,7 +104,7 @@ static const dma_stream_map_t s_uart_dma_map[3] = {
     s_dma_rx_done_cbs[idx] = NULL;
     s_rx_args[idx]         = NULL;
 
-    // Disable UART DMA
+    // Disable UART RX DMA
     handle->CR3 &= ~USART_CR3_DMAR;
 
     // Finally, invoke the user callback
@@ -338,24 +350,20 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
 // DMA interrupts
 // USART1: TX
 void DMA2_Stream7_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream7, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7, DMA_HISR_HTIF7);
-    isr_tx_helper(USART1, ret, get_index(USART1));
+    isr_tx_helper(USART1);
 }
 
 // USART1: RX
 void DMA2_Stream2_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream2, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
-    isr_rx_helper(USART1, ret, get_index(USART1));
+    isr_rx_helper(USART1);
 }
 
 // USART2: TX
 void DMA1_Stream6_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream6, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_DMEIF6, DMA_HISR_HTIF6);
-    isr_tx_helper(USART2, ret, get_index(USART2));
+    isr_tx_helper(USART2);
 }
 
 // USART2: RX
 void DMA1_Stream5_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream5, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_DMEIF5, DMA_HISR_HTIF5);
-    isr_rx_helper(USART2, ret, get_index(USART2));
+    isr_rx_helper(USART2);
 }

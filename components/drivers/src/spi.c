@@ -3,6 +3,7 @@
 #include "utils/common.h"
 #include "drivers/spi.h"
 #include "drivers/dma.h"
+#include "utils/err.h"
 
 
 // The 5 SPI instances: ISRs called when the DMA is done
@@ -59,7 +60,13 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     }
 }
 
-[[__gnu__::__always_inline__]] static inline void isr_tx_helper(SPI_TypeDef* handle, hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_tx_helper(SPI_TypeDef* handle) {
+    const uint8_t idx = get_index(handle);
+    ASSERT(idx != 0xFFU);
+
+    // Clear any flags that were set and get the error status
+    hal_err_t ret = dma_isr_helper(s_spi_dma_map[idx].tx.stream);
+
     if (!s_dma_tx_done_cbs[idx]) {
         return;
     }
@@ -101,7 +108,13 @@ static const dma_stream_map_t s_spi_dma_map[5] = {
     local_cb(local_arg, ret);
 }
 
-[[__gnu__::__always_inline__]] static inline void isr_rx_helper(hal_err_t ret, uint8_t idx) {
+[[__gnu__::__always_inline__]] static inline void isr_rx_helper(SPI_TypeDef* handle) {
+    const uint8_t idx = get_index(handle);
+    ASSERT(idx != 0xFFU);
+
+    // Clear any flags that were set and get the error status
+    hal_err_t ret = dma_isr_helper(s_spi_dma_map[idx].rx.stream);
+
     if (!s_dma_rx_done_cbs[idx]) {
         return;
     }
@@ -657,40 +670,39 @@ void spi_master_register_callback(dma_done_cb_t cb, void* arg, uint8_t idx, bool
     }
 }
 
+void spi_master_get_dma_stream_map(dma_stream_map_t* map, uint32_t idx) {
+    if (map) {
+        *map = s_spi_dma_map[idx];
+    }
+}
 
 // DMA interrupts
 // SPI2: TX
 void DMA1_Stream4_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream4, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4, DMA_HISR_HTIF4);
-    isr_tx_helper(SPI2, ret, get_index(SPI2));
+    isr_tx_helper(SPI2);
 }
 
 // SPI2: RX
 void DMA1_Stream3_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream3, &DMA1->LIFCR, &DMA1->LISR, DMA_LISR_TCIF3, DMA_LISR_TEIF3, DMA_LISR_DMEIF3, DMA_LISR_HTIF3);
-    isr_rx_helper(ret, get_index(SPI2));
+    isr_rx_helper(SPI2);
 }
 
 // SPI3: TX
 void DMA1_Stream7_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream7, &DMA1->HIFCR, &DMA1->HISR, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_DMEIF7, DMA_HISR_HTIF7);
-    isr_tx_helper(SPI3, ret, get_index(SPI3));
+    isr_tx_helper(SPI3);
 }
 
 // SPI3: RX
 void DMA1_Stream2_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA1_Stream2, &DMA1->LIFCR, &DMA1->LISR, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_DMEIF2, DMA_LISR_HTIF2);
-    isr_rx_helper(ret, get_index(SPI3));
+    isr_rx_helper(SPI3);
 }
 
 // SPI4: TX
 void DMA2_Stream1_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_DMEIF1, DMA_LISR_HTIF1);
-    isr_tx_helper(SPI4, ret, get_index(SPI4));
+    isr_tx_helper(SPI4);
 }
 
 // SPI4: RX
 void DMA2_Stream4_IRQHandler(void) {
-    hal_err_t ret = dma_isr_helper(DMA2_Stream4, &DMA2->HIFCR, &DMA2->HISR, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_DMEIF4, DMA_HISR_HTIF4);
-    isr_rx_helper(ret, get_index(SPI4));
+    isr_rx_helper(SPI4);
 }

@@ -42,7 +42,7 @@ static const dma_map_t s_adc_dma_map[] = {
 
 
 // Inline helpers
-static inline uint8_t get_index(const ADC_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline uint8_t get_index(const ADC_TypeDef* handle) {
 #if defined(ADC1)
     if (handle == ADC1) {
         return 0U;
@@ -61,7 +61,7 @@ static inline uint8_t get_index(const ADC_TypeDef* handle) {
     return 0xFFU;
 }
 
-static inline void adcx_isr_helper(ADC_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline void adcx_isr_helper(ADC_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     // Assert since we can't return the error anywhere
     ASSERT(idx != 0xFFU);
@@ -136,12 +136,7 @@ static inline void adcx_isr_helper(ADC_TypeDef* handle) {
     }
 }
 
-static inline void adcx_dma_isr_helper(ADC_TypeDef*       handle,
-                                       volatile uint32_t* irq_clear_register,
-                                       volatile uint32_t* irq_status_register,
-                                       uint32_t           tc_mask,
-                                       uint32_t           te_mask,
-                                       uint32_t           dme_mask) {
+[[__gnu__::__always_inline__]] static inline void adcx_dma_isr_helper(ADC_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     ASSERT(idx != 0xFFU);
 
@@ -206,7 +201,7 @@ static inline void adcx_dma_isr_helper(ADC_TypeDef*       handle,
     }
 }
 
-static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
+[[__gnu__::__always_inline__]] static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
     if (regular) {
         handle->SR &= ~(ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR);
         handle->CR1 &= ~(ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE);
@@ -227,7 +222,7 @@ static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected)
     }
 }
 
-static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channels_t channel) {
+[[__gnu__::__always_inline__]] static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channels_t channel) {
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
@@ -930,5 +925,5 @@ void ADC_IRQHandler(void) {
 
 // ADC1
 void DMA2_Stream0_IRQHandler(void) {
-    adcx_dma_isr_helper(ADC1, &DMA2->LIFCR, &DMA2->LISR, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_DMEIF0);
+    adcx_dma_isr_helper(ADC1);
 }
