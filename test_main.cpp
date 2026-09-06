@@ -1,3 +1,4 @@
+#include "drivers/dma_types.h"
 #include "test/runner.hpp"
 #include "o1heap/o1heap.h"
 #include "utils/common.h"
@@ -289,6 +290,7 @@ int main() {
     ASSERT(crc_get_dma(
                buffer.data(),
                buffer.size(),
+               DMA_PRIORITY_VERY_HIGH,
                [](void*, hal_err_t err, uint32_t crc_32) {
                    ASSERT(err == HAL_OK);
                    LOGI("CRC32_DMA", "CRC32 checksum of data = %lu", crc_32);

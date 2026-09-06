@@ -44,6 +44,22 @@ typedef enum : uint8_t {
 } dma_circ_mode_t;
 
 typedef struct {
+    // irq_status_register is the DMA interrupt status register.
+    // When a bit gets set, the corresponding DMA interrupt is fired.
+    uint32_t* irq_status_register;
+
+    // irq_clear_register is the DMA interrupt clear register. It is used to clear the
+    // interrupt bit set in its corresponding status register. It is write 1 to clear a bit.
+    uint32_t* irq_clear_register;
+
+    uint32_t tc_mask;  // Transfer complete flag bitmask
+    uint32_t ht_mask;  // Half transfer complete flag bitmask
+    uint32_t te_mask;  // Transfer error flag bitmask
+    uint32_t dme_mask; // Direct mode error flag bitmask
+    uint32_t fe_mask;  // FIFO mode error flag bitmask
+} dma_stream_flags_t;
+
+typedef struct {
     DMA_Stream_TypeDef* stream;
     uint8_t             channel;
 } dma_map_t;

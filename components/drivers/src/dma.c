@@ -28,15 +28,40 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable) {
     return HAL_OK;
 }
 
-hal_err_t dma_clear_stream_flags(DMA_Stream_TypeDef* stream) {
+hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {
+    if (stream == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    stream->CR |= DMA_SxCR_EN;
+    uint32_t timeout = TIMEOUT_CYCLES;
+    while (!(stream->CR & DMA_SxCR_EN) && (--timeout));
+    if (timeout == 0) {
+        return HAL_ERR_TIMEOUT;
+    }
+    return HAL_OK;
+}
+
+hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
+    if (stream == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    stream->CR &= ~DMA_SxCR_EN;
+    uint32_t timeout = TIMEOUT_CYCLES;
+    while ((stream->CR & DMA_SxCR_EN) && (--timeout));
+    if (timeout == 0) {
+        return HAL_ERR_TIMEOUT;
+    }
+    return HAL_OK;
+}
+
+hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, dma_stream_flags_t* flags) {
     if (stream == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
     dma_stream_info_t stream_info;
-    TRY(get_stream_info(stream, &stream_info));
+    TRY(dma_get_stream_info(stream, &stream_info));
 
-    uint32_t flags = 0;
     switch (stream_info.stream_number) {
         case 0:
             flags = (DMA_LISR_TCIF0 | DMA_LISR_HTIF0 | DMA_LISR_TEIF0 | DMA_LISR_DMEIF0 | DMA_LISR_FEIF0);
@@ -75,33 +100,7 @@ hal_err_t dma_clear_stream_flags(DMA_Stream_TypeDef* stream) {
     return HAL_OK;
 }
 
-hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {
-    if (stream == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    stream->CR |= DMA_SxCR_EN;
-    uint32_t timeout = TIMEOUT_CYCLES;
-    while (!(stream->CR & DMA_SxCR_EN) && (--timeout));
-    if (timeout == 0) {
-        return HAL_ERR_TIMEOUT;
-    }
-    return HAL_OK;
-}
-
-hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
-    if (stream == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    stream->CR &= ~DMA_SxCR_EN;
-    uint32_t timeout = TIMEOUT_CYCLES;
-    while ((stream->CR & DMA_SxCR_EN) && (--timeout));
-    if (timeout == 0) {
-        return HAL_ERR_TIMEOUT;
-    }
-    return HAL_OK;
-}
-
-hal_err_t get_stream_info(DMA_Stream_TypeDef* stream, dma_stream_info_t* stream_info) {
+hal_err_t dma_get_stream_info(DMA_Stream_TypeDef* stream, dma_stream_info_t* stream_info) {
     if (stream_info == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -140,12 +139,18 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Get the stream's DMA controller and NVIC interrupt type
     dma_stream_info_t stream_info;
-    TRY(get_stream_info(stream, &stream_info));
+    TRY(dma_get_stream_info(stream, &stream_info));
 
     TRY(dmax_clk_enable(stream_info.controller, true));
-    TRY(dma_clear_stream_flags(stream));
     TRY(dma_disable_stream(stream));
+
+    // Clear all the DMA flags
+    // Get the DMA status flags for this stream and the corresponding status and irq clear register
+    dma_stream_flags_t flags;
+    TRY(dma_get_stream_flags(stream, &flags));
+    *flags.irq_clear_register = (flags.tc_mask | flags.te_mask | flags.ht_mask | flags.fe_mask | flags.dme_mask);
 
     stream->CR &= ~(DMA_SxCR_CHSEL | DMA_SxCR_MBURST | DMA_SxCR_PBURST | DMA_SxCR_CT | DMA_SxCR_DBM | DMA_SxCR_PL | DMA_SxCR_PINCOS | DMA_SxCR_MSIZE |
                     DMA_SxCR_PSIZE | DMA_SxCR_MINC | DMA_SxCR_PINC | DMA_SxCR_CIRC | DMA_SxCR_DIR | DMA_SxCR_PFCTRL | DMA_SxCR_TCIE | DMA_SxCR_HTIE |

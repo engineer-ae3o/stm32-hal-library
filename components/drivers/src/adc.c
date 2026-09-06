@@ -158,14 +158,22 @@ static const dma_map_t s_adc_dma_map[] = {
     void* const              user_data    = s_adc_ctx[idx].continuous_mode_callbacks.user;
     __enable_irq();
 
-    if (*irq_status_register & tc_mask) {
+    // Get the DMA status flags for this stream and the corresponding status and irq clear register
+    dma_stream_flags_t flags;
+    hal_err_t          ret = dma_get_stream_flags(stream, &flags);
+    ASSERT(ret == HAL_OK);
+
+    const uint32_t status_register = *flags.irq_status_register;
+    uint32_t       clear_register  = 0;
+
+    if (status_register & flags.tc_mask) {
         // End the conversion if we are not in circular or double buffering mode
         if (!(stream->CR & DMA_SxCR_CIRC) && !(stream->CR & DMA_SxCR_DBM)) {
             ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
         }
 
         // Clear the TC flag. The DMA_HIFCR and DMA_LIFCR are write 1 to clear
-        *irq_clear_register |= tc_mask;
+        clear_register |= flags.tc_mask;
 
         // Transfer complete. If in circular or double buffering mode, the DMA has either
         // wrapped around in the same buffer or has switched to the second buffer respectively.
@@ -176,29 +184,31 @@ static const dma_map_t s_adc_dma_map[] = {
 
     // Errors that end the conversion. Either a plain DMA transfer error or a direct mode error.
     // Conversions can be restarted by the user if necessary in the callback.
-    if (*irq_status_register & te_mask) {
+    if (status_register & flags.te_mask) {
         // Transfer error. End the conversion and invoke the user callback.
         ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
 
         // Clear the TE flag. The DMA_HIFCR and DMA_LIFCR are write 1 to clear
-        *irq_clear_register |= te_mask;
+        clear_register |= flags.te_mask;
 
         if (te_local_cb) {
             te_local_cb(user_data, is_buf_1, num_of_items_left);
         }
     }
 
-    if (*irq_status_register & dme_mask) {
+    if (status_register & flags.dme_mask) {
         // Direct mode error. End the conversion and invoke the user callback.
         ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
 
         // Clear the DME flag. The DMA_HIFCR and DMA_LIFCR are write 1 to clear
-        *irq_clear_register |= dme_mask;
+        clear_register |= flags.dme_mask;
 
         if (dme_local_cb) {
             dme_local_cb(user_data, is_buf_1, num_of_items_left);
         }
     }
+
+    *flags.irq_clear_register = clear_register;
 }
 
 [[__gnu__::__always_inline__]] static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
