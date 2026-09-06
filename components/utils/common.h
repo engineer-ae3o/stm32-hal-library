@@ -40,7 +40,6 @@ extern "C" {
 // SPI DMA has the highest priority
 #define SPI_DMA_NVIC_IRQ_PRIORITY (6)
 #define UART_DMA_NVIC_IRQ_PRIORITY (10)
-#define I2S_DMA_NVIC_IRQ_PRIORITY (9)
 #define ADC_DMA_NVIC_IRQ_PRIORITY (8)
 #define CRC_DMA_NVIC_IRQ_PRIORITY (11)
 

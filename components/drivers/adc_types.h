@@ -169,10 +169,13 @@ typedef struct {
     adc_trigger_polarity_t      trigger_polarity;
 
     // The buffer(s) to store the samples
-    dma_circ_mode_t circular_mode;
     const uint16_t* buffer_1;
     const uint16_t* buffer_2;
+
+    // DMA settings
     uint16_t        buffer_size;
+    dma_priority_t  priority;
+    dma_circ_mode_t circular_mode;
 
     // The different callbacks to be registered. They determine what interrupts will be enabled.
     adc_dma_callbacks_t callbacks;

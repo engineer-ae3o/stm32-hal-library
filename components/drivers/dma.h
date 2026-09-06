@@ -36,12 +36,8 @@ void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_d
 void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, bool ht_mask, bool dme_mask);
 void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, const volatile void* mem_0, const volatile void* mem_1);
 
-// Helper to abstract checking and clearing of DMA irq flags
+// Helper to assist with the checking and clearing of interrupt flags and propagation of errors
 [[__gnu__::__always_inline__]] static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream) {
-    if (stream == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
     TRY(dma_get_stream_flags(stream, &flags));
@@ -49,6 +45,7 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
     const uint32_t status         = *flags.irq_status_register;
     uint32_t       flags_to_clear = 0;
 
+    // Record the error status
     hal_err_t error = HAL_OK;
 
     // Transfer complete

@@ -9,11 +9,11 @@
 [[__gnu__::__always_inline__]] static inline bool send_start(I2C_TypeDef* handle);
 [[__gnu__::__always_inline__]] static inline void send_stop(I2C_TypeDef* handle);
 
-static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t size);
-static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t size);
+static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
+static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
 
 
-// Public API
+// General API
 hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
     if (enable) {
         if (handle == I2C1) {
@@ -110,8 +110,10 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     return HAL_OK;
 }
 
-hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t size) {
-    if (handle == NULL || addr == 0 || data == NULL || size == 0) {
+
+// Polling API
+hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size) {
+    if (handle == NULL || address == 0 || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -126,7 +128,7 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* 
     }
 
     // Transmit the data
-    hal_err_t ret = tx_trans(handle, addr, data, size);
+    hal_err_t ret = tx_trans(handle, address, data, size);
 
     // End the transaction regardless of an error or success
     send_stop(handle);
@@ -134,8 +136,8 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* 
     return ret;
 }
 
-hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t size) {
-    if (handle == NULL || addr == 0 || data == NULL || size == 0) {
+hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
+    if (handle == NULL || address == 0 || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -150,11 +152,11 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, s
     }
 
     // No need to call send_stop() as rx_trans() already does
-    return rx_trans(handle, addr, data, size);
+    return rx_trans(handle, address, data, size);
 }
 
-hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t* tx_data, size_t tx_size, uint8_t* rx_data, size_t rx_size) {
-    if (handle == NULL || addr == 0 || tx_data == NULL || tx_size == 0 || rx_data == NULL || rx_size == 0) {
+hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data, size_t tx_size, uint8_t* rx_data, size_t rx_size) {
+    if (handle == NULL || address == 0 || tx_data == NULL || tx_size == 0 || rx_data == NULL || rx_size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -169,7 +171,7 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t
     }
 
     // Start the transmission
-    TRY_WITH_FUNC(tx_trans(handle, addr, tx_data, tx_size), send_stop(handle));
+    TRY_WITH_FUNC(tx_trans(handle, address, tx_data, tx_size), send_stop(handle));
 
     // Send the repeated start
     if (!send_start(handle)) {
@@ -177,8 +179,9 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t
     }
 
     // Start the RX transaction
-    return rx_trans(handle, addr, rx_data, rx_size);
+    return rx_trans(handle, address, rx_data, rx_size);
 }
+
 
 // Helpers
 static bool send_start(I2C_TypeDef* handle) {
@@ -213,10 +216,10 @@ static void send_stop(I2C_TypeDef* handle) {
     handle->CR1 |= I2C_CR1_STOP;
 }
 
-static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t size) {
-    // Send addr and write bit
+static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size) {
+    // Send address and write bit
     // cppcheck-suppress badBitmaskCheck
-    handle->DR = ((uint32_t)(addr << 1UL) | 0UL);
+    handle->DR = ((uint32_t)(address << 1UL) | 0UL);
 
     // Wait for ACK
     uint32_t timeout_cycles = TIMEOUT_CYCLES;
@@ -300,9 +303,9 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data
     return HAL_OK;
 }
 
-static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t size) {
-    // Send addr and read bit
-    handle->DR = ((uint32_t)(addr << 1UL) | 1UL);
+static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
+    // Send address and read bit
+    handle->DR = ((uint32_t)(address << 1UL) | 1UL);
 
     // Wait for ACK
     uint32_t timeout_cycles = TIMEOUT_CYCLES;

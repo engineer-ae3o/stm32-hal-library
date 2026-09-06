@@ -56,12 +56,14 @@ static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
     }
 }
 
-// Defined in spi.c. Used to post DMA events or get info from spi.c since the I2S peripheral is from the SPI peripheral and share DMA streams
-extern void spi_master_get_dma_stream_map(dma_stream_map_t* map, uint32_t idx);
-extern void spi_master_register_callback(dma_done_cb_t cb, void* arg, uint8_t idx, bool is_tx);
+// Defined in the SPI driver. Used to post DMA events or get info from the SPI driver since the I2S peripheral
+// shares the same hardware block as the SPI peripheral, and consequently, share the same DMA streams.
+// All the NVIC interrupt handlers are managed by the SPI driver.
+extern hal_err_t spi_master_get_dma_stream_map(dma_stream_map_t* map, uint32_t idx);
+extern hal_err_t spi_master_register_callback(dma_done_cb_t callback, void* arg, uint8_t idx, bool is_tx);
 
 
-// Public API
+// General API
 void i2s_pll_init_76_8mhz(void) {
     // Disable the audio PLL before setup
     RCC->CR &= ~RCC_CR_PLLI2SON;
@@ -213,7 +215,7 @@ hal_err_t i2s_master_enable(I2S_TypeDef* handle, bool enable) {
     return HAL_OK;
 }
 
-hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
+hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -221,15 +223,85 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
 
     // Get the DMA stream mapping to the corresponding I2S handle
     dma_stream_map_t dma_map;
-    spi_master_get_dma_stream_map(&dma_map, idx);
+    TRY(spi_master_get_dma_stream_map(&dma_map, idx));
 
+    // TX mapping
     DMA_Stream_TypeDef* tx_stream  = dma_map.tx.stream;
     const uint8_t       tx_channel = dma_map.tx.channel;
+
+    // RX mapping
     DMA_Stream_TypeDef* rx_stream  = dma_map.rx.stream;
     const uint8_t       rx_channel = dma_map.rx.channel;
+
     if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
+
+    // DMA TX stream configuration
+    const dma_stream_config_t tx_stream_config = {
+        .deconfigure   = false,
+        .enable_stream = false,
+
+        .per_addr_incement = false,
+        .mem_addr_incement = true,
+
+        .tc_irq_enable  = true,
+        .ht_irq_enable  = false,
+        .te_irq_enable  = true,
+        .dme_irq_enable = true,
+        .fe_irq_enable  = false,
+
+        .mode            = DMA_MODE_DIRECT,
+        .priority        = priority,
+        .direction       = DMA_DIR_M_P,
+        .per_data_size   = DMA_SIZE_BYTE,
+        .mem_data_size   = DMA_SIZE_BYTE,
+        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .flow_controller = DMA_FLOW_CONTROLLER_DMA,
+
+        .buffer_size       = 0,
+        .channel           = tx_channel,
+        .nvic_irq_priority = UART_DMA_NVIC_IRQ_PRIORITY,
+
+        .per_addr  = NULL,
+        .mem_buf_0 = NULL,
+        .mem_buf_1 = NULL,
+
+    };
+    TRY(dma_configure_stream(tx_stream, &tx_stream_config));
+
+    // DMA RX stream configuration
+    const dma_stream_config_t rx_stream_config = {
+        .deconfigure   = false,
+        .enable_stream = false,
+
+        .per_addr_incement = false,
+        .mem_addr_incement = true,
+
+        .tc_irq_enable  = true,
+        .ht_irq_enable  = false,
+        .te_irq_enable  = true,
+        .dme_irq_enable = true,
+        .fe_irq_enable  = false,
+
+        .mode            = DMA_MODE_DIRECT,
+        .priority        = priority,
+        .direction       = DMA_DIR_P_M,
+        .per_data_size   = DMA_SIZE_BYTE,
+        .mem_data_size   = DMA_SIZE_BYTE,
+        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .flow_controller = DMA_FLOW_CONTROLLER_DMA,
+
+        .buffer_size       = 0,
+        .channel           = rx_channel,
+        .nvic_irq_priority = UART_DMA_NVIC_IRQ_PRIORITY,
+
+        .per_addr  = NULL,
+        .mem_buf_0 = NULL,
+        .mem_buf_1 = NULL,
+
+    };
+    TRY(dma_configure_stream(rx_stream, &rx_stream_config));
 
     // TX stream configuration
     TRY(dma_disable_stream(tx_stream));
@@ -237,7 +309,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     dma_set_direct_mode(tx_stream, true);
     dma_set_direction(tx_stream, DMA_DIR_M_P);
     dma_set_flow_controller(tx_stream, true);
-    dma_set_stream_priority(tx_stream, DMA_PRIORITY_LOW);
+    dma_set_stream_priority(tx_stream, priority);
     dma_enable_circm_dbm(tx_stream, false, false);
     dma_set_increment(tx_stream, false, true);
     dma_enable_irqs(tx_stream, true, true, false, true);
@@ -249,7 +321,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     dma_set_direct_mode(rx_stream, true);
     dma_set_direction(rx_stream, DMA_DIR_P_M);
     dma_set_flow_controller(rx_stream, true);
-    dma_set_stream_priority(rx_stream, DMA_PRIORITY_LOW);
+    dma_set_stream_priority(rx_stream, priority);
     dma_enable_circm_dbm(rx_stream, false, false);
     dma_set_increment(rx_stream, false, true);
     dma_enable_irqs(rx_stream, true, true, false, true);
@@ -261,6 +333,8 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle) {
     return HAL_OK;
 }
 
+
+// DMA transfers API
 hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
@@ -273,7 +347,7 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t siz
 
     // Get the DMA stream mapping to the corresponding I2S handle
     dma_stream_map_t dma_map;
-    spi_master_get_dma_stream_map(&dma_map, idx);
+    TRY(spi_master_get_dma_stream_map(&dma_map, idx));
 
     DMA_Stream_TypeDef* stream = dma_map.tx.stream;
     if (stream == NULL) {
@@ -292,7 +366,7 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t siz
 
     // Save the user passed callback
     if (callback) {
-        spi_master_register_callback(callback, arg, idx, true);
+        TRY(spi_master_register_callback(callback, arg, idx, true));
     }
 
     // Enable DMA TX stream
@@ -311,7 +385,7 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_
 
     // Get the DMA stream mapping to the corresponding I2S handle
     dma_stream_map_t dma_map;
-    spi_master_get_dma_stream_map(&dma_map, idx);
+    TRY(spi_master_get_dma_stream_map(&dma_map, idx));
 
     DMA_Stream_TypeDef* stream = dma_map.rx.stream;
     if (stream == NULL) {
@@ -326,12 +400,13 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_
 
     // Save the user passed callback
     if (callback) {
-        spi_master_register_callback(callback, arg, idx, false);
+        TRY(spi_master_register_callback(callback, arg, idx, false));
     }
 
     // Enable DMA RX stream
     return dma_enable_stream(stream);
 }
+
 
 // Double buffering API
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uint16_t size, dma_done_cb_t callback, void* arg) {
@@ -346,7 +421,7 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uin
 
     // Get the DMA stream mapping to the corresponding I2S handle
     dma_stream_map_t dma_map;
-    spi_master_get_dma_stream_map(&dma_map, idx);
+    TRY(spi_master_get_dma_stream_map(&dma_map, idx));
 
     DMA_Stream_TypeDef* stream = dma_map.rx.stream;
     if (stream == NULL) {
@@ -363,7 +438,7 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_a, void* buf_b, uin
 
     // Save the user passed callback
     if (callback) {
-        spi_master_register_callback(callback, arg, idx, false);
+        TRY(spi_master_register_callback(callback, arg, idx, false));
     }
 
     return HAL_OK;
@@ -377,7 +452,7 @@ hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle) {
 
     // Get the DMA stream mapping to the corresponding I2S handle
     dma_stream_map_t dma_map;
-    spi_master_get_dma_stream_map(&dma_map, idx);
+    TRY(spi_master_get_dma_stream_map(&dma_map, idx));
 
     DMA_Stream_TypeDef* stream = dma_map.rx.stream;
     if (stream == NULL) {
@@ -397,7 +472,7 @@ hal_err_t i2s_master_dbm_start(I2S_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
     dma_stream_map_t dma_map;
-    spi_master_get_dma_stream_map(&dma_map, idx);
+    TRY(spi_master_get_dma_stream_map(&dma_map, idx));
     return dma_enable_stream(dma_map.rx.stream);
 }
 
@@ -407,7 +482,7 @@ hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
     dma_stream_map_t dma_map;
-    spi_master_get_dma_stream_map(&dma_map, idx);
+    TRY(spi_master_get_dma_stream_map(&dma_map, idx));
     return dma_disable_stream(dma_map.rx.stream);
 }
 
@@ -420,7 +495,7 @@ uint8_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle) {
 
     // Get the DMA stream mapping to the corresponding I2S handle
     dma_stream_map_t dma_map;
-    spi_master_get_dma_stream_map(&dma_map, idx);
+    TRY(spi_master_get_dma_stream_map(&dma_map, idx));
 
     DMA_Stream_TypeDef* stream = dma_map.rx.stream;
     if (stream == NULL) {

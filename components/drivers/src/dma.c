@@ -172,8 +172,8 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     }
 
     uint32_t cr_mask = stream->CR;
-    cr_mask |= config->per_inc ? DMA_SxCR_PINC : 0;
-    cr_mask |= config->mem_inc ? DMA_SxCR_MINC : 0;
+    cr_mask |= config->per_addr_incement ? DMA_SxCR_PINC : 0;
+    cr_mask |= config->mem_addr_incement ? DMA_SxCR_MINC : 0;
     cr_mask |= config->tc_irq_enable ? DMA_SxCR_TCIE : 0;
     cr_mask |= config->te_irq_enable ? DMA_SxCR_TEIE : 0;
     cr_mask |= config->ht_irq_enable ? DMA_SxCR_HTIE : 0;

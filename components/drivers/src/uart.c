@@ -6,7 +6,7 @@
 #include "utils/err.h"
 
 
-// The 3 UaRT instances: ISRs called when the DMA is done
+// The 3 UaRT instances: The ISRs invoked when a DMA event occurred
 static dma_stream_ctx_t s_dma_stream_ctx[3] = {};
 
 // Mapping for the DMA streams to the 3 UART peripheral instances
@@ -29,7 +29,7 @@ static const dma_stream_map_t s_uart_dma_map[] = {
 };
 
 
-// Helper
+// Helpers
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(const USART_TypeDef* handle) {
     if (handle == USART1) {
         return 0U;
@@ -49,7 +49,8 @@ static const dma_stream_map_t s_uart_dma_map[] = {
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].tx.stream);
 
-    if (!s_dma_stream_ctx[idx].tx.callback) {
+    // Return if no callback registered
+    if (s_dma_stream_ctx[idx].tx.callback == NULL) {
         return;
     }
 
@@ -88,7 +89,8 @@ static const dma_stream_map_t s_uart_dma_map[] = {
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].rx.stream);
 
-    if (!s_dma_stream_ctx[idx].rx.callback) {
+    // Return if no callback registered
+    if (s_dma_stream_ctx[idx].rx.callback == NULL) {
         return;
     }
 
@@ -107,7 +109,8 @@ static const dma_stream_map_t s_uart_dma_map[] = {
     local_cb(local_arg, ret);
 }
 
-// Public API
+
+// General API
 hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable) {
     if (enable) {
         if (handle == USART1) {
@@ -226,33 +229,77 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // TX
-    TRY(dma_disable_stream(tx_stream));
-    dma_set_channel(tx_stream, tx_channel);
-    dma_set_stream_priority(tx_stream, priority);
-    dma_set_direction(tx_stream, DMA_DIR_M_P);
-    dma_enable_irqs(tx_stream, true, true, false, true);
-    dma_set_increment(tx_stream, false, true);
-    dma_set_per_mem_size(tx_stream, DMA_SIZE_BYTE, DMA_SIZE_BYTE);
-    dma_enable_circm_dbm(tx_stream, false, false);
-    dma_set_flow_controller(tx_stream, true);
-    dma_set_direct_mode(tx_stream, true);
+    // DMA TX stream configuration
+    const dma_stream_config_t tx_stream_config = {
+        .deconfigure   = false,
+        .enable_stream = false,
 
-    // RX
-    TRY(dma_disable_stream(rx_stream));
-    dma_set_channel(rx_stream, rx_channel);
-    dma_set_stream_priority(rx_stream, priority);
-    dma_set_direction(rx_stream, DMA_DIR_P_M);
-    dma_enable_irqs(rx_stream, true, true, false, true);
-    dma_set_increment(rx_stream, false, true);
-    dma_set_per_mem_size(rx_stream, DMA_SIZE_BYTE, DMA_SIZE_BYTE);
-    dma_enable_circm_dbm(rx_stream, false, false);
-    dma_set_flow_controller(rx_stream, true);
-    dma_set_direct_mode(rx_stream, true);
+        .per_addr_incement = false,
+        .mem_addr_incement = true,
+
+        .tc_irq_enable  = true,
+        .ht_irq_enable  = false,
+        .te_irq_enable  = true,
+        .dme_irq_enable = true,
+        .fe_irq_enable  = false,
+
+        .mode            = DMA_MODE_DIRECT,
+        .priority        = priority,
+        .direction       = DMA_DIR_M_P,
+        .per_data_size   = DMA_SIZE_BYTE,
+        .mem_data_size   = DMA_SIZE_BYTE,
+        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .flow_controller = DMA_FLOW_CONTROLLER_DMA,
+
+        .buffer_size       = 0,
+        .channel           = tx_channel,
+        .nvic_irq_priority = UART_DMA_NVIC_IRQ_PRIORITY,
+
+        .per_addr  = NULL,
+        .mem_buf_0 = NULL,
+        .mem_buf_1 = NULL,
+
+    };
+    TRY(dma_configure_stream(tx_stream, &tx_stream_config));
+
+    // DMA RX stream configuration
+    const dma_stream_config_t rx_stream_config = {
+        .deconfigure   = false,
+        .enable_stream = false,
+
+        .per_addr_incement = false,
+        .mem_addr_incement = true,
+
+        .tc_irq_enable  = true,
+        .ht_irq_enable  = false,
+        .te_irq_enable  = true,
+        .dme_irq_enable = true,
+        .fe_irq_enable  = false,
+
+        .mode            = DMA_MODE_DIRECT,
+        .priority        = priority,
+        .direction       = DMA_DIR_P_M,
+        .per_data_size   = DMA_SIZE_BYTE,
+        .mem_data_size   = DMA_SIZE_BYTE,
+        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .flow_controller = DMA_FLOW_CONTROLLER_DMA,
+
+        .buffer_size       = 0,
+        .channel           = rx_channel,
+        .nvic_irq_priority = UART_DMA_NVIC_IRQ_PRIORITY,
+
+        .per_addr  = NULL,
+        .mem_buf_0 = NULL,
+        .mem_buf_1 = NULL,
+
+    };
+    TRY(dma_configure_stream(rx_stream, &rx_stream_config));
 
     return HAL_OK;
 }
 
+
+// Polling TX API
 hal_err_t uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
     if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
@@ -275,13 +322,11 @@ hal_err_t uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t 
     return HAL_OK;
 }
 
+
+// DMA transfers API
 hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    if (data == NULL || size == 0) {
+    if (idx == 0xFFU || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -294,16 +339,16 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
     dma_set_addresses(stream, &handle->DR, data, NULL);
     dma_set_trans_length(stream, size);
 
+    // Enable the DMA TX stream
+    TRY(dma_enable_stream(stream));
+
     // Save the user passed callback
     if (callback) {
         s_dma_stream_ctx[idx].tx.callback = callback;
         s_dma_stream_ctx[idx].tx.arg      = arg;
     }
 
-    // Enable the DMA TX stream
-    TRY(dma_enable_stream(stream));
-
-    // Enable USART DMA
+    // Enable USART TX DMA requests
     handle->CR3 |= USART_CR3_DMAT;
 
     return HAL_OK;
@@ -311,11 +356,7 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
 
 hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    if (data == NULL || size == 0) {
+    if (idx == 0xFFU || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -328,20 +369,21 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
     dma_set_addresses(stream, &handle->DR, data, NULL);
     dma_set_trans_length(stream, size);
 
+    // Enable the DMA RX stream
+    TRY(dma_enable_stream(stream));
+
     // Save the user passed callback
     if (callback) {
         s_dma_stream_ctx[idx].rx.callback = callback;
         s_dma_stream_ctx[idx].rx.arg      = arg;
     }
 
-    // Enable the DMA RX stream
-    TRY(dma_enable_stream(stream));
-
-    // Enable USART DMA
+    // Enable USART RX DMA requests
     handle->CR3 |= USART_CR3_DMAR;
 
     return HAL_OK;
 }
+
 
 // DMA interrupts
 // USART1: TX

@@ -472,8 +472,8 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         .deconfigure   = false,
         .enable_stream = true,
 
-        .per_inc = false,
-        .mem_inc = true,
+        .per_addr_incement = false,
+        .mem_addr_incement = true,
 
         .tc_irq_enable  = config->callbacks.on_buffer_full != NULL,
         .ht_irq_enable  = false,
@@ -482,7 +482,7 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         .fe_irq_enable  = false,
 
         .mode            = DMA_MODE_DIRECT,
-        .priority        = DMA_PRIORITY_LOW,
+        .priority        = config->priority,
         .direction       = DMA_DIR_P_M,
         .per_data_size   = DMA_SIZE_HWORD,
         .mem_data_size   = DMA_SIZE_HWORD,

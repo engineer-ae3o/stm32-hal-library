@@ -75,12 +75,11 @@ void      i2s_pll_init(void);
 hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable);
 
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config);
+hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority);
 
 // NOTE: This function should be called to enable the I2S peripheral after calling i2s_master_transmit(...)
 // or i2s_master_receive(...), and immediately the user callback was invoked to disable the I2S peripheral
 hal_err_t i2s_master_enable(I2S_TypeDef* handle, bool enable);
-
-hal_err_t i2s_master_dma_init(I2S_TypeDef* handle);
 
 // DMA backed transfers API. The user should only enable the I2S peripheral with
 // i2s_master_enable(...) after confirming that these functions return HAL_OK.

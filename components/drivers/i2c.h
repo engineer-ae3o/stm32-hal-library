@@ -32,9 +32,9 @@ typedef struct {
 
 hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable);
 hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config);
-hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t addr, const uint8_t* data, size_t size);
-hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t addr, uint8_t* data, size_t size);
-hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t addr, const uint8_t* tx_data, size_t tx_size, uint8_t* rx_data, size_t rx_size);
+hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
+hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
+hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data, size_t tx_size, uint8_t* rx_data, size_t rx_size);
 
 
 #ifdef __cplusplus

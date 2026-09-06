@@ -8,7 +8,7 @@ extern "C" {
 
 
 #include "stm32f411xe.h"
-#include "drivers/dma.h"
+#include "drivers/dma_types.h"
 #include "utils/err.h"
 
 #include <stdint.h>
