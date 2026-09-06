@@ -62,6 +62,9 @@ hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, dma_stream_flags_t* f
     dma_stream_info_t stream_info;
     TRY(dma_get_stream_info(stream, &stream_info));
 
+    (void)flags;
+
+    /*
     switch (stream_info.stream_number) {
         case 0:
             flags = (DMA_LISR_TCIF0 | DMA_LISR_HTIF0 | DMA_LISR_TEIF0 | DMA_LISR_DMEIF0 | DMA_LISR_FEIF0);
@@ -90,11 +93,12 @@ hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, dma_stream_flags_t* f
         default:
             return HAL_ERR_INVALID_ARG;
     }
+    */
 
     if (stream_info.stream_number <= 3) {
-        stream_info.controller->LIFCR = flags;
+        stream_info.controller->LIFCR;
     } else if (stream_info.stream_number <= 7) {
-        stream_info.controller->HIFCR = flags;
+        stream_info.controller->HIFCR;
     }
 
     return HAL_OK;
@@ -152,6 +156,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     TRY(dma_get_stream_flags(stream, &flags));
     *flags.irq_clear_register = (flags.tc_mask | flags.te_mask | flags.ht_mask | flags.fe_mask | flags.dme_mask);
 
+    // Clear all state before proceeding
     stream->CR &= ~(DMA_SxCR_CHSEL | DMA_SxCR_MBURST | DMA_SxCR_PBURST | DMA_SxCR_CT | DMA_SxCR_DBM | DMA_SxCR_PL | DMA_SxCR_PINCOS | DMA_SxCR_MSIZE |
                     DMA_SxCR_PSIZE | DMA_SxCR_MINC | DMA_SxCR_PINC | DMA_SxCR_CIRC | DMA_SxCR_DIR | DMA_SxCR_PFCTRL | DMA_SxCR_TCIE | DMA_SxCR_HTIE |
                     DMA_SxCR_TEIE | DMA_SxCR_DMEIE);
@@ -185,8 +190,12 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
         cr_mask |= DMA_SxCR_CIRC;
     }
 
-    stream->CR = cr_mask;
-    stream->FCR |= config->mode == DMA_MODE_DIRECT ? 0 : DMA_SxFCR_DMDIS;
+    uint32_t fcr_mask = stream->FCR;
+    fcr_mask |= config->fe_irq_enable ? DMA_SxFCR_FEIE : 0;
+    fcr_mask |= config->mode == DMA_MODE_DIRECT ? 0 : DMA_SxFCR_DMDIS;
+
+    stream->CR   = cr_mask;
+    stream->FCR  = fcr_mask;
     stream->NDTR = config->buffer_size;
 
     if (config->per_addr) {

@@ -58,12 +58,14 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, dma_priority_t priori
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_inc        = true,
-        .mem_inc        = false,
+        .per_inc = true,
+        .mem_inc = false,
+
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,
         .te_irq_enable  = true,
         .dme_irq_enable = false,
+        .fe_irq_enable  = true,
 
         .mode            = DMA_MODE_FIFO,
         .priority        = priority,

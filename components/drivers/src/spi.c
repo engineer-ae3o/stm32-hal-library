@@ -263,7 +263,7 @@ hal_err_t spi_master_enable(SPI_TypeDef* handle, bool enable) {
     return HAL_OK;
 }
 
-hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
+hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -281,8 +281,42 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Configure and start the stream
+    // If the DFF bit in SPIx_CR1 is set, then it's a 16 bit transfer
+    const dma_data_size_t dma_data_size = (handle->CR1 & SPI_CR1_DFF) ? DMA_SIZE_HWORD : DMA_SIZE_BYTE;
+
     // TX stream configuration
+    const dma_stream_config_t tx_stream_config = {
+        .deconfigure   = false,
+        .enable_stream = false,
+
+        .per_inc = false,
+        .mem_inc = true,
+
+        .tc_irq_enable  = true,
+        .ht_irq_enable  = false,
+        .te_irq_enable  = true,
+        .dme_irq_enable = true,
+        .fe_irq_enable  = false,
+
+        .mode            = DMA_MODE_DIRECT,
+        .priority        = priority,
+        .direction       = DMA_DIR_M_P,
+        .per_data_size   = dma_data_size,
+        .mem_data_size   = dma_data_size,
+        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .flow_controller = DMA_FLOW_CONTROLLER_DMA,
+
+        .buffer_size       = 0,
+        .channel           = tx_channel,
+        .nvic_irq_priority = SPI_DMA_NVIC_IRQ_PRIORITY,
+
+        .per_addr  = NULL,
+        .mem_buf_0 = NULL,
+        .mem_buf_1 = NULL,
+
+    };
+    TRY(dma_configure_stream(tx_stream, &tx_stream_config));
+
     TRY(dma_disable_stream(tx_stream));
     dma_set_channel(tx_stream, tx_channel);
     dma_set_direct_mode(tx_stream, true);
@@ -303,11 +337,6 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle) {
     dma_enable_circm_dbm(rx_stream, false, false);
     dma_set_increment(rx_stream, false, true);
     dma_enable_irqs(rx_stream, true, true, false, true);
-
-    // If the DFF bit in SPIx_CR1 is set, then it's a 16 bit transfer
-    const dma_data_size_t dma_data_size = (handle->CR1 & SPI_CR1_DFF) ? DMA_SIZE_HWORD : DMA_SIZE_BYTE;
-    dma_set_per_mem_size(tx_stream, dma_data_size, dma_data_size);
-    dma_set_per_mem_size(rx_stream, dma_data_size, dma_data_size);
 
     // Enable SPI requests to DMA
     handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);

@@ -46,38 +46,41 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
     dma_stream_flags_t flags;
     TRY(dma_get_stream_flags(stream, &flags));
 
-    const uint32_t status_register = *flags.irq_status_register;
-    uint32_t       clear_register  = 0;
+    const uint32_t status         = *flags.irq_status_register;
+    uint32_t       flags_to_clear = 0;
 
     hal_err_t error = HAL_OK;
 
     // Transfer complete
-    if (status_register & flags.tc_mask) {
-        // Clear DMA TC interrupt bit
-        clear_register |= flags.tc_mask;
+    if (status & flags.tc_mask) {
+        flags_to_clear |= flags.tc_mask;
     }
 
     // Transfer error
-    if (status_register & flags.te_mask) {
-        // Clear DMA TE interrupt bit
-        clear_register |= flags.te_mask;
+    if (status & flags.te_mask) {
+        flags_to_clear |= flags.te_mask;
         error = HAL_ERR_DMA_TE;
     }
 
     // Direct mode error
-    if (status_register & flags.dme_mask) {
-        // Clear DMA DME interrupt bit
-        clear_register |= flags.dme_mask;
+    if (status & flags.dme_mask) {
+        flags_to_clear |= flags.dme_mask;
         error = HAL_ERR_DMA_DME;
     }
 
     // Half transfer complete
-    if (status_register & flags.ht_mask) {
-        // Clear DMA HT interrupt bit
-        clear_register |= flags.ht_mask;
+    if (status & flags.ht_mask) {
+        flags_to_clear |= flags.ht_mask;
     }
 
-    *flags.irq_clear_register = clear_register;
+    // FIFO mode error
+    if (status & flags.fe_mask) {
+        flags_to_clear |= flags.fe_mask;
+        error = HAL_ERR_DMA_FE;
+    }
+
+    // Clear all the set flags
+    *flags.irq_clear_register = flags_to_clear;
 
     // Return if the stream is in circular mode or half transfer,
     // so as not to disable the DMA strean. Everything else should

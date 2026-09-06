@@ -93,12 +93,14 @@ typedef struct {
     bool deconfigure;   // Set to deinitialize the given stream. All other fields are ignored if this is true
     bool enable_stream; // Enable the DMA stream immediately after configuring it
 
-    bool per_inc;        // Increment the peripheral address (or source address in memory to memory transfers)
-    bool mem_inc;        // Increment the memory address(es) (or destination address(es) in memory to memory transfers)
+    bool per_inc; // Increment the peripheral address (or source address in memory to memory transfers)
+    bool mem_inc; // Increment the memory address(es) (or destination address(es) in memory to memory transfers)
+
     bool tc_irq_enable;  // Transfer complete interrupt enable
     bool ht_irq_enable;  // Half transfer interrupt enable
     bool te_irq_enable;  // Transfer error interrupt enable
     bool dme_irq_enable; // Direct mode error interrupt enable
+    bool fe_irq_enable;  // FIFO mode error interrupt enable
 
     dma_direct_mode_t  mode;
     dma_priority_t     priority;

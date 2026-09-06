@@ -2,7 +2,7 @@
 #include "utils/err.h"
 
 
-// Convert error codes to string
+// Convert error codes to strings
 static const char* s_err_code_lut[] = {
     [HAL_OK]                          = "HAL_OK",
     [HAL_FAIL]                        = "HAL_FAIL",
@@ -21,6 +21,7 @@ static const char* s_err_code_lut[] = {
     [HAL_ERR_UART_TC_FAILED_TO_SET]   = "HAL_ERR_UART_TC_FAILED_TO_SET",
     [HAL_ERR_DMA_TE]                  = "HAL_ERR_DMA_TE",
     [HAL_ERR_DMA_DME]                 = "HAL_ERR_DMA_DME",
+    [HAL_ERR_DMA_FE]                  = "HAL_ERR_DMA_FE",
     [HAL_ERR_DMA_ERR_UNKNOWN]         = "HAL_ERR_DMA_ERR_UNKNOWN",
 };
 
