@@ -8,6 +8,7 @@ extern "C" {
 
 
 #include "stm32f411xe.h"
+#include "drivers/gpio.h"
 #include "drivers/dma.h"
 #include "utils/err.h"
 
@@ -63,24 +64,21 @@ typedef struct {
     bool cpol;
     bool use_mck;
 
-    uint8_t mck_pin;
-    uint8_t ws_pin;
-    uint8_t sd_pin;
-    uint8_t sck_pin;
+    gpio_pin_t mck_pin;
+    gpio_pin_t ws_pin;
+    gpio_pin_t sd_pin;
+    gpio_pin_t sck_pin;
 
     GPIO_TypeDef* gpio_port;
 } i2s_master_config_t;
 
+// Clock setup/init
 void      i2s_pll_init(void);
 hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable);
 
+// General API
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config);
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority, bool init);
-
-// NOTE: This function should be called to enable the I2S peripheral after calling i2s_master_transmit(...)
-// or i2s_master_receive(...), and immediately the user callback was invoked to disable the I2S peripheral.
-// This is because i2s_master_transmit(...) and i2s_master_receive(...) do not start the transaction. This does.
-hal_err_t i2s_master_enable(I2S_TypeDef* handle, bool enable);
 
 // DMA backed transfers API. The user should only enable the I2S peripheral with
 // i2s_master_enable(...) after confirming that these functions return HAL_OK.
@@ -107,10 +105,9 @@ hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);
 hal_err_t i2s_master_dbm_start(I2S_TypeDef* handle);
 hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle);
 
-// Returns 0 if the first buffer is filled and the DMA controller has started filling the second buffer
-// Returns 1 if the second buffer is filled and the DMA controller has started filling the first buffer again
-// Returns 0xFF if an invalid argument is passed
-uint8_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle);
+// Returns 0 (out parameter) if the first buffer is filled and the DMA controller has started filling the second buffer
+// Returns 1 (out parameter) if the second buffer is filled and the DMA controller has started filling the first buffer again
+hal_err_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle, uint8_t* buffer_idx);
 
 
 #ifdef __cplusplus

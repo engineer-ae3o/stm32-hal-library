@@ -38,16 +38,8 @@ static const dma_stream_map_t s_spi_i2s_dma_map[] = {
     },
 };
 
-#define ENABLE_SPI()                                                                                                                                 \
-    do {                                                                                                                                             \
-        handle->CR1 |= SPI_CR1_SPE;                                                                                                                  \
-    } while (0)
-
-#define DISABLE_SPI()                                                                                                                                \
-    do {                                                                                                                                             \
-        handle->CR1 &= ~SPI_CR1_SPE;                                                                                                                 \
-        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;                                                                                                      \
-    } while (0)
+#define ENABLE_SPI() handle->CR1 |= SPI_CR1_SPE
+#define DISABLE_SPI() handle->CR1 &= ~SPI_CR1_SPE
 
 
 // Helpers
@@ -100,6 +92,9 @@ static const dma_stream_map_t s_spi_i2s_dma_map[] = {
     // Disable only after all transactions have completed
     DISABLE_SPI();
 
+    // Disable I2S as well since the interrupt could have been triggered by it
+    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
+
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].tx.callback == NULL) {
         return;
@@ -126,6 +121,9 @@ static const dma_stream_map_t s_spi_i2s_dma_map[] = {
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_spi_i2s_dma_map[idx].rx.stream);
     DISABLE_SPI();
+
+    // Disable I2S as well since the interrupt could have been triggered by it
+    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
 
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].rx.callback == NULL) {
@@ -210,7 +208,7 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
         TRY(gpio_set_alternate_function(config->gpio_port, config->miso_pin, alt_val));
         gpio_enable_pullup(config->gpio_port, config->miso_pin, true);
         gpio_set_speed_mode(config->gpio_port, config->miso_pin, GPIO_HIGH_SPEED);
-        // MISO cannot be configured as push pull or open drain
+        // We cannot hardcode an output type since the slave can drive this pin
     }
 
     if (config->use_mosi) {
@@ -227,6 +225,9 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 
     // Disable the SPI (and I2S) peripheral before modifying it's internal state
     DISABLE_SPI();
+
+    // Disable I2S since in SPI mode
+    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
 
     uint32_t cr1_mask = handle->CR1;
     cr1_mask &= ~SPI_CR1_BR;
@@ -320,7 +321,6 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority, bool
         .per_addr  = NULL,
         .mem_buf_0 = NULL,
         .mem_buf_1 = NULL,
-
     };
 
     // DMA RX stream configuration
@@ -352,7 +352,6 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority, bool
         .per_addr  = NULL,
         .mem_buf_0 = NULL,
         .mem_buf_1 = NULL,
-
     };
 
     if (init) {

@@ -92,38 +92,34 @@ void system_init(void) {
 }
 
 // Update the buses' clock frequency variables
-void system_core_clock_update() {
-    // Get the SYSCLK clock source
+void system_core_clock_update(void) {
     uint32_t sysclk = 0;
 
+    // Get the SYSCLK clock source
     switch (RCC->CFGR & RCC_CFGR_SWS) {
-        case 0:
-            // The HSI is the SYSCLK clock source
+        case RCC_CFGR_SWS_HSI:
             sysclk = HSI_VALUE_MHZ * 1'000'000;
             break;
 
-        case 4:
-            // The HSE is the SYSCLK clock source
+        case RCC_CFGR_SWS_HSE:
             sysclk = HSE_VALUE_MHZ * 1'000'000;
             break;
 
-        case 8:
-            // The PLL is the SYSCLK clock source
-            const uint32_t pllm = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
-
+        case RCC_CFGR_SWS_PLL:
             // Get the PLL clock source
-            uint32_t pllvco = 0;
             if ((RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> RCC_PLLCFGR_PLLSRC_Pos) {
                 // The HSE is the PLL clock source
-                pllvco = (HSE_VALUE_MHZ * 1'000'000 / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos);
+                const uint32_t pllm   = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
+                const uint32_t pllvco = (HSE_VALUE_MHZ * 1'000'000 / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos);
+                const uint32_t pllp   = (((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >> RCC_PLLCFGR_PLLP_Pos) + 1) * 2;
+                sysclk                = pllvco / pllp;
             } else {
                 // The HSI is the PLL clock source
-                pllvco = (HSI_VALUE_MHZ * 1'000'000 / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos);
+                const uint32_t pllm   = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
+                const uint32_t pllvco = (HSI_VALUE_MHZ * 1'000'000 / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos);
+                const uint32_t pllp   = (((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >> RCC_PLLCFGR_PLLP_Pos) + 1) * 2;
+                sysclk                = pllvco / pllp;
             }
-
-            // Get the SYSCLK frequency value
-            const uint32_t pllp = (((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >> RCC_PLLCFGR_PLLP_Pos) + 1) * 2;
-            sysclk              = pllvco / pllp;
             break;
 
         default:
@@ -131,13 +127,12 @@ void system_core_clock_update() {
             break;
     }
 
-    // Compute the HCLK frequency
-    const uint32_t hclk = sysclk >> AHBPrescTable[(RCC->CFGR & RCC_CFGR_HPRE) >> RCC_CFGR_HPRE_Pos];
-
-    // Update the globals
-    APB1CoreClock   = hclk >> APBPrescTable[(RCC->CFGR & RCC_CFGR_PPRE1) >> RCC_CFGR_PPRE1_Pos];
-    APB2CoreClock   = hclk >> APBPrescTable[(RCC->CFGR & RCC_CFGR_PPRE2) >> RCC_CFGR_PPRE2_Pos];
-    SystemCoreClock = hclk;
+    // Compute the HCLK, APB1 and APB2 bus frequencies
+    __disable_irq();
+    SystemCoreClock = sysclk >> AHBPrescTable[(RCC->CFGR & RCC_CFGR_HPRE) >> RCC_CFGR_HPRE_Pos];
+    APB1CoreClock   = SystemCoreClock >> APBPrescTable[(RCC->CFGR & RCC_CFGR_PPRE1) >> RCC_CFGR_PPRE1_Pos];
+    APB2CoreClock   = SystemCoreClock >> APBPrescTable[(RCC->CFGR & RCC_CFGR_PPRE2) >> RCC_CFGR_PPRE2_Pos];
+    __enable_irq();
 }
 
 // Provide a weak main function

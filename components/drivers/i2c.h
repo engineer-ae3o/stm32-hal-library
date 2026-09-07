@@ -8,6 +8,7 @@ extern "C" {
 
 
 #include "stm32f411xe.h"
+#include "drivers/gpio.h"
 #include "utils/err.h"
 
 #include <stddef.h>
@@ -15,41 +16,45 @@ extern "C" {
 
 
 typedef enum : uint8_t {
-    I2C_100KHz = 0,
-    I2C_400KHz,
-} i2c_freq_t;
+    I2C_FREQ_100KHz = 0,
+    I2C_FREQ_400KHz,
+} i2c_frequency_t;
 
 typedef enum : uint8_t {
-    I2C_FILTER_0 = 0,
-    I2C_FILTER_1,
-    I2C_FILTER_2,
-    I2C_FILTER_3,
-    I2C_FILTER_4,
-    I2C_FILTER_5,
-    I2C_FILTER_6,
-    I2C_FILTER_7,
-    I2C_FILTER_8,
-    I2C_FILTER_9,
-    I2C_FILTER_10,
-    I2C_FILTER_11,
-    I2C_FILTER_12,
-    I2C_FILTER_13,
-    I2C_FILTER_14,
-    I2C_FILTER_15,
-} i2c_filter_t;
+    I2C_DIGITAL_FILTER_0 = 0, // Digiter filter disabled
+    I2C_DIGITAL_FILTER_1,
+    I2C_DIGITAL_FILTER_2,
+    I2C_DIGITAL_FILTER_3,
+    I2C_DIGITAL_FILTER_4,
+    I2C_DIGITAL_FILTER_5,
+    I2C_DIGITAL_FILTER_6,
+    I2C_DIGITAL_FILTER_7,
+    I2C_DIGITAL_FILTER_8,
+    I2C_DIGITAL_FILTER_9,
+    I2C_DIGITAL_FILTER_10,
+    I2C_DIGITAL_FILTER_11,
+    I2C_DIGITAL_FILTER_12,
+    I2C_DIGITAL_FILTER_13,
+    I2C_DIGITAL_FILTER_14,
+    I2C_DIGITAL_FILTER_15,
+} i2c_digi_filt_t;
 
 typedef struct {
-    bool         use_pullups;
-    i2c_freq_t   freq_type;
-    i2c_filter_t digital_filter;
+    bool use_pullups;
 
-    uint8_t       sda_pin;
-    uint8_t       scl_pin;
+    i2c_frequency_t frequency;
+    i2c_digi_filt_t digital_filter;
+
+    gpio_pin_t    sda_pin;
+    gpio_pin_t    scl_pin;
     GPIO_TypeDef* gpio_port;
 } i2c_master_config_t;
 
+// General API
 hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable);
 hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config);
+
+// Polling API. DMA not supported
 hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
 hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
 hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data, size_t tx_size, uint8_t* rx_data, size_t rx_size);

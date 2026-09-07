@@ -56,6 +56,9 @@ static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
     }
 }
 
+#define ENABLE_I2S() handle->I2SCFGR |= SPI_I2SCFGR_I2SE
+#define DISABLE_I2S() handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE
+
 // Defined in the SPI driver. Used to post DMA events or get info from the SPI driver since the I2S peripheral
 // shares the same hardware block as the SPI peripheral, and consequently, share the same DMA streams.
 // All the NVIC interrupt handlers are managed by the SPI driver.
@@ -135,13 +138,13 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     // Alternate function value selection for the GPIO pins
     uint8_t alt_val = 0;
     if ((handle == I2S1) || (handle == I2S2)) {
-        alt_val = 5U;
+        alt_val = 5;
     } else if (handle == I2S3) {
-        alt_val = (config->gpio_port == GPIOD) ? 5U : 6U;
+        alt_val = (config->gpio_port == GPIOD) ? 5 : 6;
     } else if (handle == I2S4) {
-        alt_val = (config->gpio_port == GPIOE) ? 5U : 6U;
+        alt_val = (config->gpio_port == GPIOE) ? 5 : 6;
     } else if (handle == I2S5) {
-        alt_val = 6U;
+        alt_val = 6;
     } else {
         return HAL_ERR_INVALID_ARG;
     }
@@ -185,7 +188,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     // Set the clock prescaler
     const uint32_t prescaler = (config->use_mck) ? prescaler_table[config->freq].prescaler_with_mck : prescaler_table[config->freq].prescaler;
     handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
-    handle->I2SPR |= ((prescaler & 0x3FFUL) << SPI_I2SPR_I2SDIV_Pos);
+    handle->I2SPR |= ((prescaler & 0xFFUL) << SPI_I2SPR_I2SDIV_Pos);
 
     handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN);
 
@@ -200,18 +203,6 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
                         frame_size_mask |                                     // Frame size: 16 or 32 bits
                         cpol_mask);                                           // Clock polarity
 
-    return HAL_OK;
-}
-
-hal_err_t i2s_master_enable(I2S_TypeDef* handle, bool enable) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    if (enable) {
-        handle->I2SCFGR |= SPI_I2SCFGR_I2SE;
-    } else {
-        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
-    }
     return HAL_OK;
 }
 
@@ -453,25 +444,27 @@ hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle) {
     return dma_disable_stream(dma_map.rx.stream);
 }
 
-uint8_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle) {
+hal_err_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle, uint8_t* buffer_idx) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
-        return 0xFFU;
+        return HAL_ERR_INVALID_ARG;
     }
 
     // Get the DMA stream mapped to the corresponding I2S handle
     dma_stream_map_t dma_map;
     if (spi_master_get_dma_stream_map(&dma_map, idx) != HAL_OK) {
-        return 0xFFU;
+        return HAL_ERR_INVALID_ARG;
     }
 
     DMA_Stream_TypeDef* stream = dma_map.rx.stream;
     if (stream == NULL) {
-        return 0xFFU;
+        return HAL_ERR_NOT_SUPPORTED;
     }
 
     // CT represents the active buffer. That is, the buffer currently in use by the dma controller.
     // 0 represents the first buffer, and 1 is the second buffer. If the bit is 0, that means the first
     // buffer is currently being used by the DMA controller and the second buffer is filled and free.
-    return (stream->CR & DMA_SxCR_CT) ? 0 : 1;
+    *buffer_idx = (stream->CR & DMA_SxCR_CT) ? 0 : 1;
+
+    return HAL_OK;
 }

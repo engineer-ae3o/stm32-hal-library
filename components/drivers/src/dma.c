@@ -63,6 +63,8 @@ hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, dma_stream_flags_t* f
     TRY(dma_get_stream_info(stream, &stream_info));
 
     (void)flags;
+    (void)stream_info.controller->LIFCR;
+    (void)stream_info.controller->HIFCR;
 
     /*
     switch (stream_info.stream_number) {

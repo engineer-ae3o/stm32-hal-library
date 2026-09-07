@@ -9,6 +9,7 @@ extern "C" {
 
 #include "stm32f411xe.h"
 #include "drivers/dma_types.h"
+#include "drivers/gpio.h"
 #include "utils/err.h"
 
 #include <stddef.h>
@@ -42,9 +43,9 @@ typedef struct {
     bool use_miso;
     bool use_mosi;
 
-    uint8_t miso_pin;
-    uint8_t mosi_pin;
-    uint8_t sclk_pin;
+    gpio_pin_t miso_pin;
+    gpio_pin_t mosi_pin;
+    gpio_pin_t sclk_pin;
 
     GPIO_TypeDef* gpio_port;
 } spi_master_config_t;

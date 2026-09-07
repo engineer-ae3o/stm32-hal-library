@@ -37,7 +37,7 @@ void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, boo
 void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, const volatile void* mem_0, const volatile void* mem_1);
 
 // Helper to assist with the checking and clearing of interrupt flags and propagation of errors
-[[__gnu__::__always_inline__]] static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream) {
+[[__gnu__::__always_inline__]] inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream) {
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
     TRY(dma_get_stream_flags(stream, &flags));

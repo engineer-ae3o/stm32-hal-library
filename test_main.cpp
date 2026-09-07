@@ -218,7 +218,6 @@ int main() {
     i2sx_clk_enable(I2S1, true);
     i2s_master_init(I2S1, nullptr);
     i2s_master_dma_init(I2S1, DMA_PRIORITY_VERY_HIGH, true);
-    i2s_master_enable(I2S1, true);
     i2s_master_transmit(I2S1, nullptr, 0, nullptr, nullptr);
 
     // ADC peripheral
@@ -257,7 +256,7 @@ int main() {
 
     // Configure PA3 as analog since it is ADC channel 3
     ASSERT(gpiox_clk_enable(GPIOA, true) == HAL_OK);
-    gpio_set_analog(GPIOA, 3);
+    gpio_set_analog(GPIOA, GPIO_PIN_3);
 
     // Get the raw ADC data
     uint16_t raw_channel_3 = 0, raw_vbat = 0, raw_vref_int = 0;

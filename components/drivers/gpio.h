@@ -14,6 +14,25 @@ extern "C" {
 
 
 typedef enum : uint8_t {
+    GPIO_PIN_0 = 0,
+    GPIO_PIN_1,
+    GPIO_PIN_2,
+    GPIO_PIN_3,
+    GPIO_PIN_4,
+    GPIO_PIN_5,
+    GPIO_PIN_6,
+    GPIO_PIN_7,
+    GPIO_PIN_8,
+    GPIO_PIN_9,
+    GPIO_PIN_10,
+    GPIO_PIN_11,
+    GPIO_PIN_12,
+    GPIO_PIN_13,
+    GPIO_PIN_14,
+    GPIO_PIN_15,
+} gpio_pin_t;
+
+typedef enum : uint8_t {
     GPIO_LOW_SPEED = 0,
     GPIO_MEDIUM_SPEED,
     GPIO_FAST_SPEED,
@@ -24,7 +43,7 @@ typedef enum : uint8_t {
     GPIO_NO_EDGE = 0,
     GPIO_RISING_EDGE_ONLY,
     GPIO_FALLING_EDGE_ONLY,
-    GPIO_RISING_AND_FALLING_EDGE,
+    GPIO_RISING_FALLING_EDGE,
 } gpio_edge_trigger_t;
 
 typedef enum : uint8_t {
@@ -34,23 +53,23 @@ typedef enum : uint8_t {
 
 hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable);
 
-void      gpio_set_output(GPIO_TypeDef* port, uint8_t pin);
-void      gpio_set_input(GPIO_TypeDef* port, uint8_t pin);
-void      gpio_set_analog(GPIO_TypeDef* port, uint8_t pin);
-hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, uint8_t pin, uint8_t alt_val);
+void      gpio_set_output(GPIO_TypeDef* port, gpio_pin_t pin);
+void      gpio_set_input(GPIO_TypeDef* port, gpio_pin_t pin);
+void      gpio_set_analog(GPIO_TypeDef* port, gpio_pin_t pin);
+hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t alt_val);
 
-void gpio_enable_pullup(GPIO_TypeDef* port, uint8_t pin, bool enable);
-void gpio_enable_pulldown(GPIO_TypeDef* port, uint8_t pin, bool enable);
+void gpio_enable_pullup(GPIO_TypeDef* port, gpio_pin_t pin, bool enable);
+void gpio_enable_pulldown(GPIO_TypeDef* port, gpio_pin_t pin, bool enable);
 
-void gpio_set_speed_mode(GPIO_TypeDef* port, uint8_t pin, gpio_speed_mode_t mode);
-void gpio_set_output_type(GPIO_TypeDef* port, uint8_t pin, gpio_output_type_t type);
+void gpio_set_speed_mode(GPIO_TypeDef* port, gpio_pin_t pin, gpio_speed_mode_t mode);
+void gpio_set_output_type(GPIO_TypeDef* port, gpio_pin_t pin, gpio_output_type_t type);
 
-void gpio_level_set(GPIO_TypeDef* port, uint8_t pin, bool level);
-void gpio_level_toggle(GPIO_TypeDef* port, uint8_t pin);
-bool gpio_get_level(GPIO_TypeDef* port, uint8_t pin);
+void gpio_level_set(GPIO_TypeDef* port, gpio_pin_t pin, bool level);
+void gpio_level_toggle(GPIO_TypeDef* port, gpio_pin_t pin);
+bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin);
 
-hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_t edge);
-void      gpio_clear_interrupt(GPIO_TypeDef* port, uint8_t pin);
+hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigger_t edge);
+void      gpio_clear_interrupt(GPIO_TypeDef* port, gpio_pin_t pin);
 
 
 #ifdef __cplusplus

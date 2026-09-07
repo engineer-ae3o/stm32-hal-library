@@ -424,9 +424,11 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
-    // Enable scan mode if we have more than one channel
+    // Enable scan mode if we have more than one channel. Disable otherwise
     if (config->channels.num_of_channels > 1) {
         handle->CR1 |= ADC_CR1_SCAN;
+    } else {
+        handle->CR1 &= ~ADC_CR1_SCAN;
     }
 
     // Set the number of channels/conversions in the L bit positions of the
@@ -496,7 +498,6 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         .per_addr  = &handle->DR,
         .mem_buf_0 = config->buffer_1,
         .mem_buf_1 = config->circular_mode == DMA_MODE_DOUBLE_BUFFER ? config->buffer_2 : NULL,
-
     };
     TRY(dma_configure_stream(stream, &stream_config));
 

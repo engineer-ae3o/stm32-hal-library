@@ -45,20 +45,20 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
     return HAL_OK;
 }
 
-void gpio_set_output(GPIO_TypeDef* port, uint8_t pin) {
+void gpio_set_output(GPIO_TypeDef* port, gpio_pin_t pin) {
     if (port) {
         port->MODER &= ~(0b11UL << (pin * 2));
         port->MODER |= (0b1UL << (pin * 2));
     }
 }
 
-void gpio_set_input(GPIO_TypeDef* port, uint8_t pin) {
+void gpio_set_input(GPIO_TypeDef* port, gpio_pin_t pin) {
     if (port) {
         port->MODER &= ~(0b11UL << (pin * 2));
     }
 }
 
-void gpio_set_analog(GPIO_TypeDef* port, uint8_t pin) {
+void gpio_set_analog(GPIO_TypeDef* port, gpio_pin_t pin) {
     if (port) {
         // ORing in 0b11 gets us our desired value regardless of
         // previous state, so it is redundant to clear it first
@@ -66,7 +66,7 @@ void gpio_set_analog(GPIO_TypeDef* port, uint8_t pin) {
     }
 }
 
-hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, uint8_t pin, uint8_t alt_val) {
+hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t alt_val) {
     if (port) {
         // Set the MODER for alternate mode
         port->MODER &= ~(0b11UL << (pin * 2));
@@ -88,7 +88,7 @@ hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, uint8_t pin, uint8_t a
     return HAL_ERR_INVALID_ARG;
 }
 
-void gpio_enable_pullup(GPIO_TypeDef* port, uint8_t pin, bool enable) {
+void gpio_enable_pullup(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
     if (port) {
         port->PUPDR &= ~(0b11UL << (pin * 2));
         if (enable) {
@@ -97,7 +97,7 @@ void gpio_enable_pullup(GPIO_TypeDef* port, uint8_t pin, bool enable) {
     }
 }
 
-void gpio_enable_pulldown(GPIO_TypeDef* port, uint8_t pin, bool enable) {
+void gpio_enable_pulldown(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
     if (port) {
         port->PUPDR &= ~(0b11UL << (pin * 2));
         if (enable) {
@@ -106,7 +106,7 @@ void gpio_enable_pulldown(GPIO_TypeDef* port, uint8_t pin, bool enable) {
     }
 }
 
-void gpio_set_output_type(GPIO_TypeDef* port, uint8_t pin, gpio_output_type_t type) {
+void gpio_set_output_type(GPIO_TypeDef* port, gpio_pin_t pin, gpio_output_type_t type) {
     if (port) {
         if (type == GPIO_OPEN_DRAIN) {
             port->OTYPER |= (1UL << pin);
@@ -116,34 +116,34 @@ void gpio_set_output_type(GPIO_TypeDef* port, uint8_t pin, gpio_output_type_t ty
     }
 }
 
-void gpio_set_speed_mode(GPIO_TypeDef* port, uint8_t pin, gpio_speed_mode_t mode) {
+void gpio_set_speed_mode(GPIO_TypeDef* port, gpio_pin_t pin, gpio_speed_mode_t mode) {
     if (port) {
         port->OSPEEDR &= ~(0b11UL << (pin * 2));
         port->OSPEEDR |= ((uint32_t)mode << (pin * 2));
     }
 }
 
-void gpio_level_set(GPIO_TypeDef* port, uint8_t pin, bool level) {
+void gpio_level_set(GPIO_TypeDef* port, gpio_pin_t pin, bool level) {
     if (port) {
         level ? (port->BSRR = (0b1UL << pin)) : (port->BSRR = (0b1UL << (pin + 16)));
     }
 }
 
-void gpio_level_toggle(GPIO_TypeDef* port, uint8_t pin) {
+void gpio_level_toggle(GPIO_TypeDef* port, gpio_pin_t pin) {
     if (port) {
         // Read the level of the pin and then toggle it
         gpio_level_set(port, pin, !gpio_get_level(port, pin));
     }
 }
 
-bool gpio_get_level(GPIO_TypeDef* port, uint8_t pin) {
+bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin) {
     if (!port) {
         return false;
     }
     return ((port->IDR >> pin) & 0x01U);
 }
 
-hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_t edge) {
+hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigger_t edge) {
     // Extract register index and bit position
     const uint8_t reg_idx = pin / 4;
     const uint8_t bit_pos = (pin % 4) * 4;
@@ -198,7 +198,7 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, uint8_t pin, gpio_edge_trigger_
     return HAL_OK;
 }
 
-void gpio_clear_interrupt(GPIO_TypeDef* port, uint8_t pin) {
+void gpio_clear_interrupt(GPIO_TypeDef* port, gpio_pin_t pin) {
     if (port) {
         // Extract register index and bit position
         const uint8_t reg_idx = pin / 4;

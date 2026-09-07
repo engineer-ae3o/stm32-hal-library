@@ -12,6 +12,9 @@
 static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
 static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
 
+#define I2C_ENABLE() handle->CR1 |= I2C_CR1_PE
+#define I2C_DISABLE() handle->CR1 &= ~I2C_CR1_PE
+
 
 // General API
 hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
@@ -53,8 +56,9 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 
     // Set pins to alternate function for I2C
     // I2C uses an alternate function value of 0b100
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sda_pin, 0b100U));
-    TRY(gpio_set_alternate_function(config->gpio_port, config->scl_pin, 0b100U));
+    const uint32_t alt_val = 0b100;
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sda_pin, alt_val));
+    TRY(gpio_set_alternate_function(config->gpio_port, config->scl_pin, alt_val));
 
     // Set as open drain
     gpio_set_output_type(config->gpio_port, config->sda_pin, GPIO_OPEN_DRAIN);
@@ -69,7 +73,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     gpio_enable_pullup(config->gpio_port, config->scl_pin, config->use_pullups);
 
     // Disable the I2C peripheral before writing to any of its registers
-    handle->CR1 &= ~I2C_CR1_PE;
+    I2C_DISABLE();
 
     // Get the APB1 bus frequency and cache it
     system_core_clock_update();
@@ -82,14 +86,14 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 
     // Clock configuration
     handle->CCR &= ~(0xFFFUL << I2C_CCR_CCR_Pos);
-    if (config->freq_type == I2C_400KHz) {
+    if (config->frequency == I2C_FREQ_400KHz) {
         // Enable Full mode and duty cycle mode of 16:9
         handle->CCR |= (I2C_CCR_FS | I2C_CCR_DUTY);
         // Calculate the CCR value
         const uint32_t ccr = (apb1_clk * 1'000'000U) / (25U * 400'000UL);
         handle->CCR |= ((ccr & 0xFFFUL) << I2C_CCR_CCR_Pos);
 
-    } else if (config->freq_type == I2C_100KHz) {
+    } else if (config->frequency == I2C_FREQ_100KHz) {
         // Enable Standard mode
         handle->CCR &= ~I2C_CCR_FS;
         // Calculate the CCR value
@@ -105,11 +109,8 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     handle->FLTR |= (uint32_t)(config->digital_filter << I2C_FLTR_DNF_Pos);
 
     // Rise time
-    const uint32_t trise_ns = (config->freq_type == I2C_400KHz) ? 300U : 1'000U;
+    const uint32_t trise_ns = (config->frequency == I2C_FREQ_400KHz) ? 300 : 1'000;
     handle->TRISE           = (((trise_ns * apb1_clk) / 1000U) + config->digital_filter + 1);
-
-    // Enable the I2C peripheral
-    handle->CR1 |= I2C_CR1_PE;
 
     return HAL_OK;
 }
@@ -120,14 +121,17 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_
     if (handle == NULL || address == 0 || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
+    I2C_ENABLE();
 
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
+        I2C_DISABLE();
         return HAL_ERR_INVALID_STATE;
     }
 
     // Start the transaction
     if (!send_start(handle)) {
+        I2C_DISABLE();
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
@@ -137,6 +141,7 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_
     // End the transaction regardless of an error or success
     send_stop(handle);
 
+    I2C_DISABLE();
     return ret;
 }
 
@@ -144,14 +149,17 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data
     if (handle == NULL || address == 0 || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
+    I2C_ENABLE();
 
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
+        I2C_DISABLE();
         return HAL_ERR_INVALID_STATE;
     }
 
     // Start the transaction
     if (!send_start(handle)) {
+        I2C_DISABLE();
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
@@ -163,14 +171,17 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint
     if (handle == NULL || address == 0 || tx_data == NULL || tx_size == 0 || rx_data == NULL || rx_size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
+    I2C_ENABLE();
 
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
+        I2C_DISABLE();
         return HAL_ERR_INVALID_STATE;
     }
 
     // Start the transaction
     if (!send_start(handle)) {
+        I2C_DISABLE();
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
@@ -179,6 +190,7 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint
 
     // Send the repeated start
     if (!send_start(handle)) {
+        I2C_DISABLE();
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 

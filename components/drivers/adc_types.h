@@ -179,7 +179,6 @@ typedef struct {
 
     // The different callbacks to be registered. They determine what interrupts will be enabled.
     adc_dma_callbacks_t callbacks;
-
 } adc_continuous_config_t;
 
 

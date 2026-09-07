@@ -9,6 +9,7 @@ extern "C" {
 
 #include "stm32f411xe.h"
 #include "drivers/dma_types.h"
+#include "drivers/gpio.h"
 #include "utils/err.h"
 
 #include <stdint.h>
@@ -24,17 +25,18 @@ typedef struct {
     uint32_t baud_rate;
 
     GPIO_TypeDef* gpio_port;
-    uint8_t       tx_pin;
-    uint8_t       rx_pin;
+    gpio_pin_t    tx_pin;
+    gpio_pin_t    rx_pin;
 
     uart_over_sample_t over_sampling;
 } uart_config_t;
 
+// General API
 hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable);
 hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config);
 hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority, bool init);
 
-// Polling TX API
+// Polling TX API. Polling RX not supported
 hal_err_t uart_transmit_byte(USART_TypeDef* handle, uint8_t byte);
 hal_err_t uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t size);
 
