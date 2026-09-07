@@ -62,44 +62,69 @@ hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, dma_stream_flags_t* f
     dma_stream_info_t stream_info;
     TRY(dma_get_stream_info(stream, &stream_info));
 
-    (void)flags;
-
-    /*
     switch (stream_info.stream_number) {
         case 0:
-            flags = (DMA_LISR_TCIF0 | DMA_LISR_HTIF0 | DMA_LISR_TEIF0 | DMA_LISR_DMEIF0 | DMA_LISR_FEIF0);
+            flags->tc_mask  = DMA_LISR_TCIF0;
+            flags->te_mask  = DMA_LISR_TEIF0;
+            flags->ht_mask  = DMA_LISR_HTIF0;
+            flags->dme_mask = DMA_LISR_DMEIF0;
+            flags->fe_mask  = DMA_LISR_FEIF0;
             break;
         case 1:
-            flags = (DMA_LISR_TCIF1 | DMA_LISR_HTIF1 | DMA_LISR_TEIF1 | DMA_LISR_DMEIF1 | DMA_LISR_FEIF1);
+            flags->tc_mask  = DMA_LISR_TCIF1;
+            flags->te_mask  = DMA_LISR_TEIF1;
+            flags->ht_mask  = DMA_LISR_HTIF1;
+            flags->dme_mask = DMA_LISR_DMEIF1;
+            flags->fe_mask  = DMA_LISR_FEIF1;
             break;
         case 2:
-            flags = (DMA_LISR_TCIF2 | DMA_LISR_HTIF2 | DMA_LISR_TEIF2 | DMA_LISR_DMEIF2 | DMA_LISR_FEIF2);
+            flags->tc_mask  = DMA_LISR_TCIF2;
+            flags->te_mask  = DMA_LISR_TEIF2;
+            flags->ht_mask  = DMA_LISR_HTIF2;
+            flags->dme_mask = DMA_LISR_DMEIF2;
+            flags->fe_mask  = DMA_LISR_FEIF2;
             break;
         case 3:
-            flags = (DMA_LISR_TCIF3 | DMA_LISR_HTIF3 | DMA_LISR_TEIF3 | DMA_LISR_DMEIF3 | DMA_LISR_FEIF3);
+            flags->tc_mask  = DMA_LISR_TCIF3;
+            flags->te_mask  = DMA_LISR_TEIF3;
+            flags->ht_mask  = DMA_LISR_HTIF3;
+            flags->dme_mask = DMA_LISR_DMEIF3;
+            flags->fe_mask  = DMA_LISR_FEIF3;
             break;
         case 4:
-            flags = (DMA_HISR_TCIF4 | DMA_HISR_HTIF4 | DMA_HISR_TEIF4 | DMA_HISR_DMEIF4 | DMA_HISR_FEIF4);
+            flags->tc_mask  = DMA_HISR_TCIF4;
+            flags->te_mask  = DMA_HISR_TEIF4;
+            flags->ht_mask  = DMA_HISR_HTIF4;
+            flags->dme_mask = DMA_HISR_DMEIF4;
+            flags->fe_mask  = DMA_HISR_FEIF4;
             break;
         case 5:
-            flags = (DMA_HISR_TCIF5 | DMA_HISR_HTIF5 | DMA_HISR_TEIF5 | DMA_HISR_DMEIF5 | DMA_HISR_FEIF5);
+            flags->tc_mask  = DMA_HISR_TCIF5;
+            flags->te_mask  = DMA_HISR_TEIF5;
+            flags->ht_mask  = DMA_HISR_HTIF5;
+            flags->dme_mask = DMA_HISR_DMEIF5;
+            flags->fe_mask  = DMA_HISR_FEIF5;
             break;
         case 6:
-            flags = (DMA_HISR_TCIF6 | DMA_HISR_HTIF6 | DMA_HISR_TEIF6 | DMA_HISR_DMEIF6 | DMA_HISR_FEIF6);
+            flags->tc_mask  = DMA_HISR_TCIF6;
+            flags->te_mask  = DMA_HISR_TEIF6;
+            flags->ht_mask  = DMA_HISR_HTIF6;
+            flags->dme_mask = DMA_HISR_DMEIF6;
+            flags->fe_mask  = DMA_HISR_FEIF6;
             break;
         case 7:
-            flags = (DMA_HISR_TCIF7 | DMA_HISR_HTIF7 | DMA_HISR_TEIF7 | DMA_HISR_DMEIF7 | DMA_HISR_FEIF7);
+            flags->tc_mask  = DMA_HISR_TCIF7;
+            flags->te_mask  = DMA_HISR_TEIF7;
+            flags->ht_mask  = DMA_HISR_HTIF7;
+            flags->dme_mask = DMA_HISR_DMEIF7;
+            flags->fe_mask  = DMA_HISR_FEIF7;
             break;
         default:
             return HAL_ERR_INVALID_ARG;
     }
-    */
 
-    if (stream_info.stream_number <= 3) {
-        stream_info.controller->LIFCR = 0;
-    } else if (stream_info.stream_number <= 7) {
-        stream_info.controller->HIFCR = 0;
-    }
+    flags->irq_clear_register  = stream_info.stream_number <= 3 ? &stream_info.controller->LIFCR : &stream_info.controller->HIFCR;
+    flags->irq_status_register = stream_info.stream_number <= 3 ? &stream_info.controller->LISR : &stream_info.controller->HISR;
 
     return HAL_OK;
 }
