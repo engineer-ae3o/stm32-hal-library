@@ -90,8 +90,10 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, dma_priority_t priori
     CRC->CR |= CRC_CR_RESET;
     __DSB();
 
+    __disable_irq();
     s_user_callback = cb;
     s_user_data     = arg;
+    __enable_irq();
 
     return dma_enable_stream(s_crc_dma_map.stream);
 }
@@ -103,15 +105,23 @@ dma_map_t crc_get_dma_stream_info() {
 // DMA interrupt handler
 void DMA2_Stream5_IRQHandler(void) {
     hal_err_t ret = dma_isr_helper(s_crc_dma_map.stream);
-    if (s_user_callback) {
+
+    __disable_irq();
+    const crc_dma_done_cb_t local_cb  = s_user_callback;
+    void* const             local_arg = s_user_data;
+
+    s_user_callback = NULL;
+    s_user_data     = NULL;
+    __enable_irq();
+
+    if (local_cb) {
         if (ret == HAL_OK) {
-            s_user_callback(s_user_data, HAL_OK, CRC->DR);
+            local_cb(local_arg, HAL_OK, CRC->DR);
         } else {
-            s_user_callback(s_user_data, ret, 0);
+            local_cb(local_arg, ret, 0);
         }
-        s_user_callback = NULL;
-        s_user_data     = NULL;
     }
+
     // Deinitialize the stream. This clears all DMA flags as well
     dma_stream_config_t stream_config = {};
     stream_config.deconfigure         = true;

@@ -5,6 +5,9 @@
 #include "drivers/dma.h"
 #include "utils/err.h"
 
+#include <string.h>
+#include <stddef.h>
+
 
 // Mapping for the DMA streams to the UART peripheral instances
 static const dma_stream_map_t s_uart_dma_map[] = {
@@ -73,6 +76,9 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].tx.stream);
 
+    // Clear the status flags
+    handle->SR &= ~(USART_SR_TC | USART_SR_TXE);
+
     // Transfers require us to poll on the TC flag
     // even after data has been shifted out
 
@@ -89,8 +95,11 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     // Disable the UART TX peripheral after all transactions have completed
     DISABLE_UART_TX();
 
+    __disable_irq();
+
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].tx.callback == NULL) {
+        __enable_irq();
         return;
     }
 
@@ -101,6 +110,8 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     // Clear the user passed callback since this is a one-off event
     s_dma_stream_ctx[idx].tx.callback = NULL;
     s_dma_stream_ctx[idx].tx.arg      = NULL;
+
+    __enable_irq();
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
@@ -113,11 +124,17 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].rx.stream);
 
+    // Clear the status flag
+    handle->SR &= ~USART_SR_RXNE;
+
     // Disable the UART RX peripheral
     DISABLE_UART_RX();
 
+    __disable_irq();
+
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].rx.callback == NULL) {
+        __enable_irq();
         return;
     }
 
@@ -128,6 +145,8 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     // Clear the user passed callback since this is a one-off event
     s_dma_stream_ctx[idx].rx.callback = NULL;
     s_dma_stream_ctx[idx].rx.arg      = NULL;
+
+    __enable_irq();
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
@@ -187,12 +206,13 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Set oversampling and baud rate divider
     // The fractional part can only be 3 bits if oversampling is 8
+    handle->BRR &= ~(USART_BRR_DIV_Mantissa | USART_BRR_DIV_Fraction);
     if (config->over_sampling == UART_OVER_SAMPLING_8) {
         handle->CR1 |= USART_CR1_OVER8;
-        handle->BRR = (uint32_t)(mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x07U);
+        handle->BRR |= ((uint32_t)(mantissa << USART_BRR_DIV_Mantissa_Pos) & USART_BRR_DIV_Mantissa) | (fraction & 0x07U);
     } else if (config->over_sampling == UART_OVER_SAMPLING_16) {
         handle->CR1 &= ~USART_CR1_OVER8;
-        handle->BRR = (uint32_t)(mantissa << USART_BRR_DIV_Mantissa_Pos) | (fraction & 0x0FU);
+        handle->BRR |= ((uint32_t)(mantissa << USART_BRR_DIV_Mantissa_Pos) & USART_BRR_DIV_Mantissa) | (fraction & 0x0FU);
     } else {
         return HAL_ERR_INVALID_ARG;
     }
@@ -237,8 +257,8 @@ hal_err_t uart_deinit(USART_TypeDef* handle) {
 
     handle->CR1 &= ~(USART_CR1_SBK | USART_CR1_RWU | USART_CR1_RE | USART_CR1_TE | USART_CR1_IDLEIE | USART_CR1_RXNEIE | USART_CR1_TCIE |
                      USART_CR1_TXEIE | USART_CR1_PEIE | USART_CR1_PS | USART_CR1_PCE | USART_CR1_WAKE | USART_CR1_M | USART_CR1_OVER8);
-    handle->CR3 &= ~(USART_CR3_DMAT | USART_CR3_DMAR);
     handle->BRR &= ~(USART_BRR_DIV_Fraction | USART_BRR_DIV_Mantissa);
+    handle->SR &= ~(USART_SR_TC | USART_SR_TXE | USART_SR_RXNE);
 
     // Disable the UART peripheral
     handle->CR1 &= ~USART_CR1_UE;
@@ -356,6 +376,11 @@ hal_err_t uart_dma_deinit(USART_TypeDef* handle) {
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));
 
+    // Zero out all stored callbacks
+    __disable_irq();
+    memset(&s_dma_stream_ctx[idx], 0, sizeof(s_dma_stream_ctx[idx]));
+    __enable_irq();
+
     return HAL_OK;
 }
 
@@ -390,6 +415,9 @@ hal_err_t uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t 
     // Wait till all bytes have been fully transmitted
     while (!(handle->SR & USART_SR_TC));
 
+    // Clar the status flags when done
+    handle->SR &= ~(USART_SR_TC | USART_SR_TXE);
+
     DISABLE_UART_TX();
     return HAL_OK;
 }
@@ -411,14 +439,19 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
     dma_set_addresses(stream, &handle->DR, data, NULL);
     dma_set_trans_length(stream, size);
 
-    // Enable the DMA TX stream
-    TRY(dma_enable_stream(stream));
-
     // Save the user passed callback
     if (callback) {
+        __disable_irq();
         s_dma_stream_ctx[idx].tx.callback = callback;
         s_dma_stream_ctx[idx].tx.arg      = arg;
+        __enable_irq();
     }
+
+    // Clear the status flags before starting
+    handle->SR &= ~(USART_SR_TC | USART_SR_TXE);
+
+    // Enable the DMA TX stream
+    TRY(dma_enable_stream(stream));
 
     // Enable the UART TX peripheral
     ENABLE_UART_TX();
@@ -441,14 +474,19 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
     dma_set_addresses(stream, &handle->DR, data, NULL);
     dma_set_trans_length(stream, size);
 
-    // Enable the DMA RX stream
-    TRY(dma_enable_stream(stream));
-
     // Save the user passed callback
     if (callback) {
+        __disable_irq();
         s_dma_stream_ctx[idx].rx.callback = callback;
         s_dma_stream_ctx[idx].rx.arg      = arg;
+        __enable_irq();
     }
+
+    // Clear the status flag before starting
+    handle->SR &= ~USART_SR_RXNE;
+
+    // Enable the DMA RX stream
+    TRY(dma_enable_stream(stream));
 
     // Enable the UART RX peripheral
     ENABLE_UART_RX();

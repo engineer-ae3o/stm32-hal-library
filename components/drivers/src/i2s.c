@@ -5,8 +5,6 @@
 #include "drivers/i2s.h"
 #include "utils/err.h"
 
-#include <stddef.h>
-
 
 // Clock prescaler table
 typedef struct {
@@ -381,7 +379,10 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t siz
     }
 
     // Enable the DMA TX stream
-    return dma_enable_stream(stream);
+    TRY(dma_enable_stream(stream));
+    ENABLE_I2S();
+
+    return HAL_OK;
 }
 
 hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_done_cb_t callback, void* arg) {
@@ -412,7 +413,10 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_
     }
 
     // Enable the DMA RX stream
-    return dma_enable_stream(stream);
+    TRY(dma_enable_stream(stream));
+    ENABLE_I2S();
+
+    return HAL_OK;
 }
 
 
@@ -445,6 +449,7 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uin
         TRY(spi_master_register_callback(callback, arg, idx, false));
     }
 
+    ENABLE_I2S();
     return HAL_OK;
 }
 
@@ -464,8 +469,7 @@ hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle) {
     }
 
     TRY(dma_disable_stream(stream));
-    dma_enable_circm_dbm(stream, false, false);
-    dma_set_trans_length(stream, 0);
+    DISABLE_I2S();
 
     return HAL_OK;
 }
@@ -475,9 +479,19 @@ hal_err_t i2s_master_dbm_start(I2S_TypeDef* handle) {
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
+
     dma_stream_map_t dma_map;
     TRY(spi_master_get_dma_stream_map(&dma_map, idx));
-    return dma_enable_stream(dma_map.rx.stream);
+
+    DMA_Stream_TypeDef* stream = dma_map.rx.stream;
+    if (stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    TRY(dma_enable_stream(stream));
+    ENABLE_I2S();
+
+    return HAL_OK;
 }
 
 hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle) {
@@ -485,9 +499,19 @@ hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle) {
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
+
     dma_stream_map_t dma_map;
     TRY(spi_master_get_dma_stream_map(&dma_map, idx));
-    return dma_disable_stream(dma_map.rx.stream);
+
+    DMA_Stream_TypeDef* stream = dma_map.rx.stream;
+    if (stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    TRY(dma_disable_stream(stream));
+    DISABLE_I2S();
+
+    return HAL_OK;
 }
 
 hal_err_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle, uint8_t* buffer_idx) {

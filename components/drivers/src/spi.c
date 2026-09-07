@@ -5,6 +5,9 @@
 #include "drivers/dma.h"
 #include "utils/err.h"
 
+#include <string.h>
+#include <stddef.h>
+
 
 // Mapping for the DMA streams to the SPI peripheral instances
 static const dma_stream_map_t s_spi_i2s_dma_map[] = {
@@ -104,8 +107,11 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
     // Disable I2S as well since the interrupt could have been triggered by it
     handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
 
+    __disable_irq();
+
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].tx.callback == NULL) {
+        __enable_irq();
         return;
     }
 
@@ -118,6 +124,8 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         s_dma_stream_ctx[idx].tx.callback = NULL;
         s_dma_stream_ctx[idx].tx.arg      = NULL;
     }
+
+    __enable_irq();
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
@@ -134,8 +142,11 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
     // Disable I2S as well since the interrupt could have been triggered by it
     handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
 
+    __disable_irq();
+
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].rx.callback == NULL) {
+        __enable_irq();
         return;
     }
 
@@ -148,6 +159,8 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         s_dma_stream_ctx[idx].rx.callback = NULL;
         s_dma_stream_ctx[idx].rx.arg      = NULL;
     }
+
+    __enable_irq();
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
@@ -406,6 +419,11 @@ hal_err_t spi_master_dma_deinit(SPI_TypeDef* handle) {
 
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));
+
+    // Zero out all stored callbacks
+    __disable_irq();
+    memset(&s_dma_stream_ctx[idx], 0, sizeof(s_dma_stream_ctx[idx]));
+    __enable_irq();
 
     return HAL_OK;
 }
@@ -696,8 +714,10 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
 
     // Save the user passed callback
     if (cb) {
+        __disable_irq();
         s_dma_stream_ctx[idx].tx.callback = cb;
         s_dma_stream_ctx[idx].tx.arg      = arg;
+        __enable_irq();
     }
 
     // Enable the DMA TX stream
@@ -726,8 +746,10 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size,
 
     // Save the user passed callback
     if (cb) {
+        __disable_irq();
         s_dma_stream_ctx[idx].rx.callback = cb;
         s_dma_stream_ctx[idx].rx.arg      = arg;
+        __enable_irq();
     }
 
     // Enable the DMA TX stream
@@ -762,8 +784,10 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     // Save the user passed callback
     if (cb) {
         // Save the callback to the TX DMA irq only
+        __disable_irq();
         s_dma_stream_ctx[idx].tx.callback = cb;
         s_dma_stream_ctx[idx].tx.arg      = arg;
+        __enable_irq();
     }
 
     // Enable the DMA TX and RX streams
@@ -780,6 +804,7 @@ hal_err_t spi_master_register_callback(dma_done_cb_t callback, void* arg, uint8_
     if (callback == NULL || idx >= ARRAY_SIZE(s_spi_i2s_dma_map)) {
         return HAL_ERR_INVALID_ARG;
     }
+    __disable_irq();
     if (is_tx) {
         s_dma_stream_ctx[idx].tx.callback = callback;
         s_dma_stream_ctx[idx].tx.arg      = arg;
@@ -787,6 +812,7 @@ hal_err_t spi_master_register_callback(dma_done_cb_t callback, void* arg, uint8_
         s_dma_stream_ctx[idx].rx.callback = callback;
         s_dma_stream_ctx[idx].rx.arg      = arg;
     }
+    __enable_irq();
     return HAL_OK;
 }
 

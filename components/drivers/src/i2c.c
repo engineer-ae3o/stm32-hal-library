@@ -70,7 +70,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     handle->CR1 |= I2C_CR1_ACK;
 
     handle->CR2 &= ~I2C_CR2_FREQ;
-    handle->CR2 |= (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos);
+    handle->CR2 |= (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos) & I2C_CR2_FREQ;
 
     // Clock configuration
     handle->CCR &= ~I2C_CCR_CCR;
@@ -145,7 +145,7 @@ hal_err_t i2c_master_deinit(I2C_TypeDef* handle) {
 
 // Polling API
 hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size) {
-    if (handle == NULL || address == 0 || data == NULL || size == 0) {
+    if (handle == NULL || address == 0 || address > 0x7F || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
     I2C_ENABLE();
@@ -173,7 +173,7 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_
 }
 
 hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
-    if (handle == NULL || address == 0 || data == NULL || size == 0) {
+    if (handle == NULL || address == 0 || address > 0x7F || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
     I2C_ENABLE();
@@ -198,7 +198,7 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data
 }
 
 hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data, size_t tx_size, uint8_t* rx_data, size_t rx_size) {
-    if (handle == NULL || address == 0 || tx_data == NULL || tx_size == 0 || rx_data == NULL || rx_size == 0) {
+    if (handle == NULL || address == 0 || address > 0x7F || tx_data == NULL || tx_size == 0 || rx_data == NULL || rx_size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
     I2C_ENABLE();
@@ -231,9 +231,6 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint
 
     // Start the RX transaction
     ret = rx_trans(handle, address, rx_data, rx_size);
-    if (ret != HAL_OK) {
-        send_stop(handle);
-    }
 
     I2C_DISABLE();
     return ret;
