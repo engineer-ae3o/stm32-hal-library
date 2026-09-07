@@ -34,7 +34,11 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
         __DSB();                                                                                                                                     \
     } while (0)
 
-#define DISABLE_UART_TX() handle->CR1 &= ~USART_CR1_TE
+#define DISABLE_UART_TX()                                                                                                                            \
+    do {                                                                                                                                             \
+        handle->CR1 &= ~USART_CR1_TE;                                                                                                                \
+        __DSB();                                                                                                                                     \
+    } while (0)
 
 #define ENABLE_UART_RX()                                                                                                                             \
     do {                                                                                                                                             \
@@ -42,7 +46,11 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
         __DSB();                                                                                                                                     \
     } while (0)
 
-#define DISABLE_UART_RX() handle->CR1 &= ~USART_CR1_RE
+#define DISABLE_UART_RX()                                                                                                                            \
+    do {                                                                                                                                             \
+        handle->CR1 &= ~USART_CR1_RE;                                                                                                                \
+        __DSB();                                                                                                                                     \
+    } while (0)
 
 
 // Helpers
@@ -78,8 +86,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
         }
     }
 
-    // Disable UART TX DMA and then disable the UART TX peripheral
-    handle->CR3 &= ~USART_CR3_DMAT;
+    // Disable the UART TX peripheral after all transactions have completed
     DISABLE_UART_TX();
 
     // Return if no callback registered
@@ -106,8 +113,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].rx.stream);
 
-    // Disable UART RX DMA and then disable the UART RX peripheral
-    handle->CR3 &= ~USART_CR3_DMAR;
+    // Disable the UART RX peripheral
     DISABLE_UART_RX();
 
     // Return if no callback registered
@@ -221,26 +227,37 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     return HAL_OK;
 }
 
-hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority, bool init) {
+hal_err_t uart_deinit(USART_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    DISABLE_UART_RX();
+    DISABLE_UART_TX();
+
+    handle->CR1 &= ~(SPI_CR1_CPHA | SPI_CR1_CPOL | SPI_CR1_MSTR | SPI_CR1_BR | SPI_CR1_LSBFIRST | SPI_CR1_SSI | SPI_CR1_SSM | SPI_CR1_RXONLY |
+                     SPI_CR1_DFF | SPI_CR1_CRCNEXT | SPI_CR1_CRCEN | SPI_CR1_BIDIOE | SPI_CR1_BIDIMODE);
+    handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN | SPI_CR2_FRF | SPI_CR2_ERRIE | SPI_CR2_RXNEIE | SPI_CR2_TXEIE);
+
+    return HAL_OK;
+}
+
+hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
 
     // TX mapping
-    DMA_Stream_TypeDef* tx_stream  = s_uart_dma_map[idx].tx.stream;
-    const uint8_t       tx_channel = s_uart_dma_map[idx].tx.channel;
-
-    // RX mapping
-    DMA_Stream_TypeDef* rx_stream  = s_uart_dma_map[idx].rx.stream;
-    const uint8_t       rx_channel = s_uart_dma_map[idx].rx.channel;
+    DMA_Stream_TypeDef* tx_stream = s_uart_dma_map[idx].tx.stream;
+    DMA_Stream_TypeDef* rx_stream = s_uart_dma_map[idx].rx.stream;
 
     if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
     // DMA TX stream configuration
-    dma_stream_config_t tx_stream_config = {
+    const dma_stream_config_t tx_stream_config = {
         .deconfigure   = false,
         .enable_stream = false,
 
@@ -262,7 +279,7 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority, bool ini
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = 0,
-        .channel           = tx_channel,
+        .channel           = s_uart_dma_map[idx].tx.channel,
         .nvic_irq_priority = UART_DMA_NVIC_IRQ_PRIORITY,
 
         .per_addr  = NULL,
@@ -271,7 +288,7 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority, bool ini
     };
 
     // DMA RX stream configuration
-    dma_stream_config_t rx_stream_config = {
+    const dma_stream_config_t rx_stream_config = {
         .deconfigure   = false,
         .enable_stream = false,
 
@@ -293,7 +310,7 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority, bool ini
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = 0,
-        .channel           = rx_channel,
+        .channel           = s_uart_dma_map[idx].rx.channel,
         .nvic_irq_priority = UART_DMA_NVIC_IRQ_PRIORITY,
 
         .per_addr  = NULL,
@@ -301,11 +318,36 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority, bool ini
         .mem_buf_1 = NULL,
     };
 
-    if (!init) {
-        // Set the deconfigure flags so dma_configure_stream(...) deinitializes the streams
-        tx_stream_config.deconfigure = true;
-        rx_stream_config.deconfigure = true;
+    TRY(dma_configure_stream(tx_stream, &tx_stream_config));
+    TRY(dma_configure_stream(rx_stream, &rx_stream_config));
+
+    // Enable USART TX and RX DMA requests
+    handle->CR3 |= (USART_CR3_DMAT | USART_CR3_DMAR);
+
+    return HAL_OK;
+}
+
+hal_err_t uart_dma_deinit(USART_TypeDef* handle) {
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) {
+        return HAL_ERR_INVALID_ARG;
     }
+
+    DMA_Stream_TypeDef* tx_stream = s_uart_dma_map[idx].tx.stream;
+    DMA_Stream_TypeDef* rx_stream = s_uart_dma_map[idx].rx.stream;
+
+    if (tx_stream == NULL || rx_stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Disable USART TX and RX DMA requests
+    handle->CR3 &= ~(USART_CR3_DMAT | USART_CR3_DMAR);
+
+    dma_stream_config_t tx_stream_config = {};
+    tx_stream_config.deconfigure         = true;
+
+    dma_stream_config_t rx_stream_config = {};
+    rx_stream_config.deconfigure         = true;
 
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));
@@ -374,8 +416,7 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
         s_dma_stream_ctx[idx].tx.arg      = arg;
     }
 
-    // Enable USART TX DMA requests and then enable the UART TX peripheral
-    handle->CR3 |= USART_CR3_DMAT;
+    // Enable the UART TX peripheral
     ENABLE_UART_TX();
 
     return HAL_OK;
@@ -405,8 +446,7 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
         s_dma_stream_ctx[idx].rx.arg      = arg;
     }
 
-    // Enable USART RX DMA requests and then enable the UART RX peripheral
-    handle->CR3 |= USART_CR3_DMAR;
+    // Enable the UART RX peripheral
     ENABLE_UART_RX();
 
     return HAL_OK;

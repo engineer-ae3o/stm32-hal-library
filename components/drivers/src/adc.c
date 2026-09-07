@@ -414,9 +414,7 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     }
 
     // ADC DMA stream mapping
-    DMA_Stream_TypeDef* stream  = s_adc_dma_map[idx].stream;
-    const uint8_t       channel = s_adc_dma_map[idx].channel;
-
+    DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
     if (stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
@@ -492,7 +490,7 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = config->buffer_size,
-        .channel           = channel,
+        .channel           = s_adc_dma_map[idx].channel,
         .nvic_irq_priority = ADC_DMA_NVIC_IRQ_PRIORITY,
 
         .per_addr  = &handle->DR,
@@ -525,14 +523,14 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Stop the conversion by clearing the necessary bits
-    clear_state(handle, true, false);
-
     // ADC DMA stream mapping
     DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
     if (stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
+
+    // Stop the conversion by clearing the necessary bits
+    clear_state(handle, true, false);
 
     // Deinitialize the stream. This clears all DMA flags as well
     dma_stream_config_t stream_config = {};

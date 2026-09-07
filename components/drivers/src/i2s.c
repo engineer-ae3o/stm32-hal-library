@@ -62,7 +62,11 @@ static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
         __DSB();                                                                                                                                     \
     } while (0)
 
-#define DISABLE_I2S() handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE
+#define DISABLE_I2S()                                                                                                                                \
+    do {                                                                                                                                             \
+        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;                                                                                                        \
+        __DSB();                                                                                                                                     \
+    } while (0)
 
 // Defined in the SPI driver. Used to post DMA events or get info from the SPI driver since the I2S peripheral
 // shares the same hardware block as the SPI peripheral, and consequently, share the same DMA streams.
@@ -185,7 +189,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 
     // Disable the SPI and I2S peripheral before modifying its registers
     handle->CR1 &= ~SPI_CR1_SPE;
-    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
+    DISABLE_I2S();
 
     // I2S mode
     handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
@@ -193,7 +197,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     // Set the clock prescaler
     const uint32_t prescaler = (config->use_mck) ? prescaler_table[config->freq].prescaler_with_mck : prescaler_table[config->freq].prescaler;
     handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
-    handle->I2SPR |= ((prescaler & 0xFFUL) << SPI_I2SPR_I2SDIV_Pos);
+    handle->I2SPR |= (prescaler << SPI_I2SPR_I2SDIV_Pos) & SPI_I2SPR_I2SDIV;
 
     handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN);
 
@@ -211,7 +215,20 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     return HAL_OK;
 }
 
-hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority, bool init) {
+hal_err_t i2s_master_deinit(I2S_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    DISABLE_I2S();
+
+    handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_PCMSYNC);
+    handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
+
+    return HAL_OK;
+}
+
+hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -229,7 +246,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority, bool
     }
 
     // DMA TX stream configuration
-    dma_stream_config_t tx_stream_config = {
+    const dma_stream_config_t tx_stream_config = {
         .deconfigure   = false,
         .enable_stream = false,
 
@@ -260,7 +277,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority, bool
     };
 
     // DMA RX stream configuration
-    dma_stream_config_t rx_stream_config = {
+    const dma_stream_config_t rx_stream_config = {
         .deconfigure   = false,
         .enable_stream = false,
 
@@ -290,16 +307,40 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority, bool
         .mem_buf_1 = NULL,
     };
 
-    if (init) {
-        // Enable I2S requests to the DMA controller
-        handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
-    } else {
-        // Disable I2S requests to the DMA controller
-        handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
-        // Set the deconfigure flags so dma_configure_stream(...) deinitializes the streams
-        tx_stream_config.deconfigure = true;
-        rx_stream_config.deconfigure = true;
+    TRY(dma_configure_stream(tx_stream, &tx_stream_config));
+    TRY(dma_configure_stream(rx_stream, &rx_stream_config));
+
+    // Enable I2S requests to the DMA controller
+    handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
+
+    return HAL_OK;
+}
+
+hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle) {
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) {
+        return HAL_ERR_INVALID_ARG;
     }
+
+    // Get the DMA stream mapped to the corresponding I2S handle
+    dma_stream_map_t dma_map;
+    TRY(spi_master_get_dma_stream_map(&dma_map, idx));
+
+    DMA_Stream_TypeDef* tx_stream = dma_map.tx.stream;
+    DMA_Stream_TypeDef* rx_stream = dma_map.rx.stream;
+
+    if (tx_stream == NULL || rx_stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Disable I2S requests to the DMA controller
+    handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
+
+    dma_stream_config_t tx_stream_config = {};
+    tx_stream_config.deconfigure         = true;
+
+    dma_stream_config_t rx_stream_config = {};
+    rx_stream_config.deconfigure         = true;
 
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));

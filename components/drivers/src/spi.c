@@ -44,7 +44,11 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         __DSB();                                                                                                                                     \
     } while (0)
 
-#define DISABLE_SPI() handle->CR1 &= ~SPI_CR1_SPE
+#define DISABLE_SPI()                                                                                                                                \
+    do {                                                                                                                                             \
+        handle->CR1 &= ~SPI_CR1_SPE;                                                                                                                 \
+        __DSB();                                                                                                                                     \
+    } while (0)
 
 
 // Helpers
@@ -282,6 +286,7 @@ hal_err_t spi_master_deinit(SPI_TypeDef* handle) {
     }
 
     DISABLE_SPI();
+
     handle->CR1 &= ~(SPI_CR1_CPHA | SPI_CR1_CPOL | SPI_CR1_MSTR | SPI_CR1_BR | SPI_CR1_LSBFIRST | SPI_CR1_SSI | SPI_CR1_SSM | SPI_CR1_RXONLY |
                      SPI_CR1_DFF | SPI_CR1_CRCNEXT | SPI_CR1_CRCEN | SPI_CR1_BIDIOE | SPI_CR1_BIDIMODE);
     handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN | SPI_CR2_FRF | SPI_CR2_ERRIE | SPI_CR2_RXNEIE | SPI_CR2_TXEIE);
@@ -295,13 +300,8 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // TX mapping
-    DMA_Stream_TypeDef* tx_stream  = s_spi_i2s_dma_map[idx].tx.stream;
-    const uint8_t       tx_channel = s_spi_i2s_dma_map[idx].tx.channel;
-
-    // RX mapping
-    DMA_Stream_TypeDef* rx_stream  = s_spi_i2s_dma_map[idx].rx.stream;
-    const uint8_t       rx_channel = s_spi_i2s_dma_map[idx].rx.channel;
+    DMA_Stream_TypeDef* tx_stream = s_spi_i2s_dma_map[idx].tx.stream;
+    DMA_Stream_TypeDef* rx_stream = s_spi_i2s_dma_map[idx].rx.stream;
 
     if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
@@ -333,7 +333,7 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = 0,
-        .channel           = tx_channel,
+        .channel           = s_spi_i2s_dma_map[idx].tx.channel,
         .nvic_irq_priority = SPI_DMA_NVIC_IRQ_PRIORITY,
 
         .per_addr  = NULL,
@@ -364,7 +364,7 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = 0,
-        .channel           = rx_channel,
+        .channel           = s_spi_i2s_dma_map[idx].rx.channel,
         .nvic_irq_priority = SPI_DMA_NVIC_IRQ_PRIORITY,
 
         .per_addr  = NULL,
@@ -372,11 +372,11 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
         .mem_buf_1 = NULL,
     };
 
-    // Enable SPI requests to the DMA controller
-    handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
-
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));
+
+    // Enable SPI requests to the DMA controller
+    handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
 
     return HAL_OK;
 }
@@ -399,10 +399,10 @@ hal_err_t spi_master_dma_deinit(SPI_TypeDef* handle) {
 
     // Set the deconfigure flags so dma_configure_stream(...) deinitializes the streams
     dma_stream_config_t tx_stream_config = {};
-    dma_stream_config_t rx_stream_config = {};
+    tx_stream_config.deconfigure         = true;
 
-    tx_stream_config.deconfigure = true;
-    rx_stream_config.deconfigure = true;
+    dma_stream_config_t rx_stream_config = {};
+    rx_stream_config.deconfigure         = true;
 
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));

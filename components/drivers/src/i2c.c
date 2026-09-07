@@ -18,7 +18,11 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
         __DSB();                                                                                                                                     \
     } while (0)
 
-#define I2C_DISABLE() handle->CR1 &= ~I2C_CR1_PE
+#define I2C_DISABLE()                                                                                                                                \
+    do {                                                                                                                                             \
+        handle->CR1 &= ~I2C_CR1_PE;                                                                                                                  \
+        __DSB();                                                                                                                                     \
+    } while (0)
 
 
 // General API
@@ -126,6 +130,7 @@ hal_err_t i2c_master_deinit(I2C_TypeDef* handle) {
     }
 
     I2C_DISABLE();
+
     handle->CCR &= ~(I2C_CCR_FS | I2C_CCR_DUTY | I2C_CCR_CCR);
     handle->CR1 &= ~(I2C_CR1_SMBUS | I2C_CR1_SMBTYPE | I2C_CR1_ENARP | I2C_CR1_ENPEC | I2C_CR1_ENGC | I2C_CR1_NOSTRETCH | I2C_CR1_START |
                      I2C_CR1_STOP | I2C_CR1_ACK | I2C_CR1_POS | I2C_CR1_PEC | I2C_CR1_ALERT | I2C_CR1_SWRST);
