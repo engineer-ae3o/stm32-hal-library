@@ -197,7 +197,7 @@ namespace profile {
         // Profile logging from SEGGER RTT
         segger_rtt();
         // Profile malloc from o1heap
-        // o1heap_malloc();
+        o1heap_malloc();
     }
 
 } // namespace profile
@@ -210,11 +210,8 @@ int main() {
 
     // Run the profile tests
     profile::all();
+    */
 
-    // Halt once tests are finished since nothing else to do.
-    LOGI("Main", "Done with all tests. Halting...");
-
-    /*
     i2sx_clk_enable(I2S1, true);
     i2s_master_init(I2S1, nullptr);
     i2s_master_dma_init(I2S1, DMA_PRIORITY_VERY_HIGH);
@@ -298,8 +295,9 @@ int main() {
 
     LOGI("CRC32", "CRC32 checksum of data = %lu", crc32);
     LOGI("CRC32", "CRC32 checksum of data = 0x%X", (size_t)crc32);
-    */
 
+    // Halt once tests are finished since nothing else to do.
+    LOGI("Main", "Done with all tests. Halting...");
     HALT();
 }
 }
