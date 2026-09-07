@@ -204,7 +204,7 @@ namespace profile {
 
 extern "C" {
 int main() {
-    /**
+    /*
     // Run all the hardware driver tests
     test::runner();
 

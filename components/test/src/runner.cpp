@@ -6,10 +6,9 @@
 #include "test/i2s.hpp"
 #include "test/pwm.hpp"
 #include "test/spi.hpp"
-#include "test/rtc.hpp"
+#include "test/crc.hpp"
 #include "test/heap.hpp"
 #include "test/iwdg.hpp"
-#include "test/wwdg.hpp"
 #include "test/uart.hpp"
 #include "test/gpio.hpp"
 #include "test/timer.hpp"
@@ -36,9 +35,8 @@ namespace test {
         i2s::all();
         pwm::all();
         spi::all();
-        rtc::all();
+        crc::all();
         iwdg::all();
-        wwdg::all();
         heap::all();
         uart::all();
         gpio::all();

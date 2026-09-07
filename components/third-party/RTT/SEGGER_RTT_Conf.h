@@ -72,7 +72,7 @@
 *    messages.
 */
 #ifndef BUFFER_SIZE_UP
-#define BUFFER_SIZE_UP (6 * 1024)
+#define BUFFER_SIZE_UP (880)
 #endif
 
 /*********************************************************************
