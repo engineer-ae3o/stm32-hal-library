@@ -217,7 +217,7 @@ int main() {
 
     i2sx_clk_enable(I2S1, true);
     i2s_master_init(I2S1, nullptr);
-    i2s_master_dma_init(I2S1, DMA_PRIORITY_VERY_HIGH, true);
+    i2s_master_dma_init(I2S1, DMA_PRIORITY_VERY_HIGH);
     i2s_master_transmit(I2S1, nullptr, 0, nullptr, nullptr);
 
     // ADC peripheral
@@ -232,7 +232,6 @@ int main() {
     };
     ASSERT(adcx_clk_enable(ADC1, true) == HAL_OK);
     ASSERT(adc_configure(ADC1, &adc_cfg) == HAL_OK);
-    ASSERT(adc_power_on(ADC1, true) == HAL_OK);
 
     // Configure the analog watchdog
     constexpr adc_analog_wdg_config_t awdg_config = {

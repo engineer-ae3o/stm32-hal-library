@@ -15,9 +15,9 @@ extern "C" {
 #include <stdint.h>
 
 
-typedef enum : uint8_t {
-    I2C_FREQ_100KHz = 0,
-    I2C_FREQ_400KHz,
+typedef enum : uint32_t {
+    I2C_FREQ_100KHz = 100'000,
+    I2C_FREQ_400KHz = 400'000,
 } i2c_frequency_t;
 
 typedef enum : uint8_t {

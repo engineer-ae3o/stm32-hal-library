@@ -64,28 +64,29 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 
     // Get the APB1 bus frequency and cache it
     system_core_clock_update();
-    const uint32_t apb1_clk = APB1CoreClock;
+    const uint32_t apb1_clk_freq_mhz = APB1CoreClock / 1'000'000U;
 
     // I2C configuration
     handle->CR1 |= I2C_CR1_ACK;
+
     handle->CR2 &= ~I2C_CR2_FREQ;
-    handle->CR2 |= (uint32_t)(apb1_clk << I2C_CR2_FREQ_Pos);
+    handle->CR2 |= (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos);
 
     // Clock configuration
-    handle->CCR &= ~(0xFFFUL << I2C_CCR_CCR_Pos);
+    handle->CCR &= ~I2C_CCR_CCR;
     if (config->frequency == I2C_FREQ_400KHz) {
         // Enable Full mode and duty cycle mode of 16:9
         handle->CCR |= (I2C_CCR_FS | I2C_CCR_DUTY);
         // Calculate the CCR value
-        const uint32_t ccr = (apb1_clk * 1'000'000U) / (25U * 400'000UL);
-        handle->CCR |= ((ccr & 0xFFFUL) << I2C_CCR_CCR_Pos);
+        const uint32_t ccr = (apb1_clk_freq_mhz * 1'000'000U) / (25 * I2C_FREQ_400KHz);
+        handle->CCR |= (ccr << I2C_CCR_CCR_Pos) & I2C_CCR_CCR;
 
     } else if (config->frequency == I2C_FREQ_100KHz) {
         // Enable Standard mode
-        handle->CCR &= ~I2C_CCR_FS;
+        handle->CCR &= ~(I2C_CCR_FS | I2C_CCR_DUTY);
         // Calculate the CCR value
-        const uint32_t ccr = (apb1_clk * 1'000'000UL) / (2U * 100'000UL);
-        handle->CCR |= ((ccr & 0xFFFUL) << I2C_CCR_CCR_Pos);
+        const uint32_t ccr = (apb1_clk_freq_mhz * 1'000'000U) / (2 * I2C_FREQ_100KHz);
+        handle->CCR |= (ccr << I2C_CCR_CCR_Pos) & I2C_CCR_CCR;
 
     } else {
         return HAL_ERR_INVALID_ARG;
@@ -97,7 +98,8 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 
     // Rise time
     const uint32_t trise_ns = (config->frequency == I2C_FREQ_400KHz) ? 300 : 1000;
-    handle->TRISE           = (((trise_ns * apb1_clk) / 1000U) + config->digital_filter + 1);
+    handle->TRISE &= ~I2C_TRISE_TRISE;
+    handle->TRISE |= (((trise_ns * apb1_clk_freq_mhz) / 1000U) + config->digital_filter + 1) & I2C_TRISE_TRISE;
 
     // Configure pins for I2C
     // Enable gpio channel clock
