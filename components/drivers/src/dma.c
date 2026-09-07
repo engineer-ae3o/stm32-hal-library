@@ -54,15 +54,12 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
     return HAL_OK;
 }
 
-hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, dma_stream_flags_t* flags) {
+hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number) {
     if (stream == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    dma_stream_info_t stream_info;
-    TRY(dma_get_stream_info(stream, &stream_info));
-
-    switch (stream_info.stream_number) {
+    switch (stream_number) {
         case 0:
             flags->tc_mask  = DMA_LISR_TCIF0;
             flags->te_mask  = DMA_LISR_TEIF0;
@@ -123,8 +120,8 @@ hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, dma_stream_flags_t* f
             return HAL_ERR_INVALID_ARG;
     }
 
-    flags->irq_clear_register  = stream_info.stream_number <= 3 ? &stream_info.controller->LIFCR : &stream_info.controller->HIFCR;
-    flags->irq_status_register = stream_info.stream_number <= 3 ? &stream_info.controller->LISR : &stream_info.controller->HISR;
+    flags->irq_clear_register  = stream_number <= 3 ? &controller->LIFCR : &controller->HIFCR;
+    flags->irq_status_register = stream_number <= 3 ? &controller->LISR : &controller->HISR;
 
     return HAL_OK;
 }
@@ -178,7 +175,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     // Clear all the DMA flags
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
-    TRY(dma_get_stream_flags(stream, &flags));
+    TRY(dma_get_stream_flags(stream, stream_info.controller, &flags, stream_info.stream_number));
     *flags.irq_clear_register = (flags.tc_mask | flags.te_mask | flags.ht_mask | flags.fe_mask | flags.dme_mask);
 
     // Clear all state before proceeding

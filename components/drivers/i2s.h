@@ -86,17 +86,14 @@ hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle);
 hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_done_cb_t callback, void* arg);
 hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_done_cb_t callback, void* arg);
 
-// Double buffering API
+// Double buffering API.
 // NOTE: These APIs are mutually exclusive with the DMA oneshot functions
-// NOTE: Only data reception is supported. User should determine which
-// buffer is free with i2s_master_dbm_get_filled_buffer()
+// NOTE: Only data reception is supported. Determine which buffer is free with i2s_master_dbm_get_filled_buffer()
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uint16_t size, dma_done_cb_t callback, void* arg);
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);
 
 // When start is called, the DMA starts filling buffer A, and then the isr is fired on completion, then starts filling B
-// NOTE: Calling stop can cause the peripheral to drop samples and consequently, the peripheral to trigger an overrun error.
-// So to "pause" or stop transfers, the peripheral should also be disabled because these functions just enable and disable
-// the DMA stream being used.
+// i2s_master_dbm_stop(...) can be used to pause the transaction, and i2s_master_dbm_start(...) to resume or start.
 hal_err_t i2s_master_dbm_start(I2S_TypeDef* handle);
 hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle);
 

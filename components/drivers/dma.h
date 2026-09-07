@@ -20,9 +20,9 @@ hal_err_t dmax_clk_enable(DMA_TypeDef* controller, bool enable);
 
 hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream);
 hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream);
-hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, dma_stream_flags_t* flags);
 hal_err_t dma_get_stream_info(DMA_Stream_TypeDef* stream, dma_stream_info_t* stream_info);
 hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_config_t* config);
+hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number);
 
 void dma_set_channel(DMA_Stream_TypeDef* stream, uint32_t channel);
 void dma_set_direct_mode(DMA_Stream_TypeDef* stream, bool direct_mode);
@@ -38,9 +38,13 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
 
 // Helper to assist with the checking and clearing of interrupt flags and propagation of errors
 [[__gnu__::__always_inline__]] inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream) {
+    // Get the stream's DMA controller and NVIC interrupt type
+    dma_stream_info_t stream_info;
+    TRY(dma_get_stream_info(stream, &stream_info));
+
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
-    TRY(dma_get_stream_flags(stream, &flags));
+    TRY(dma_get_stream_flags(stream, stream_info.controller, &flags, stream_info.stream_number));
 
     const uint32_t status         = *flags.irq_status_register;
     uint32_t       flags_to_clear = 0;

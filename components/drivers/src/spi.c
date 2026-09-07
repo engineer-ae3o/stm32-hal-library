@@ -103,12 +103,6 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
 
     __disable_irq();
 
-    // Return if no callback registered
-    if (s_dma_stream_ctx[idx].tx.callback == NULL) {
-        __enable_irq();
-        return;
-    }
-
     // Save the user callback so we can clear it's global array position
     const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].tx.callback;
     void* const         local_arg = s_dma_stream_ctx[idx].tx.arg;
@@ -117,15 +111,18 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
     if (!(s_spi_i2s_dma_map[idx].tx.stream->CR & DMA_SxCR_CIRC)) {
         s_dma_stream_ctx[idx].tx.callback = NULL;
         s_dma_stream_ctx[idx].tx.arg      = NULL;
-        DISABLE_SPI();
+
         // Disable I2S as well since the interrupt could have been triggered by it
         handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
+        DISABLE_SPI();
     }
 
     __enable_irq();
 
-    // Finally, invoke the user callback
-    local_cb(local_arg, ret);
+    if (local_cb) {
+        // Finally, invoke the user callback
+        local_cb(local_arg, ret);
+    }
 }
 
 [[__gnu__::__always_inline__]] static inline void isr_rx_helper(SPI_TypeDef* handle) {
@@ -137,12 +134,6 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
 
     __disable_irq();
 
-    // Return if no callback registered
-    if (s_dma_stream_ctx[idx].rx.callback == NULL) {
-        __enable_irq();
-        return;
-    }
-
     // Save the user callback so we can clear it's global array position
     const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].rx.callback;
     void* const         local_arg = s_dma_stream_ctx[idx].rx.arg;
@@ -151,15 +142,18 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
     if (!(s_spi_i2s_dma_map[idx].rx.stream->CR & DMA_SxCR_CIRC)) {
         s_dma_stream_ctx[idx].rx.callback = NULL;
         s_dma_stream_ctx[idx].rx.arg      = NULL;
-        DISABLE_SPI();
+
         // Disable I2S as well since the interrupt could have been triggered by it
         handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
+        DISABLE_SPI();
     }
 
     __enable_irq();
 
-    // Finally, invoke the user callback
-    local_cb(local_arg, ret);
+    if (local_cb) {
+        // Finally, invoke the user callback
+        local_cb(local_arg, ret);
+    }
 }
 
 
