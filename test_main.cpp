@@ -217,7 +217,7 @@ int main() {
 
     i2sx_clk_enable(I2S1, true);
     i2s_master_init(I2S1, nullptr);
-    i2s_master_dma_init(I2S1);
+    i2s_master_dma_init(I2S1, DMA_PRIORITY_VERY_HIGH, true);
     i2s_master_enable(I2S1, true);
     i2s_master_transmit(I2S1, nullptr, 0, nullptr, nullptr);
 

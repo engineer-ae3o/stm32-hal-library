@@ -158,8 +158,12 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     // 8 bit UART and parity bit disabled
     handle->CR1 &= ~(USART_CR1_M | USART_CR1_PCE);
 
-    // Baud rate generator
-    const float uart_div = (float)config->clock_freq_hz / (float)(config->baud_rate * config->over_sampling);
+    // Get the frequency of the bus clock on which the uart peripheral lives on
+    system_core_clock_update();
+    const uint32_t bus_clock_freq_hz = (handle == USART1 || handle == USART6) ? APB2CoreClock : APB1CoreClock;
+
+    // Baud rate generator: Get the UART bus divider from the target baud rate and bus clock frequency
+    const float uart_div = (float)bus_clock_freq_hz / (float)(config->baud_rate * config->over_sampling);
 
     // Get the mantissa and the fractional parts of the uart clock divider
     const uint16_t mantissa = (uint16_t)uart_div;

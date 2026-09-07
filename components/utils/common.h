@@ -19,6 +19,13 @@ extern "C" {
 #define AUDIO_PLL_HZ (76'800'000)
 
 
+// Global variables to match the SystemCoreClock variable, but for the APB1 and APB2 buses
+extern uint32_t APB1CoreClock;
+extern uint32_t APB2CoreClock;
+
+void system_core_clock_update();
+
+
 // Use the HSE, not the HSI
 #define USE_HSE
 

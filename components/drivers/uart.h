@@ -21,14 +21,13 @@ typedef enum : uint8_t {
 } uart_over_sample_t;
 
 typedef struct {
-    uart_over_sample_t over_sampling;
+    uint32_t baud_rate;
 
+    GPIO_TypeDef* gpio_port;
     uint8_t       tx_pin;
     uint8_t       rx_pin;
-    GPIO_TypeDef* gpio_port;
 
-    uint32_t clock_freq_hz;
-    uint32_t baud_rate;
+    uart_over_sample_t over_sampling;
 } uart_config_t;
 
 hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable);

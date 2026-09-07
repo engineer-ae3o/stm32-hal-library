@@ -65,16 +65,20 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     gpio_set_speed_mode(config->gpio_port, config->scl_pin, GPIO_MEDIUM_SPEED);
 
     // Pullups
-    gpio_enable_pullup(config->gpio_port, config->sda_pin, config->use_pullup);
-    gpio_enable_pullup(config->gpio_port, config->scl_pin, config->use_pullup);
+    gpio_enable_pullup(config->gpio_port, config->sda_pin, config->use_pullups);
+    gpio_enable_pullup(config->gpio_port, config->scl_pin, config->use_pullups);
 
     // Disable the I2C peripheral before writing to any of its registers
     handle->CR1 &= ~I2C_CR1_PE;
 
+    // Get the APB1 bus frequency and cache it
+    system_core_clock_update();
+    const uint32_t apb1_clk = APB1CoreClock;
+
     // I2C configuration
     handle->CR1 |= I2C_CR1_ACK;
     handle->CR2 &= ~I2C_CR2_FREQ;
-    handle->CR2 |= (uint32_t)(config->apb1_bus_freq_mhz << I2C_CR2_FREQ_Pos);
+    handle->CR2 |= (uint32_t)(apb1_clk << I2C_CR2_FREQ_Pos);
 
     // Clock configuration
     handle->CCR &= ~(0xFFFUL << I2C_CCR_CCR_Pos);
@@ -82,14 +86,14 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
         // Enable Full mode and duty cycle mode of 16:9
         handle->CCR |= (I2C_CCR_FS | I2C_CCR_DUTY);
         // Calculate the CCR value
-        const uint32_t ccr = (config->apb1_bus_freq_mhz * 1'000'000U) / (25U * 400'000UL);
+        const uint32_t ccr = (apb1_clk * 1'000'000U) / (25U * 400'000UL);
         handle->CCR |= ((ccr & 0xFFFUL) << I2C_CCR_CCR_Pos);
 
     } else if (config->freq_type == I2C_100KHz) {
         // Enable Standard mode
         handle->CCR &= ~I2C_CCR_FS;
         // Calculate the CCR value
-        const uint32_t ccr = (config->apb1_bus_freq_mhz * 1'000'000UL) / (2U * 100'000UL);
+        const uint32_t ccr = (apb1_clk * 1'000'000UL) / (2U * 100'000UL);
         handle->CCR |= ((ccr & 0xFFFUL) << I2C_CCR_CCR_Pos);
 
     } else {
@@ -97,12 +101,12 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     }
 
     // Analog and digital noise filters
-    handle->FLTR &= ~I2C_FLTR_ANOFF;
+    handle->FLTR &= ~(I2C_FLTR_ANOFF | I2C_FLTR_DNF);
     handle->FLTR |= (uint32_t)(config->digital_filter << I2C_FLTR_DNF_Pos);
 
     // Rise time
     const uint32_t trise_ns = (config->freq_type == I2C_400KHz) ? 300U : 1'000U;
-    handle->TRISE           = (((trise_ns * config->apb1_bus_freq_mhz) / 1000U) + config->digital_filter + 1);
+    handle->TRISE           = (((trise_ns * apb1_clk) / 1000U) + config->digital_filter + 1);
 
     // Enable the I2C peripheral
     handle->CR1 |= I2C_CR1_PE;

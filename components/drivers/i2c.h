@@ -19,11 +19,29 @@ typedef enum : uint8_t {
     I2C_400KHz,
 } i2c_freq_t;
 
+typedef enum : uint8_t {
+    I2C_FILTER_0 = 0,
+    I2C_FILTER_1,
+    I2C_FILTER_2,
+    I2C_FILTER_3,
+    I2C_FILTER_4,
+    I2C_FILTER_5,
+    I2C_FILTER_6,
+    I2C_FILTER_7,
+    I2C_FILTER_8,
+    I2C_FILTER_9,
+    I2C_FILTER_10,
+    I2C_FILTER_11,
+    I2C_FILTER_12,
+    I2C_FILTER_13,
+    I2C_FILTER_14,
+    I2C_FILTER_15,
+} i2c_filter_t;
+
 typedef struct {
-    bool       use_pullup;
-    uint8_t    apb1_bus_freq_mhz;
-    uint8_t    digital_filter;
-    i2c_freq_t freq_type;
+    bool         use_pullups;
+    i2c_freq_t   freq_type;
+    i2c_filter_t digital_filter;
 
     uint8_t       sda_pin;
     uint8_t       scl_pin;
