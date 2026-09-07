@@ -101,9 +101,6 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         }
     }
 
-    // Disable I2S as well since the interrupt could have been triggered by it
-    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
-
     __disable_irq();
 
     // Return if no callback registered
@@ -121,6 +118,8 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         s_dma_stream_ctx[idx].tx.callback = NULL;
         s_dma_stream_ctx[idx].tx.arg      = NULL;
         DISABLE_SPI();
+        // Disable I2S as well since the interrupt could have been triggered by it
+        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
     }
 
     __enable_irq();
@@ -135,9 +134,6 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
 
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_spi_i2s_dma_map[idx].rx.stream);
-
-    // Disable I2S as well since the interrupt could have been triggered by it
-    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
 
     __disable_irq();
 
@@ -156,6 +152,8 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         s_dma_stream_ctx[idx].rx.callback = NULL;
         s_dma_stream_ctx[idx].rx.arg      = NULL;
         DISABLE_SPI();
+        // Disable I2S as well since the interrupt could have been triggered by it
+        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
     }
 
     __enable_irq();

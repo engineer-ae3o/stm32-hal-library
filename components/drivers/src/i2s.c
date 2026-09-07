@@ -449,7 +449,6 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uin
         TRY(spi_master_register_callback(callback, arg, idx, false));
     }
 
-    ENABLE_I2S();
     return HAL_OK;
 }
 

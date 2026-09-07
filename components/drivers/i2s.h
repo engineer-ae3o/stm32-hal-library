@@ -82,11 +82,7 @@ hal_err_t i2s_master_deinit(I2S_TypeDef* handle);
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority);
 hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle);
 
-// DMA backed transfers API. The user should only enable the I2S peripheral with
-// i2s_master_enable(...) after confirming that these functions return HAL_OK.
-// And then disable the peripheral after their callback was invoked. Also, when
-// double buffering, the user should disable the I2S peripheral when they want
-// to "pause" or stop the transfers, and not just when the isr is called.
+// DMA backed oneshot transfers API.
 hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_done_cb_t callback, void* arg);
 hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_done_cb_t callback, void* arg);
 
@@ -97,13 +93,10 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uint16_t size, dma_done_cb_t callback, void* arg);
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);
 
-// When start is called, the DMA starts filling buffer A, and
-// then the isr is fired on completion, then starts filling B
-// NOTE: Calling stop can cause the peripheral to drop samples
-// and consequently, the peripheral to trigger an overrun error.
-// So to "pause" or stop transfers, the peripheral should also be
-// disabled because these functions just enable and disable the DMA
-// stream being used.
+// When start is called, the DMA starts filling buffer A, and then the isr is fired on completion, then starts filling B
+// NOTE: Calling stop can cause the peripheral to drop samples and consequently, the peripheral to trigger an overrun error.
+// So to "pause" or stop transfers, the peripheral should also be disabled because these functions just enable and disable
+// the DMA stream being used.
 hal_err_t i2s_master_dbm_start(I2S_TypeDef* handle);
 hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle);
 
