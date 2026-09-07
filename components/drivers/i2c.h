@@ -53,6 +53,7 @@ typedef struct {
 // General API
 hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable);
 hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config);
+hal_err_t i2c_master_deinit(I2C_TypeDef* handle);
 
 // Polling API. DMA not supported
 hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);

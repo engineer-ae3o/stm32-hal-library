@@ -15,6 +15,7 @@ extern "C" {
 // Configure a specific ADC peripheral
 hal_err_t adcx_clk_enable(ADC_TypeDef* handle, bool enable);
 hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config);
+hal_err_t adc_deconfigure(ADC_TypeDef* handle);
 hal_err_t adc_power_on(ADC_TypeDef* handle, bool on);
 
 

@@ -53,7 +53,9 @@ typedef struct {
 // General API
 hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable);
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config);
-hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority, bool init);
+hal_err_t spi_master_deinit(SPI_TypeDef* handle);
+hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority);
+hal_err_t spi_master_dma_deinit(SPI_TypeDef* handle);
 
 // Polling API
 hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t size);

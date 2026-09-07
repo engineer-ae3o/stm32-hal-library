@@ -63,8 +63,6 @@ hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, dma_stream_flags_t* f
     TRY(dma_get_stream_info(stream, &stream_info));
 
     (void)flags;
-    (void)stream_info.controller->LIFCR;
-    (void)stream_info.controller->HIFCR;
 
     /*
     switch (stream_info.stream_number) {
@@ -98,9 +96,9 @@ hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, dma_stream_flags_t* f
     */
 
     if (stream_info.stream_number <= 3) {
-        stream_info.controller->LIFCR;
+        stream_info.controller->LIFCR = 0;
     } else if (stream_info.stream_number <= 7) {
-        stream_info.controller->HIFCR;
+        stream_info.controller->HIFCR = 0;
     }
 
     return HAL_OK;

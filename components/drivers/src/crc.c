@@ -32,6 +32,7 @@ hal_err_t crc_get(const uint32_t* data, size_t size, uint32_t* crc32) {
 
     // Reset the CRC peripheral
     CRC->CR |= CRC_CR_RESET;
+    __DSB();
 
     // Feed all the elements into the data register
     for (size_t i = 0; i < size; i++) {
@@ -87,6 +88,7 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, dma_priority_t priori
 
     // Reset the CRC peripheral
     CRC->CR |= CRC_CR_RESET;
+    __DSB();
 
     s_user_callback = cb;
     s_user_data     = arg;

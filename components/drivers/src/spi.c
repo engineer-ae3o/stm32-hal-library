@@ -6,10 +6,7 @@
 #include "utils/err.h"
 
 
-// The 5 SPI instances: The ISRs invoked when a DMA event occurred
-static dma_stream_ctx_t s_dma_stream_ctx[5] = {};
-
-// Mapping for the DMA streams to the 5 SPI peripheral instances
+// Mapping for the DMA streams to the SPI peripheral instances
 static const dma_stream_map_t s_spi_i2s_dma_map[] = {
     // SPI1: DMA not supported: Not enough streams to go round other peripherals
     {
@@ -38,7 +35,15 @@ static const dma_stream_map_t s_spi_i2s_dma_map[] = {
     },
 };
 
-#define ENABLE_SPI() handle->CR1 |= SPI_CR1_SPE
+// The SPI instances: The ISRs invoked when a DMA event occurred
+static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
+
+#define ENABLE_SPI()                                                                                                                                 \
+    do {                                                                                                                                             \
+        handle->CR1 |= SPI_CR1_SPE;                                                                                                                  \
+        __DSB();                                                                                                                                     \
+    } while (0)
+
 #define DISABLE_SPI() handle->CR1 &= ~SPI_CR1_SPE
 
 
@@ -93,7 +98,7 @@ static const dma_stream_map_t s_spi_i2s_dma_map[] = {
     DISABLE_SPI();
 
     // Disable I2S as well since the interrupt could have been triggered by it
-    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
+    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
 
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].tx.callback == NULL) {
@@ -123,7 +128,7 @@ static const dma_stream_map_t s_spi_i2s_dma_map[] = {
     DISABLE_SPI();
 
     // Disable I2S as well since the interrupt could have been triggered by it
-    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
+    handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
 
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].rx.callback == NULL) {
@@ -226,7 +231,7 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     // Disable the SPI (and I2S) peripheral before modifying it's internal state
     DISABLE_SPI();
 
-    // Disable I2S since in SPI mode
+    // Deselect I2S since in SPI mode
     handle->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
 
     uint32_t cr1_mask = handle->CR1;
@@ -271,7 +276,20 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     return HAL_OK;
 }
 
-hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority, bool init) {
+hal_err_t spi_master_deinit(SPI_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    DISABLE_SPI();
+    handle->CR1 &= ~(SPI_CR1_CPHA | SPI_CR1_CPOL | SPI_CR1_MSTR | SPI_CR1_BR | SPI_CR1_LSBFIRST | SPI_CR1_SSI | SPI_CR1_SSM | SPI_CR1_RXONLY |
+                     SPI_CR1_DFF | SPI_CR1_CRCNEXT | SPI_CR1_CRCEN | SPI_CR1_BIDIOE | SPI_CR1_BIDIMODE);
+    handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN | SPI_CR2_FRF | SPI_CR2_ERRIE | SPI_CR2_RXNEIE | SPI_CR2_TXEIE);
+
+    return HAL_OK;
+}
+
+hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -293,7 +311,7 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority, bool
     const dma_data_size_t dma_data_size = (handle->CR1 & SPI_CR1_DFF) ? DMA_SIZE_HWORD : DMA_SIZE_BYTE;
 
     // DMA TX stream configuration
-    dma_stream_config_t tx_stream_config = {
+    const dma_stream_config_t tx_stream_config = {
         .deconfigure   = false,
         .enable_stream = false,
 
@@ -324,7 +342,7 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority, bool
     };
 
     // DMA RX stream configuration
-    dma_stream_config_t rx_stream_config = {
+    const dma_stream_config_t rx_stream_config = {
         .deconfigure   = false,
         .enable_stream = false,
 
@@ -354,16 +372,37 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority, bool
         .mem_buf_1 = NULL,
     };
 
-    if (init) {
-        // Enable SPI requests to the DMA controller
-        handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
-    } else {
-        // Disable SPI requests to the DMA controller
-        handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
-        // Set the deconfigure flags so dma_configure_stream(...) deinitializes the streams
-        tx_stream_config.deconfigure = true;
-        rx_stream_config.deconfigure = true;
+    // Enable SPI requests to the DMA controller
+    handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
+
+    TRY(dma_configure_stream(tx_stream, &tx_stream_config));
+    TRY(dma_configure_stream(rx_stream, &rx_stream_config));
+
+    return HAL_OK;
+}
+
+hal_err_t spi_master_dma_deinit(SPI_TypeDef* handle) {
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) {
+        return HAL_ERR_INVALID_ARG;
     }
+
+    DMA_Stream_TypeDef* tx_stream = s_spi_i2s_dma_map[idx].tx.stream;
+    DMA_Stream_TypeDef* rx_stream = s_spi_i2s_dma_map[idx].rx.stream;
+
+    if (tx_stream == NULL || rx_stream == NULL) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Disable SPI requests to the DMA controller
+    handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
+
+    // Set the deconfigure flags so dma_configure_stream(...) deinitializes the streams
+    dma_stream_config_t tx_stream_config = {};
+    dma_stream_config_t rx_stream_config = {};
+
+    tx_stream_config.deconfigure = true;
+    rx_stream_config.deconfigure = true;
 
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));

@@ -6,10 +6,7 @@
 #include "utils/err.h"
 
 
-// The 3 UaRT instances: The ISRs invoked when a DMA event occurred
-static dma_stream_ctx_t s_dma_stream_ctx[3] = {};
-
-// Mapping for the DMA streams to the 3 UART peripheral instances
+// Mapping for the DMA streams to the UART peripheral instances
 static const dma_stream_map_t s_uart_dma_map[] = {
     // USART1
     {
@@ -28,10 +25,23 @@ static const dma_stream_map_t s_uart_dma_map[] = {
     },
 };
 
-#define ENABLE_UART_TX() handle->CR1 |= USART_CR1_TE
+// The UaRT instances: The ISRs invoked when a DMA event occurred
+static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
+
+#define ENABLE_UART_TX()                                                                                                                             \
+    do {                                                                                                                                             \
+        handle->CR1 |= USART_CR1_TE;                                                                                                                 \
+        __DSB();                                                                                                                                     \
+    } while (0)
+
 #define DISABLE_UART_TX() handle->CR1 &= ~USART_CR1_TE
 
-#define ENABLE_UART_RX() handle->CR1 |= USART_CR1_RE
+#define ENABLE_UART_RX()                                                                                                                             \
+    do {                                                                                                                                             \
+        handle->CR1 |= USART_CR1_RE;                                                                                                                 \
+        __DSB();                                                                                                                                     \
+    } while (0)
+
 #define DISABLE_UART_RX() handle->CR1 &= ~USART_CR1_RE
 
 

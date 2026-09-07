@@ -34,7 +34,9 @@ typedef struct {
 // General API
 hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable);
 hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config);
-hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority, bool init);
+hal_err_t uart_deinit(USART_TypeDef* handle);
+hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority);
+hal_err_t uart_dma_deinit(USART_TypeDef* handle);
 
 // Polling TX API. Polling RX not supported
 hal_err_t uart_transmit_byte(USART_TypeDef* handle, uint8_t byte);

@@ -56,7 +56,12 @@ static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
     }
 }
 
-#define ENABLE_I2S() handle->I2SCFGR |= SPI_I2SCFGR_I2SE
+#define ENABLE_I2S()                                                                                                                                 \
+    do {                                                                                                                                             \
+        handle->I2SCFGR |= SPI_I2SCFGR_I2SE;                                                                                                         \
+        __DSB();                                                                                                                                     \
+    } while (0)
+
 #define DISABLE_I2S() handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE
 
 // Defined in the SPI driver. Used to post DMA events or get info from the SPI driver since the I2S peripheral
