@@ -110,4 +110,8 @@ void DMA2_Stream5_IRQHandler(void) {
         s_user_callback = NULL;
         s_user_data     = NULL;
     }
+    // Deinitialize the stream. This clears all DMA flags as well
+    dma_stream_config_t stream_config = {};
+    stream_config.deconfigure         = true;
+    ASSERT(dma_configure_stream(s_crc_dma_map.stream, &stream_config) == HAL_OK);
 }

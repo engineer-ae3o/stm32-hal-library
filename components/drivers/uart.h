@@ -33,8 +33,7 @@ typedef struct {
 
 hal_err_t uartx_clk_enable(USART_TypeDef* handle, bool enable);
 hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config);
-hal_err_t uart_enable(USART_TypeDef* handle, bool enable);
-hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority);
+hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority, bool init);
 
 // Polling TX API
 hal_err_t uart_transmit_byte(USART_TypeDef* handle, uint8_t byte);

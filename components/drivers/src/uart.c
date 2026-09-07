@@ -28,6 +28,12 @@ static const dma_stream_map_t s_uart_dma_map[] = {
     },
 };
 
+#define ENABLE_UART_TX() handle->CR1 |= USART_CR1_TE
+#define DISABLE_UART_TX() handle->CR1 &= ~USART_CR1_TE
+
+#define ENABLE_UART_RX() handle->CR1 |= USART_CR1_RE
+#define DISABLE_UART_RX() handle->CR1 &= ~USART_CR1_RE
+
 
 // Helpers
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(const USART_TypeDef* handle) {
@@ -49,11 +55,6 @@ static const dma_stream_map_t s_uart_dma_map[] = {
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].tx.stream);
 
-    // Return if no callback registered
-    if (s_dma_stream_ctx[idx].tx.callback == NULL) {
-        return;
-    }
-
     // Transfers require us to poll on the TC flag
     // even after data has been shifted out
 
@@ -67,6 +68,15 @@ static const dma_stream_map_t s_uart_dma_map[] = {
         }
     }
 
+    // Disable UART TX DMA and then disable the UART TX peripheral
+    handle->CR3 &= ~USART_CR3_DMAT;
+    DISABLE_UART_TX();
+
+    // Return if no callback registered
+    if (s_dma_stream_ctx[idx].tx.callback == NULL) {
+        return;
+    }
+
     // Save the user callback so we can clear it's global array position
     const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].tx.callback;
     void* const         local_arg = s_dma_stream_ctx[idx].tx.arg;
@@ -74,9 +84,6 @@ static const dma_stream_map_t s_uart_dma_map[] = {
     // Clear the user passed callback since this is a one-off event
     s_dma_stream_ctx[idx].tx.callback = NULL;
     s_dma_stream_ctx[idx].tx.arg      = NULL;
-
-    // Disable UART TX DMA
-    handle->CR3 &= ~USART_CR3_DMAT;
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
@@ -88,6 +95,10 @@ static const dma_stream_map_t s_uart_dma_map[] = {
 
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].rx.stream);
+
+    // Disable UART RX DMA and then disable the UART RX peripheral
+    handle->CR3 &= ~USART_CR3_DMAR;
+    DISABLE_UART_RX();
 
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].rx.callback == NULL) {
@@ -101,9 +112,6 @@ static const dma_stream_map_t s_uart_dma_map[] = {
     // Clear the user passed callback since this is a one-off event
     s_dma_stream_ctx[idx].rx.callback = NULL;
     s_dma_stream_ctx[idx].rx.arg      = NULL;
-
-    // Disable UART RX DMA
-    handle->CR3 &= ~USART_CR3_DMAR;
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
@@ -199,19 +207,7 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     return HAL_OK;
 }
 
-hal_err_t uart_enable(USART_TypeDef* handle, bool enable) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    if (enable) {
-        handle->CR1 |= (USART_CR1_TE | USART_CR1_RE);
-    } else {
-        handle->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
-    }
-    return HAL_OK;
-}
-
-hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
+hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority, bool init) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -230,7 +226,7 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
     }
 
     // DMA TX stream configuration
-    const dma_stream_config_t tx_stream_config = {
+    dma_stream_config_t tx_stream_config = {
         .deconfigure   = false,
         .enable_stream = false,
 
@@ -258,12 +254,10 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
         .per_addr  = NULL,
         .mem_buf_0 = NULL,
         .mem_buf_1 = NULL,
-
     };
-    TRY(dma_configure_stream(tx_stream, &tx_stream_config));
 
     // DMA RX stream configuration
-    const dma_stream_config_t rx_stream_config = {
+    dma_stream_config_t rx_stream_config = {
         .deconfigure   = false,
         .enable_stream = false,
 
@@ -291,8 +285,15 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
         .per_addr  = NULL,
         .mem_buf_0 = NULL,
         .mem_buf_1 = NULL,
-
     };
+
+    if (!init) {
+        // Set the deconfigure flags so dma_configure_stream(...) deinitializes the streams
+        tx_stream_config.deconfigure = true;
+        rx_stream_config.deconfigure = true;
+    }
+
+    TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));
 
     return HAL_OK;
@@ -304,9 +305,13 @@ hal_err_t uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
     if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
+    ENABLE_UART_TX();
+
     // Wait till the data register is empty
     while (!(handle->SR & USART_SR_TXE));
     handle->DR = byte;
+
+    DISABLE_UART_TX();
     return HAL_OK;
 }
 
@@ -314,11 +319,18 @@ hal_err_t uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t 
     if (handle == NULL || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
+    ENABLE_UART_TX();
+
     for (size_t i = 0; i < size; i++) {
-        uart_transmit_byte(handle, data[i]);
+        // Wait till the data register is empty
+        while (!(handle->SR & USART_SR_TXE));
+        handle->DR = data[i];
     }
+
     // Wait till all bytes have been fully transmitted
     while (!(handle->SR & USART_SR_TC));
+
+    DISABLE_UART_TX();
     return HAL_OK;
 }
 
@@ -348,8 +360,9 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
         s_dma_stream_ctx[idx].tx.arg      = arg;
     }
 
-    // Enable USART TX DMA requests
+    // Enable USART TX DMA requests and then enable the UART TX peripheral
     handle->CR3 |= USART_CR3_DMAT;
+    ENABLE_UART_TX();
 
     return HAL_OK;
 }
@@ -378,8 +391,9 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
         s_dma_stream_ctx[idx].rx.arg      = arg;
     }
 
-    // Enable USART RX DMA requests
+    // Enable USART RX DMA requests and then enable the UART RX peripheral
     handle->CR3 |= USART_CR3_DMAR;
+    ENABLE_UART_RX();
 
     return HAL_OK;
 }

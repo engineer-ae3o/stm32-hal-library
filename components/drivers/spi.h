@@ -8,7 +8,7 @@ extern "C" {
 
 
 #include "stm32f411xe.h"
-#include "drivers/dma.h"
+#include "drivers/dma_types.h"
 #include "utils/err.h"
 
 #include <stddef.h>
@@ -16,14 +16,31 @@ extern "C" {
 #include <stdbool.h>
 
 
+typedef enum : uint8_t {
+    SPI_PRESCALER_DIV2,
+    SPI_PRESCALER_DIV4,
+    SPI_PRESCALER_DIV8,
+    SPI_PRESCALER_DIV16,
+    SPI_PRESCALER_DIV32,
+    SPI_PRESCALER_DIV64,
+    SPI_PRESCALER_DIV128,
+    SPI_PRESCALER_DIV256,
+} spi_prescaler_t;
+
+typedef enum : uint8_t {
+    SPI_DATA_SIZE_8_BITS,
+    SPI_DATA_SIZE_16_BITS,
+} spi_data_size_t;
+
 typedef struct {
     bool cpol;
     bool cpha;
+
+    spi_data_size_t data_size;
+    spi_prescaler_t prescaler;
+
     bool use_miso;
     bool use_mosi;
-    bool use_8bit_mode;
-
-    uint8_t clk_divider;
 
     uint8_t miso_pin;
     uint8_t mosi_pin;
@@ -32,10 +49,10 @@ typedef struct {
     GPIO_TypeDef* gpio_port;
 } spi_master_config_t;
 
+// General API
 hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable);
 hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config);
-hal_err_t spi_master_enable(SPI_TypeDef* handle, bool enable);
-hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority);
+hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority, bool init);
 
 // Polling API
 hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t size);
