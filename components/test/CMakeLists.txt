@@ -5,7 +5,7 @@ if (BUILD_TESTS)
 set(SRCS
     src/i2c.cpp
     src/i2s.cpp
-    src/rtc.cpp
+    src/crc.cpp
     src/spi.cpp
     src/pwm.cpp
     src/adc.cpp
@@ -13,7 +13,6 @@ set(SRCS
     src/heap.cpp
     src/gpio.cpp
     src/uart.cpp
-    src/wwdg.cpp
     src/iwdg.cpp
     src/timer.cpp
     src/runner.cpp

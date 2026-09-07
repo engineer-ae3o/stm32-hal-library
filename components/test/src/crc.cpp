@@ -1,9 +1,9 @@
 #include "Unity/unity.h"
 
 
-namespace test::rtc {
+namespace test::crc {
 
     void all() {
     }
 
-} // namespace test::rtc
+} // namespace test::crc
