@@ -213,7 +213,7 @@ static const dma_map_t s_adc_dma_map[] = {
 [[__gnu__::__always_inline__]] static inline void clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
     if (regular) {
         handle->SR &= ~(ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR);
-        handle->CR1 &= ~(ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE);
+        handle->CR1 &= ~(ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE | ADC_CR1_SCAN);
         handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART | ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
         handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
         handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
@@ -306,10 +306,25 @@ hal_err_t adcx_clk_enable(ADC_TypeDef* handle, bool enable) {
     return HAL_OK;
 }
 
+hal_err_t adc_power_on(ADC_TypeDef* handle, bool on) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    if (on) {
+        handle->CR2 |= ADC_CR2_ADON;
+        delay_us(ADC_STARUP_TIME_US);
+    } else {
+        handle->CR2 &= ~ADC_CR2_ADON;
+    }
+    return HAL_OK;
+}
+
 hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
     if (config == NULL || handle == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
+
+    TRY(adc_power_on(handle, true));
 
     // Set the data register alignment
     if (config->alignment == ADC_RIGHT_ALIGN) {
@@ -343,16 +358,20 @@ hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
     return HAL_OK;
 }
 
-hal_err_t adc_power_on(ADC_TypeDef* handle, bool on) {
+hal_err_t adc_deconfigure(ADC_TypeDef* handle) {
     if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
-    if (on) {
-        handle->CR2 |= ADC_CR2_ADON;
-        delay_us(ADC_STARUP_TIME_US);
-    } else {
-        handle->CR2 &= ~ADC_CR2_ADON;
-    }
+
+    clear_state(handle, true, true);
+    handle->CR1 &= ~ADC_CR1_RES;
+    handle->CR2 &= ~ADC_CR2_ALIGN;
+    handle->SMPR1 &= ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15);
+    handle->SMPR2 &= ~(ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 | ADC_SMPR2_SMP4 | ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 |
+                       ADC_SMPR2_SMP7 | ADC_SMPR2_SMP8 | ADC_SMPR2_SMP9);
+
+    TRY(adc_power_on(handle, false));
+
     return HAL_OK;
 }
 

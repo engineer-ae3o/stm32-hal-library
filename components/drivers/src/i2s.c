@@ -141,6 +141,31 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Disable the SPI and I2S peripheral before modifying its registers
+    handle->CR1 &= ~SPI_CR1_SPE;
+    DISABLE_I2S();
+
+    // I2S mode
+    handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
+
+    // Set the clock prescaler
+    const uint32_t prescaler = (config->use_mck) ? prescaler_table[config->freq].prescaler_with_mck : prescaler_table[config->freq].prescaler;
+    handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
+    handle->I2SPR |= (prescaler << SPI_I2SPR_I2SDIV_Pos) & SPI_I2SPR_I2SDIV;
+
+    handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN);
+
+    // Get frame size: It can only be 16 bits when the data is 16 bits
+    const uint32_t frame_size_mask = (config->frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 0 : SPI_I2SCFGR_CHLEN;
+    const uint32_t cpol_mask       = (config->cpol) ? SPI_I2SCFGR_CKPOL : 0;
+
+    // Apply user settings
+    handle->I2SCFGR |= (((uint32_t)config->dir << SPI_I2SCFGR_I2SCFG_Pos) |   // Direction: TX or RX in master mode
+                        ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos) |  // I2S mode: Philips, left or right justified
+                        ((uint32_t)config->frame << SPI_I2SCFGR_DATLEN_Pos) | // Data length: 16, 24 or 32 bits
+                        frame_size_mask |                                     // Frame size: 16 or 32 bits
+                        cpol_mask);                                           // Clock polarity
+
     // Configure the GPIO pins
     TRY(gpiox_clk_enable(config->gpio_port, true));
 
@@ -186,31 +211,6 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     gpio_enable_pullup(config->gpio_port, config->sck_pin, true);
     gpio_set_speed_mode(config->gpio_port, config->sck_pin, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->gpio_port, config->sck_pin, GPIO_PUSH_PULL);
-
-    // Disable the SPI and I2S peripheral before modifying its registers
-    handle->CR1 &= ~SPI_CR1_SPE;
-    DISABLE_I2S();
-
-    // I2S mode
-    handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
-
-    // Set the clock prescaler
-    const uint32_t prescaler = (config->use_mck) ? prescaler_table[config->freq].prescaler_with_mck : prescaler_table[config->freq].prescaler;
-    handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
-    handle->I2SPR |= (prescaler << SPI_I2SPR_I2SDIV_Pos) & SPI_I2SPR_I2SDIV;
-
-    handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN);
-
-    // Get frame size: It can only be 16 bits when the data is 16 bits
-    const uint32_t frame_size_mask = (config->frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 0 : SPI_I2SCFGR_CHLEN;
-    const uint32_t cpol_mask       = (config->cpol) ? SPI_I2SCFGR_CKPOL : 0;
-
-    // Apply user settings
-    handle->I2SCFGR |= (((uint32_t)config->dir << SPI_I2SCFGR_I2SCFG_Pos) |   // Direction: TX or RX in master mode
-                        ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos) |  // I2S mode: Philips, left or right justified
-                        ((uint32_t)config->frame << SPI_I2SCFGR_DATLEN_Pos) | // Data length: 16, 24 or 32 bits
-                        frame_size_mask |                                     // Frame size: 16 or 32 bits
-                        cpol_mask);                                           // Clock polarity
 
     return HAL_OK;
 }

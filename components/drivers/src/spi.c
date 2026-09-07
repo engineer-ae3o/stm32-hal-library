@@ -196,42 +196,6 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Configure the GPIO pins
-    TRY(gpiox_clk_enable(config->gpio_port, true));
-
-    // Alternate function value selection for the GPIO pin
-    uint8_t alt_val = 0;
-    if ((handle == SPI1) || (handle == SPI2)) {
-        alt_val = 5;
-    } else if (handle == SPI3) {
-        alt_val = (config->gpio_port == GPIOD) ? 5 : 6;
-    } else if (handle == SPI4) {
-        alt_val = (config->gpio_port == GPIOE) ? 5 : 6;
-    } else if (handle == SPI5) {
-        alt_val = 6;
-    } else {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    if (config->use_miso) {
-        TRY(gpio_set_alternate_function(config->gpio_port, config->miso_pin, alt_val));
-        gpio_enable_pullup(config->gpio_port, config->miso_pin, true);
-        gpio_set_speed_mode(config->gpio_port, config->miso_pin, GPIO_HIGH_SPEED);
-        // We cannot hardcode an output type since the slave can drive this pin
-    }
-
-    if (config->use_mosi) {
-        TRY(gpio_set_alternate_function(config->gpio_port, config->mosi_pin, alt_val));
-        gpio_enable_pullup(config->gpio_port, config->mosi_pin, true);
-        gpio_set_speed_mode(config->gpio_port, config->mosi_pin, GPIO_HIGH_SPEED);
-        gpio_set_output_type(config->gpio_port, config->mosi_pin, GPIO_PUSH_PULL);
-    }
-
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sclk_pin, alt_val));
-    gpio_enable_pullup(config->gpio_port, config->sclk_pin, true);
-    gpio_set_speed_mode(config->gpio_port, config->sclk_pin, GPIO_HIGH_SPEED);
-    gpio_set_output_type(config->gpio_port, config->sclk_pin, GPIO_PUSH_PULL);
-
     // Disable the SPI (and I2S) peripheral before modifying it's internal state
     DISABLE_SPI();
 
@@ -276,6 +240,42 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 
     // Motorolla mode and SS output disable
     handle->CR2 &= ~(SPI_CR2_FRF | SPI_CR2_SSOE);
+
+    // Configure the GPIO pins
+    TRY(gpiox_clk_enable(config->gpio_port, true));
+
+    // Alternate function value selection for the GPIO pin
+    uint8_t alt_val = 0;
+    if ((handle == SPI1) || (handle == SPI2)) {
+        alt_val = 5;
+    } else if (handle == SPI3) {
+        alt_val = (config->gpio_port == GPIOD) ? 5 : 6;
+    } else if (handle == SPI4) {
+        alt_val = (config->gpio_port == GPIOE) ? 5 : 6;
+    } else if (handle == SPI5) {
+        alt_val = 6;
+    } else {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    if (config->use_miso) {
+        TRY(gpio_set_alternate_function(config->gpio_port, config->miso_pin, alt_val));
+        gpio_enable_pullup(config->gpio_port, config->miso_pin, true);
+        gpio_set_speed_mode(config->gpio_port, config->miso_pin, GPIO_HIGH_SPEED);
+        // We cannot hardcode an output type since the slave can drive this pin
+    }
+
+    if (config->use_mosi) {
+        TRY(gpio_set_alternate_function(config->gpio_port, config->mosi_pin, alt_val));
+        gpio_enable_pullup(config->gpio_port, config->mosi_pin, true);
+        gpio_set_speed_mode(config->gpio_port, config->mosi_pin, GPIO_HIGH_SPEED);
+        gpio_set_output_type(config->gpio_port, config->mosi_pin, GPIO_PUSH_PULL);
+    }
+
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sclk_pin, alt_val));
+    gpio_enable_pullup(config->gpio_port, config->sclk_pin, true);
+    gpio_set_speed_mode(config->gpio_port, config->sclk_pin, GPIO_HIGH_SPEED);
+    gpio_set_output_type(config->gpio_port, config->sclk_pin, GPIO_PUSH_PULL);
 
     return HAL_OK;
 }

@@ -59,28 +59,6 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Configure pins for I2C
-    // Enable gpio channel clock
-    TRY(gpiox_clk_enable(config->gpio_port, true));
-
-    // Set pins to alternate function for I2C
-    // I2C uses an alternate function value of 0b100
-    const uint32_t alt_val = 0b100;
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sda_pin, alt_val));
-    TRY(gpio_set_alternate_function(config->gpio_port, config->scl_pin, alt_val));
-
-    // Set as open drain
-    gpio_set_output_type(config->gpio_port, config->sda_pin, GPIO_OPEN_DRAIN);
-    gpio_set_output_type(config->gpio_port, config->scl_pin, GPIO_OPEN_DRAIN);
-
-    // Speed mode
-    gpio_set_speed_mode(config->gpio_port, config->sda_pin, GPIO_MEDIUM_SPEED);
-    gpio_set_speed_mode(config->gpio_port, config->scl_pin, GPIO_MEDIUM_SPEED);
-
-    // Pullups
-    gpio_enable_pullup(config->gpio_port, config->sda_pin, config->use_pullups);
-    gpio_enable_pullup(config->gpio_port, config->scl_pin, config->use_pullups);
-
     // Disable the I2C peripheral before writing to any of its registers
     I2C_DISABLE();
 
@@ -118,8 +96,29 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     handle->FLTR |= (uint32_t)(config->digital_filter << I2C_FLTR_DNF_Pos);
 
     // Rise time
-    const uint32_t trise_ns = (config->frequency == I2C_FREQ_400KHz) ? 300 : 1'000;
+    const uint32_t trise_ns = (config->frequency == I2C_FREQ_400KHz) ? 300 : 1000;
     handle->TRISE           = (((trise_ns * apb1_clk) / 1000U) + config->digital_filter + 1);
+
+    // Configure pins for I2C
+    // Enable gpio channel clock
+    TRY(gpiox_clk_enable(config->gpio_port, true));
+
+    // Set pins to alternate function for I2C
+    const uint32_t alt_val = 4;
+    TRY(gpio_set_alternate_function(config->gpio_port, config->sda_pin, alt_val));
+    TRY(gpio_set_alternate_function(config->gpio_port, config->scl_pin, alt_val));
+
+    // Set as open drain
+    gpio_set_output_type(config->gpio_port, config->sda_pin, GPIO_OPEN_DRAIN);
+    gpio_set_output_type(config->gpio_port, config->scl_pin, GPIO_OPEN_DRAIN);
+
+    // Speed mode
+    gpio_set_speed_mode(config->gpio_port, config->sda_pin, GPIO_MEDIUM_SPEED);
+    gpio_set_speed_mode(config->gpio_port, config->scl_pin, GPIO_MEDIUM_SPEED);
+
+    // Pullups
+    gpio_enable_pullup(config->gpio_port, config->sda_pin, config->use_pullups);
+    gpio_enable_pullup(config->gpio_port, config->scl_pin, config->use_pullups);
 
     return HAL_OK;
 }
