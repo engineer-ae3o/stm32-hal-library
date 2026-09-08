@@ -18,6 +18,8 @@ extern "C" {
 #define MAX_CLOCK_SPEED_HZ (100'000'000)
 #define AUDIO_PLL_HZ (76'800'000)
 
+// A tick rate of 1kHz
+#define TICK_RATE_HZ (1000)
 
 // Global variables to match the SystemCoreClock variable, but for the APB1 and APB2 buses
 extern uint32_t APB1CoreClock;
@@ -39,12 +41,11 @@ void system_core_clock_update();
 #define HSI_VALUE_MHZ (16)
 
 
-// At 100MHz, this is 100us: suitable for most use cases
 #define TIMEOUT_CYCLES (10'000)
-
 #define UNUSED(x) (void)(x)
 
-// SPI DMA has the highest priority
+
+#define TIM2_NVIC_IRQ_PRIORITY (3)
 #define SPI_DMA_NVIC_IRQ_PRIORITY (6)
 #define I2S_DMA_NVIC_IRQ_PRIORITY (12)
 #define UART_DMA_NVIC_IRQ_PRIORITY (10)

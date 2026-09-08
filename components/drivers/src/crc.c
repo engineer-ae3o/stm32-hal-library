@@ -6,7 +6,7 @@
 
 
 // The DMA stream being used
-const dma_map_t s_crc_dma_map = {
+static const dma_map_t s_crc_dma_map = {
     .stream  = DMA2_Stream5,
     .channel = 0,
 };

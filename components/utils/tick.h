@@ -13,7 +13,7 @@ extern "C" {
 
 
 // Get number of miliseconds that have passed since bootup
-uint32_t ticks_since_boot_ms(void);
+uint32_t ticks_since_boot(void);
 
 
 // Polling delay functions

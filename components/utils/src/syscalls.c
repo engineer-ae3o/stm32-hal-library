@@ -27,13 +27,14 @@ const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
 void system_init(void) {
     // Enable the FPU
     SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
-
-    // Barriers to ensure all memory accesses are completed
     __DSB();
     __ISB();
 
-    // Set flash latency, enable I and D caches, as well as the instruction prefetch buffer
+    // Set the flash latency, enable I and D caches, as well as the instruction prefetch buffer
+    FLASH->ACR &= ~FLASH_ACR_LATENCY;
     FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS | FLASH_ACR_PRFTEN);
+    __DSB();
+    __ISB();
 
     // Disable the PLLs
     RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
@@ -42,52 +43,59 @@ void system_init(void) {
     // Configure the voltage regulator. Requires that the PLLs be disabled
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
     __DSB();
-    PWR->CR |= PWR_CR_VOS;
+    PWR->CR &= ~PWR_CR_VOS;
+    PWR->CR |= (PWR_CR_VOS_1 | PWR_CR_VOS_0);
 
 #ifdef USE_HSE
     // Enable the HSE
     RCC->CR |= RCC_CR_HSEON;
     while (!(RCC->CR & RCC_CR_HSERDY));
 
-    // Configure the PLL
-    RCC->PLLCFGR = (HSE_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSE) |
-                   (4 << RCC_PLLCFGR_PLLQ_Pos);
+    // Configure the PLL to provide a clock of 100MHz, derived from the HSE
+    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ);
+    RCC->PLLCFGR |= (HSE_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSE) |
+                    (4 << RCC_PLLCFGR_PLLQ_Pos);
 #else
     // Enable the HSI
     RCC->CR |= RCC_CR_HSION;
     while (!(RCC->CR & RCC_CR_HSIRDY));
 
-    // Configure the PLL
-    RCC->PLLCFGR = (HSI_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSI) |
-                   (4 << RCC_PLLCFGR_PLLQ_Pos);
+    // Configure the PLL to provide a clock of 100MHz, derived from the HSI
+    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ);
+    RCC->PLLCFGR |= (HSI_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSI) |
+                    (4 << RCC_PLLCFGR_PLLQ_Pos);
 #endif
 
-    // Bus prescaler: AHB = SystemCoreClock, APB1 = (SystemCoreClock / 2), APB2 = SystemCoreClock
+    // Set the bus prescalers.
+    RCC->CFGR &= ~(RCC_CFGR_HPRE | RCC_CFGR_PPRE1 | RCC_CFGR_PPRE2);
     RCC->CFGR |= (RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1);
 
     // Enable the PLL
     RCC->CR |= RCC_CR_PLLON;
     while (!(RCC->CR & RCC_CR_PLLRDY));
 
-    // Switch to the PLL
+    // Ensure the VOSRDY bit reads 1 after the PLLs have been enabled
+    while (!(PWR->CSR & PWR_CSR_VOSRDY));
+
+    // Use the PLL as the SYSCLK source
+    RCC->CFGR &= ~RCC_CFGR_SW;
     RCC->CFGR |= RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+
+    // Disable the HSI since not in use
+    RCC->CR &= ~RCC_CR_HSION;
+    while (RCC->CR & RCC_CR_HSIRDY);
 
     __DSB();
     __ISB();
 
-    // Ensure the VOSRDY bit reads 1 before proceeding
-    while (!(PWR->CSR & PWR_CSR_VOSRDY));
-
-    system_core_clock_update();
-
-    // Enable bus fault and usage fault exceptions
+    // Enable the bus fault and usage fault exceptions
     SCB->SHCSR |= (SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
 
-    // Enable exceptions on divide by 0 and unaligned trapping
+    // Enable exceptions on divide by 0 and unaligned memory accesses
     SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk);
 
-    // Initialize SEGGER RTT
+    system_core_clock_update();
     SEGGER_RTT_Init();
 }
 

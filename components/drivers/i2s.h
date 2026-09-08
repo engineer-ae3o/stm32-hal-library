@@ -73,7 +73,7 @@ typedef struct {
 } i2s_master_config_t;
 
 // Clock setup/init
-void      i2s_pll_init(void);
+void      i2s_pll_init_76_8mhz(void);
 hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable);
 
 // General API

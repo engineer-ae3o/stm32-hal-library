@@ -79,9 +79,9 @@ void i2s_pll_init_76_8mhz(void) {
     RCC->CR &= ~RCC_CR_PLLI2SON;
 
 #ifdef USE_HSE
-    const uint8_t clock_mhz = HSE_VALUE_MHZ;
+    const uint32_t clock_mhz = HSE_VALUE_MHZ;
 #else
-    const uint8_t clock_mhz = HSI_VALUE_MHZ;
+    const uint32_t clock_mhz = HSI_VALUE_MHZ;
 #endif
 
     // Divide the HSE or HSI clock by its value in MHz to get a Vco of 1MHz regardless of its value
