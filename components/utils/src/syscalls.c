@@ -82,12 +82,18 @@ void system_init(void) {
     RCC->CFGR |= RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
 
+    __DSB();
+    __ISB();
+
+#ifdef USE_HSE
     // Disable the HSI since not in use
     RCC->CR &= ~RCC_CR_HSION;
     while (RCC->CR & RCC_CR_HSIRDY);
-
-    __DSB();
-    __ISB();
+#else
+    // Disable the HSE since not in use
+    RCC->CR &= ~RCC_CR_HSEON;
+    while (RCC->CR & RCC_CR_HSERDY);
+#endif
 
     // Enable the bus fault and usage fault exceptions
     SCB->SHCSR |= (SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
@@ -117,15 +123,17 @@ void system_core_clock_update(void) {
             // Get the PLL clock source
             if ((RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> RCC_PLLCFGR_PLLSRC_Pos) {
                 // The HSE is the PLL clock source
-                const uint32_t pllm   = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
-                const uint32_t pllvco = (HSE_VALUE_MHZ * 1'000'000 / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos);
+                const uint32_t pllm   = (RCC->PLLCFGR & RCC_PLLCFGR_PLLM) >> RCC_PLLCFGR_PLLM_Pos;
+                const uint32_t plln   = (RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos;
                 const uint32_t pllp   = (((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >> RCC_PLLCFGR_PLLP_Pos) + 1) * 2;
+                const uint32_t pllvco = (HSE_VALUE_MHZ * 1'000'000 / pllm) * plln;
                 sysclk                = pllvco / pllp;
             } else {
                 // The HSI is the PLL clock source
-                const uint32_t pllm   = RCC->PLLCFGR & RCC_PLLCFGR_PLLM;
-                const uint32_t pllvco = (HSI_VALUE_MHZ * 1'000'000 / pllm) * ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos);
+                const uint32_t pllm   = (RCC->PLLCFGR & RCC_PLLCFGR_PLLM) >> RCC_PLLCFGR_PLLM_Pos;
+                const uint32_t plln   = (RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos;
                 const uint32_t pllp   = (((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >> RCC_PLLCFGR_PLLP_Pos) + 1) * 2;
+                const uint32_t pllvco = (HSI_VALUE_MHZ * 1'000'000 / pllm) * plln;
                 sysclk                = pllvco / pllp;
             }
             break;
@@ -172,6 +180,10 @@ void system_core_clock_update(void) {
                    "mrseq r0, msp\n"
                    "mrsne r0, psp\n"
                    "b usage_fault_dump\n");
+}
+
+void NMI_Handler(void) {
+    LOGI("CPU Exception", "Non Maskable Interrupt fired.");
 }
 
 // Fault state dumps

@@ -18,9 +18,6 @@ extern "C" {
 #define MAX_CLOCK_SPEED_HZ (100'000'000)
 #define AUDIO_PLL_HZ (76'800'000)
 
-// A tick rate of 1kHz
-#define TICK_RATE_HZ (1000)
-
 // Global variables to match the SystemCoreClock variable, but for the APB1 and APB2 buses
 extern uint32_t APB1CoreClock;
 extern uint32_t APB2CoreClock;
