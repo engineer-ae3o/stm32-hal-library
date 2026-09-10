@@ -65,30 +65,6 @@ extern hal_err_t spi_master_register_callback(dma_done_cb_t callback, void* arg,
 
 
 // General API
-void i2s_pll_init_76_8mhz(void) {
-    // Disable the audio PLL before setup
-    RCC->CR &= ~RCC_CR_PLLI2SON;
-
-#ifdef USE_HSE
-    const uint32_t clock_mhz = HSE_VALUE_MHZ;
-#else
-    const uint32_t clock_mhz = HSI_VALUE_MHZ;
-#endif
-
-    // Divide the HSE or HSI clock by its value in MHz to get a Vco of 1MHz regardless of its value
-    RCC->PLLI2SCFGR &= ~(RCC_PLLI2SCFGR_PLLI2SM | RCC_PLLI2SCFGR_PLLI2SN | RCC_PLLI2SCFGR_PLLI2SR);
-    RCC->PLLI2SCFGR |= (clock_mhz << RCC_PLLI2SCFGR_PLLI2SM_Pos) | // PLLI2SM of the main PLL: Divides either the HSE or the HSI to get a 1MHz Vco
-                       (384UL << RCC_PLLI2SCFGR_PLLI2SN_Pos) |     // PLLI2SN of 384: Multiplies Vco by 384 to get 384MHz
-                       (5UL << RCC_PLLI2SCFGR_PLLI2SR_Pos);        // PLLI2SR of 5: Divides the 384MHz Vco by 5 to get us 76.8MHz
-
-    // Enable the audio PLL
-    RCC->CR |= RCC_CR_PLLI2SON;
-    while (!(RCC->CR & RCC_CR_PLLI2SRDY));
-
-    // Use the internal I2S PLL for the I2S peripherals
-    RCC->CFGR &= ~RCC_CFGR_I2SSRC;
-}
-
 hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
     if (enable) {
         if (handle == I2S1) {

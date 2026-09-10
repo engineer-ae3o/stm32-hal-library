@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "RTT/SEGGER_RTT.h"
 #include "printf/printf.h"
+#include "system_stm32f4xx.h"
 #include "utils/common.h"
 #include "utils/clock.h"
 #include "utils/log.h"
@@ -43,7 +44,7 @@ void system_init(void) {
 
     // Configure the PLL to provide a clock of 100MHz, derived from the HSE
     RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ);
-    RCC->PLLCFGR |= (HSE_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSE) |
+    RCC->PLLCFGR |= (HSE_VALUE_MHz << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSE) |
                     (4 << RCC_PLLCFGR_PLLQ_Pos);
 #else
     // Enable the HSI
@@ -52,7 +53,7 @@ void system_init(void) {
 
     // Configure the PLL to provide a clock of 100MHz, derived from the HSI
     RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ);
-    RCC->PLLCFGR |= (HSI_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSI) |
+    RCC->PLLCFGR |= (HSI_VALUE_MHz << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSI) |
                     (4 << RCC_PLLCFGR_PLLQ_Pos);
 #endif
 
@@ -150,41 +151,39 @@ void NMI_Handler(void) {
             PANIC();
         }
 
-        LOGI(TAG, "Reconfiguring the PLL as SYSCLK source to acheive a bus clock of 100MHz, derived from the HSI");
+        LOGI(TAG, "Clock Security System fault: HSE failure.");
 
-        // Ensure the PLLs are disabled
-        RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
-        while (RCC->CR & (RCC_CR_PLLRDY | RCC_CR_PLLI2SRDY));
+        // Reconfigure the main PLL back to whatever value it was on, but its HSI equivalent
+        system_clock_t system_clock = HSI_PLL_100MHz;
+        switch (SystemCoreClockType) {
+            case HSE_PLL_100MHz:
+                system_clock = HSI_PLL_100MHz;
+                break;
+            case HSE_PLL_96MHz:
+                system_clock = HSI_PLL_96MHz;
+                break;
+            case HSE_PLL_84MHz:
+                system_clock = HSI_PLL_84MHz;
+                break;
+            case HSE_PLL_64MHz:
+                system_clock = HSI_PLL_64MHz;
+                break;
+            case HSE_PLL_48MHz:
+                system_clock = HSI_PLL_48MHz;
+                break;
+            case HSE_DIRECT:
+                system_clock = HSI_DIRECT;
+                break;
+            default:
+                system_clock = SystemCoreClockType;
+                break;
+        }
+        system_core_clock_config(system_clock);
 
-        // Configure the PLL to provide a clock of 100MHz, derived from the HSI
-        RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ);
-        RCC->PLLCFGR |= (HSI_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) |
-                        (RCC_PLLCFGR_PLLSRC_HSI) | (4 << RCC_PLLCFGR_PLLQ_Pos);
+        // Reconfigure the audio PLL to run at whatever value it was before the CSS fault
+        audio_pll_clock_config(AudioPLLCoreClockType);
 
-        // Set the bus prescalers.
-        RCC->CFGR &= ~(RCC_CFGR_HPRE | RCC_CFGR_PPRE1 | RCC_CFGR_PPRE2);
-        RCC->CFGR |= (RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1);
-
-        // Enable the PLL
-        RCC->CR |= RCC_CR_PLLON;
-        while (!(RCC->CR & RCC_CR_PLLRDY));
-
-        // Use the PLL as the SYSCLK source
-        RCC->CFGR &= ~RCC_CFGR_SW;
-        RCC->CFGR |= RCC_CFGR_SW_PLL;
-        while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
-
-        __DSB();
-        __ISB();
-
-        system_core_clock_update();
-        LOGI(TAG, "PLL and clock prescalers configured.");
-        LOGI(TAG,
-             "AHB matrix clock: %luMHz, APB1 clock: %luMHz, APB2 clock: %luMHz",
-             (SystemCoreClock / 1'000'000),
-             (APB1CoreClock / 1'000'000),
-             (APB2CoreClock / 1'000'000));
-        LOGI(TAG, "Resuming normal operation with the HSI");
+        LOGI(TAG, "Resuming normal operation with the HSI with a system clock of %luMHz", SystemCoreClock / 1'000'000U);
     }
 }
 
