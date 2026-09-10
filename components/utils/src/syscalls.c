@@ -2,6 +2,7 @@
 #include "RTT/SEGGER_RTT.h"
 #include "printf/printf.h"
 #include "utils/common.h"
+#include "utils/clock.h"
 #include "utils/log.h"
 
 #include <errno.h>
@@ -12,21 +13,10 @@
 #include <sys/types.h>
 
 
-// These are extern declared in the CMSIS headers. Need to be defined here.
-// At startup, the HSI feeds the SYSCLK, and since there are no prescalers or divider
-// active at boot, the values of the HCLK, PCLK1 and PCLK2 are equal to the HSI value
-uint32_t SystemCoreClock = HSI_VALUE_MHZ * 1'000'000;
-uint32_t APB1CoreClock   = HSI_VALUE_MHZ * 1'000'000;
-uint32_t APB2CoreClock   = HSI_VALUE_MHZ * 1'000'000;
-
-const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
-const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
-
-
 // Initalizes hardware resources needed before main runs
 void system_init(void) {
     // Enable the FPU
-    SCB->CPACR |= ((3UL << (10 * 2)) | (3UL << (11 * 2)));
+    SCB->CPACR |= (0xFUL << 20);
     __DSB();
     __ISB();
 
@@ -85,6 +75,9 @@ void system_init(void) {
     __DSB();
     __ISB();
 
+    // Enable the CSS to monitor the HSE
+    RCC->CR |= RCC_CR_CSSON;
+
 #ifdef USE_HSE
     // Disable the HSI since not in use
     RCC->CR &= ~RCC_CR_HSION;
@@ -103,52 +96,8 @@ void system_init(void) {
 
     system_core_clock_update();
     SEGGER_RTT_Init();
-}
 
-// Update the buses' clock frequency variables
-void system_core_clock_update(void) {
-    uint32_t sysclk = 0;
-
-    // Get the SYSCLK clock source
-    switch (RCC->CFGR & RCC_CFGR_SWS) {
-        case RCC_CFGR_SWS_HSI:
-            sysclk = HSI_VALUE_MHZ * 1'000'000;
-            break;
-
-        case RCC_CFGR_SWS_HSE:
-            sysclk = HSE_VALUE_MHZ * 1'000'000;
-            break;
-
-        case RCC_CFGR_SWS_PLL:
-            // Get the PLL clock source
-            if ((RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> RCC_PLLCFGR_PLLSRC_Pos) {
-                // The HSE is the PLL clock source
-                const uint32_t pllm   = (RCC->PLLCFGR & RCC_PLLCFGR_PLLM) >> RCC_PLLCFGR_PLLM_Pos;
-                const uint32_t plln   = (RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos;
-                const uint32_t pllp   = (((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >> RCC_PLLCFGR_PLLP_Pos) + 1) * 2;
-                const uint32_t pllvco = (HSE_VALUE_MHZ * 1'000'000 / pllm) * plln;
-                sysclk                = pllvco / pllp;
-            } else {
-                // The HSI is the PLL clock source
-                const uint32_t pllm   = (RCC->PLLCFGR & RCC_PLLCFGR_PLLM) >> RCC_PLLCFGR_PLLM_Pos;
-                const uint32_t plln   = (RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos;
-                const uint32_t pllp   = (((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >> RCC_PLLCFGR_PLLP_Pos) + 1) * 2;
-                const uint32_t pllvco = (HSI_VALUE_MHZ * 1'000'000 / pllm) * plln;
-                sysclk                = pllvco / pllp;
-            }
-            break;
-
-        default:
-            sysclk = HSI_VALUE_MHZ * 1'000'000;
-            break;
-    }
-
-    // Compute the HCLK, APB1 and APB2 bus frequencies
-    __disable_irq();
-    SystemCoreClock = sysclk >> AHBPrescTable[(RCC->CFGR & RCC_CFGR_HPRE) >> RCC_CFGR_HPRE_Pos];
-    APB1CoreClock   = SystemCoreClock >> APBPrescTable[(RCC->CFGR & RCC_CFGR_PPRE1) >> RCC_CFGR_PPRE1_Pos];
-    APB2CoreClock   = SystemCoreClock >> APBPrescTable[(RCC->CFGR & RCC_CFGR_PPRE2) >> RCC_CFGR_PPRE2_Pos];
-    __enable_irq();
+    LOGI("System_Init", "--------------- Done with FPU, PLL, prescalers and system clocks setup ---------------");
 }
 
 // Provide a weak main function
@@ -184,6 +133,59 @@ void system_core_clock_update(void) {
 
 void NMI_Handler(void) {
     LOGI("CPU Exception", "Non Maskable Interrupt fired.");
+
+    // Check if the interrupt was from the Clock Security System
+    if (RCC->CIR & RCC_CIR_CSSF) {
+        RCC->CIR |= RCC_CIR_CSSC;
+
+        // When this interrupt occurs, it means the HSE had a failure.
+        // The CSS automatically switches the SYSCLK source to the HSI.
+        // To continue normal operation, we reconfigure the SYSCLK to
+        // use the PLL, which in turn will be derived from the HSI.
+        const char* TAG = "CSS";
+
+        // Make sure the SYSCLK is indeed fed from the HSI
+        if ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI) {
+            LOGE(TAG, "CSS not automatically switched to HSI after HSE fault");
+            PANIC();
+        }
+
+        LOGI(TAG, "Reconfiguring the PLL as SYSCLK source to acheive a bus clock of 100MHz, derived from the HSI");
+
+        // Ensure the PLLs are disabled
+        RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
+        while (RCC->CR & (RCC_CR_PLLRDY | RCC_CR_PLLI2SRDY));
+
+        // Configure the PLL to provide a clock of 100MHz, derived from the HSI
+        RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ);
+        RCC->PLLCFGR |= (HSI_VALUE_MHZ << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) |
+                        (RCC_PLLCFGR_PLLSRC_HSI) | (4 << RCC_PLLCFGR_PLLQ_Pos);
+
+        // Set the bus prescalers.
+        RCC->CFGR &= ~(RCC_CFGR_HPRE | RCC_CFGR_PPRE1 | RCC_CFGR_PPRE2);
+        RCC->CFGR |= (RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1);
+
+        // Enable the PLL
+        RCC->CR |= RCC_CR_PLLON;
+        while (!(RCC->CR & RCC_CR_PLLRDY));
+
+        // Use the PLL as the SYSCLK source
+        RCC->CFGR &= ~RCC_CFGR_SW;
+        RCC->CFGR |= RCC_CFGR_SW_PLL;
+        while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+
+        __DSB();
+        __ISB();
+
+        system_core_clock_update();
+        LOGI(TAG, "PLL and clock prescalers configured.");
+        LOGI(TAG,
+             "AHB matrix clock: %luMHz, APB1 clock: %luMHz, APB2 clock: %luMHz",
+             (SystemCoreClock / 1'000'000),
+             (APB1CoreClock / 1'000'000),
+             (APB2CoreClock / 1'000'000));
+        LOGI(TAG, "Resuming normal operation with the HSI");
+    }
 }
 
 // Fault state dumps

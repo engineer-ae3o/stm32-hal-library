@@ -12,17 +12,14 @@ extern "C" {
 #include <stdint.h>
 
 
-// The system tick rate
-#define TICK_RATE_HZ (1000)
+// Get number of ticks that have passed since bootup
+uint32_t ticks_since_boot(void);
 
 // Converts a time in milliseconds to a time in ticks.
 #define MS_TO_TICKS(ms) (((ms) * TICK_RATE_HZ) / 1000)
 
 // Converts a time in ticks to a time in milliseconds.
 #define TICKS_TO_MS(ticks) (((ticks) * 1000U) / TICK_RATE_HZ)
-
-// Get number of miliseconds that have passed since bootup
-uint32_t ticks_since_boot_ms(void);
 
 
 // Polling delay functions

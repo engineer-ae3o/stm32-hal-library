@@ -1,12 +1,13 @@
 #include "stm32f411xe.h"
 #include "utils/common.h"
+#include "utils/clock.h"
 #include "utils/tick.h"
 #include "utils/log.h"
 
 #include <stdatomic.h>
 
 
-#define MS_PER_TICK (1 * 1'000 / TICK_RATE_HZ)
+#define MS_PER_TICK (1 * 1000 / TICK_RATE_HZ)
 
 // Initialize the tick timer before main runs
 [[__gnu__::__constructor__]] static void tick_init(void) {
@@ -25,7 +26,6 @@
     // so the APB1 bus frequency isn't divided) since the APB1 bus feeds
     // off of HCLK directly. If the prescaler is greater than 1, the TIM2
     // clock is equal to 2 times the APB1 bus clock.
-    system_core_clock_update();
     const uint32_t tim2_clk_freq_hz = ((RCC->CFGR & RCC_CFGR_PPRE1) == RCC_CFGR_PPRE1_DIV1) ? APB1CoreClock : APB1CoreClock * 2;
 
     const uint32_t psc = (MS_PER_TICK * tim2_clk_freq_hz) - 1;
@@ -64,8 +64,8 @@
 static atomic_uint s_tick_counter = 0;
 
 // Getter for the tick counter
-uint32_t ticks_since_boot_ms(void) {
-    return TICKS_TO_MS(atomic_load_explicit(&s_tick_counter, memory_order_relaxed));
+uint32_t ticks_since_boot(void) {
+    return atomic_load_explicit(&s_tick_counter, memory_order_relaxed);
 }
 
 // TIM2 irq handler to increment the tick counter every milisecond

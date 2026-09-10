@@ -14,17 +14,6 @@ extern "C" {
 #include <stdint.h>
 
 
-// Core clock and audio PLL frequencies
-#define MAX_CLOCK_SPEED_HZ (100'000'000)
-#define AUDIO_PLL_HZ (76'800'000)
-
-// Global variables to match the SystemCoreClock variable, but for the APB1 and APB2 buses
-extern uint32_t APB1CoreClock;
-extern uint32_t APB2CoreClock;
-
-void system_core_clock_update();
-
-
 // Use the HSE, not the HSI
 #define USE_HSE
 
@@ -73,6 +62,9 @@ void system_core_clock_update();
 #error "No V_sense and Avg_Slope defined for the given target. Refer to the datasheet for your specific chip and add these values"
 #endif
 
+
+// The system tick rate
+#define TICK_RATE_HZ (1000)
 
 // Heap size
 #define HEAP_SIZE_BYTES (32 * 1024)

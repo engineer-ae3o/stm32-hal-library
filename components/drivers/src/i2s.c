@@ -16,7 +16,7 @@ typedef struct {
 // Modify that and everything breaks. It also encodes
 // the bit for ODD and the SPI_I2SPR_MCKOE bit
 // TODO: Compute the prescaler table
-static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
+static const prescaler_mck_t s_s_prescaler_table_76_8mhz[] = {
     [I2S_FREQ_8kHz]   = {.prescaler = 0, .prescaler_with_mck = 0},
     [I2S_FREQ_16kHz]  = {.prescaler = 0, .prescaler_with_mck = 0},
     [I2S_FREQ_22kHz]  = {.prescaler = 0, .prescaler_with_mck = 0},
@@ -26,15 +26,6 @@ static const prescaler_mck_t s_prescaler_table_76_8mhz[] = {
     [I2S_FREQ_96kHz]  = {.prescaler = 0, .prescaler_with_mck = 0},
     [I2S_FREQ_192kHz] = {.prescaler = 0, .prescaler_with_mck = 0},
 };
-
-// Audio PLL check. To use a different PLL clock speed
-// provide a corresponding prescaler table, update the
-// macro in "common.h" and this check
-#if AUDIO_PLL_HZ == 76'800'000U
-#define prescaler_table (s_prescaler_table_76_8mhz)
-#else
-#error "No pll table defined for used I2S PLL frequency"
-#endif
 
 
 // Helper
@@ -147,7 +138,8 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
 
     // Set the clock prescaler
-    const uint32_t prescaler = (config->use_mck) ? prescaler_table[config->freq].prescaler_with_mck : prescaler_table[config->freq].prescaler;
+    const uint32_t prescaler =
+        (config->use_mck) ? s_s_prescaler_table_76_8mhz[config->freq].prescaler_with_mck : s_s_prescaler_table_76_8mhz[config->freq].prescaler;
     handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
     handle->I2SPR |= (prescaler << SPI_I2SPR_I2SDIV_Pos) & SPI_I2SPR_I2SDIV;
 

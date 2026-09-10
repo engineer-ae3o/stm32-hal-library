@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
+#include "utils/clock.h"
 #include "drivers/i2c.h"
 #include "utils/err.h"
 
@@ -63,7 +64,6 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     I2C_DISABLE();
 
     // Get the APB1 bus frequency and cache it
-    system_core_clock_update();
     const uint32_t apb1_clk_freq_mhz = APB1CoreClock / 1'000'000U;
 
     // I2C configuration

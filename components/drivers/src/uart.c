@@ -2,6 +2,7 @@
 #include "drivers/gpio.h"
 #include "drivers/uart.h"
 #include "utils/common.h"
+#include "utils/clock.h"
 #include "drivers/dma.h"
 #include "utils/err.h"
 
@@ -194,7 +195,6 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     handle->CR1 &= ~(USART_CR1_M | USART_CR1_PCE);
 
     // Get the frequency of the bus clock on which the uart peripheral lives on
-    system_core_clock_update();
     const uint32_t bus_clock_freq_hz = (handle == USART1 || handle == USART6) ? APB2CoreClock : APB1CoreClock;
 
     // Baud rate generator: Get the UART bus divider from the target baud rate and bus clock frequency
