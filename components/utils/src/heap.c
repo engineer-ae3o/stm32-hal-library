@@ -15,7 +15,7 @@ static size_t          s_num_of_allocations = 0;
 static const char* TAG = "O1heap";
 
 // The heap should be initialized and created before main runs. Only one heap is needed
-[[__gnu__::__constructor__]] static void init() {
+[[__gnu__::__constructor__]] static void heap_init() {
     LOGI(TAG, "Initializing the heap.");
 
     static alignas(O1HEAP_ALIGNMENT) uint8_t s_heap_buffer[HEAP_SIZE_BYTES] = {};

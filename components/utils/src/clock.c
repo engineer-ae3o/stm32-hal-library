@@ -22,92 +22,149 @@ const static uint8_t s_apb_presc_lut[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
 
 
 typedef struct {
-
+    // General settings
+    uint32_t flash_latency; // CMSIS defined macro
+    uint32_t vos_scale;     // CMSIS defined macro
+    uint32_t sysclk_source; // CMSIS defined macro
+    // These only have any meaning if sysclk_source is RCC_CFGR_SWS_PLL
+    uint32_t pll_source; // CMSIS defined macro
+    uint32_t pllm;       // Raw calculated number
+    uint32_t plln;       // Raw calculated number
+    uint32_t pllp;       // Raw calculated number
+    uint32_t pllq;       // Raw calculated number
+    // Bus prescalers
+    uint32_t ahb_prescaler;  // CMSIS defined macro
+    uint32_t apb1_prescaler; // CMSIS defined macro
+    uint32_t apb2_prescaler; // CMSIS defined macro
 } system_clock_preset_t;
 
 typedef struct {
-
+    bool     disable;
+    uint32_t plln; // Raw calculated number
+    uint32_t pllr; // Raw calculated number
 } audio_clock_preset_t;
 
 // Tables mapping the different clock frequencies and sources to their respective configuration data
-const static system_clock_preset_t s_system_clock_preset_lut[] = {};
-const static audio_clock_preset_t  s_audio_clock_preset_lut[]  = {};
+const static system_clock_preset_t s_system_clock_preset_lut[] = {
+    [HSE_PLL_100MHz] = {},
+    [HSE_PLL_96MHz]  = {},
+    [HSE_PLL_84MHz]  = {},
+    [HSE_PLL_64MHz]  = {},
+    [HSE_PLL_48MHz]  = {},
+    [HSE_PLL_DIRECT] = {},
+    [HSI_PLL_100MHz] = {},
+    [HSI_PLL_96MHz]  = {},
+    [HSI_PLL_84MHz]  = {},
+    [HSI_PLL_64MHz]  = {},
+    [HSI_PLL_48MHz]  = {},
+    [HSI_PLL_DIRECT] = {},
+};
+
+const static audio_clock_preset_t s_audio_clock_preset_lut[] = {
+    [AUDIO_PLL_DISABLE]  = {},
+    [AUDIO_PLL_76_8MHz]  = {},
+    [AUDIO_PLL_135_5MHz] = {},
+    [AUDIO_PLL_151MHz]   = {},
+    [AUDIO_PLL_195_5MHz] = {},
+};
 
 // Helpers
 static inline void system_core_clock_config_preset(const system_clock_preset_t* preset) {
     __disable_irq();
 
-
-    // Set the flash latency, enable I and D caches, as well as the instruction prefetch buffer
-    FLASH->ACR &= ~FLASH_ACR_LATENCY;
-    FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS | FLASH_ACR_PRFTEN);
+    // Set the required flash latency
+    FLASH->ACR = (FLASH->ACR & ~FLASH_ACR_LATENCY) | preset->flash_latency;
     __DSB();
     __ISB();
 
-    // Disable the PLLs
+    // Disable the main PLL before configuring any clock
     RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
     while (RCC->CR & (RCC_CR_PLLRDY | RCC_CR_PLLI2SRDY));
 
-    // Configure the voltage regulator. Requires that the PLLs be disabled
+    // Configure the voltage regulator. Requires that the main PLL be disabled
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
     __DSB();
-    PWR->CR &= ~PWR_CR_VOS;
-    PWR->CR |= (PWR_CR_VOS_1 | PWR_CR_VOS_0);
 
-#ifdef USE_HSE
-    // Enable the HSE
-    RCC->CR |= RCC_CR_HSEON;
-    while (!(RCC->CR & RCC_CR_HSERDY));
+    // Set the required voltage regulator scale
+    PWR->CR = (PWR->CR & ~PWR_CR_VOS) | preset->vos_scale;
 
-    // Configure the PLL to provide a clock of 100MHz, derived from the HSE
-    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC);
-    RCC->PLLCFGR |= (HSE_VALUE_MHz << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSE);
-#else
-    // Enable the HSI
-    RCC->CR |= RCC_CR_HSION;
-    while (!(RCC->CR & RCC_CR_HSIRDY));
-
-    // Configure the PLL to provide a clock of 100MHz, derived from the HSI
-    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC);
-    RCC->PLLCFGR |= (HSI_VALUE_MHz << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSI);
-#endif
-
-    // Set the bus prescalers.
+    // Set the bus prescalers
     RCC->CFGR &= ~(RCC_CFGR_HPRE | RCC_CFGR_PPRE1 | RCC_CFGR_PPRE2);
-    RCC->CFGR |= (RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1);
+    RCC->CFGR |= (preset->ahb_prescaler | preset->apb1_prescaler | preset->apb2_prescaler);
 
-    // Enable the PLL
-    RCC->CR |= RCC_CR_PLLON;
-    while (!(RCC->CR & RCC_CR_PLLRDY));
+    switch (preset->sysclk_source) {
+        case RCC_CFGR_SWS_HSI:
+            // Enable the HSI
+            RCC->CR |= RCC_CR_HSION;
+            while (!(RCC->CR & RCC_CR_HSIRDY));
 
-    // Ensure the VOSRDY bit reads 1 after the PLLs have been enabled
-    while (!(PWR->CSR & PWR_CSR_VOSRDY));
+            // Use the HSI as the SYSCLK source
+            RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_HSI;
+            while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI);
+            break;
 
-    // Use the PLL as the SYSCLK source
-    RCC->CFGR &= ~RCC_CFGR_SW;
-    RCC->CFGR |= RCC_CFGR_SW_PLL;
-    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+        case RCC_CFGR_SWS_HSE:
+            // Enable the HSE
+            RCC->CR |= RCC_CR_HSEON;
+            while (!(RCC->CR & RCC_CR_HSERDY));
+
+            // Use the HSE as the SYSCLK source
+            RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_HSE;
+            while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSE);
+            break;
+
+        case RCC_CFGR_SWS_PLL:
+            if (preset->pll_source == RCC_PLLCFGR_PLLSRC_HSI) {
+                // Enable the HSI
+                RCC->CR |= RCC_CR_HSION;
+                while (!(RCC->CR & RCC_CR_HSIRDY));
+            } else {
+                // Enable the HSE
+                RCC->CR |= RCC_CR_HSEON;
+                while (!(RCC->CR & RCC_CR_HSERDY));
+            }
+
+            // Configure the PLL to provide the SYSCLK source, derived from the HSI
+            RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLQ | RCC_PLLCFGR_PLLSRC);
+            RCC->PLLCFGR |= (preset->pllm << RCC_PLLCFGR_PLLM_Pos) | (preset->plln << RCC_PLLCFGR_PLLN_Pos) | (preset->pllp << RCC_PLLCFGR_PLLP_Pos) |
+                            (preset->pllq << RCC_PLLCFGR_PLLQ_Pos) | (preset->pll_source);
+
+            // Enable the PLL
+            RCC->CR |= RCC_CR_PLLON;
+            while (!(RCC->CR & RCC_CR_PLLRDY));
+
+            // Use the PLL as the SYSCLK source
+            RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_PLL;
+            while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+            break;
+
+        default:
+            // Should be unreachable
+            ASSERT(0);
+            break;
+    }
 
     __DSB();
     __ISB();
 
-    // Enable the CSS to monitor the HSE
-    RCC->CR |= RCC_CR_CSSON;
+    if (preset->sysclk_source == RCC_CFGR_SWS_HSI || preset->pll_source == RCC_PLLCFGR_PLLSRC_HSI) {
+        // The HSI is used either as the SYSCLK source directly or as the PLL input, so we disable the HSE since not in use
+        RCC->CR &= ~RCC_CR_HSEON;
+        while (RCC->CR & RCC_CR_HSERDY);
+    } else {
+        // The HSE is used either as the SYSCLK source directly or as the PLL input, so we disable the HSI since not in use
+        RCC->CR &= ~RCC_CR_HSION;
+        while (RCC->CR & RCC_CR_HSIRDY);
 
-#ifdef USE_HSE
-    // Disable the HSI since not in use
-    RCC->CR &= ~RCC_CR_HSION;
-    while (RCC->CR & RCC_CR_HSIRDY);
-#else
-    // Disable the HSE since not in use
-    RCC->CR &= ~RCC_CR_HSEON;
-    while (RCC->CR & RCC_CR_HSERDY);
-#endif
-
+        // Enable the Clock Security System to monitor the HSE
+        RCC->CR |= RCC_CR_CSSON;
+    }
 
     __enable_irq();
 
+    // Update the global variables tracking the system clock and reconfigure the audio PLL to its old state
     system_core_clock_update();
+    audio_pll_clock_config(AudioPLLCoreClockType);
 }
 
 static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* preset) {
@@ -120,34 +177,54 @@ static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* pre
     RCC->PLLI2SCFGR &= ~(RCC_PLLI2SCFGR_PLLI2SM | RCC_PLLI2SCFGR_PLLI2SN | RCC_PLLI2SCFGR_PLLI2SR);
     RCC->CFGR &= ~RCC_CFGR_I2SSRC;
 
-    if (clock == AUDIO_PLL_DISABLE) {
-        AudioPLLCoreClockType = AUDIO_PLL_DISABLE;
+    if (preset->disable) {
         return;
     }
 
-#ifdef USE_HSE
-    const uint32_t clock_mhz = HSE_VALUE_MHz;
-#else
-    const uint32_t clock_mhz = HSI_VALUE_MHz;
-#endif
+    // We use a PLLM value to get us a Vco of 1MHz regardless of whether the HSI or HSE is used
+    uint32_t clock_mhz = 0;
+
+    // Get the SYSCLK source.
+    switch (RCC->CFGR & RCC_CFGR_SWS) {
+        case RCC_CFGR_SWS_HSI:
+            clock_mhz = HSI_VALUE_MHz;
+            break;
+
+        case RCC_CFGR_SWS_HSE:
+            clock_mhz = HSE_VALUE_MHz;
+            break;
+
+        case RCC_CFGR_SWS_PLL:
+            // Get the PLL clock source
+            if ((RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC) >> RCC_PLLCFGR_PLLSRC_Pos) {
+                // The HSE is the PLL clock source
+                clock_mhz = HSE_VALUE_MHz;
+            } else {
+                // The HSI is the PLL clock source
+                clock_mhz = HSI_VALUE_MHz;
+            }
+            break;
+
+        default:
+            clock_mhz = HSI_VALUE_MHz;
+            break;
+    }
 
     // Divide the HSE or HSI clock by its value in MHz to get a Vco of 1MHz regardless of its value
-    RCC->PLLI2SCFGR |= (clock_mhz << RCC_PLLI2SCFGR_PLLI2SM_Pos) | // PLLI2SM of the main PLL: Divides either the HSE or the HSI to get a 1MHz Vco
-                       (384UL << RCC_PLLI2SCFGR_PLLI2SN_Pos) |     // PLLI2SN of 384: Multiplies Vco by 384 to get 384MHz
-                       (5UL << RCC_PLLI2SCFGR_PLLI2SR_Pos);        // PLLI2SR of 5: Divides the 384MHz Vco by 5 to get us 76.8MHz
+    RCC->PLLI2SCFGR |=
+        (clock_mhz << RCC_PLLI2SCFGR_PLLI2SM_Pos) | (preset->plln << RCC_PLLI2SCFGR_PLLI2SN_Pos) | (preset->pllr << RCC_PLLI2SCFGR_PLLI2SR_Pos);
 
     // Enable the audio PLL
     RCC->CR |= RCC_CR_PLLI2SON;
     while (!(RCC->CR & RCC_CR_PLLI2SRDY));
 
-    __DSB();
-    __ISB();
-
     // Use the internal I2S PLL for the I2S peripherals
     RCC->CFGR &= ~RCC_CFGR_I2SSRC;
 
-    __enable_irq();
+    __DSB();
+    __ISB();
 
+    __enable_irq();
     audio_pll_clock_update();
 }
 
