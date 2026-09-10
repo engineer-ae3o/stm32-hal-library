@@ -35,7 +35,7 @@ typedef enum : uint8_t {
     AUDIO_PLL_76_8MHz,  // The Audio PLL at 76.8MHz. Suitable for the 48kHz family with no MCK output
     AUDIO_PLL_135_5MHz, // The Audio PLL at 135.5MHz. Suitable for the 44.1kHz family with MCK output
     AUDIO_PLL_151MHz,   // The Audio PLL at 151MHz. Suitable for the 44.1kHz family with no MCK output
-    AUDIO_PLL_195_5MHz, // The Audio PLL at 195.5MHz. Suitable for the 48kHz family with MCK output
+    AUDIO_PLL_196_5MHz, // The Audio PLL at 196.5MHz. Suitable for the 48kHz family with MCK output
 } audio_clock_t;
 
 // Track the system clock, buses' clock and audio PLL frequencies

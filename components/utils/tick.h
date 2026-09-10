@@ -9,6 +9,7 @@ extern "C" {
 
 #include "stm32f411xe.h"
 #include "utils/common.h"
+#include "utils/clock.h"
 
 #include <stdint.h>
 

@@ -37,7 +37,7 @@ void system_init(void) {
     audio_pll_clock_config(AUDIO_PLL_DISABLE);
 
     SEGGER_RTT_Init();
-    LOGI("System_Init", "--------------- Done with FPU, PLL, prescalers and system clocks setup ---------------");
+    LOGI("System_Init", "--------------- Done with FPU, PLL and system clock setup ---------------");
 }
 
 // Provide a weak main function

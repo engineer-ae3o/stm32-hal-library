@@ -15,6 +15,7 @@ set(SRCS
     src/uart.cpp
     src/iwdg.cpp
     src/timer.cpp
+    src/clock.cpp
     src/runner.cpp
 )
 
