@@ -1,7 +1,6 @@
 #include "stm32f411xe.h"
 #include "RTT/SEGGER_RTT.h"
 #include "printf/printf.h"
-#include "system_stm32f4xx.h"
 #include "utils/common.h"
 #include "utils/clock.h"
 #include "utils/log.h"

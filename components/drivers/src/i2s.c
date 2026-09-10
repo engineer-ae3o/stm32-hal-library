@@ -104,6 +104,12 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
         return HAL_ERR_INVALID_ARG;
     }
 
+    // A sampling rate of 192kHz is not supported when MCK output is not needed.
+    // For more details, refer to clock.h as to why this setup is impractical.
+    if (config->freq == I2S_FREQ_192kHz && config->use_mck) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
     // Disable the SPI and I2S peripheral before modifying its registers
     handle->CR1 &= ~SPI_CR1_SPE;
     DISABLE_I2S();

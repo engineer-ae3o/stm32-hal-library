@@ -32,19 +32,23 @@ typedef enum : uint8_t {
     // The value of the audio PLL. It feeds the I2S peripheral directly, so the clock value should
     // be chosen with the needs of the target I2S sampling frequency in mind. These values were the
     // frequencies that minimize the audio sampling frequency errors for the given modes.
-    AUDIO_PLL_76_8MHz,  // The Audio PLL at 76.8MHz. Suitable for the 48kHz family with no MCK output
-    AUDIO_PLL_135_5MHz, // The Audio PLL at 135.5MHz. Suitable for the 44.1kHz family with MCK output
-    AUDIO_PLL_151MHz,   // The Audio PLL at 151MHz. Suitable for the 44.1kHz family with no MCK output
-    AUDIO_PLL_196_5MHz, // The Audio PLL at 196.5MHz. Suitable for the 48kHz family with MCK output
+    AUDIO_PLL_76_8MHz,  // The Audio PLL at 76.8MHz. Suitable for the 48kHz family with MCK output disabled
+    AUDIO_PLL_135_5MHz, // The Audio PLL at 135.5MHz. Suitable for the 44.1kHz family with MCK output enabled
+    AUDIO_PLL_151MHz,   // The Audio PLL at 151MHz. Suitable for the 44.1kHz family with MCK output disabled
+    AUDIO_PLL_172MHz,   // The Audio PLL at 172MHz. Suitable for the 48kHz family with MCK output enabled
+    // NOTE: Due to hardware limits, operation with an I2S frequency of 192kHz and MCK output enabled is not
+    // supported due to the errors and inaccuracies, as this would render this specific setup not feasible and
+    // impractical for any realistic I2S and audio usage.
 } audio_clock_t;
 
 // Track the system clock, buses' clock and audio PLL frequencies
 extern volatile system_clock_t SystemCoreClockType;
 extern volatile audio_clock_t  AudioPLLCoreClockType;
-extern volatile uint32_t       SystemCoreClock;
-extern volatile uint32_t       APB1CoreClock;
-extern volatile uint32_t       APB2CoreClock;
-extern volatile uint32_t       AudioPLLCoreClock;
+
+extern volatile uint32_t SystemCoreClock;
+extern volatile uint32_t APB1CoreClock;
+extern volatile uint32_t APB2CoreClock;
+extern volatile uint32_t AudioPLLCoreClock;
 
 
 // Configure the system clock, audio PLL and update the global variables tracking them
