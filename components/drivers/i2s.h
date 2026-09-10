@@ -10,6 +10,7 @@ extern "C" {
 #include "stm32f411xe.h"
 #include "drivers/gpio.h"
 #include "drivers/dma.h"
+#include "utils/clock.h"
 #include "utils/err.h"
 
 #include <stdint.h>
@@ -56,10 +57,11 @@ typedef enum : uint8_t {
 } i2s_freq_t;
 
 typedef struct {
-    i2s_dir_t   dir;
-    i2s_mode_t  mode;
-    i2s_freq_t  freq;
-    i2s_frame_t frame;
+    i2s_dir_t     dir;
+    i2s_mode_t    mode;
+    i2s_freq_t    freq;
+    i2s_frame_t   frame;
+    audio_clock_t clock;
 
     bool cpol;
     bool use_mck;

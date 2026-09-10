@@ -8,13 +8,12 @@
 // At startup, the HSI feeds the SYSCLK, and since there are no prescalers or divider
 // active at boot, the values of the HCLK, PCLK1 and PCLK2 are equal to the HSI value
 // Whereas, the audio PLL starts disabled
-system_clock_t SystemCoreClockType   = HSI_DIRECT;
-audio_clock_t  AudioPLLCoreClockType = AUDIO_PLL_DISABLE;
+volatile system_clock_t SystemCoreClockType   = HSI_PLL_DIRECT;
+volatile audio_clock_t  AudioPLLCoreClockType = AUDIO_PLL_DISABLE;
 
-uint32_t SystemCoreClock   = HSI_VALUE_MHz * 1'000'000;
-uint32_t APB1CoreClock     = HSI_VALUE_MHz * 1'000'000;
-uint32_t APB2CoreClock     = HSI_VALUE_MHz * 1'000'000;
-float    AudioPLLCoreClock = 0;
+volatile uint32_t SystemCoreClock = HSI_VALUE_Hz;
+volatile uint32_t APB1CoreClock   = HSI_VALUE_Hz;
+volatile uint32_t APB2CoreClock   = HSI_VALUE_Hz;
 
 // Lookup tables for the HCLK and APB prescalers
 const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
@@ -23,9 +22,12 @@ const uint8_t APBPrescTable[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
 
 // Update the buses' clock frequency variables
 void system_core_clock_config(system_clock_t system_clock) {
+    __disable_irq();
 
     SystemCoreClockType = system_clock;
     system_core_clock_update();
+
+    __enable_irq();
 }
 
 void system_core_clock_update(void) {
@@ -74,6 +76,8 @@ void system_core_clock_update(void) {
 }
 
 void audio_pll_clock_config(audio_clock_t audio_clock) {
+    __disable_irq();
+
     // Disable the audio PLL
     RCC->CR &= ~RCC_CR_PLLI2SON;
 
@@ -82,7 +86,6 @@ void audio_pll_clock_config(audio_clock_t audio_clock) {
     RCC->CFGR &= ~RCC_CFGR_I2SSRC;
 
     if (audio_clock == AUDIO_PLL_DISABLE) {
-        AudioPLLCoreClock     = 0;
         AudioPLLCoreClockType = AUDIO_PLL_DISABLE;
         return;
     }
@@ -109,9 +112,9 @@ void audio_pll_clock_config(audio_clock_t audio_clock) {
     RCC->CFGR &= ~RCC_CFGR_I2SSRC;
 
     AudioPLLCoreClockType = audio_clock;
-    audio_pll_clock_update();
+    __enable_irq();
 }
 
-void audio_pll_clock_update() {
-    AudioPLLCoreClock = 0;
+void audio_pll_clock_update(void) {
+    AudioPLLCoreClockType = AUDIO_PLL_76_8MHz;
 }

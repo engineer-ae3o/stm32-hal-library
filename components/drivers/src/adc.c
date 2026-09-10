@@ -1,5 +1,6 @@
 #include "stm32f411xe.h"
 #include "utils/common.h"
+#include "utils/board.h"
 #include "drivers/dma.h"
 #include "drivers/adc.h"
 #include "utils/tick.h"
@@ -802,7 +803,7 @@ hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
     // It is the value of V_ref_int measured at V_dda = 3.3V and 30C
 
     // Calculate the actual VDDA from the calibration data
-    *vdda = (3.3F * (float)VREFINT_CALIB_VAL) / (float)raw_vref;
+    *vdda = (3.3F * (float)VREFINT_CALIBRATION_VALUE) / (float)raw_vref;
 
     return HAL_OK;
 }
@@ -821,15 +822,15 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
     TRY(adc_get_temperature(handle, &raw_temp));
 
     // Normalize the raw temperature sensor data read
-    const float normalized = ((float)VREFINT_CALIB_VAL / (float)v_ref_int) * (float)raw_temp;
+    const float normalized = ((float)VREFINT_CALIBRATION_VALUE / (float)v_ref_int) * (float)raw_temp;
 
     // Get the temperature calibration values from their locations in memory
     // They represent the temperature values measured at 30C and 110C respectively when VDDA is 3.3V
-    const uint16_t temp_cal_1 = TEMP_SENSOR_CALIB_30C;
-    const uint16_t temp_cal_2 = TEMP_SENSOR_CALIB_110C;
+    const uint16_t temp_cal_30c  = TEMP_SENSOR_CALIB_30C_VALUE;
+    const uint16_t temp_cal_110c = TEMP_SENSOR_CALIB_110C_VALUE;
 
     // Get the temperature using linear interpolation with the calibration data at 110C and 30C
-    *temp_celsius = (((110.0F - 30.0F) / (float)(temp_cal_2 - temp_cal_1)) * (normalized - (float)temp_cal_1)) + 30.0F;
+    *temp_celsius = (((110.0F - 30.0F) / (float)(temp_cal_110c - temp_cal_30c)) * (normalized - (float)temp_cal_30c)) + 30.0F;
 
     return HAL_OK;
 }

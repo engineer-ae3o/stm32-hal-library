@@ -43,18 +43,16 @@ void system_init(void) {
     while (!(RCC->CR & RCC_CR_HSERDY));
 
     // Configure the PLL to provide a clock of 100MHz, derived from the HSE
-    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ);
-    RCC->PLLCFGR |= (HSE_VALUE_MHz << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSE) |
-                    (4 << RCC_PLLCFGR_PLLQ_Pos);
+    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC);
+    RCC->PLLCFGR |= (HSE_VALUE_MHz << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSE);
 #else
     // Enable the HSI
     RCC->CR |= RCC_CR_HSION;
     while (!(RCC->CR & RCC_CR_HSIRDY));
 
     // Configure the PLL to provide a clock of 100MHz, derived from the HSI
-    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC | RCC_PLLCFGR_PLLQ);
-    RCC->PLLCFGR |= (HSI_VALUE_MHz << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSI) |
-                    (4 << RCC_PLLCFGR_PLLQ_Pos);
+    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC);
+    RCC->PLLCFGR |= (HSI_VALUE_MHz << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSI);
 #endif
 
     // Set the bus prescalers.
@@ -171,8 +169,8 @@ void NMI_Handler(void) {
             case HSE_PLL_48MHz:
                 system_clock = HSI_PLL_48MHz;
                 break;
-            case HSE_DIRECT:
-                system_clock = HSI_DIRECT;
+            case HSE_PLL_DIRECT:
+                system_clock = HSI_PLL_DIRECT;
                 break;
             default:
                 system_clock = SystemCoreClockType;

@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
+#include "utils/board.h"
 #include "utils/clock.h"
 #include "drivers/i2c.h"
 #include "utils/err.h"
@@ -97,7 +98,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     handle->FLTR |= (uint32_t)(config->digital_filter << I2C_FLTR_DNF_Pos);
 
     // Rise time
-    const uint32_t trise_ns = (config->frequency == I2C_FREQ_400KHz) ? 300 : 1000;
+    const uint32_t trise_ns = (config->frequency == I2C_FREQ_400KHz) ? I2C_TRISE_TIME_400kHz_ns : I2C_TRISE_TIME_100kHz_ns;
     handle->TRISE &= ~I2C_TRISE_TRISE;
     handle->TRISE |= (((trise_ns * apb1_clk_freq_mhz) / 1000U) + config->digital_filter + 1) & I2C_TRISE_TRISE;
 

@@ -38,6 +38,10 @@ extern "C" {
   * @{
   */
 
+
+#include <stdint.h>
+
+
 /**
   * @}
   */
@@ -54,7 +58,7 @@ extern "C" {
              is no need to call the 2 first functions listed above, since SystemCoreClock
              variable is updated automatically.
 */
-extern uint32_t SystemCoreClock; /*!< System Clock Frequency (Core Clock) */
+extern volatile uint32_t SystemCoreClock; /*!< System Clock Frequency (Core Clock) */
 
 extern const uint8_t AHBPrescTable[16]; /*!< AHB prescalers table values */
 extern const uint8_t APBPrescTable[8];  /*!< APB prescalers table values */

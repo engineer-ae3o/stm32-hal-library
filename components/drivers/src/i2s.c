@@ -12,9 +12,7 @@ typedef struct {
     uint16_t prescaler_with_mck;
 } prescaler_mck_t;
 
-// The table assumes an audio input PLL of 76.8MHz
-// Modify that and everything breaks. It also encodes
-// the bit for ODD and the SPI_I2SPR_MCKOE bit
+// Prescaler tables for the different supported audio PLL clock
 // TODO: Compute the prescaler table
 static const prescaler_mck_t s_s_prescaler_table_76_8mhz[] = {
     [I2S_FREQ_8kHz]   = {.prescaler = 0, .prescaler_with_mck = 0},
