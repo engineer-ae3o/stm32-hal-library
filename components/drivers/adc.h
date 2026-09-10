@@ -41,7 +41,7 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data_
 // For operation of the internal channels.
 // Only oneshot and conversion with the regular group are supported.
 // These only return the raw ADC values. Pair with adc_get_value_right_aligned(...)
-// (if you use ADC_RIGHT_ALIGN) to get the actual voltages read by thr ADC.
+// (if you use ADC_RIGHT_ALIGN) to get the actual voltages read by the ADC.
 hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data);
 hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data);
 hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_data);

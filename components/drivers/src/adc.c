@@ -11,20 +11,6 @@
 #include <string.h>
 
 
-// User context
-typedef struct {
-    adc_dma_callbacks_t continuous_mode_callbacks;
-
-    adc_callback_t injected_done_cb;
-    void*          injected_done_arg;
-
-    adc_callback_t analog_wdg_cb;
-    void*          analog_wdg_arg;
-} adc_ctx_t;
-
-static adc_ctx_t s_adc_ctx[NUM_OF_ADC_CONTROLLERS] = {};
-
-
 // Mapping for the DMA channels for the ADC peripheral instances
 static const dma_map_t s_adc_dma_map[] = {
 #if defined(ADC1)
@@ -40,6 +26,19 @@ static const dma_map_t s_adc_dma_map[] = {
     {.stream = NULL, .channel = 0},
 #endif
 };
+
+// User context
+typedef struct {
+    adc_dma_callbacks_t continuous_mode_callbacks;
+
+    adc_callback_t injected_done_cb;
+    void*          injected_done_arg;
+
+    adc_callback_t analog_wdg_cb;
+    void*          analog_wdg_arg;
+} adc_ctx_t;
+
+static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
 
 
 // Inline helpers
@@ -124,7 +123,7 @@ static const dma_map_t s_adc_dma_map[] = {
         ASSERT(stream);
 
         // If the CT bit is 0, that means the DMA controller is in the first buffer
-        const bool     is_buf_1          = (stream->CR & DMA_SxCR_CT) == 0;
+        const bool     is_buf_1_in_use   = (stream->CR & DMA_SxCR_CT) == 0;
         const uint16_t num_of_items_left = (uint16_t)stream->NDTR;
 
         // End the regular group conversion. The conversion can be restarted in the callback if necessary
@@ -132,7 +131,7 @@ static const dma_map_t s_adc_dma_map[] = {
 
         // Finally, invoke the user callback
         if (local_cb) {
-            local_cb(user_data, is_buf_1, num_of_items_left);
+            local_cb(user_data, is_buf_1_in_use, num_of_items_left);
         }
     }
 }
@@ -149,7 +148,7 @@ static const dma_map_t s_adc_dma_map[] = {
     }
 
     // If the CT bit is 0, that means the DMA controller is in the first buffer
-    const bool     is_buf_1          = (stream->CR & DMA_SxCR_CT) == 0;
+    const bool     is_buf_1_in_use   = (stream->CR & DMA_SxCR_CT) == 0;
     const uint16_t num_of_items_left = (uint16_t)stream->NDTR;
 
     __disable_irq();
@@ -172,7 +171,7 @@ static const dma_map_t s_adc_dma_map[] = {
 
     if (status & flags.tc_mask) {
         // End the conversion if we are not in circular or double buffering mode
-        if (!(stream->CR & DMA_SxCR_CIRC) && !(stream->CR & DMA_SxCR_DBM)) {
+        if (!((stream->CR & DMA_SxCR_CIRC) || (stream->CR & DMA_SxCR_DBM))) {
             ASSERT(adc_regular_group_cont_end_conv(handle) == HAL_OK);
         }
 
@@ -182,7 +181,7 @@ static const dma_map_t s_adc_dma_map[] = {
         // Transfer complete. If in circular or double buffering mode, the DMA has either
         // wrapped around in the same buffer or has switched to the second buffer respectively.
         if (tc_local_cb) {
-            tc_local_cb(user_data, is_buf_1);
+            tc_local_cb(user_data, is_buf_1_in_use);
         }
     }
 
@@ -196,7 +195,7 @@ static const dma_map_t s_adc_dma_map[] = {
         flags_to_clear |= flags.te_mask;
 
         if (te_local_cb) {
-            te_local_cb(user_data, is_buf_1, num_of_items_left);
+            te_local_cb(user_data, is_buf_1_in_use, num_of_items_left);
         }
     }
 
@@ -208,7 +207,7 @@ static const dma_map_t s_adc_dma_map[] = {
         flags_to_clear |= flags.dme_mask;
 
         if (dme_local_cb) {
-            dme_local_cb(user_data, is_buf_1, num_of_items_left);
+            dme_local_cb(user_data, is_buf_1_in_use, num_of_items_left);
         }
     }
 

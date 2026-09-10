@@ -16,76 +16,15 @@
 
 // Initalizes hardware resources needed before main runs
 void system_init(void) {
+    // Enable the I and D caches, as well as the instruction prefetch buffer
+    FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_PRFTEN);
+    __DSB();
+    __ISB();
+
     // Enable the FPU
     SCB->CPACR |= (0xFUL << 20);
     __DSB();
     __ISB();
-
-    // Set the flash latency, enable I and D caches, as well as the instruction prefetch buffer
-    FLASH->ACR &= ~FLASH_ACR_LATENCY;
-    FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_LATENCY_3WS | FLASH_ACR_PRFTEN);
-    __DSB();
-    __ISB();
-
-    // Disable the PLLs
-    RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
-    while (RCC->CR & (RCC_CR_PLLRDY | RCC_CR_PLLI2SRDY));
-
-    // Configure the voltage regulator. Requires that the PLLs be disabled
-    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
-    __DSB();
-    PWR->CR &= ~PWR_CR_VOS;
-    PWR->CR |= (PWR_CR_VOS_1 | PWR_CR_VOS_0);
-
-#ifdef USE_HSE
-    // Enable the HSE
-    RCC->CR |= RCC_CR_HSEON;
-    while (!(RCC->CR & RCC_CR_HSERDY));
-
-    // Configure the PLL to provide a clock of 100MHz, derived from the HSE
-    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC);
-    RCC->PLLCFGR |= (HSE_VALUE_MHz << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSE);
-#else
-    // Enable the HSI
-    RCC->CR |= RCC_CR_HSION;
-    while (!(RCC->CR & RCC_CR_HSIRDY));
-
-    // Configure the PLL to provide a clock of 100MHz, derived from the HSI
-    RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLSRC);
-    RCC->PLLCFGR |= (HSI_VALUE_MHz << RCC_PLLCFGR_PLLM_Pos) | (200 << RCC_PLLCFGR_PLLN_Pos) | (0 << RCC_PLLCFGR_PLLP_Pos) | (RCC_PLLCFGR_PLLSRC_HSI);
-#endif
-
-    // Set the bus prescalers.
-    RCC->CFGR &= ~(RCC_CFGR_HPRE | RCC_CFGR_PPRE1 | RCC_CFGR_PPRE2);
-    RCC->CFGR |= (RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV1);
-
-    // Enable the PLL
-    RCC->CR |= RCC_CR_PLLON;
-    while (!(RCC->CR & RCC_CR_PLLRDY));
-
-    // Ensure the VOSRDY bit reads 1 after the PLLs have been enabled
-    while (!(PWR->CSR & PWR_CSR_VOSRDY));
-
-    // Use the PLL as the SYSCLK source
-    RCC->CFGR &= ~RCC_CFGR_SW;
-    RCC->CFGR |= RCC_CFGR_SW_PLL;
-    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
-
-    __DSB();
-    __ISB();
-
-    // Enable the CSS to monitor the HSE
-    RCC->CR |= RCC_CR_CSSON;
-
-#ifdef USE_HSE
-    // Disable the HSI since not in use
-    RCC->CR &= ~RCC_CR_HSION;
-    while (RCC->CR & RCC_CR_HSIRDY);
-#else
-    // Disable the HSE since not in use
-    RCC->CR &= ~RCC_CR_HSEON;
-    while (RCC->CR & RCC_CR_HSERDY);
-#endif
 
     // Enable the bus fault and usage fault exceptions
     SCB->SHCSR |= (SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
@@ -93,9 +32,11 @@ void system_init(void) {
     // Enable exceptions on divide by 0 and unaligned memory accesses
     SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk);
 
-    system_core_clock_update();
-    SEGGER_RTT_Init();
+    // Configure the system clock to 100MHz, derived from the HSE. Also ensure the audio PLL is disabled at startup
+    system_core_clock_config(HSE_PLL_100MHz);
+    audio_pll_clock_config(AUDIO_PLL_DISABLE);
 
+    SEGGER_RTT_Init();
     LOGI("System_Init", "--------------- Done with FPU, PLL, prescalers and system clocks setup ---------------");
 }
 
@@ -131,7 +72,7 @@ void system_init(void) {
 }
 
 void NMI_Handler(void) {
-    LOGI("CPU Exception", "Non Maskable Interrupt fired.");
+    LOGI("CPU Exception", "The Non Maskable Interrupt triggered.");
 
     // Check if the interrupt was from the Clock Security System
     if (RCC->CIR & RCC_CIR_CSSF) {
@@ -149,34 +90,32 @@ void NMI_Handler(void) {
             PANIC();
         }
 
-        LOGI(TAG, "Clock Security System fault: HSE failure.");
+        LOGI(TAG, "Clock Security System fault: HSE failure. Reconfiguring to use the HSI as the PLL clock source");
 
         // Reconfigure the main PLL back to whatever value it was on, but its HSI equivalent
-        system_clock_t system_clock = HSI_PLL_100MHz;
         switch (SystemCoreClockType) {
             case HSE_PLL_100MHz:
-                system_clock = HSI_PLL_100MHz;
+                system_core_clock_config(HSI_PLL_100MHz);
                 break;
             case HSE_PLL_96MHz:
-                system_clock = HSI_PLL_96MHz;
+                system_core_clock_config(HSI_PLL_96MHz);
                 break;
             case HSE_PLL_84MHz:
-                system_clock = HSI_PLL_84MHz;
+                system_core_clock_config(HSI_PLL_84MHz);
                 break;
             case HSE_PLL_64MHz:
-                system_clock = HSI_PLL_64MHz;
+                system_core_clock_config(HSI_PLL_64MHz);
                 break;
             case HSE_PLL_48MHz:
-                system_clock = HSI_PLL_48MHz;
+                system_core_clock_config(HSI_PLL_48MHz);
                 break;
             case HSE_PLL_DIRECT:
-                system_clock = HSI_PLL_DIRECT;
+                system_core_clock_config(HSI_PLL_DIRECT);
                 break;
             default:
-                system_clock = SystemCoreClockType;
+                system_core_clock_config(SystemCoreClockType);
                 break;
         }
-        system_core_clock_config(system_clock);
 
         // Reconfigure the audio PLL to run at whatever value it was before the CSS fault
         audio_pll_clock_config(AudioPLLCoreClockType);

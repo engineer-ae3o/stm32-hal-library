@@ -15,10 +15,10 @@
 
 // Shape of all callbacks passed to the ADC driver
 typedef void (*adc_callback_t)(void* arg);
-typedef void (*adc_cont_done_cb_t)(void* arg, bool is_buf_1);
-typedef void (*adc_cont_err_cb_t)(void* arg, bool is_buf_1, uint16_t num_of_items_left);
-// arg is user passed in data. is_buf_1 represents whether the DMA controller is in the first buffer or not.
-// num_of_items_left is the number of elements that were remaining to be transmitted when the error occurred
+typedef void (*adc_cont_done_cb_t)(void* arg, bool is_buf_1_in_use);
+typedef void (*adc_cont_err_cb_t)(void* arg, bool is_buf_1_in_use, uint16_t num_of_items_left);
+// arg is user passed in data. is_buf_1_in_use represents whether the DMA controller is in the first buffer.
+// num_of_items_left is the number of elements that were remaining to be transmitted when the error occurred.
 
 
 // External ADC channels

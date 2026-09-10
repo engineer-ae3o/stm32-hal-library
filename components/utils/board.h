@@ -13,8 +13,6 @@ extern "C" {
 
 #if defined(STM32F411xE)
 // ADC values to use the internal temperature sensor. Gotten from the datasheet
-#define NUM_OF_ADC_CONTROLLERS 1
-#define MAX_ADC_CLOCK_MHZ 36
 #define ADC_STARUP_TIME_US 4U
 #define VBAT_DIVIDER_RATIO 4U
 
@@ -30,8 +28,8 @@ extern "C" {
 #define TEMP_SENSOR_CALIB_110C_VALUE (uint16_t)(*(volatile uint16_t*)0x1FFF7A2EU)
 
 // Bus rise times for I2C
-#define I2C_TRISE_TIME_400kHz_ns 300
-#define I2C_TRISE_TIME_100kHz_ns 1000
+#define I2C_TRISE_TIME_400kHz_ns 300U
+#define I2C_TRISE_TIME_100kHz_ns 1000U
 #else
 #error "No board configuration values given for current target."
 #endif

@@ -44,13 +44,14 @@ extern volatile audio_clock_t  AudioPLLCoreClockType;
 extern volatile uint32_t       SystemCoreClock;
 extern volatile uint32_t       APB1CoreClock;
 extern volatile uint32_t       APB2CoreClock;
+extern volatile uint32_t       AudioPLLCoreClock;
 
 
 // Configure the system clock, audio PLL and update the global variables tracking them
-void system_core_clock_config(system_clock_t system_clock);
+void system_core_clock_config(system_clock_t clock);
 void system_core_clock_update(void);
 
-void audio_pll_clock_config(audio_clock_t audio_clock);
+void audio_pll_clock_config(audio_clock_t clock);
 void audio_pll_clock_update(void);
 
 
