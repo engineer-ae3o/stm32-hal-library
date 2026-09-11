@@ -221,11 +221,23 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
     __DSB();
     __ISB();
 
-    // Disable the main PLL before configuring any clock
+    // Temporarily switch the SYSCLK source to the HSI so we can safely disable the PLLs.
+    // We use the HSI explicitly for this purpose because this function could be called
+    // when the HSE experiences a fault, so trying to reuse it here will cause more issues.
+
+    // Enable the HSI
+    RCC->CR |= RCC_CR_HSION;
+    while (!(RCC->CR & RCC_CR_HSIRDY));
+
+    // Use the HSI as the SYSCLK source
+    RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_HSI;
+    while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI);
+
+    // Disable the PLLs before configuring any clock
     RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
     while (RCC->CR & (RCC_CR_PLLRDY | RCC_CR_PLLI2SRDY));
 
-    // Configure the voltage regulator. Requires that the main PLL be disabled
+    // Configure the voltage regulator. Requires that the PLLs be disabled
     RCC->APB1ENR |= RCC_APB1ENR_PWREN;
     __DSB();
 
@@ -238,13 +250,7 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
 
     switch (preset->sysclk_source) {
         case RCC_CFGR_SWS_HSI:
-            // Enable the HSI
-            RCC->CR |= RCC_CR_HSION;
-            while (!(RCC->CR & RCC_CR_HSIRDY));
-
-            // Use the HSI as the SYSCLK source
-            RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_HSI;
-            while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI);
+            // Do nothing. The HSI is already enabled and the SYSCLK source
             break;
 
         case RCC_CFGR_SWS_HSE:
@@ -258,11 +264,9 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
             break;
 
         case RCC_CFGR_SWS_PLL:
-            // Set the PLL source
+            // Enable the PLL source
             if (preset->pll_source == RCC_PLLCFGR_PLLSRC_HSI) {
-                // Enable the HSI
-                RCC->CR |= RCC_CR_HSION;
-                while (!(RCC->CR & RCC_CR_HSIRDY));
+                // Do nothing. The HSI is already enabled
             } else if (preset->pll_source == RCC_PLLCFGR_PLLSRC_HSE) {
                 // Enable the HSE
                 RCC->CR |= RCC_CR_HSEON;
@@ -306,6 +310,7 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
         RCC->CR &= ~RCC_CR_HSEON;
         while (RCC->CR & RCC_CR_HSERDY);
     } else {
+        // Should be unreachable
         ASSERT(0);
     }
 

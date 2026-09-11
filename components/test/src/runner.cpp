@@ -12,6 +12,7 @@
 #include "test/uart.hpp"
 #include "test/gpio.hpp"
 #include "test/timer.hpp"
+#include "test/clock.hpp"
 #include "test/runner.hpp"
 
 
@@ -40,6 +41,7 @@ namespace test {
         heap::all();
         uart::all();
         gpio::all();
+        clock::all();
         timer::all();
 
         UNITY_END();
