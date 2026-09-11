@@ -2,7 +2,7 @@
 #define ADC_TYPES_H_
 
 
-#include "drivers/dma.h"
+#include "drivers/dma_types.h"
 
 #include <stdint.h>
 #include <stddef.h>

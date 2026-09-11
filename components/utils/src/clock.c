@@ -275,7 +275,7 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
                 ASSERT(0);
             }
 
-            // Configure the PLL to provide the SYSCLK source, derived from the HSI
+            // Configure the PLL to provide the SYSCLK source
             RCC->PLLCFGR &= ~(RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLQ | RCC_PLLCFGR_PLLSRC);
             RCC->PLLCFGR |= (preset->pllm << RCC_PLLCFGR_PLLM_Pos) | (preset->plln << RCC_PLLCFGR_PLLN_Pos) | (preset->pllp << RCC_PLLCFGR_PLLP_Pos) |
                             (preset->pllq << RCC_PLLCFGR_PLLQ_Pos) | (preset->pll_source);
@@ -309,6 +309,9 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
         // The HSI is used either as the SYSCLK source directly or as the PLL input, so we disable the HSE since not in use to save power
         RCC->CR &= ~RCC_CR_HSEON;
         while (RCC->CR & RCC_CR_HSERDY);
+
+        // Disable the Clock Security System since the HSE is disabled
+        RCC->CR &= ~RCC_CR_CSSON;
     } else {
         // Should be unreachable
         ASSERT(0);
@@ -329,6 +332,7 @@ static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* pre
     RCC->PLLI2SCFGR &= ~(RCC_PLLI2SCFGR_PLLI2SM | RCC_PLLI2SCFGR_PLLI2SN | RCC_PLLI2SCFGR_PLLI2SR);
 
     if (preset->disable) {
+        __enable_irq();
         return;
     }
 
