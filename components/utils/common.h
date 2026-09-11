@@ -14,14 +14,6 @@ extern "C" {
 #include <stdint.h>
 
 
-// HSI and HSE clocks
-#define HSE_VALUE_MHz (25U)
-#define HSE_VALUE_Hz (HSE_VALUE_MHz * 1000000U)
-
-#define HSI_VALUE_MHz (16U)
-#define HSI_VALUE_Hz (HSI_VALUE_MHz * 1000000U)
-
-
 #define TIMEOUT_CYCLES (10'000U)
 #define UNUSED(x) (void)(x)
 

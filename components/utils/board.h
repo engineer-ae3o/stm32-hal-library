@@ -12,6 +12,13 @@ extern "C" {
 
 
 #if defined(STM32F411xE)
+// HSI and HSE clocks
+#define HSE_VALUE_MHz (25U)
+#define HSE_VALUE_Hz (HSE_VALUE_MHz * 1000000U)
+
+#define HSI_VALUE_MHz (16U)
+#define HSI_VALUE_Hz (HSI_VALUE_MHz * 1000000U)
+
 // ADC values to use the internal temperature sensor. Gotten from the datasheet
 #define ADC_STARUP_TIME_US 4U
 #define VBAT_DIVIDER_RATIO 4U

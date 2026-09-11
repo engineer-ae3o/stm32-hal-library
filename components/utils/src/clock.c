@@ -1,5 +1,6 @@
 #include "stm32f411xe.h"
 #include "utils/common.h"
+#include "utils/board.h"
 #include "utils/clock.h"
 
 #include <stdint.h>
@@ -23,128 +24,127 @@ static const uint8_t s_apb_presc_lut[8]  = {0, 0, 0, 0, 1, 2, 3, 4};
 
 typedef struct {
     // General settings
-    uint32_t flash_latency; // CMSIS defined macro
-    uint32_t vos_scale;     // CMSIS defined macro. Ignored if the sysclk_source is not RCC_CFGR_SWS_PLL
-    uint32_t sysclk_source; // CMSIS defined macro
+    uint32_t flash_latency; // CMSIS defined macro. See FLASH_ACR_LATENCY_xxx
+    uint32_t vos_scale;     // CMSIS defined macro. See PWR_CR_VOS_xxx. Ignored if sysclk_source is RCC_CFGR_SWS_HSI or RCC_CFGR_SWS_HSE
+    uint32_t sysclk_source; // CMSIS defined macro. See RCC_CFGR_SWS_xxx
     // These only have any meaning if sysclk_source is RCC_CFGR_SWS_PLL
     uint32_t pll_source; // CMSIS defined macro
-    uint32_t pllm;       // Raw calculated number
-    uint32_t plln;       // Raw calculated number
-    uint32_t pllp;       // Raw calculated number
-    uint32_t pllq;       // Raw calculated number
+    uint32_t pllm;       // Regular number. Allowed range is 2 - 63
+    uint32_t plln;       // Regular number. Allowed range is 50 - 432
+    uint32_t pllp;       // Regular number. Allowed values are 2, 4, 6 and 8 (encoded as 0b00, 0b01, 0b10 and 0b11 respectively)
+    uint32_t pllq;       // Regular number. Allowed range is 2 - 15
     // Bus prescalers
-    uint32_t ahb_prescaler;  // CMSIS defined macro
-    uint32_t apb1_prescaler; // CMSIS defined macro
-    uint32_t apb2_prescaler; // CMSIS defined macro
+    uint32_t ahb_prescaler;  // CMSIS defined macro. See RCC_CFGR_HPRE_DIVx
+    uint32_t apb1_prescaler; // CMSIS defined macro. See RCC_CFGR_PPRE1_DIVx
+    uint32_t apb2_prescaler; // CMSIS defined macro. See RCC_CFGR_PPRE2_DIVx
 } system_clock_preset_t;
 
 typedef struct {
-    bool     disable;
-    uint32_t plln; // Raw calculated number
-    uint32_t pllr; // Raw calculated number
+    bool     disable; // Set to power down the audio PLL
+    uint32_t plln;    // Regular number. Allowed range is 50 - 432
+    uint32_t pllr;    // Regular number. Allowed range is 2 - 7
 } audio_clock_preset_t;
 
 // Tables mapping the different clock frequencies and sources to their respective configuration data
 static const system_clock_preset_t s_system_clock_preset_lut[] = {
     [HSE_PLL_100MHz] =
         {
-            .flash_latency  = FLASH_ACR_LATENCY_3WS,       // 3 flash wait states since the SYSCLK is at the highest value
-            .vos_scale      = PWR_CR_VOS_0 | PWR_CR_VOS_1, // Voltage scale of 1 since high SYSCLK frequency
-            .sysclk_source  = RCC_CFGR_SWS_PLL,            // SYSCLK source is the PLL
-            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE,      // PLL source is the HSE
+            .flash_latency  = FLASH_ACR_LATENCY_3WS,  // 3 flash wait states since the SYSCLK is at the highest value
+            .vos_scale      = 0b11 << PWR_CR_VOS_Pos, // Voltage scale of 1 since high SYSCLK frequency
+            .sysclk_source  = RCC_CFGR_SWS_PLL,       // SYSCLK source is the PLL
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE, // PLL source is the HSE
+            .pllm           = HSE_VALUE_MHz,          // Divides the HSE to give us 1MHz
+            .plln           = 200,                    // Multiplies the resultant 1MHz by 200 to give 200MHz
+            .pllp           = 0b00,                   // Divides the 200MHz by 2 to provide 100MHz for the SYSCLK. For more details, refer above
+            .pllq           = 4,                      // Divides the 200MHz by 4 to provide 50MHz for the USB and SDIO clocks
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 100MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = SystemCoreClock / 2 = 50MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 100MHz
+        },
+    [HSE_PLL_96MHz] =
+        {
+            .flash_latency  = FLASH_ACR_LATENCY_3WS,  // 3 flash wait states since the SYSCLK is at the very high value
+            .vos_scale      = 0b11 << PWR_CR_VOS_Pos, // Voltage scale of 1 since high SYSCLK frequency
+            .sysclk_source  = RCC_CFGR_SWS_PLL,       // SYSCLK source is the PLL
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE, // PLL source is the HSE
+            .pllm           = HSE_VALUE_MHz,          // Divides the HSE to give us 1MHz
+            .plln           = 200,                    // Multiplies the resultant 1MHz by 200 to give 200MHz
+            .pllp           = 0b00,                   // Divides the 200MHz by 2 to provide 100MHz for the SYSCLK. For more details, refer above
+            .pllq           = 4,                      // Divides the 200MHz by 4 to provide 50MHz for the USB and SDIO clocks
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 100MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = SystemCoreClock / 2 = 50MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 100MHz
+        },
+    [HSE_PLL_84MHz] =
+        {
+            .flash_latency  = FLASH_ACR_LATENCY_2WS,
+            .vos_scale      = 0b10 << PWR_CR_VOS_Pos,
+            .sysclk_source  = RCC_CFGR_SWS_PLL,
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE,
             .pllm           = HSE_VALUE_MHz,
             .plln           = 200,
             .pllp           = 0,
             .pllq           = 4,
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,  // SystemCoreClock (HCLK) = SYSCLK
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2, // APB1 = SystemCoreClock (HCLK) / 2
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1, // APB2 = SystemCoreClock (HCLK)
-        },
-    [HSE_PLL_96MHz] =
-        {
-            .flash_latency  = FLASH_ACR_LATENCY_3WS,
-            .vos_scale      = PWR_CR_VOS_0 | PWR_CR_VOS_1,
-            .sysclk_source  = RCC_CFGR_SWS_PLL,
-            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE,
-            .pllm           = 0,
-            .plln           = 0,
-            .pllp           = 0,
-            .pllq           = 0,
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,
-        },
-    [HSE_PLL_84MHz] =
-        {
-            .flash_latency  = FLASH_ACR_LATENCY_3WS,
-            .vos_scale      = PWR_CR_VOS_0 | PWR_CR_VOS_1,
-            .sysclk_source  = RCC_CFGR_SWS_PLL,
-            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE,
-            .pllm           = 0,
-            .plln           = 0,
-            .pllp           = 0,
-            .pllq           = 0,
             .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,
             .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,
             .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,
         },
     [HSE_PLL_64MHz] =
         {
-            .flash_latency  = FLASH_ACR_LATENCY_3WS,
-            .vos_scale      = PWR_CR_VOS_0 | PWR_CR_VOS_1,
+            .flash_latency  = FLASH_ACR_LATENCY_1WS,
+            .vos_scale      = 0b01 << PWR_CR_VOS_Pos,
             .sysclk_source  = RCC_CFGR_SWS_PLL,
             .pll_source     = RCC_PLLCFGR_PLLSRC_HSE,
-            .pllm           = 0,
-            .plln           = 0,
+            .pllm           = HSE_VALUE_MHz,
+            .plln           = 200,
             .pllp           = 0,
-            .pllq           = 0,
+            .pllq           = 4,
             .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,
             .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,
             .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,
         },
     [HSE_PLL_48MHz] =
         {
-            .flash_latency  = FLASH_ACR_LATENCY_3WS,
-            .vos_scale      = PWR_CR_VOS_0 | PWR_CR_VOS_1,
+            .flash_latency  = FLASH_ACR_LATENCY_1WS,
+            .vos_scale      = 0b01 << PWR_CR_VOS_Pos,
             .sysclk_source  = RCC_CFGR_SWS_PLL,
             .pll_source     = RCC_PLLCFGR_PLLSRC_HSE,
-            .pllm           = 0,
-            .plln           = 0,
+            .pllm           = HSE_VALUE_MHz,
+            .plln           = 200,
             .pllp           = 0,
-            .pllq           = 0,
+            .pllq           = 4,
             .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,
             .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,
         },
     [HSE_PLL_DIRECT] =
         {
             .flash_latency  = FLASH_ACR_LATENCY_0WS, // 0 flash wait states since the SYSCLK frequency is low
-            .vos_scale      = 0,                     // Ignored since PLL is disabled
             .sysclk_source  = RCC_CFGR_SWS_HSE,      // SYSCLK source is the HSE
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,    // SystemCoreClock (HCLK) = SYSCLK
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,   // APB1 = SystemCoreClock (HCLK)
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,   // APB2 = SystemCoreClock (HCLK)
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,    // SystemCoreClock = SYSCLK
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,   // APB1 = SystemCoreClock
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,   // APB2 = SystemCoreClock
         },
     [HSI_PLL_100MHz] =
         {
-            .flash_latency  = FLASH_ACR_LATENCY_3WS,       // 3 flash wait states since the SYSCLK is at the highest value
-            .vos_scale      = PWR_CR_VOS_0 | PWR_CR_VOS_1, // Voltage scale of 1 since high SYSCLK frequency
-            .sysclk_source  = RCC_CFGR_SWS_PLL,            // SYSCLK source is the PLL
-            .pll_source     = RCC_PLLCFGR_PLLSRC_HSI,      // PLL source is the HSI
+            .flash_latency  = FLASH_ACR_LATENCY_3WS,  // 3 flash wait states since the SYSCLK is at the highest value
+            .vos_scale      = 0b11 << PWR_CR_VOS_Pos, // Voltage scale of 1 since high SYSCLK frequency
+            .sysclk_source  = RCC_CFGR_SWS_PLL,       // SYSCLK source is the PLL
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSI, // PLL source is the HSI
             .pllm           = HSI_VALUE_MHz,
             .plln           = 200,
             .pllp           = 0,
             .pllq           = 4,
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,  // SystemCoreClock (HCLK) = SYSCLK
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2, // APB1 = SystemCoreClock (HCLK) / 2
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1, // APB2 = SystemCoreClock (HCLK)
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,  // SystemCoreClock = SYSCLK = 100MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2, // APB1 = SystemCoreClock / 2 = 50MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1, // APB2 = SystemCoreClock = 100MHz
         },
     [HSI_PLL_96MHz] =
         {
             .flash_latency  = FLASH_ACR_LATENCY_3WS,
-            .vos_scale      = PWR_CR_VOS_0 | PWR_CR_VOS_1,
+            .vos_scale      = 0b11 << PWR_CR_VOS_Pos,
             .sysclk_source  = RCC_CFGR_SWS_PLL,
-            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE,
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSI,
             .pllm           = 0,
             .plln           = 0,
             .pllp           = 0,
@@ -155,10 +155,10 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
         },
     [HSI_PLL_84MHz] =
         {
-            .flash_latency  = FLASH_ACR_LATENCY_3WS,
-            .vos_scale      = PWR_CR_VOS_0 | PWR_CR_VOS_1,
+            .flash_latency  = FLASH_ACR_LATENCY_2WS,
+            .vos_scale      = 0b10 << PWR_CR_VOS_Pos,
             .sysclk_source  = RCC_CFGR_SWS_PLL,
-            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE,
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSI,
             .pllm           = 0,
             .plln           = 0,
             .pllp           = 0,
@@ -169,10 +169,10 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
         },
     [HSI_PLL_64MHz] =
         {
-            .flash_latency  = FLASH_ACR_LATENCY_3WS,
-            .vos_scale      = PWR_CR_VOS_0 | PWR_CR_VOS_1,
+            .flash_latency  = FLASH_ACR_LATENCY_1WS,
+            .vos_scale      = 0b01 << PWR_CR_VOS_Pos,
             .sysclk_source  = RCC_CFGR_SWS_PLL,
-            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE,
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSI,
             .pllm           = 0,
             .plln           = 0,
             .pllp           = 0,
@@ -183,10 +183,10 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
         },
     [HSI_PLL_48MHz] =
         {
-            .flash_latency  = FLASH_ACR_LATENCY_3WS,
-            .vos_scale      = PWR_CR_VOS_0 | PWR_CR_VOS_1,
+            .flash_latency  = FLASH_ACR_LATENCY_1WS,
+            .vos_scale      = 0b01 << PWR_CR_VOS_Pos,
             .sysclk_source  = RCC_CFGR_SWS_PLL,
-            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE,
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSI,
             .pllm           = 0,
             .plln           = 0,
             .pllp           = 0,
@@ -198,11 +198,10 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
     [HSI_PLL_DIRECT] =
         {
             .flash_latency  = FLASH_ACR_LATENCY_0WS, // 0 flash wait states since the SYSCLK frequency is low
-            .vos_scale      = 0,                     // Ignored since PLL is disabled
             .sysclk_source  = RCC_CFGR_SWS_HSI,      // SYSCLK source is the HSI
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,    // SystemCoreClock (HCLK) = SYSCLK
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,   // APB1 = SystemCoreClock (HCLK)
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,   // APB2 = SystemCoreClock (HCLK)
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,    // SystemCoreClock = SYSCLK
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,   // APB1 = SystemCoreClock
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,   // APB2 = SystemCoreClock
         },
 };
 
@@ -312,7 +311,7 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
 
     __enable_irq();
 
-    // Update the global variables tracking the system clock and reconfigure the audio PLL to its old state since it was disabled
+    // Update the global variables tracking the system clock and reconfigure the audio PLL to its old state since it was disabled here
     system_core_clock_update();
     audio_pll_clock_config(AudioPLLCoreClockType);
 }
@@ -337,13 +336,13 @@ static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* pre
         // the PLL(s), which is bypassed if the HSE or HSI feeds the SYSCLK directly; so we cannot trust
         // its current value. So we set the PLLSRC to be whatever is driving the SYSCLK currently.
         case RCC_CFGR_SWS_HSI:
-            RCC->CFGR = (RCC->CFGR & ~RCC_PLLCFGR_PLLSRC) | RCC_PLLCFGR_PLLSRC_HSI;
-            pllm      = HSI_VALUE_MHz;
+            RCC->PLLCFGR = (RCC->CFGR & ~RCC_PLLCFGR_PLLSRC) | RCC_PLLCFGR_PLLSRC_HSI;
+            pllm         = HSI_VALUE_MHz;
             break;
 
         case RCC_CFGR_SWS_HSE:
-            RCC->CFGR = (RCC->CFGR & ~RCC_PLLCFGR_PLLSRC) | RCC_PLLCFGR_PLLSRC_HSE;
-            pllm      = HSE_VALUE_MHz;
+            RCC->PLLCFGR = (RCC->CFGR & ~RCC_PLLCFGR_PLLSRC) | RCC_PLLCFGR_PLLSRC_HSE;
+            pllm         = HSE_VALUE_MHz;
             break;
 
         // But if the PLL is the SYSCLK source, the PLLSRC bit has already been explicitly before now.
@@ -438,5 +437,5 @@ void audio_pll_clock_update(void) {
     const uint32_t pllm   = (RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SM) >> RCC_PLLI2SCFGR_PLLI2SM_Pos;
     const uint32_t plln   = (RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SN) >> RCC_PLLI2SCFGR_PLLI2SN_Pos;
     const uint32_t pllr   = (RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SR) >> RCC_PLLI2SCFGR_PLLI2SR_Pos;
-    AudioPLLCoreClock     = ((source / pllm) * plln) / pllr;
+    AudioPLLCoreClock     = (RCC->CR & RCC_CR_PLLI2SRDY) ? (((source / pllm) * plln) / pllr) : 0;
 }
