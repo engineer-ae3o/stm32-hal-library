@@ -37,6 +37,11 @@ void system_init(void) {
 
     SEGGER_RTT_Init();
     LOGI("System_Init", "--------------- Done with FPU, PLL and system clock setup ---------------");
+    LOGI("System_Init",
+         "System Clock: %luMHz, APB1 Bus Clock: %luMHz, APB2 Bus Clock: %luMHz",
+         (SystemCoreClock / 1'000'000),
+         (APB1CoreClock / 1'000'000),
+         (APB2CoreClock / 1'000'000));
 }
 
 // Provide a weak main function
