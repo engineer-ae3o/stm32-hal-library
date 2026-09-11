@@ -12,7 +12,7 @@ namespace test::clock {
 
     namespace {
 
-        constexpr const char* TAG = "ClockTest";
+        constexpr const char* TAG = "Clock_Test";
 
         struct system_clock_case_t {
             system_clock_t clock;

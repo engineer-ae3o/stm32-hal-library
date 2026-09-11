@@ -1,14 +1,13 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
-#include "drivers/adc.h"
 #include "drivers/adc_types.h"
-#include "drivers/dma.h"
-#include "utils/board.h"
 #include "utils/common.h"
+#include "drivers/adc.h"
+#include "utils/board.h"
+#include "utils/tick.h"
 #include "utils/err.h"
 #include "utils/log.h"
-#include "utils/tick.h"
 
 #include <array>
 #include <cstdint>
@@ -18,7 +17,7 @@ namespace test::adc {
 
     namespace {
 
-        constexpr const char* TAG = "AdcTest";
+        constexpr const char* TAG = "ADC_Test";
 
         constexpr uint32_t BOUNDED_WAIT_ITERS = 10U * TIMEOUT_CYCLES;
 
@@ -274,12 +273,12 @@ namespace test::adc {
                 sequence[i] = static_cast<adc_channels_t>(i % 16);
             }
 
-            uint16_t                      buffer[1] = {0};
+            uint16_t                      buffer = 0;
             const adc_continuous_config_t config{
                 .channels         = {sequence.data(), count},
                 .trigger          = RG_TRIGGER_SOFTWARE,
                 .trigger_polarity = RISING_EDGE,
-                .buffer_1         = buffer,
+                .buffer_1         = &buffer,
                 .buffer_2         = nullptr,
                 .buffer_size      = 1,
                 .priority         = DMA_PRIORITY_LOW,
@@ -317,15 +316,16 @@ namespace test::adc {
     void continuous_conversion_arg_guards() {
         reset_to_baseline();
 
-        constexpr adc_channels_t      ONE_CHANNEL[1] = {ADC_CHANNEL_0};
-        uint16_t                      buf[4]         = {};
+        constexpr adc_channels_t channel = ADC_CHANNEL_0;
+        std::array<uint16_t, 4>  buffer  = {};
+
         const adc_continuous_config_t base{
-            .channels         = {ONE_CHANNEL, 1},
+            .channels         = {.channels_sequence = &channel, .num_of_channels = 1},
             .trigger          = RG_TRIGGER_SOFTWARE,
             .trigger_polarity = RISING_EDGE,
-            .buffer_1         = buf,
+            .buffer_1         = buffer.data(),
             .buffer_2         = nullptr,
-            .buffer_size      = 4,
+            .buffer_size      = buffer.size(),
             .priority         = DMA_PRIORITY_LOW,
             .circular_mode    = DMA_MODE_NO_CIRCULAR,
             .callbacks        = {},
@@ -335,11 +335,11 @@ namespace test::adc {
         TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_cont_start_conv(ADC1, nullptr));
 
         auto no_channels     = base;
-        no_channels.channels = {nullptr, 1};
+        no_channels.channels = {.channels_sequence = nullptr, .num_of_channels = 1};
         TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_cont_start_conv(ADC1, &no_channels));
 
         auto zero_count     = base;
-        zero_count.channels = {ONE_CHANNEL, 0};
+        zero_count.channels = {.channels_sequence = &channel, .num_of_channels = 0};
         TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_cont_start_conv(ADC1, &zero_count));
 
         auto too_many                     = base;
@@ -359,14 +359,14 @@ namespace test::adc {
     void continuous_conversion_fills_the_buffer_via_dma_and_calls_back() {
         reset_to_baseline();
 
-        constexpr adc_channels_t CHANNELS[2] = {ADC_CHANNEL_0, ADC_CHANNEL_1};
-        std::array<uint16_t, 8>  buffer{};
+        constexpr auto          CHANNELS = std::array{ADC_CHANNEL_0, ADC_CHANNEL_1};
+        std::array<uint16_t, 8> buffer{};
         buffer.fill(0xFFFF);
 
         s_cont_done = false;
 
         const adc_continuous_config_t config{
-            .channels         = {CHANNELS, 2},
+            .channels         = {.channels_sequence = CHANNELS.data(), .num_of_channels = CHANNELS.size()},
             .trigger          = RG_TRIGGER_SOFTWARE,
             .trigger_polarity = RISING_EDGE,
             .buffer_1         = buffer.data(),
@@ -374,11 +374,14 @@ namespace test::adc {
             .buffer_size      = static_cast<uint16_t>(buffer.size()),
             .priority         = DMA_PRIORITY_LOW,
             .circular_mode    = DMA_MODE_NO_CIRCULAR,
-            .callbacks        = {.on_buffer_full       = cont_done_cb,
-                                 .on_transfer_error    = nullptr,
-                                 .on_direct_mode_error = nullptr,
-                                 .on_data_overrun      = nullptr,
-                                 .user                 = nullptr},
+            .callbacks =
+                {
+                    .on_buffer_full       = cont_done_cb,
+                    .on_transfer_error    = nullptr,
+                    .on_direct_mode_error = nullptr,
+                    .on_data_overrun      = nullptr,
+                    .user                 = nullptr,
+                },
         };
 
         adc_enable_nvic_irq(true);

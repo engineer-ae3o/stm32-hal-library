@@ -1,9 +1,9 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
+#include "utils/common.h"
 #include "drivers/crc.h"
 #include "drivers/dma.h"
-#include "utils/common.h"
 #include "utils/err.h"
 #include "utils/log.h"
 
@@ -15,7 +15,7 @@ namespace test::crc {
 
     namespace {
 
-        constexpr const char* TAG = "CrcTest";
+        constexpr const char* TAG = "CRC_Test";
 
         // A wide buffer so the DMA transfer takes long enough to reliably observe the
         // "already in progress" state from software, not just the two endpoints.

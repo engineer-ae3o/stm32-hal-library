@@ -18,7 +18,7 @@ namespace test::heap {
 
     namespace {
 
-        constexpr const char* TAG = "HeapTest";
+        constexpr const char* TAG = "Heap_Test";
 
         // Helper to verify zero leaks and valid invariant state
         void assert_heap_clean() {

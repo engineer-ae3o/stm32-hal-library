@@ -13,7 +13,7 @@ namespace test::gpio {
 
     namespace {
 
-        constexpr const char* TAG = "GpioTest";
+        constexpr const char* TAG = "GPIO_Test";
 
         // A scratch pin/port used for tests that need to actually drive and read back a level.
         // Chosen arbitrarily; nothing on this board ties it to a fixed function.

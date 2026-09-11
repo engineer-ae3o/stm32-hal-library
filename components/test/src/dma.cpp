@@ -1,9 +1,9 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
-#include "drivers/dma.h"
 #include "drivers/dma_types.h"
 #include "utils/common.h"
+#include "drivers/dma.h"
 #include "utils/err.h"
 #include "utils/log.h"
 
@@ -16,9 +16,9 @@ namespace test::dma {
 
     namespace {
 
-        constexpr const char* TAG = "DmaTest";
+        constexpr const char* TAG = "DMA_Test";
 
-        // An otherwise-unused stream reserved for tests that need to drive a real transfer
+        // An otherwise unused stream reserved for tests that need to drive a real transfer
         DMA_Stream_TypeDef* const SCRATCH_STREAM = DMA2_Stream1;
 
         struct stream_expectation_t {
@@ -94,6 +94,10 @@ namespace test::dma {
         }
 
     } // namespace
+
+    void DMA2_Stream1_IRQHandler() {
+        TEST_ASSERT_EQUAL(HAL_OK, dma_isr_helper(SCRATCH_STREAM));
+    }
 
     void clk_enable_toggles_only_the_targeted_controller() {
         TEST_ASSERT_EQUAL(HAL_OK, dmax_clk_enable(DMA1, true));
@@ -337,7 +341,7 @@ namespace test::dma {
         std::array<uint32_t, COUNT> dst{};
 
         for (size_t i = 0; i < COUNT; i++) {
-            src[i] = static_cast<uint32_t>(0xC0FFEE00U + i);
+            src[i] = 0xC0FFEE00U + i;
         }
         dst.fill(0);
 
