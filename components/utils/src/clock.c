@@ -336,12 +336,12 @@ static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* pre
         // the PLL(s), which is bypassed if the HSE or HSI feeds the SYSCLK directly; so we cannot trust
         // its current value. So we set the PLLSRC to be whatever is driving the SYSCLK currently.
         case RCC_CFGR_SWS_HSI:
-            RCC->PLLCFGR = (RCC->CFGR & ~RCC_PLLCFGR_PLLSRC) | RCC_PLLCFGR_PLLSRC_HSI;
+            RCC->PLLCFGR = (RCC->PLLCFGR & ~RCC_PLLCFGR_PLLSRC) | RCC_PLLCFGR_PLLSRC_HSI;
             pllm         = HSI_VALUE_MHz;
             break;
 
         case RCC_CFGR_SWS_HSE:
-            RCC->PLLCFGR = (RCC->CFGR & ~RCC_PLLCFGR_PLLSRC) | RCC_PLLCFGR_PLLSRC_HSE;
+            RCC->PLLCFGR = (RCC->PLLCFGR & ~RCC_PLLCFGR_PLLSRC) | RCC_PLLCFGR_PLLSRC_HSE;
             pllm         = HSE_VALUE_MHz;
             break;
 
