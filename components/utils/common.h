@@ -18,7 +18,7 @@ extern "C" {
 #define UNUSED(x) (void)(x)
 
 // NVIC interrupt priorities for the different peripherals
-#define TIM2_NVIC_IRQ_PRIORITY (3U)
+#define SysTick_NVIC_IRQ_PRIORITY (0U)
 #define SPI_DMA_NVIC_IRQ_PRIORITY (6U)
 #define I2S_DMA_NVIC_IRQ_PRIORITY (12U)
 #define UART_DMA_NVIC_IRQ_PRIORITY (10U)
@@ -27,7 +27,7 @@ extern "C" {
 
 
 // The system tick rate
-#define TICK_RATE_HZ (1000)
+#define TICK_RATE_Hz (1000)
 
 // Heap size
 #define HEAP_SIZE_BYTES (32 * 1024)
@@ -36,9 +36,6 @@ extern "C" {
 
 // RTT buffer for logging. Controls the output buffer parameter
 #define RTT_BUFFER_INDEX (0)
-
-// Use the cycle counter component
-#define USE_DWT_CYCCNT 1
 
 #define HALT()                                                                                                                                       \
     do {                                                                                                                                             \

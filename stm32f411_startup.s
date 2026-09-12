@@ -51,6 +51,8 @@ reset_handler:
 
 .type default_handler, %function
 default_handler:
+    cpsid i
+    wfi
     b default_handler
 
 .size  default_handler, .-default_handler

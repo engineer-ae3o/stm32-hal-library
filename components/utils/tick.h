@@ -14,14 +14,20 @@ extern "C" {
 #include <stdint.h>
 
 
-// Get number of ticks that have passed since bootup
+// Initialize or reinitialize (after a clock switch) the SysTick timer
+void systick_init(void);
+
+// Enable the DWT->CYCCNT counter if supported
+void dwt_cnt_init(void);
+
+// Get number of ticks that have passed since boot
 uint32_t ticks_since_boot(void);
 
 // Converts a time in milliseconds to a time in ticks.
-#define MS_TO_TICKS(ms) (((ms) * TICK_RATE_HZ) / 1000)
+#define MS_TO_TICKS(ms) (((ms) * TICK_RATE_Hz) / 1000)
 
 // Converts a time in ticks to a time in milliseconds.
-#define TICKS_TO_MS(ticks) (((ticks) * 1000U) / TICK_RATE_HZ)
+#define TICKS_TO_MS(ticks) (((ticks) * 1000U) / TICK_RATE_Hz)
 
 
 // Polling delay functions
@@ -31,18 +37,15 @@ uint32_t ticks_since_boot(void);
         while ((ticks_since_boot_ms() - start) < (ms));                                                                                              \
     } while (0)
 
-#ifdef USE_DWT_CYCCNT
 #define delay_us(us)                                                                                                                                 \
     do {                                                                                                                                             \
         uint32_t cycles = (us) * (SystemCoreClock / 1'000'000U);                                                                                     \
         uint32_t start  = DWT->CYCCNT;                                                                                                               \
         while ((DWT->CYCCNT - start) < cycles);                                                                                                      \
     } while (0)
-#endif
 
 
 // Profiling helpers
-#ifdef USE_DWT_CYCCNT
 [[maybe_unused]] static uint32_t s_prof_start = 0;
 
 #define prof_start()                                                                                                                                 \
@@ -51,7 +54,6 @@ uint32_t ticks_since_boot(void);
     } while (0)
 
 #define prof_end() (DWT->CYCCNT - s_prof_start)
-#endif
 
 // Convert cycles to time.
 #define cycles_to_us(cycles) ((cycles) * 1'000'000ULL / SystemCoreClock)

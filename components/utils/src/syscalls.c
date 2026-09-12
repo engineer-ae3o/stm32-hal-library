@@ -3,6 +3,7 @@
 #include "printf/printf.h"
 #include "utils/common.h"
 #include "utils/clock.h"
+#include "utils/tick.h"
 #include "utils/log.h"
 
 #include <errno.h>
@@ -13,7 +14,7 @@
 #include <sys/types.h>
 
 
-// Initalizes hardware resources needed before main runs
+// Initalizes hardware resources needed before main runs. Called in the reset handler
 void system_init(void) {
     // Enable the I and D caches, as well as the instruction prefetch buffer
     FLASH->ACR |= (FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_PRFTEN);
@@ -32,8 +33,12 @@ void system_init(void) {
     SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk);
 
     // Configure the system clock to 100MHz, derived from the HSE. Also ensure the audio PLL is disabled at startup
-    system_core_clock_config(HSE_PLL_100MHz);
+    system_core_clock_config(HSI_PLL_MATCH_HSE);
     audio_pll_clock_config(AUDIO_PLL_DISABLE);
+
+    // Initialize the debug trace counter and the SysTick counter
+    systick_init();
+    dwt_cnt_init();
 
     SEGGER_RTT_Init();
     LOGI("System_Init", "--------------- Done with FPU, PLL and system clock setup ---------------");
@@ -114,7 +119,7 @@ void NMI_Handler(void) {
                 system_core_clock_config(HSI_PLL_48MHz);
                 break;
             case HSE_PLL_DIRECT:
-                system_core_clock_config(HSI_PLL_DIRECT);
+                system_core_clock_config(HSI_PLL_MATCH_HSE);
                 break;
             default:
                 system_core_clock_config(SystemCoreClockType);

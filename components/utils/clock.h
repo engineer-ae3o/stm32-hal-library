@@ -12,19 +12,21 @@ extern "C" {
 
 typedef enum : uint8_t {
     // Derived from the HSE
-    HSE_PLL_100MHz, // The HSE feeds the main PLL, which feeds the SYSCLK 100MHz
-    HSE_PLL_96MHz,  // The HSE feeds the main PLL, which feeds the SYSCLK 96MHz, suitable for operation with USB
-    HSE_PLL_84MHz,  // The HSE feeds the main PLL, which feeds the SYSCLK 84MHz
-    HSE_PLL_64MHz,  // The HSE feeds the main PLL, which feeds the SYSCLK 64MHz
-    HSE_PLL_48MHz,  // The HSE feeds the main PLL, which feeds the SYSCLK 48MHz, suitable for operation with USB
-    HSE_PLL_DIRECT, // The HSE feeds the SYSCLK directly, and has a value of HSE_VALUE_MHz (defined in common.h)
+    HSE_PLL_100MHz,    // The HSE feeds the main PLL, which feeds the SYSCLK 100MHz
+    HSE_PLL_96MHz,     // The HSE feeds the main PLL, which feeds the SYSCLK 96MHz, suitable for operation with USB
+    HSE_PLL_84MHz,     // The HSE feeds the main PLL, which feeds the SYSCLK 84MHz
+    HSE_PLL_64MHz,     // The HSE feeds the main PLL, which feeds the SYSCLK 64MHz
+    HSE_PLL_48MHz,     // The HSE feeds the main PLL, which feeds the SYSCLK 48MHz, suitable for operation with USB
+    HSE_PLL_MATCH_HSI, // The HSE feeds the main PLL to generate a clock frequency matching HSI_VALUE_MHz (defined in board.h)
+    HSE_PLL_DIRECT,    // The HSE feeds the SYSCLK directly, and has a value of HSE_VALUE_MHz (defined in board.h)
     // Derived from the HSI
-    HSI_PLL_100MHz, // The HSI feeds the main PLL, which feeds the SYSCLK 100MHz
-    HSI_PLL_96MHz,  // The HSI feeds the main PLL, which feeds the SYSCLK 96MHz, suitable for operation with USB
-    HSI_PLL_84MHz,  // The HSI feeds the main PLL, which feeds the SYSCLK 84MHz
-    HSI_PLL_64MHz,  // The HSI feeds the main PLL, which feeds the SYSCLK 64MHz
-    HSI_PLL_48MHz,  // The HSI feeds the main PLL, which feeds the SYSCLK 48MHz, suitable for operation with USB
-    HSI_PLL_DIRECT, // The HSI feeds the SYSCLK directly, and has a value of HSI_VALUE_MHz (defined in common.h)
+    HSI_PLL_100MHz,    // The HSI feeds the main PLL, which feeds the SYSCLK 100MHz
+    HSI_PLL_96MHz,     // The HSI feeds the main PLL, which feeds the SYSCLK 96MHz, suitable for operation with USB
+    HSI_PLL_84MHz,     // The HSI feeds the main PLL, which feeds the SYSCLK 84MHz
+    HSI_PLL_64MHz,     // The HSI feeds the main PLL, which feeds the SYSCLK 64MHz
+    HSI_PLL_48MHz,     // The HSI feeds the main PLL, which feeds the SYSCLK 48MHz, suitable for operation with USB
+    HSI_PLL_MATCH_HSE, // The HSI feeds the main PLL to generate a clock frequency matching HSE_VALUE_MHz (defined in board.h)
+    HSI_PLL_DIRECT,    // The HSI feeds the SYSCLK directly, and has a value of HSI_VALUE_MHz (defined in board.h)
 } system_clock_t;
 
 typedef enum : uint8_t {

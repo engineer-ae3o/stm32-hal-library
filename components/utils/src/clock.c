@@ -2,6 +2,7 @@
 #include "utils/common.h"
 #include "utils/board.h"
 #include "utils/clock.h"
+#include "utils/tick.h"
 
 #include <stdint.h>
 
@@ -117,6 +118,20 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,    // APB1 = SystemCoreClock  = 48MHz
             .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 48MHz
         },
+    [HSE_PLL_MATCH_HSI] =
+        {
+            .flash_latency  = FLASH_ACR_LATENCY_0WS,  // 0 flash wait state since the SYSCLK is at a low value
+            .vos_scale      = 0b01 << PWR_CR_VOS_Pos, // Voltage scale of 3 since low SYSCLK frequency
+            .sysclk_source  = RCC_CFGR_SWS_PLL,       // SYSCLK source is the PLL
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSE, // PLL source is the HSE
+            .pllm           = HSE_VALUE_MHz,          // Divides the HSE by its value in MHz to give us 1MHz regardless of its starting value
+            .plln           = HSI_VALUE_MHz * 2,      // Multiplies the resultant 1MHz by HSI_VALUE_MHz * 2
+            .pllp           = 0b00, // Divides the HSI_VALUE_MHz * 2 by 2 to provide HSI_VALUE_MHz for the SYSCLK. For more details, refer above
+            .pllq           = 2,    // Divides the HSI_VALUE_MHz * 2 by 2 to provide HSI_VALUE_MHz for the USB and SDIO clocks
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,  // SystemCoreClock = SYSCLK = HSI_VALUE_MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1, // APB1 = SystemCoreClock  = HSI_VALUE_MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1, // APB2 = SystemCoreClock = HSI_VALUE_MHz
+        },
     [HSE_PLL_DIRECT] =
         {
             .flash_latency  = FLASH_ACR_LATENCY_0WS, // 0 flash wait states since the SYSCLK frequency is very low
@@ -195,6 +210,20 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,    // APB1 = SystemCoreClock  = 48MHz
             .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 48MHz
         },
+    [HSI_PLL_MATCH_HSE] =
+        {
+            .flash_latency  = FLASH_ACR_LATENCY_0WS,  // 0 flash wait states since the SYSCLK is at a low value
+            .vos_scale      = 0b01 << PWR_CR_VOS_Pos, // Voltage scale of 3 since low SYSCLK frequency
+            .sysclk_source  = RCC_CFGR_SWS_PLL,       // SYSCLK source is the PLL
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSI, // PLL source is the HSE
+            .pllm           = HSI_VALUE_MHz,          // Divides the HSI by its value in MHz to give us 1MHz regardless of its starting value
+            .plln           = HSE_VALUE_MHz * 2,      // Multiplies the resultant 1MHz by HSE_VALUE_MHz * 2
+            .pllp           = 0b00, // Divides the HSE_VALUE_MHz * 2 by 2 to provide HSE_VALUE_MHz for the SYSCLK. For more details, refer above
+            .pllq           = 2,    // Divides the HSE_VALUE_MHz * 2 by 2 to provide HSE_VALUE_MHz for the USB and SDIO clocks
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,  // SystemCoreClock = SYSCLK = HSE_VALUE_MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1, // APB1 = SystemCoreClock  = HSE_VALUE_MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1, // APB2 = SystemCoreClock = HSE_VALUE_MHz
+        },
     [HSI_PLL_DIRECT] =
         {
             .flash_latency  = FLASH_ACR_LATENCY_0WS, // 0 flash wait states since the SYSCLK frequency is very low
@@ -216,11 +245,6 @@ static const audio_clock_preset_t s_audio_clock_preset_lut[] = {
 static inline void system_core_clock_config_preset(const system_clock_preset_t* preset) {
     __disable_irq();
 
-    // Set the required flash latency
-    FLASH->ACR = (FLASH->ACR & ~FLASH_ACR_LATENCY) | preset->flash_latency;
-    __DSB();
-    __ISB();
-
     // Temporarily switch the SYSCLK source to the HSI so we can safely disable the PLLs.
     // We use the HSI explicitly for this purpose because this function could be called
     // when the HSE experiences a fault, so trying to reuse it here will cause more issues.
@@ -232,6 +256,11 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
     // Use the HSI as the SYSCLK source
     RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_HSI;
     while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI);
+
+    // Set the required flash latency
+    FLASH->ACR = (FLASH->ACR & ~FLASH_ACR_LATENCY) | preset->flash_latency;
+    __DSB();
+    __ISB();
 
     // Disable the PLLs before configuring any clock
     RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_PLLI2SON);
@@ -268,7 +297,6 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
             if (preset->pll_source == RCC_PLLCFGR_PLLSRC_HSI) {
                 // Do nothing. The HSI is already enabled
             } else if (preset->pll_source == RCC_PLLCFGR_PLLSRC_HSE) {
-                // Enable the HSE
                 RCC->CR |= RCC_CR_HSEON;
                 while (!(RCC->CR & RCC_CR_HSERDY));
             } else {
@@ -319,8 +347,10 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
 
     __enable_irq();
 
-    // Update the global variables tracking the system clock and reconfigure the audio PLL to its old state since it was disabled here
+    // Update the global variables tracking the system clock, and reconfigure the SysTick since
+    // the system clock got updated the audio PLL to its old state since it was disabled here.
     system_core_clock_update();
+    systick_init();
     audio_pll_clock_config(AudioPLLCoreClockType);
 }
 
