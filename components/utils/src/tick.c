@@ -10,9 +10,17 @@
 static atomic_uint s_tick_counter = 0;
 
 void systick_init(void) {
-    LOGI("Tick", "Initializing the SysTick as the tick timer source.");
     SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
-    NVIC_SetPriority(SysTick_IRQn, SysTick_NVIC_IRQ_PRIORITY);
+
+    static bool first_init = true;
+    if (gnu_unlikely(first_init)) {
+        LOGI("Tick", "Initializing the SysTick as the tick timer source with an HCLK of %luMHz", SystemCoreClock / 1'000'000U);
+        NVIC_SetPriority(SysTick_IRQn, SysTick_NVIC_IRQ_PRIORITY);
+        first_init = false;
+    } else {
+        LOGI("Tick", "Reinitializing the SysTick as the tick timer source with an HCLK of %luMHz", SystemCoreClock / 1'000'000U);
+    }
+
     SysTick->VAL  = 0;
     SysTick->LOAD = (((SystemCoreClock / 8) / TICK_RATE_Hz) - 1) & SysTick_LOAD_RELOAD_Msk;
     SysTick->CTRL = (SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk) | (SysTick->CTRL & ~SysTick_CTRL_CLKSOURCE_Msk);

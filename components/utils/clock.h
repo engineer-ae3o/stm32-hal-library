@@ -39,8 +39,8 @@ typedef enum : uint8_t {
     AUDIO_PLL_151MHz,   // The Audio PLL at 151MHz. Suitable for the 44.1kHz family with MCK output disabled
     AUDIO_PLL_172MHz,   // The Audio PLL at 172MHz. Suitable for the 48kHz family with MCK output enabled
     // NOTE: Due to hardware limits, operation with an I2S frequency of 192kHz and MCK output enabled is not
-    // supported due to the errors and inaccuracies, as this would render this specific setup not feasible and
-    // impractical for any realistic I2S and audio usage.
+    // supported due to theinaccuracies the clock would produce, as this would render this specific setup not
+    // feasible and impractical for any realistic I2S and audio usage.
 } audio_clock_t;
 
 // Track the system clock, buses' clock and audio PLL frequencies

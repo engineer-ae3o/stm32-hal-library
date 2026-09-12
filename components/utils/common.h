@@ -26,6 +26,10 @@ extern "C" {
 #define CRC_DMA_NVIC_IRQ_PRIORITY (11U)
 
 
+#define gnu_likely(x) __builtin_expect(!!(x), 1)
+#define gnu_unlikely(x) __builtin_expect(!!(x), 0)
+
+
 // The system tick rate
 #define TICK_RATE_Hz (1000)
 
