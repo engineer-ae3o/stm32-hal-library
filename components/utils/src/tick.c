@@ -10,6 +10,7 @@
 static atomic_uint s_tick_counter = 0;
 
 void systick_init(void) {
+    LOGI("Tick", "Initializing the SysTick as the tick timer source.");
     SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
     NVIC_SetPriority(SysTick_IRQn, SysTick_NVIC_IRQ_PRIORITY);
     SysTick->VAL  = 0;
@@ -18,11 +19,10 @@ void systick_init(void) {
 }
 
 void dwt_cnt_init(void) {
-    LOGI("Tick", "Initializing the SysTick as the tick timer source.");
-
-    // Check if the DWT->CYCCNT is supported on the running microcontroller
+    // Enable the Debug interface
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 
+    // Check if the DWT->CYCCNT is supported on the running microcontroller
     if ((DWT->CTRL >> DWT_CTRL_NOCYCCNT_Pos) & 1) {
         LOGW("Tick", "The cycle counter on the data watchpoint and tracing subsystem not supported on given target.");
         LOGW("Tick", "Profiling facilities and the delay_us(...) macro will not be available.");
@@ -37,8 +37,9 @@ void dwt_cnt_init(void) {
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-uint32_t ticks_since_boot(void) {
-    return atomic_load_explicit(&s_tick_counter, memory_order_relaxed);
+uint32_t ms_since_boot(void) {
+    // Convert to milliseconds
+    return (atomic_load_explicit(&s_tick_counter, memory_order_relaxed) * 1000U) / TICK_RATE_Hz;
 }
 
 void SysTick_Handler(void) {

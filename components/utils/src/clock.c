@@ -215,7 +215,7 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .flash_latency  = FLASH_ACR_LATENCY_0WS,  // 0 flash wait states since the SYSCLK is at a low value
             .vos_scale      = 0b01 << PWR_CR_VOS_Pos, // Voltage scale of 3 since low SYSCLK frequency
             .sysclk_source  = RCC_CFGR_SWS_PLL,       // SYSCLK source is the PLL
-            .pll_source     = RCC_PLLCFGR_PLLSRC_HSI, // PLL source is the HSE
+            .pll_source     = RCC_PLLCFGR_PLLSRC_HSI, // PLL source is the HSI
             .pllm           = HSI_VALUE_MHz,          // Divides the HSI by its value in MHz to give us 1MHz regardless of its starting value
             .plln           = HSE_VALUE_MHz * 2,      // Multiplies the resultant 1MHz by HSE_VALUE_MHz * 2
             .pllp           = 0b00, // Divides the HSE_VALUE_MHz * 2 by 2 to provide HSE_VALUE_MHz for the SYSCLK. For more details, refer above
@@ -347,10 +347,9 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
 
     __enable_irq();
 
-    // Update the global variables tracking the system clock, and reconfigure the SysTick since
-    // the system clock got updated the audio PLL to its old state since it was disabled here.
+    // Update the global variables tracking the system clock and reconfigure
+    // the audio PLL to its old state since it was disabled here.
     system_core_clock_update();
-    systick_init();
     audio_pll_clock_config(AudioPLLCoreClockType);
 }
 
@@ -466,6 +465,9 @@ void system_core_clock_update(void) {
     ASSERT(SystemCoreClock <= MAX_SYSTEM_CLOCK_Hz);
     ASSERT(APB1CoreClock <= MAX_APB1_CLOCK_Hz);
     ASSERT(APB2CoreClock <= MAX_APB2_CLOCK_Hz);
+
+    // Reconfigure the SysTick since the system clock got updated
+    systick_init();
 }
 
 

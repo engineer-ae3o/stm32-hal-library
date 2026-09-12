@@ -20,25 +20,20 @@ void systick_init(void);
 // Enable the DWT->CYCCNT counter if supported
 void dwt_cnt_init(void);
 
-// Get number of ticks that have passed since boot
-uint32_t ticks_since_boot(void);
-
-// Converts a time in milliseconds to a time in ticks.
-#define MS_TO_TICKS(ms) (((ms) * TICK_RATE_Hz) / 1000)
-
-// Converts a time in ticks to a time in milliseconds.
-#define TICKS_TO_MS(ticks) (((ticks) * 1000U) / TICK_RATE_Hz)
+// Get number of milliseconds since boot
+uint32_t ms_since_boot(void);
 
 
-// Polling delay functions
+// Polling delay macros
 #define delay_ms(ms)                                                                                                                                 \
     do {                                                                                                                                             \
-        uint32_t start = ticks_since_boot_ms();                                                                                                      \
-        while ((ticks_since_boot_ms() - start) < (ms));                                                                                              \
+        uint32_t start = ms_since_boot();                                                                                                            \
+        while ((ms_since_boot() - start) < (ms));                                                                                                    \
     } while (0)
 
 #define delay_us(us)                                                                                                                                 \
     do {                                                                                                                                             \
+        ASSERT(DWT->CTRL & DWT_CTRL_CYCCNTENA_Msk);                                                                                                  \
         uint32_t cycles = (us) * (SystemCoreClock / 1'000'000U);                                                                                     \
         uint32_t start  = DWT->CYCCNT;                                                                                                               \
         while ((DWT->CYCCNT - start) < cycles);                                                                                                      \
@@ -50,6 +45,7 @@ uint32_t ticks_since_boot(void);
 
 #define prof_start()                                                                                                                                 \
     do {                                                                                                                                             \
+        ASSERT(DWT->CTRL & DWT_CTRL_CYCCNTENA_Msk);                                                                                                  \
         s_prof_start = DWT->CYCCNT;                                                                                                                  \
     } while (0)
 

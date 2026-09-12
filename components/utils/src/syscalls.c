@@ -32,13 +32,13 @@ void system_init(void) {
     // Enable exceptions on divide by 0 and unaligned memory accesses
     SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk);
 
-    // Configure the system clock to 100MHz, derived from the HSE. Also ensure the audio PLL is disabled at startup
-    system_core_clock_config(HSI_PLL_MATCH_HSE);
-    audio_pll_clock_config(AUDIO_PLL_DISABLE);
-
     // Initialize the debug trace counter and the SysTick counter
     systick_init();
     dwt_cnt_init();
+
+    // Configure the system clock to 100MHz, derived from the HSE. Also ensure the audio PLL is disabled at startup
+    system_core_clock_config(HSE_PLL_100MHz);
+    audio_pll_clock_config(AUDIO_PLL_DISABLE);
 
     SEGGER_RTT_Init();
     LOGI("System_Init", "--------------- Done with FPU, PLL and system clock setup ---------------");

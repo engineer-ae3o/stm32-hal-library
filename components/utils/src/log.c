@@ -17,7 +17,7 @@ void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...) {
     const int buffer_length   = (int)sizeof(full_string) - line_end_length;
 
     // Write the header of the log which consists of the escape code to set the output color, the timestamp, and the tag.
-    const int header_length = snprintf_(full_string, buffer_length, "%s(%lums) [%s]: ", esc_code, TICKS_TO_MS(ticks_since_boot()), tag);
+    const int header_length = snprintf_(full_string, buffer_length, "%s(%lums) [%s]: ", esc_code, ms_since_boot(), tag);
     ASSERT(header_length > 0 && header_length < (int)buffer_length);
     const int size_remaining = buffer_length - header_length;
 
