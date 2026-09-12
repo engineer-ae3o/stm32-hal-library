@@ -510,3 +510,7 @@ uint32_t get_apb1_core_clock(void) {
 uint32_t get_apb2_core_clock(void) {
     return s_apb2_core_clock;
 }
+
+bool is_sysclk_on_hse(void) {
+    return (RCC->CFGR & RCC_CFGR_SWS_HSE) || (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC_HSE);
+}

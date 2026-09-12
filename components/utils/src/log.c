@@ -38,5 +38,9 @@ void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...) {
 
     // Write the final string with no locks. If thread safety is needed, it can be done with
     // the addition of a mutex, rather than disabling all interrupts for the entire write period.
-    ASSERT(SEGGER_RTT_WriteNoLock(RTT_BUFFER_INDEX, full_string, final_string_length) == final_string_length);
+    if (SEGGER_RTT_WriteNoLock(RTT_BUFFER_INDEX, full_string, final_string_length) != final_string_length) {
+        // We can't use ASSERT here since it logs. SEGGER_RTT_WriteNoLock(...) failing implies something wrong host side. Calling this from
+        // an ASSERT would still fail, which in turn would also call this function and so on/ Leading to infinite recursion. So we just halt.
+        HALT();
+    }
 }

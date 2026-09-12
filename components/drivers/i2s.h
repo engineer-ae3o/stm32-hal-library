@@ -17,7 +17,6 @@ extern "C" {
 #include <stdbool.h>
 
 
-// Typedefing to make it clearer that we are working with I2S not SPI
 typedef SPI_TypeDef I2S_TypeDef;
 
 #define I2S1 ((I2S_TypeDef*)SPI1)
@@ -54,14 +53,15 @@ typedef enum : uint8_t {
     I2S_FREQ_48kHz,
     I2S_FREQ_96kHz,
     I2S_FREQ_192kHz,
-} i2s_freq_t;
+    I2S_FREQ_COUNT,
+} i2s_frequency_t;
 
 typedef struct {
-    i2s_dir_t     dir;
-    i2s_mode_t    mode;
-    i2s_freq_t    freq;
-    i2s_frame_t   frame;
-    audio_clock_t clock;
+    i2s_dir_t       direction;
+    i2s_mode_t      mode;
+    i2s_frequency_t frequency;
+    i2s_frame_t     frame;
+    audio_clock_t   audio_pll_type;
 
     bool cpol;
     bool use_mck;

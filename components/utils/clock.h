@@ -58,6 +58,7 @@ uint32_t get_system_core_clock(void);
 uint32_t get_audio_pll_clock(void);
 uint32_t get_apb1_core_clock(void);
 uint32_t get_apb2_core_clock(void);
+bool     is_sysclk_on_hse(void);
 
 
 #ifdef __cplusplus
