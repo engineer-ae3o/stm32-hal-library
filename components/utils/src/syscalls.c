@@ -44,9 +44,9 @@ void system_init(void) {
     LOGI("System_Init", "--------------- Done with FPU, PLL and system clock setup ---------------");
     LOGI("System_Init",
          "System Clock: %luMHz, APB1 Bus Clock: %luMHz, APB2 Bus Clock: %luMHz",
-         (SystemCoreClock / 1'000'000),
-         (APB1CoreClock / 1'000'000),
-         (APB2CoreClock / 1'000'000));
+         (get_system_core_clock() / 1'000'000),
+         (get_apb1_core_clock() / 1'000'000),
+         (get_apb2_core_clock() / 1'000'000));
 }
 
 // Provide a weak main function
@@ -102,7 +102,10 @@ void NMI_Handler(void) {
         LOGI(TAG, "Clock Security System fault: HSE failure. Reconfiguring to use the HSI as the PLL clock source");
 
         // Reconfigure the main PLL back to whatever value it was on, but its HSI equivalent
-        switch (SystemCoreClockType) {
+        const system_clock_t system_clock = get_system_core_clock_type();
+        const audio_clock_t  audio_clock  = get_audio_pll_clock_type();
+
+        switch (system_clock) {
             case HSE_PLL_100MHz:
                 system_core_clock_config(HSI_PLL_100MHz);
                 break;
@@ -122,14 +125,14 @@ void NMI_Handler(void) {
                 system_core_clock_config(HSI_PLL_MATCH_HSE);
                 break;
             default:
-                system_core_clock_config(SystemCoreClockType);
+                system_core_clock_config(system_clock);
                 break;
         }
 
         // Reconfigure the audio PLL to run at whatever value it was before the CSS fault
-        audio_pll_clock_config(AudioPLLCoreClockType);
+        audio_pll_clock_config(audio_clock);
 
-        LOGI(TAG, "Resuming normal operation with the HSI with a system clock of %luMHz", SystemCoreClock / 1'000'000U);
+        LOGI(TAG, "Resuming normal operation with the HSI with a system clock of %luMHz", get_system_core_clock() / 1'000'000U);
     }
 }
 

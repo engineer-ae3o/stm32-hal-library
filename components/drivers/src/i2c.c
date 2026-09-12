@@ -65,7 +65,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     I2C_DISABLE();
 
     // Get the APB1 bus frequency and cache it
-    const uint32_t apb1_clk_freq_mhz = APB1CoreClock / 1'000'000U;
+    const uint32_t apb1_clk_freq_mhz = get_apb1_core_clock() / 1'000'000U;
 
     // I2C configuration
     handle->CR1 |= I2C_CR1_ACK;

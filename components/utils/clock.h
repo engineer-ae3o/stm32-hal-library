@@ -43,22 +43,21 @@ typedef enum : uint8_t {
     // feasible and impractical for any realistic I2S and audio usage.
 } audio_clock_t;
 
-// Track the system clock, buses' clock and audio PLL frequencies
-extern volatile system_clock_t SystemCoreClockType;
-extern volatile audio_clock_t  AudioPLLCoreClockType;
-
-extern volatile uint32_t SystemCoreClock;
-extern volatile uint32_t APB1CoreClock;
-extern volatile uint32_t APB2CoreClock;
-extern volatile uint32_t AudioPLLCoreClock;
-
-
 // Configure the system clock, audio PLL and update the global variables tracking them
 void system_core_clock_config(system_clock_t clock);
 void system_core_clock_update(void);
 
 void audio_pll_clock_config(audio_clock_t clock);
 void audio_pll_clock_update(void);
+
+// Track the system clock, buses' clock and audio PLL frequencies
+system_clock_t get_system_core_clock_type(void);
+audio_clock_t  get_audio_pll_clock_type(void);
+
+uint32_t get_system_core_clock(void);
+uint32_t get_audio_pll_clock(void);
+uint32_t get_apb1_core_clock(void);
+uint32_t get_apb2_core_clock(void);
 
 
 #ifdef __cplusplus

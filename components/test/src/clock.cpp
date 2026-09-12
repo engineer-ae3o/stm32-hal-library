@@ -56,20 +56,20 @@ namespace test::clock {
         }};
 
         void assert_system_clock(system_clock_t expected_type, uint32_t expected_sysclk, uint32_t expected_apb1, uint32_t expected_apb2) {
-            TEST_ASSERT_EQUAL(expected_type, SystemCoreClockType);
-            TEST_ASSERT_EQUAL_UINT32(expected_sysclk, SystemCoreClock);
-            TEST_ASSERT_EQUAL_UINT32(expected_apb1, APB1CoreClock);
-            TEST_ASSERT_EQUAL_UINT32(expected_apb2, APB2CoreClock);
+            TEST_ASSERT_EQUAL(expected_type, get_system_core_clock_type());
+            TEST_ASSERT_EQUAL_UINT32(expected_sysclk, get_system_core_clock());
+            TEST_ASSERT_EQUAL_UINT32(expected_apb1, get_apb1_core_clock());
+            TEST_ASSERT_EQUAL_UINT32(expected_apb2, get_apb2_core_clock());
 
-            TEST_ASSERT_TRUE(SystemCoreClock <= MAX_SYSTEM_CLOCK_Hz);
-            TEST_ASSERT_TRUE(APB1CoreClock <= MAX_APB1_CLOCK_Hz);
-            TEST_ASSERT_TRUE(APB2CoreClock <= MAX_APB2_CLOCK_Hz);
+            TEST_ASSERT_TRUE(get_system_core_clock() <= MAX_SYSTEM_CLOCK_Hz);
+            TEST_ASSERT_TRUE(get_apb1_core_clock() <= MAX_APB1_CLOCK_Hz);
+            TEST_ASSERT_TRUE(get_apb2_core_clock() <= MAX_APB2_CLOCK_Hz);
         }
 
         void assert_audio_clock(audio_clock_t expected_type, uint32_t expected_freq) {
-            TEST_ASSERT_EQUAL(expected_type, AudioPLLCoreClockType);
-            TEST_ASSERT_EQUAL_UINT32(expected_freq, AudioPLLCoreClock);
-            TEST_ASSERT_TRUE(AudioPLLCoreClock <= MAX_AUDIO_PLL_CLOCK_Hz);
+            TEST_ASSERT_EQUAL(expected_type, get_audio_pll_clock_type());
+            TEST_ASSERT_EQUAL_UINT32(expected_freq, get_audio_pll_clock());
+            TEST_ASSERT_TRUE(get_audio_pll_clock() <= MAX_AUDIO_PLL_CLOCK_Hz);
         }
 
         // Must run first: verifies the reset-default state before any test has touched the
@@ -140,7 +140,7 @@ namespace test::clock {
             audio_pll_clock_config(AUDIO_PLL_172MHz);
             assert_audio_clock(AUDIO_PLL_172MHz, 172'000'000U);
 
-            // system_core_clock_config re-applies AudioPLLCoreClockType internally after
+            // system_core_clock_config re-applies get_audio_pll_clock_type() internally after
             // switching sources - confirms that restore path also holds up across HSE<->HSI.
             system_core_clock_config(HSI_PLL_96MHz);
             assert_audio_clock(AUDIO_PLL_172MHz, 172'000'000U);
@@ -169,20 +169,20 @@ namespace test::clock {
             system_core_clock_config(HSE_PLL_96MHz);
             audio_pll_clock_config(AUDIO_PLL_151MHz);
 
-            const uint32_t sysclk_before = SystemCoreClock;
-            const uint32_t apb1_before   = APB1CoreClock;
-            const uint32_t apb2_before   = APB2CoreClock;
-            const uint32_t audio_before  = AudioPLLCoreClock;
+            const uint32_t sysclk_before = get_system_core_clock();
+            const uint32_t apb1_before   = get_apb1_core_clock();
+            const uint32_t apb2_before   = get_apb2_core_clock();
+            const uint32_t audio_before  = get_audio_pll_clock_type();
 
             // Calling the *_update() functions directly (bypassing *_config()) must be a
             // pure re-derivation from the live registers, not a source of drift.
             system_core_clock_update();
             audio_pll_clock_update();
 
-            TEST_ASSERT_EQUAL_UINT32(sysclk_before, SystemCoreClock);
-            TEST_ASSERT_EQUAL_UINT32(apb1_before, APB1CoreClock);
-            TEST_ASSERT_EQUAL_UINT32(apb2_before, APB2CoreClock);
-            TEST_ASSERT_EQUAL_UINT32(audio_before, AudioPLLCoreClock);
+            TEST_ASSERT_EQUAL_UINT32(sysclk_before, get_system_core_clock());
+            TEST_ASSERT_EQUAL_UINT32(apb1_before, get_apb1_core_clock());
+            TEST_ASSERT_EQUAL_UINT32(apb2_before, get_apb2_core_clock());
+            TEST_ASSERT_EQUAL_UINT32(audio_before, get_audio_pll_clock_type());
 
             audio_pll_clock_config(AUDIO_PLL_DISABLE);
         }
@@ -196,8 +196,8 @@ namespace test::clock {
         // production config set up in system_init()) so every test suite that runs after
         // this one - UART baud rates, I2C timing, PWM/timer frequencies - isn't left
         // running against a clock state this suite happened to leave behind.
-        const system_clock_t original_clock = SystemCoreClockType;
-        const audio_clock_t  original_audio = AudioPLLCoreClockType;
+        const system_clock_t original_clock = get_system_core_clock_type();
+        const audio_clock_t  original_audio = get_audio_pll_clock_type();
 
         RUN_TEST(default_boot_state_is_correct);
         RUN_TEST(each_system_clock_preset_configures_correctly);

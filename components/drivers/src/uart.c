@@ -195,7 +195,7 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     handle->CR1 &= ~(USART_CR1_M | USART_CR1_PCE);
 
     // Get the frequency of the bus clock on which the uart peripheral lives on
-    const uint32_t bus_clock_freq_hz = (handle == USART1 || handle == USART6) ? APB2CoreClock : APB1CoreClock;
+    const uint32_t bus_clock_freq_hz = (handle == USART1 || handle == USART6) ? get_apb2_core_clock() : get_apb1_core_clock();
 
     // Baud rate generator: Get the UART bus divider from the target baud rate and bus clock frequency
     const float uart_div = (float)bus_clock_freq_hz / (float)(config->baud_rate * config->over_sampling);

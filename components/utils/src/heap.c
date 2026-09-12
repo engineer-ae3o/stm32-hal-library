@@ -22,7 +22,7 @@ static const char* TAG = "O1heap";
 
     s_heap_handle = o1heapInit(s_heap_buffer, sizeof(s_heap_buffer));
     if (s_heap_handle == NULL) {
-        LOGE(TAG, "Failed to initialize the heap.");
+        LOGE(TAG, "Failed to initialize the heap");
         PANIC();
     }
 

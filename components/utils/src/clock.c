@@ -10,13 +10,13 @@
 // At startup, the HSI feeds the SYSCLK, and since there are no prescalers or divider
 // active at boot, the values of the HCLK, PCLK1 and PCLK2 are equal to the HSI value
 // Whereas, the audio PLL is disabled after reset.
-volatile system_clock_t SystemCoreClockType   = HSI_PLL_DIRECT;
-volatile audio_clock_t  AudioPLLCoreClockType = AUDIO_PLL_DISABLE;
+static volatile system_clock_t s_system_core_clock_type = HSI_PLL_DIRECT;
+static volatile audio_clock_t  s_audio_pll_clock_type   = AUDIO_PLL_DISABLE;
 
-volatile uint32_t SystemCoreClock   = HSI_VALUE_Hz;
-volatile uint32_t APB1CoreClock     = HSI_VALUE_Hz;
-volatile uint32_t APB2CoreClock     = HSI_VALUE_Hz;
-volatile uint32_t AudioPLLCoreClock = 0;
+static volatile uint32_t s_system_core_clock = HSI_VALUE_Hz;
+static volatile uint32_t s_apb1_core_clock   = HSI_VALUE_Hz;
+static volatile uint32_t s_apb2_core_clock   = HSI_VALUE_Hz;
+static volatile uint32_t s_audio_pll_clock   = 0;
 
 // Lookup tables for the HCLK and APB prescalers
 static const uint8_t s_ahb_presc_lut[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
@@ -58,9 +58,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = 200,                    // Multiplies the resultant 1MHz by 200 to give 200MHz
             .pllp           = 0b00,                   // Divides the 200MHz by 2 to provide 100MHz for the SYSCLK. For more details, refer above
             .pllq           = 4,                      // Divides the 200MHz by 4 to provide 50MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 100MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = SystemCoreClock / 2 = 50MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 100MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // s_system_core_clock = SYSCLK = 100MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = s_system_core_clock / 2 = 50MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = s_system_core_clock = 100MHz
         },
     [HSE_PLL_96MHz] =
         {
@@ -72,9 +72,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = 192,                    // Multiplies the resultant 1MHz by 192 to give 192MHz
             .pllp           = 0b00,                   // Divides the 192MHz by 2 to provide 96MHz for the SYSCLK. For more details, refer above
             .pllq           = 4,                      // Divides the 192MHz by 4 to provide 48MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 96MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = SystemCoreClock / 2 = 48MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 96MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // s_system_core_clock = SYSCLK = 96MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = s_system_core_clock / 2 = 48MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = s_system_core_clock = 96MHz
         },
     [HSE_PLL_84MHz] =
         {
@@ -86,9 +86,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = 168,                    // Multiplies the resultant 1MHz by 168 to give 168MHz
             .pllp           = 0b00,                   // Divides the 168MHz by 2 to provide 84MHz for the SYSCLK. For more details, refer above
             .pllq           = 4,                      // Divides the 168MHz by 4 to provide 42MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 84MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = SystemCoreClock / 2 = 42MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 84MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // s_system_core_clock = SYSCLK = 84MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = s_system_core_clock / 2 = 42MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = s_system_core_clock = 84MHz
         },
     [HSE_PLL_64MHz] =
         {
@@ -100,9 +100,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = 128,                    // Multiplies the resultant 1MHz by 128 to give 128MHz
             .pllp           = 0b00,                   // Divides the 128MHz by 2 to provide 64MHz for the SYSCLK. For more details, refer above
             .pllq           = 4,                      // Divides the 128MHz by 4 to provide 32MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 64MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = SystemCoreClock / 2 = 32MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 64MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // s_system_core_clock = SYSCLK = 64MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = s_system_core_clock / 2 = 32MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = s_system_core_clock = 64MHz
         },
     [HSE_PLL_48MHz] =
         {
@@ -114,9 +114,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = 96,                     // Multiplies the resultant 1MHz by 96 to give 96MHz
             .pllp           = 0b00,                   // Divides the 96MHz by 2 to provide 48MHz for the SYSCLK. For more details, refer above
             .pllq           = 2,                      // Divides the 96MHz by 2 to provide 48MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 48MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,    // APB1 = SystemCoreClock  = 48MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 48MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // s_system_core_clock = SYSCLK = 48MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,    // APB1 = s_system_core_clock  = 48MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = s_system_core_clock = 48MHz
         },
     [HSE_PLL_MATCH_HSI] =
         {
@@ -128,17 +128,17 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = HSI_VALUE_MHz * 2,      // Multiplies the resultant 1MHz by HSI_VALUE_MHz * 2
             .pllp           = 0b00, // Divides the HSI_VALUE_MHz * 2 by 2 to provide HSI_VALUE_MHz for the SYSCLK. For more details, refer above
             .pllq           = 2,    // Divides the HSI_VALUE_MHz * 2 by 2 to provide HSI_VALUE_MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,  // SystemCoreClock = SYSCLK = HSI_VALUE_MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1, // APB1 = SystemCoreClock  = HSI_VALUE_MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1, // APB2 = SystemCoreClock = HSI_VALUE_MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,  // s_system_core_clock = SYSCLK = HSI_VALUE_MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1, // APB1 = s_system_core_clock  = HSI_VALUE_MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1, // APB2 = s_system_core_clock = HSI_VALUE_MHz
         },
     [HSE_PLL_DIRECT] =
         {
             .flash_latency  = FLASH_ACR_LATENCY_0WS, // 0 flash wait states since the SYSCLK frequency is very low
             .sysclk_source  = RCC_CFGR_SWS_HSE,      // SYSCLK source is the HSE
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,    // SystemCoreClock = SYSCLK = HSE
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,   // APB1 = SystemCoreClock = HSE
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,   // APB2 = SystemCoreClock = HSE
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,    // s_system_core_clock = SYSCLK = HSE
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,   // APB1 = s_system_core_clock = HSE
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,   // APB2 = s_system_core_clock = HSE
         },
     [HSI_PLL_100MHz] =
         {
@@ -150,9 +150,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = 200,                    // Multiplies the resultant 1MHz by 200 to give 200MHz
             .pllp           = 0b00,                   // Divides the 200MHz by 2 to provide 100MHz for the SYSCLK. For more details, refer above
             .pllq           = 4,                      // Divides the 200MHz by 4 to provide 50MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 100MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = SystemCoreClock / 2 = 50MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 100MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // s_system_core_clock = SYSCLK = 100MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = s_system_core_clock / 2 = 50MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = s_system_core_clock = 100MHz
         },
     [HSI_PLL_96MHz] =
         {
@@ -164,9 +164,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = 192,                    // Multiplies the resultant 1MHz by 192 to give 192MHz
             .pllp           = 0b00,                   // Divides the 192MHz by 2 to provide 96MHz for the SYSCLK. For more details, refer above
             .pllq           = 4,                      // Divides the 192MHz by 4 to provide 48MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 96MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = SystemCoreClock / 2 = 48MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 96MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // s_system_core_clock = SYSCLK = 96MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = s_system_core_clock / 2 = 48MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = s_system_core_clock = 96MHz
         },
     [HSI_PLL_84MHz] =
         {
@@ -178,9 +178,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = 168,                    // Multiplies the resultant 1MHz by 168 to give 168MHz
             .pllp           = 0b00,                   // Divides the 168MHz by 2 to provide 84MHz for the SYSCLK. For more details, refer above
             .pllq           = 4,                      // Divides the 168MHz by 4 to provide 42MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 84MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = SystemCoreClock / 2 = 42MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 84MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // s_system_core_clock = SYSCLK = 84MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = s_system_core_clock / 2 = 42MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = s_system_core_clock = 84MHz
         },
     [HSI_PLL_64MHz] =
         {
@@ -192,9 +192,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = 128,                    // Multiplies the resultant 1MHz by 128 to give 128MHz
             .pllp           = 0b00,                   // Divides the 128MHz by 2 to provide 64MHz for the SYSCLK. For more details, refer above
             .pllq           = 4,                      // Divides the 128MHz by 4 to provide 32MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 64MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = SystemCoreClock / 2 = 32MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 64MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // s_system_core_clock = SYSCLK = 64MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV2,    // APB1 = s_system_core_clock / 2 = 32MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = s_system_core_clock = 64MHz
         },
     [HSI_PLL_48MHz] =
         {
@@ -206,9 +206,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = 96,                     // Multiplies the resultant 1MHz by 96 to give 96MHz
             .pllp           = 0b00,                   // Divides the 96MHz by 2 to provide 48MHz for the SYSCLK. For more details, refer above
             .pllq           = 2,                      // Divides the 96MHz by 2 to provide 48MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // SystemCoreClock = SYSCLK = 48MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,    // APB1 = SystemCoreClock  = 48MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = SystemCoreClock = 48MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,     // s_system_core_clock = SYSCLK = 48MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,    // APB1 = s_system_core_clock  = 48MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,    // APB2 = s_system_core_clock = 48MHz
         },
     [HSI_PLL_MATCH_HSE] =
         {
@@ -220,17 +220,17 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .plln           = HSE_VALUE_MHz * 2,      // Multiplies the resultant 1MHz by HSE_VALUE_MHz * 2
             .pllp           = 0b00, // Divides the HSE_VALUE_MHz * 2 by 2 to provide HSE_VALUE_MHz for the SYSCLK. For more details, refer above
             .pllq           = 2,    // Divides the HSE_VALUE_MHz * 2 by 2 to provide HSE_VALUE_MHz for the USB and SDIO clocks
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,  // SystemCoreClock = SYSCLK = HSE_VALUE_MHz
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1, // APB1 = SystemCoreClock  = HSE_VALUE_MHz
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1, // APB2 = SystemCoreClock = HSE_VALUE_MHz
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,  // s_system_core_clock = SYSCLK = HSE_VALUE_MHz
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1, // APB1 = s_system_core_clock  = HSE_VALUE_MHz
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1, // APB2 = s_system_core_clock = HSE_VALUE_MHz
         },
     [HSI_PLL_DIRECT] =
         {
             .flash_latency  = FLASH_ACR_LATENCY_0WS, // 0 flash wait states since the SYSCLK frequency is very low
             .sysclk_source  = RCC_CFGR_SWS_HSI,      // SYSCLK source is the HSI
-            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,    // SystemCoreClock = SYSCLK = HSI
-            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,   // APB1 = SystemCoreClock = HSI
-            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,   // APB2 = SystemCoreClock = HSI
+            .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,    // s_system_core_clock = SYSCLK = HSI
+            .apb1_prescaler = RCC_CFGR_PPRE1_DIV1,   // APB1 = s_system_core_clock = HSI
+            .apb2_prescaler = RCC_CFGR_PPRE2_DIV1,   // APB2 = s_system_core_clock = HSI
         },
 };
 
@@ -350,7 +350,7 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
     // Update the global variables tracking the system clock and reconfigure
     // the audio PLL to its old state since it was disabled here.
     system_core_clock_update();
-    audio_pll_clock_config(AudioPLLCoreClockType);
+    audio_pll_clock_config(s_audio_pll_clock_type);
 }
 
 static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* preset) {
@@ -415,7 +415,7 @@ static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* pre
 // System Clock Configuration
 void system_core_clock_config(system_clock_t clock) {
     system_core_clock_config_preset(&s_system_clock_preset_lut[clock]);
-    SystemCoreClockType = clock;
+    s_system_core_clock_type = clock;
 }
 
 void system_core_clock_update(void) {
@@ -457,14 +457,14 @@ void system_core_clock_update(void) {
 
     // Compute the HCLK, APB1 and APB2 bus frequencies
     __disable_irq();
-    SystemCoreClock = sysclk >> s_ahb_presc_lut[(RCC->CFGR & RCC_CFGR_HPRE) >> RCC_CFGR_HPRE_Pos];
-    APB1CoreClock   = SystemCoreClock >> s_apb_presc_lut[(RCC->CFGR & RCC_CFGR_PPRE1) >> RCC_CFGR_PPRE1_Pos];
-    APB2CoreClock   = SystemCoreClock >> s_apb_presc_lut[(RCC->CFGR & RCC_CFGR_PPRE2) >> RCC_CFGR_PPRE2_Pos];
+    s_system_core_clock = sysclk >> s_ahb_presc_lut[(RCC->CFGR & RCC_CFGR_HPRE) >> RCC_CFGR_HPRE_Pos];
+    s_apb1_core_clock   = s_system_core_clock >> s_apb_presc_lut[(RCC->CFGR & RCC_CFGR_PPRE1) >> RCC_CFGR_PPRE1_Pos];
+    s_apb2_core_clock   = s_system_core_clock >> s_apb_presc_lut[(RCC->CFGR & RCC_CFGR_PPRE2) >> RCC_CFGR_PPRE2_Pos];
     __enable_irq();
 
-    ASSERT(SystemCoreClock <= MAX_SYSTEM_CLOCK_Hz);
-    ASSERT(APB1CoreClock <= MAX_APB1_CLOCK_Hz);
-    ASSERT(APB2CoreClock <= MAX_APB2_CLOCK_Hz);
+    ASSERT(s_system_core_clock <= MAX_SYSTEM_CLOCK_Hz);
+    ASSERT(s_apb1_core_clock <= MAX_APB1_CLOCK_Hz);
+    ASSERT(s_apb2_core_clock <= MAX_APB2_CLOCK_Hz);
 
     // Reconfigure the SysTick since the system clock got updated
     systick_init();
@@ -474,7 +474,7 @@ void system_core_clock_update(void) {
 // Audio PLL Configuration
 void audio_pll_clock_config(audio_clock_t clock) {
     audio_pll_clock_config_preset(&s_audio_clock_preset_lut[clock]);
-    AudioPLLCoreClockType = clock;
+    s_audio_pll_clock_type = clock;
 }
 
 void audio_pll_clock_update(void) {
@@ -482,6 +482,31 @@ void audio_pll_clock_update(void) {
     const uint32_t pllm   = (RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SM) >> RCC_PLLI2SCFGR_PLLI2SM_Pos;
     const uint32_t plln   = (RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SN) >> RCC_PLLI2SCFGR_PLLI2SN_Pos;
     const uint32_t pllr   = (RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SR) >> RCC_PLLI2SCFGR_PLLI2SR_Pos;
-    AudioPLLCoreClock     = (RCC->CR & RCC_CR_PLLI2SRDY) ? (((source / pllm) * plln) / pllr) : 0;
-    ASSERT(AudioPLLCoreClock <= MAX_AUDIO_PLL_CLOCK_Hz);
+    s_audio_pll_clock     = (RCC->CR & RCC_CR_PLLI2SRDY) ? (((source / pllm) * plln) / pllr) : 0;
+    ASSERT(s_audio_pll_clock <= MAX_AUDIO_PLL_CLOCK_Hz);
+}
+
+// Track the system clock, buses' clock and audio PLL frequencies
+system_clock_t get_system_core_clock_type(void) {
+    return s_system_core_clock_type;
+}
+
+audio_clock_t get_audio_pll_clock_type(void) {
+    return s_audio_pll_clock_type;
+}
+
+uint32_t get_system_core_clock(void) {
+    return s_system_core_clock;
+}
+
+uint32_t get_audio_pll_clock(void) {
+    return s_audio_pll_clock;
+}
+
+uint32_t get_apb1_core_clock(void) {
+    return s_apb1_core_clock;
+}
+
+uint32_t get_apb2_core_clock(void) {
+    return s_apb2_core_clock;
 }

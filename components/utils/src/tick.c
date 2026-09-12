@@ -14,15 +14,15 @@ void systick_init(void) {
 
     static bool first_init = true;
     if (gnu_unlikely(first_init)) {
-        LOGI("Tick", "Initializing the SysTick as the tick timer source with an HCLK of %luMHz", SystemCoreClock / 1'000'000U);
+        LOGI("Tick", "Initializing the SysTick as the tick timer source with an HCLK of %luMHz", get_system_core_clock() / 1'000'000U);
         NVIC_SetPriority(SysTick_IRQn, SysTick_NVIC_IRQ_PRIORITY);
         first_init = false;
     } else {
-        LOGI("Tick", "Reinitializing the SysTick as the tick timer source with an HCLK of %luMHz", SystemCoreClock / 1'000'000U);
+        LOGI("Tick", "Reinitializing the SysTick as the tick timer source with an HCLK of %luMHz", get_system_core_clock() / 1'000'000U);
     }
 
     SysTick->VAL  = 0;
-    SysTick->LOAD = (((SystemCoreClock / 8) / TICK_RATE_Hz) - 1) & SysTick_LOAD_RELOAD_Msk;
+    SysTick->LOAD = (((get_system_core_clock() / 8) / TICK_RATE_Hz) - 1) & SysTick_LOAD_RELOAD_Msk;
     SysTick->CTRL = (SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk) | (SysTick->CTRL & ~SysTick_CTRL_CLKSOURCE_Msk);
 }
 

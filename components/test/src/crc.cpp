@@ -145,6 +145,7 @@ namespace test::crc {
 
         void dma_path_rejects_a_second_start_while_busy() {
             for (auto& word : s_wide_buffer) {
+                // cppcheck-suppress useStlAlgorithm
                 word = 0xA5A5'A5A5U;
             }
 

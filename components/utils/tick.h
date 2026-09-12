@@ -34,7 +34,7 @@ uint32_t ms_since_boot(void);
 #define delay_us(us)                                                                                                                                 \
     do {                                                                                                                                             \
         ASSERT(DWT->CTRL & DWT_CTRL_CYCCNTENA_Msk);                                                                                                  \
-        uint32_t cycles = (us) * (SystemCoreClock / 1'000'000U);                                                                                     \
+        uint32_t cycles = (us) * (get_system_core_clock() / 1'000'000U);                                                                             \
         uint32_t start  = DWT->CYCCNT;                                                                                                               \
         while ((DWT->CYCCNT - start) < cycles);                                                                                                      \
     } while (0)
@@ -52,14 +52,14 @@ uint32_t ms_since_boot(void);
 #define prof_end() (DWT->CYCCNT - s_prof_start)
 
 // Convert cycles to time.
-#define cycles_to_us(cycles) ((cycles) * 1'000'000ULL / SystemCoreClock)
-#define cycles_to_us_frac(cycles) (((cycles) * 1'000'000'000ULL / SystemCoreClock) % 1'000ULL)
+#define cycles_to_us(cycles) ((cycles) * 1'000'000ULL / get_system_core_clock())
+#define cycles_to_us_frac(cycles) (((cycles) * 1'000'000'000ULL / get_system_core_clock()) % 1'000ULL)
 
-#define cycles_to_ms(cycles) ((cycles) * 1'000ULL / SystemCoreClock)
-#define cycles_to_ms_frac(cycles) (((cycles) * 1'000'000ULL / SystemCoreClock) % 1'000ULL)
+#define cycles_to_ms(cycles) ((cycles) * 1'000ULL / get_system_core_clock())
+#define cycles_to_ms_frac(cycles) (((cycles) * 1'000'000ULL / get_system_core_clock()) % 1'000ULL)
 
-#define cycles_to_ss(cycles) ((cycles) / SystemCoreClock)
-#define cycles_to_ss_frac(cycles) (((cycles) * 1'000ULL / SystemCoreClock) % 1'000ULL)
+#define cycles_to_ss(cycles) ((cycles) / get_system_core_clock())
+#define cycles_to_ss_frac(cycles) (((cycles) * 1'000ULL / get_system_core_clock()) % 1'000ULL)
 
 
 #ifdef __cplusplus
