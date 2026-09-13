@@ -1,14 +1,13 @@
 #include "stm32f411xe.h"
 #include "drivers/iwdg.h"
 #include "utils/common.h"
+#include "utils/board.h"
 #include "utils/err.h"
 
 
 hal_err_t iwdg_start(uint32_t reload_value_s) {
     // Find the new clock speed
-    const uint32_t clk_speed_hz     = 32'768U;
-    const uint32_t prescaler        = 0b110U;
-    const uint32_t new_clk_speed_hz = clk_speed_hz / (1U << (prescaler + 2));
+    const uint32_t new_clk_speed_hz = LSI_VALUE_Hz / (1U << (IWDG_PRESCALER + 2));
 
     if (reload_value_s > (IWDG_RLR_RL_Msk / new_clk_speed_hz)) {
         return HAL_ERR_INVALID_ARG;
@@ -24,7 +23,7 @@ hal_err_t iwdg_start(uint32_t reload_value_s) {
     uint32_t actual_reload_val = new_clk_speed_hz * reload_value_s;
 
     // Set a prescaler of 256: 3 bits
-    IWDG->PR = (prescaler & IWDG_PR_PR_Msk) | (IWDG->PR & ~IWDG_PR_PR_Msk);
+    IWDG->PR = (IWDG_PRESCALER & IWDG_PR_PR_Msk) | (IWDG->PR & ~IWDG_PR_PR_Msk);
 
     // Reload value
     IWDG->RLR = (actual_reload_val & IWDG_RLR_RL_Msk) | (IWDG->RLR & ~IWDG_RLR_RL_Msk);

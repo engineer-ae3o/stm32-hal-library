@@ -3,6 +3,7 @@
 
 #include "utils/common.h"
 #include "drivers/iwdg.h"
+#include "utils/board.h"
 #include "utils/err.h"
 
 #include <cstdint>
@@ -14,18 +15,14 @@ namespace test::iwdg {
 
         constexpr const char* TAG = "IWDG_Test";
 
-        constexpr uint32_t LSI_HZ         = 32'768U;
-        constexpr uint32_t PRESCALER_BITS = 0b110U;
-        constexpr uint32_t COUNTER_CLK_HZ = LSI_HZ / (1U << (PRESCALER_BITS + 2));
-        constexpr uint32_t MAX_RELOAD_S   = IWDG_RLR_RL_Msk / COUNTER_CLK_HZ;
+        constexpr uint32_t COUNTER_CLK_Hz = LSI_VALUE_Hz / (1U << (IWDG_PRESCALER + 2));
+        constexpr uint32_t MAX_RELOAD_S   = IWDG_RLR_RL_Msk / COUNTER_CLK_Hz;
 
         // TESTS
-
-        // Must run before iwdg_start is ever called anywhere in the suite. If this is set,
-        // the IWDG actually expired and reset the chip on a previous run — a real timeout
-        // event, not a test artifact. We clear it so a future genuine timeout is detectable
-        // again on the next boot.
         void reset_flag_is_clear_before_first_start() {
+            // Must run before iwdg_start is ever called anywhere in the suite. If this is set, the
+            // IWDG actually expired and reset the chip on a previous run. A real timeout event, not
+            // a test artifact. We clear it so a future timeout is detectable again on the next boot.
             TEST_ASSERT_FALSE_MESSAGE(RCC->CSR & RCC_CSR_IWDGRSTF, "IWDG previously reset the chip; investigate before continuing");
             RCC->CSR |= RCC_CSR_RMVF;
         }
@@ -43,19 +40,19 @@ namespace test::iwdg {
 
         void reload_and_prescaler_are_set_correctly() {
             constexpr uint32_t REQUEST_S       = 10U;
-            constexpr uint32_t EXPECTED_RELOAD = COUNTER_CLK_HZ * REQUEST_S;
+            constexpr uint32_t EXPECTED_RELOAD = COUNTER_CLK_Hz * REQUEST_S;
 
             TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(REQUEST_S));
 
-            TEST_ASSERT_EQUAL_UINT32(PRESCALER_BITS, IWDG->PR & IWDG_PR_PR_Msk);
-            TEST_ASSERT_EQUAL_UINT32(EXPECTED_RELOAD, IWDG->RLR & IWDG_RLR_RL_Msk);
+            TEST_ASSERT_EQUAL_UINT32(IWDG_PRESCALER, (IWDG->PR & IWDG_PR_PR_Msk) >> IWDG_PR_PR_Pos);
+            TEST_ASSERT_EQUAL_UINT32(EXPECTED_RELOAD, (IWDG->RLR & IWDG_RLR_RL_Msk) >> IWDG_RLR_RL_Pos);
         }
 
         // A second, larger request must fully replace the first, not accumulate into it.
         void reload_value_can_grow_on_a_second_call() {
             constexpr uint32_t FIRST_S  = 5U;
             constexpr uint32_t SECOND_S = 20U;
-            constexpr uint32_t EXPECTED = COUNTER_CLK_HZ * SECOND_S;
+            constexpr uint32_t EXPECTED = COUNTER_CLK_Hz * SECOND_S;
 
             TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(FIRST_S));
             TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(SECOND_S));
@@ -68,7 +65,7 @@ namespace test::iwdg {
         void reload_value_can_shrink_on_a_second_call() {
             constexpr uint32_t FIRST_S  = 30U;
             constexpr uint32_t SECOND_S = 3U;
-            constexpr uint32_t EXPECTED = COUNTER_CLK_HZ * SECOND_S;
+            constexpr uint32_t EXPECTED = COUNTER_CLK_Hz * SECOND_S;
 
             TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(FIRST_S));
             TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(SECOND_S));

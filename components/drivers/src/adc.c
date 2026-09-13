@@ -316,7 +316,7 @@ hal_err_t adc_power_on(ADC_TypeDef* handle, bool on) {
     }
     if (on) {
         handle->CR2 |= ADC_CR2_ADON;
-        delay_us(ADC_STARUP_TIME_US);
+        delay_us(ADC_STARTUP_TIME_US);
     } else {
         handle->CR2 &= ~ADC_CR2_ADON;
     }
@@ -399,7 +399,7 @@ void adc_enable_nvic_irq(bool enable) {
 void adc_power_on_temp_sensor(bool on) {
     if (on) {
         ADC->CCR |= ADC_CCR_TSVREFE;
-        delay_us(TEMP_SENSOR_STARUP_TIME_US);
+        delay_us(TEMP_SENSOR_STARTUP_TIME_US);
     } else {
         ADC->CCR &= ~ADC_CCR_TSVREFE;
     }

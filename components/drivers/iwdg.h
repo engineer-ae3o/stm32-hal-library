@@ -12,6 +12,8 @@ extern "C" {
 #include <stdint.h>
 
 
+#define IWDG_PRESCALER 0b110U
+
 hal_err_t iwdg_start(uint32_t reload_value_s);
 void      iwdg_kick(void);
 
