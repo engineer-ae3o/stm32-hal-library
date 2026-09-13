@@ -21,7 +21,7 @@ namespace test::heap {
 
         constexpr const char* TAG = "Heap_Test";
 
-        // Helper to verify zero leaks and valid invariant state
+        // Helper
         void assert_heap_clean() {
             TEST_ASSERT_TRUE(check_heap_state());
 
@@ -32,6 +32,7 @@ namespace test::heap {
             TEST_ASSERT_EQUAL(0, info.num_of_allocations);
         }
 
+        // TESTS
         void invalid_arg_guards() {
             assert_heap_clean();
 

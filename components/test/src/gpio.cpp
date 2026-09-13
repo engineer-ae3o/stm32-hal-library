@@ -20,9 +20,16 @@ namespace test::gpio {
         GPIO_TypeDef* const  SCRATCH_PORT = GPIOA;
         constexpr gpio_pin_t SCRATCH_PIN  = GPIO_PIN_8;
 
-        const std::array<GPIO_TypeDef*, 6> ALL_PORTS{GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOH};
+        const std::array<GPIO_TypeDef*, 6> ALL_PORTS = {
+            GPIOA,
+            GPIOB,
+            GPIOC,
+            GPIOD,
+            GPIOE,
+            GPIOH,
+        };
 
-        constexpr std::array<gpio_pin_t, 16> ALL_PINS = {
+        constexpr auto ALL_PINS = std::array{
             GPIO_PIN_0,
             GPIO_PIN_1,
             GPIO_PIN_2,
@@ -41,6 +48,7 @@ namespace test::gpio {
             GPIO_PIN_15,
         };
 
+        // Helpers
         uint32_t moder_bits(GPIO_TypeDef* port, gpio_pin_t pin) {
             return (port->MODER >> (pin * 2)) & 0b11UL;
         }
@@ -58,6 +66,7 @@ namespace test::gpio {
             port->AFR[1]  = 0;
         }
 
+        // TESTS
         void clk_enable_toggles_only_the_targeted_port() {
             for (auto* port : ALL_PORTS) {
                 TEST_ASSERT_EQUAL(HAL_OK, gpiox_clk_enable(port, true));

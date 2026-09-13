@@ -36,14 +36,12 @@ namespace test::crc {
         volatile uint32_t  s_dma_crc32 = 0;
 
         // Helpers
-        // DMA TC callback reused across different tests
         void dma_done_callback(void*, hal_err_t err, uint32_t crc32) {
             s_dma_err   = err;
             s_dma_crc32 = crc32;
             s_dma_done  = true;
         }
 
-        // Bounded spin wait
         bool wait_for_dma_done() {
             uint32_t timeout = 10U * TIMEOUT_CYCLES;
             while (!s_dma_done && --timeout);

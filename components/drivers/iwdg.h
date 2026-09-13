@@ -7,11 +7,13 @@ extern "C" {
 #endif
 
 
+#include "utils/err.h"
+
 #include <stdint.h>
 
 
-void iwdg_start(uint32_t reload_value_s);
-void iwdg_kick(void);
+hal_err_t iwdg_start(uint32_t reload_value_s);
+void      iwdg_kick(void);
 
 
 #ifdef __cplusplus
