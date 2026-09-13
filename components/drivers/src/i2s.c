@@ -1,7 +1,7 @@
 #include "stm32f411xe.h"
 #include "drivers/gpio.h"
-#include "utils/clock.h"
 #include "utils/common.h"
+#include "utils/clock.h"
 #include "drivers/spi.h"
 #include "drivers/i2s.h"
 #include "utils/err.h"
@@ -16,7 +16,8 @@ typedef struct {
 // Prescaler tables for the different supported audio PLL clock frequencies
 // TODO: Compute the prescaler table
 static const prescaler_t s_prescaler_lut[][I2S_FREQ_COUNT] = {
-    // The Audio PLL at 76.8MHz. Suitable for the 48kHz family with MCK output disabled
+    // The Audio PLL at 76.8MHz. Suitable for the 48kHz family with MCK output disabled.
+    // The other unsupported frequencies are left default initialized at 0.
     [AUDIO_PLL_76_8MHz] =
         {
             [I2S_FREQ_8kHz]   = {.i2sdiv = 0, .odd = 0},
@@ -26,19 +27,22 @@ static const prescaler_t s_prescaler_lut[][I2S_FREQ_COUNT] = {
             [I2S_FREQ_96kHz]  = {.i2sdiv = 0, .odd = 0},
             [I2S_FREQ_192kHz] = {.i2sdiv = 0, .odd = 0},
         },
-    // The Audio PLL at 135.5MHz. Suitable for the 44.1kHz family with MCK output enabled
+    // The Audio PLL at 135.5MHz. Suitable for the 44.1kHz family with MCK output enabled.
+    // The other unsupported frequencies are left default initialized at 0.
     [AUDIO_PLL_135_5MHz] =
         {
             [I2S_FREQ_22kHz] = {.i2sdiv = 0, .odd = 0},
             [I2S_FREQ_44kHz] = {.i2sdiv = 0, .odd = 0},
         },
-    // The Audio PLL at 151MHz. Suitable for the 44.1kHz family with MCK output disabled
+    // The Audio PLL at 151MHz. Suitable for the 44.1kHz family with MCK output disabled.
+    // The other unsupported frequencies are left default initialized at 0.
     [AUDIO_PLL_151MHz] =
         {
             [I2S_FREQ_22kHz] = {.i2sdiv = 0, .odd = 0},
             [I2S_FREQ_44kHz] = {.i2sdiv = 0, .odd = 0},
         },
-    // The Audio PLL at 172MHz. Suitable for the 48kHz family with MCK output enabled
+    // The Audio PLL at 172MHz. Suitable for the 48kHz family with MCK output enabled.
+    // The other unsupported frequencies are left default initialized at 0.
     [AUDIO_PLL_172MHz] =
         {
             [I2S_FREQ_8kHz]   = {.i2sdiv = 0, .odd = 0},
@@ -133,9 +137,13 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
         return HAL_ERR_INVALID_STATE;
     }
 
+    // Get the audio PLL clock prescaler
+    const uint8_t i2sdiv = s_prescaler_lut[config->audio_pll_type][config->frequency].i2sdiv;
+    const uint8_t odd    = s_prescaler_lut[config->audio_pll_type][config->frequency].odd;
+
     // A sampling rate of 192kHz is not supported when MCK output is not needed.
     // For more details, refer to clock.h as to why this setup is impractical.
-    if (config->frequency == I2S_FREQ_192kHz && config->use_mck) {
+    if ((config->frequency == I2S_FREQ_192kHz && config->use_mck) || i2sdiv == 0) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
@@ -146,10 +154,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     // I2S mode
     handle->I2SCFGR |= SPI_I2SCFGR_I2SMOD;
 
-    // Set the clock prescaler
-    const uint8_t i2sdiv = s_prescaler_lut[config->audio_pll_type][config->frequency].i2sdiv;
-    const uint8_t odd    = s_prescaler_lut[config->audio_pll_type][config->frequency].odd;
-
+    // Apply the prescalers
     handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
     handle->I2SPR |= (uint32_t)(i2sdiv << SPI_I2SPR_I2SDIV_Pos) | (uint32_t)(odd << SPI_I2SPR_ODD_Pos) | ((config->use_mck) ? SPI_I2SPR_MCKOE : 0);
 
@@ -183,7 +188,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
         return HAL_ERR_INVALID_ARG;
     }
 
-    // MCK pin. If used
+    // MCK pin if used
     if (config->use_mck) {
         TRY(gpio_set_alternate_function(config->gpio_port, config->mck_pin, alt_val));
         gpio_enable_pullup(config->gpio_port, config->mck_pin, true);

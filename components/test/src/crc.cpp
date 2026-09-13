@@ -7,6 +7,7 @@
 #include "utils/err.h"
 #include "utils/log.h"
 
+#include <span>
 #include <array>
 #include <cstdint>
 
@@ -17,18 +18,13 @@ namespace test::crc {
 
         constexpr const char* TAG = "CRC_Test";
 
-        // A wide buffer so the DMA transfer takes long enough to reliably observe the
-        // "already in progress" state from software, not just the two endpoints.
-        constexpr size_t                        WIDE_BUFFER_WORDS = 2048;
-        std::array<uint32_t, WIDE_BUFFER_WORDS> s_wide_buffer{};
-
-        // Software reference model of the STM32 hardware CRC unit: polynomial 0x04C11DB7,
-        // initial value 0xFFFFFFFF, no input/output reflection, no final XOR, word-at-a-time.
-        uint32_t soft_crc32(const uint32_t* data, size_t count) {
+        // Software reference model of the STM32F411's hardware CRC unit: polynomial 0x04C11DB7,
+        // initial value 0xFFFFFFFF, no input/output reflection, no final XOR, word at a time.
+        constexpr uint32_t software_crc32(std::span<const uint32_t> data) {
             uint32_t crc = 0xFFFFFFFFU;
-            for (size_t i = 0; i < count; i++) {
-                crc ^= data[i];
-                for (int bit = 0; bit < 32; bit++) {
+            for (const auto& num : data) {
+                crc ^= num;
+                for (size_t bit = 0; bit < 32; bit++) {
                     crc = (crc & 0x8000'0000U) ? (crc << 1) ^ 0x04C1'1DB7U : (crc << 1);
                 }
             }
@@ -39,59 +35,78 @@ namespace test::crc {
         volatile hal_err_t s_dma_err   = HAL_OK;
         volatile uint32_t  s_dma_crc32 = 0;
 
-        void dma_done_callback(void* arg, hal_err_t err, uint32_t crc32) {
-            UNUSED(arg);
+        // Helpers
+        // DMA TC callback reused across different tests
+        void dma_done_callback(void*, hal_err_t err, uint32_t crc32) {
             s_dma_err   = err;
             s_dma_crc32 = crc32;
             s_dma_done  = true;
         }
 
-        // Bounded spin-wait, mirroring the TIMEOUT_CYCLES pattern used throughout the drivers
+        // Bounded spin wait
         bool wait_for_dma_done() {
             uint32_t timeout = 10U * TIMEOUT_CYCLES;
-            while (!s_dma_done && --timeout) {
-            }
+            while (!s_dma_done && --timeout);
             return s_dma_done;
         }
 
+        // TESTS
         void invalid_arg_guards() {
             uint32_t result = 0;
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get(nullptr, 4, &result));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get(s_wide_buffer.data(), 0, &result));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get(s_wide_buffer.data(), 4, nullptr));
+            constexpr std::array<uint32_t, 4> data{};
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get_dma(nullptr, 4, DMA_PRIORITY_LOW, dma_done_callback, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get_dma(s_wide_buffer.data(), 0, DMA_PRIORITY_LOW, dma_done_callback, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get_dma(s_wide_buffer.data(), 4, DMA_PRIORITY_LOW, nullptr, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get(nullptr, data.size(), &result));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get(data.data(), 0, &result));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get(data.data(), data.size(), nullptr));
+
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get_dma(nullptr, data.size(), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get_dma(data.data(), 0, DMA_PRIORITY_LOW, dma_done_callback, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get_dma(data.data(), data.size(), DMA_PRIORITY_LOW, nullptr, nullptr));
         }
 
         void cpu_path_matches_the_software_reference_model() {
-            constexpr std::array<uint32_t, 1> SINGLE_WORD{0x1234'5678U};
-            constexpr std::array<uint32_t, 8> MULTI_WORD{
-                0x0000'0000U,
-                0xFFFF'FFFFU,
-                0xDEAD'BEEFU,
-                0x0123'4567U,
-                0x89AB'CDEFU,
-                0x7FFF'FFFFU,
-                0x8000'0000U,
-                0x5A5A'5A5AU,
+            constexpr auto SINGLE_WORD = std::array{
+                0x1234'5678UL,
             };
+            constexpr auto MULTI_WORD = std::array{
+                0x0000'0000UL,
+                0xFFFF'FFFFUL,
+                0xDEAD'BEEFUL,
+                0x0123'4567UL,
+                0x89AB'CDEFUL,
+                0x7FFF'FFFFUL,
+                0x8000'0000UL,
+                0x5A5A'5A5AUL,
+            };
+
+            constexpr uint32_t crc32_single_word = software_crc32(SINGLE_WORD);
+            constexpr uint32_t crc32_multi_word  = software_crc32(MULTI_WORD);
 
             uint32_t hw_result = 0;
             TEST_ASSERT_EQUAL(HAL_OK, crc_get(SINGLE_WORD.data(), SINGLE_WORD.size(), &hw_result));
-            TEST_ASSERT_EQUAL_UINT32(soft_crc32(SINGLE_WORD.data(), SINGLE_WORD.size()), hw_result);
+            TEST_ASSERT_EQUAL_UINT32(crc32_single_word, hw_result);
 
             TEST_ASSERT_EQUAL(HAL_OK, crc_get(MULTI_WORD.data(), MULTI_WORD.size(), &hw_result));
-            TEST_ASSERT_EQUAL_UINT32(soft_crc32(MULTI_WORD.data(), MULTI_WORD.size()), hw_result);
+            TEST_ASSERT_EQUAL_UINT32(crc32_multi_word, hw_result);
         }
 
         void cpu_path_is_stateless_between_calls() {
-            // Back-to-back calls with different data must not leak state from the previous
-            // computation - the driver explicitly issues CRC_CR_RESET before every call.
-            constexpr std::array<uint32_t, 3> FIRST{0x1111'1111U, 0x2222'2222U, 0x3333'3333U};
-            constexpr std::array<uint32_t, 3> SECOND{0x4444'4444U, 0x5555'5555U, 0x6666'6666U};
+            // Back to back calls with different data must not leak state from the previous
+            // computation. The driver explicitly issues a CRC_CR_RESET before every call.
+            constexpr auto FIRST = std::array{
+                0x1111'1111UL,
+                0x2222'2222UL,
+                0x3333'3333UL,
+            };
+            constexpr auto SECOND = std::array{
+                0x4444'4444UL,
+                0x5555'5555UL,
+                0x6666'6666UL,
+            };
+
+            constexpr uint32_t crc32_first  = software_crc32(FIRST);
+            constexpr uint32_t crc32_second = software_crc32(SECOND);
 
             uint32_t first_result  = 0;
             uint32_t second_result = 0;
@@ -99,75 +114,86 @@ namespace test::crc {
             TEST_ASSERT_EQUAL(HAL_OK, crc_get(FIRST.data(), FIRST.size(), &first_result));
             TEST_ASSERT_EQUAL(HAL_OK, crc_get(SECOND.data(), SECOND.size(), &second_result));
 
-            TEST_ASSERT_EQUAL_UINT32(soft_crc32(FIRST.data(), FIRST.size()), first_result);
-            TEST_ASSERT_EQUAL_UINT32(soft_crc32(SECOND.data(), SECOND.size()), second_result);
+            TEST_ASSERT_EQUAL_UINT32(crc32_first, first_result);
+            TEST_ASSERT_EQUAL_UINT32(crc32_second, second_result);
 
-            // Re-running FIRST again must reproduce the same result as the first time
+            // Re running FIRST again must reproduce the same result as the first time
             uint32_t repeat_result = 0;
             TEST_ASSERT_EQUAL(HAL_OK, crc_get(FIRST.data(), FIRST.size(), &repeat_result));
             TEST_ASSERT_EQUAL_UINT32(first_result, repeat_result);
         }
 
         void dma_path_matches_the_cpu_path_and_the_software_model() {
-            constexpr std::array<uint32_t, 16> DATA{
-                0x0000'0001U,
-                0x0000'0002U,
-                0x0000'0003U,
-                0x0000'0004U,
-                0x0000'0005U,
-                0x0000'0006U,
-                0x0000'0007U,
-                0x0000'0008U,
-                0x0000'0009U,
-                0x0000'000AU,
-                0x0000'000BU,
-                0x0000'000CU,
-                0x0000'000DU,
-                0x0000'000EU,
-                0x0000'000FU,
-                0x0000'0010U,
+            constexpr auto DATA = std::array{
+                0x0000'0001UL,
+                0x0000'0002UL,
+                0x0000'0003UL,
+                0x0000'0004UL,
+                0x0000'0005UL,
+                0x0000'0006UL,
+                0x0000'0007UL,
+                0x0000'0008UL,
+                0x0000'0009UL,
+                0x0000'000AUL,
+                0x0000'000BUL,
+                0x0000'000CUL,
+                0x0000'000DUL,
+                0x0000'000EUL,
+                0x0000'000FUL,
+                0x0000'0010UL,
             };
+
+            constexpr uint32_t crc32 = software_crc32(DATA);
 
             uint32_t cpu_result = 0;
             TEST_ASSERT_EQUAL(HAL_OK, crc_get(DATA.data(), DATA.size(), &cpu_result));
+            TEST_ASSERT_EQUAL_UINT32(crc32, cpu_result);
 
             s_dma_done  = false;
             s_dma_err   = HAL_FAIL;
             s_dma_crc32 = 0;
 
-            TEST_ASSERT_EQUAL(HAL_OK, crc_get_dma(DATA.data(), static_cast<uint16_t>(DATA.size()), DMA_PRIORITY_HIGH, dma_done_callback, nullptr));
+            TEST_ASSERT_EQUAL(HAL_OK, crc_get_dma(DATA.data(), DATA.size(), DMA_PRIORITY_HIGH, dma_done_callback, nullptr));
             TEST_ASSERT_TRUE_MESSAGE(wait_for_dma_done(), "CRC DMA transfer never completed");
 
             TEST_ASSERT_EQUAL(HAL_OK, s_dma_err);
-            TEST_ASSERT_EQUAL_UINT32(soft_crc32(DATA.data(), DATA.size()), s_dma_crc32);
+            TEST_ASSERT_EQUAL_UINT32(crc32, s_dma_crc32);
             TEST_ASSERT_EQUAL_UINT32(cpu_result, s_dma_crc32);
         }
 
         void dma_path_rejects_a_second_start_while_busy() {
-            for (auto& word : s_wide_buffer) {
-                // cppcheck-suppress useStlAlgorithm
-                word = 0xA5A5'A5A5U;
-            }
+            constexpr auto make_filled_buffer = [](uint32_t val) {
+                // A big buffer so the DMA controller doesn't finish the transfers almost immediately before we can check
+                std::array<uint32_t, 512> data{};
+                data.fill(val);
+                return data;
+            };
+
+            // A wide buffer so the DMA transfer takes long enough to reliably observe the
+            // "already in progress" state from software, not just the two endpoints.
+            constexpr auto     wide_buffer = make_filled_buffer(0xA5A5'A5A5U);
+            constexpr uint32_t crc32_wide  = software_crc32(wide_buffer);
 
             s_dma_done  = false;
             s_dma_err   = HAL_FAIL;
             s_dma_crc32 = 0;
 
-            TEST_ASSERT_EQUAL(
-                HAL_OK, crc_get_dma(s_wide_buffer.data(), static_cast<uint16_t>(WIDE_BUFFER_WORDS), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
+            TEST_ASSERT_EQUAL(HAL_OK, crc_get_dma(wide_buffer.data(), wide_buffer.size(), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
 
-            // Immediately re-issuing another DMA request must be rejected while the first is still in flight
-            TEST_ASSERT_EQUAL(
-                HAL_ERR_INVALID_STATE,
-                crc_get_dma(s_wide_buffer.data(), static_cast<uint16_t>(WIDE_BUFFER_WORDS), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
+            // Immediately re issuing another DMA request must be rejected while the first is still in flight
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE,
+                              crc_get_dma(wide_buffer.data(), wide_buffer.size(), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
 
             TEST_ASSERT_TRUE_MESSAGE(wait_for_dma_done(), "CRC DMA transfer never completed");
             TEST_ASSERT_EQUAL(HAL_OK, s_dma_err);
-            TEST_ASSERT_EQUAL_UINT32(soft_crc32(s_wide_buffer.data(), WIDE_BUFFER_WORDS), s_dma_crc32);
+            TEST_ASSERT_EQUAL_UINT32(crc32_wide, s_dma_crc32);
 
             // Once complete, a fresh request must be accepted again
-            s_dma_done = false;
-            TEST_ASSERT_EQUAL(HAL_OK, crc_get_dma(s_wide_buffer.data(), 4, DMA_PRIORITY_LOW, dma_done_callback, nullptr));
+            s_dma_done  = false;
+            s_dma_err   = HAL_FAIL;
+            s_dma_crc32 = 0;
+
+            TEST_ASSERT_EQUAL(HAL_OK, crc_get_dma(wide_buffer.data(), wide_buffer.size(), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
             TEST_ASSERT_TRUE_MESSAGE(wait_for_dma_done(), "CRC DMA transfer never completed");
         }
 
@@ -178,19 +204,18 @@ namespace test::crc {
         }
 
         void clk_enable_toggles_the_ahb1_bit() {
-            crc_clk_enable(true);
-            TEST_ASSERT_TRUE(RCC->AHB1ENR & RCC_AHB1ENR_CRCEN);
-
             crc_clk_enable(false);
             TEST_ASSERT_FALSE(RCC->AHB1ENR & RCC_AHB1ENR_CRCEN);
 
             crc_clk_enable(true);
+            TEST_ASSERT_TRUE(RCC->AHB1ENR & RCC_AHB1ENR_CRCEN);
         }
 
     } // namespace
 
     void all() {
         LOGI(TAG, "Starting the tests on the CRC driver");
+        crc_clk_enable(true);
 
         RUN_TEST(clk_enable_toggles_the_ahb1_bit);
         RUN_TEST(invalid_arg_guards);
@@ -200,6 +225,7 @@ namespace test::crc {
         RUN_TEST(dma_path_rejects_a_second_start_while_busy);
         RUN_TEST(stream_info_reports_the_fixed_dma_mapping);
 
+        crc_clk_enable(false);
         LOGI(TAG, "Done with all tests on the CRC driver");
     }
 

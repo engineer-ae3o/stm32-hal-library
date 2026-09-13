@@ -29,7 +29,7 @@ typedef struct {
     uint32_t vos_scale;     // CMSIS defined macro. See PWR_CR_VOS_xxx. Ignored if sysclk_source is RCC_CFGR_SWS_HSI or RCC_CFGR_SWS_HSE
     uint32_t sysclk_source; // CMSIS defined macro. See RCC_CFGR_SWS_xxx
     // These only have any meaning if sysclk_source is RCC_CFGR_SWS_PLL
-    uint32_t pll_source; // CMSIS defined macro
+    uint32_t pll_source; // CMSIS defined macro. See RCC_PLLCFGR_PLLSRC_xxx
     uint32_t pllm;       // Regular number. Allowed range is 2 - 63
     uint32_t plln;       // Regular number. Allowed range is 50 - 432
     uint32_t pllp;       // Regular number. Allowed values are 2, 4, 6 and 8 (encoded as 0b00, 0b01, 0b10 and 0b11 respectively)
@@ -41,7 +41,7 @@ typedef struct {
 } system_clock_preset_t;
 
 typedef struct {
-    bool     disable; // Set to power down the audio PLL
+    bool     disable; // Set to power down the audio PLL. The other fields are ignored if this is set
     uint32_t plln;    // Regular number. Allowed range is 50 - 432
     uint32_t pllr;    // Regular number. Allowed range is 2 - 7
 } audio_clock_preset_t;
@@ -242,6 +242,7 @@ static const audio_clock_preset_t s_audio_clock_preset_lut[] = {
     [AUDIO_PLL_172MHz]   = {.disable = false, .plln = 344, .pllr = 2},
 };
 
+// Helpers
 static inline void system_core_clock_config_preset(const system_clock_preset_t* preset) {
     __disable_irq();
 
