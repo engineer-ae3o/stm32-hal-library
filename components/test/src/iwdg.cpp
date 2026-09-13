@@ -3,6 +3,7 @@
 
 #include "utils/common.h"
 #include "drivers/iwdg.h"
+#include "utils/err.h"
 
 #include <cstdint>
 
@@ -13,12 +14,10 @@ namespace test::iwdg {
 
         constexpr const char* TAG = "IWDG_Test";
 
-        // Mirrors the driver's internal derivation: fixed prescaler of 256 (0b110),
-        // LSI at 32.768kHz -> 128Hz counter clock, 12-bit reload register.
         constexpr uint32_t LSI_HZ         = 32'768U;
         constexpr uint32_t PRESCALER_BITS = 0b110U;
         constexpr uint32_t COUNTER_CLK_HZ = LSI_HZ / (1U << (PRESCALER_BITS + 2));
-        constexpr uint32_t MAX_RELOAD     = 0xFFFU;
+        constexpr uint32_t MAX_RELOAD_S   = IWDG_RLR_RL_Msk / COUNTER_CLK_HZ;
 
         // TESTS
 
@@ -31,23 +30,55 @@ namespace test::iwdg {
             RCC->CSR |= RCC_CSR_RMVF;
         }
 
-        void reload_and_prescaler_are_set_correctly() {
-            constexpr uint32_t REQUEST_S       = 10U;
-            constexpr uint32_t EXPECTED_RELOAD = COUNTER_CLK_HZ * REQUEST_S; // 1280, well under 0xFFF
+        void invalid_arg_is_rejected_and_leaves_registers_untouched() {
+            const uint32_t pr_before  = IWDG->PR;
+            const uint32_t rlr_before = IWDG->RLR;
 
-            iwdg_start(REQUEST_S);
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, iwdg_start(MAX_RELOAD_S + 1U));
 
-            TEST_ASSERT_EQUAL_UINT32(PRESCALER_BITS, IWDG->PR & 0b111U);
-            TEST_ASSERT_EQUAL_UINT32(EXPECTED_RELOAD, IWDG->RLR & 0xFFFU);
+            // Rejected call must not have touched PR/RLR or unlocked the key register sequence
+            TEST_ASSERT_EQUAL_UINT32(pr_before, IWDG->PR);
+            TEST_ASSERT_EQUAL_UINT32(rlr_before, IWDG->RLR);
         }
 
-        void reload_value_clamps_to_12_bits() {
-            // 100s * 128Hz = 12800, far past the 12-bit reload register's range.
-            constexpr uint32_t REQUEST_S = 100U;
+        void reload_and_prescaler_are_set_correctly() {
+            constexpr uint32_t REQUEST_S       = 10U;
+            constexpr uint32_t EXPECTED_RELOAD = COUNTER_CLK_HZ * REQUEST_S;
 
-            iwdg_start(REQUEST_S);
+            TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(REQUEST_S));
 
-            TEST_ASSERT_EQUAL_UINT32(MAX_RELOAD, IWDG->RLR & 0xFFFU);
+            TEST_ASSERT_EQUAL_UINT32(PRESCALER_BITS, IWDG->PR & IWDG_PR_PR_Msk);
+            TEST_ASSERT_EQUAL_UINT32(EXPECTED_RELOAD, IWDG->RLR & IWDG_RLR_RL_Msk);
+        }
+
+        // A second, larger request must fully replace the first, not accumulate into it.
+        void reload_value_can_grow_on_a_second_call() {
+            constexpr uint32_t FIRST_S  = 5U;
+            constexpr uint32_t SECOND_S = 20U;
+            constexpr uint32_t EXPECTED = COUNTER_CLK_HZ * SECOND_S;
+
+            TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(FIRST_S));
+            TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(SECOND_S));
+
+            TEST_ASSERT_EQUAL_UINT32(EXPECTED, IWDG->RLR & IWDG_RLR_RL_Msk);
+        }
+
+        // The inverse: a second, smaller request must actually shrink the reload, proving
+        // the write clears the previous value's bits rather than only ever setting new ones.
+        void reload_value_can_shrink_on_a_second_call() {
+            constexpr uint32_t FIRST_S  = 30U;
+            constexpr uint32_t SECOND_S = 3U;
+            constexpr uint32_t EXPECTED = COUNTER_CLK_HZ * SECOND_S;
+
+            TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(FIRST_S));
+            TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(SECOND_S));
+
+            TEST_ASSERT_EQUAL_UINT32(EXPECTED, IWDG->RLR & IWDG_RLR_RL_Msk);
+        }
+
+        void max_reload_value_is_accepted_at_the_boundary() {
+            TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(MAX_RELOAD_S));
+            TEST_ASSERT_TRUE(IWDG->RLR & IWDG_RLR_RL_Msk);
         }
 
         void debug_freeze_bit_is_set() {
@@ -70,9 +101,14 @@ namespace test::iwdg {
         LOGI(TAG, "Starting the tests on the IWDG driver");
 
         RUN_TEST(reset_flag_is_clear_before_first_start);
+        RUN_TEST(invalid_arg_is_rejected_and_leaves_registers_untouched);
         RUN_TEST(reload_and_prescaler_are_set_correctly);
         iwdg_kick();
-        RUN_TEST(reload_value_clamps_to_12_bits);
+        RUN_TEST(reload_value_can_grow_on_a_second_call);
+        iwdg_kick();
+        RUN_TEST(reload_value_can_shrink_on_a_second_call);
+        iwdg_kick();
+        RUN_TEST(max_reload_value_is_accepted_at_the_boundary);
         iwdg_kick();
         RUN_TEST(debug_freeze_bit_is_set);
         iwdg_kick();

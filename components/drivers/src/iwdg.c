@@ -27,7 +27,7 @@ hal_err_t iwdg_start(uint32_t reload_value_s) {
     IWDG->PR = (prescaler & IWDG_PR_PR_Msk) | (IWDG->PR & ~IWDG_PR_PR_Msk);
 
     // Reload value
-    IWDG->RLR |= actual_reload_val & IWDG_RLR_RL_Msk;
+    IWDG->RLR = (actual_reload_val & IWDG_RLR_RL_Msk) | (IWDG->RLR & ~IWDG_RLR_RL_Msk);
 
     // Wait until PVU and RVU bits are 0 after modifying the PR and RLR
     uint32_t timeout = TIMEOUT_CYCLES;
