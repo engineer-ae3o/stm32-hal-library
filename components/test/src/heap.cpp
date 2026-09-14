@@ -22,7 +22,7 @@ namespace test::heap {
         constexpr const char* TAG = "Heap_Test";
 
         // Helper
-        void assert_heap_clean() {
+        inline void assert_heap_clean() {
             TEST_ASSERT_TRUE(check_heap_state());
 
             heap_info_t info{};

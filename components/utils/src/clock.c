@@ -368,8 +368,7 @@ static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* pre
     RCC->PLLI2SCFGR &= ~(RCC_PLLI2SCFGR_PLLI2SM | RCC_PLLI2SCFGR_PLLI2SN | RCC_PLLI2SCFGR_PLLI2SR);
 
     if (preset->disable) {
-        __enable_irq();
-        return;
+        goto done;
     }
 
     // We use a PLLM value to get us a Vco of 1MHz regardless if the HSI or HSE is used.
@@ -418,6 +417,7 @@ static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* pre
     __DSB();
     __ISB();
 
+done:
     __enable_irq();
     audio_pll_clock_update();
 }
@@ -493,7 +493,7 @@ void audio_pll_clock_update(void) {
     const uint32_t pllm   = (RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SM) >> RCC_PLLI2SCFGR_PLLI2SM_Pos;
     const uint32_t plln   = (RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SN) >> RCC_PLLI2SCFGR_PLLI2SN_Pos;
     const uint32_t pllr   = (RCC->PLLI2SCFGR & RCC_PLLI2SCFGR_PLLI2SR) >> RCC_PLLI2SCFGR_PLLI2SR_Pos;
-    s_audio_pll_clock     = (RCC->CR & RCC_CR_PLLI2SRDY) ? (((source / pllm) * plln) / pllr) : 0;
+    s_audio_pll_clock     = (RCC->CR & RCC_CR_PLLI2SON) ? (((source / pllm) * plln) / pllr) : 0;
     ASSERT(s_audio_pll_clock <= MAX_AUDIO_PLL_CLOCK_Hz);
 }
 
