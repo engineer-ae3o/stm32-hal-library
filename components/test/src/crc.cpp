@@ -213,6 +213,8 @@ namespace test::crc {
 
     void all() {
         LOGI(TAG, "Starting the tests on the CRC driver");
+        UNITY_BEGIN();
+
         crc_clk_enable(true);
 
         RUN_TEST(clk_enable_toggles_the_ahb1_bit);
@@ -224,6 +226,8 @@ namespace test::crc {
         RUN_TEST(stream_info_reports_the_fixed_dma_mapping);
 
         crc_clk_enable(false);
+
+        UNITY_END();
         LOGI(TAG, "Done with all tests on the CRC driver");
     }
 

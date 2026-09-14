@@ -117,6 +117,7 @@ namespace test::iwdg {
 
     void all() {
         LOGI(TAG, "Starting the tests on the IWDG driver");
+        UNITY_BEGIN();
 
         RUN_TEST(reset_flag_is_clear_before_first_start);
         RUN_TEST(invalid_arg_is_rejected_and_leaves_registers_untouched);
@@ -134,6 +135,7 @@ namespace test::iwdg {
         iwdg_kick();
         RUN_TEST(kick_does_not_hang_or_fault);
 
+        UNITY_END();
         LOGI(TAG, "Done with all tests on the IWDG driver");
     }
 

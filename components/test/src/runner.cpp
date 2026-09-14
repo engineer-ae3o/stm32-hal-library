@@ -27,8 +27,6 @@ void tearDown() {
 namespace test {
 
     void runner() {
-        UNITY_BEGIN();
-
         // Test runners for all components
         adc::all();
         dma::all();
@@ -43,8 +41,6 @@ namespace test {
         gpio::all();
         clock::all();
         timer::all();
-
-        UNITY_END();
     }
 
 } // namespace test

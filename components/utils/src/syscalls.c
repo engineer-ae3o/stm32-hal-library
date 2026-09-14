@@ -41,7 +41,7 @@ void system_init(void) {
     audio_pll_clock_config(AUDIO_PLL_DISABLE);
 
     SEGGER_RTT_Init();
-    LOGI("System_Init", "--------------- Done with FPU, PLL and system clock setup ---------------");
+    LOGI("System_Init", "------------------- FPU, PLL and system clock setup complete -------------------");
     LOGI("System_Init",
          "System Clock: %luMHz, APB1 Bus Clock: %luMHz, APB2 Bus Clock: %luMHz from the %s",
          (get_system_core_clock() / 1'000'000),
@@ -237,9 +237,8 @@ void NMI_Handler(void) {
     return -1;
 }
 
-[[__gnu__::__weak__, __gnu__::__noreturn__]] void _exit(int status) {
-    (void)status;
-    LOGE("Exit", "_exit() is called.");
+[[__gnu__::__weak__, __gnu__::__noreturn__]] void _exit(int exit_code) {
+    LOGE("Exit", "Program exited with an exit code of %d", exit_code);
     PANIC();
 }
 

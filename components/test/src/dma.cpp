@@ -383,6 +383,7 @@ namespace test::dma {
 
     void all() {
         LOGI(TAG, "Starting the tests on the DMA driver");
+        UNITY_BEGIN();
 
         RUN_TEST(clk_enable_toggles_only_the_targeted_controller);
         RUN_TEST(stream_info_lookup_covers_every_stream);
@@ -395,6 +396,7 @@ namespace test::dma {
         RUN_TEST(end_to_end_m2m_transfer_completes_and_matches_source);
         RUN_TEST(circular_transfer_is_left_enabled_by_the_isr_helper);
 
+        UNITY_END();
         LOGI(TAG, "Done with all tests on the DMA driver");
     }
 

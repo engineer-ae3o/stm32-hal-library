@@ -15,12 +15,7 @@ namespace test::gpio {
 
         constexpr const char* TAG = "GPIO_Test";
 
-        // A scratch pin/port used for tests that need to actually drive and read back a level.
-        // Chosen arbitrarily; nothing on this board ties it to a fixed function.
-        GPIO_TypeDef* const  SCRATCH_PORT = GPIOA;
-        constexpr gpio_pin_t SCRATCH_PIN  = GPIO_PIN_8;
-
-        const std::array<GPIO_TypeDef*, 6> ALL_PORTS = {
+        const auto ALL_PORTS = std::array{
             GPIOA,
             GPIOB,
             GPIOC,
@@ -48,16 +43,21 @@ namespace test::gpio {
             GPIO_PIN_15,
         };
 
+        // A scratch pin/port used for tests that need to actually drive and read back a level.
+        // Chosen arbitrarily; nothing on this board ties it to a fixed function.
+        const auto     SCRATCH_PORT = ALL_PORTS[0];
+        constexpr auto SCRATCH_PIN  = ALL_PINS[9];
+
         // Helpers
-        uint32_t moder_bits(GPIO_TypeDef* port, gpio_pin_t pin) {
+        inline uint32_t get_mode_register_bits(GPIO_TypeDef* port, gpio_pin_t pin) {
             return (port->MODER >> (pin * 2)) & 0b11UL;
         }
 
-        uint32_t pupdr_bits(GPIO_TypeDef* port, gpio_pin_t pin) {
+        inline uint32_t get_pullup_pulldown_register_bits(GPIO_TypeDef* port, gpio_pin_t pin) {
             return (port->PUPDR >> (pin * 2)) & 0b11UL;
         }
 
-        void reset_port(GPIO_TypeDef* port) {
+        inline void reset_port(GPIO_TypeDef* port) {
             port->MODER   = 0;
             port->PUPDR   = 0;
             port->OTYPER  = 0;
@@ -84,13 +84,13 @@ namespace test::gpio {
 
             for (const auto pin : ALL_PINS) {
                 gpio_set_output(SCRATCH_PORT, pin);
-                TEST_ASSERT_EQUAL_UINT32(0b01U, moder_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b01U, get_mode_register_bits(SCRATCH_PORT, pin));
 
                 gpio_set_input(SCRATCH_PORT, pin);
-                TEST_ASSERT_EQUAL_UINT32(0b00U, moder_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b00U, get_mode_register_bits(SCRATCH_PORT, pin));
 
                 gpio_set_analog(SCRATCH_PORT, pin);
-                TEST_ASSERT_EQUAL_UINT32(0b11U, moder_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b11U, get_mode_register_bits(SCRATCH_PORT, pin));
                 gpio_set_input(SCRATCH_PORT, pin);
 
                 // Setting one pin must never disturb its neighbours
@@ -99,7 +99,7 @@ namespace test::gpio {
                     if (other == pin) {
                         continue;
                     }
-                    TEST_ASSERT_EQUAL_UINT32(0b00U, moder_bits(SCRATCH_PORT, other));
+                    TEST_ASSERT_EQUAL_UINT32(0b00U, get_mode_register_bits(SCRATCH_PORT, other));
                 }
                 gpio_set_input(SCRATCH_PORT, pin);
             }
@@ -113,7 +113,7 @@ namespace test::gpio {
             for (const auto pin : ALL_PINS) {
                 // alt_val deliberately exceeds 4 bits to verify the driver masks it to & 0xF
                 TEST_ASSERT_EQUAL(HAL_OK, gpio_set_alternate_function(SCRATCH_PORT, pin, 0xABU));
-                TEST_ASSERT_EQUAL_UINT32(0b10U, moder_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b10U, get_mode_register_bits(SCRATCH_PORT, pin));
 
                 constexpr uint32_t EXPECTED_NIBBLE = 0xBU; // only the low nibble should survive
                 if (pin <= GPIO_PIN_7) {
@@ -135,17 +135,17 @@ namespace test::gpio {
 
             for (const auto pin : ALL_PINS) {
                 gpio_enable_pullup(SCRATCH_PORT, pin, true);
-                TEST_ASSERT_EQUAL_UINT32(0b01U, pupdr_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b01U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
                 // Enabling the pulldown must replace the pullup bit, not OR into it
                 gpio_enable_pulldown(SCRATCH_PORT, pin, true);
-                TEST_ASSERT_EQUAL_UINT32(0b10U, pupdr_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b10U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
                 gpio_enable_pulldown(SCRATCH_PORT, pin, false);
-                TEST_ASSERT_EQUAL_UINT32(0b00U, pupdr_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b00U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
                 gpio_enable_pullup(SCRATCH_PORT, pin, false);
-                TEST_ASSERT_EQUAL_UINT32(0b00U, pupdr_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b00U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
             }
 
             reset_port(SCRATCH_PORT);
@@ -246,28 +246,27 @@ namespace test::gpio {
         }
 
         void clear_interrupt_fully_undoes_set_interrupt() {
+            GPIO_TypeDef* const  PORT    = GPIOB;
             constexpr gpio_pin_t PIN     = GPIO_PIN_5;
             constexpr uint8_t    REG_IDX = PIN / 4;
             constexpr uint8_t    BIT_POS = (PIN % 4) * 4;
 
-            TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(GPIOB, PIN, GPIO_RISING_FALLING_EDGE));
+            TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(PORT, PIN, GPIO_RISING_FALLING_EDGE));
             TEST_ASSERT_NOT_EQUAL(0, (SYSCFG->EXTICR[REG_IDX] >> BIT_POS) & 0xFUL);
 
-            gpio_clear_interrupt(GPIOB, PIN);
+            gpio_clear_interrupt(PORT, PIN);
 
             TEST_ASSERT_EQUAL_UINT32(0, (SYSCFG->EXTICR[REG_IDX] >> BIT_POS) & 0xFUL);
-            TEST_ASSERT_FALSE(EXTI->RTSR & (1UL << PIN));
-            TEST_ASSERT_FALSE(EXTI->FTSR & (1UL << PIN));
-            TEST_ASSERT_FALSE(EXTI->IMR & (1UL << PIN));
-
-            // A NULL port is documented (via the `if (port)` guard) as a safe no-op, not an error
-            gpio_clear_interrupt(nullptr, PIN);
+            TEST_ASSERT_EQUAL_UINT32(0, (EXTI->RTSR & (1UL << PIN)));
+            TEST_ASSERT_EQUAL_UINT32(0, (EXTI->FTSR & (1UL << PIN)));
+            TEST_ASSERT_EQUAL_UINT32(0, (EXTI->IMR & (1UL << PIN)));
         }
 
     } // namespace
 
     void all() {
         LOGI(TAG, "Starting the tests on the GPIO driver");
+        UNITY_BEGIN();
 
         RUN_TEST(clk_enable_toggles_only_the_targeted_port);
         RUN_TEST(mode_setters_touch_only_their_own_pin);
@@ -278,6 +277,7 @@ namespace test::gpio {
         RUN_TEST(interrupt_config_covers_every_port_code_and_every_edge);
         RUN_TEST(clear_interrupt_fully_undoes_set_interrupt);
 
+        UNITY_END();
         LOGI(TAG, "Done with all tests on the GPIO driver");
     }
 

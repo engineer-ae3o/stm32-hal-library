@@ -21,7 +21,7 @@ void systick_init(void);
 void dwt_cnt_init(void);
 
 // Get number of milliseconds since boot
-uint32_t ms_since_boot(void);
+uint64_t ms_since_boot(void);
 
 
 // Polling delay macros

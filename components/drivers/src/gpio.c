@@ -67,25 +67,26 @@ void gpio_set_analog(GPIO_TypeDef* port, gpio_pin_t pin) {
 }
 
 hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t alt_val) {
-    if (port) {
-        // Set the MODER for alternate mode
-        port->MODER &= ~(0b11UL << (pin * 2));
-        port->MODER |= (0b10UL << (pin * 2));
-
-        // Set the specified alternate function
-        if (pin <= 7) {
-            port->AFR[0] &= ~(0xFUL << (pin * 4UL));
-            port->AFR[0] |= ((alt_val & 0xFUL) << (pin * 4UL));
-        } else if (pin <= 15) {
-            port->AFR[1] &= ~(0xFUL << ((pin - 8) * 4UL));
-            port->AFR[1] |= ((alt_val & 0xFUL) << ((pin - 8) * 4UL));
-        } else {
-            return HAL_ERR_INVALID_ARG;
-        }
-
-        return HAL_OK;
+    if (port == NULL) {
+        return HAL_ERR_INVALID_ARG;
     }
-    return HAL_ERR_INVALID_ARG;
+
+    // Set the MODER for alternate mode
+    port->MODER &= ~(0b11UL << (pin * 2));
+    port->MODER |= (0b10UL << (pin * 2));
+
+    // Set the specified alternate function
+    if (pin <= GPIO_PIN_7) {
+        port->AFR[0] &= ~(0xFUL << (pin * 4UL));
+        port->AFR[0] |= ((alt_val & 0xFUL) << (pin * 4UL));
+    } else if (pin <= GPIO_PIN_15) {
+        port->AFR[1] &= ~(0xFUL << ((pin - 8) * 4UL));
+        port->AFR[1] |= ((alt_val & 0xFUL) << ((pin - 8) * 4UL));
+    } else {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    return HAL_OK;
 }
 
 void gpio_enable_pullup(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {

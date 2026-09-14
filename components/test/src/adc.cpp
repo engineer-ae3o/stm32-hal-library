@@ -553,6 +553,7 @@ namespace test::adc {
 
     void all() {
         LOGI(TAG, "Starting the tests on the ADC driver");
+        UNITY_BEGIN();
 
         RUN_TEST(clk_enable_rejects_unknown_handles);
         RUN_TEST(power_on_toggles_adon);
@@ -574,6 +575,7 @@ namespace test::adc {
         RUN_TEST(injected_group_invokes_the_completion_callback_via_the_isr);
         RUN_TEST(analog_watchdog_validates_thresholds_and_monitor_flags);
 
+        UNITY_END();
         LOGI(TAG, "Done with all tests on the ADC driver");
     }
 

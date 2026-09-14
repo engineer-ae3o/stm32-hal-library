@@ -229,6 +229,7 @@ namespace test::heap {
 
     void all() {
         LOGI(TAG, "Starting the tests on the heap allocation driver");
+        UNITY_BEGIN();
 
         RUN_TEST(invalid_arg_guards);
         RUN_TEST(calloc_zero_initialization);
@@ -237,6 +238,7 @@ namespace test::heap {
         RUN_TEST(oom_counter_and_power_of_two_penalty);
         RUN_TEST(profile_raw_allocation_cycles);
 
+        UNITY_END();
         LOGI(TAG, "Done with all tests on the heap allocation driver");
     }
 

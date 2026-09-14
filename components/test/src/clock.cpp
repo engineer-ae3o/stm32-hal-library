@@ -320,6 +320,7 @@ namespace test::clock {
 
     void all() {
         LOGI(TAG, "Starting the tests on the system and audio PLL clock driver");
+        UNITY_BEGIN();
 
         // Preserve whatever clock config was active on entry.
         const system_clock_t original_clock = get_system_core_clock_type();
@@ -339,6 +340,7 @@ namespace test::clock {
         system_core_clock_config(original_clock);
         audio_pll_clock_config(original_audio);
 
+        UNITY_END();
         LOGI(TAG, "Done with all tests on the system and audio PLL clock driver");
     }
 
