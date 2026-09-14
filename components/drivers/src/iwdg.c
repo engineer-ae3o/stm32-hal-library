@@ -17,7 +17,7 @@ hal_err_t iwdg_start(iwdg_prescaler_t prescaler, uint32_t timeout_ms) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Enable the key register and unlock the prescaler and reload registers
+    // Start the watchdog and unlock the prescaler and reload registers
     IWDG->KR = 0xCCCCU;
     IWDG->KR = 0x5555U;
 
@@ -35,7 +35,7 @@ hal_err_t iwdg_start(iwdg_prescaler_t prescaler, uint32_t timeout_ms) {
     IWDG->PR  = prescaler & IWDG_PR_PR_Msk;
     IWDG->RLR = actual_reload_val & IWDG_RLR_RL_Msk;
 
-    // Wait until the PVU and RVU bits read 0 again since we have modified the PR and RLR
+    // Wait until the PVU and RVU bits read 0 before we can safely proceed
     timeout = TIMEOUT_CYCLES;
     while (((IWDG->SR & IWDG_SR_PVU) || (IWDG->SR & IWDG_SR_RVU)) && --timeout);
     if (timeout == 0) {
@@ -45,7 +45,7 @@ hal_err_t iwdg_start(iwdg_prescaler_t prescaler, uint32_t timeout_ms) {
     // Freeze the IWDG if a breakpoint is active
     DBGMCU->APB1FZ |= DBGMCU_APB1_FZ_DBG_IWDG_STOP;
 
-    // Kick the watchdog
+    // Kick the watchdog immediately
     IWDG->KR = 0xAAAAU;
 
     return HAL_OK;

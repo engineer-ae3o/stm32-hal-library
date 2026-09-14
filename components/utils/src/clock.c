@@ -125,9 +125,9 @@ static const system_clock_preset_t s_system_clock_preset_lut[] = {
             .sysclk_source  = RCC_CFGR_SWS_PLL,       // SYSCLK source is the PLL
             .pll_source     = RCC_PLLCFGR_PLLSRC_HSE, // PLL source is the HSE
             .pllm           = HSE_VALUE_MHz,          // Divides the HSE by its value in MHz to give us 1MHz regardless of its starting value
-            .plln           = HSI_VALUE_MHz * 2,      // Multiplies the resultant 1MHz by HSI_VALUE_MHz * 2
-            .pllp           = 0b00, // Divides the HSI_VALUE_MHz * 2 by 2 to provide HSI_VALUE_MHz for the SYSCLK. For more details, refer above
-            .pllq           = 2,    // Divides the HSI_VALUE_MHz * 2 by 2 to provide HSI_VALUE_MHz for the USB and SDIO clocks
+            .plln           = HSI_VALUE_MHz * 4,      // Multiplies the resultant 1MHz by HSI_VALUE_MHz * 4
+            .pllp           = 0b01, // Divides the HSI_VALUE_MHz * 2 by 4 to provide HSI_VALUE_MHz for the SYSCLK. For more details, refer above
+            .pllq           = 4,    // Divides the HSI_VALUE_MHz * 2 by 4 to provide HSI_VALUE_MHz for the USB and SDIO clocks
             .ahb_prescaler  = RCC_CFGR_HPRE_DIV1,  // s_system_core_clock = SYSCLK = HSI_VALUE_MHz
             .apb1_prescaler = RCC_CFGR_PPRE1_DIV1, // APB1 = s_system_core_clock  = HSI_VALUE_MHz
             .apb2_prescaler = RCC_CFGR_PPRE2_DIV1, // APB2 = s_system_core_clock = HSI_VALUE_MHz
@@ -294,6 +294,12 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
             break;
 
         case RCC_CFGR_SWS_PLL:
+            // Sanity check the prescaler values
+            ASSERT(preset->pllm >= 2 && preset->pllm <= 63);
+            ASSERT(preset->plln >= 50 && preset->plln <= 432);
+            ASSERT(preset->pllp <= 0b110U);
+            ASSERT(preset->pllq >= 2 && preset->pllq <= 15);
+
             // Enable the PLL source
             if (preset->pll_source == RCC_PLLCFGR_PLLSRC_HSI) {
                 // Do nothing. The HSI is already enabled
@@ -368,6 +374,10 @@ static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* pre
 
     // We use a PLLM value to get us a Vco of 1MHz regardless if the HSI or HSE is used.
     uint32_t pllm = 0;
+
+    // Sanity check the prescaler values
+    ASSERT(preset->plln >= 50 && preset->plln <= 432);
+    ASSERT(preset->pllr >= 2 && preset->pllr <= 7);
 
     switch (RCC->CFGR & RCC_CFGR_SWS) {
         // If the SYSCLK source is either from the HSE or HSI directly, this implies the PLLSRC bit
@@ -467,7 +477,7 @@ void system_core_clock_update(void) {
     ASSERT(s_apb1_core_clock <= MAX_APB1_CLOCK_Hz);
     ASSERT(s_apb2_core_clock <= MAX_APB2_CLOCK_Hz);
 
-    // Reconfigure the SysTick since the system clock got updated
+    // Reconfigure SysTick since the system clock got updated
     systick_init();
 }
 
@@ -513,5 +523,12 @@ uint32_t get_apb2_core_clock(void) {
 }
 
 bool is_sysclk_on_hse(void) {
-    return (RCC->CFGR & RCC_CFGR_SWS_HSE) || (RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC_HSE);
+    switch (RCC->CFGR & RCC_CFGR_SWS) {
+        case RCC_CFGR_SWS_HSE:
+            return true;
+        case RCC_CFGR_SWS_HSI:
+            return false;
+        default:
+            return RCC->PLLCFGR & RCC_PLLCFGR_PLLSRC_HSE;
+    }
 }

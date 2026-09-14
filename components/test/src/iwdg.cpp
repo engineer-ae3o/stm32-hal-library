@@ -1,10 +1,10 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
-#include "utils/common.h"
 #include "drivers/iwdg.h"
 #include "utils/board.h"
 #include "utils/err.h"
+#include "utils/log.h"
 
 #include <cstdint>
 
@@ -95,7 +95,7 @@ namespace test::iwdg {
         void max_reload_value_is_accepted_at_the_boundary() {
             TEST_ASSERT_EQUAL(HAL_OK, iwdg_start(TEST_PRESCALER, MAX_RELOAD_MS));
 
-            const uint32_t expected_reload = (COUNTER_CLK_Hz * MAX_RELOAD_MS) / 1000;
+            constexpr uint32_t expected_reload = (COUNTER_CLK_Hz * MAX_RELOAD_MS) / 1000;
             TEST_ASSERT_EQUAL_UINT32(expected_reload, (IWDG->RLR & IWDG_RLR_RL_Msk) >> IWDG_RLR_RL_Pos);
         }
 

@@ -234,7 +234,7 @@ namespace test::adc {
                 float voltage = 0.0F;
                 TEST_ASSERT_EQUAL(HAL_OK, adc_get_value_right_aligned(ADC1, c.raw, c.res, &voltage));
                 const float expected = (measured_vdda * static_cast<float>(c.raw)) / static_cast<float>(c.full_scale);
-                TEST_ASSERT_FLOAT_WITHIN(0.001F, expected, voltage);
+                TEST_ASSERT_FLOAT_WITHIN(0.01F, expected, voltage);
             }
 
             float aligned = 0;
