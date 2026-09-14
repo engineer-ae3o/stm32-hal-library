@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
+#include "test/clock.hpp"
 #include "utils/board.h"
 #include "utils/clock.h"
 #include "utils/log.h"

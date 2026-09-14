@@ -3,6 +3,7 @@
 
 #include "drivers/iwdg.h"
 #include "utils/board.h"
+#include "test/iwdg.hpp"
 #include "utils/err.h"
 #include "utils/log.h"
 

@@ -1,3 +1,4 @@
+#include "test/profile.hpp"
 #include "o1heap/o1heap.h"
 #include "utils/common.h"
 #include "utils/tick.h"

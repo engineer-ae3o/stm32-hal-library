@@ -2,11 +2,12 @@
 #include "Unity/unity.h"
 
 #include "utils/common.h"
-#include "drivers/spi.h"
 #include "drivers/gpio.h"
+#include "drivers/spi.h"
+#include "test/spi.hpp"
+#include "utils/tick.h"
 #include "utils/err.h"
 #include "utils/log.h"
-#include "utils/tick.h"
 
 #include <array>
 #include <cstdint>

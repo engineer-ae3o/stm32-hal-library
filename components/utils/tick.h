@@ -27,7 +27,7 @@ uint64_t ms_since_boot(void);
 // Polling delay macros
 #define delay_ms(ms)                                                                                                                                 \
     do {                                                                                                                                             \
-        uint32_t start = ms_since_boot();                                                                                                            \
+        uint64_t start = ms_since_boot();                                                                                                            \
         while ((ms_since_boot() - start) < (ms));                                                                                                    \
     } while (0)
 

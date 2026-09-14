@@ -4,9 +4,10 @@
 #include "utils/common.h"
 #include "drivers/uart.h"
 #include "drivers/gpio.h"
+#include "test/uart.hpp"
+#include "utils/tick.h"
 #include "utils/err.h"
 #include "utils/log.h"
-#include "utils/tick.h"
 
 #include <array>
 #include <cstdint>

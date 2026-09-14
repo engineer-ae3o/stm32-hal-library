@@ -3,6 +3,7 @@
 
 #include "drivers/gpio.h"
 #include "utils/common.h"
+#include "test/gpio.hpp"
 #include "utils/log.h"
 
 #include <array>

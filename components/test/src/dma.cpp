@@ -4,6 +4,7 @@
 #include "drivers/dma_types.h"
 #include "utils/common.h"
 #include "drivers/dma.h"
+#include "test/dma.hpp"
 #include "utils/err.h"
 #include "utils/log.h"
 

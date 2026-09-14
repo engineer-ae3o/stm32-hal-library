@@ -4,6 +4,7 @@
 #include "utils/common.h"
 #include "drivers/crc.h"
 #include "drivers/dma.h"
+#include "test/crc.hpp"
 #include "utils/err.h"
 #include "utils/log.h"
 
