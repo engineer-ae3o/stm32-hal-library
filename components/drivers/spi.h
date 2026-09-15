@@ -14,7 +14,6 @@ extern "C" {
 
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 
 typedef enum : uint8_t {

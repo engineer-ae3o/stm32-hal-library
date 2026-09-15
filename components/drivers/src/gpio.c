@@ -47,8 +47,7 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
 
 void gpio_set_output(GPIO_TypeDef* port, gpio_pin_t pin) {
     if (port) {
-        port->MODER &= ~(0b11UL << (pin * 2));
-        port->MODER |= (0b1UL << (pin * 2));
+        port->MODER = (port->MODER & ~(0b11UL << (pin * 2))) | (0b1UL << (pin * 2));
     }
 }
 
@@ -60,8 +59,6 @@ void gpio_set_input(GPIO_TypeDef* port, gpio_pin_t pin) {
 
 void gpio_set_analog(GPIO_TypeDef* port, gpio_pin_t pin) {
     if (port) {
-        // ORing in 0b11 gets us our desired value regardless of
-        // previous state, so it is redundant to clear it first
         port->MODER |= (0b11UL << (pin * 2));
     }
 }
@@ -72,8 +69,7 @@ hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_
     }
 
     // Set the MODER for alternate mode
-    port->MODER &= ~(0b11UL << (pin * 2));
-    port->MODER |= (0b10UL << (pin * 2));
+    port->MODER = (port->MODER & ~(0b11UL << (pin * 2))) | (0b10UL << (pin * 2));
 
     // Set the specified alternate function
     if (pin <= GPIO_PIN_7) {
@@ -145,6 +141,14 @@ bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin) {
 }
 
 hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigger_t edge) {
+    // Extract rising and falling bits from edge variable
+    const bool rising  = (uint8_t)edge & 0x1U;
+    const bool falling = ((uint8_t)edge >> 0b1U) & 0x1U;
+
+    if (!rising && !falling) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
     // Extract register index and bit position
     const uint8_t reg_idx = pin / 4;
     const uint8_t bit_pos = (pin % 4) * 4;
@@ -177,10 +181,6 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigg
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(0b1UL << pin);
     EXTI->FTSR &= ~(0b1UL << pin);
-
-    // Extract rising and falling bits from edge variable
-    const bool rising  = (uint8_t)edge & 0x1U;
-    const bool falling = ((uint8_t)edge >> 0b1U) & 0x1U;
 
     // Set interrupts edge registers if enabled
     if (rising) {

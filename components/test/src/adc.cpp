@@ -6,7 +6,6 @@
 #include "drivers/adc.h"
 #include "utils/board.h"
 #include "test/adc.hpp"
-#include "utils/tick.h"
 #include "utils/err.h"
 #include "utils/log.h"
 

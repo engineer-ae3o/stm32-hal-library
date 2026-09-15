@@ -14,7 +14,6 @@ extern "C" {
 #include "utils/err.h"
 
 #include <stdint.h>
-#include <stdbool.h>
 
 
 typedef SPI_TypeDef I2S_TypeDef;

@@ -40,9 +40,8 @@ typedef enum : uint8_t {
 } gpio_speed_mode_t;
 
 typedef enum : uint8_t {
-    GPIO_NO_EDGE = 0,
-    GPIO_RISING_EDGE_ONLY,
-    GPIO_FALLING_EDGE_ONLY,
+    GPIO_RISING_EDGE = 1,
+    GPIO_FALLING_EDGE,
     GPIO_RISING_FALLING_EDGE,
 } gpio_edge_trigger_t;
 
