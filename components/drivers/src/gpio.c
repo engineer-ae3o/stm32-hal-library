@@ -87,36 +87,33 @@ hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_
 
 void gpio_enable_pullup(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
     if (port) {
-        port->PUPDR &= ~(0b11UL << (pin * 2));
         if (enable) {
-            port->PUPDR |= (0b1UL << (pin * 2));
+            port->PUPDR = (port->PUPDR & ~(0b11UL << (pin * 2))) | (0b1UL << (pin * 2));
+        } else {
+            port->PUPDR &= ~(0b11UL << (pin * 2));
         }
     }
 }
 
 void gpio_enable_pulldown(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
     if (port) {
-        port->PUPDR &= ~(0b11UL << (pin * 2));
         if (enable) {
-            port->PUPDR |= (0b10UL << (pin * 2));
+            port->PUPDR = (port->PUPDR & ~(0b11UL << (pin * 2))) | (0b10UL << (pin * 2));
+        } else {
+            port->PUPDR &= ~(0b11UL << (pin * 2));
         }
     }
 }
 
 void gpio_set_output_type(GPIO_TypeDef* port, gpio_pin_t pin, gpio_output_type_t type) {
     if (port) {
-        if (type == GPIO_OPEN_DRAIN) {
-            port->OTYPER |= (1UL << pin);
-        } else if (type == GPIO_PUSH_PULL) {
-            port->OTYPER &= ~(1UL << pin);
-        }
+        port->OTYPER = (port->OTYPER & ~(1UL << pin)) | ((uint32_t)type << pin);
     }
 }
 
 void gpio_set_speed_mode(GPIO_TypeDef* port, gpio_pin_t pin, gpio_speed_mode_t mode) {
     if (port) {
-        port->OSPEEDR &= ~(0b11UL << (pin * 2));
-        port->OSPEEDR |= ((uint32_t)mode << (pin * 2));
+        port->OSPEEDR = (port->OSPEEDR & ~(0b11UL << (pin * 2))) | ((uint32_t)mode << (pin * 2));
     }
 }
 

@@ -297,7 +297,7 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
             // Sanity check the prescaler values
             ASSERT(preset->pllm >= 2 && preset->pllm <= 63);
             ASSERT(preset->plln >= 50 && preset->plln <= 432);
-            ASSERT(preset->pllp <= 0b110U);
+            ASSERT(preset->pllp <= 0b11U);
             ASSERT(preset->pllq >= 2 && preset->pllq <= 15);
 
             // Enable the PLL source
