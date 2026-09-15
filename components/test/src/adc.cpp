@@ -21,17 +21,17 @@ namespace test::adc {
 
         constexpr uint32_t BOUNDED_WAIT_ITERS = 10U * TIMEOUT_CYCLES;
 
-        // Bring ADC1 to a known-good, powered, 12-bit right-aligned baseline before each test
+        // Helpers
         void reset_to_baseline() {
-            adc_deconfigure(ADC1);
+            TEST_ASSERT_EQUAL(HAL_OK, adc_deconfigure(ADC1));
             adc_clk_configure(ADC_CLK_PRESCALER_4);
 
-            const adc_config_t config{
+            const adc_config_t config = {
                 .alignment       = ADC_RIGHT_ALIGN,
                 .resolution      = ADC_RES_12_BITS,
                 .sampling_cycles = ADC_SAMPLE_28_CYCLES,
             };
-            adc_configure(ADC1, &config);
+            TEST_ASSERT_EQUAL(HAL_OK, adc_configure(ADC1, &config));
         }
 
         volatile bool s_injected_done = false;
@@ -58,6 +58,7 @@ namespace test::adc {
             return pred();
         }
 
+        // TESTS
         void clk_enable_rejects_unknown_handles() {
             TEST_ASSERT_EQUAL(HAL_OK, adcx_clk_enable(ADC1, true));
             TEST_ASSERT_TRUE(RCC->APB2ENR & RCC_APB2ENR_ADC1EN);

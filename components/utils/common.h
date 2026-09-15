@@ -24,6 +24,7 @@ extern "C" {
 #define UART_DMA_NVIC_IRQ_PRIORITY (10U)
 #define ADC_DMA_NVIC_IRQ_PRIORITY (8U)
 #define CRC_DMA_NVIC_IRQ_PRIORITY (11U)
+#define M2M_DMA_NVIC_IRQ_PRIORITY (15U)
 
 
 #define gnu_likely(x) __builtin_expect(!!(x), 1)

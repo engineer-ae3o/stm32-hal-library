@@ -153,7 +153,7 @@ namespace test::i2c {
     } // namespace
 
     void all() {
-        LOGI(TAG, "Starting the tests on the I2C driver (argument validation only, for now)");
+        LOGI(TAG, "Starting the tests on the I2C driver");
         UNITY_BEGIN();
 
         RUN_TEST(invalid_arg_guards);
@@ -165,9 +165,13 @@ namespace test::i2c {
         RUN_TEST(aht20_read_works);
         RUN_TEST(aht20_read_works);
         RUN_TEST(aht20_deinits_fine);
+        RUN_TEST(aht20_inits_fine);
+        RUN_TEST(aht20_read_works);
+        RUN_TEST(aht20_read_works);
+        RUN_TEST(aht20_deinits_fine);
 
         UNITY_END();
-        LOGI(TAG, "Done with the I2C driver argument validation tests");
+        LOGI(TAG, "Done with the I2C driver tests");
     }
 
 } // namespace test::i2c
