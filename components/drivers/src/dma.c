@@ -1,4 +1,5 @@
 #include "stm32f411xe.h"
+#include "drivers/dma_types.h"
 #include "utils/common.h"
 #include "drivers/dma.h"
 #include "utils/err.h"
@@ -163,6 +164,11 @@ hal_err_t dma_get_stream_info(DMA_Stream_TypeDef* stream, dma_stream_info_t* str
 hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_config_t* config) {
     if (stream == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
+    }
+
+    if ((config->direction == DMA_DIR_M2M) && (config->mode == DMA_MODE_DIRECT || config->flow_controller == DMA_FLOW_CONTROLLER_PERIPHERAL ||
+                                               config->circular_mode != DMA_MODE_NO_CIRCULAR)) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
 
     // Get the stream's DMA controller and NVIC interrupt type

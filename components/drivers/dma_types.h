@@ -9,9 +9,9 @@
 
 
 typedef enum : uint8_t {
-    DMA_DIR_P_M = 0b00, // Peripheral to memory
-    DMA_DIR_M_P = 0b01, // Memory to peripheral
-    DMA_DIR_M_M = 0b10, // Memory to memory
+    DMA_DIR_P2M = 0b00, // Peripheral to memory
+    DMA_DIR_M2P = 0b01, // Memory to peripheral
+    DMA_DIR_M2M = 0b10, // Memory to memory
 } dma_direction_t;
 
 typedef enum : uint8_t {
@@ -28,17 +28,17 @@ typedef enum : uint8_t {
 } dma_data_size_t;
 
 typedef enum : uint8_t {
-    DMA_MODE_FIFO,
+    DMA_MODE_FIFO = 0,
     DMA_MODE_DIRECT,
 } dma_direct_mode_t;
 
 typedef enum : uint8_t {
-    DMA_FLOW_CONTROLLER_DMA,        // The DMA controller is the flow controller
+    DMA_FLOW_CONTROLLER_DMA = 0,    // The DMA controller is the flow controller
     DMA_FLOW_CONTROLLER_PERIPHERAL, // The peripheral is the flow controller
 } dma_flow_control_t;
 
 typedef enum : uint8_t {
-    DMA_MODE_NO_CIRCULAR,
+    DMA_MODE_NO_CIRCULAR = 0,
     DMA_MODE_CIRCULAR,
     DMA_MODE_DOUBLE_BUFFER,
 } dma_circ_mode_t;

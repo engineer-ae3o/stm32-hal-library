@@ -266,7 +266,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority) {
 
         .mode            = DMA_MODE_DIRECT,
         .priority        = priority,
-        .direction       = DMA_DIR_M_P,
+        .direction       = DMA_DIR_M2P,
         .per_data_size   = DMA_SIZE_HWORD,
         .mem_data_size   = DMA_SIZE_HWORD,
         .circular_mode   = DMA_MODE_NO_CIRCULAR,
@@ -297,7 +297,7 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority) {
 
         .mode            = DMA_MODE_DIRECT,
         .priority        = priority,
-        .direction       = DMA_DIR_P_M,
+        .direction       = DMA_DIR_P2M,
         .per_data_size   = DMA_SIZE_HWORD,
         .mem_data_size   = DMA_SIZE_HWORD,
         .circular_mode   = DMA_MODE_NO_CIRCULAR,

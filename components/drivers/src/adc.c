@@ -506,7 +506,7 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
 
         .mode            = DMA_MODE_DIRECT,
         .priority        = config->priority,
-        .direction       = DMA_DIR_P_M,
+        .direction       = DMA_DIR_P2M,
         .per_data_size   = DMA_SIZE_HWORD,
         .mem_data_size   = DMA_SIZE_HWORD,
         .circular_mode   = config->circular_mode,

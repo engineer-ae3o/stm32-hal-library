@@ -329,7 +329,7 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
 
         .mode            = DMA_MODE_DIRECT,
         .priority        = priority,
-        .direction       = DMA_DIR_M_P,
+        .direction       = DMA_DIR_M2P,
         .per_data_size   = dma_data_size,
         .mem_data_size   = dma_data_size,
         .circular_mode   = DMA_MODE_NO_CIRCULAR,
@@ -360,7 +360,7 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
 
         .mode            = DMA_MODE_DIRECT,
         .priority        = priority,
-        .direction       = DMA_DIR_P_M,
+        .direction       = DMA_DIR_P2M,
         .per_data_size   = dma_data_size,
         .mem_data_size   = dma_data_size,
         .circular_mode   = DMA_MODE_NO_CIRCULAR,

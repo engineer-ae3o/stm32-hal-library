@@ -65,7 +65,7 @@ namespace test::dma {
 
                 .mode            = DMA_MODE_FIFO,
                 .priority        = DMA_PRIORITY_LOW,
-                .direction       = DMA_DIR_M_M,
+                .direction       = DMA_DIR_M2M,
                 .per_data_size   = DMA_SIZE_WORD,
                 .mem_data_size   = DMA_SIZE_WORD,
                 .circular_mode   = DMA_MODE_NO_CIRCULAR,
@@ -84,7 +84,7 @@ namespace test::dma {
 
         bool wait_for_tc_flag() {
             uint32_t timeout = 10 * TIMEOUT_CYCLES;
-            // This assumes stream 1. Should match SCRATCH_STREAM
+            // This assumes DMA2, stream 1. Should match SCRATCH_STREAM
             while (!(DMA2->LISR & DMA_LISR_TCIF1) && --timeout);
             return (DMA2->LISR & DMA_LISR_TCIF1) != 0;
         }
@@ -170,7 +170,7 @@ namespace test::dma {
             dma_set_channel(nullptr, 3);
             dma_set_direct_mode(nullptr, true);
             dma_set_trans_length(nullptr, 10);
-            dma_set_direction(nullptr, DMA_DIR_M_P);
+            dma_set_direction(nullptr, DMA_DIR_M2P);
             dma_set_increment(nullptr, true, true);
             dma_set_flow_controller(nullptr, true);
             dma_set_stream_priority(nullptr, DMA_PRIORITY_HIGH);
@@ -196,7 +196,7 @@ namespace test::dma {
             dma_set_trans_length(stream, 1234);
             TEST_ASSERT_EQUAL_UINT32(1234, stream->NDTR);
 
-            constexpr std::array<dma_direction_t, 3> DIRECTIONS{DMA_DIR_P_M, DMA_DIR_M_P, DMA_DIR_M_M};
+            constexpr std::array<dma_direction_t, 3> DIRECTIONS{DMA_DIR_P2M, DMA_DIR_M2P, DMA_DIR_M2M};
             for (const auto dir : DIRECTIONS) {
                 dma_set_direction(stream, dir);
                 TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(dir), (stream->CR & DMA_SxCR_DIR) >> DMA_SxCR_DIR_Pos);
@@ -298,7 +298,7 @@ namespace test::dma {
                 .fe_irq_enable     = false,
                 .mode              = DMA_MODE_FIFO,
                 .priority          = DMA_PRIORITY_LOW,
-                .direction         = DMA_DIR_M_M,
+                .direction         = DMA_DIR_M2M,
                 .per_data_size     = DMA_SIZE_WORD,
                 .mem_data_size     = DMA_SIZE_WORD,
                 .circular_mode     = DMA_MODE_DOUBLE_BUFFER,
