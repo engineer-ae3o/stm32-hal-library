@@ -3,6 +3,7 @@
 
 #include "drivers/dma_types.h"
 #include "utils/common.h"
+#include "utils/memcpy.h"
 #include "drivers/dma.h"
 #include "test/dma.hpp"
 #include "utils/err.h"
@@ -11,6 +12,7 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <string_view>
 
 
 namespace test::dma {
@@ -375,6 +377,38 @@ namespace test::dma {
             dma_configure_stream(SCRATCH_STREAM, &deconf);
         }
 
+        void dma_memcpy_with_flag_works() {
+            constexpr std::string_view      source = "This is the DMA memcpy function source. Nothing's happening here";
+            std::array<char, source.size()> destination{};
+
+            volatile memcpy_state_t flag = DMA_MEMCPY_NOT_DONE;
+            TEST_ASSERT_EQUAL(HAL_OK, dma_memcpy(destination.data(), source.data(), source.size(), &flag));
+            TEST_ASSERT_EQUAL(DMA_MEMCPY_DONE, dma_memcpy_wait_for_flag(&flag, TIMEOUT_CYCLES));
+
+            TEST_ASSERT_EQUAL_CHAR_ARRAY(source.data(), destination.data(), source.size());
+        }
+
+        void dma_memcpy_with_callback_works() {
+            constexpr std::string_view      source = "This is the DMA memcpy callback function source. Nothing's happening here";
+            std::array<char, source.size()> destination{};
+
+            // Its only static so the lambda passed to dma_memcpy_cb can see it
+            memcpy_state_t flag = DMA_MEMCPY_NOT_DONE;
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              dma_memcpy_cb(
+                                  destination.data(),
+                                  source.data(),
+                                  source.size(),
+                                  [](void* arg, hal_err_t ret) {
+                                      TEST_ASSERT_EQUAL_UINT8(HAL_OK, ret);
+                                      *static_cast<memcpy_state_t*>(arg) = DMA_MEMCPY_DONE;
+                                  },
+                                  &flag));
+
+            TEST_ASSERT_EQUAL(DMA_MEMCPY_DONE, dma_memcpy_wait_for_flag(&flag, TIMEOUT_CYCLES));
+            TEST_ASSERT_EQUAL_CHAR_ARRAY(source.data(), destination.data(), source.size());
+        }
+
     } // namespace
 
     void all() {
@@ -391,6 +425,8 @@ namespace test::dma {
         RUN_TEST(enable_and_disable_stream_are_null_safe);
         RUN_TEST(end_to_end_m2m_transfer_completes_and_matches_source);
         RUN_TEST(circular_transfer_is_left_enabled_by_the_isr_helper);
+        RUN_TEST(dma_memcpy_with_flag_works);
+        RUN_TEST(dma_memcpy_with_callback_works);
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the DMA driver");

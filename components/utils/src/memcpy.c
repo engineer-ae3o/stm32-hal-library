@@ -62,7 +62,7 @@ hal_err_t dma_memcpy(void* dest, const void* src, uint16_t len, volatile memcpy_
     TRY(dma_configure_stream(s_memcpy_dma_map.stream, &stream_config));
 
     s_dma_done_flag  = dma_done_flag;
-    *s_dma_done_flag = MEMCPY_NOT_DONE;
+    *s_dma_done_flag = DMA_MEMCPY_NOT_DONE;
 
     return dma_enable_stream(s_memcpy_dma_map.stream);
 }
@@ -115,6 +115,14 @@ hal_err_t dma_memcpy_cb(void* dest, const void* src, uint16_t len, dma_done_cb_t
     return dma_enable_stream(s_memcpy_dma_map.stream);
 }
 
+memcpy_state_t dma_memcpy_wait_for_flag(volatile memcpy_state_t* dma_done_flag, uint32_t timeout) {
+    while ((*dma_done_flag == DMA_MEMCPY_NOT_DONE) && --timeout);
+    if (timeout == 0) {
+        return DMA_MEMCPY_TIMEOUT;
+    }
+    return *dma_done_flag;
+}
+
 dma_map_t dma_memcpy_get_stream_info(void) {
     return s_memcpy_dma_map;
 }
@@ -137,9 +145,9 @@ void DMA2_Stream3_IRQHandler(void) {
 
     if (dma_done_flag) {
         if (ret == HAL_OK) {
-            *dma_done_flag = MEMCPY_DMA_DONE;
+            *dma_done_flag = DMA_MEMCPY_DONE;
         } else {
-            *dma_done_flag = MEMCPY_DMA_ERROR;
+            *dma_done_flag = DMA_MEMCPY_ERROR;
         }
     }
 
