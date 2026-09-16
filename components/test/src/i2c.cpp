@@ -1,7 +1,6 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
-#include "drivers/gpio.h"
 #include "drivers/i2c.h"
 #include "test/i2c.hpp"
 #include "utils/tick.h"
@@ -18,6 +17,8 @@ namespace test::i2c {
 
         constexpr const char* TAG = "I2C_Test";
 
+        I2C_TypeDef* const TEST_PORT = I2C1;
+
         const i2c_master_config_t PORT_CONFIG = {
             .use_pullups    = true,
             .frequency      = I2C_FREQ_100kHz,
@@ -25,9 +26,6 @@ namespace test::i2c {
             .sda_pin        = BOARD_I2C1_SDA_PB7,
             .scl_pin        = BOARD_I2C1_SCL_PB6,
         };
-
-        auto* const       TEST_PORT         = I2C1;
-        constexpr uint8_t AHT20_I2C_ADDRESS = 0x38;
 
         // TESTS
         void invalid_arg_guards() {
@@ -73,8 +71,32 @@ namespace test::i2c {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transceive(TEST_PORT, 0x50, data.data(), data.size(), rx_buf.data(), 0));
         }
 
+        void clk_enable_toggles_the_correct_bus_bit() {
+            i2cx_clk_enable(I2C1, false);
+            TEST_ASSERT_FALSE(RCC->APB1ENR & RCC_APB1ENR_I2C1EN);
+            i2cx_clk_enable(I2C1, true);
+            TEST_ASSERT_TRUE(RCC->APB1ENR & RCC_APB1ENR_I2C1EN);
+            i2cx_clk_enable(I2C1, false);
+
+            i2cx_clk_enable(I2C2, false);
+            TEST_ASSERT_FALSE(RCC->APB1ENR & RCC_APB1ENR_I2C2EN);
+            i2cx_clk_enable(I2C2, true);
+            TEST_ASSERT_TRUE(RCC->APB1ENR & RCC_APB1ENR_I2C2EN);
+            i2cx_clk_enable(I2C2, false);
+
+            i2cx_clk_enable(I2C3, false);
+            TEST_ASSERT_FALSE(RCC->APB1ENR & RCC_APB1ENR_I2C3EN);
+            i2cx_clk_enable(I2C3, true);
+            TEST_ASSERT_TRUE(RCC->APB1ENR & RCC_APB1ENR_I2C3EN);
+            i2cx_clk_enable(I2C3, false);
+
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2cx_clk_enable(reinterpret_cast<I2C_TypeDef*>(0x1), true));
+        }
+
         // These tests requires another physical component to be present: the AHT20 sensor.
         // They test the communication with another I2C device as a way to model real world usage.
+
+        constexpr uint8_t AHT20_I2C_ADDRESS = 0x38;
 
         void aht20_inits_fine() {
             // This test must run first before any other AHT20 test since it sets up the bus and initializes the AHT20
@@ -103,7 +125,7 @@ namespace test::i2c {
             delay_ms(15);
         }
 
-        void aht20_read_works() {
+        void read_attempt_from_aht20() {
             // Buffer which contains the values to trigger a read from the AHT20
             constexpr std::array<uint8_t, 3> tx_trigger = {0xAC, 0x33, 0x00};
             TEST_ASSERT_EQUAL(HAL_OK, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, tx_trigger.data(), tx_trigger.size()));
@@ -149,6 +171,25 @@ namespace test::i2c {
             TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
         }
 
+        void multiple_aht20_reads_work() {
+            aht20_inits_fine();
+            for (uint8_t i = 0; i < 10; i++) {
+                read_attempt_from_aht20();
+            }
+            aht20_deinits_fine();
+        }
+
+        void aht20_init_deinit_stress_test() {
+            aht20_inits_fine();
+            read_attempt_from_aht20();
+            aht20_deinits_fine();
+            aht20_inits_fine();
+            aht20_deinits_fine();
+            aht20_inits_fine();
+            read_attempt_from_aht20();
+            aht20_deinits_fine();
+        }
+
     } // namespace
 
     void all() {
@@ -156,17 +197,11 @@ namespace test::i2c {
         UNITY_BEGIN();
 
         RUN_TEST(invalid_arg_guards);
+        RUN_TEST(clk_enable_toggles_the_correct_bus_bit);
         RUN_TEST(aht20_inits_fine);
-        RUN_TEST(aht20_read_works);
-        RUN_TEST(aht20_deinits_fine);
-        RUN_TEST(aht20_inits_fine);
-        RUN_TEST(aht20_read_works);
-        RUN_TEST(aht20_read_works);
-        RUN_TEST(aht20_read_works);
-        RUN_TEST(aht20_deinits_fine);
-        RUN_TEST(aht20_inits_fine);
-        RUN_TEST(aht20_read_works);
-        RUN_TEST(aht20_read_works);
+        RUN_TEST(read_attempt_from_aht20);
+        RUN_TEST(multiple_aht20_reads_work);
+        RUN_TEST(aht20_init_deinit_stress_test);
         RUN_TEST(aht20_deinits_fine);
 
         UNITY_END();

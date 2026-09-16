@@ -22,16 +22,16 @@ namespace test::uart {
 
         // Instance under test. TX and RX must be physically jumpered together on the
         // board for the loopback tests below to pass.
-        USART_TypeDef* const TEST_INSTANCE = USART1;
+        USART_TypeDef* const TEST_INSTANCE = USART2;
         GPIO_TypeDef* const  TEST_PORT     = GPIOA;
-        constexpr gpio_pin_t TEST_TX_PIN   = GPIO_PIN_9;
-        constexpr gpio_pin_t TEST_RX_PIN   = GPIO_PIN_10;
+        constexpr gpio_pin_t TEST_TX_PIN   = GPIO_PIN_2;
+        constexpr gpio_pin_t TEST_RX_PIN   = GPIO_PIN_3;
 
         const uart_config_t DEFAULT_CONFIG = {
             .over_sampling = UART_OVER_SAMPLING_16,
             .baud_rate     = 115200UL,
-            .tx_pin        = BOARD_UART1_TX_PA9,
-            .rx_pin        = BOARD_UART1_RX_PA10,
+            .tx_pin        = BOARD_UART2_TX_PA2,
+            .rx_pin        = BOARD_UART2_RX_PA3,
         };
 
         volatile bool      s_tx_done = false;

@@ -7,13 +7,6 @@
 #include "utils/err.h"
 
 
-// Forward declarations
-[[__gnu__::__always_inline__]] static inline bool send_start(I2C_TypeDef* handle);
-[[__gnu__::__always_inline__]] static inline void send_stop(I2C_TypeDef* handle);
-
-static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
-static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
-
 #define I2C_ENABLE()                                                                                                                                 \
     do {                                                                                                                                             \
         handle->CR1 |= I2C_CR1_PE;                                                                                                                   \
@@ -25,6 +18,13 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
         handle->CR1 &= ~I2C_CR1_PE;                                                                                                                  \
         __DSB();                                                                                                                                     \
     } while (0)
+
+// Forward declarations
+[[__gnu__::__always_inline__]] static inline bool send_start(I2C_TypeDef* handle);
+[[__gnu__::__always_inline__]] static inline void send_stop(I2C_TypeDef* handle);
+
+static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
+static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
 
 
 // General API
@@ -93,24 +93,16 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     handle->TRISE |= (((trise_ns * apb1_clk_freq_mhz) / 1000U) + config->digital_filter + 1) & I2C_TRISE_TRISE;
 
     // Configure pins for I2C
-    // Enable gpio channel clock
     TRY(gpiox_clk_enable(config->sda_pin.port, true));
-    TRY(gpiox_clk_enable(config->scl_pin.port, true));
-
-    // Set pins to alternate function for I2C
     TRY(gpio_set_alternate_function(config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af));
-    TRY(gpio_set_alternate_function(config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af));
-
-    // Set as open drain
     gpio_set_output_type(config->sda_pin.port, config->sda_pin.pin, GPIO_OPEN_DRAIN);
-    gpio_set_output_type(config->scl_pin.port, config->scl_pin.pin, GPIO_OPEN_DRAIN);
-
-    // Speed mode
     gpio_set_speed_mode(config->sda_pin.port, config->sda_pin.pin, GPIO_MEDIUM_SPEED);
-    gpio_set_speed_mode(config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
-
-    // Pullups
     gpio_enable_pullup(config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
+
+    TRY(gpiox_clk_enable(config->scl_pin.port, true));
+    TRY(gpio_set_alternate_function(config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af));
+    gpio_set_output_type(config->scl_pin.port, config->scl_pin.pin, GPIO_OPEN_DRAIN);
+    gpio_set_speed_mode(config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_enable_pullup(config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
     return HAL_OK;

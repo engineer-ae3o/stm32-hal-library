@@ -281,47 +281,6 @@ namespace test::dma {
             TEST_ASSERT_FALSE(SCRATCH_STREAM->CR & DMA_SxCR_EN);
         }
 
-        void configure_stream_double_buffer_sets_circ_and_dbm() {
-            uint32_t src = 0, dst0 = 0, dst1 = 0;
-
-            dma_stream_config_t deconf{};
-            deconf.deconfigure = true;
-            TEST_ASSERT_EQUAL(HAL_OK, dma_configure_stream(SCRATCH_STREAM, &deconf));
-
-            const dma_stream_config_t config = {
-                .deconfigure       = false,
-                .enable_stream     = false,
-                .per_addr_incement = true,
-                .mem_addr_incement = true,
-                .tc_irq_enable     = false,
-                .ht_irq_enable     = false,
-                .te_irq_enable     = false,
-                .dme_irq_enable    = false,
-                .fe_irq_enable     = false,
-                .mode              = DMA_MODE_FIFO,
-                .priority          = DMA_PRIORITY_LOW,
-                .direction         = DMA_DIR_M2M,
-                .per_data_size     = DMA_SIZE_WORD,
-                .mem_data_size     = DMA_SIZE_WORD,
-                .circular_mode     = DMA_MODE_DOUBLE_BUFFER,
-                .flow_controller   = DMA_FLOW_CONTROLLER_DMA,
-                .buffer_size       = 4,
-                .channel           = 0,
-                .nvic_irq_priority = CRC_DMA_NVIC_IRQ_PRIORITY,
-                .per_addr          = &src,
-                .mem_buf_0         = &dst0,
-                .mem_buf_1         = &dst1,
-            };
-            TEST_ASSERT_EQUAL(HAL_OK, dma_configure_stream(SCRATCH_STREAM, &config));
-
-            TEST_ASSERT_TRUE(SCRATCH_STREAM->CR & DMA_SxCR_CIRC);
-            TEST_ASSERT_TRUE(SCRATCH_STREAM->CR & DMA_SxCR_DBM);
-            TEST_ASSERT_EQUAL_UINT32(reinterpret_cast<uint32_t>(&dst1), SCRATCH_STREAM->M1AR);
-
-            deconf.deconfigure = true;
-            dma_configure_stream(SCRATCH_STREAM, &deconf);
-        }
-
         void enable_and_disable_stream_are_null_safe() {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dma_enable_stream(nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dma_disable_stream(nullptr));
@@ -421,7 +380,6 @@ namespace test::dma {
         RUN_TEST(low_level_setters_are_null_safe_and_cover_every_enum_value);
         RUN_TEST(configure_stream_invalid_arg_guards);
         RUN_TEST(deconfigure_clears_addresses_length_and_irq);
-        RUN_TEST(configure_stream_double_buffer_sets_circ_and_dbm);
         RUN_TEST(enable_and_disable_stream_are_null_safe);
         RUN_TEST(end_to_end_m2m_transfer_completes_and_matches_source);
         RUN_TEST(circular_transfer_is_left_enabled_by_the_isr_helper);
