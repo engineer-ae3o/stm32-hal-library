@@ -178,7 +178,7 @@ namespace test::gpio {
             gpio_set_output_type(SCRATCH_PORT, SCRATCH_PIN, GPIO_PUSH_PULL);
             TEST_ASSERT_FALSE(SCRATCH_PORT->OTYPER & (1UL << SCRATCH_PIN));
 
-            constexpr auto SPEEDS = std::array{GPIO_LOW_SPEED, GPIO_MEDIUM_SPEED, GPIO_FAST_SPEED, GPIO_HIGH_SPEED};
+            constexpr auto SPEEDS = std::array{GPIO_LOW_SPEED, GPIO_MEDIUM_SPEED, GPIO_HIGH_SPEED, GPIO_FULL_SPEED};
             for (const auto speed : SPEEDS) {
                 gpio_set_speed_mode(SCRATCH_PORT, SCRATCH_PIN, speed);
                 TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(speed), (SCRATCH_PORT->OSPEEDR >> (SCRATCH_PIN * 2)) & 0b11UL);

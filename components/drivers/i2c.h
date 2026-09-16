@@ -9,6 +9,7 @@ extern "C" {
 
 #include "stm32f411xe.h"
 #include "drivers/gpio.h"
+#include "utils/board.h"
 #include "utils/err.h"
 
 #include <stddef.h>
@@ -16,8 +17,8 @@ extern "C" {
 
 
 typedef enum : uint32_t {
-    I2C_FREQ_100KHz = 100'000,
-    I2C_FREQ_400KHz = 400'000,
+    I2C_FREQ_100kHz = 100'000,
+    I2C_FREQ_400kHz = 400'000,
 } i2c_frequency_t;
 
 typedef enum : uint8_t {
@@ -45,9 +46,8 @@ typedef struct {
     i2c_frequency_t frequency;
     i2c_digi_filt_t digital_filter;
 
-    gpio_pin_t    sda_pin;
-    gpio_pin_t    scl_pin;
-    GPIO_TypeDef* gpio_port;
+    board_pin_t sda_pin;
+    board_pin_t scl_pin;
 } i2c_master_config_t;
 
 // General API

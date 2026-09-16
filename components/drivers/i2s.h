@@ -10,6 +10,7 @@ extern "C" {
 #include "stm32f411xe.h"
 #include "drivers/gpio.h"
 #include "drivers/dma.h"
+#include "utils/board.h"
 #include "utils/clock.h"
 #include "utils/err.h"
 
@@ -51,26 +52,23 @@ typedef enum : uint8_t {
     I2S_FREQ_44kHz, // 44.1kHz
     I2S_FREQ_48kHz,
     I2S_FREQ_96kHz,
-    I2S_FREQ_192kHz,
     I2S_FREQ_COUNT,
-} i2s_frequency_t;
+} i2s_freq_t;
 
 typedef struct {
-    i2s_dir_t       direction;
-    i2s_mode_t      mode;
-    i2s_frequency_t frequency;
-    i2s_frame_t     frame;
-    audio_clock_t   audio_pll_type;
+    i2s_dir_t     direction;
+    i2s_mode_t    mode;
+    i2s_freq_t    frequency;
+    i2s_frame_t   frame;
+    audio_clock_t audio_clock;
 
     bool cpol;
     bool use_mck;
 
-    gpio_pin_t mck_pin;
-    gpio_pin_t ws_pin;
-    gpio_pin_t sd_pin;
-    gpio_pin_t sck_pin;
-
-    GPIO_TypeDef* gpio_port;
+    board_pin_t ws_pin;
+    board_pin_t sd_pin;
+    board_pin_t mclk_pin;
+    board_pin_t sclk_pin;
 } i2s_master_config_t;
 
 

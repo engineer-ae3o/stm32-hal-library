@@ -10,6 +10,7 @@ extern "C" {
 #include "stm32f411xe.h"
 #include "drivers/dma_types.h"
 #include "drivers/gpio.h"
+#include "utils/board.h"
 #include "utils/err.h"
 
 #include <stddef.h>
@@ -28,25 +29,23 @@ typedef enum : uint8_t {
 } spi_prescaler_t;
 
 typedef enum : uint8_t {
-    SPI_DATA_SIZE_8_BITS,
-    SPI_DATA_SIZE_16_BITS,
+    SPI_DATA_8_BITS,
+    SPI_DATA_16_BITS,
 } spi_data_size_t;
 
 typedef struct {
     bool cpol;
     bool cpha;
 
-    spi_data_size_t data_size;
-    spi_prescaler_t prescaler;
-
     bool use_miso;
     bool use_mosi;
 
-    gpio_pin_t miso_pin;
-    gpio_pin_t mosi_pin;
-    gpio_pin_t sclk_pin;
+    spi_data_size_t data_size;
+    spi_prescaler_t prescaler;
 
-    GPIO_TypeDef* gpio_port;
+    board_pin_t miso_pin;
+    board_pin_t mosi_pin;
+    board_pin_t sclk_pin;
 } spi_master_config_t;
 
 // General API

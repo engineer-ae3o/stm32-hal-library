@@ -21,26 +21,23 @@ namespace test::spi {
         constexpr const char* TAG = "SPI_Test";
 
         // Instance under test. MOSI and MISO must be physically jumpered together on
-        // the board for the loopback tests below to pass. Defaults assume a
-        // Nucleo-F411RE (SPI2 via the Arduino header: PB13 = SCLK, PB14 = MISO,
-        // PB15 = MOSI) - adjust to match your actual wiring.
+        // the board for the loopback tests below to pass.
         SPI_TypeDef* const   TEST_INSTANCE = SPI2;
         GPIO_TypeDef* const  TEST_PORT     = GPIOB;
         constexpr gpio_pin_t TEST_MISO_PIN = GPIO_PIN_14;
         constexpr gpio_pin_t TEST_MOSI_PIN = GPIO_PIN_15;
-        constexpr gpio_pin_t TEST_SCLK_PIN = GPIO_PIN_13;
+        constexpr gpio_pin_t TEST_SCLK_PIN = GPIO_PIN_10;
 
         const spi_master_config_t DEFAULT_CONFIG = {
             .cpol      = false,
             .cpha      = false,
-            .data_size = SPI_DATA_SIZE_8_BITS,
-            .prescaler = SPI_PRESCALER_DIV8,
             .use_miso  = true,
             .use_mosi  = true,
-            .miso_pin  = TEST_MISO_PIN,
-            .mosi_pin  = TEST_MOSI_PIN,
-            .sclk_pin  = TEST_SCLK_PIN,
-            .gpio_port = TEST_PORT,
+            .data_size = SPI_DATA_8_BITS,
+            .prescaler = SPI_PRESCALER_DIV4,
+            .miso_pin  = BOARD_SPI2_MISO_PB14,
+            .mosi_pin  = BOARD_SPI2_MOSI_PB15,
+            .sclk_pin  = BOARD_SPI2_SCLK_PB10,
         };
 
         volatile bool      s_tx_done = false;
@@ -211,7 +208,7 @@ namespace test::spi {
 
         void transceive_poll_loopback_16bit() {
             spi_master_config_t config = DEFAULT_CONFIG;
-            config.data_size           = SPI_DATA_SIZE_16_BITS;
+            config.data_size           = SPI_DATA_16_BITS;
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &config));
 
             constexpr std::array<uint16_t, 8>    TX_DATA = {0x0102, 0x0304, 0x0506, 0x0708, 0xDEAD, 0xBEEF, 0xCAFE, 0xF00D};

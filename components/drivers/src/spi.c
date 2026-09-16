@@ -206,79 +206,50 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     handle->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
 
     uint32_t cr1_mask = handle->CR1;
-    cr1_mask &= ~SPI_CR1_BR;
-    cr1_mask |= (((uint32_t)config->prescaler << SPI_CR1_BR_Pos) | // Clock prescaler
-                 SPI_CR1_SSM |                                     // Software slave select
-                 SPI_CR1_SSI |                                     // Set internal slave to high
-                 SPI_CR1_MSTR);                                    // SPI in master mode
-
     cr1_mask &= ~(SPI_CR1_LSBFIRST | // MSB first
                   SPI_CR1_RXONLY |   // TX and RX
                   SPI_CR1_CRCEN |    // Hardware CRC disable
                   SPI_CR1_CRCNEXT |  // No CRC phase; data phase always
-                  SPI_CR1_BIDIMODE | // MOSI and MISO used
-                  SPI_CR1_BIDIOE);   // Dual communication
+                  SPI_CR1_BIDIMODE | // MOSI and MISO used from the SPI peripheral's perspective
+                  SPI_CR1_BIDIOE |   // Dual communication
+                  // Clear state
+                  SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF | SPI_CR1_BR);
 
-    // CPOL and CPHA setting
-    if (config->cpol) {
-        cr1_mask |= SPI_CR1_CPOL;
-    } else {
-        cr1_mask &= ~SPI_CR1_CPOL;
-    }
+    cr1_mask |= (((uint32_t)config->prescaler << SPI_CR1_BR_Pos) | // Clock prescaler
+                 SPI_CR1_SSM |                                     // Software slave select
+                 SPI_CR1_SSI |                                     // Set internal slave to high
+                 SPI_CR1_MSTR);                                    // SPI in master mode
+    cr1_mask |= (config->cpol) ? SPI_CR1_CPOL : 0;
+    cr1_mask |= (config->cpha) ? SPI_CR1_CPHA : 0;
+    cr1_mask |= (config->data_size == SPI_DATA_16_BITS) ? SPI_CR1_DFF : 0;
 
-    if (config->cpha) {
-        cr1_mask |= SPI_CR1_CPHA;
-    } else {
-        cr1_mask &= ~SPI_CR1_CPHA;
-    }
-
-    if (config->data_size == SPI_DATA_SIZE_8_BITS) {
-        cr1_mask &= ~SPI_CR1_DFF;
-    } else {
-        cr1_mask |= SPI_CR1_DFF;
-    }
-
-    // Write the final mask
     handle->CR1 = cr1_mask;
 
-    // Motorolla mode and SS output disable
+    // Motorolla mode and slave select output disable
     handle->CR2 &= ~(SPI_CR2_FRF | SPI_CR2_SSOE);
 
     // Configure the GPIO pins
-    TRY(gpiox_clk_enable(config->gpio_port, true));
+    TRY(gpiox_clk_enable(config->sclk_pin.port, true));
+    TRY(gpio_set_alternate_function(config->sclk_pin.port, config->sclk_pin.pin, config->sclk_pin.af));
+    gpio_enable_pullup(config->sclk_pin.port, config->sclk_pin.pin, true);
+    gpio_set_speed_mode(config->sclk_pin.port, config->sclk_pin.pin, GPIO_FULL_SPEED);
+    gpio_set_output_type(config->sclk_pin.port, config->sclk_pin.pin, GPIO_PUSH_PULL);
 
-    // Alternate function value selection for the GPIO pin
-    uint8_t alt_val = 0;
-    if ((handle == SPI1) || (handle == SPI2)) {
-        alt_val = 5;
-    } else if (handle == SPI3) {
-        alt_val = (config->gpio_port == GPIOD) ? 5 : 6;
-    } else if (handle == SPI4) {
-        alt_val = (config->gpio_port == GPIOE) ? 5 : 6;
-    } else if (handle == SPI5) {
-        alt_val = 6;
-    } else {
-        return HAL_ERR_INVALID_ARG;
+    if (config->use_mosi) {
+        TRY(gpiox_clk_enable(config->mosi_pin.port, true));
+        TRY(gpio_set_alternate_function(config->mosi_pin.port, config->mosi_pin.pin, config->mosi_pin.af));
+        gpio_enable_pullup(config->mosi_pin.port, config->mosi_pin.pin, true);
+        gpio_set_speed_mode(config->mosi_pin.port, config->mosi_pin.pin, GPIO_FULL_SPEED);
+        gpio_set_output_type(config->mosi_pin.port, config->mosi_pin.pin, GPIO_PUSH_PULL);
     }
 
     if (config->use_miso) {
-        TRY(gpio_set_alternate_function(config->gpio_port, config->miso_pin, alt_val));
-        gpio_enable_pullup(config->gpio_port, config->miso_pin, true);
-        gpio_set_speed_mode(config->gpio_port, config->miso_pin, GPIO_HIGH_SPEED);
-        // We cannot hardcode an output type since the slave can drive this pin
+        TRY(gpiox_clk_enable(config->miso_pin.port, true));
+        TRY(gpio_set_alternate_function(config->miso_pin.port, config->miso_pin.pin, config->miso_pin.af));
+        gpio_enable_pullup(config->miso_pin.port, config->miso_pin.pin, true);
+        gpio_set_speed_mode(config->miso_pin.port, config->miso_pin.pin, GPIO_FULL_SPEED);
+        gpio_set_output_type(config->miso_pin.port, config->miso_pin.pin, GPIO_OPEN_DRAIN);
     }
-
-    if (config->use_mosi) {
-        TRY(gpio_set_alternate_function(config->gpio_port, config->mosi_pin, alt_val));
-        gpio_enable_pullup(config->gpio_port, config->mosi_pin, true);
-        gpio_set_speed_mode(config->gpio_port, config->mosi_pin, GPIO_HIGH_SPEED);
-        gpio_set_output_type(config->gpio_port, config->mosi_pin, GPIO_PUSH_PULL);
-    }
-
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sclk_pin, alt_val));
-    gpio_enable_pullup(config->gpio_port, config->sclk_pin, true);
-    gpio_set_speed_mode(config->gpio_port, config->sclk_pin, GPIO_HIGH_SPEED);
-    gpio_set_output_type(config->gpio_port, config->sclk_pin, GPIO_PUSH_PULL);
 
     return HAL_OK;
 }

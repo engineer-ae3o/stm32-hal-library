@@ -35,8 +35,8 @@ typedef enum : uint8_t {
 typedef enum : uint8_t {
     GPIO_LOW_SPEED = 0,
     GPIO_MEDIUM_SPEED,
-    GPIO_FAST_SPEED,
     GPIO_HIGH_SPEED,
+    GPIO_FULL_SPEED,
 } gpio_speed_mode_t;
 
 typedef enum : uint8_t {

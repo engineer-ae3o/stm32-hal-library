@@ -21,19 +21,17 @@ namespace test::uart {
         constexpr const char* TAG = "UART_Test";
 
         // Instance under test. TX and RX must be physically jumpered together on the
-        // board for the loopback tests below to pass. Defaults assume a Nucleo-F411RE
-        // (USART2: PA2 = TX, PA3 = RX) - adjust to match your actual wiring.
-        USART_TypeDef* const TEST_INSTANCE = USART2;
+        // board for the loopback tests below to pass.
+        USART_TypeDef* const TEST_INSTANCE = USART1;
         GPIO_TypeDef* const  TEST_PORT     = GPIOA;
-        constexpr gpio_pin_t TEST_TX_PIN   = GPIO_PIN_2;
-        constexpr gpio_pin_t TEST_RX_PIN   = GPIO_PIN_3;
+        constexpr gpio_pin_t TEST_TX_PIN   = GPIO_PIN_9;
+        constexpr gpio_pin_t TEST_RX_PIN   = GPIO_PIN_10;
 
         const uart_config_t DEFAULT_CONFIG = {
-            .baud_rate     = 115'200UL,
-            .gpio_port     = TEST_PORT,
-            .tx_pin        = TEST_TX_PIN,
-            .rx_pin        = TEST_RX_PIN,
             .over_sampling = UART_OVER_SAMPLING_16,
+            .baud_rate     = 115200UL,
+            .tx_pin        = BOARD_UART1_TX_PA9,
+            .rx_pin        = BOARD_UART1_RX_PA10,
         };
 
         volatile bool      s_tx_done = false;

@@ -217,29 +217,18 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Initialize GPIO pins for UART
-    // Enable gpio channel clock
-    TRY(gpiox_clk_enable(config->gpio_port, true));
+    // Configure the GPIO pins
+    TRY(gpiox_clk_enable(config->tx_pin.port, true));
+    TRY(gpio_set_alternate_function(config->tx_pin.port, config->tx_pin.pin, config->tx_pin.af));
+    gpio_enable_pullup(config->tx_pin.port, config->tx_pin.pin, true);
+    gpio_set_speed_mode(config->tx_pin.port, config->tx_pin.pin, GPIO_MEDIUM_SPEED);
+    gpio_set_output_type(config->tx_pin.port, config->tx_pin.pin, GPIO_PUSH_PULL);
 
-    // Get the alternate function value as it
-    // varies for each peripheral instance
-    const uint8_t alt_val = (handle == USART6) ? 8U : 7U;
-
-    // Set gpio pin to alternate function
-    TRY(gpio_set_alternate_function(config->gpio_port, config->tx_pin, alt_val));
-    TRY(gpio_set_alternate_function(config->gpio_port, config->rx_pin, alt_val));
-
-    // Set as push pull
-    gpio_set_output_type(config->gpio_port, config->tx_pin, GPIO_PUSH_PULL);
-    gpio_set_output_type(config->gpio_port, config->rx_pin, GPIO_PUSH_PULL);
-
-    // Set pullup
-    gpio_enable_pullup(config->gpio_port, config->tx_pin, true);
-    gpio_enable_pullup(config->gpio_port, config->rx_pin, true);
-
-    // Speed mode
-    gpio_set_speed_mode(config->gpio_port, config->tx_pin, GPIO_MEDIUM_SPEED);
-    gpio_set_speed_mode(config->gpio_port, config->rx_pin, GPIO_MEDIUM_SPEED);
+    TRY(gpiox_clk_enable(config->rx_pin.port, true));
+    TRY(gpio_set_alternate_function(config->rx_pin.port, config->rx_pin.pin, config->rx_pin.af));
+    gpio_enable_pullup(config->rx_pin.port, config->rx_pin.pin, true);
+    gpio_set_speed_mode(config->rx_pin.port, config->rx_pin.pin, GPIO_MEDIUM_SPEED);
+    gpio_set_output_type(config->rx_pin.port, config->rx_pin.pin, GPIO_OPEN_DRAIN);
 
     // Enable the UART peripheral
     handle->CR1 |= USART_CR1_UE;

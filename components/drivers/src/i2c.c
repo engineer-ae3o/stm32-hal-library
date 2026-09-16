@@ -64,64 +64,54 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     // Disable the I2C peripheral before writing to any of its registers
     I2C_DISABLE();
 
+    // I2C configuration. Enable ACK immediately
+    handle->CR1 |= I2C_CR1_ACK;
+
     // Get the APB1 bus frequency and cache it
     const uint32_t apb1_clk_freq_mhz = get_apb1_core_clock() / 1'000'000U;
-
-    // I2C configuration
-    handle->CR1 |= I2C_CR1_ACK;
 
     handle->CR2 &= ~I2C_CR2_FREQ;
     handle->CR2 |= (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos) & I2C_CR2_FREQ;
 
     // Clock configuration
-    handle->CCR &= ~I2C_CCR_CCR;
-    if (config->frequency == I2C_FREQ_400KHz) {
-        // Enable Full mode and duty cycle mode of 16:9
-        handle->CCR |= (I2C_CCR_FS | I2C_CCR_DUTY);
-        // Calculate the CCR value
-        const uint32_t ccr = (apb1_clk_freq_mhz * 1'000'000U) / (25 * I2C_FREQ_400KHz);
-        handle->CCR |= (ccr << I2C_CCR_CCR_Pos) & I2C_CCR_CCR;
+    uint32_t ccr = handle->CCR & ~(I2C_CCR_CCR | I2C_CCR_FS | I2C_CCR_DUTY);
 
-    } else if (config->frequency == I2C_FREQ_100KHz) {
-        // Enable Standard mode
-        handle->CCR &= ~(I2C_CCR_FS | I2C_CCR_DUTY);
-        // Calculate the CCR value
-        const uint32_t ccr = (apb1_clk_freq_mhz * 1'000'000U) / (2 * I2C_FREQ_100KHz);
-        handle->CCR |= (ccr << I2C_CCR_CCR_Pos) & I2C_CCR_CCR;
-
-    } else {
-        return HAL_ERR_INVALID_ARG;
-    }
+    // Enable Full mode and duty cycle mode of 16:9 if using 400kHz. Leave at standard mode if 100kHz
+    ccr |= (config->frequency == I2C_FREQ_400kHz) ? (I2C_CCR_FS | I2C_CCR_DUTY) : 0;
+    const uint32_t clock_val = (config->frequency == I2C_FREQ_400kHz) ? (apb1_clk_freq_mhz * 1'000'000U) / (25 * I2C_FREQ_400kHz)
+                                                                      : (apb1_clk_freq_mhz * 1'000'000U) / (2 * I2C_FREQ_100kHz);
+    ccr |= (clock_val << I2C_CCR_CCR_Pos) & I2C_CCR_CCR;
+    handle->CCR = ccr;
 
     // Analog and digital noise filters
     handle->FLTR &= ~(I2C_FLTR_ANOFF | I2C_FLTR_DNF);
     handle->FLTR |= (uint32_t)(config->digital_filter << I2C_FLTR_DNF_Pos);
 
     // Rise time
-    const uint32_t trise_ns = (config->frequency == I2C_FREQ_400KHz) ? I2C_TRISE_TIME_400kHz_ns : I2C_TRISE_TIME_100kHz_ns;
+    const uint32_t trise_ns = (config->frequency == I2C_FREQ_400kHz) ? I2C_TRISE_TIME_400kHz_ns : I2C_TRISE_TIME_100kHz_ns;
     handle->TRISE &= ~I2C_TRISE_TRISE;
     handle->TRISE |= (((trise_ns * apb1_clk_freq_mhz) / 1000U) + config->digital_filter + 1) & I2C_TRISE_TRISE;
 
     // Configure pins for I2C
     // Enable gpio channel clock
-    TRY(gpiox_clk_enable(config->gpio_port, true));
+    TRY(gpiox_clk_enable(config->sda_pin.port, true));
+    TRY(gpiox_clk_enable(config->scl_pin.port, true));
 
     // Set pins to alternate function for I2C
-    const uint32_t alt_val = 4;
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sda_pin, alt_val));
-    TRY(gpio_set_alternate_function(config->gpio_port, config->scl_pin, alt_val));
+    TRY(gpio_set_alternate_function(config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af));
+    TRY(gpio_set_alternate_function(config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af));
 
     // Set as open drain
-    gpio_set_output_type(config->gpio_port, config->sda_pin, GPIO_OPEN_DRAIN);
-    gpio_set_output_type(config->gpio_port, config->scl_pin, GPIO_OPEN_DRAIN);
+    gpio_set_output_type(config->sda_pin.port, config->sda_pin.pin, GPIO_OPEN_DRAIN);
+    gpio_set_output_type(config->scl_pin.port, config->scl_pin.pin, GPIO_OPEN_DRAIN);
 
     // Speed mode
-    gpio_set_speed_mode(config->gpio_port, config->sda_pin, GPIO_MEDIUM_SPEED);
-    gpio_set_speed_mode(config->gpio_port, config->scl_pin, GPIO_MEDIUM_SPEED);
+    gpio_set_speed_mode(config->sda_pin.port, config->sda_pin.pin, GPIO_MEDIUM_SPEED);
+    gpio_set_speed_mode(config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
 
     // Pullups
-    gpio_enable_pullup(config->gpio_port, config->sda_pin, config->use_pullups);
-    gpio_enable_pullup(config->gpio_port, config->scl_pin, config->use_pullups);
+    gpio_enable_pullup(config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
+    gpio_enable_pullup(config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
     return HAL_OK;
 }

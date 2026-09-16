@@ -20,11 +20,10 @@ namespace test::i2c {
 
         const i2c_master_config_t PORT_CONFIG = {
             .use_pullups    = true,
-            .frequency      = I2C_FREQ_100KHz,
-            .digital_filter = I2C_DIGITAL_FILTER_0,
-            .sda_pin        = GPIO_PIN_9,
-            .scl_pin        = GPIO_PIN_8,
-            .gpio_port      = GPIOB,
+            .frequency      = I2C_FREQ_100kHz,
+            .digital_filter = I2C_DIGITAL_FILTER_5,
+            .sda_pin        = BOARD_I2C1_SDA_PB7,
+            .scl_pin        = BOARD_I2C1_SCL_PB6,
         };
 
         auto* const       TEST_PORT         = I2C1;

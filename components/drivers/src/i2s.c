@@ -20,12 +20,11 @@ static const prescaler_t s_prescaler_lut[][I2S_FREQ_COUNT] = {
     // The other unsupported frequencies are left default initialized at 0.
     [AUDIO_PLL_76_8MHz] =
         {
-            [I2S_FREQ_8kHz]   = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_16kHz]  = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_32kHz]  = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_48kHz]  = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_96kHz]  = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_192kHz] = {.i2sdiv = 0, .odd = 0},
+            [I2S_FREQ_8kHz]  = {.i2sdiv = 0, .odd = 0},
+            [I2S_FREQ_16kHz] = {.i2sdiv = 0, .odd = 0},
+            [I2S_FREQ_32kHz] = {.i2sdiv = 0, .odd = 0},
+            [I2S_FREQ_48kHz] = {.i2sdiv = 0, .odd = 0},
+            [I2S_FREQ_96kHz] = {.i2sdiv = 0, .odd = 0},
         },
     // The Audio PLL at 135.5MHz. Suitable for the 44.1kHz family with MCK output enabled.
     // The other unsupported frequencies are left default initialized at 0.
@@ -45,12 +44,11 @@ static const prescaler_t s_prescaler_lut[][I2S_FREQ_COUNT] = {
     // The other unsupported frequencies are left default initialized at 0.
     [AUDIO_PLL_172MHz] =
         {
-            [I2S_FREQ_8kHz]   = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_16kHz]  = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_32kHz]  = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_48kHz]  = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_96kHz]  = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_192kHz] = {.i2sdiv = 0, .odd = 0},
+            [I2S_FREQ_8kHz]  = {.i2sdiv = 0, .odd = 0},
+            [I2S_FREQ_16kHz] = {.i2sdiv = 0, .odd = 0},
+            [I2S_FREQ_32kHz] = {.i2sdiv = 0, .odd = 0},
+            [I2S_FREQ_48kHz] = {.i2sdiv = 0, .odd = 0},
+            [I2S_FREQ_96kHz] = {.i2sdiv = 0, .odd = 0},
         },
 };
 
@@ -133,17 +131,14 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (config->audio_pll_type == AUDIO_PLL_DISABLE) {
+    if (config->audio_clock == AUDIO_PLL_DISABLE) {
         return HAL_ERR_INVALID_STATE;
     }
 
     // Get the audio PLL clock prescaler
-    const uint8_t i2sdiv = s_prescaler_lut[config->audio_pll_type][config->frequency].i2sdiv;
-    const uint8_t odd    = s_prescaler_lut[config->audio_pll_type][config->frequency].odd;
-
-    // A sampling rate of 192kHz is not supported when MCK output is not needed.
-    // For more details, refer to clock.h as to why this setup is impractical.
-    if ((config->frequency == I2S_FREQ_192kHz && config->use_mck) || i2sdiv == 0) {
+    const uint8_t i2sdiv = s_prescaler_lut[config->audio_clock][config->frequency].i2sdiv;
+    const uint8_t odd    = s_prescaler_lut[config->audio_clock][config->frequency].odd;
+    if (i2sdiv == 0) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
@@ -163,8 +158,6 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     const uint32_t cpol_mask       = (config->cpol) ? SPI_I2SCFGR_CKPOL : 0;
 
     handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN);
-
-    // Apply user settings
     handle->I2SCFGR |= (((uint32_t)config->direction << SPI_I2SCFGR_I2SCFG_Pos) | // Direction: TX or RX in master mode
                         ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos) |      // I2S mode: Philips, left or right justified
                         ((uint32_t)config->frame << SPI_I2SCFGR_DATLEN_Pos) |     // Data length: 16, 24 or 32 bits
@@ -172,50 +165,31 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
                         cpol_mask);                                               // Clock polarity
 
     // Configure the GPIO pins
-    TRY(gpiox_clk_enable(config->gpio_port, true));
-
-    // Alternate function value selection for the GPIO pins
-    uint8_t alt_val = 0;
-    if ((handle == I2S1) || (handle == I2S2)) {
-        alt_val = 5;
-    } else if (handle == I2S3) {
-        alt_val = (config->gpio_port == GPIOD) ? 5 : 6;
-    } else if (handle == I2S4) {
-        alt_val = (config->gpio_port == GPIOE) ? 5 : 6;
-    } else if (handle == I2S5) {
-        alt_val = 6;
-    } else {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    // MCK pin if used
     if (config->use_mck) {
-        TRY(gpio_set_alternate_function(config->gpio_port, config->mck_pin, alt_val));
-        gpio_enable_pullup(config->gpio_port, config->mck_pin, true);
-        gpio_set_speed_mode(config->gpio_port, config->mck_pin, GPIO_MEDIUM_SPEED);
-        gpio_set_output_type(config->gpio_port, config->mck_pin, GPIO_PUSH_PULL);
+        TRY(gpiox_clk_enable(config->mclk_pin.port, true));
+        TRY(gpio_set_alternate_function(config->mclk_pin.port, config->mclk_pin.pin, config->mclk_pin.af));
+        gpio_enable_pullup(config->mclk_pin.port, config->mclk_pin.pin, true);
+        gpio_set_speed_mode(config->mclk_pin.port, config->mclk_pin.pin, GPIO_FULL_SPEED);
+        gpio_set_output_type(config->mclk_pin.port, config->mclk_pin.pin, GPIO_PUSH_PULL);
     }
 
-    // SD pin: Can be input or output
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sd_pin, alt_val));
-    gpio_enable_pullup(config->gpio_port, config->sd_pin, true);
-    gpio_set_speed_mode(config->gpio_port, config->sd_pin, GPIO_MEDIUM_SPEED);
-    // Only set output type as push pull when we are driving, that is, in TX mode
-    if (config->direction == I2S_DIR_HALF_DUPLEX_TX) {
-        gpio_set_output_type(config->gpio_port, config->sd_pin, GPIO_PUSH_PULL);
-    }
+    TRY(gpiox_clk_enable(config->sclk_pin.port, true));
+    TRY(gpio_set_alternate_function(config->sclk_pin.port, config->sclk_pin.pin, config->sclk_pin.af));
+    gpio_enable_pullup(config->sclk_pin.port, config->sclk_pin.pin, true);
+    gpio_set_speed_mode(config->sclk_pin.port, config->sclk_pin.pin, GPIO_FULL_SPEED);
+    gpio_set_output_type(config->sclk_pin.port, config->sclk_pin.pin, GPIO_PUSH_PULL);
 
-    // WS pin
-    TRY(gpio_set_alternate_function(config->gpio_port, config->ws_pin, alt_val));
-    gpio_enable_pullup(config->gpio_port, config->ws_pin, true);
-    gpio_set_speed_mode(config->gpio_port, config->ws_pin, GPIO_MEDIUM_SPEED);
-    gpio_set_output_type(config->gpio_port, config->ws_pin, GPIO_PUSH_PULL);
+    TRY(gpiox_clk_enable(config->ws_pin.port, true));
+    TRY(gpio_set_alternate_function(config->ws_pin.port, config->ws_pin.pin, config->ws_pin.af));
+    gpio_enable_pullup(config->ws_pin.port, config->ws_pin.pin, true);
+    gpio_set_speed_mode(config->ws_pin.port, config->ws_pin.pin, GPIO_FULL_SPEED);
+    gpio_set_output_type(config->ws_pin.port, config->ws_pin.pin, GPIO_PUSH_PULL);
 
-    // SCK pin
-    TRY(gpio_set_alternate_function(config->gpio_port, config->sck_pin, alt_val));
-    gpio_enable_pullup(config->gpio_port, config->sck_pin, true);
-    gpio_set_speed_mode(config->gpio_port, config->sck_pin, GPIO_MEDIUM_SPEED);
-    gpio_set_output_type(config->gpio_port, config->sck_pin, GPIO_PUSH_PULL);
+    TRY(gpiox_clk_enable(config->sd_pin.port, true));
+    TRY(gpio_set_alternate_function(config->sd_pin.port, config->sd_pin.pin, config->sd_pin.af));
+    gpio_enable_pullup(config->sd_pin.port, config->sd_pin.pin, true);
+    gpio_set_speed_mode(config->sd_pin.port, config->sd_pin.pin, GPIO_FULL_SPEED);
+    gpio_set_output_type(config->sd_pin.port, config->sd_pin.pin, config->direction == I2S_DIR_HALF_DUPLEX_TX ? GPIO_PUSH_PULL : GPIO_OPEN_DRAIN);
 
     return HAL_OK;
 }
