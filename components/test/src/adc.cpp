@@ -422,7 +422,8 @@ namespace test::adc {
                 std::array<uint16_t, MAX_INJECTED_CHANNELS> results{};
                 TEST_ASSERT_EQUAL(HAL_OK, adc_injected_group_get_result(ADC1, results.data(), count));
                 for (size_t i = 0; i < count; i++) {
-                    TEST_ASSERT_TRUE(results[i] <= 0x0FFFU);
+                    LOGI(TAG, "Sample %zu: %u", i, results[i]);
+                    TEST_ASSERT_TRUE(results[i] <= 0xFFFU);
                 }
 
                 ADC1->SR &= ~ADC_SR_JEOC;

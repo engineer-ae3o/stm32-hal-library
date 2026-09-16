@@ -93,8 +93,8 @@ typedef struct {
     bool deconfigure;   // Set to deinitialize the given stream. All other fields are ignored if this is true
     bool enable_stream; // Enable the DMA stream immediately after configuring it
 
-    bool per_addr_incement; // Increment the peripheral address (or source address in memory to memory transfers)
-    bool mem_addr_incement; // Increment the memory address(es) (or destination address(es) in memory to memory transfers)
+    bool per_addr_incement; // Increment the peripheral address (or source address in M2M transfers)
+    bool mem_addr_incement; // Increment the memory address(es) (or destination address(es) in M2M transfers)
 
     bool tc_irq_enable;  // Transfer complete interrupt enable
     bool ht_irq_enable;  // Half transfer interrupt enable
@@ -114,9 +114,9 @@ typedef struct {
     uint32_t channel;
     uint32_t nvic_irq_priority;
 
-    const volatile void* per_addr;
-    const volatile void* mem_buf_0;
-    const volatile void* mem_buf_1;
+    const volatile void* per_addr;  // Peripheral address (or source address in M2M transfers)
+    const volatile void* mem_buf_0; // Memory address 0 (or destination address in M2M transfers)
+    const volatile void* mem_buf_1; // Memory address 1
 } dma_stream_config_t;
 
 
