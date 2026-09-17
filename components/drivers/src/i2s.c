@@ -1,4 +1,5 @@
 #include "stm32f411xe.h"
+#include "drivers/spi_internals.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
 #include "utils/clock.h"
@@ -6,18 +7,6 @@
 #include "drivers/i2s.h"
 #include "utils/err.h"
 
-
-#define ENABLE_I2S()                                                                                                                                 \
-    do {                                                                                                                                             \
-        handle->I2SCFGR |= SPI_I2SCFGR_I2SE;                                                                                                         \
-        __DSB();                                                                                                                                     \
-    } while (0)
-
-#define DISABLE_I2S()                                                                                                                                \
-    do {                                                                                                                                             \
-        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;                                                                                                        \
-        __DSB();                                                                                                                                     \
-    } while (0)
 
 static uint32_t s_sampling_rate_lut[] = {
     [I2S_FREQ_8kHz]  = 8'000U,
@@ -52,12 +41,6 @@ static uint32_t s_audio_pll_lut[] = {
         return 0xFFU;
     }
 }
-
-// Defined in the SPI driver. Used to post DMA events or get info from the SPI driver since the I2S peripheral
-// shares the same hardware block as the SPI peripheral, and consequently, share the same DMA streams.
-// All the NVIC interrupt handlers are managed by the SPI driver.
-extern hal_err_t spi_master_get_dma_stream_map(dma_stream_map_t* map, uint32_t idx);
-extern hal_err_t spi_master_register_callback(dma_done_cb_t callback, void* arg, uint8_t idx, bool is_tx);
 
 
 // General API
@@ -119,8 +102,8 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Disable the SPI and I2S peripheral before modifying its registers
-    handle->CR1 &= ~SPI_CR1_SPE;
+    // Disable the I2S (and SPI) peripheral before modifying its registers
+    DISABLE_SPI();
     DISABLE_I2S();
 
     // I2S mode
@@ -262,9 +245,6 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority) {
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));
 
-    // Enable I2S requests to the DMA controller
-    handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
-
     return HAL_OK;
 }
 
@@ -284,9 +264,6 @@ hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle) {
     if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
-
-    // Disable I2S requests to the DMA controller
-    handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
 
     dma_stream_config_t tx_stream_config = {};
     tx_stream_config.deconfigure         = true;
@@ -327,13 +304,14 @@ hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t siz
     dma_set_addresses(stream, &handle->DR, buf, NULL);
     dma_set_trans_length(stream, size);
 
-    // Save the user passed callback
     if (callback) {
         TRY(spi_master_register_callback(callback, arg, idx, true));
     }
 
-    // Enable the DMA TX stream
+    // Enable the DMA stream, SPI requests to the DMA controller,
+    // and finally the I2S peripheral The order mattersa lot.
     TRY(dma_enable_stream(stream));
+    ENABLE_SPI_DMA();
     ENABLE_I2S();
 
     return HAL_OK;
@@ -366,8 +344,10 @@ hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_
         TRY(spi_master_register_callback(callback, arg, idx, false));
     }
 
-    // Enable the DMA RX stream
+    // Enable the DMA stream, SPI requests to the DMA controller,
+    // and finally the I2S peripheral The order mattersa lot.
     TRY(dma_enable_stream(stream));
+    ENABLE_SPI_DMA();
     ENABLE_I2S();
 
     return HAL_OK;

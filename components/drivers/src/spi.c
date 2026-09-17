@@ -1,4 +1,5 @@
 #include "stm32f411xe.h"
+#include "drivers/spi_internals.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
 #include "drivers/spi.h"
@@ -40,19 +41,6 @@ static const dma_stream_map_t s_spi_i2s_dma_map[] = {
 
 // The SPI instances: The ISRs invoked when a DMA event occurred
 static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
-
-#define ENABLE_SPI()                                                                                                                                 \
-    do {                                                                                                                                             \
-        handle->CR1 |= SPI_CR1_SPE;                                                                                                                  \
-        __DSB();                                                                                                                                     \
-    } while (0)
-
-#define DISABLE_SPI()                                                                                                                                \
-    do {                                                                                                                                             \
-        handle->CR1 &= ~SPI_CR1_SPE;                                                                                                                 \
-        __DSB();                                                                                                                                     \
-    } while (0)
-
 
 // Helpers
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(const SPI_TypeDef* handle) {
@@ -113,8 +101,9 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         s_dma_stream_ctx[idx].tx.arg      = NULL;
 
         // Disable I2S as well since the interrupt could have been triggered by it
-        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
+        DISABLE_SPI_DMA();
         DISABLE_SPI();
+        DISABLE_I2S();
     }
 
     __enable_irq();
@@ -144,8 +133,9 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         s_dma_stream_ctx[idx].rx.arg      = NULL;
 
         // Disable I2S as well since the interrupt could have been triggered by it
-        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;
+        DISABLE_SPI_DMA();
         DISABLE_SPI();
+        DISABLE_I2S();
     }
 
     __enable_irq();
@@ -282,6 +272,7 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 
     // Disable the SPI (and I2S) peripheral before modifying it's internal state
     DISABLE_SPI();
+    DISABLE_I2S();
 
     // Deselect I2S since in SPI mode
     handle->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
@@ -430,9 +421,6 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));
 
-    // Enable SPI requests to the DMA controller
-    handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
-
     return HAL_OK;
 }
 
@@ -448,9 +436,6 @@ hal_err_t spi_master_dma_deinit(SPI_TypeDef* handle) {
     if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
-
-    // Disable SPI requests to the DMA controller
-    handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
 
     // Set the deconfigure flags so dma_configure_stream(...) deinitializes the streams
     dma_stream_config_t tx_stream_config;
@@ -559,7 +544,9 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
     TRY(dma_enable_stream(rx_stream));
     TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
 
+    ENABLE_SPI_DMA();
     ENABLE_SPI();
+
     return HAL_OK;
 }
 
@@ -610,7 +597,9 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size,
     TRY(dma_enable_stream(rx_stream));
     TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
 
+    ENABLE_SPI_DMA();
     ENABLE_SPI();
+
     return HAL_OK;
 }
 
@@ -654,7 +643,9 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     TRY(dma_enable_stream(rx_stream));
     TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
 
+    ENABLE_SPI_DMA();
     ENABLE_SPI();
+
     return HAL_OK;
 }
 

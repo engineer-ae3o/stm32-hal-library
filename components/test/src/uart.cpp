@@ -93,7 +93,7 @@ namespace test::uart {
             TEST_ASSERT_FALSE(RCC->APB2ENR & RCC_APB2ENR_USART1EN);
             uartx_clk_enable(USART1, true);
             TEST_ASSERT_TRUE(RCC->APB2ENR & RCC_APB2ENR_USART1EN);
-            // Leave USART2 enabled: the loopback tests below need it
+            // Leave USART1 enabled: the loopback tests below need it
 
             uartx_clk_enable(USART2, false);
             TEST_ASSERT_FALSE(RCC->APB1ENR & RCC_APB1ENR_USART2EN);

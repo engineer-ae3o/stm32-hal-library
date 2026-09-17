@@ -320,17 +320,6 @@ namespace test::spi {
             TEST_ASSERT_FALSE(TEST_INSTANCE->CR2 & (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN));
         }
 
-        void dma_deinit_disables_dma_requests() {
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &DEFAULT_CONFIG));
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
-            TEST_ASSERT_TRUE(TEST_INSTANCE->CR2 & (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN));
-
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_dma_deinit(TEST_INSTANCE));
-            TEST_ASSERT_FALSE(TEST_INSTANCE->CR2 & (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN));
-
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_deinit(TEST_INSTANCE));
-        }
-
     } // namespace
 
     void all() {
@@ -351,7 +340,6 @@ namespace test::spi {
         RUN_TEST(dma_transmit_and_receive_as_separate_calls_loopback);
         RUN_TEST(dma_transfer_without_callback_still_completes);
         RUN_TEST(deinit_clears_control_registers);
-        RUN_TEST(dma_deinit_disables_dma_requests);
 
         spix_clk_enable(TEST_INSTANCE, false);
 
