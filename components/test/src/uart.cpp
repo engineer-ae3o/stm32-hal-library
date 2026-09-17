@@ -34,24 +34,23 @@ namespace test::uart {
             .rx_pin        = BOARD_UART1_RX_PA10,
         };
 
-        volatile bool      s_tx_done = false;
-        volatile bool      s_rx_done = false;
-        volatile hal_err_t s_tx_err  = HAL_OK;
-        volatile hal_err_t s_rx_err  = HAL_OK;
-
         // Helpers
-        inline void tx_done_callback(void*, hal_err_t err) {
+        volatile bool      s_tx_done = false;
+        volatile hal_err_t s_tx_err  = HAL_OK;
+        inline void        tx_done_callback(void*, hal_err_t err) {
             s_tx_err  = err;
             s_tx_done = true;
         }
 
-        inline void rx_done_callback(void*, hal_err_t err) {
+        volatile bool      s_rx_done = false;
+        volatile hal_err_t s_rx_err  = HAL_OK;
+        inline void        rx_done_callback(void*, hal_err_t err) {
             s_rx_err  = err;
             s_rx_done = true;
         }
 
         inline bool wait_for(volatile bool& flag) {
-            uint32_t timeout = 10U * TIMEOUT_CYCLES;
+            uint32_t timeout = 10 * TIMEOUT_CYCLES;
             while (!flag && --timeout);
             return flag;
         }

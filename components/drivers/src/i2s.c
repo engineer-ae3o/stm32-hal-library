@@ -120,6 +120,9 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
                         ((config->frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 0 : SPI_I2SCFGR_CHLEN) | // Frame size: 16 or 32 bits
                         ((config->cpol) ? SPI_I2SCFGR_CKPOL : 0));                                    // Clock polarity
 
+    // Disable SPI DMA requests by default
+    DISABLE_SPI_DMA();
+
     // Configure the GPIO pins
     if (config->use_mck) {
         TRY(gpiox_clk_enable(config->mclk_pin.port, true));
@@ -265,11 +268,11 @@ hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    dma_stream_config_t tx_stream_config = {};
-    tx_stream_config.deconfigure         = true;
+    dma_stream_config_t tx_stream_config;
+    tx_stream_config.deconfigure = true;
 
-    dma_stream_config_t rx_stream_config = {};
-    rx_stream_config.deconfigure         = true;
+    dma_stream_config_t rx_stream_config;
+    rx_stream_config.deconfigure = true;
 
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));

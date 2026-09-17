@@ -31,9 +31,9 @@ namespace test {
         adc::all();
         dma::all();
         i2c::all();
-        // i2s::all();
+        i2s::all();
         // pwm::all();
-        spi::all();
+        // spi::all();
         // crc::all();
         // iwdg::all();
         // heap::all();

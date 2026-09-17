@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cstdint>
+#include <utility>
 
 
 namespace test::adc {
@@ -85,8 +86,13 @@ namespace test::adc {
         void configure_covers_every_alignment_resolution_and_sample_time() {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_configure(nullptr, nullptr));
 
-            constexpr std::array<adc_resolution_t, 4>    RESOLUTIONS{ADC_RES_6_BITS, ADC_RES_8_BITS, ADC_RES_10_BITS, ADC_RES_12_BITS};
-            constexpr std::array<adc_sample_cycles_t, 8> SAMPLE_TIMES{
+            constexpr auto RESOLUTIONS = std::array{
+                ADC_RES_6_BITS,
+                ADC_RES_8_BITS,
+                ADC_RES_10_BITS,
+                ADC_RES_12_BITS,
+            };
+            constexpr auto SAMPLE_TIMES = std::array{
                 ADC_SAMPLE_3_CYCLES,
                 ADC_SAMPLE_15_CYCLES,
                 ADC_SAMPLE_28_CYCLES,
@@ -103,18 +109,21 @@ namespace test::adc {
                     TEST_ASSERT_EQUAL(HAL_OK, adc_configure(ADC1, &config));
 
                     TEST_ASSERT_TRUE(ADC1->CR2 & ADC_CR2_ALIGN);
-                    TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(res), (ADC1->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos);
+                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(res), (ADC1->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos);
 
                     // Every external channel must carry the same sampling time
-                    TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(time), (ADC1->SMPR1 >> ADC_SMPR1_SMP10_Pos) & 0b111UL);
-                    TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(time), (ADC1->SMPR1 >> ADC_SMPR1_SMP15_Pos) & 0b111UL);
-                    TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(time), (ADC1->SMPR2 >> ADC_SMPR2_SMP0_Pos) & 0b111UL);
-                    TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(time), (ADC1->SMPR2 >> ADC_SMPR2_SMP9_Pos) & 0b111UL);
+                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(time), (ADC1->SMPR1 >> ADC_SMPR1_SMP10_Pos) & 0b111UL);
+                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(time), (ADC1->SMPR1 >> ADC_SMPR1_SMP15_Pos) & 0b111UL);
+                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(time), (ADC1->SMPR2 >> ADC_SMPR2_SMP0_Pos) & 0b111UL);
+                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(time), (ADC1->SMPR2 >> ADC_SMPR2_SMP9_Pos) & 0b111UL);
                 }
             }
 
-            const adc_config_t right_align_config{
-                .alignment = ADC_RIGHT_ALIGN, .resolution = ADC_RES_12_BITS, .sampling_cycles = ADC_SAMPLE_28_CYCLES};
+            constexpr adc_config_t right_align_config = {
+                .alignment       = ADC_RIGHT_ALIGN,
+                .resolution      = ADC_RES_12_BITS,
+                .sampling_cycles = ADC_SAMPLE_28_CYCLES,
+            };
             TEST_ASSERT_EQUAL(HAL_OK, adc_configure(ADC1, &right_align_config));
             TEST_ASSERT_FALSE(ADC1->CR2 & ADC_CR2_ALIGN);
 
@@ -134,17 +143,22 @@ namespace test::adc {
         }
 
         void clk_configure_sweeps_every_prescaler() {
-            constexpr std::array<adc_prescaler_t, 4> PRESCALERS{ADC_CLK_PRESCALER_2, ADC_CLK_PRESCALER_4, ADC_CLK_PRESCALER_6, ADC_CLK_PRESCALER_8};
+            constexpr auto PRESCALERS = std::array{
+                ADC_CLK_PRESCALER_2,
+                ADC_CLK_PRESCALER_4,
+                ADC_CLK_PRESCALER_6,
+                ADC_CLK_PRESCALER_8,
+            };
             for (const auto presc : PRESCALERS) {
                 adc_clk_configure(presc);
-                TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(presc), (ADC->CCR & ADC_CCR_ADCPRE) >> ADC_CCR_ADCPRE_Pos);
+                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(presc), (ADC->CCR & ADC_CCR_ADCPRE) >> ADC_CCR_ADCPRE_Pos);
             }
             adc_clk_configure(ADC_CLK_PRESCALER_4);
         }
 
         void nvic_irq_enable_toggles_the_adc_line() {
             auto irq_is_enabled = []() {
-                return (NVIC->ISER[static_cast<uint32_t>(ADC_IRQn) >> 5] & (1UL << (static_cast<uint32_t>(ADC_IRQn) & 0x1FU))) != 0;
+                return (NVIC->ISER[std::to_underlying(ADC_IRQn) >> 5] & (1UL << (std::to_underlying(ADC_IRQn) & 0x1FU))) != 0;
             };
 
             adc_enable_nvic_irq(true);
@@ -221,20 +235,20 @@ namespace test::adc {
                 uint16_t         raw;
                 uint32_t         full_scale;
             };
-            constexpr std::array<case_t, 4> CASES{{
-                {ADC_RES_6_BITS, 63, 64},
-                {ADC_RES_8_BITS, 255, 256},
-                {ADC_RES_10_BITS, 1023, 1024},
-                {ADC_RES_12_BITS, 4095, 4096},
+            constexpr std::array<case_t, 4> CASES = {{
+                {.res = ADC_RES_6_BITS, .raw = 63, .full_scale = 64},
+                {.res = ADC_RES_8_BITS, .raw = 255, .full_scale = 256},
+                {.res = ADC_RES_10_BITS, .raw = 1023, .full_scale = 1024},
+                {.res = ADC_RES_12_BITS, .raw = 4095, .full_scale = 4096},
             }};
 
             float measured_vdda = 0.0F;
             TEST_ASSERT_EQUAL(HAL_OK, adc_get_vdda(ADC1, &measured_vdda));
 
-            for (const auto& c : CASES) {
+            for (const auto& cases : CASES) {
                 float voltage = 0.0F;
-                TEST_ASSERT_EQUAL(HAL_OK, adc_get_value_right_aligned(ADC1, c.raw, c.res, &voltage));
-                const float expected = (measured_vdda * static_cast<float>(c.raw)) / static_cast<float>(c.full_scale);
+                TEST_ASSERT_EQUAL(HAL_OK, adc_get_value_right_aligned(ADC1, cases.raw, cases.res, &voltage));
+                const float expected = (measured_vdda * static_cast<float>(cases.raw)) / static_cast<float>(cases.full_scale);
                 TEST_ASSERT_FLOAT_WITHIN(0.01F, expected, voltage);
             }
 
@@ -266,7 +280,7 @@ namespace test::adc {
 
                 uint16_t                      buffer = 0;
                 const adc_continuous_config_t config{
-                    .channels         = {sequence.data(), count},
+                    .channels         = {.channels_sequence = sequence.data(), .num_of_channels = count},
                     .trigger          = RG_TRIGGER_SOFTWARE,
                     .trigger_polarity = RISING_EDGE,
                     .buffer_1         = &buffer,
@@ -283,7 +297,7 @@ namespace test::adc {
                 constexpr uint32_t MASK      = (1U << BIT_WIDTH) - 1U;
 
                 for (size_t i = 0; i < count; i++) {
-                    const uint32_t expected = static_cast<uint32_t>(sequence[i]) & MASK;
+                    const uint32_t expected = std::to_underlying(sequence[i]) & MASK;
                     uint32_t       actual   = 0;
                     if (i >= 12) {
                         actual = (ADC1->SQR1 >> ((i - 12) * BIT_WIDTH)) & MASK;
@@ -403,7 +417,7 @@ namespace test::adc {
                 }
 
                 adc_injected_group_config_t config{};
-                config.channels         = {channels.data(), count};
+                config.channels         = {.channels_sequence = channels.data(), .num_of_channels = count};
                 config.trigger          = JG_TRIGGER_SOFTWARE;
                 config.trigger_polarity = RISING_EDGE;
                 for (size_t i = 0; i < count; i++) {
@@ -445,14 +459,14 @@ namespace test::adc {
 
             constexpr auto              channels = std::array{ADC_CHANNEL_0};
             adc_injected_group_config_t config{};
-            config.channels = {channels.data(), channels.size()};
+            config.channels = {.channels_sequence = channels.data(), .num_of_channels = channels.size()};
             config.trigger  = JG_TRIGGER_SOFTWARE;
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_injected_group_start_conv(nullptr, &config));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_injected_group_start_conv(ADC1, nullptr));
 
             auto no_channels     = config;
-            no_channels.channels = {nullptr, 1};
+            no_channels.channels = {.channels_sequence = nullptr, .num_of_channels = 1};
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_injected_group_start_conv(ADC1, &no_channels));
 
             auto too_many                     = config;
@@ -524,9 +538,9 @@ namespace test::adc {
                 uint32_t expected_bits;
             };
             constexpr std::array<combo_t, 3> COMBOS{{
-                {true, true, ADC_CR1_AWDEN | ADC_CR1_JAWDEN},
-                {false, true, ADC_CR1_JAWDEN},
-                {true, false, ADC_CR1_AWDEN},
+                {.regular = true, .injected = true, .expected_bits = ADC_CR1_AWDEN | ADC_CR1_JAWDEN},
+                {.regular = false, .injected = true, .expected_bits = ADC_CR1_JAWDEN},
+                {.regular = true, .injected = false, .expected_bits = ADC_CR1_AWDEN},
             }};
 
             for (const auto& combo : COMBOS) {

@@ -177,7 +177,6 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
                 rx_buf[i] = rx_word;
             }
         }
-
     } else {
         // Cast to appropriate type
         const uint8_t* tx_buf = (const uint8_t*)tx_data;
@@ -209,7 +208,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         }
     }
 
-    // Wait for the TXE and BSY bits
+    // Wait for the TXE and BSY bits to set and clear respectively
     // TXE bit
     uint32_t timeout = TIMEOUT_CYCLES;
     while (!(handle->SR & SPI_SR_TXE) && (--timeout));
@@ -297,8 +296,8 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 
     handle->CR1 = cr1_mask;
 
-    // Motorolla mode and slave select output disable
-    handle->CR2 &= ~(SPI_CR2_FRF | SPI_CR2_SSOE);
+    // Set motorolla mode, slave select output disable and disable SPI DMA requests by default
+    handle->CR2 &= ~(SPI_CR2_FRF | SPI_CR2_SSOE | SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN);
 
     // Configure the GPIO pins
     TRY(gpiox_clk_enable(config->sclk_pin.port, true));
@@ -610,7 +609,7 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
         return HAL_ERR_INVALID_ARG;
     }
 
-    // TX and RX mapping
+    // TX and RX DMA streams mapping
     DMA_Stream_TypeDef* tx_stream = s_spi_i2s_dma_map[idx].tx.stream;
     DMA_Stream_TypeDef* rx_stream = s_spi_i2s_dma_map[idx].rx.stream;
 
@@ -619,7 +618,7 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     }
 
     // Set the memory address and transaction length.
-    // Re-enable memory increment for both streams.
+    // Reenable memory increment for both streams.
     dma_set_addresses(tx_stream, &handle->DR, tx_data, NULL);
     dma_set_trans_length(tx_stream, size);
     dma_set_increment(tx_stream, false, true);

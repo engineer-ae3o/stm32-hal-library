@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cstdint>
+#include <utility>
 #include <cstring>
 #include <string_view>
 
@@ -132,7 +133,7 @@ namespace test::dma {
                 bool     is_low;
             };
 
-            const std::array<flag_expectation_t, 8> EXPECTATIONS{{
+            const std::array<flag_expectation_t, 8> EXPECTATIONS = {{
                 {0, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_HTIF0, DMA_LISR_DMEIF0, DMA_LISR_FEIF0, true},
                 {1, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_HTIF1, DMA_LISR_DMEIF1, DMA_LISR_FEIF1, true},
                 {2, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_HTIF2, DMA_LISR_DMEIF2, DMA_LISR_FEIF2, true},
@@ -201,7 +202,7 @@ namespace test::dma {
             constexpr std::array<dma_direction_t, 3> DIRECTIONS{DMA_DIR_P2M, DMA_DIR_M2P, DMA_DIR_M2M};
             for (const auto dir : DIRECTIONS) {
                 dma_set_direction(stream, dir);
-                TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(dir), (stream->CR & DMA_SxCR_DIR) >> DMA_SxCR_DIR_Pos);
+                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(dir), (stream->CR & DMA_SxCR_DIR) >> DMA_SxCR_DIR_Pos);
             }
 
             dma_set_increment(stream, true, false);
@@ -219,7 +220,7 @@ namespace test::dma {
             constexpr std::array<dma_priority_t, 4> PRIORITIES{DMA_PRIORITY_LOW, DMA_PRIORITY_MEDIUM, DMA_PRIORITY_HIGH, DMA_PRIORITY_VERY_HIGH};
             for (const auto prio : PRIORITIES) {
                 dma_set_stream_priority(stream, prio);
-                TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(prio), (stream->CR & DMA_SxCR_PL) >> DMA_SxCR_PL_Pos);
+                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(prio), (stream->CR & DMA_SxCR_PL) >> DMA_SxCR_PL_Pos);
             }
 
             dma_enable_circm_dbm(stream, true, true);
@@ -233,8 +234,8 @@ namespace test::dma {
             for (const auto per : SIZES) {
                 for (const auto mem : SIZES) {
                     dma_set_per_mem_size(stream, per, mem);
-                    TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(per), (stream->CR & DMA_SxCR_PSIZE) >> DMA_SxCR_PSIZE_Pos);
-                    TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(mem), (stream->CR & DMA_SxCR_MSIZE) >> DMA_SxCR_MSIZE_Pos);
+                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(per), (stream->CR & DMA_SxCR_PSIZE) >> DMA_SxCR_PSIZE_Pos);
+                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(mem), (stream->CR & DMA_SxCR_MSIZE) >> DMA_SxCR_MSIZE_Pos);
                 }
             }
 

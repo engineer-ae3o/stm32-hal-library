@@ -8,6 +8,7 @@
 
 #include <array>
 #include <cstdint>
+#include <utility>
 
 
 namespace test::gpio {
@@ -181,7 +182,7 @@ namespace test::gpio {
             constexpr auto SPEEDS = std::array{GPIO_LOW_SPEED, GPIO_MEDIUM_SPEED, GPIO_HIGH_SPEED, GPIO_FULL_SPEED};
             for (const auto speed : SPEEDS) {
                 gpio_set_speed_mode(SCRATCH_PORT, SCRATCH_PIN, speed);
-                TEST_ASSERT_EQUAL_UINT32(static_cast<uint32_t>(speed), (SCRATCH_PORT->OSPEEDR >> (SCRATCH_PIN * 2)) & 0b11UL);
+                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(speed), (SCRATCH_PORT->OSPEEDR >> (SCRATCH_PIN * 2)) & 0b11UL);
             }
 
             enable_all_port_clocks(false);
