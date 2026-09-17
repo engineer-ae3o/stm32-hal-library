@@ -7,51 +7,34 @@
 #include "utils/err.h"
 
 
-// Clock prescaler table
-typedef struct {
-    uint8_t i2sdiv;
-    uint8_t odd;
-} prescaler_t;
+#define ENABLE_I2S()                                                                                                                                 \
+    do {                                                                                                                                             \
+        handle->I2SCFGR |= SPI_I2SCFGR_I2SE;                                                                                                         \
+        __DSB();                                                                                                                                     \
+    } while (0)
 
-// Prescaler tables for the different supported audio PLL clock frequencies
-// TODO: Compute the prescaler table
-static const prescaler_t s_prescaler_lut[][I2S_FREQ_COUNT] = {
-    // The Audio PLL at 76.8MHz. Suitable for the 48kHz family with MCK output disabled.
-    // The other unsupported frequencies are left default initialized at 0.
-    [AUDIO_PLL_76_8MHz] =
-        {
-            [I2S_FREQ_8kHz]  = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_16kHz] = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_32kHz] = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_48kHz] = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_96kHz] = {.i2sdiv = 0, .odd = 0},
-        },
-    // The Audio PLL at 135.5MHz. Suitable for the 44.1kHz family with MCK output enabled.
-    // The other unsupported frequencies are left default initialized at 0.
-    [AUDIO_PLL_135_5MHz] =
-        {
-            [I2S_FREQ_22kHz] = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_44kHz] = {.i2sdiv = 0, .odd = 0},
-        },
-    // The Audio PLL at 151MHz. Suitable for the 44.1kHz family with MCK output disabled.
-    // The other unsupported frequencies are left default initialized at 0.
-    [AUDIO_PLL_151MHz] =
-        {
-            [I2S_FREQ_22kHz] = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_44kHz] = {.i2sdiv = 0, .odd = 0},
-        },
-    // The Audio PLL at 172MHz. Suitable for the 48kHz family with MCK output enabled.
-    // The other unsupported frequencies are left default initialized at 0.
-    [AUDIO_PLL_172MHz] =
-        {
-            [I2S_FREQ_8kHz]  = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_16kHz] = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_32kHz] = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_48kHz] = {.i2sdiv = 0, .odd = 0},
-            [I2S_FREQ_96kHz] = {.i2sdiv = 0, .odd = 0},
-        },
+#define DISABLE_I2S()                                                                                                                                \
+    do {                                                                                                                                             \
+        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;                                                                                                        \
+        __DSB();                                                                                                                                     \
+    } while (0)
+
+static uint32_t s_sampling_rate_lut[] = {
+    [I2S_FREQ_8kHz]  = 8'000U,
+    [I2S_FREQ_16kHz] = 16'000U,
+    [I2S_FREQ_22kHz] = 22'050U,
+    [I2S_FREQ_32kHz] = 32'000U,
+    [I2S_FREQ_44kHz] = 44'100U,
+    [I2S_FREQ_48kHz] = 48'000U,
+    [I2S_FREQ_96kHz] = 96'000U,
 };
 
+static uint32_t s_audio_pll_lut[] = {
+    [AUDIO_PLL_76_8MHz]  = 76'800'000U,
+    [AUDIO_PLL_135_5MHz] = 135'500'000U,
+    [AUDIO_PLL_151MHz]   = 151'000'000U,
+    [AUDIO_PLL_172MHz]   = 172'000'000U,
+};
 
 // Helper
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(const I2S_TypeDef* handle) {
@@ -69,18 +52,6 @@ static const prescaler_t s_prescaler_lut[][I2S_FREQ_COUNT] = {
         return 0xFFU;
     }
 }
-
-#define ENABLE_I2S()                                                                                                                                 \
-    do {                                                                                                                                             \
-        handle->I2SCFGR |= SPI_I2SCFGR_I2SE;                                                                                                         \
-        __DSB();                                                                                                                                     \
-    } while (0)
-
-#define DISABLE_I2S()                                                                                                                                \
-    do {                                                                                                                                             \
-        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;                                                                                                        \
-        __DSB();                                                                                                                                     \
-    } while (0)
 
 // Defined in the SPI driver. Used to post DMA events or get info from the SPI driver since the I2S peripheral
 // shares the same hardware block as the SPI peripheral, and consequently, share the same DMA streams.
@@ -127,18 +98,24 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
 }
 
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config) {
-    if (handle == NULL || config == NULL || config->frequency == I2S_FREQ_COUNT) {
+    if (handle == NULL || config == NULL || config->audio_clock == AUDIO_PLL_DISABLE) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (config->audio_clock == AUDIO_PLL_DISABLE) {
-        return HAL_ERR_INVALID_STATE;
+    // Get the audio PLL clock prescalers
+    uint32_t mutiplier = 0;
+    if (config->use_mck) {
+        mutiplier = 256;
+    } else {
+        mutiplier = (config->frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 32 : 64;
     }
 
-    // Get the audio PLL clock prescaler
-    const uint8_t i2sdiv = s_prescaler_lut[config->audio_clock][config->frequency].i2sdiv;
-    const uint8_t odd    = s_prescaler_lut[config->audio_clock][config->frequency].odd;
-    if (i2sdiv == 0) {
+    const uint32_t denominator = s_sampling_rate_lut[config->frequency] * mutiplier;
+    const uint32_t divisor     = (s_audio_pll_lut[config->audio_clock] + (denominator / 2)) / denominator;
+
+    const uint8_t i2sdiv = (uint8_t)(divisor >> 1);
+    const uint8_t odd    = divisor & 1;
+    if (i2sdiv < 2) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
@@ -153,16 +130,12 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
     handle->I2SPR |= (uint32_t)(i2sdiv << SPI_I2SPR_I2SDIV_Pos) | (uint32_t)(odd << SPI_I2SPR_ODD_Pos) | ((config->use_mck) ? SPI_I2SPR_MCKOE : 0);
 
-    // Get frame size: It can only be 16 bits when the data is 16 bits
-    const uint32_t frame_size_mask = (config->frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 0 : SPI_I2SCFGR_CHLEN;
-    const uint32_t cpol_mask       = (config->cpol) ? SPI_I2SCFGR_CKPOL : 0;
-
     handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN);
-    handle->I2SCFGR |= (((uint32_t)config->direction << SPI_I2SCFGR_I2SCFG_Pos) | // Direction: TX or RX in master mode
-                        ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos) |      // I2S mode: Philips, left or right justified
-                        ((uint32_t)config->frame << SPI_I2SCFGR_DATLEN_Pos) |     // Data length: 16, 24 or 32 bits
-                        frame_size_mask |                                         // Frame size: 16 or 32 bits
-                        cpol_mask);                                               // Clock polarity
+    handle->I2SCFGR |= (((uint32_t)config->direction << SPI_I2SCFGR_I2SCFG_Pos) |                     // Direction: TX or RX in master mode
+                        ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos) |                          // I2S mode: Philips, left or right justified
+                        ((uint32_t)config->frame << SPI_I2SCFGR_DATLEN_Pos) |                         // Data length: 16, 24 or 32 bits
+                        ((config->frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 0 : SPI_I2SCFGR_CHLEN) | // Frame size: 16 or 32 bits
+                        ((config->cpol) ? SPI_I2SCFGR_CKPOL : 0));                                    // Clock polarity
 
     // Configure the GPIO pins
     if (config->use_mck) {

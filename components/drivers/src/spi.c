@@ -156,6 +156,87 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
     }
 }
 
+[[__gnu__::__always_inline__]] static inline hal_err_t poll_transfer_helper(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t size) {
+    // The DFF bit being set means a 16 bit transfer
+    if (handle->CR1 & SPI_CR1_DFF) {
+        // Cast to appropriate type
+        const uint16_t* tx_buf = (const uint16_t*)tx_data;
+        uint16_t*       rx_buf = (uint16_t*)rx_data;
+
+        for (size_t i = 0; i < size; i++) {
+            // Write the data, or a dummy word if this is a receive-only transfer
+            handle->DR = tx_buf ? tx_buf[i] : 0;
+
+            // Poll till the data has been transferred out
+            uint32_t timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+            if (timeout == 0) {
+                return HAL_ERR_TIMEOUT;
+            }
+
+            // Poll till the data has been received
+            timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
+            if (timeout == 0) {
+                return HAL_ERR_TIMEOUT;
+            }
+
+            // Read the data register: keep it if this is a receive, discard otherwise
+            const uint16_t rx_word = (uint16_t)handle->DR;
+            if (rx_buf) {
+                rx_buf[i] = rx_word;
+            }
+        }
+
+    } else {
+        // Cast to appropriate type
+        const uint8_t* tx_buf = (const uint8_t*)tx_data;
+        uint8_t*       rx_buf = (uint8_t*)rx_data;
+
+        for (size_t i = 0; i < size; i++) {
+            // Write the data, or a dummy byte if this is a receive-only transfer
+            handle->DR = tx_buf ? tx_buf[i] : 0;
+
+            // Poll till data has been transferred out
+            uint32_t timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+            if (timeout == 0) {
+                return HAL_ERR_TIMEOUT;
+            }
+
+            // Wait till data has been received
+            timeout = TIMEOUT_CYCLES;
+            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
+            if (timeout == 0) {
+                return HAL_ERR_TIMEOUT;
+            }
+
+            // Read the data register: keep it if this is a receive, discard otherwise
+            const uint8_t rx_byte = (uint8_t)handle->DR;
+            if (rx_buf) {
+                rx_buf[i] = rx_byte;
+            }
+        }
+    }
+
+    // Wait for the TXE and BSY bits
+    // TXE bit
+    uint32_t timeout = TIMEOUT_CYCLES;
+    while (!(handle->SR & SPI_SR_TXE) && (--timeout));
+    if (timeout == 0) {
+        return HAL_ERR_TIMEOUT;
+    }
+
+    // BSY bit
+    timeout = TIMEOUT_CYCLES;
+    while ((handle->SR & SPI_SR_BSY) && (--timeout));
+    if (timeout == 0) {
+        return HAL_ERR_TIMEOUT;
+    }
+
+    return HAL_OK;
+}
+
 
 // General API
 hal_err_t spix_clk_enable(SPI_TypeDef* handle, bool enable) {
@@ -212,7 +293,7 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
                   SPI_CR1_CRCNEXT |  // No CRC phase; data phase always
                   SPI_CR1_BIDIMODE | // MOSI and MISO used from the SPI peripheral's perspective
                   SPI_CR1_BIDIOE |   // Dual communication
-                  // Clear state
+                  // Clear remaining state
                   SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF | SPI_CR1_BR);
 
     cr1_mask |= (((uint32_t)config->prescaler << SPI_CR1_BR_Pos) | // Clock prescaler
@@ -372,11 +453,11 @@ hal_err_t spi_master_dma_deinit(SPI_TypeDef* handle) {
     handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);
 
     // Set the deconfigure flags so dma_configure_stream(...) deinitializes the streams
-    dma_stream_config_t tx_stream_config = {};
-    tx_stream_config.deconfigure         = true;
+    dma_stream_config_t tx_stream_config;
+    tx_stream_config.deconfigure = true;
 
-    dma_stream_config_t rx_stream_config = {};
-    rx_stream_config.deconfigure         = true;
+    dma_stream_config_t rx_stream_config;
+    rx_stream_config.deconfigure = true;
 
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));
@@ -397,84 +478,9 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
     }
 
     ENABLE_SPI();
-    hal_err_t error = HAL_OK;
-
-    // The DFF bit being set means a 16 bit transfer
-    if (handle->CR1 & SPI_CR1_DFF) {
-        // Cast to appropriate type
-        const uint16_t* buf = (const uint16_t*)data;
-
-        for (size_t i = 0; i < size; i++) {
-            // Write the data
-            handle->DR = buf[i];
-
-            // Poll till the data has been transferred out
-            uint32_t timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Poll till the data has been received
-            timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Read the data register and discard the value
-            (void)handle->DR;
-        }
-
-    } else {
-        // Cast to appropriate type
-        const uint8_t* buf = (const uint8_t*)data;
-
-        for (size_t i = 0; i < size; i++) {
-            // Write the data
-            handle->DR = buf[i];
-
-            // Poll till data has been transferred out
-            uint32_t timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Wait till data has been received
-            timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Read the data register and discard the value
-            (void)handle->DR;
-        }
-    }
-
-    // Wait for the TXE and BSY bits
-    // TXE bit
-    uint32_t timeout = TIMEOUT_CYCLES;
-    while (!(handle->SR & SPI_SR_TXE) && (--timeout));
-    if (timeout == 0) {
-        error = HAL_ERR_TIMEOUT;
-        goto done;
-    }
-
-    // BSY bit
-    timeout = TIMEOUT_CYCLES;
-    while ((handle->SR & SPI_SR_BSY) && (--timeout));
-    if (timeout == 0) {
-        error = HAL_ERR_TIMEOUT;
-    }
-
-done:
+    const hal_err_t error = poll_transfer_helper(handle, data, NULL, size);
     DISABLE_SPI();
+
     return error;
 }
 
@@ -484,84 +490,9 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t size) 
     }
 
     ENABLE_SPI();
-    hal_err_t error = HAL_OK;
-
-    // The DFF bit being set means a 16 bit transfer
-    if (handle->CR1 & SPI_CR1_DFF) {
-        // Cast to appropriate type
-        uint16_t* buf = (uint16_t*)data;
-
-        for (size_t i = 0; i < size; i++) {
-            // Write dummy data
-            handle->DR = 0;
-
-            // Poll till the data has been transferred out
-            uint32_t timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Poll till the data has been received
-            timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Finally, read the data register
-            buf[i] = (uint16_t)handle->DR;
-        }
-
-    } else {
-        // Cast to appropriate type
-        uint8_t* buf = (uint8_t*)data;
-
-        for (size_t i = 0; i < size; i++) {
-            // Write dummy data
-            handle->DR = 0;
-
-            // Poll till data has been transferred out
-            uint32_t timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Wait till data has been received
-            timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Finally, read the data register
-            buf[i] = (uint8_t)handle->DR;
-        }
-    }
-
-    // Wait for the TXE and BSY bits
-    // TXE bit
-    uint32_t timeout = TIMEOUT_CYCLES;
-    while (!(handle->SR & SPI_SR_TXE) && (--timeout));
-    if (timeout == 0) {
-        error = HAL_ERR_TIMEOUT;
-        goto done;
-    }
-
-    // BSY bit
-    timeout = TIMEOUT_CYCLES;
-    while ((handle->SR & SPI_SR_BSY) && (--timeout));
-    if (timeout == 0) {
-        error = HAL_ERR_TIMEOUT;
-    }
-
-done:
+    const hal_err_t error = poll_transfer_helper(handle, NULL, data, size);
     DISABLE_SPI();
+
     return error;
 }
 
@@ -571,86 +502,9 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
     }
 
     ENABLE_SPI();
-    hal_err_t error = HAL_OK;
-
-    // The DFF bit being set means a 16 bit transfer
-    if (handle->CR1 & SPI_CR1_DFF) {
-        // Cast to appropriate type
-        const uint16_t* tx_buf = (const uint16_t*)tx_data;
-        uint16_t*       rx_buf = (uint16_t*)rx_data;
-
-        for (size_t i = 0; i < size; i++) {
-            // Write the data
-            handle->DR = tx_buf[i];
-
-            // Poll till data has been transferred out
-            uint32_t timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Poll till the data has been received
-            timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Finally, read the data register
-            rx_buf[i] = (uint16_t)handle->DR;
-        }
-
-    } else {
-        // Cast to appropriate type
-        const uint8_t* tx_buf = (const uint8_t*)tx_data;
-        uint8_t*       rx_buf = (uint8_t*)rx_data;
-
-        for (size_t i = 0; i < size; i++) {
-            // Write the data
-            handle->DR = tx_buf[i];
-
-            // Poll till data has been transferred out
-            uint32_t timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_TXE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Wait till the data has been received
-            timeout = TIMEOUT_CYCLES;
-            while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
-            if (timeout == 0) {
-                error = HAL_ERR_TIMEOUT;
-                goto done;
-            }
-
-            // Finally, read the data register
-            rx_buf[i] = (uint8_t)handle->DR;
-        }
-    }
-
-    // Wait for the TXE and BSY bits
-    // TXE bit
-    uint32_t timeout = TIMEOUT_CYCLES;
-    while (!(handle->SR & SPI_SR_TXE) && (--timeout));
-    if (timeout == 0) {
-        error = HAL_ERR_TIMEOUT;
-        goto done;
-    }
-
-    // BSY bit
-    timeout = TIMEOUT_CYCLES;
-    while ((handle->SR & SPI_SR_BSY) && (--timeout));
-    if (timeout == 0) {
-        error = HAL_ERR_TIMEOUT;
-    }
-
-done:
+    const hal_err_t error = poll_transfer_helper(handle, tx_data, rx_data, size);
     DISABLE_SPI();
+
     return error;
 }
 
@@ -663,26 +517,47 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
         return HAL_ERR_INVALID_ARG;
     }
 
-    // TX mapping
-    DMA_Stream_TypeDef* stream = s_spi_i2s_dma_map[idx].tx.stream;
-    if (stream == NULL) {
+    // TX and RX mapping. The RX stream is used purely to drain the bytes SPI
+    // shifts in during transmission: with RXDMAEN left enabled by
+    // spi_master_dma_init(), an unserviced SPI RX side would leave the RXNE bit
+    // set after the first byte and cause an overrun error.
+    DMA_Stream_TypeDef* tx_stream = s_spi_i2s_dma_map[idx].tx.stream;
+    DMA_Stream_TypeDef* rx_stream = s_spi_i2s_dma_map[idx].rx.stream;
+
+    if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Set the memory address and transaction length
-    dma_set_addresses(stream, &handle->DR, data, NULL);
-    dma_set_trans_length(stream, size);
+    // Discard sink for whatever comes in on MISO. Never incremented, so
+    // every incoming word overwrites the same throwaway location.
+    static uint16_t s_dummy_rx;
 
-    // Save the user passed callback
+    // Set the memory address and transaction length for the real TX data
+    // Peripheral data side doesn't increment but memory side increments.
+    dma_set_addresses(tx_stream, &handle->DR, data, NULL);
+    dma_set_trans_length(tx_stream, size);
+    dma_set_increment(tx_stream, false, true);
+
+    // RX stream drains into the same throwaway word every beat:
+    // Peripheral data side and memory side both do not get incremented.
+    dma_set_addresses(rx_stream, &handle->DR, &s_dummy_rx, NULL);
+    dma_set_trans_length(rx_stream, size);
+    dma_set_increment(rx_stream, false, false);
+
     if (cb) {
+        // Save the callback to the TX DMA irq only.
+        // The isr_tx_helper(...) polls the BSY and TXE bit, which tells us
+        // that the last bit of the data has been transmitted. Its only then
+        // we can safely disable the SPI peripheral. isr_rx_helper(...) has
+        // no such checks, so isr_tx_helper(...) is better for our usage here.
         __disable_irq();
         s_dma_stream_ctx[idx].tx.callback = cb;
         s_dma_stream_ctx[idx].tx.arg      = arg;
         __enable_irq();
     }
 
-    // Enable the DMA TX stream
-    TRY(dma_enable_stream(stream));
+    TRY(dma_enable_stream(rx_stream));
+    TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
 
     ENABLE_SPI();
     return HAL_OK;
@@ -695,26 +570,45 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size,
         return HAL_ERR_INVALID_ARG;
     }
 
-    // RX mapping
-    DMA_Stream_TypeDef* stream = s_spi_i2s_dma_map[idx].rx.stream;
-    if (stream == NULL) {
+    // TX and RX mapping. In master mode, SCLK is only generated while data is
+    // shifted out of DR, so the TX stream is used to keep feeding a dummy
+    // word in for the duration of the transfer.
+    DMA_Stream_TypeDef* tx_stream = s_spi_i2s_dma_map[idx].tx.stream;
+    DMA_Stream_TypeDef* rx_stream = s_spi_i2s_dma_map[idx].rx.stream;
+
+    if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Set the memory address and transaction length
-    dma_set_addresses(stream, &handle->DR, data, NULL);
-    dma_set_trans_length(stream, size);
+    // Dummy source fed to DR for the duration of the transfer, purely to generate
+    // the clock. Never incremented, so the same zero word is read every beat.
+    static const uint16_t s_dummy_tx = 0;
 
-    // Save the user passed callback
+    // TX stream feeds the same dummy word every beat: peripheral and
+    // memory side both fixed, nothing to increment
+    dma_set_addresses(tx_stream, &handle->DR, &s_dummy_tx, NULL);
+    dma_set_trans_length(tx_stream, size);
+    dma_set_increment(tx_stream, false, false);
+
+    // Set the memory address and transaction length for the real RX data
+    dma_set_addresses(rx_stream, &handle->DR, data, NULL);
+    dma_set_trans_length(rx_stream, size);
+    dma_set_increment(rx_stream, false, true);
+
     if (cb) {
+        // Save the callback to the TX DMA irq only.
+        // The isr_tx_helper(...) polls the BSY and TXE bit, which tells us
+        // that the last bit of the data has been transmitted. Its only then
+        // we can safely disable the SPI peripheral. isr_rx_helper(...) has
+        // no such checks, so isr_tx_helper(...) is better for our usage here.
         __disable_irq();
-        s_dma_stream_ctx[idx].rx.callback = cb;
-        s_dma_stream_ctx[idx].rx.arg      = arg;
+        s_dma_stream_ctx[idx].tx.callback = cb;
+        s_dma_stream_ctx[idx].tx.arg      = arg;
         __enable_irq();
     }
 
-    // Enable the DMA TX stream
-    TRY(dma_enable_stream(stream));
+    TRY(dma_enable_stream(rx_stream));
+    TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
 
     ENABLE_SPI();
     return HAL_OK;
@@ -735,23 +629,28 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Set the memory address and transaction length
+    // Set the memory address and transaction length.
+    // Re-enable memory increment for both streams.
     dma_set_addresses(tx_stream, &handle->DR, tx_data, NULL);
     dma_set_trans_length(tx_stream, size);
+    dma_set_increment(tx_stream, false, true);
 
     dma_set_addresses(rx_stream, &handle->DR, rx_data, NULL);
     dma_set_trans_length(rx_stream, size);
+    dma_set_increment(rx_stream, false, true);
 
-    // Save the user passed callback
     if (cb) {
-        // Save the callback to the TX DMA irq only
+        // Save the callback to the TX DMA irq only.
+        // The isr_tx_helper(...) polls the BSY and TXE bit, which tells us
+        // that the last bit of the data has been transmitted. Its only then
+        // we can safely disable the SPI peripheral. isr_rx_helper(...) has
+        // no such checks, so isr_tx_helper(...) is better for our usage here.
         __disable_irq();
         s_dma_stream_ctx[idx].tx.callback = cb;
         s_dma_stream_ctx[idx].tx.arg      = arg;
         __enable_irq();
     }
 
-    // Enable the DMA TX and RX streams
     TRY(dma_enable_stream(rx_stream));
     TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
 

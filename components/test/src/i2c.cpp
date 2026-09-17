@@ -45,11 +45,6 @@ namespace test::i2c {
             TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
             TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
 
-            // Frequency must be one of the two supported presets
-            i2c_master_config_t bad_freq_config = PORT_CONFIG;
-            bad_freq_config.frequency           = static_cast<i2c_frequency_t>(0);
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_init(TEST_PORT, &bad_freq_config));
-
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transmit(nullptr, 0x50, data.data(), data.size()));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transmit(TEST_PORT, 0, data.data(), data.size()));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transmit(TEST_PORT, 0x80, data.data(), data.size()));

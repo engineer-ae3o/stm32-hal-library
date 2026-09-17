@@ -22,16 +22,16 @@ namespace test::uart {
 
         // Instance under test. TX and RX must be physically jumpered together on the
         // board for the loopback tests below to pass.
-        USART_TypeDef* const TEST_INSTANCE = USART2;
+        USART_TypeDef* const TEST_INSTANCE = USART1;
         GPIO_TypeDef* const  TEST_PORT     = GPIOA;
-        constexpr gpio_pin_t TEST_TX_PIN   = GPIO_PIN_2;
-        constexpr gpio_pin_t TEST_RX_PIN   = GPIO_PIN_3;
+        constexpr gpio_pin_t TEST_TX_PIN   = GPIO_PIN_9;
+        constexpr gpio_pin_t TEST_RX_PIN   = GPIO_PIN_10;
 
         const uart_config_t DEFAULT_CONFIG = {
             .over_sampling = UART_OVER_SAMPLING_16,
             .baud_rate     = 115200UL,
-            .tx_pin        = BOARD_UART2_TX_PA2,
-            .rx_pin        = BOARD_UART2_RX_PA3,
+            .tx_pin        = BOARD_UART1_TX_PA9,
+            .rx_pin        = BOARD_UART1_RX_PA10,
         };
 
         volatile bool      s_tx_done = false;
@@ -93,13 +93,13 @@ namespace test::uart {
             TEST_ASSERT_FALSE(RCC->APB2ENR & RCC_APB2ENR_USART1EN);
             uartx_clk_enable(USART1, true);
             TEST_ASSERT_TRUE(RCC->APB2ENR & RCC_APB2ENR_USART1EN);
-            uartx_clk_enable(USART1, false);
+            // Leave USART2 enabled: the loopback tests below need it
 
             uartx_clk_enable(USART2, false);
             TEST_ASSERT_FALSE(RCC->APB1ENR & RCC_APB1ENR_USART2EN);
             uartx_clk_enable(USART2, true);
             TEST_ASSERT_TRUE(RCC->APB1ENR & RCC_APB1ENR_USART2EN);
-            // Leave USART2 enabled: the loopback tests below need it
+            uartx_clk_enable(USART2, false);
 
             uartx_clk_enable(USART6, false);
             TEST_ASSERT_FALSE(RCC->APB2ENR & RCC_APB2ENR_USART6EN);

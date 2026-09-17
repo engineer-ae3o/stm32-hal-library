@@ -52,7 +52,6 @@ typedef enum : uint8_t {
     I2S_FREQ_44kHz, // 44.1kHz
     I2S_FREQ_48kHz,
     I2S_FREQ_96kHz,
-    I2S_FREQ_COUNT,
 } i2s_freq_t;
 
 typedef struct {
