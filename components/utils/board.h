@@ -54,7 +54,8 @@ extern "C" {
 #define MINIIMUM_I2C_100kHz_APB1_CLK_MHz (2U)
 #define MINIIMUM_I2C_400kHz_APB1_CLK_MHz (4U)
 
-// Peripheral pin mapping with the alternate function
+
+// Peripheral pin mapping with its alternate function value
 typedef struct {
     GPIO_TypeDef* port;
     gpio_pin_t    pin;

@@ -455,82 +455,74 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
         // When N > 2
         default: {
             size_t remaining_bytes = size;
-            while (1) {
-                // Handle the different cases for the remaining number of bytes
-                switch (remaining_bytes) {
-                    case 3:
-                        // Wait till the BTF bit has been set
-                        timeout = TIMEOUT;
-                        while (!(handle->SR1 & I2C_SR1_BTF) && --timeout) {
-                            if (handle->SR1 & I2C_SR1_BERR) {
-                                TRY(check_error_flags(handle, true));
-                            }
-                        }
+            if (remaining_bytes > 3) {
+                // Read both registers to clear the ADDR bit
+                (void)handle->SR1;
+                (void)handle->SR2;
 
-                        // Return if the BTF bit still has not been set
-                        if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
-                            send_stop(handle);
-                            return HAL_ERR_RX;
-                        }
+                // Read RXE up until remaining_bytes is 3
+                for (size_t i = 0; i < (size - 3); i++) {
+                    timeout = TIMEOUT;
+                    while (!(handle->SR1 & I2C_SR1_RXNE) && --timeout) {
+                        TRY(check_error_flags(handle, true));
+                    }
 
-                        // Clear the ACK bit so the peripheral sends a NACK after all reception has been completed
-                        handle->CR1 &= ~I2C_CR1_ACK;
-
-                        // Get the third to the last byte
-                        data[size - remaining_bytes] = (uint8_t)handle->DR;
-                        remaining_bytes--;
-
-                        break;
-
-                    case 2:
-                        // Wait till the BTF bit has been set, again
-                        timeout = TIMEOUT;
-                        while (!(handle->SR1 & I2C_SR1_BTF) && --timeout) {
-                            TRY(check_error_flags(handle, true));
-                        }
-
-                        // Return if the BTF bit still has not been set
-                        if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
-                            send_stop(handle);
-                            return HAL_ERR_RX;
-                        }
-
-                        // Send stop now so the peripheral does this immediately after the transaction
+                    // Return if RXNE still isn't set
+                    if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) {
                         send_stop(handle);
+                        return HAL_ERR_RX;
+                    }
 
-                        // Finally, read DR twice to get both remaining bytes
-                        data[size - remaining_bytes]     = (uint8_t)handle->DR;
-                        data[size - remaining_bytes + 1] = (uint8_t)handle->DR;
-
-                        return HAL_OK;
-
-                    default:
-                        // Read both registers to clear the ADDR bit
-                        (void)handle->SR1;
-                        (void)handle->SR2;
-
-                        // Read RXE up until remaining_bytes is 3
-                        for (size_t i = 0; i < (size - 3); i++) {
-                            timeout = TIMEOUT;
-                            while (!(handle->SR1 & I2C_SR1_RXNE) && --timeout) {
-                                TRY(check_error_flags(handle, true));
-                            }
-
-                            // Return if RXNE still isn't set
-                            if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) {
-                                send_stop(handle);
-                                return HAL_ERR_RX;
-                            }
-
-                            // get the next data item
-                            data[i] = (uint8_t)handle->DR;
-                            remaining_bytes--;
-                        }
-                        break;
+                    // get the next data item
+                    data[i] = (uint8_t)handle->DR;
+                    remaining_bytes--;
                 }
             }
+
+            // If all went well, remaining_bytes should be 3
+            ASSERT(remaining_bytes == 3);
+
+            // Wait till the BTF bit has been set
+            timeout = TIMEOUT;
+            while (!(handle->SR1 & I2C_SR1_BTF) && --timeout) {
+                TRY(check_error_flags(handle, true));
+            }
+
+            // Return if the BTF bit still has not been set
+            if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
+                send_stop(handle);
+                return HAL_ERR_RX;
+            }
+
+            // Clear the ACK bit so the peripheral sends a NACK after all reception has been completed
+            handle->CR1 &= ~I2C_CR1_ACK;
+
+            // Get the third to the last byte
+            data[size - remaining_bytes] = (uint8_t)handle->DR;
+            remaining_bytes--;
+
+            // If all went well, remaining_bytes should be 2
+            ASSERT(remaining_bytes == 2);
+
+            // Wait till the BTF bit has been set, again
+            timeout = TIMEOUT;
+            while (!(handle->SR1 & I2C_SR1_BTF) && --timeout) {
+                TRY(check_error_flags(handle, true));
+            }
+
+            // Return if the BTF bit still has not been set
+            if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
+                send_stop(handle);
+                return HAL_ERR_RX;
+            }
+
+            // Send stop now so the peripheral does this immediately after the transaction
+            send_stop(handle);
+
+            // Finally, read DR twice to get both remaining bytes
+            data[size - remaining_bytes]     = (uint8_t)handle->DR;
+            data[size - remaining_bytes + 1] = (uint8_t)handle->DR;
+            return HAL_OK;
         }
     }
-
-    return HAL_OK;
 }
