@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
+#include "utils/common.h"
 #include "drivers/i2c.h"
 #include "test/i2c.hpp"
 #include "utils/tick.h"
@@ -17,7 +18,8 @@ namespace test::i2c {
 
         constexpr const char* TAG = "I2C_Test";
 
-        I2C_TypeDef* const TEST_PORT = I2C1;
+        I2C_TypeDef* const TEST_PORT         = I2C1;
+        constexpr uint8_t  AHT20_I2C_ADDRESS = 0x38;
 
         const i2c_master_config_t PORT_CONFIG = {
             .use_pullups    = true,
@@ -88,10 +90,78 @@ namespace test::i2c {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2cx_clk_enable(reinterpret_cast<I2C_TypeDef*>(0x1), true));
         }
 
+        void deinit_clears_control_registers() {
+            TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, true));
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_init(TEST_PORT, &PORT_CONFIG));
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
+
+            TEST_ASSERT_FALSE(TEST_PORT->CR1 & I2C_CR1_PE);
+            TEST_ASSERT_FALSE(TEST_PORT->CR1 & I2C_CR1_ACK);
+            TEST_ASSERT_EQUAL_UINT32(0, TEST_PORT->CR2 & I2C_CR2_FREQ);
+            TEST_ASSERT_EQUAL_UINT32(0, TEST_PORT->CCR & (I2C_CCR_FS | I2C_CCR_DUTY | I2C_CCR_CCR));
+            TEST_ASSERT_EQUAL_UINT32(0, TEST_PORT->FLTR & (I2C_FLTR_DNF | I2C_FLTR_ANOFF));
+            TEST_ASSERT_EQUAL_UINT32(0, TEST_PORT->TRISE & I2C_TRISE_TRISE);
+
+            TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
+        }
+
+        void init_selects_fast_mode_only_at_400khz() {
+            i2c_master_config_t config = PORT_CONFIG;
+
+            TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, true));
+
+            // At 100kHz, FS/DUTY must stay clear (standard mode) and CCR must still be programmed
+            config.frequency = I2C_FREQ_100kHz;
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_init(TEST_PORT, &config));
+            TEST_ASSERT_FALSE(TEST_PORT->CCR & (I2C_CCR_FS | I2C_CCR_DUTY));
+            TEST_ASSERT_TRUE((TEST_PORT->CCR & I2C_CCR_CCR) != 0);
+            const uint32_t trise_100khz = TEST_PORT->TRISE & I2C_TRISE_TRISE;
+            TEST_ASSERT_TRUE(trise_100khz != 0);
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
+
+            // At 400kHz, both FS and DUTY (16:9) must be set, and the rise time budget shrinks
+            config.frequency = I2C_FREQ_400kHz;
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_init(TEST_PORT, &config));
+            TEST_ASSERT_TRUE(TEST_PORT->CCR & I2C_CCR_FS);
+            TEST_ASSERT_TRUE(TEST_PORT->CCR & I2C_CCR_DUTY);
+            TEST_ASSERT_TRUE((TEST_PORT->CCR & I2C_CCR_CCR) != 0);
+            const uint32_t trise_400khz = TEST_PORT->TRISE & I2C_TRISE_TRISE;
+            TEST_ASSERT_TRUE(trise_400khz != 0);
+            TEST_ASSERT_TRUE(trise_400khz < trise_100khz);
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
+
+            TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
+        }
+
+        void init_programs_the_configured_digital_filter() {
+            i2c_master_config_t config = PORT_CONFIG;
+            config.digital_filter      = I2C_DIGITAL_FILTER_9;
+
+            TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, true));
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_init(TEST_PORT, &config));
+
+            TEST_ASSERT_EQUAL_UINT32(I2C_DIGITAL_FILTER_9, (TEST_PORT->FLTR & I2C_FLTR_DNF) >> I2C_FLTR_DNF_Pos);
+
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
+            TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
+        }
+
+        void transmit_to_unaddressed_device_returns_device_not_found() {
+            // No physical device on the bus should ACK this address.
+            constexpr uint8_t UNUSED_ADDRESS = 0x1A;
+            constexpr uint8_t data           = 0x69;
+
+            TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, true));
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_init(TEST_PORT, &PORT_CONFIG));
+
+            TEST_ASSERT_EQUAL(HAL_ERR_I2C_DEVICE_NOT_FOUND, i2c_master_transmit(TEST_PORT, UNUSED_ADDRESS, &data, sizeof(data)));
+
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
+            TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
+        }
+
         // These tests requires another physical component to be present: the AHT20 sensor.
         // They test the communication with another I2C device as a way to model real world usage.
-
-        constexpr uint8_t AHT20_I2C_ADDRESS = 0x38;
 
         void aht20_inits_fine() {
             // This test must run first before any other AHT20 test since it sets up the bus and initializes the AHT20
@@ -158,6 +228,66 @@ namespace test::i2c {
             LOGI(TAG, "Humidity: %f%%. Temperature: %fC", (double)humidity, (double)temperature);
         }
 
+        void transmit_and_receive_reject_a_busy_bus() {
+            // Manually drive a start condition and deliberately withhold the stop condition,
+            // so the peripheral's own BUSY flag (line-state based, not just internal state)
+            // gets set the same way it would during genuine bus contention.
+            constexpr std::array<uint8_t, 1> data{0xFF};
+            std::array<uint8_t, 1>           rx_buf{};
+
+            TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, true));
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_init(TEST_PORT, &PORT_CONFIG));
+
+            TEST_PORT->CR1 |= I2C_CR1_PE;
+            TEST_PORT->CR1 |= I2C_CR1_START;
+
+            uint32_t timeout = TIMEOUT_CYCLES;
+            while (!(TEST_PORT->SR1 & I2C_SR1_SB) && --timeout);
+            TEST_ASSERT_TRUE_MESSAGE(timeout != 0, "Never observed SB after manually issuing a start condition");
+            (void)TEST_PORT->SR1; // Clear SB the same way the driver does
+
+            TEST_ASSERT_TRUE_MESSAGE(TEST_PORT->SR2 & I2C_SR2_BUSY, "Bus did not report BUSY after an unterminated start condition");
+
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, data.data(), data.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE,
+                              i2c_master_transceive(TEST_PORT, AHT20_I2C_ADDRESS, data.data(), data.size(), rx_buf.data(), rx_buf.size()));
+
+            // Release the bus so later tests don't inherit a stuck BUSY flag
+            TEST_PORT->CR1 |= I2C_CR1_STOP;
+            delay_ms(1);
+            TEST_PORT->CR1 &= ~I2C_CR1_PE;
+
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
+            TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
+        }
+
+        void receive_handles_one_and_two_byte_transfers() {
+            // rx_trans() branches on size (1, 2, or >2 remaining bytes) and each branch has its
+            // own ACK/POS/stop sequencing. Every other test here requests all 7 bytes, so this
+            // is the only place the 1- and 2-byte branches get exercised at all.
+
+            // Trigger a measurement so the AHT20 has fresh bytes queued up to read back
+            constexpr std::array<uint8_t, 3> tx_trigger = {0xAC, 0x33, 0x00};
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, tx_trigger.data(), tx_trigger.size()));
+            delay_ms(100);
+
+            // N == 1: status byte only
+            uint8_t status_byte = 0;
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, &status_byte, 1));
+
+            // Trigger again for a clean 2-byte read
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, tx_trigger.data(), tx_trigger.size()));
+            delay_ms(100);
+
+            // N == 2
+            std::array<uint8_t, 2> two_bytes{};
+            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, two_bytes.data(), two_bytes.size()));
+
+            // Leave the sensor in a known state for whatever runs next
+            delay_ms(15);
+        }
+
         void aht20_deinits_fine() {
             // This test must run last after all other AHT20 tests since it tears up the bus and deinitializes the AHT20
             constexpr uint8_t aht20_reset_code = 0xBA;
@@ -193,8 +323,14 @@ namespace test::i2c {
 
         RUN_TEST(invalid_arg_guards);
         RUN_TEST(clk_enable_toggles_the_correct_bus_bit);
+        RUN_TEST(deinit_clears_control_registers);
+        RUN_TEST(init_selects_fast_mode_only_at_400khz);
+        RUN_TEST(init_programs_the_configured_digital_filter);
+        RUN_TEST(transmit_and_receive_reject_a_busy_bus);
+        RUN_TEST(transmit_to_unaddressed_device_returns_device_not_found);
         RUN_TEST(aht20_inits_fine);
         RUN_TEST(read_attempt_from_aht20);
+        RUN_TEST(receive_handles_one_and_two_byte_transfers);
         RUN_TEST(multiple_aht20_reads_work);
         RUN_TEST(aht20_init_deinit_stress_test);
         RUN_TEST(aht20_deinits_fine);

@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
+#include "drivers/pwm.h"
 #include "test/pwm.hpp"
 #include "utils/log.h"
 
