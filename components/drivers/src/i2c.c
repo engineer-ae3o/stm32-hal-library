@@ -52,11 +52,23 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 
     // Disable the I2C peripheral before writing to any of its registers and issue a software and hardware bus reset
     handle->CR1 &= ~I2C_CR1_PE;
-    TRY(i2c_master_software_reset(handle));
     TRY(i2c_master_hardware_reset(config->scl_pin.port, config->scl_pin.pin, config->sda_pin.port, config->sda_pin.pin));
+    TRY(i2c_master_software_reset(handle));
 
     // Get the APB1 bus frequency and cache it
     const uint32_t apb1_clk_freq_mhz = get_apb1_core_clock() / 1'000'000U;
+
+    if (config->frequency == I2C_FREQ_100kHz) {
+        if (apb1_clk_freq_mhz < MINIIMUM_I2C_100kHz_APB1_CLK_MHz) {
+            return HAL_ERR_NOT_SUPPORTED;
+        }
+    } else if (config->frequency == I2C_FREQ_400kHz) {
+        if (apb1_clk_freq_mhz < MINIIMUM_I2C_400kHz_APB1_CLK_MHz) {
+            return HAL_ERR_NOT_SUPPORTED;
+        }
+    } else {
+        return HAL_ERR_INVALID_ARG;
+    }
 
     handle->CR2 &= ~I2C_CR2_FREQ;
     handle->CR2 |= (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos) & I2C_CR2_FREQ;
@@ -267,8 +279,8 @@ static bool send_start(I2C_TypeDef* handle) {
     while (!(handle->SR1 & I2C_SR1_SB) && (--timeout_cycles)) {
         if (handle->SR1 & I2C_SR1_BERR) {
             handle->SR1 &= ~I2C_SR1_BERR;
-            // Continue with the operation as spurious bus errors don't corrupt the transaction
-            continue;
+            send_stop(handle);
+            return false;
         }
         if (handle->SR1 & I2C_SR1_ARLO) {
             handle->SR1 &= ~I2C_SR1_ARLO;

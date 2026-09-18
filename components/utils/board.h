@@ -50,6 +50,9 @@ extern "C" {
 #define I2C_TRISE_TIME_400kHz_ns (300U)
 #define I2C_TRISE_TIME_100kHz_ns (1000U)
 
+// Minimum APB1 bus clock for I2C frequencies at 100kHz and 400khz
+#define MINIIMUM_I2C_100kHz_APB1_CLK_MHz (2U)
+#define MINIIMUM_I2C_400kHz_APB1_CLK_MHz (4U)
 
 // Peripheral pin mapping with the alternate function
 typedef struct {
