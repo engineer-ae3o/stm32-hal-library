@@ -108,16 +108,16 @@ namespace test::dma {
         }
 
         void stream_info_lookup_covers_every_stream() {
-            for (const auto& exp : ALL_STREAMS) {
-                dma_stream_info_t info{};
-                TEST_ASSERT_EQUAL(HAL_OK, dma_get_stream_info(exp.stream, &info));
-                TEST_ASSERT_EQUAL_PTR(exp.stream, info.stream);
-                TEST_ASSERT_EQUAL_PTR(exp.controller, info.controller);
-                TEST_ASSERT_EQUAL_UINT32(exp.stream_number, info.stream_number);
-                TEST_ASSERT_EQUAL(exp.irq_type, info.nvic_irq_type);
+            for (const auto& expected : ALL_STREAMS) {
+                dma_stream_info_t info;
+                TEST_ASSERT_EQUAL(HAL_OK, dma_get_stream_info(expected.stream, &info));
+                TEST_ASSERT_EQUAL_PTR(expected.stream, info.stream);
+                TEST_ASSERT_EQUAL_PTR(expected.controller, info.controller);
+                TEST_ASSERT_EQUAL_UINT32(expected.stream_number, info.stream_number);
+                TEST_ASSERT_EQUAL(expected.irq_type, info.nvic_irq_type);
             }
 
-            dma_stream_info_t info{};
+            dma_stream_info_t info;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dma_get_stream_info(nullptr, &info));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dma_get_stream_info(DMA1_Stream0, nullptr));
         }
@@ -133,28 +133,92 @@ namespace test::dma {
                 bool     is_low;
             };
 
-            const std::array<flag_expectation_t, 8> EXPECTATIONS = {{
-                {0, DMA_LISR_TCIF0, DMA_LISR_TEIF0, DMA_LISR_HTIF0, DMA_LISR_DMEIF0, DMA_LISR_FEIF0, true},
-                {1, DMA_LISR_TCIF1, DMA_LISR_TEIF1, DMA_LISR_HTIF1, DMA_LISR_DMEIF1, DMA_LISR_FEIF1, true},
-                {2, DMA_LISR_TCIF2, DMA_LISR_TEIF2, DMA_LISR_HTIF2, DMA_LISR_DMEIF2, DMA_LISR_FEIF2, true},
-                {3, DMA_LISR_TCIF3, DMA_LISR_TEIF3, DMA_LISR_HTIF3, DMA_LISR_DMEIF3, DMA_LISR_FEIF3, true},
-                {4, DMA_HISR_TCIF4, DMA_HISR_TEIF4, DMA_HISR_HTIF4, DMA_HISR_DMEIF4, DMA_HISR_FEIF4, false},
-                {5, DMA_HISR_TCIF5, DMA_HISR_TEIF5, DMA_HISR_HTIF5, DMA_HISR_DMEIF5, DMA_HISR_FEIF5, false},
-                {6, DMA_HISR_TCIF6, DMA_HISR_TEIF6, DMA_HISR_HTIF6, DMA_HISR_DMEIF6, DMA_HISR_FEIF6, false},
-                {7, DMA_HISR_TCIF7, DMA_HISR_TEIF7, DMA_HISR_HTIF7, DMA_HISR_DMEIF7, DMA_HISR_FEIF7, false},
+            constexpr std::array<flag_expectation_t, 8> EXPECTATIONS = {{
+                {
+                    .stream_number = 0,
+                    .tc_mask       = DMA_LISR_TCIF0,
+                    .te_mask       = DMA_LISR_TEIF0,
+                    .ht_mask       = DMA_LISR_HTIF0,
+                    .dme_mask      = DMA_LISR_DMEIF0,
+                    .fe_mask       = DMA_LISR_FEIF0,
+                    .is_low        = true,
+                },
+                {
+                    .stream_number = 1,
+                    .tc_mask       = DMA_LISR_TCIF1,
+                    .te_mask       = DMA_LISR_TEIF1,
+                    .ht_mask       = DMA_LISR_HTIF1,
+                    .dme_mask      = DMA_LISR_DMEIF1,
+                    .fe_mask       = DMA_LISR_FEIF1,
+                    .is_low        = true,
+                },
+                {
+                    .stream_number = 2,
+                    .tc_mask       = DMA_LISR_TCIF2,
+                    .te_mask       = DMA_LISR_TEIF2,
+                    .ht_mask       = DMA_LISR_HTIF2,
+                    .dme_mask      = DMA_LISR_DMEIF2,
+                    .fe_mask       = DMA_LISR_FEIF2,
+                    .is_low        = true,
+                },
+                {
+                    .stream_number = 3,
+                    .tc_mask       = DMA_LISR_TCIF3,
+                    .te_mask       = DMA_LISR_TEIF3,
+                    .ht_mask       = DMA_LISR_HTIF3,
+                    .dme_mask      = DMA_LISR_DMEIF3,
+                    .fe_mask       = DMA_LISR_FEIF3,
+                    .is_low        = true,
+                },
+                {
+                    .stream_number = 4,
+                    .tc_mask       = DMA_HISR_TCIF4,
+                    .te_mask       = DMA_HISR_TEIF4,
+                    .ht_mask       = DMA_HISR_HTIF4,
+                    .dme_mask      = DMA_HISR_DMEIF4,
+                    .fe_mask       = DMA_HISR_FEIF4,
+                    .is_low        = false,
+                },
+                {
+                    .stream_number = 5,
+                    .tc_mask       = DMA_HISR_TCIF5,
+                    .te_mask       = DMA_HISR_TEIF5,
+                    .ht_mask       = DMA_HISR_HTIF5,
+                    .dme_mask      = DMA_HISR_DMEIF5,
+                    .fe_mask       = DMA_HISR_FEIF5,
+                    .is_low        = false,
+                },
+                {
+                    .stream_number = 6,
+                    .tc_mask       = DMA_HISR_TCIF6,
+                    .te_mask       = DMA_HISR_TEIF6,
+                    .ht_mask       = DMA_HISR_HTIF6,
+                    .dme_mask      = DMA_HISR_DMEIF6,
+                    .fe_mask       = DMA_HISR_FEIF6,
+                    .is_low        = false,
+                },
+                {
+                    .stream_number = 7,
+                    .tc_mask       = DMA_HISR_TCIF7,
+                    .te_mask       = DMA_HISR_TEIF7,
+                    .ht_mask       = DMA_HISR_HTIF7,
+                    .dme_mask      = DMA_HISR_DMEIF7,
+                    .fe_mask       = DMA_HISR_FEIF7,
+                    .is_low        = false,
+                },
             }};
 
-            for (const auto& exp : EXPECTATIONS) {
-                dma_stream_flags_t flags{};
-                TEST_ASSERT_EQUAL(HAL_OK, dma_get_stream_flags(DMA1_Stream0, DMA1, &flags, exp.stream_number));
+            for (const auto& expected : EXPECTATIONS) {
+                dma_stream_flags_t flags;
+                TEST_ASSERT_EQUAL(HAL_OK, dma_get_stream_flags(DMA1_Stream0, DMA1, &flags, expected.stream_number));
 
-                TEST_ASSERT_EQUAL_UINT32(exp.tc_mask, flags.tc_mask);
-                TEST_ASSERT_EQUAL_UINT32(exp.te_mask, flags.te_mask);
-                TEST_ASSERT_EQUAL_UINT32(exp.ht_mask, flags.ht_mask);
-                TEST_ASSERT_EQUAL_UINT32(exp.dme_mask, flags.dme_mask);
-                TEST_ASSERT_EQUAL_UINT32(exp.fe_mask, flags.fe_mask);
+                TEST_ASSERT_EQUAL_UINT32(expected.tc_mask, flags.tc_mask);
+                TEST_ASSERT_EQUAL_UINT32(expected.te_mask, flags.te_mask);
+                TEST_ASSERT_EQUAL_UINT32(expected.ht_mask, flags.ht_mask);
+                TEST_ASSERT_EQUAL_UINT32(expected.dme_mask, flags.dme_mask);
+                TEST_ASSERT_EQUAL_UINT32(expected.fe_mask, flags.fe_mask);
 
-                if (exp.is_low) {
+                if (expected.is_low) {
                     TEST_ASSERT_EQUAL_PTR(&DMA1->LISR, flags.irq_status_register);
                     TEST_ASSERT_EQUAL_PTR(&DMA1->LIFCR, flags.irq_clear_register);
                 } else {
@@ -163,7 +227,7 @@ namespace test::dma {
                 }
             }
 
-            dma_stream_flags_t flags{};
+            dma_stream_flags_t flags;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dma_get_stream_flags(nullptr, DMA1, &flags, 0));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dma_get_stream_flags(DMA1_Stream0, DMA1, &flags, 8));
         }

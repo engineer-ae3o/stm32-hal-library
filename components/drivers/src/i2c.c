@@ -16,8 +16,6 @@
 static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
 static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
 
-#define CHECK_CLEAR_FLAGS()
-
 
 // General API
 hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
@@ -473,7 +471,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
                         return HAL_ERR_RX;
                     }
 
-                    // get the next data item
+                    // Get the next data item
                     data[i] = (uint8_t)handle->DR;
                     remaining_bytes--;
                 }
@@ -501,9 +499,6 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
             data[size - remaining_bytes] = (uint8_t)handle->DR;
             remaining_bytes--;
 
-            // If all went well, remaining_bytes should be 2
-            ASSERT(remaining_bytes == 2);
-
             // Wait till the BTF bit has been set, again
             timeout = TIMEOUT;
             while (!(handle->SR1 & I2C_SR1_BTF) && --timeout) {
@@ -516,7 +511,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
                 return HAL_ERR_RX;
             }
 
-            // Send stop now so the peripheral does this immediately after the transaction
+            // Send stop now so the peripheral does this immediately after the transaction ends
             send_stop(handle);
 
             // Finally, read DR twice to get both remaining bytes
