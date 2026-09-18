@@ -16,6 +16,7 @@ static const char* s_err_code_lut[] = {
     [HAL_ERR_TX]                      = "HAL_ERR_TX",
     [HAL_ERR_RX]                      = "HAL_ERR_RX",
     [HAL_ERR_I2C_BUS_BUSY]            = "HAL_ERR_I2C_BUS_BUSY",
+    [HAL_ERR_I2C_BUS_ERROR]           = "HAL_ERR_I2C_BUS_ERROR",
     [HAL_ERR_I2C_DEVICE_NOT_FOUND]    = "HAL_ERR_I2C_DEVICE_NOT_FOUND",
     [HAL_ERR_I2C_ARBITRATION_LOST]    = "HAL_ERR_I2C_ARBITRATION_LOST",
     [HAL_ERR_SPI_TXE_FAILED_TO_SET]   = "HAL_ERR_SPI_TXE_FAILED_TO_SET",

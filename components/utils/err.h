@@ -32,7 +32,8 @@ typedef enum : uint8_t {
 
     // I2C extensions
     HAL_ERR_I2C_BUS_BUSY,         // The bus is in use by a different master
-    HAL_ERR_I2C_DEVICE_NOT_FOUND, // The selectd slave with the given address was not found on the bus
+    HAL_ERR_I2C_BUS_ERROR,        // An illegal start or stop condition detected on the bus
+    HAL_ERR_I2C_DEVICE_NOT_FOUND, // The selected slave with the given address was not found on the bus
     HAL_ERR_I2C_ARBITRATION_LOST, // I2C bus arbitration lost to another master
 
     // SPI extensions
@@ -51,6 +52,7 @@ typedef enum : uint8_t {
     // Sentinel value
     HAL_ERR_COUNT,
 } hal_err_t;
+
 
 const char* hal_err_to_string(hal_err_t err);
 

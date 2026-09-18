@@ -241,7 +241,7 @@ namespace test::i2c {
             TEST_PORT->CR1 |= I2C_CR1_PE;
             TEST_PORT->CR1 |= I2C_CR1_START;
 
-            uint32_t timeout = TIMEOUT_CYCLES;
+            uint32_t timeout = TIMEOUT;
             while (!(TEST_PORT->SR1 & I2C_SR1_SB) && --timeout);
             TEST_ASSERT_TRUE_MESSAGE(timeout != 0, "Never observed SB after manually issuing a start condition");
             (void)TEST_PORT->SR1; // Clear SB the same way the driver does

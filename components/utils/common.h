@@ -14,7 +14,7 @@ extern "C" {
 #include <stdint.h>
 
 
-#define TIMEOUT_CYCLES (10000U)
+#define TIMEOUT (100000U)
 #define UNUSED(x) (void)(x)
 
 // NVIC interrupt priorities for the different peripherals
