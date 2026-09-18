@@ -38,7 +38,7 @@ typedef enum : uint8_t {
 } dma_flow_control_t;
 
 typedef enum : uint8_t {
-    DMA_MODE_NO_CIRCULAR = 0,
+    DMA_MODE_ONESHOT = 0,
     DMA_MODE_CIRCULAR,
     DMA_MODE_DOUBLE_BUFFER,
 } dma_circ_mode_t;

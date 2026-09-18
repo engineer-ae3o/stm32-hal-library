@@ -216,8 +216,6 @@ namespace test::uart {
         LOGI(TAG, "Starting the tests on the UART driver");
         UNITY_BEGIN();
 
-        uartx_clk_enable(TEST_INSTANCE, true);
-
         RUN_TEST(invalid_arg_guards);
         RUN_TEST(clk_enable_toggles_the_correct_bus_bit);
         RUN_TEST(dma_init_rejects_unsupported_instance);
@@ -226,8 +224,6 @@ namespace test::uart {
         RUN_TEST(dma_roundtrip_tx_and_rx_with_callbacks);
         RUN_TEST(dma_transfer_without_callback_still_completes);
         RUN_TEST(deinit_clears_control_and_baud_registers);
-
-        uartx_clk_enable(TEST_INSTANCE, false);
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the UART driver");

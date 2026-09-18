@@ -319,7 +319,7 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
         TRY(gpio_set_alternate_function(config->miso_pin.port, config->miso_pin.pin, config->miso_pin.af));
         gpio_enable_pullup(config->miso_pin.port, config->miso_pin.pin, true);
         gpio_set_speed_mode(config->miso_pin.port, config->miso_pin.pin, GPIO_FULL_SPEED);
-        gpio_set_output_type(config->miso_pin.port, config->miso_pin.pin, GPIO_OPEN_DRAIN);
+        gpio_set_output_type(config->miso_pin.port, config->miso_pin.pin, GPIO_PUSH_PULL);
     }
 
     return HAL_OK;
@@ -374,14 +374,14 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
         .direction       = DMA_DIR_M2P,
         .per_data_size   = dma_data_size,
         .mem_data_size   = dma_data_size,
-        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .circular_mode   = DMA_MODE_ONESHOT,
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = 0,
         .channel           = s_spi_i2s_dma_map[idx].tx.channel,
         .nvic_irq_priority = SPI_DMA_NVIC_IRQ_PRIORITY,
 
-        .per_addr  = NULL,
+        .per_addr  = &handle->DR,
         .mem_buf_0 = NULL,
         .mem_buf_1 = NULL,
     };
@@ -405,14 +405,14 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
         .direction       = DMA_DIR_P2M,
         .per_data_size   = dma_data_size,
         .mem_data_size   = dma_data_size,
-        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .circular_mode   = DMA_MODE_ONESHOT,
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = 0,
         .channel           = s_spi_i2s_dma_map[idx].rx.channel,
         .nvic_irq_priority = SPI_DMA_NVIC_IRQ_PRIORITY,
 
-        .per_addr  = NULL,
+        .per_addr  = &handle->DR,
         .mem_buf_0 = NULL,
         .mem_buf_1 = NULL,
     };
@@ -651,7 +651,7 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
 
 // To be used only by i2s.c to register interrupt handlers and get its DMA stream(s)
 hal_err_t spi_master_register_callback(dma_done_cb_t callback, void* arg, uint8_t idx, bool is_tx) {
-    if (callback == NULL || idx >= ARRAY_SIZE(s_spi_i2s_dma_map)) {
+    if (idx >= ARRAY_SIZE(s_spi_i2s_dma_map)) {
         return HAL_ERR_INVALID_ARG;
     }
     __disable_irq();
@@ -666,7 +666,7 @@ hal_err_t spi_master_register_callback(dma_done_cb_t callback, void* arg, uint8_
     return HAL_OK;
 }
 
-hal_err_t spi_master_get_dma_stream_map(dma_stream_map_t* map, uint32_t idx) {
+hal_err_t spi_master_get_dma_stream_map(dma_stream_map_t* map, uint8_t idx) {
     if (map == NULL || idx >= ARRAY_SIZE(s_spi_i2s_dma_map)) {
         return HAL_ERR_INVALID_ARG;
     }

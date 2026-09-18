@@ -287,7 +287,7 @@ namespace test::adc {
                     .buffer_2         = nullptr,
                     .buffer_size      = 1,
                     .priority         = DMA_PRIORITY_LOW,
-                    .circular_mode    = DMA_MODE_NO_CIRCULAR,
+                    .circular_mode    = DMA_MODE_ONESHOT,
                     .callbacks        = {},
                 };
 
@@ -332,7 +332,7 @@ namespace test::adc {
                 .buffer_2         = nullptr,
                 .buffer_size      = buffer.size(),
                 .priority         = DMA_PRIORITY_LOW,
-                .circular_mode    = DMA_MODE_NO_CIRCULAR,
+                .circular_mode    = DMA_MODE_ONESHOT,
                 .callbacks        = {},
             };
 
@@ -378,7 +378,7 @@ namespace test::adc {
                 .buffer_2         = nullptr,
                 .buffer_size      = static_cast<uint16_t>(buffer.size()),
                 .priority         = DMA_PRIORITY_LOW,
-                .circular_mode    = DMA_MODE_NO_CIRCULAR,
+                .circular_mode    = DMA_MODE_ONESHOT,
                 .callbacks =
                     {
                         .on_buffer_full       = cont_done_cb,

@@ -73,7 +73,7 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, dma_priority_t priori
         .direction       = DMA_DIR_M2M,
         .per_data_size   = DMA_SIZE_WORD,
         .mem_data_size   = DMA_SIZE_WORD,
-        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .circular_mode   = DMA_MODE_ONESHOT,
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = size,

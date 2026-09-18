@@ -1,6 +1,7 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
+#include "drivers/i2s.h"
 #include "test/i2s.hpp"
 #include "utils/log.h"
 

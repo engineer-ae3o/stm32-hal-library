@@ -282,14 +282,14 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
         .direction       = DMA_DIR_M2P,
         .per_data_size   = DMA_SIZE_BYTE,
         .mem_data_size   = DMA_SIZE_BYTE,
-        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .circular_mode   = DMA_MODE_ONESHOT,
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = 0,
         .channel           = s_uart_dma_map[idx].tx.channel,
         .nvic_irq_priority = UART_DMA_NVIC_IRQ_PRIORITY,
 
-        .per_addr  = NULL,
+        .per_addr  = &handle->DR,
         .mem_buf_0 = NULL,
         .mem_buf_1 = NULL,
     };
@@ -313,14 +313,14 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
         .direction       = DMA_DIR_P2M,
         .per_data_size   = DMA_SIZE_BYTE,
         .mem_data_size   = DMA_SIZE_BYTE,
-        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .circular_mode   = DMA_MODE_ONESHOT,
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = 0,
         .channel           = s_uart_dma_map[idx].rx.channel,
         .nvic_irq_priority = UART_DMA_NVIC_IRQ_PRIORITY,
 
-        .per_addr  = NULL,
+        .per_addr  = &handle->DR,
         .mem_buf_0 = NULL,
         .mem_buf_1 = NULL,
     };

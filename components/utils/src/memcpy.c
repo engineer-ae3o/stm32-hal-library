@@ -48,7 +48,7 @@ hal_err_t dma_memcpy(void* dest, const void* src, uint16_t len, volatile memcpy_
         .direction       = DMA_DIR_M2M,
         .per_data_size   = DMA_SIZE_BYTE,
         .mem_data_size   = DMA_SIZE_BYTE,
-        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .circular_mode   = DMA_MODE_ONESHOT,
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = len,
@@ -96,7 +96,7 @@ hal_err_t dma_memcpy_cb(void* dest, const void* src, uint16_t len, dma_done_cb_t
         .direction       = DMA_DIR_M2M,
         .per_data_size   = DMA_SIZE_BYTE,
         .mem_data_size   = DMA_SIZE_BYTE,
-        .circular_mode   = DMA_MODE_NO_CIRCULAR,
+        .circular_mode   = DMA_MODE_ONESHOT,
         .flow_controller = DMA_FLOW_CONTROLLER_DMA,
 
         .buffer_size       = len,
