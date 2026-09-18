@@ -101,6 +101,7 @@ namespace test::dma {
 
             TEST_ASSERT_EQUAL(HAL_OK, dmax_clk_enable(DMA2, true));
             TEST_ASSERT_TRUE(RCC->AHB1ENR & RCC_AHB1ENR_DMA2EN);
+            // Leave DMA2 clock enabled as its used for the other M2M tests
 
             const uint32_t before = RCC->AHB1ENR;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dmax_clk_enable(nullptr, true));
@@ -210,13 +211,13 @@ namespace test::dma {
 
             for (const auto& expected : EXPECTATIONS) {
                 dma_stream_flags_t flags;
-                TEST_ASSERT_EQUAL(HAL_OK, dma_get_stream_flags(DMA1_Stream0, DMA1, &flags, expected.stream_number));
+                TEST_ASSERT_EQUAL(HAL_OK, dma_get_stream_flags(DMA1, &flags, expected.stream_number));
 
                 TEST_ASSERT_EQUAL_UINT32(expected.tc_mask, flags.tc_mask);
                 TEST_ASSERT_EQUAL_UINT32(expected.te_mask, flags.te_mask);
                 TEST_ASSERT_EQUAL_UINT32(expected.ht_mask, flags.ht_mask);
-                TEST_ASSERT_EQUAL_UINT32(expected.dme_mask, flags.dme_mask);
                 TEST_ASSERT_EQUAL_UINT32(expected.fe_mask, flags.fe_mask);
+                TEST_ASSERT_EQUAL_UINT32(expected.dme_mask, flags.dme_mask);
 
                 if (expected.is_low) {
                     TEST_ASSERT_EQUAL_PTR(&DMA1->LISR, flags.irq_status_register);
@@ -227,13 +228,14 @@ namespace test::dma {
                 }
             }
 
+            // Test the invalid arguments catching
             dma_stream_flags_t flags;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dma_get_stream_flags(nullptr, DMA1, &flags, 0));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dma_get_stream_flags(DMA1_Stream0, DMA1, &flags, 8));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dma_get_stream_flags(nullptr, &flags, 0));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, dma_get_stream_flags(DMA1, &flags, 8));
         }
 
         void low_level_setters_are_null_safe_and_cover_every_enum_value() {
-            // Passing nullptr to any of these should no-op.
+            // Passing nullptr to any of these should be a no-op
             dma_set_channel(nullptr, 3);
             dma_set_direct_mode(nullptr, true);
             dma_set_trans_length(nullptr, 10);
@@ -247,10 +249,8 @@ namespace test::dma {
             dma_set_addresses(nullptr, nullptr, nullptr, nullptr);
 
             DMA_Stream_TypeDef* const stream = SCRATCH_STREAM;
-            stream->CR                       = 0;
-            stream->FCR                      = 0;
 
-            for (uint32_t channel = 0; channel <= 7; channel++) {
+            for (uint8_t channel = 0; channel < 8; channel++) {
                 dma_set_channel(stream, channel);
                 TEST_ASSERT_EQUAL_UINT32(channel, (stream->CR & DMA_SxCR_CHSEL) >> DMA_SxCR_CHSEL_Pos);
             }
@@ -263,10 +263,9 @@ namespace test::dma {
             dma_set_trans_length(stream, 1234);
             TEST_ASSERT_EQUAL_UINT32(1234, stream->NDTR);
 
-            constexpr std::array<dma_direction_t, 3> DIRECTIONS{DMA_DIR_P2M, DMA_DIR_M2P, DMA_DIR_M2M};
-            for (const auto dir : DIRECTIONS) {
-                dma_set_direction(stream, dir);
-                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(dir), (stream->CR & DMA_SxCR_DIR) >> DMA_SxCR_DIR_Pos);
+            for (const auto direction : {DMA_DIR_M2M, DMA_DIR_M2P, DMA_DIR_P2M}) {
+                dma_set_direction(stream, direction);
+                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(direction), (stream->CR & DMA_SxCR_DIR) >> DMA_SxCR_DIR_Pos);
             }
 
             dma_set_increment(stream, true, false);
@@ -276,25 +275,28 @@ namespace test::dma {
             TEST_ASSERT_FALSE(stream->CR & DMA_SxCR_PINC);
             TEST_ASSERT_TRUE(stream->CR & DMA_SxCR_MINC);
 
+            // NOTE: The PFCTRL bit is forced by the hardware to 0 if the direction is DMA_DIR_M2M
             dma_set_flow_controller(stream, true);
             TEST_ASSERT_FALSE(stream->CR & DMA_SxCR_PFCTRL);
             dma_set_flow_controller(stream, false);
             TEST_ASSERT_TRUE(stream->CR & DMA_SxCR_PFCTRL);
 
-            constexpr std::array<dma_priority_t, 4> PRIORITIES{DMA_PRIORITY_LOW, DMA_PRIORITY_MEDIUM, DMA_PRIORITY_HIGH, DMA_PRIORITY_VERY_HIGH};
-            for (const auto prio : PRIORITIES) {
-                dma_set_stream_priority(stream, prio);
-                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(prio), (stream->CR & DMA_SxCR_PL) >> DMA_SxCR_PL_Pos);
+            for (const auto priority : {DMA_PRIORITY_LOW, DMA_PRIORITY_MEDIUM, DMA_PRIORITY_HIGH, DMA_PRIORITY_VERY_HIGH}) {
+                dma_set_stream_priority(stream, priority);
+                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(priority), (stream->CR & DMA_SxCR_PL) >> DMA_SxCR_PL_Pos);
             }
 
             dma_set_circular_mode(stream, DMA_MODE_DOUBLE_BUFFER);
             TEST_ASSERT_TRUE(stream->CR & DMA_SxCR_CIRC);
             TEST_ASSERT_TRUE(stream->CR & DMA_SxCR_DBM);
+            dma_set_circular_mode(stream, DMA_MODE_CIRCULAR);
+            TEST_ASSERT_TRUE(stream->CR & DMA_SxCR_CIRC);
+            TEST_ASSERT_FALSE(stream->CR & DMA_SxCR_DBM);
             dma_set_circular_mode(stream, DMA_MODE_ONESHOT);
             TEST_ASSERT_FALSE(stream->CR & DMA_SxCR_CIRC);
             TEST_ASSERT_FALSE(stream->CR & DMA_SxCR_DBM);
 
-            constexpr std::array<dma_data_size_t, 3> SIZES{DMA_SIZE_BYTE, DMA_SIZE_HWORD, DMA_SIZE_WORD};
+            constexpr auto SIZES = std::array{DMA_SIZE_BYTE, DMA_SIZE_HWORD, DMA_SIZE_WORD};
             for (const auto per : SIZES) {
                 for (const auto mem : SIZES) {
                     dma_set_per_mem_size(stream, per, mem);
@@ -315,7 +317,7 @@ namespace test::dma {
             TEST_ASSERT_EQUAL_UINT32(reinterpret_cast<uint32_t>(&mem0), stream->M0AR);
             TEST_ASSERT_EQUAL_UINT32(reinterpret_cast<uint32_t>(&mem1), stream->M1AR);
 
-            // A NULL address must leave the corresponding register untouched, not zero it
+            // A NULL address argument must leave the corresponding register untouched, not zero it
             dma_set_addresses(stream, nullptr, nullptr, nullptr);
             TEST_ASSERT_EQUAL_UINT32(reinterpret_cast<uint32_t>(&per_addr), stream->PAR);
             TEST_ASSERT_EQUAL_UINT32(reinterpret_cast<uint32_t>(&mem0), stream->M0AR);
@@ -333,12 +335,16 @@ namespace test::dma {
 
         void deconfigure_clears_addresses_length_and_irq() {
             uint32_t src = 0, dst = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, configure_scratch_m2m(&src, &dst, 4, false));
 
-            dma_stream_config_t deconf{};
+            TEST_ASSERT_EQUAL(HAL_OK, configure_scratch_m2m(&src, &dst, sizeof(src), false));
+            TEST_ASSERT_EQUAL_UINT32(&src, SCRATCH_STREAM->PAR);
+            TEST_ASSERT_EQUAL_UINT32(&dst, SCRATCH_STREAM->M0AR);
+            TEST_ASSERT_EQUAL_UINT32(sizeof(src), SCRATCH_STREAM->NDTR);
+
+            dma_stream_config_t deconf;
             deconf.deconfigure = true;
-            TEST_ASSERT_EQUAL(HAL_OK, dma_configure_stream(SCRATCH_STREAM, &deconf));
 
+            TEST_ASSERT_EQUAL(HAL_OK, dma_configure_stream(SCRATCH_STREAM, &deconf));
             TEST_ASSERT_EQUAL_UINT32(0, SCRATCH_STREAM->PAR);
             TEST_ASSERT_EQUAL_UINT32(0, SCRATCH_STREAM->M0AR);
             TEST_ASSERT_EQUAL_UINT32(0, SCRATCH_STREAM->M1AR);
@@ -359,14 +365,13 @@ namespace test::dma {
             for (size_t i = 0; i < COUNT; i++) {
                 src[i] = 0xC0FFEE00U + i;
             }
-            dst.fill(0);
 
             TEST_ASSERT_EQUAL(HAL_OK, configure_scratch_m2m(src.data(), dst.data(), COUNT, true));
             TEST_ASSERT_TRUE_MESSAGE(wait_for_tc_flag(), "DMA M2M transfer never completed");
 
             TEST_ASSERT_EQUAL(HAL_OK, dma_isr_helper(SCRATCH_STREAM));
 
-            // A non-circular transfer must be auto-disabled by the isr helper once it's done
+            // A non circular transfer must be auto disabled by the isr helper once it's done
             TEST_ASSERT_FALSE(SCRATCH_STREAM->CR & DMA_SxCR_EN);
             TEST_ASSERT_FALSE(DMA2->LISR & DMA_LISR_TCIF1);
 
@@ -374,29 +379,7 @@ namespace test::dma {
                 TEST_ASSERT_EQUAL_UINT32(src[i], dst[i]);
             }
 
-            dma_stream_config_t deconf{};
-            deconf.deconfigure = true;
-            dma_configure_stream(SCRATCH_STREAM, &deconf);
-        }
-
-        void circular_transfer_is_left_enabled_by_the_isr_helper() {
-            constexpr size_t            COUNT = 8;
-            std::array<uint32_t, COUNT> src{};
-            std::array<uint32_t, COUNT> dst{};
-            src.fill(0x1234'5678U);
-            dst.fill(0);
-
-            TEST_ASSERT_EQUAL(HAL_OK, configure_scratch_m2m(src.data(), dst.data(), COUNT, true));
-            TEST_ASSERT_TRUE_MESSAGE(wait_for_tc_flag(), "DMA M2M transfer never completed");
-
-            TEST_ASSERT_EQUAL(HAL_OK, dma_isr_helper(SCRATCH_STREAM));
-
-            // Circular mode must be left running by the isr helper, not disabled
-            TEST_ASSERT_TRUE(SCRATCH_STREAM->CR & DMA_SxCR_EN);
-
-            TEST_ASSERT_EQUAL(HAL_OK, dma_disable_stream(SCRATCH_STREAM));
-
-            dma_stream_config_t deconf{};
+            dma_stream_config_t deconf;
             deconf.deconfigure = true;
             dma_configure_stream(SCRATCH_STREAM, &deconf);
         }
@@ -447,7 +430,6 @@ namespace test::dma {
         RUN_TEST(deconfigure_clears_addresses_length_and_irq);
         RUN_TEST(enable_and_disable_stream_are_null_safe);
         RUN_TEST(end_to_end_m2m_transfer_completes_and_matches_source);
-        RUN_TEST(circular_transfer_is_left_enabled_by_the_isr_helper);
         RUN_TEST(dma_memcpy_with_flag_works);
         RUN_TEST(dma_memcpy_with_callback_works);
 

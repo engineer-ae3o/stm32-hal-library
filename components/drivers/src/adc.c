@@ -164,7 +164,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
 
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
-    ASSERT(dma_get_stream_flags(stream, stream_info.controller, &flags, stream_info.stream_number) == HAL_OK);
+    ASSERT(dma_get_stream_flags(stream_info.controller, &flags, stream_info.stream_number) == HAL_OK);
 
     const uint32_t status         = *flags.irq_status_register;
     uint32_t       flags_to_clear = 0;
