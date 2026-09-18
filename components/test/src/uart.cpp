@@ -50,7 +50,7 @@ namespace test::uart {
         }
 
         inline bool wait_for(volatile bool& flag) {
-            uint32_t timeout = 100 * TIMEOUT;
+            uint32_t timeout = TIMEOUT;
             while (!flag && --timeout);
             return flag;
         }

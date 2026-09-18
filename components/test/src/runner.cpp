@@ -31,15 +31,15 @@ namespace test {
         adc::all();
         dma::all();
         i2c::all();
-        i2s::all();
         pwm::all();
-        // spi::all();
-        // crc::all();
-        // iwdg::all();
-        // heap::all();
-        // uart::all();
-        // gpio::all();
-        // clock::all();
+        crc::all();
+        spi::all();
+        i2s::all();
+        iwdg::all();
+        heap::all();
+        uart::all();
+        gpio::all();
+        clock::all();
         timer::all();
     }
 

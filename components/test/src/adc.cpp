@@ -20,14 +20,10 @@ namespace test::adc {
 
         constexpr const char* TAG = "ADC_Test";
 
-        constexpr uint32_t BOUNDED_WAIT_ITERS = 10U * TIMEOUT;
-
         // Helpers
         void reset_to_baseline() {
-            TEST_ASSERT_EQUAL(HAL_OK, adc_deconfigure(ADC1));
             adc_clk_configure(ADC_CLK_PRESCALER_4);
-
-            const adc_config_t config = {
+            constexpr adc_config_t config = {
                 .alignment       = ADC_RIGHT_ALIGN,
                 .resolution      = ADC_RES_12_BITS,
                 .sampling_cycles = ADC_SAMPLE_28_CYCLES,
@@ -54,7 +50,7 @@ namespace test::adc {
 
         template<typename predicate>
         bool wait_until(predicate pred) {
-            uint32_t timeout = BOUNDED_WAIT_ITERS;
+            uint32_t timeout = TIMEOUT;
             while (!pred() && --timeout);
             return pred();
         }

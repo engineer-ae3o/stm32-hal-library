@@ -328,8 +328,6 @@ hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    TRY(adc_power_on(handle, true));
-
     // Set the data register alignment
     if (config->alignment == ADC_RIGHT_ALIGN) {
         handle->CR2 &= ~ADC_CR2_ALIGN;
@@ -359,6 +357,8 @@ hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
                       (time << ADC_SMPR2_SMP4_Pos) | (time << ADC_SMPR2_SMP5_Pos) | (time << ADC_SMPR2_SMP6_Pos) | (time << ADC_SMPR2_SMP7_Pos) |
                       (time << ADC_SMPR2_SMP8_Pos) | (time << ADC_SMPR2_SMP9_Pos));
 
+    TRY(adc_power_on(handle, true));
+
     return HAL_OK;
 }
 
@@ -383,8 +383,7 @@ hal_err_t adc_deconfigure(ADC_TypeDef* handle) {
 // Control of all the ADC instances
 void adc_clk_configure(adc_prescaler_t clk_prescaler) {
     // Set the ADC clock prescaler
-    ADC->CCR &= ~ADC_CCR_ADCPRE;
-    ADC->CCR |= ((uint32_t)clk_prescaler << ADC_CCR_ADCPRE_Pos);
+    ADC->CCR = (ADC->CCR & ~ADC_CCR_ADCPRE) | ((uint32_t)clk_prescaler << ADC_CCR_ADCPRE_Pos);
 }
 
 void adc_enable_nvic_irq(bool enable) {

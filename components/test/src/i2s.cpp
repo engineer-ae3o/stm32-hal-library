@@ -89,13 +89,13 @@ namespace test::i2s {
         }
 
         inline bool wait_for(volatile bool& flag) {
-            uint32_t timeout = 10 * TIMEOUT;
+            uint32_t timeout = TIMEOUT;
             while (!flag && --timeout);
             return flag;
         }
 
         inline bool wait_for_count(volatile int& counter, int target) {
-            uint32_t timeout = 50 * TIMEOUT;
+            uint32_t timeout = TIMEOUT;
             while (counter < target && --timeout);
             return counter >= target;
         }

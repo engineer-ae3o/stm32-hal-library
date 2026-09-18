@@ -86,7 +86,7 @@ namespace test::dma {
         }
 
         bool wait_for_tc_flag() {
-            uint32_t timeout = 10 * TIMEOUT;
+            uint32_t timeout = TIMEOUT;
             // This assumes DMA2, stream 1. Should match SCRATCH_STREAM
             while (!(DMA2->LISR & DMA_LISR_TCIF1) && --timeout);
             return (DMA2->LISR & DMA_LISR_TCIF1) != 0;

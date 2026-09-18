@@ -88,8 +88,8 @@ namespace test::gpio {
         }
 
         void mode_setters_touch_only_their_own_pin() {
-            reset_port(SCRATCH_PORT);
             enable_all_port_clocks(true);
+            reset_port(SCRATCH_PORT);
 
             for (const auto pin : ALL_PINS) {
                 gpio_set_output(SCRATCH_PORT, pin);
@@ -113,13 +113,13 @@ namespace test::gpio {
                 gpio_set_input(SCRATCH_PORT, pin);
             }
 
-            enable_all_port_clocks(false);
             reset_port(SCRATCH_PORT);
+            enable_all_port_clocks(false);
         }
 
         void alternate_function_selects_the_right_afr_half_and_masks_the_value() {
-            reset_port(SCRATCH_PORT);
             enable_all_port_clocks(true);
+            reset_port(SCRATCH_PORT);
 
             // The alternate value deliberately exceeds 4 bits to verify the driver masks it to 4 bits
             constexpr uint8_t  alternate_value = 0xABU;
@@ -142,13 +142,13 @@ namespace test::gpio {
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, gpio_set_alternate_function(nullptr, GPIO_PIN_0, 0));
 
-            enable_all_port_clocks(false);
             reset_port(SCRATCH_PORT);
+            enable_all_port_clocks(false);
         }
 
         void pullup_and_pulldown_are_mutually_exclusive() {
-            reset_port(SCRATCH_PORT);
             enable_all_port_clocks(true);
+            reset_port(SCRATCH_PORT);
 
             for (const auto pin : ALL_PINS) {
                 gpio_enable_pullups(SCRATCH_PORT, pin, true);
@@ -165,13 +165,13 @@ namespace test::gpio {
                 TEST_ASSERT_EQUAL_UINT32(0b00U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
             }
 
-            enable_all_port_clocks(false);
             reset_port(SCRATCH_PORT);
+            enable_all_port_clocks(false);
         }
 
         void output_type_and_speed_cover_every_enum_value() {
-            reset_port(SCRATCH_PORT);
             enable_all_port_clocks(true);
+            reset_port(SCRATCH_PORT);
 
             gpio_set_output_type(SCRATCH_PORT, SCRATCH_PIN, GPIO_OPEN_DRAIN);
             TEST_ASSERT_TRUE(SCRATCH_PORT->OTYPER & (1UL << SCRATCH_PIN));
@@ -185,13 +185,13 @@ namespace test::gpio {
                 TEST_ASSERT_EQUAL_UINT32(std::to_underlying(speed), (SCRATCH_PORT->OSPEEDR >> (SCRATCH_PIN * 2)) & 0b11UL);
             }
 
-            enable_all_port_clocks(false);
             reset_port(SCRATCH_PORT);
+            enable_all_port_clocks(false);
         }
 
         void level_set_get_and_toggle_round_trip_through_the_pad() {
-            reset_port(SCRATCH_PORT);
             enable_all_port_clocks(true);
+            reset_port(SCRATCH_PORT);
 
             gpio_set_output(SCRATCH_PORT, SCRATCH_PIN);
             gpio_set_output_type(SCRATCH_PORT, SCRATCH_PIN, GPIO_PUSH_PULL);
@@ -228,13 +228,13 @@ namespace test::gpio {
             TEST_ASSERT_FALSE(gpio_get_level(nullptr, ANOTHER_SCRATCH_PIN));
             gpio_set_input(SCRATCH_PORT, ANOTHER_SCRATCH_PIN);
 
-            enable_all_port_clocks(false);
             reset_port(SCRATCH_PORT);
+            enable_all_port_clocks(false);
         }
 
         void interrupt_config_covers_every_port_code_and_every_edge() {
-            reset_port(SCRATCH_PORT);
             enable_all_port_clocks(true);
+            reset_port(SCRATCH_PORT);
 
             struct port_code_t {
                 GPIO_TypeDef* port;
@@ -280,13 +280,13 @@ namespace test::gpio {
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, gpio_set_interrupt(nullptr, PIN, GPIO_RISING_FALLING_EDGE));
 
-            enable_all_port_clocks(false);
             reset_port(SCRATCH_PORT);
+            enable_all_port_clocks(false);
         }
 
         void clear_interrupt_fully_undoes_set_interrupt() {
-            reset_port(SCRATCH_PORT);
             enable_all_port_clocks(true);
+            reset_port(SCRATCH_PORT);
 
             GPIO_TypeDef* const  PORT    = GPIOB;
             constexpr gpio_pin_t PIN     = GPIO_PIN_5;
@@ -310,8 +310,8 @@ namespace test::gpio {
             TEST_ASSERT_EQUAL_UINT32(0, (EXTI->FTSR & EXTI_FTSR_TR5));
             TEST_ASSERT_EQUAL_UINT32(0, (EXTI->IMR & EXTI_IMR_MR5));
 
-            enable_all_port_clocks(false);
             reset_port(SCRATCH_PORT);
+            enable_all_port_clocks(false);
         }
 
     } // namespace
