@@ -556,8 +556,8 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
     clear_state(handle, true, false);
 
     // Deinitialize the stream. This clears all DMA flags as well
-    dma_stream_config_t stream_config = {};
-    stream_config.deconfigure         = true;
+    dma_stream_config_t stream_config;
+    stream_config.deconfigure = true;
     TRY(dma_configure_stream(stream, &stream_config));
 
     // Clear all user passed callbacks

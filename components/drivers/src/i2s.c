@@ -3,18 +3,12 @@
 #include "drivers/gpio.h"
 #include "utils/common.h"
 #include "utils/clock.h"
+#include "drivers/dma.h"
 #include "drivers/spi.h"
 #include "drivers/i2s.h"
 #include "utils/err.h"
 #include <stdint.h>
 
-
-static uint32_t s_audio_pll_lut[] = {
-    [AUDIO_PLL_76_8MHz]  = 76'800'000U,
-    [AUDIO_PLL_135_5MHz] = 135'500'000U,
-    [AUDIO_PLL_151MHz]   = 151'000'000U,
-    [AUDIO_PLL_172MHz]   = 172'000'000U,
-};
 
 // Helper
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(const I2S_TypeDef* handle) {
@@ -72,8 +66,26 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
 }
 
 hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config) {
-    if (handle == NULL || config == NULL || config->audio_clock == AUDIO_PLL_DISABLE) {
+    if (handle == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
+    }
+
+    uint32_t audio_clock = 0;
+    switch (config->audio_clock) {
+        case AUDIO_PLL_76_8MHz:
+            audio_clock = 76'800'000U;
+            break;
+        case AUDIO_PLL_135_5MHz:
+            audio_clock = 135'500'000U;
+            break;
+        case AUDIO_PLL_151MHz:
+            audio_clock = 151'000'000U;
+            break;
+        case AUDIO_PLL_172MHz:
+            audio_clock = 172'000'000U;
+            break;
+        default:
+            return HAL_ERR_INVALID_ARG;
     }
 
     // Get the audio PLL clock prescalers
@@ -85,7 +97,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     }
 
     const uint32_t denominator = config->frequency * multiplier;
-    const uint32_t divisor     = (s_audio_pll_lut[config->audio_clock] + (denominator / 2)) / denominator;
+    const uint32_t divisor     = (audio_clock + (denominator / 2)) / denominator;
 
     const uint32_t i2sdiv = divisor >> 1;
     const uint32_t odd    = divisor & 1;
@@ -276,7 +288,7 @@ hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle) {
 }
 
 
-// DMA transfers API
+// DMA oneshot transfers API
 hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU || buf == NULL || size == 0) {
@@ -394,7 +406,7 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uin
     }
 
     TRY(dma_disable_stream(stream));
-    dma_enable_circm_dbm(stream, true, true);
+    dma_set_circular_mode(stream, DMA_MODE_DOUBLE_BUFFER);
     dma_set_addresses(stream, &handle->DR, buf_0, buf_1);
     dma_set_trans_length(stream, (uint16_t)actual_size);
 
@@ -423,8 +435,8 @@ hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle) {
     DISABLE_SPI_RX_DMA();
     TRY(dma_disable_stream(stream));
 
-    // Disable DBM and CIRC modes and clear the interrupt handler
-    dma_enable_circm_dbm(stream, false, false);
+    // Reset the mode to oneshot and clear the interrupt handler
+    dma_set_circular_mode(stream, DMA_MODE_ONESHOT);
     TRY(spi_master_register_callback(NULL, NULL, idx, false));
 
     return HAL_OK;
@@ -480,7 +492,7 @@ hal_err_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle, uint8_t* buffer_
 
     // Get the DMA stream mapped to the corresponding I2S handle
     dma_stream_map_t dma_map;
-    TRY(spi_master_get_dma_stream_map(&dma_map, idx) != HAL_OK);
+    TRY(spi_master_get_dma_stream_map(&dma_map, idx));
 
     DMA_Stream_TypeDef* stream = dma_map.rx.stream;
     if (stream == NULL) {

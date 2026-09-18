@@ -177,7 +177,7 @@ namespace test::dma {
             dma_set_increment(nullptr, true, true);
             dma_set_flow_controller(nullptr, true);
             dma_set_stream_priority(nullptr, DMA_PRIORITY_HIGH);
-            dma_enable_circm_dbm(nullptr, true, true);
+            dma_set_circular_mode(nullptr, DMA_MODE_DOUBLE_BUFFER);
             dma_set_per_mem_size(nullptr, DMA_SIZE_BYTE, DMA_SIZE_WORD);
             dma_enable_irqs(nullptr, true, true, true, true);
             dma_set_addresses(nullptr, nullptr, nullptr, nullptr);
@@ -223,10 +223,10 @@ namespace test::dma {
                 TEST_ASSERT_EQUAL_UINT32(std::to_underlying(prio), (stream->CR & DMA_SxCR_PL) >> DMA_SxCR_PL_Pos);
             }
 
-            dma_enable_circm_dbm(stream, true, true);
+            dma_set_circular_mode(stream, DMA_MODE_DOUBLE_BUFFER);
             TEST_ASSERT_TRUE(stream->CR & DMA_SxCR_CIRC);
             TEST_ASSERT_TRUE(stream->CR & DMA_SxCR_DBM);
-            dma_enable_circm_dbm(stream, false, false);
+            dma_set_circular_mode(stream, DMA_MODE_ONESHOT);
             TEST_ASSERT_FALSE(stream->CR & DMA_SxCR_CIRC);
             TEST_ASSERT_FALSE(stream->CR & DMA_SxCR_DBM);
 

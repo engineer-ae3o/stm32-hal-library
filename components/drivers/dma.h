@@ -31,7 +31,7 @@ void dma_set_direction(DMA_Stream_TypeDef* stream, dma_direction_t dir);
 void dma_set_increment(DMA_Stream_TypeDef* stream, bool per_inc, bool mem_inc);
 void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler);
 void dma_set_stream_priority(DMA_Stream_TypeDef* stream, dma_priority_t priority);
-void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circm, bool ena_dbm);
+void dma_set_circular_mode(DMA_Stream_TypeDef* stream, dma_circ_mode_t circ_mode);
 void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_data_size_t mem);
 void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, bool ht_mask, bool dme_mask);
 void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, const volatile void* mem_0, const volatile void* mem_1);

@@ -300,11 +300,14 @@ void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler
     }
 }
 
-void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circm, bool ena_dbm) {
+void dma_set_circular_mode(DMA_Stream_TypeDef* stream, dma_circ_mode_t circ_mode) {
     if (stream) {
         uint32_t mask = stream->CR & ~(DMA_SxCR_CIRC | DMA_SxCR_DBM);
-        mask |= ena_circm ? DMA_SxCR_CIRC : 0;
-        mask |= ena_dbm ? DMA_SxCR_DBM : 0;
+        if (circ_mode == DMA_MODE_DOUBLE_BUFFER) {
+            mask |= (DMA_SxCR_DBM | DMA_SxCR_CIRC);
+        } else if (circ_mode == DMA_MODE_CIRCULAR) {
+            mask |= DMA_SxCR_CIRC;
+        }
         stream->CR = mask;
     }
 }
