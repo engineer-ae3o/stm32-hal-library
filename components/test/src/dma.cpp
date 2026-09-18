@@ -86,7 +86,7 @@ namespace test::dma {
         }
 
         bool wait_for_tc_flag() {
-            uint32_t timeout = 10 * TIMEOUT_CYCLES;
+            uint32_t timeout = 10 * TIMEOUT;
             // This assumes DMA2, stream 1. Should match SCRATCH_STREAM
             while (!(DMA2->LISR & DMA_LISR_TCIF1) && --timeout);
             return (DMA2->LISR & DMA_LISR_TCIF1) != 0;
@@ -343,7 +343,7 @@ namespace test::dma {
 
             volatile memcpy_state_t flag = DMA_MEMCPY_NOT_DONE;
             TEST_ASSERT_EQUAL(HAL_OK, dma_memcpy(destination.data(), source.data(), source.size(), &flag));
-            TEST_ASSERT_EQUAL(DMA_MEMCPY_DONE, dma_memcpy_wait_for_flag(&flag, TIMEOUT_CYCLES));
+            TEST_ASSERT_EQUAL(DMA_MEMCPY_DONE, dma_memcpy_wait_for_flag(&flag, TIMEOUT));
 
             TEST_ASSERT_EQUAL_CHAR_ARRAY(source.data(), destination.data(), source.size());
         }
@@ -365,7 +365,7 @@ namespace test::dma {
                                   },
                                   &flag));
 
-            TEST_ASSERT_EQUAL(DMA_MEMCPY_DONE, dma_memcpy_wait_for_flag(&flag, TIMEOUT_CYCLES));
+            TEST_ASSERT_EQUAL(DMA_MEMCPY_DONE, dma_memcpy_wait_for_flag(&flag, TIMEOUT));
             TEST_ASSERT_EQUAL_CHAR_ARRAY(source.data(), destination.data(), source.size());
         }
 

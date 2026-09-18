@@ -251,7 +251,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
     handle->CR2 |= (ADC_CR2_SWSTART | ADC_CR2_EOCS);
 
     // Poll till the conversion is complete. That is, till the EOC bit is set
-    uint32_t timeout_cycles = TIMEOUT_CYCLES;
+    uint32_t timeout_cycles = TIMEOUT;
     while (!(handle->SR & ADC_SR_EOC) && --timeout_cycles);
     if (timeout_cycles == 0) {
         // The max value of the ADC is 2^12 - 1 (4095). It is

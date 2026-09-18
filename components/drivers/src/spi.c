@@ -72,7 +72,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
     // Poll till TXE has been set
     // Skip polling if an error has occurred
     if (ret == HAL_OK) {
-        uint32_t timeout = TIMEOUT_CYCLES;
+        uint32_t timeout = TIMEOUT;
         while (!(handle->SR & SPI_SR_TXE) && (--timeout));
         if (timeout == 0) {
             ret = HAL_ERR_SPI_TXE_FAILED_TO_SET;
@@ -82,7 +82,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
     // Poll till BSY has been cleared
     // Skip polling BSY if TXE failed to set or another error occurred
     if (ret == HAL_OK) {
-        uint32_t timeout = TIMEOUT_CYCLES;
+        uint32_t timeout = TIMEOUT;
         while ((handle->SR & SPI_SR_BSY) && (--timeout));
         if (timeout == 0) {
             ret = HAL_ERR_SPI_BSY_FAILED_TO_CLEAR;
@@ -158,14 +158,14 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
             handle->DR = tx_buf ? tx_buf[i] : 0;
 
             // Poll till the data has been transferred out
-            uint32_t timeout = TIMEOUT_CYCLES;
+            uint32_t timeout = TIMEOUT;
             while (!(handle->SR & SPI_SR_TXE) && (--timeout));
             if (timeout == 0) {
                 return HAL_ERR_TIMEOUT;
             }
 
             // Poll till the data has been received
-            timeout = TIMEOUT_CYCLES;
+            timeout = TIMEOUT;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
                 return HAL_ERR_TIMEOUT;
@@ -187,14 +187,14 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
             handle->DR = tx_buf ? tx_buf[i] : 0;
 
             // Poll till data has been transferred out
-            uint32_t timeout = TIMEOUT_CYCLES;
+            uint32_t timeout = TIMEOUT;
             while (!(handle->SR & SPI_SR_TXE) && (--timeout));
             if (timeout == 0) {
                 return HAL_ERR_TIMEOUT;
             }
 
             // Wait till data has been received
-            timeout = TIMEOUT_CYCLES;
+            timeout = TIMEOUT;
             while (!(handle->SR & SPI_SR_RXNE) && (--timeout));
             if (timeout == 0) {
                 return HAL_ERR_TIMEOUT;
@@ -210,14 +210,14 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
 
     // Wait for the TXE and BSY bits to set and clear respectively
     // TXE bit
-    uint32_t timeout = TIMEOUT_CYCLES;
+    uint32_t timeout = TIMEOUT;
     while (!(handle->SR & SPI_SR_TXE) && (--timeout));
     if (timeout == 0) {
         return HAL_ERR_TIMEOUT;
     }
 
     // BSY bit
-    timeout = TIMEOUT_CYCLES;
+    timeout = TIMEOUT;
     while ((handle->SR & SPI_SR_BSY) && (--timeout));
     if (timeout == 0) {
         return HAL_ERR_TIMEOUT;

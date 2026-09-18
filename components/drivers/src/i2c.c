@@ -387,13 +387,10 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
         return HAL_ERR_RX;
     }
 
-    // Set the ACK bit and clear the POS
-    handle->CR1 |= I2C_CR1_ACK;
-    handle->CR1 &= ~I2C_CR1_POS;
+    // Set the ACK bit and clear the POS bit
+    handle->CR1 = (handle->CR1 & ~I2C_CR1_POS) | I2C_CR1_ACK;
 
-    // Start reception after receiving ACK
-    size_t remaining_bytes = size;
-
+    // Start the reception after receiving ACK
     // The data phase. Handle the cases for the different initial lengths
     switch (size) {
         // When N == 1
@@ -435,7 +432,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
             (void)handle->SR1;
             (void)handle->SR2;
 
-            // Wait till the both bytes have been fully received by the bus
+            // Wait till both bytes have been fully received by the bus
             timeout = TIMEOUT;
             while (!(handle->SR1 & I2C_SR1_BTF) && --timeout) {
                 TRY(check_error_flags(handle, true));
@@ -456,7 +453,8 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
             return HAL_OK;
 
         // When N > 2
-        default:
+        default: {
+            size_t remaining_bytes = size;
             while (1) {
                 // Handle the different cases for the remaining number of bytes
                 switch (remaining_bytes) {
@@ -465,13 +463,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
                         timeout = TIMEOUT;
                         while (!(handle->SR1 & I2C_SR1_BTF) && --timeout) {
                             if (handle->SR1 & I2C_SR1_BERR) {
-                                handle->SR1 = ~I2C_SR1_BERR;
-                                return HAL_ERR_I2C_BUS_ERROR;
-                            }
-                            if (handle->SR1 & I2C_SR1_ARLO) {
-                                handle->SR1 = ~I2C_SR1_ARLO;
-                                send_stop(handle);
-                                return HAL_ERR_I2C_ARBITRATION_LOST;
+                                TRY(check_error_flags(handle, true));
                             }
                         }
 
@@ -494,15 +486,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
                         // Wait till the BTF bit has been set, again
                         timeout = TIMEOUT;
                         while (!(handle->SR1 & I2C_SR1_BTF) && --timeout) {
-                            if (handle->SR1 & I2C_SR1_BERR) {
-                                handle->SR1 = ~I2C_SR1_BERR;
-                                return HAL_ERR_I2C_BUS_ERROR;
-                            }
-                            if (handle->SR1 & I2C_SR1_ARLO) {
-                                handle->SR1 = ~I2C_SR1_ARLO;
-                                send_stop(handle);
-                                return HAL_ERR_I2C_ARBITRATION_LOST;
-                            }
+                            TRY(check_error_flags(handle, true));
                         }
 
                         // Return if the BTF bit still has not been set
@@ -529,15 +513,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
                         for (size_t i = 0; i < (size - 3); i++) {
                             timeout = TIMEOUT;
                             while (!(handle->SR1 & I2C_SR1_RXNE) && --timeout) {
-                                if (handle->SR1 & I2C_SR1_BERR) {
-                                    handle->SR1 = ~I2C_SR1_BERR;
-                                    return HAL_ERR_I2C_BUS_ERROR;
-                                }
-                                if (handle->SR1 & I2C_SR1_ARLO) {
-                                    handle->SR1 = ~I2C_SR1_ARLO;
-                                    send_stop(handle);
-                                    return HAL_ERR_I2C_ARBITRATION_LOST;
-                                }
+                                TRY(check_error_flags(handle, true));
                             }
 
                             // Return if RXNE still isn't set
@@ -546,13 +522,14 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
                                 return HAL_ERR_RX;
                             }
 
-                            // Read byte
+                            // get the next data item
                             data[i] = (uint8_t)handle->DR;
                             remaining_bytes--;
                         }
                         break;
                 }
             }
+        }
     }
 
     return HAL_OK;

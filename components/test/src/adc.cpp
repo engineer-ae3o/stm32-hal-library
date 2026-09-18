@@ -20,7 +20,7 @@ namespace test::adc {
 
         constexpr const char* TAG = "ADC_Test";
 
-        constexpr uint32_t BOUNDED_WAIT_ITERS = 10U * TIMEOUT_CYCLES;
+        constexpr uint32_t BOUNDED_WAIT_ITERS = 10U * TIMEOUT;
 
         // Helpers
         void reset_to_baseline() {

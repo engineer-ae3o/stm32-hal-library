@@ -57,7 +57,7 @@ namespace test::spi {
         }
 
         inline bool wait_for(volatile bool& flag) {
-            uint32_t timeout = 10 * TIMEOUT_CYCLES;
+            uint32_t timeout = 10 * TIMEOUT;
             while (!flag && --timeout);
             return flag;
         }

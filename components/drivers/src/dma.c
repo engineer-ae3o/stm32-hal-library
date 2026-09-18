@@ -34,7 +34,7 @@ hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {
         return HAL_ERR_INVALID_ARG;
     }
     stream->CR |= DMA_SxCR_EN;
-    uint32_t timeout = TIMEOUT_CYCLES;
+    uint32_t timeout = TIMEOUT;
     while (!(stream->CR & DMA_SxCR_EN) && (--timeout));
     if (timeout == 0) {
         return HAL_ERR_TIMEOUT;
@@ -47,7 +47,7 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
         return HAL_ERR_INVALID_ARG;
     }
     stream->CR &= ~DMA_SxCR_EN;
-    uint32_t timeout = TIMEOUT_CYCLES;
+    uint32_t timeout = TIMEOUT;
     while ((stream->CR & DMA_SxCR_EN) && (--timeout));
     if (timeout == 0) {
         return HAL_ERR_TIMEOUT;

@@ -74,7 +74,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].tx.stream);
 
     // Clear the status flags
-    handle->SR &= ~(USART_SR_TC | USART_SR_TXE);
+    handle->SR = ~(USART_SR_TC | USART_SR_TXE);
 
     // Transfers require us to poll on the TC flag
     // even after data has been shifted out
@@ -82,7 +82,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     // Poll till the TC bit has been set
     // Skip polling if an error has occurred
     if (ret == HAL_OK) {
-        uint32_t timeout = TIMEOUT_CYCLES;
+        uint32_t timeout = TIMEOUT;
         while (!(handle->SR & USART_SR_TC) && (--timeout));
         if (timeout == 0) {
             ret = HAL_ERR_UART_TC_FAILED_TO_SET;
@@ -120,7 +120,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     hal_err_t ret = dma_isr_helper(s_uart_dma_map[idx].rx.stream);
 
     // Clear the status flag
-    handle->SR &= ~USART_SR_RXNE;
+    handle->SR = ~USART_SR_RXNE;
 
     DISABLE_UART_DMA_RX();
     __disable_irq();
@@ -244,7 +244,7 @@ hal_err_t uart_deinit(USART_TypeDef* handle) {
     handle->CR1 &= ~(USART_CR1_SBK | USART_CR1_RWU | USART_CR1_RE | USART_CR1_TE | USART_CR1_IDLEIE | USART_CR1_RXNEIE | USART_CR1_TCIE |
                      USART_CR1_TXEIE | USART_CR1_PEIE | USART_CR1_PS | USART_CR1_PCE | USART_CR1_WAKE | USART_CR1_M | USART_CR1_OVER8);
     handle->BRR &= ~(USART_BRR_DIV_Fraction | USART_BRR_DIV_Mantissa);
-    handle->SR &= ~(USART_SR_TC | USART_SR_TXE | USART_SR_RXNE);
+    handle->SR = ~(USART_SR_TC | USART_SR_TXE | USART_SR_RXNE);
 
     return HAL_OK;
 }
@@ -449,7 +449,7 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
     }
 
     // Clear the status flag before starting
-    handle->SR &= ~USART_SR_RXNE;
+    handle->SR = ~USART_SR_RXNE;
 
     // Enable the DMA stream, UART DMA requests and then the UART RX peripheral
     TRY(dma_enable_stream(stream));
