@@ -151,17 +151,17 @@ namespace test::gpio {
             enable_all_port_clocks(true);
 
             for (const auto pin : ALL_PINS) {
-                gpio_enable_pullup(SCRATCH_PORT, pin, true);
+                gpio_enable_pullups(SCRATCH_PORT, pin, true);
                 TEST_ASSERT_EQUAL_UINT32(0b01U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
                 // Enabling the pulldown must replace the pullup bit, not OR into it
-                gpio_enable_pulldown(SCRATCH_PORT, pin, true);
+                gpio_enable_pulldowns(SCRATCH_PORT, pin, true);
                 TEST_ASSERT_EQUAL_UINT32(0b10U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
-                gpio_enable_pulldown(SCRATCH_PORT, pin, false);
+                gpio_enable_pulldowns(SCRATCH_PORT, pin, false);
                 TEST_ASSERT_EQUAL_UINT32(0b00U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
-                gpio_enable_pullup(SCRATCH_PORT, pin, false);
+                gpio_enable_pullups(SCRATCH_PORT, pin, false);
                 TEST_ASSERT_EQUAL_UINT32(0b00U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
             }
 
@@ -199,11 +199,11 @@ namespace test::gpio {
             bool scratch_pin_level = false;
 
             // A push pull output pin's own drive state is readable back on the IDR via the pad
-            gpio_level_set(SCRATCH_PORT, SCRATCH_PIN, true);
+            gpio_set_level(SCRATCH_PORT, SCRATCH_PIN, true);
             scratch_pin_level = true;
             TEST_ASSERT_EQUAL(scratch_pin_level, gpio_get_level(SCRATCH_PORT, SCRATCH_PIN));
 
-            gpio_level_set(SCRATCH_PORT, SCRATCH_PIN, false);
+            gpio_set_level(SCRATCH_PORT, SCRATCH_PIN, false);
             scratch_pin_level = false;
             TEST_ASSERT_EQUAL(scratch_pin_level, gpio_get_level(SCRATCH_PORT, SCRATCH_PIN));
 
@@ -222,7 +222,7 @@ namespace test::gpio {
             gpio_set_output(SCRATCH_PORT, ANOTHER_SCRATCH_PIN);
             gpio_set_output_type(SCRATCH_PORT, ANOTHER_SCRATCH_PIN, GPIO_PUSH_PULL);
 
-            gpio_level_set(SCRATCH_PORT, ANOTHER_SCRATCH_PIN, scratch_pin_level);
+            gpio_set_level(SCRATCH_PORT, ANOTHER_SCRATCH_PIN, scratch_pin_level);
             TEST_ASSERT_EQUAL(scratch_pin_level, gpio_get_level(SCRATCH_PORT, ANOTHER_SCRATCH_PIN));
 
             TEST_ASSERT_FALSE(gpio_get_level(nullptr, ANOTHER_SCRATCH_PIN));

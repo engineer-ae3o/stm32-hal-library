@@ -218,13 +218,13 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     // Configure the GPIO pins
     TRY(gpiox_clk_enable(config->tx_pin.port, true));
     TRY(gpio_set_alternate_function(config->tx_pin.port, config->tx_pin.pin, config->tx_pin.af));
-    gpio_enable_pullup(config->tx_pin.port, config->tx_pin.pin, true);
+    gpio_enable_pullups(config->tx_pin.port, config->tx_pin.pin, true);
     gpio_set_speed_mode(config->tx_pin.port, config->tx_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->tx_pin.port, config->tx_pin.pin, GPIO_PUSH_PULL);
 
     TRY(gpiox_clk_enable(config->rx_pin.port, true));
     TRY(gpio_set_alternate_function(config->rx_pin.port, config->rx_pin.pin, config->rx_pin.af));
-    gpio_enable_pullup(config->rx_pin.port, config->rx_pin.pin, true);
+    gpio_enable_pullups(config->rx_pin.port, config->rx_pin.pin, true);
     gpio_set_speed_mode(config->rx_pin.port, config->rx_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->rx_pin.port, config->rx_pin.pin, GPIO_PUSH_PULL);
 

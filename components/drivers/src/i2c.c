@@ -50,11 +50,10 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Disable the I2C peripheral before writing to any of its registers
+    // Disable the I2C peripheral before writing to any of its registers and issue a software and hardware bus reset
     handle->CR1 &= ~I2C_CR1_PE;
-
-    // I2C configuration. Enable ACK immediately
-    handle->CR1 |= I2C_CR1_ACK;
+    TRY(i2c_master_software_reset(handle));
+    TRY(i2c_master_hardware_reset(config->scl_pin.port, config->scl_pin.pin, config->sda_pin.port, config->sda_pin.pin));
 
     // Get the APB1 bus frequency and cache it
     const uint32_t apb1_clk_freq_mhz = get_apb1_core_clock() / 1'000'000U;
@@ -82,17 +81,14 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     handle->TRISE |= (((trise_ns * apb1_clk_freq_mhz) / 1000U) + config->digital_filter + 1) & I2C_TRISE_TRISE;
 
     // Configure pins for I2C
-    TRY(gpiox_clk_enable(config->sda_pin.port, true));
+    // the pins already have their ports enabled and have been set as open drain already. No need to repeat here
     TRY(gpio_set_alternate_function(config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af));
-    gpio_set_output_type(config->sda_pin.port, config->sda_pin.pin, GPIO_OPEN_DRAIN);
     gpio_set_speed_mode(config->sda_pin.port, config->sda_pin.pin, GPIO_MEDIUM_SPEED);
-    gpio_enable_pullup(config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
+    gpio_enable_pullups(config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
 
-    TRY(gpiox_clk_enable(config->scl_pin.port, true));
     TRY(gpio_set_alternate_function(config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af));
-    gpio_set_output_type(config->scl_pin.port, config->scl_pin.pin, GPIO_OPEN_DRAIN);
     gpio_set_speed_mode(config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
-    gpio_enable_pullup(config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
+    gpio_enable_pullups(config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
     // Enable the i2C peripheral after all setup
     handle->CR1 |= I2C_CR1_PE;
@@ -118,6 +114,8 @@ hal_err_t i2c_master_deinit(I2C_TypeDef* handle) {
     return HAL_OK;
 }
 
+
+// Bus recovery mechanisms
 hal_err_t i2c_master_software_reset(I2C_TypeDef* handle) {
     if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
@@ -128,7 +126,7 @@ hal_err_t i2c_master_software_reset(I2C_TypeDef* handle) {
     __DSB();
 
     // Hold the reset for a brief moment
-    delay_us(1);
+    delay_us(5);
 
     // Deassert the software reset
     handle->CR1 &= ~I2C_CR1_SWRST;
@@ -137,10 +135,47 @@ hal_err_t i2c_master_software_reset(I2C_TypeDef* handle) {
     return HAL_OK;
 }
 
-hal_err_t i2c_master_hardware_reset(I2C_TypeDef* handle) {
-    if (handle == NULL) {
+hal_err_t i2c_master_hardware_reset(GPIO_TypeDef* scl_port, gpio_pin_t scl_pin, GPIO_TypeDef* sda_port, gpio_pin_t sda_pin) {
+    if (scl_port == NULL || sda_port == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
+
+    // Set the SCL and SDA as GPIO open drain output with pullups
+    TRY(gpiox_clk_enable(scl_port, true));
+    gpio_set_output(scl_port, scl_pin);
+    gpio_set_output_type(scl_port, scl_pin, GPIO_OPEN_DRAIN);
+    gpio_enable_pullups(scl_port, scl_pin, true);
+
+    TRY(gpiox_clk_enable(sda_port, true));
+    gpio_set_output(sda_port, sda_pin);
+    gpio_set_output_type(sda_port, sda_pin, GPIO_OPEN_DRAIN);
+    gpio_enable_pullups(sda_port, sda_pin, true);
+
+    // Release the SDA line ourselves so it doesn't interfer with the recovery loop
+    gpio_set_level(sda_port, sda_pin, true);
+    delay_us(5);
+
+    // Pulse the SCL up to 9 times to clock out a stuck target data
+    for (uint8_t i = 0; i < 9; i++) {
+        gpio_set_level(scl_port, scl_pin, false);
+        delay_us(5);
+
+        gpio_set_level(scl_port, scl_pin, true);
+        delay_us(5);
+
+        // Check if the SDA has been released
+        if (gpio_get_level(sda_port, sda_pin)) {
+            break; // Target has released the SDA line
+        }
+    }
+
+    // Generate the STOP condition manually: SDA low -> SCL high -> SDA high
+    gpio_set_level(sda_port, sda_pin, false);
+    delay_us(5);
+    gpio_set_level(scl_port, scl_pin, true);
+    delay_us(5);
+    gpio_set_level(sda_port, sda_pin, true);
+    delay_us(5);
 
     return HAL_OK;
 }
@@ -343,8 +378,9 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* d
 }
 
 static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
-    // Send address and read bit
+    // Send address and read bit and set the ACK bit before starting
     handle->DR = ((uint32_t)(address << 1UL) | 1UL);
+    handle->CR1 |= I2C_CR1_ACK;
 
     // Wait for ACK
     uint32_t timeout_cycles = TIMEOUT_CYCLES;

@@ -302,14 +302,14 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     // Configure the GPIO pins
     TRY(gpiox_clk_enable(config->sclk_pin.port, true));
     TRY(gpio_set_alternate_function(config->sclk_pin.port, config->sclk_pin.pin, config->sclk_pin.af));
-    gpio_enable_pullup(config->sclk_pin.port, config->sclk_pin.pin, true);
+    gpio_enable_pullups(config->sclk_pin.port, config->sclk_pin.pin, true);
     gpio_set_speed_mode(config->sclk_pin.port, config->sclk_pin.pin, GPIO_FULL_SPEED);
     gpio_set_output_type(config->sclk_pin.port, config->sclk_pin.pin, GPIO_PUSH_PULL);
 
     if (config->use_mosi) {
         TRY(gpiox_clk_enable(config->mosi_pin.port, true));
         TRY(gpio_set_alternate_function(config->mosi_pin.port, config->mosi_pin.pin, config->mosi_pin.af));
-        gpio_enable_pullup(config->mosi_pin.port, config->mosi_pin.pin, true);
+        gpio_enable_pullups(config->mosi_pin.port, config->mosi_pin.pin, true);
         gpio_set_speed_mode(config->mosi_pin.port, config->mosi_pin.pin, GPIO_FULL_SPEED);
         gpio_set_output_type(config->mosi_pin.port, config->mosi_pin.pin, GPIO_PUSH_PULL);
     }
@@ -317,7 +317,7 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
     if (config->use_miso) {
         TRY(gpiox_clk_enable(config->miso_pin.port, true));
         TRY(gpio_set_alternate_function(config->miso_pin.port, config->miso_pin.pin, config->miso_pin.af));
-        gpio_enable_pullup(config->miso_pin.port, config->miso_pin.pin, true);
+        gpio_enable_pullups(config->miso_pin.port, config->miso_pin.pin, true);
         gpio_set_speed_mode(config->miso_pin.port, config->miso_pin.pin, GPIO_FULL_SPEED);
         gpio_set_output_type(config->miso_pin.port, config->miso_pin.pin, GPIO_PUSH_PULL);
     }

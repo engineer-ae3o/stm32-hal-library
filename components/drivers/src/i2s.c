@@ -130,26 +130,26 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     if (config->use_mck) {
         TRY(gpiox_clk_enable(config->mclk_pin.port, true));
         TRY(gpio_set_alternate_function(config->mclk_pin.port, config->mclk_pin.pin, config->mclk_pin.af));
-        gpio_enable_pullup(config->mclk_pin.port, config->mclk_pin.pin, true);
+        gpio_enable_pullups(config->mclk_pin.port, config->mclk_pin.pin, true);
         gpio_set_speed_mode(config->mclk_pin.port, config->mclk_pin.pin, GPIO_FULL_SPEED);
         gpio_set_output_type(config->mclk_pin.port, config->mclk_pin.pin, GPIO_PUSH_PULL);
     }
 
     TRY(gpiox_clk_enable(config->sclk_pin.port, true));
     TRY(gpio_set_alternate_function(config->sclk_pin.port, config->sclk_pin.pin, config->sclk_pin.af));
-    gpio_enable_pullup(config->sclk_pin.port, config->sclk_pin.pin, true);
+    gpio_enable_pullups(config->sclk_pin.port, config->sclk_pin.pin, true);
     gpio_set_speed_mode(config->sclk_pin.port, config->sclk_pin.pin, GPIO_FULL_SPEED);
     gpio_set_output_type(config->sclk_pin.port, config->sclk_pin.pin, GPIO_PUSH_PULL);
 
     TRY(gpiox_clk_enable(config->ws_pin.port, true));
     TRY(gpio_set_alternate_function(config->ws_pin.port, config->ws_pin.pin, config->ws_pin.af));
-    gpio_enable_pullup(config->ws_pin.port, config->ws_pin.pin, true);
+    gpio_enable_pullups(config->ws_pin.port, config->ws_pin.pin, true);
     gpio_set_speed_mode(config->ws_pin.port, config->ws_pin.pin, GPIO_FULL_SPEED);
     gpio_set_output_type(config->ws_pin.port, config->ws_pin.pin, GPIO_PUSH_PULL);
 
     TRY(gpiox_clk_enable(config->sd_pin.port, true));
     TRY(gpio_set_alternate_function(config->sd_pin.port, config->sd_pin.pin, config->sd_pin.af));
-    gpio_enable_pullup(config->sd_pin.port, config->sd_pin.pin, true);
+    gpio_enable_pullups(config->sd_pin.port, config->sd_pin.pin, true);
     gpio_set_speed_mode(config->sd_pin.port, config->sd_pin.pin, GPIO_FULL_SPEED);
     gpio_set_output_type(config->sd_pin.port, config->sd_pin.pin, GPIO_PUSH_PULL);
 
