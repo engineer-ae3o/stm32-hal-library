@@ -31,6 +31,7 @@ typedef enum : uint8_t {
     HAL_ERR_RX,
 
     // I2C extensions
+    HAL_ERR_I2C_BUS_BUSY,         // The bus is in use by a different master
     HAL_ERR_I2C_DEVICE_NOT_FOUND, // The selectd slave with the given address was not found on the bus
     HAL_ERR_I2C_ARBITRATION_LOST, // I2C bus arbitration lost to another master
 

@@ -4,20 +4,9 @@
 #include "utils/board.h"
 #include "utils/clock.h"
 #include "drivers/i2c.h"
+#include "utils/tick.h"
 #include "utils/err.h"
 
-
-#define I2C_ENABLE()                                                                                                                                 \
-    do {                                                                                                                                             \
-        handle->CR1 |= I2C_CR1_PE;                                                                                                                   \
-        __DSB();                                                                                                                                     \
-    } while (0)
-
-#define I2C_DISABLE()                                                                                                                                \
-    do {                                                                                                                                             \
-        handle->CR1 &= ~I2C_CR1_PE;                                                                                                                  \
-        __DSB();                                                                                                                                     \
-    } while (0)
 
 // Forward declarations
 [[__gnu__::__always_inline__]] static inline bool send_start(I2C_TypeDef* handle);
@@ -62,7 +51,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     }
 
     // Disable the I2C peripheral before writing to any of its registers
-    I2C_DISABLE();
+    handle->CR1 &= ~I2C_CR1_PE;
 
     // I2C configuration. Enable ACK immediately
     handle->CR1 |= I2C_CR1_ACK;
@@ -105,6 +94,9 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     gpio_set_speed_mode(config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_enable_pullup(config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
+    // Enable the i2C peripheral after all setup
+    handle->CR1 |= I2C_CR1_PE;
+
     return HAL_OK;
 }
 
@@ -113,7 +105,8 @@ hal_err_t i2c_master_deinit(I2C_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    I2C_DISABLE();
+    // Disable before modifiying any other bits
+    handle->CR1 &= ~I2C_CR1_PE;
 
     handle->CCR &= ~(I2C_CCR_FS | I2C_CCR_DUTY | I2C_CCR_CCR);
     handle->CR1 &= ~(I2C_CR1_SMBUS | I2C_CR1_SMBTYPE | I2C_CR1_ENARP | I2C_CR1_ENPEC | I2C_CR1_ENGC | I2C_CR1_NOSTRETCH | I2C_CR1_START |
@@ -125,23 +118,47 @@ hal_err_t i2c_master_deinit(I2C_TypeDef* handle) {
     return HAL_OK;
 }
 
+hal_err_t i2c_master_software_reset(I2C_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    // Assert the software reset
+    handle->CR1 |= I2C_CR1_SWRST;
+    __DSB();
+
+    // Hold the reset for a brief moment
+    delay_us(1);
+
+    // Deassert the software reset
+    handle->CR1 &= ~I2C_CR1_SWRST;
+    __DSB();
+
+    return HAL_OK;
+}
+
+hal_err_t i2c_master_hardware_reset(I2C_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    return HAL_OK;
+}
+
 
 // Polling API
 hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size) {
     if (handle == NULL || address == 0 || address > 0x7F || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
-    I2C_ENABLE();
 
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
-        I2C_DISABLE();
-        return HAL_ERR_INVALID_STATE;
+        return HAL_ERR_I2C_BUS_BUSY;
     }
 
     // Start the transaction
     if (!send_start(handle)) {
-        I2C_DISABLE();
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
@@ -150,8 +167,6 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_
 
     // End the transaction regardless of an error or success
     send_stop(handle);
-
-    I2C_DISABLE();
     return ret;
 }
 
@@ -159,42 +174,33 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data
     if (handle == NULL || address == 0 || address > 0x7F || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
-    I2C_ENABLE();
 
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
-        I2C_DISABLE();
-        return HAL_ERR_INVALID_STATE;
+        return HAL_ERR_I2C_BUS_BUSY;
     }
 
     // Start the transaction
     if (!send_start(handle)) {
-        I2C_DISABLE();
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
-    // No need to call send_stop() as rx_trans() already does
-    hal_err_t ret = rx_trans(handle, address, data, size);
-
-    I2C_DISABLE();
-    return ret;
+    // Start the RX transaction. No need to call send_stop() as rx_trans() already does
+    return rx_trans(handle, address, data, size);
 }
 
 hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data, size_t tx_size, uint8_t* rx_data, size_t rx_size) {
     if (handle == NULL || address == 0 || address > 0x7F || tx_data == NULL || tx_size == 0 || rx_data == NULL || rx_size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
-    I2C_ENABLE();
 
     // Check if the bus is free before proceeding
     if (handle->SR2 & I2C_SR2_BUSY) {
-        I2C_DISABLE();
-        return HAL_ERR_INVALID_STATE;
+        return HAL_ERR_I2C_BUS_BUSY;
     }
 
     // Start the transaction
     if (!send_start(handle)) {
-        I2C_DISABLE();
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
@@ -202,21 +208,17 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint
     hal_err_t ret = tx_trans(handle, address, tx_data, tx_size);
     if (ret != HAL_OK) {
         send_stop(handle);
-        I2C_DISABLE();
         return ret;
     }
 
     // Send the repeated start
     if (!send_start(handle)) {
-        I2C_DISABLE();
+        send_stop(handle);
         return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
-    // Start the RX transaction
-    ret = rx_trans(handle, address, rx_data, rx_size);
-
-    I2C_DISABLE();
-    return ret;
+    // Start the RX transaction. No need to call send_stop() as rx_trans() already does
+    return rx_trans(handle, address, rx_data, rx_size);
 }
 
 

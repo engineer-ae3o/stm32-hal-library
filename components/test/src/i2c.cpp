@@ -232,8 +232,8 @@ namespace test::i2c {
             // Manually drive a start condition and deliberately withhold the stop condition,
             // so the peripheral's own BUSY flag (line-state based, not just internal state)
             // gets set the same way it would during genuine bus contention.
-            constexpr std::array<uint8_t, 1> data{0xFF};
-            std::array<uint8_t, 1>           rx_buf{};
+            constexpr uint8_t tx_data = 0xFF;
+            uint8_t           rx_data = 0;
 
             TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2c_master_init(TEST_PORT, &PORT_CONFIG));
@@ -248,10 +248,10 @@ namespace test::i2c {
 
             TEST_ASSERT_TRUE_MESSAGE(TEST_PORT->SR2 & I2C_SR2_BUSY, "Bus did not report BUSY after an unterminated start condition");
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, data.data(), data.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, &tx_data, sizeof(tx_data)));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, &rx_data, sizeof(rx_data)));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE,
-                              i2c_master_transceive(TEST_PORT, AHT20_I2C_ADDRESS, data.data(), data.size(), rx_buf.data(), rx_buf.size()));
+                              i2c_master_transceive(TEST_PORT, AHT20_I2C_ADDRESS, &tx_data, sizeof(tx_data), &rx_data, sizeof(rx_data)));
 
             // Release the bus so later tests don't inherit a stuck BUSY flag
             TEST_PORT->CR1 |= I2C_CR1_STOP;
