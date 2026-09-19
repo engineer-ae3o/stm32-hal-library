@@ -9,9 +9,9 @@
 
 
 // Forward declarations
-[[__gnu__::__always_inline__]] static inline bool      send_start(I2C_TypeDef* handle);
+[[__gnu__::__always_inline__]] static inline hal_err_t send_start(I2C_TypeDef* handle);
 [[__gnu__::__always_inline__]] static inline void      send_stop(I2C_TypeDef* handle);
-[[__gnu__::__always_inline__]] static inline hal_err_t check_error_flags(I2C_TypeDef* handle, bool send_stop_on_exit);
+[[__gnu__::__always_inline__]] static inline hal_err_t check_error_flags(I2C_TypeDef* handle, bool send_stop_on_error);
 
 static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
 static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
@@ -206,16 +206,11 @@ hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_
     }
 
     // Start the transaction
-    if (!send_start(handle)) {
-        return HAL_ERR_I2C_ARBITRATION_LOST;
-    }
-
-    // Transmit the data
-    hal_err_t ret = tx_trans(handle, address, data, size);
-
-    // End the transaction regardless of an error or success
+    TRY(send_start(handle));
+    TRY_WITH_FUNC(tx_trans(handle, address, data, size), send_stop(handle));
     send_stop(handle);
-    return ret;
+
+    return HAL_OK;
 }
 
 hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
@@ -228,13 +223,11 @@ hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data
         return HAL_ERR_I2C_BUS_BUSY;
     }
 
-    // Start the transaction
-    if (!send_start(handle)) {
-        return HAL_ERR_I2C_ARBITRATION_LOST;
-    }
+    // Start the transaction. rx_trans(...) already sends the stop condition so no need to repeat
+    TRY(send_start(handle));
+    TRY(rx_trans(handle, address, data, size));
 
-    // Start the RX transaction. No need to call send_stop() as rx_trans() already does
-    return rx_trans(handle, address, data, size);
+    return HAL_OK;
 }
 
 hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data, size_t tx_size, uint8_t* rx_data, size_t rx_size) {
@@ -248,67 +241,47 @@ hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint
     }
 
     // Start the transaction
-    if (!send_start(handle)) {
-        return HAL_ERR_I2C_ARBITRATION_LOST;
-    }
+    TRY(send_start(handle));
+    TRY_WITH_FUNC(tx_trans(handle, address, tx_data, tx_size), send_stop(handle));
+    TRY_WITH_FUNC(send_start(handle), send_stop(handle));
+    TRY(rx_trans(handle, address, rx_data, rx_size));
 
-    // Start the transmission
-    hal_err_t ret = tx_trans(handle, address, tx_data, tx_size);
-    if (ret != HAL_OK) {
-        send_stop(handle);
-        return ret;
-    }
-
-    // Send the repeated start
-    if (!send_start(handle)) {
-        send_stop(handle);
-        return HAL_ERR_I2C_ARBITRATION_LOST;
-    }
-
-    // Start the RX transaction. No need to call send_stop() as rx_trans() already does
-    return rx_trans(handle, address, rx_data, rx_size);
+    return HAL_OK;
 }
 
 
 // Helpers
-static bool send_start(I2C_TypeDef* handle) {
-    // Set start bit
+static hal_err_t send_start(I2C_TypeDef* handle) {
+    // Send the start condition
     handle->CR1 |= I2C_CR1_START;
 
-    // Poll the start bit in the SR1 register
+    // Poll the start bit in the SR1 register till its 1
     uint32_t timeout = TIMEOUT;
     while (!(handle->SR1 & I2C_SR1_SB) && --timeout) {
-        if (handle->SR1 & I2C_SR1_BERR) {
-            handle->SR1 = ~I2C_SR1_BERR;
-            goto error;
-        }
-        if (handle->SR1 & I2C_SR1_ARLO) {
-            handle->SR1 = ~I2C_SR1_ARLO;
-            goto error;
-        }
+        TRY(check_error_flags(handle, true));
     }
+
     if (!(handle->SR1 & I2C_SR1_SB) || (timeout == 0)) {
-        goto error;
+        send_stop(handle);
+        return HAL_ERR_I2C_ARBITRATION_LOST;
     }
 
     // Read the SR1 register as part of the sequence to clear the SB flag in the SR1 register
     (void)handle->SR1;
-    return true;
-
-error:
-    send_stop(handle);
-    return false;
+    return HAL_OK;
 }
 
 static void send_stop(I2C_TypeDef* handle) {
     handle->CR1 |= I2C_CR1_STOP;
+    __DSB();
 }
 
-static hal_err_t check_error_flags(I2C_TypeDef* handle, bool send_stop_on_exit) {
+static hal_err_t check_error_flags(I2C_TypeDef* handle, bool send_stop_on_error) {
     hal_err_t error = HAL_OK;
 
     const uint32_t status = handle->SR1;
     uint32_t       clear  = handle->SR1;
+
     if (status & I2C_SR1_AF) {
         clear &= ~I2C_SR1_AF;
         error = HAL_ERR_I2C_DEVICE_NOT_FOUND;
@@ -323,7 +296,7 @@ static hal_err_t check_error_flags(I2C_TypeDef* handle, bool send_stop_on_exit) 
     }
     handle->SR1 = clear;
 
-    if (error != HAL_OK && send_stop_on_exit) {
+    if (send_stop_on_error && error != HAL_OK) {
         send_stop(handle);
     }
     return error;
@@ -350,7 +323,7 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* d
 
     // Start the transmission after receiving ACK
     for (size_t i = 0; i < size; i++) {
-        // Wait for the data register to be empty
+        // Wait for the data register to be empty before writing the data
         timeout = TIMEOUT;
         while (!(handle->SR1 & I2C_SR1_TXE) && --timeout) {
             TRY(check_error_flags(handle, false));
@@ -398,7 +371,7 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
     switch (size) {
         // When N == 1
         case 1:
-            // Clear the ACK bit so the peripheral sends a NACK after first byte
+            // Clear the ACK bit so the peripheral sends a NACK after the first byte
             handle->CR1 &= ~I2C_CR1_ACK;
 
             // Read both registers to clear the ADDR bit
@@ -441,7 +414,6 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
                 TRY(check_error_flags(handle, true));
             }
 
-            // Return if the BTF bit still has not been set
             if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
                 send_stop(handle);
                 return HAL_ERR_RX;

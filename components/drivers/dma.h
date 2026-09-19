@@ -36,6 +36,7 @@ void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_d
 void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, bool ht_mask, bool dme_mask);
 void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, const volatile void* mem_0, const volatile void* mem_1);
 
+
 // Helper to assist with the checking and clearing of interrupt flags and propagation of errors
 [[__gnu__::__always_inline__]] inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream) {
     // Get the stream's DMA controller and NVIC interrupt type
@@ -50,11 +51,20 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
     uint32_t       flags_to_clear = 0;
 
     // Record the error status
-    hal_err_t error = HAL_OK;
+    hal_err_t error            = HAL_OK;
+    bool      is_half_transfer = false;
+
+    // Half transfer complete
+    if (status & flags.ht_mask) {
+        flags_to_clear |= flags.ht_mask;
+        is_half_transfer = true;
+    }
 
     // Transfer complete
     if (status & flags.tc_mask) {
         flags_to_clear |= flags.tc_mask;
+        // Overwrite since the transfer has ended. The HT flag being set doesn't matter
+        is_half_transfer = false;
     }
 
     // Transfer error
@@ -69,11 +79,6 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
         error = HAL_ERR_DMA_DME;
     }
 
-    // Half transfer complete
-    if (status & flags.ht_mask) {
-        flags_to_clear |= flags.ht_mask;
-    }
-
     // FIFO mode error
     if (status & flags.fe_mask) {
         flags_to_clear |= flags.fe_mask;
@@ -83,10 +88,10 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
     // Clear all the set flags
     *flags.irq_clear_register = flags_to_clear;
 
-    // Return if the stream is in circular mode or half transfer,
-    // so as not to disable the DMA strean. Everything else should
-    // disable the stream since not being used till the next transfer
-    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_HTIE | DMA_SxCR_DBM)) {
+    // Return if the stream is in circular mode or double buffering or this is
+    // the halfway mark for the transefer, so as not to disable the DMA stream.
+    // Everything else should disable the stream since not being used till the next transfer
+    if ((stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM)) || is_half_transfer) {
         return error;
     }
 

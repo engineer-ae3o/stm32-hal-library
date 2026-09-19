@@ -187,7 +187,7 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
     const float divisor = (float)bus_clock_freq_hz / (float)(config->baud_rate * config->over_sampling);
 
     // Get the mantissa and the fractional parts of the uart clock divider
-    const uint16_t mantissa = (uint16_t)(divisor + 0.5F);
+    const uint16_t mantissa = (uint16_t)divisor;
     const uint16_t fraction = (uint16_t)((divisor - (float)mantissa) * (float)config->over_sampling);
     if (mantissa > 0xFFFUL || fraction > 0xFUL) {
         return HAL_ERR_INVALID_ARG;
