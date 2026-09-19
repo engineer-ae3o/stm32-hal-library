@@ -307,8 +307,8 @@ hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* buf, uint
 
     // If for some reason, the CIRC and/or DBM bits are set, this means that i2s_master_dbm_init(...)
     // was called without a call to i2s_master_dbm_deinit(...) which would clean up its state. Also
-    // check to see if the DMA is currently enabled and ongoing in a transaction.
-    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN)) {
+    // check to see if the DMA is currently enabled and ongoing in a transaction or SPI mode is selected.
+    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN) || !(handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
         return HAL_ERR_INVALID_STATE;
     }
 
@@ -355,8 +355,8 @@ hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* buf, uint16_t si
 
     // If for some reason, the CIRC and/or DBM bits are set, this means that i2s_master_dbm_init(...)
     // was called without a call to i2s_master_dbm_deinit(...) which would clean up its state. Also
-    // check to see if the DMA is currently enabled and ongoing in a transaction.
-    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN)) {
+    // check to see if the DMA is currently enabled and ongoing in a transaction or SPI mode is selected.
+    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN) || !(handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
         return HAL_ERR_INVALID_STATE;
     }
 
@@ -398,6 +398,10 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uin
     DMA_Stream_TypeDef* stream = dma_map.rx.stream;
     if (stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN) || !(handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
+        return HAL_ERR_INVALID_STATE;
     }
 
     // Get the transfer size from the DATLEN bit

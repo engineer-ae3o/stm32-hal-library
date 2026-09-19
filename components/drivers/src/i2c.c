@@ -51,25 +51,25 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Disable the I2C peripheral before writing to any of its registers and issue a software and hardware bus reset
-    handle->CR1 &= ~I2C_CR1_PE;
-    TRY(i2c_master_hardware_reset(config->scl_pin.port, config->scl_pin.pin, config->sda_pin.port, config->sda_pin.pin));
-    TRY(i2c_master_software_reset(handle));
-
     // Get the APB1 bus frequency and cache it
     const uint32_t apb1_clk_freq_mhz = get_apb1_core_clock() / 1'000'000U;
 
     if (config->frequency == I2C_FREQ_100kHz) {
-        if (apb1_clk_freq_mhz < MINIIMUM_I2C_100kHz_APB1_CLK_MHz) {
+        if (apb1_clk_freq_mhz < MINIMUM_I2C_100kHz_APB1_CLK_MHz) {
             return HAL_ERR_NOT_SUPPORTED;
         }
     } else if (config->frequency == I2C_FREQ_400kHz) {
-        if (apb1_clk_freq_mhz < MINIIMUM_I2C_400kHz_APB1_CLK_MHz) {
+        if ((apb1_clk_freq_mhz < MINIMUM_I2C_400kHz_APB1_CLK_MHz) || (apb1_clk_freq_mhz % 10 != 0)) {
             return HAL_ERR_NOT_SUPPORTED;
         }
     } else {
         return HAL_ERR_INVALID_ARG;
     }
+
+    // Disable the I2C peripheral before writing to any of its registers and issue a software and hardware bus reset
+    handle->CR1 &= ~I2C_CR1_PE;
+    TRY(i2c_master_hardware_reset(config->scl_pin.port, config->scl_pin.pin, config->sda_pin.port, config->sda_pin.pin));
+    TRY(i2c_master_software_reset(handle));
 
     handle->CR2 &= ~I2C_CR2_FREQ;
     handle->CR2 |= (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos) & I2C_CR2_FREQ;
@@ -94,7 +94,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     handle->TRISE |= (((trise_ns * apb1_clk_freq_mhz) / 1000U) + config->digital_filter + 1) & I2C_TRISE_TRISE;
 
     // Configure pins for I2C
-    // the pins already have their ports enabled and have been set as open drain already. No need to repeat here
+    // The pins already have their ports enabled and have been set as open drain already. No need to repeat here
     TRY(gpio_set_alternate_function(config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af));
     gpio_set_speed_mode(config->sda_pin.port, config->sda_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_enable_pullups(config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
@@ -103,7 +103,7 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     gpio_set_speed_mode(config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_enable_pullups(config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
-    // Enable the i2C peripheral after all setup
+    // Enable the I2C peripheral after all setup
     handle->CR1 |= I2C_CR1_PE;
 
     return HAL_OK;
@@ -307,18 +307,21 @@ static void send_stop(I2C_TypeDef* handle) {
 static hal_err_t check_error_flags(I2C_TypeDef* handle, bool send_stop_on_exit) {
     hal_err_t error = HAL_OK;
 
-    if (handle->SR1 & I2C_SR1_AF) {
-        handle->SR1 = ~I2C_SR1_AF;
-        error       = HAL_ERR_I2C_DEVICE_NOT_FOUND;
+    const uint32_t status = handle->SR1;
+    uint32_t       clear  = handle->SR1;
+    if (status & I2C_SR1_AF) {
+        clear &= ~I2C_SR1_AF;
+        error = HAL_ERR_I2C_DEVICE_NOT_FOUND;
     }
-    if (handle->SR1 & I2C_SR1_BERR) {
-        handle->SR1 = ~I2C_SR1_BERR;
-        error       = HAL_ERR_I2C_BUS_ERROR;
+    if (status & I2C_SR1_BERR) {
+        clear &= ~I2C_SR1_BERR;
+        error = HAL_ERR_I2C_BUS_ERROR;
     }
-    if (handle->SR1 & I2C_SR1_ARLO) {
-        handle->SR1 = ~I2C_SR1_ARLO;
-        error       = HAL_ERR_I2C_ARBITRATION_LOST;
+    if (status & I2C_SR1_ARLO) {
+        clear &= ~I2C_SR1_ARLO;
+        error = HAL_ERR_I2C_ARBITRATION_LOST;
     }
+    handle->SR1 = clear;
 
     if (error != HAL_OK && send_stop_on_exit) {
         send_stop(handle);
@@ -333,7 +336,9 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* d
 
     // Wait for ACK
     uint32_t timeout = TIMEOUT;
-    while (!(handle->SR1 & I2C_SR1_ADDR) && --timeout);
+    while (!(handle->SR1 & I2C_SR1_ADDR) && --timeout) {
+        TRY(check_error_flags(handle, false));
+    }
 
     if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout == 0)) {
         return HAL_ERR_TX;

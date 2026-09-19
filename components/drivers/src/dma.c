@@ -165,11 +165,6 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
         return HAL_ERR_INVALID_ARG;
     }
 
-    if ((config->direction == DMA_DIR_M2M) &&
-        (config->mode == DMA_MODE_DIRECT || config->flow_controller == DMA_FLOW_CONTROLLER_PERIPHERAL || config->circular_mode != DMA_MODE_ONESHOT)) {
-        return HAL_ERR_NOT_SUPPORTED;
-    }
-
     // Get the stream's DMA controller and NVIC interrupt type
     dma_stream_info_t stream_info;
     TRY(dma_get_stream_info(stream, &stream_info));
@@ -196,6 +191,11 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
         stream->NDTR = 0;
         NVIC_DisableIRQ(stream_info.nvic_irq_type);
         return HAL_OK;
+    }
+
+    if ((config->direction == DMA_DIR_M2M) &&
+        (config->mode == DMA_MODE_DIRECT || config->flow_controller == DMA_FLOW_CONTROLLER_PERIPHERAL || config->circular_mode != DMA_MODE_ONESHOT)) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
 
     uint32_t cr_mask = stream->CR;

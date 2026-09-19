@@ -99,13 +99,13 @@ namespace test::adc {
                 ADC_SAMPLE_480_CYCLES,
             };
 
-            for (const auto res : RESOLUTIONS) {
+            for (const auto resolution : RESOLUTIONS) {
                 for (const auto time : SAMPLE_TIMES) {
-                    const adc_config_t config{.alignment = ADC_LEFT_ALIGN, .resolution = res, .sampling_cycles = time};
+                    const adc_config_t config{.alignment = ADC_LEFT_ALIGN, .resolution = resolution, .sampling_cycles = time};
                     TEST_ASSERT_EQUAL(HAL_OK, adc_configure(ADC1, &config));
 
                     TEST_ASSERT_TRUE(ADC1->CR2 & ADC_CR2_ALIGN);
-                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(res), (ADC1->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos);
+                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(resolution), (ADC1->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos);
 
                     // Every external channel must carry the same sampling time
                     TEST_ASSERT_EQUAL_UINT32(std::to_underlying(time), (ADC1->SMPR1 >> ADC_SMPR1_SMP10_Pos) & 0b111UL);
@@ -139,13 +139,7 @@ namespace test::adc {
         }
 
         void clk_configure_sweeps_every_prescaler() {
-            constexpr auto PRESCALERS = std::array{
-                ADC_CLK_PRESCALER_2,
-                ADC_CLK_PRESCALER_4,
-                ADC_CLK_PRESCALER_6,
-                ADC_CLK_PRESCALER_8,
-            };
-            for (const auto presc : PRESCALERS) {
+            for (const auto presc : {ADC_CLK_PRESCALER_2, ADC_CLK_PRESCALER_4, ADC_CLK_PRESCALER_6, ADC_CLK_PRESCALER_8}) {
                 adc_clk_configure(presc);
                 TEST_ASSERT_EQUAL_UINT32(std::to_underlying(presc), (ADC->CCR & ADC_CCR_ADCPRE) >> ADC_CCR_ADCPRE_Pos);
             }
@@ -227,15 +221,15 @@ namespace test::adc {
             // adc_get_value_right_aligned is pure math over its raw_data argument - verify it
             // directly against hand-computed expected values for every resolution
             struct case_t {
-                adc_resolution_t res;
+                adc_resolution_t resolution;
                 uint16_t         raw;
                 uint32_t         full_scale;
             };
             constexpr std::array<case_t, 4> CASES = {{
-                {.res = ADC_RES_6_BITS, .raw = 63, .full_scale = 64},
-                {.res = ADC_RES_8_BITS, .raw = 255, .full_scale = 256},
-                {.res = ADC_RES_10_BITS, .raw = 1023, .full_scale = 1024},
-                {.res = ADC_RES_12_BITS, .raw = 4095, .full_scale = 4096},
+                {.resolution = ADC_RES_6_BITS, .raw = 63, .full_scale = 64},
+                {.resolution = ADC_RES_8_BITS, .raw = 255, .full_scale = 256},
+                {.resolution = ADC_RES_10_BITS, .raw = 1023, .full_scale = 1024},
+                {.resolution = ADC_RES_12_BITS, .raw = 4095, .full_scale = 4096},
             }};
 
             float measured_vdda = 0.0F;
@@ -243,7 +237,7 @@ namespace test::adc {
 
             for (const auto& cases : CASES) {
                 float voltage = 0.0F;
-                TEST_ASSERT_EQUAL(HAL_OK, adc_get_value_right_aligned(ADC1, cases.raw, cases.res, &voltage));
+                TEST_ASSERT_EQUAL(HAL_OK, adc_get_value_right_aligned(ADC1, cases.raw, cases.resolution, &voltage));
                 const float expected = (measured_vdda * static_cast<float>(cases.raw)) / static_cast<float>(cases.full_scale);
                 TEST_ASSERT_FLOAT_WITHIN(0.01F, expected, voltage);
             }
@@ -255,8 +249,8 @@ namespace test::adc {
         void value_right_aligned_rejects_unknown_resolution() {
             reset_to_baseline();
 
-            float      voltage          = 0.0F;
-            const auto bogus_resolution = static_cast<adc_resolution_t>(0xFF);
+            float          voltage          = 0.0F;
+            constexpr auto bogus_resolution = static_cast<adc_resolution_t>(0xFF);
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_value_right_aligned(ADC1, 100, bogus_resolution, &voltage));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_value_right_aligned(ADC1, 100, ADC_RES_12_BITS, nullptr));
         }

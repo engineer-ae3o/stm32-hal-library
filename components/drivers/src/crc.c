@@ -110,6 +110,10 @@ void DMA2_Stream5_IRQHandler(void) {
     s_user_callback = NULL;
     s_user_data     = NULL;
 
+    dma_stream_config_t stream_config;
+    stream_config.deconfigure = true;
+    dma_configure_stream(s_crc_dma_map.stream, &stream_config);
+
     if (local_cb) {
         if (ret == HAL_OK) {
             local_cb(local_arg, HAL_OK, CRC->DR);
@@ -117,8 +121,4 @@ void DMA2_Stream5_IRQHandler(void) {
             local_cb(local_arg, ret, 0);
         }
     }
-
-    dma_stream_config_t stream_config;
-    stream_config.deconfigure = true;
-    ASSERT(dma_configure_stream(s_crc_dma_map.stream, &stream_config) == HAL_OK);
 }

@@ -341,7 +341,7 @@ namespace test::dma {
             TEST_ASSERT_EQUAL_UINT32(&dst, SCRATCH_STREAM->M0AR);
             TEST_ASSERT_EQUAL_UINT32(sizeof(src), SCRATCH_STREAM->NDTR);
 
-            dma_stream_config_t deconf;
+            dma_stream_config_t deconf{};
             deconf.deconfigure = true;
 
             TEST_ASSERT_EQUAL(HAL_OK, dma_configure_stream(SCRATCH_STREAM, &deconf));

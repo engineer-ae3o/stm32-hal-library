@@ -461,6 +461,11 @@ hal_err_t spi_master_transmit_poll(SPI_TypeDef* handle, const void* data, size_t
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Guard against all scenarios possible here: SPI being enabled or I2S mode selected
+    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
     ENABLE_SPI();
     const hal_err_t error = poll_transfer_helper(handle, data, NULL, size);
     DISABLE_SPI();
@@ -473,6 +478,11 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t size) 
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Guard against all scenarios possible here: SPI being enabled or I2S mode selected
+    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
     ENABLE_SPI();
     const hal_err_t error = poll_transfer_helper(handle, NULL, data, size);
     DISABLE_SPI();
@@ -483,6 +493,11 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t size) 
 hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t size) {
     if (handle == NULL || tx_data == NULL || rx_data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
+    }
+
+    // Guard against all scenarios possible here: SPI being enabled or I2S mode selected
+    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
+        return HAL_ERR_INVALID_STATE;
     }
 
     ENABLE_SPI();
@@ -510,6 +525,11 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
 
     if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Guard against all scenarios possible here: SPI being enabled, the DMA streams being enabled or I2S mode selected
+    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD) || (tx_stream->CR & DMA_SxCR_EN) || (rx_stream->CR & DMA_SxCR_EN)) {
+        return HAL_ERR_INVALID_STATE;
     }
 
     // Discard sink for whatever comes in on MISO. Never incremented, so
@@ -566,6 +586,11 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size,
         return HAL_ERR_NOT_SUPPORTED;
     }
 
+    // Guard against all scenarios possible here: SPI being enabled, the DMA streams being enabled or I2S mode selected
+    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD) || (tx_stream->CR & DMA_SxCR_EN) || (rx_stream->CR & DMA_SxCR_EN)) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
     // Dummy source fed to DR for the duration of the transfer, purely to generate
     // the clock. Never incremented, so the same zero word is read every beat.
     static const uint16_t s_dummy_tx = 0;
@@ -615,6 +640,11 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
 
     if (tx_stream == NULL || rx_stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Guard against all scenarios possible here: SPI being enabled, the DMA streams being enabled or I2S mode selected
+    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD) || (tx_stream->CR & DMA_SxCR_EN) || (rx_stream->CR & DMA_SxCR_EN)) {
+        return HAL_ERR_INVALID_STATE;
     }
 
     // Set the memory address and transaction length.

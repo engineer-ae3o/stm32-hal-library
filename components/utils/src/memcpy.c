@@ -116,7 +116,9 @@ hal_err_t dma_memcpy_cb(void* dest, const void* src, uint16_t len, dma_done_cb_t
 }
 
 memcpy_state_t dma_memcpy_wait_for_flag(volatile memcpy_state_t* dma_done_flag, uint32_t timeout) {
-    while ((*dma_done_flag == DMA_MEMCPY_NOT_DONE) && --timeout);
+    while ((*dma_done_flag == DMA_MEMCPY_NOT_DONE) && --timeout) {
+        __WFI();
+    }
     if (timeout == 0) {
         return DMA_MEMCPY_TIMEOUT;
     }
@@ -139,6 +141,10 @@ void DMA2_Stream3_IRQHandler(void) {
     s_user_data     = NULL;
     s_dma_done_flag = NULL;
 
+    dma_stream_config_t stream_config;
+    stream_config.deconfigure = true;
+    dma_configure_stream(s_memcpy_dma_map.stream, &stream_config);
+
     if (local_cb) {
         local_cb(local_arg, ret);
     }
@@ -150,8 +156,4 @@ void DMA2_Stream3_IRQHandler(void) {
             *dma_done_flag = DMA_MEMCPY_ERROR;
         }
     }
-
-    dma_stream_config_t stream_config;
-    stream_config.deconfigure = true;
-    ASSERT(dma_configure_stream(s_memcpy_dma_map.stream, &stream_config) == HAL_OK);
 }
