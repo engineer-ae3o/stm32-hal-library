@@ -290,9 +290,9 @@ hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle) {
 
 
 // DMA oneshot transfers API
-hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* data, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU || buf == NULL || size == 0) {
+    if (idx == 0xFFU || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -322,12 +322,10 @@ hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* buf, uint
     }
 
     // Set the memory addresses and length
-    dma_set_addresses(stream, &handle->DR, buf, NULL);
+    dma_set_addresses(stream, &handle->DR, data, NULL);
     dma_set_trans_length(stream, (uint16_t)actual_size);
 
-    if (callback) {
-        TRY(spi_master_register_callback(callback, arg, idx, true));
-    }
+    TRY(spi_master_register_callback(callback, arg, idx, true));
 
     // Enable the DMA stream, SPI requests to the DMA controller,
     // and finally the I2S peripheral The order mattersa lot.
@@ -338,9 +336,9 @@ hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* buf, uint
     return HAL_OK;
 }
 
-hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* buf, uint16_t size, dma_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* data, uint16_t size, dma_done_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU || buf == NULL || size == 0) {
+    if (idx == 0xFFU || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -367,18 +365,28 @@ hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* buf, uint16_t si
     }
 
     // Set the memory addresses and length
-    dma_set_addresses(stream, &handle->DR, buf, NULL);
+    dma_set_addresses(stream, &handle->DR, data, NULL);
     dma_set_trans_length(stream, (uint16_t)actual_size);
 
-    if (callback) {
-        TRY(spi_master_register_callback(callback, arg, idx, false));
-    }
+    TRY(spi_master_register_callback(callback, arg, idx, false));
 
     // Enable the DMA stream, SPI requests to the DMA controller,
     // and finally the I2S peripheral. The order mattersa lot.
     TRY(dma_enable_stream(stream));
     ENABLE_SPI_RX_DMA();
     ENABLE_I2S();
+
+    return HAL_OK;
+}
+
+hal_err_t i2s_master_transceive_oneshot(I2S_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t size, dma_done_cb_t callback, void* arg) {
+    // Get index for DMA stream mapping
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU || tx_data == NULL || rx_data == NULL || size == 0) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    TRY(spi_master_register_callback(callback, arg, idx, false));
 
     return HAL_OK;
 }

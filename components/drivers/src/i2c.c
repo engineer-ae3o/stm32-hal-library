@@ -67,9 +67,9 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     }
 
     // Disable the I2C peripheral before writing to any of its registers and issue a software and hardware bus reset
-    handle->CR1 &= ~I2C_CR1_PE;
     TRY(i2c_master_hardware_reset(config->scl_pin.port, config->scl_pin.pin, config->sda_pin.port, config->sda_pin.pin));
     TRY(i2c_master_software_reset(handle));
+    handle->CR1 &= ~I2C_CR1_PE;
 
     handle->CR2 &= ~I2C_CR2_FREQ;
     handle->CR2 |= (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos) & I2C_CR2_FREQ;
@@ -263,7 +263,7 @@ static hal_err_t send_start(I2C_TypeDef* handle) {
 
     if (!(handle->SR1 & I2C_SR1_SB) || (timeout == 0)) {
         send_stop(handle);
-        return HAL_ERR_I2C_ARBITRATION_LOST;
+        return HAL_ERR_TIMEOUT;
     }
 
     // Read the SR1 register as part of the sequence to clear the SB flag in the SR1 register
@@ -280,7 +280,7 @@ static hal_err_t check_error_flags(I2C_TypeDef* handle, bool send_stop_on_error)
     hal_err_t error = HAL_OK;
 
     const uint32_t status = handle->SR1;
-    uint32_t       clear  = handle->SR1;
+    uint32_t       clear  = status;
 
     if (status & I2C_SR1_AF) {
         clear &= ~I2C_SR1_AF;

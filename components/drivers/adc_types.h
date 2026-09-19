@@ -140,7 +140,7 @@ typedef struct {
 
 // The sequence of channels and the number of channels
 typedef struct {
-    const adc_channels_t* channels_sequence;
+    const adc_channels_t* sequence;
     size_t                num_of_channels;
 } adc_channels_config_t;
 

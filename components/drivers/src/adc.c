@@ -424,7 +424,7 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
 
 // For use with the regular group and external channels in DMA continuous sampling mode
 hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config) {
-    if (handle == NULL || config == NULL || config->channels.channels_sequence == NULL || config->channels.num_of_channels == 0 ||
+    if (handle == NULL || config == NULL || config->channels.sequence == NULL || config->channels.num_of_channels == 0 ||
         config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL ||
         (config->circular_mode == DMA_MODE_DOUBLE_BUFFER && config->buffer_2 == NULL)) {
         return HAL_ERR_INVALID_ARG;
@@ -464,11 +464,11 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
 
     for (size_t i = 0; i < config->channels.num_of_channels; i++) {
         if (i >= 12) {
-            handle->SQR1 |= (((uint32_t)config->channels.channels_sequence[i] & sequence_bit_mask) << ((i - 12) * sequence_bit_width));
+            handle->SQR1 |= (((uint32_t)config->channels.sequence[i] & sequence_bit_mask) << ((i - 12) * sequence_bit_width));
         } else if (i >= 6) {
-            handle->SQR2 |= (((uint32_t)config->channels.channels_sequence[i] & sequence_bit_mask) << ((i - 6) * sequence_bit_width));
+            handle->SQR2 |= (((uint32_t)config->channels.sequence[i] & sequence_bit_mask) << ((i - 6) * sequence_bit_width));
         } else {
-            handle->SQR3 |= (((uint32_t)config->channels.channels_sequence[i] & sequence_bit_mask) << (i * sequence_bit_width));
+            handle->SQR3 |= (((uint32_t)config->channels.sequence[i] & sequence_bit_mask) << (i * sequence_bit_width));
         }
     }
 
@@ -570,7 +570,7 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
 
 // For use with the injected group and external channels with interrupts
 hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_group_config_t* config) {
-    if (handle == NULL || config == NULL || config->channels.channels_sequence == NULL || config->channels.num_of_channels == 0 ||
+    if (handle == NULL || config == NULL || config->channels.sequence == NULL || config->channels.num_of_channels == 0 ||
         config->channels.num_of_channels > MAX_INJECTED_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -591,35 +591,31 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
     // Set the number of channels/conversions in the JL bit positions of the
     // JSQR register. The JL bit positions are zero indexed. That is, 1 channel
     // means a JL value of 0b00, 3 channels means a JL value of 0b10 etc.
-    handle->JSQR |= ((config->channels.num_of_channels - 1) << ADC_JSQR_JL_Pos) & ADC_JSQR_JL;
+    handle->JSQR |= ((config->channels.num_of_channels - 1) << ADC_JSQR_JL_Pos);
 
     // Set the channel sequence in the JSQ register and the the offsets
     // As per the TRM, there are only 4 injected channels, and they have to be filled from the last
     // slot, that is, JSQ4. This is because all conversions in the injected group must end at JSQ4
     switch (config->channels.num_of_channels) {
         case 1:
-            handle->JSQR |= (uint32_t)(config->channels.channels_sequence[0] << ADC_JSQR_JSQ4_Pos);
+            handle->JSQR |= (uint32_t)(config->channels.sequence[0] << ADC_JSQR_JSQ4_Pos);
             handle->JOFR1 |= (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
             break;
         case 2:
-            handle->JSQR |= (uint32_t)((config->channels.channels_sequence[0] << ADC_JSQR_JSQ3_Pos) |
-                                       (config->channels.channels_sequence[1] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |= (uint32_t)((config->channels.sequence[0] << ADC_JSQR_JSQ3_Pos) | (config->channels.sequence[1] << ADC_JSQR_JSQ4_Pos));
             handle->JOFR1 |= (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
             handle->JOFR2 |= (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) & ADC_JOFR2_JOFFSET2;
             break;
         case 3:
-            handle->JSQR |= (uint32_t)((config->channels.channels_sequence[0] << ADC_JSQR_JSQ2_Pos) |
-                                       (config->channels.channels_sequence[1] << ADC_JSQR_JSQ3_Pos) |
-                                       (config->channels.channels_sequence[2] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |= (uint32_t)((config->channels.sequence[0] << ADC_JSQR_JSQ2_Pos) | (config->channels.sequence[1] << ADC_JSQR_JSQ3_Pos) |
+                                       (config->channels.sequence[2] << ADC_JSQR_JSQ4_Pos));
             handle->JOFR1 |= (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
             handle->JOFR2 |= (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) & ADC_JOFR2_JOFFSET2;
             handle->JOFR3 |= (uint32_t)(config->offsets[2] << ADC_JOFR3_JOFFSET3_Pos) & ADC_JOFR3_JOFFSET3;
             break;
         case 4:
-            handle->JSQR |= (uint32_t)((config->channels.channels_sequence[0] << ADC_JSQR_JSQ1_Pos) |
-                                       (config->channels.channels_sequence[1] << ADC_JSQR_JSQ2_Pos) |
-                                       (config->channels.channels_sequence[2] << ADC_JSQR_JSQ3_Pos) |
-                                       (config->channels.channels_sequence[3] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |= (uint32_t)((config->channels.sequence[0] << ADC_JSQR_JSQ1_Pos) | (config->channels.sequence[1] << ADC_JSQR_JSQ2_Pos) |
+                                       (config->channels.sequence[2] << ADC_JSQR_JSQ3_Pos) | (config->channels.sequence[3] << ADC_JSQR_JSQ4_Pos));
             handle->JOFR1 |= (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
             handle->JOFR2 |= (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) & ADC_JOFR2_JOFFSET2;
             handle->JOFR3 |= (uint32_t)(config->offsets[2] << ADC_JOFR3_JOFFSET3_Pos) & ADC_JOFR3_JOFFSET3;
@@ -629,15 +625,15 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
             return HAL_ERR_INVALID_ARG;
     }
 
-    if (config->on_conv_complete) {
-        // Save the user passed callback
-        __disable_irq();
-        s_adc_ctx[idx].injected_done_cb  = config->on_conv_complete;
-        s_adc_ctx[idx].injected_done_arg = config->arg;
-        __enable_irq();
+    // Save the user passed callback
+    __disable_irq();
+    s_adc_ctx[idx].injected_done_cb  = config->on_conv_complete;
+    s_adc_ctx[idx].injected_done_arg = config->arg;
+    __enable_irq();
 
-        // Enable interrupts for the injected group on conversion
-        // completion only if the user passed in a callback.
+    // Enable interrupts for the injected group on conversion
+    // completion only if a callback was passed in.
+    if (config->on_conv_complete) {
         handle->CR1 |= ADC_CR1_JEOCIE;
     }
 
@@ -653,13 +649,8 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
     return HAL_OK;
 }
 
-hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data_buffer, size_t buffer_size) {
-    if (handle == NULL || raw_data_buffer == NULL || buffer_size == 0 || buffer_size > MAX_INJECTED_CHANNELS) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
+hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data, size_t size) {
+    if (handle == NULL || raw_data == NULL || size == 0 || size > MAX_INJECTED_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -669,24 +660,24 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data_
     }
 
     // Read the injected group data registers. Can switch over them since only 4 data registers
-    switch (buffer_size) {
+    switch (size) {
         case 1:
-            raw_data_buffer[0] = (uint16_t)handle->JDR1;
+            raw_data[0] = (uint16_t)handle->JDR1;
             break;
         case 2:
-            raw_data_buffer[0] = (uint16_t)handle->JDR1;
-            raw_data_buffer[1] = (uint16_t)handle->JDR2;
+            raw_data[0] = (uint16_t)handle->JDR1;
+            raw_data[1] = (uint16_t)handle->JDR2;
             break;
         case 3:
-            raw_data_buffer[0] = (uint16_t)handle->JDR1;
-            raw_data_buffer[1] = (uint16_t)handle->JDR2;
-            raw_data_buffer[2] = (uint16_t)handle->JDR3;
+            raw_data[0] = (uint16_t)handle->JDR1;
+            raw_data[1] = (uint16_t)handle->JDR2;
+            raw_data[2] = (uint16_t)handle->JDR3;
             break;
         case 4:
-            raw_data_buffer[0] = (uint16_t)handle->JDR1;
-            raw_data_buffer[1] = (uint16_t)handle->JDR2;
-            raw_data_buffer[2] = (uint16_t)handle->JDR3;
-            raw_data_buffer[3] = (uint16_t)handle->JDR4;
+            raw_data[0] = (uint16_t)handle->JDR1;
+            raw_data[1] = (uint16_t)handle->JDR2;
+            raw_data[2] = (uint16_t)handle->JDR3;
+            raw_data[3] = (uint16_t)handle->JDR4;
             break;
         default:
             return HAL_ERR_INVALID_ARG;
@@ -712,8 +703,7 @@ hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data) {
     // Set the number of sampling cycles to 480 cycles.
     // This is done because the internal channels require
     // a much higher sampling time than the external channels
-    handle->SMPR1 &= ~ADC_SMPR1_SMP18;
-    handle->SMPR1 |= (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP18_Pos);
+    handle->SMPR1 = (handle->SMPR1 & ~ADC_SMPR1_SMP18) | (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP18_Pos);
 
     // Get the raw ADC data
     const uint16_t raw = oneshot_regular_group(handle, ADC_CHANNEL_VBAT);
@@ -746,8 +736,7 @@ hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data) {
     // Set the number of sampling cycles to 480 cycles.
     // This is done because the internal channels require
     // a much higher sampling time than the external channels
-    handle->SMPR1 &= ~ADC_SMPR1_SMP16;
-    handle->SMPR1 |= (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP16_Pos);
+    handle->SMPR1 = (handle->SMPR1 & ~ADC_SMPR1_SMP16) | (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP16_Pos);
 
     // Get the raw ADC data
     const uint16_t raw = oneshot_regular_group(handle, ADC_CHANNEL_TEMP);
@@ -773,8 +762,7 @@ hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_data) {
     // Set the number of sampling cycles to 480 cycles.
     // This is done because the internal channels require
     // a much higher sampling time than the external channels
-    handle->SMPR1 &= ~ADC_SMPR1_SMP17;
-    handle->SMPR1 |= (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP17_Pos);
+    handle->SMPR1 = (handle->SMPR1 & ~ADC_SMPR1_SMP17) | (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP17_Pos);
 
     // Get the raw ADC data
     const uint16_t raw = oneshot_regular_group(handle, ADC_CHANNEL_VREF);
@@ -862,7 +850,6 @@ hal_err_t adc_get_value_right_aligned(ADC_TypeDef* handle, uint16_t raw_data, ad
 
     // Calculate the final voltage
     *voltage = (vdda * (float)raw_data) / (float)(1UL << resolution_value);
-
     return HAL_OK;
 }
 
@@ -898,8 +885,8 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_
     }
 
     // Set the voltage thresholds
-    handle->HTR = config->max_adc_value & 0xFFFU; // Only the lower 12 bits are used
-    handle->LTR = config->min_adc_value & 0xFFFU; // Only the lower 12 bits are used
+    handle->HTR = config->max_adc_value; // Only the lower 12 bits are used
+    handle->LTR = config->min_adc_value; // Only the lower 12 bits are used
 
     // Save the user passed callback
     __disable_irq();

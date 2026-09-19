@@ -49,7 +49,7 @@ namespace test::i2s {
         constexpr gpio_pin_t MCLK_PIN  = GPIO_PIN_6;
 
         const i2s_master_config_t DEFAULT_TX_CONFIG = {
-            .direction   = I2S_DIR_HALF_DUPLEX_TX,
+            .direction   = I2S_MASTER_TRANSMIT,
             .mode        = I2S_MODE_PHILIPS,
             .frequency   = I2S_FREQ_48kHz,
             .frame       = I2S_DATA_16_BITS_FRAME_16_BITS,
@@ -64,7 +64,7 @@ namespace test::i2s {
 
         const i2s_master_config_t DEFAULT_RX_CONFIG = [] {
             i2s_master_config_t cfg = DEFAULT_TX_CONFIG;
-            cfg.direction           = I2S_DIR_HALF_DUPLEX_RX;
+            cfg.direction           = I2S_MASTER_RECEIVE;
             return cfg;
         }();
 
@@ -197,7 +197,7 @@ namespace test::i2s {
 
         void init_programs_i2smod_direction_mode_and_polarity() {
             i2s_master_config_t config = DEFAULT_TX_CONFIG;
-            config.direction           = I2S_DIR_HALF_DUPLEX_TX;
+            config.direction           = I2S_MASTER_TRANSMIT;
             config.mode                = I2S_MODE_LEFT_JUSTIFIED;
             config.cpol                = true;
 
@@ -205,7 +205,7 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
 
             TEST_ASSERT_TRUE(TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SMOD);
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(I2S_DIR_HALF_DUPLEX_TX),
+            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(I2S_MASTER_TRANSMIT),
                                      (TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SCFG) >> SPI_I2SCFGR_I2SCFG_Pos);
             TEST_ASSERT_EQUAL_UINT32(std::to_underlying(I2S_MODE_LEFT_JUSTIFIED),
                                      (TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SSTD) >> SPI_I2SCFGR_I2SSTD_Pos);
@@ -214,11 +214,10 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));
 
             // Direction flips and polarity clears
-            config.direction = I2S_DIR_HALF_DUPLEX_RX;
+            config.direction = I2S_MASTER_RECEIVE;
             config.cpol      = false;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(I2S_DIR_HALF_DUPLEX_RX),
-                                     (TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SCFG) >> SPI_I2SCFGR_I2SCFG_Pos);
+            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(I2S_MASTER_RECEIVE), (TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SCFG) >> SPI_I2SCFGR_I2SCFG_Pos);
             TEST_ASSERT_FALSE(TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_CKPOL);
 
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));

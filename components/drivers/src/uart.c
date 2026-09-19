@@ -409,12 +409,10 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
     dma_set_addresses(stream, &handle->DR, data, NULL);
     dma_set_trans_length(stream, size);
 
-    if (callback) {
-        __disable_irq();
-        s_dma_stream_ctx[idx].tx.callback = callback;
-        s_dma_stream_ctx[idx].tx.arg      = arg;
-        __enable_irq();
-    }
+    __disable_irq();
+    s_dma_stream_ctx[idx].tx.callback = callback;
+    s_dma_stream_ctx[idx].tx.arg      = arg;
+    __enable_irq();
 
     // Clear the status flag before starting
     handle->SR = ~USART_SR_TC;
@@ -441,12 +439,10 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
     dma_set_addresses(stream, &handle->DR, data, NULL);
     dma_set_trans_length(stream, size);
 
-    if (callback) {
-        __disable_irq();
-        s_dma_stream_ctx[idx].rx.callback = callback;
-        s_dma_stream_ctx[idx].rx.arg      = arg;
-        __enable_irq();
-    }
+    __disable_irq();
+    s_dma_stream_ctx[idx].rx.callback = callback;
+    s_dma_stream_ctx[idx].rx.arg      = arg;
+    __enable_irq();
 
     // Clear the status flag before starting
     handle->SR = ~USART_SR_RXNE;

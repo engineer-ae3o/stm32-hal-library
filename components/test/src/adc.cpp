@@ -270,7 +270,7 @@ namespace test::adc {
 
                 uint16_t                      buffer = 0;
                 const adc_continuous_config_t config{
-                    .channels         = {.channels_sequence = sequence.data(), .num_of_channels = count},
+                    .channels         = {.sequence = sequence.data(), .num_of_channels = count},
                     .trigger          = RG_TRIGGER_SOFTWARE,
                     .trigger_polarity = RISING_EDGE,
                     .buffer_1         = &buffer,
@@ -315,7 +315,7 @@ namespace test::adc {
             std::array<uint16_t, 4>  buffer  = {};
 
             const adc_continuous_config_t base = {
-                .channels         = {.channels_sequence = &channel, .num_of_channels = 1},
+                .channels         = {.sequence = &channel, .num_of_channels = 1},
                 .trigger          = RG_TRIGGER_SOFTWARE,
                 .trigger_polarity = RISING_EDGE,
                 .buffer_1         = buffer.data(),
@@ -330,11 +330,11 @@ namespace test::adc {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_cont_start_conv(ADC1, nullptr));
 
             auto no_channels     = base;
-            no_channels.channels = {.channels_sequence = nullptr, .num_of_channels = 1};
+            no_channels.channels = {.sequence = nullptr, .num_of_channels = 1};
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_cont_start_conv(ADC1, &no_channels));
 
             auto zero_count     = base;
-            zero_count.channels = {.channels_sequence = &channel, .num_of_channels = 0};
+            zero_count.channels = {.sequence = &channel, .num_of_channels = 0};
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_cont_start_conv(ADC1, &zero_count));
 
             auto too_many                     = base;
@@ -361,7 +361,7 @@ namespace test::adc {
             s_cont_done = false;
 
             const adc_continuous_config_t config = {
-                .channels         = {.channels_sequence = CHANNELS.data(), .num_of_channels = CHANNELS.size()},
+                .channels         = {.sequence = CHANNELS.data(), .num_of_channels = CHANNELS.size()},
                 .trigger          = RG_TRIGGER_SOFTWARE,
                 .trigger_polarity = RISING_EDGE,
                 .buffer_1         = buffer.data(),
@@ -407,7 +407,7 @@ namespace test::adc {
                 }
 
                 adc_injected_group_config_t config{};
-                config.channels         = {.channels_sequence = channels.data(), .num_of_channels = count};
+                config.channels         = {.sequence = channels.data(), .num_of_channels = count};
                 config.trigger          = JG_TRIGGER_SOFTWARE;
                 config.trigger_polarity = RISING_EDGE;
                 for (size_t i = 0; i < count; i++) {
@@ -449,14 +449,14 @@ namespace test::adc {
 
             constexpr auto              channels = std::array{ADC_CHANNEL_0};
             adc_injected_group_config_t config{};
-            config.channels = {.channels_sequence = channels.data(), .num_of_channels = channels.size()};
+            config.channels = {.sequence = channels.data(), .num_of_channels = channels.size()};
             config.trigger  = JG_TRIGGER_SOFTWARE;
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_injected_group_start_conv(nullptr, &config));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_injected_group_start_conv(ADC1, nullptr));
 
             auto no_channels     = config;
-            no_channels.channels = {.channels_sequence = nullptr, .num_of_channels = 1};
+            no_channels.channels = {.sequence = nullptr, .num_of_channels = 1};
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_injected_group_start_conv(ADC1, &no_channels));
 
             auto too_many                     = config;
@@ -474,7 +474,7 @@ namespace test::adc {
 
             constexpr auto              channels = std::array{ADC_CHANNEL_0};
             adc_injected_group_config_t config{};
-            config.channels         = {.channels_sequence = channels.data(), .num_of_channels = channels.size()};
+            config.channels         = {.sequence = channels.data(), .num_of_channels = channels.size()};
             config.trigger          = JG_TRIGGER_SOFTWARE;
             config.trigger_polarity = RISING_EDGE;
             config.on_conv_complete = injected_done_cb;

@@ -548,17 +548,15 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
     dma_set_trans_length(rx_stream, size);
     dma_set_increment(rx_stream, false, false);
 
-    if (cb) {
-        // Save the callback to the TX DMA irq only.
-        // The isr_tx_helper(...) polls the BSY and TXE bit, which tells us
-        // that the last bit of the data has been transmitted. Its only then
-        // we can safely disable the SPI peripheral. isr_rx_helper(...) has
-        // no such checks, so isr_tx_helper(...) is better for our usage here.
-        __disable_irq();
-        s_dma_stream_ctx[idx].tx.callback = cb;
-        s_dma_stream_ctx[idx].tx.arg      = arg;
-        __enable_irq();
-    }
+    // Save the callback to the TX DMA irq only.
+    // The isr_tx_helper(...) polls the BSY and TXE bit, which tells us
+    // that the last bit of the data has been transmitted. Its only then
+    // we can safely disable the SPI peripheral. isr_rx_helper(...) has
+    // no such checks, so isr_tx_helper(...) is better for our usage here.
+    __disable_irq();
+    s_dma_stream_ctx[idx].tx.callback = cb;
+    s_dma_stream_ctx[idx].tx.arg      = arg;
+    __enable_irq();
 
     TRY(dma_enable_stream(rx_stream));
     TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
@@ -606,17 +604,15 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size,
     dma_set_trans_length(rx_stream, size);
     dma_set_increment(rx_stream, false, true);
 
-    if (cb) {
-        // Save the callback to the TX DMA irq only.
-        // The isr_tx_helper(...) polls the BSY and TXE bit, which tells us
-        // that the last bit of the data has been transmitted. Its only then
-        // we can safely disable the SPI peripheral. isr_rx_helper(...) has
-        // no such checks, so isr_tx_helper(...) is better for our usage here.
-        __disable_irq();
-        s_dma_stream_ctx[idx].tx.callback = cb;
-        s_dma_stream_ctx[idx].tx.arg      = arg;
-        __enable_irq();
-    }
+    // Save the callback to the TX DMA irq only.
+    // The isr_tx_helper(...) polls the BSY and TXE bit, which tells us
+    // that the last bit of the data has been transmitted. Its only then
+    // we can safely disable the SPI peripheral. isr_rx_helper(...) has
+    // no such checks, so isr_tx_helper(...) is better for our usage here.
+    __disable_irq();
+    s_dma_stream_ctx[idx].tx.callback = cb;
+    s_dma_stream_ctx[idx].tx.arg      = arg;
+    __enable_irq();
 
     TRY(dma_enable_stream(rx_stream));
     TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
@@ -657,17 +653,15 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     dma_set_trans_length(rx_stream, size);
     dma_set_increment(rx_stream, false, true);
 
-    if (cb) {
-        // Save the callback to the TX DMA irq only.
-        // The isr_tx_helper(...) polls the BSY and TXE bit, which tells us
-        // that the last bit of the data has been transmitted. Its only then
-        // we can safely disable the SPI peripheral. isr_rx_helper(...) has
-        // no such checks, so isr_tx_helper(...) is better for our usage here.
-        __disable_irq();
-        s_dma_stream_ctx[idx].tx.callback = cb;
-        s_dma_stream_ctx[idx].tx.arg      = arg;
-        __enable_irq();
-    }
+    // Save the callback to the TX DMA irq only.
+    // The isr_tx_helper(...) polls the BSY and TXE bit, which tells us
+    // that the last bit of the data has been transmitted. Its only then
+    // we can safely disable the SPI peripheral. isr_rx_helper(...) has
+    // no such checks, so isr_tx_helper(...) is better for our usage here.
+    __disable_irq();
+    s_dma_stream_ctx[idx].tx.callback = cb;
+    s_dma_stream_ctx[idx].tx.arg      = arg;
+    __enable_irq();
 
     TRY(dma_enable_stream(rx_stream));
     TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
