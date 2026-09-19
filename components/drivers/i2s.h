@@ -39,9 +39,8 @@ typedef enum : uint8_t {
 } i2s_frame_t;
 
 typedef enum : uint8_t {
-    I2S_MASTER_TRANSMIT   = 0b10,
-    I2S_MASTER_RECEIVE    = 0b11,
-    I2S_MASTER_TRANSCEIVE = 0b00,
+    I2S_MASTER_TRANSMIT = 0b10,
+    I2S_MASTER_RECEIVE  = 0b11,
 } i2s_dir_t;
 
 typedef enum : uint32_t {
@@ -81,7 +80,6 @@ hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle);
 // DMA backed oneshot transfers API.
 hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* data, uint16_t size, dma_done_cb_t callback, void* arg);
 hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* data, uint16_t size, dma_done_cb_t callback, void* arg);
-hal_err_t i2s_master_transceive_oneshot(I2S_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t size, dma_done_cb_t callback, void* arg);
 
 // Double buffering API.
 // NOTE: These APIs are mutually exclusive with the DMA oneshot functions

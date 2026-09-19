@@ -36,11 +36,11 @@ namespace test::adc {
             s_injected_done = true;
         }
 
-        volatile bool s_cont_done       = false;
-        volatile bool s_cont_buf_1_used = false;
-        void          cont_done_cb(void*, bool is_buf_1_in_use) {
-            s_cont_buf_1_used = is_buf_1_in_use;
-            s_cont_done       = true;
+        volatile bool    s_cont_done         = false;
+        volatile uint8_t s_filled_buffer_idx = 0;
+        void             cont_done_cb(void*, uint8_t filled_buffer_idx) {
+            s_filled_buffer_idx = filled_buffer_idx;
+            s_cont_done         = true;
         }
 
         volatile bool s_wdg_triggered = false;
@@ -218,8 +218,9 @@ namespace test::adc {
             // Plausible bench/board temperature bound, not a calibrated accuracy check
             TEST_ASSERT_TRUE(temp_c > -40.0F && temp_c < 125.0F);
 
-            // adc_get_value_right_aligned is pure math over its raw_data argument - verify it
-            // directly against hand-computed expected values for every resolution
+            // adc_get_value_right_aligned is NOT pure math: it calls adc_get_vdda(...) internally,
+            // which triggers a fresh VREFINT conversion every time. Re-measure vdda immediately
+            // before comparing so we're not racing a stale reading.
             struct case_t {
                 adc_resolution_t resolution;
                 uint16_t         raw;

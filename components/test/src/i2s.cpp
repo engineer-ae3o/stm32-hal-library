@@ -1,7 +1,7 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
-#include "drivers/spi_internals.h" // Reaching into i2s.c's own internal header -- see note below
+#include "drivers/spi_internals.h"
 #include "utils/common.h"
 #include "drivers/gpio.h"
 #include "drivers/dma.h"
@@ -15,24 +15,6 @@
 #include <cstdint>
 #include <utility>
 
-
-// ASSUMPTIONS THAT NEED CONFIRMING AGAINST YOUR board.h / CMSIS HEADERS BEFORE THIS COMPILES:
-//   1. BOARD_I2S2_WS_*, BOARD_I2S2_SCLK_*, BOARD_I2S2_SD_*, BOARD_I2S2_MCLK_* macros below are
-//      guessed from the F411's standard I2S2 AF5 muxing (WS=PB12, CK=PB10, SD=PB15, MCK=PC6).
-//      Swap in whatever your board.h actually calls them.
-//   2. SPI_I2SCFGR_I2SE is assumed to be the enable bit name (standard CMSIS naming) -- used only
-//      to check the peripheral is left disabled after deinit/dbm_stop.
-//   3. DMA_Stream_TypeDef's transfer-count register is assumed to be named NDTR (standard CMSIS
-//      naming for STM32F4), used only in the 24/32-bit size-doubling check.
-//   4. I2S1 and I2S5 are assumed to have no DMA streams mapped, mirroring SPI1/SPI5 in the SPI
-//      driver, since both share spi_master_get_dma_stream_map(). Confirm against your dma map.
-//   5. Three tests (the 24/32-bit doubling check and both DBM tests) call spi_master_get_dma_stream_map()
-//      directly to read the DMA stream's NDTR/CR registers, since the public i2s.h API has no way to
-//      observe DMA transfer state. That function lives in drivers/spi_internals.h -- i2s.c's own
-//      internal header, not part of the public surface. Reaching into it from a test file is a
-//      deliberate trade-off (real introspection vs. a clean public/private boundary); if that's not
-//      acceptable, those three tests need a different way to observe "is the stream still running"
-//      and "which half-buffer just filled" -- e.g. exposing a small read-only accessor from the driver.
 
 namespace test::i2s {
 
@@ -132,7 +114,6 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_dbm_init(TEST_INSTANCE, nullptr, rx_buf.data(), rx_buf.size(), dbm_callback, nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_dbm_init(TEST_INSTANCE, rx_buf.data(), nullptr, rx_buf.size(), dbm_callback, nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_dbm_init(TEST_INSTANCE, rx_buf.data(), rx_buf.data(), 0, dbm_callback, nullptr));
-            // Callback is mandatory for double buffering: it's the only way to know which buffer is free
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_dbm_init(TEST_INSTANCE, rx_buf.data(), rx_buf.data(), rx_buf.size(), nullptr, nullptr));
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_dbm_deinit(bogus_handle));
@@ -313,10 +294,6 @@ namespace test::i2s {
             i2sx_clk_enable(I2S5, false);
         }
 
-        // ---- Tier 2: DMA plumbing. Nothing needs to be wired to WS/SCLK/SD/MCLK for any test
-        // below -- the peripheral clocks real data out (or in, from whatever floats on the line)
-        // regardless of what's downstream. These check the driver's bookkeeping, not audio content.
-
         void transmit_oneshot_completes_and_invokes_callback() {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_TX_CONFIG));
@@ -494,7 +471,6 @@ namespace test::i2s {
         LOGI(TAG, "Starting the tests on the I2S driver");
         UNITY_BEGIN();
 
-        // Tier 1: register/config correctness, no wiring
         RUN_TEST(invalid_arg_guards);
         RUN_TEST(init_rejects_invalid_audio_clock_without_touching_registers);
         RUN_TEST(init_rejects_prescaler_below_the_supported_range);
@@ -505,8 +481,6 @@ namespace test::i2s {
         RUN_TEST(mclk_pin_only_programmed_when_use_mck_is_set);
         RUN_TEST(clk_enable_toggles_the_correct_bus_bit);
         RUN_TEST(dma_init_rejects_unsupported_instances);
-
-        // Tier 2: DMA plumbing, no wiring
         RUN_TEST(transmit_oneshot_completes_and_invokes_callback);
         RUN_TEST(receive_oneshot_completes_and_invokes_callback);
         RUN_TEST(oneshot_rejects_a_call_while_a_transfer_is_still_in_flight);

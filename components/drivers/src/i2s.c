@@ -379,18 +379,6 @@ hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* data, uint16_t s
     return HAL_OK;
 }
 
-hal_err_t i2s_master_transceive_oneshot(I2S_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t size, dma_done_cb_t callback, void* arg) {
-    // Get index for DMA stream mapping
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU || tx_data == NULL || rx_data == NULL || size == 0) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    TRY(spi_master_register_callback(callback, arg, idx, false));
-
-    return HAL_OK;
-}
-
 
 // Double buffering API
 hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uint16_t size, dma_done_cb_t callback, void* arg) {

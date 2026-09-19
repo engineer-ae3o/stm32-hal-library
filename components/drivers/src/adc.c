@@ -122,8 +122,9 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
         DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
         ASSERT(stream);
 
-        // If the CT bit is 0, that means the DMA controller is in the first buffer
-        const bool     is_buf_1_in_use   = (stream->CR & DMA_SxCR_CT) == 0;
+        // If the CT bit is set, buffer 1 is in use by the DMA controller. Implying
+        // buffer 0 is filled up and free for us to use, and vice versa.
+        const uint8_t  filled_buffer_idx = (stream->CR & DMA_SxCR_CT) ? 0 : 1;
         const uint16_t num_of_items_left = (uint16_t)stream->NDTR;
 
         // End the regular group conversion. The conversion can be restarted in the callback if necessary
@@ -131,7 +132,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
 
         // Finally, invoke the user callback
         if (local_cb) {
-            local_cb(user_data, is_buf_1_in_use, num_of_items_left);
+            local_cb(user_data, filled_buffer_idx, num_of_items_left);
         }
     }
 }
@@ -147,8 +148,9 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
         return;
     }
 
-    // If the CT bit is 0, that means the DMA controller is in the first buffer
-    const bool     is_buf_1_in_use   = (stream->CR & DMA_SxCR_CT) == 0;
+    // If the CT bit is set, buffer 1 is in use by the DMA controller. Implying
+    // buffer 0 is filled up and free for us to use, and vice versa.
+    const uint8_t  filled_buffer_idx = (stream->CR & DMA_SxCR_CT) ? 0 : 1;
     const uint16_t num_of_items_left = (uint16_t)stream->NDTR;
 
     __disable_irq();
@@ -181,7 +183,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
         // Transfer complete. If in circular or double buffering mode, the DMA has either
         // wrapped around in the same buffer or has switched to the second buffer respectively.
         if (tc_local_cb) {
-            tc_local_cb(user_data, is_buf_1_in_use);
+            tc_local_cb(user_data, filled_buffer_idx);
         }
     }
 
@@ -195,7 +197,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
         flags_to_clear |= flags.te_mask;
 
         if (te_local_cb) {
-            te_local_cb(user_data, is_buf_1_in_use, num_of_items_left);
+            te_local_cb(user_data, filled_buffer_idx, num_of_items_left);
         }
     }
 
@@ -207,7 +209,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
         flags_to_clear |= flags.dme_mask;
 
         if (dme_local_cb) {
-            dme_local_cb(user_data, is_buf_1_in_use, num_of_items_left);
+            dme_local_cb(user_data, filled_buffer_idx, num_of_items_left);
         }
     }
 
@@ -480,9 +482,6 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     } else {
         handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);
     }
-
-    // Clear the CT bit to ensure the DMA controller starts at the first buffer
-    stream->CR &= ~DMA_SxCR_CT;
 
     // Enable the interrupts based on what callbacks were passed
     if (config->callbacks.on_data_overrun != NULL) {
