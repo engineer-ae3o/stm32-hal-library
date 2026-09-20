@@ -22,13 +22,9 @@ namespace test::i2s {
 
         constexpr const char* TAG = "I2S_Test";
 
-        // Primary instance under test. I2S2 == SPI2 silicon, which is already known DMA-capable
-        // from the SPI driver tests. Nothing needs to be connected to WS/SCLK/SD/MCLK for any
-        // test in this file -- see the module comment in the PR/README for why.
-        I2S_TypeDef* const TEST_INSTANCE = I2S2;
-
-        GPIO_TypeDef* const  MCLK_PORT = GPIOC;
-        constexpr gpio_pin_t MCLK_PIN  = GPIO_PIN_6;
+        I2S_TypeDef* const   TEST_INSTANCE = I2S2;
+        GPIO_TypeDef* const  MCLK_PORT     = GPIOC;
+        constexpr gpio_pin_t MCLK_PIN      = GPIO_PIN_6;
 
         const i2s_master_config_t DEFAULT_TX_CONFIG = {
             .direction   = I2S_MASTER_TRANSMIT,

@@ -19,7 +19,7 @@ monitor rtt server start 9090 0
 
 define reflash
     delete
-    file build/debug-tests/f411-hal.elf
+    file build/tests/f411-hal.elf
     monitor reset halt
     load
     break main

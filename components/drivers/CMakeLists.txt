@@ -12,6 +12,7 @@ set(SRCS
     src/uart.c
     src/iwdg.c
     src/timer.c
+    src/timer_ext.c
 )
 
 set(INC

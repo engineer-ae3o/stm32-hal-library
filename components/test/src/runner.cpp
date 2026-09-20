@@ -14,6 +14,7 @@
 #include "test/timer.hpp"
 #include "test/clock.hpp"
 #include "test/runner.hpp"
+#include "test/timer_ext.hpp"
 
 
 extern "C" {
@@ -41,6 +42,7 @@ namespace test {
         // gpio::all();
         // clock::all();
         timer::all();
+        timer_ext::all();
     }
 
 } // namespace test

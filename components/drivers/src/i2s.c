@@ -4,7 +4,6 @@
 #include "utils/common.h"
 #include "utils/clock.h"
 #include "drivers/dma.h"
-#include "drivers/spi.h"
 #include "drivers/i2s.h"
 #include "utils/err.h"
 
