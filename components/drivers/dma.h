@@ -22,7 +22,7 @@ hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream);
 hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream);
 hal_err_t dma_get_stream_info(DMA_Stream_TypeDef* stream, dma_stream_info_t* stream_info);
 hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_config_t* config);
-hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number);
+hal_err_t dma_get_stream_flags(DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number);
 
 void dma_set_channel(DMA_Stream_TypeDef* stream, uint32_t channel);
 void dma_set_direct_mode(DMA_Stream_TypeDef* stream, bool direct_mode);
@@ -31,10 +31,11 @@ void dma_set_direction(DMA_Stream_TypeDef* stream, dma_direction_t dir);
 void dma_set_increment(DMA_Stream_TypeDef* stream, bool per_inc, bool mem_inc);
 void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler);
 void dma_set_stream_priority(DMA_Stream_TypeDef* stream, dma_priority_t priority);
-void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circm, bool ena_dbm);
+void dma_set_circular_mode(DMA_Stream_TypeDef* stream, dma_circ_mode_t circ_mode);
 void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_data_size_t mem);
 void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, bool ht_mask, bool dme_mask);
 void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, const volatile void* mem_0, const volatile void* mem_1);
+
 
 // Helper to assist with the checking and clearing of interrupt flags and propagation of errors
 [[__gnu__::__always_inline__]] inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream) {
@@ -44,17 +45,26 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
 
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
-    TRY(dma_get_stream_flags(stream, stream_info.controller, &flags, stream_info.stream_number));
+    TRY(dma_get_stream_flags(stream_info.controller, &flags, stream_info.stream_number));
 
     const uint32_t status         = *flags.irq_status_register;
     uint32_t       flags_to_clear = 0;
 
     // Record the error status
-    hal_err_t error = HAL_OK;
+    hal_err_t error            = HAL_OK;
+    bool      is_half_transfer = false;
+
+    // Half transfer complete
+    if (status & flags.ht_mask) {
+        flags_to_clear |= flags.ht_mask;
+        is_half_transfer = true;
+    }
 
     // Transfer complete
     if (status & flags.tc_mask) {
         flags_to_clear |= flags.tc_mask;
+        // Overwrite since the transfer has ended. The HT flag being set doesn't matter
+        is_half_transfer = false;
     }
 
     // Transfer error
@@ -69,11 +79,6 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
         error = HAL_ERR_DMA_DME;
     }
 
-    // Half transfer complete
-    if (status & flags.ht_mask) {
-        flags_to_clear |= flags.ht_mask;
-    }
-
     // FIFO mode error
     if (status & flags.fe_mask) {
         flags_to_clear |= flags.fe_mask;
@@ -83,10 +88,10 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
     // Clear all the set flags
     *flags.irq_clear_register = flags_to_clear;
 
-    // Return if the stream is in circular mode or half transfer,
-    // so as not to disable the DMA strean. Everything else should
-    // disable the stream since not being used till the next transfer
-    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_HTIE | DMA_SxCR_DBM)) {
+    // Return if the stream is in circular mode or double buffering or this is
+    // the halfway mark for the transefer, so as not to disable the DMA stream.
+    // Everything else should disable the stream since not being used till the next transfer
+    if ((stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM)) || is_half_transfer) {
         return error;
     }
 

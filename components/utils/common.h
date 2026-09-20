@@ -14,7 +14,7 @@ extern "C" {
 #include <stdint.h>
 
 
-#define TIMEOUT_CYCLES (10'000U)
+#define TIMEOUT (100000U)
 #define UNUSED(x) (void)(x)
 
 // NVIC interrupt priorities for the different peripherals
@@ -24,6 +24,7 @@ extern "C" {
 #define UART_DMA_NVIC_IRQ_PRIORITY (10U)
 #define ADC_DMA_NVIC_IRQ_PRIORITY (8U)
 #define CRC_DMA_NVIC_IRQ_PRIORITY (11U)
+#define M2M_DMA_NVIC_IRQ_PRIORITY (15U)
 
 
 #define gnu_likely(x) __builtin_expect(!!(x), 1)
@@ -38,8 +39,6 @@ extern "C" {
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
-// RTT buffer for logging. Controls the output buffer parameter
-#define RTT_BUFFER_INDEX (0)
 
 #define HALT()                                                                                                                                       \
     do {                                                                                                                                             \
@@ -49,7 +48,6 @@ extern "C" {
             __WFI();                                                                                                                                 \
         }                                                                                                                                            \
     } while (0)
-
 
 #define REBOOT()                                                                                                                                     \
     do {                                                                                                                                             \
@@ -65,11 +63,15 @@ extern "C" {
 
 #define ASSERT(cond)                                                                                                                                 \
     do {                                                                                                                                             \
-        if (!(cond)) {                                                                                                                               \
+        if (gnu_unlikely(!(cond))) {                                                                                                                 \
             LOGE("Assert", "Assert (%s) failed", #cond);                                                                                             \
             PANIC();                                                                                                                                 \
         }                                                                                                                                            \
     } while (0)
+
+
+// RTT buffer for logging. Controls the output buffer parameter
+#define RTT_BUFFER_INDEX (0)
 
 // Buffer size of format strings
 #define FMT_STR_BUF_SIZE (192)

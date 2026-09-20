@@ -25,7 +25,7 @@ hal_err_t iwdg_start(iwdg_prescaler_t prescaler, uint32_t timeout_ms) {
     uint32_t actual_reload_val = (new_clk_speed_hz * timeout_ms) / 1000U;
 
     // Wait until the PVU and RVU bits read 0 before we can safely modify the PR and RLR
-    uint32_t timeout = TIMEOUT_CYCLES;
+    uint32_t timeout = TIMEOUT;
     while (((IWDG->SR & IWDG_SR_PVU) || (IWDG->SR & IWDG_SR_RVU)) && --timeout);
     if (timeout == 0) {
         return HAL_ERR_TIMEOUT;
@@ -36,7 +36,7 @@ hal_err_t iwdg_start(iwdg_prescaler_t prescaler, uint32_t timeout_ms) {
     IWDG->RLR = actual_reload_val & IWDG_RLR_RL_Msk;
 
     // Wait until the PVU and RVU bits read 0 before we can safely proceed
-    timeout = TIMEOUT_CYCLES;
+    timeout = TIMEOUT;
     while (((IWDG->SR & IWDG_SR_PVU) || (IWDG->SR & IWDG_SR_RVU)) && --timeout);
     if (timeout == 0) {
         return HAL_ERR_TIMEOUT;

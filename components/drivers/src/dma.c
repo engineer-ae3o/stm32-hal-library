@@ -1,4 +1,5 @@
 #include "stm32f411xe.h"
+#include "drivers/dma_types.h"
 #include "utils/common.h"
 #include "drivers/dma.h"
 #include "utils/err.h"
@@ -33,7 +34,7 @@ hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream) {
         return HAL_ERR_INVALID_ARG;
     }
     stream->CR |= DMA_SxCR_EN;
-    uint32_t timeout = TIMEOUT_CYCLES;
+    uint32_t timeout = TIMEOUT;
     while (!(stream->CR & DMA_SxCR_EN) && (--timeout));
     if (timeout == 0) {
         return HAL_ERR_TIMEOUT;
@@ -46,7 +47,7 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
         return HAL_ERR_INVALID_ARG;
     }
     stream->CR &= ~DMA_SxCR_EN;
-    uint32_t timeout = TIMEOUT_CYCLES;
+    uint32_t timeout = TIMEOUT;
     while ((stream->CR & DMA_SxCR_EN) && (--timeout));
     if (timeout == 0) {
         return HAL_ERR_TIMEOUT;
@@ -54,8 +55,8 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
     return HAL_OK;
 }
 
-hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number) {
-    if (stream == NULL) {
+hal_err_t dma_get_stream_flags(DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number) {
+    if (controller == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -122,7 +123,6 @@ hal_err_t dma_get_stream_flags(DMA_Stream_TypeDef* stream, DMA_TypeDef* controll
 
     flags->irq_clear_register  = stream_number <= 3 ? &controller->LIFCR : &controller->HIFCR;
     flags->irq_status_register = stream_number <= 3 ? &controller->LISR : &controller->HISR;
-
     return HAL_OK;
 }
 
@@ -175,7 +175,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     // Clear all the DMA flags
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
-    TRY(dma_get_stream_flags(stream, stream_info.controller, &flags, stream_info.stream_number));
+    TRY(dma_get_stream_flags(stream_info.controller, &flags, stream_info.stream_number));
     *flags.irq_clear_register = (flags.tc_mask | flags.te_mask | flags.ht_mask | flags.fe_mask | flags.dme_mask);
 
     // Clear all state before proceeding
@@ -191,6 +191,11 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
         stream->NDTR = 0;
         NVIC_DisableIRQ(stream_info.nvic_irq_type);
         return HAL_OK;
+    }
+
+    if ((config->direction == DMA_DIR_M2M) &&
+        (config->mode == DMA_MODE_DIRECT || config->flow_controller == DMA_FLOW_CONTROLLER_PERIPHERAL || config->circular_mode != DMA_MODE_ONESHOT)) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
 
     uint32_t cr_mask = stream->CR;
@@ -294,11 +299,14 @@ void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler
     }
 }
 
-void dma_enable_circm_dbm(DMA_Stream_TypeDef* stream, bool ena_circm, bool ena_dbm) {
+void dma_set_circular_mode(DMA_Stream_TypeDef* stream, dma_circ_mode_t circ_mode) {
     if (stream) {
         uint32_t mask = stream->CR & ~(DMA_SxCR_CIRC | DMA_SxCR_DBM);
-        mask |= ena_circm ? DMA_SxCR_CIRC : 0;
-        mask |= ena_dbm ? DMA_SxCR_DBM : 0;
+        if (circ_mode == DMA_MODE_DOUBLE_BUFFER) {
+            mask |= (DMA_SxCR_DBM | DMA_SxCR_CIRC);
+        } else if (circ_mode == DMA_MODE_CIRCULAR) {
+            mask |= DMA_SxCR_CIRC;
+        }
         stream->CR = mask;
     }
 }

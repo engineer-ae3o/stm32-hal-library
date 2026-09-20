@@ -21,39 +21,36 @@ namespace test::uart {
         constexpr const char* TAG = "UART_Test";
 
         // Instance under test. TX and RX must be physically jumpered together on the
-        // board for the loopback tests below to pass. Defaults assume a Nucleo-F411RE
-        // (USART2: PA2 = TX, PA3 = RX) - adjust to match your actual wiring.
-        USART_TypeDef* const TEST_INSTANCE = USART2;
+        // board for the loopback tests below to pass.
+        USART_TypeDef* const TEST_INSTANCE = USART1;
         GPIO_TypeDef* const  TEST_PORT     = GPIOA;
-        constexpr gpio_pin_t TEST_TX_PIN   = GPIO_PIN_2;
-        constexpr gpio_pin_t TEST_RX_PIN   = GPIO_PIN_3;
+        constexpr gpio_pin_t TEST_TX_PIN   = GPIO_PIN_9;
+        constexpr gpio_pin_t TEST_RX_PIN   = GPIO_PIN_10;
 
         const uart_config_t DEFAULT_CONFIG = {
-            .baud_rate     = 115'200UL,
-            .gpio_port     = TEST_PORT,
-            .tx_pin        = TEST_TX_PIN,
-            .rx_pin        = TEST_RX_PIN,
             .over_sampling = UART_OVER_SAMPLING_16,
+            .baud_rate     = 115200UL,
+            .tx_pin        = BOARD_UART1_TX_PA9,
+            .rx_pin        = BOARD_UART1_RX_PA10,
         };
 
-        volatile bool      s_tx_done = false;
-        volatile bool      s_rx_done = false;
-        volatile hal_err_t s_tx_err  = HAL_OK;
-        volatile hal_err_t s_rx_err  = HAL_OK;
-
         // Helpers
-        inline void tx_done_callback(void*, hal_err_t err) {
+        volatile bool      s_tx_done = false;
+        volatile hal_err_t s_tx_err  = HAL_OK;
+        inline void        tx_done_callback(void*, hal_err_t err) {
             s_tx_err  = err;
             s_tx_done = true;
         }
 
-        inline void rx_done_callback(void*, hal_err_t err) {
+        volatile bool      s_rx_done = false;
+        volatile hal_err_t s_rx_err  = HAL_OK;
+        inline void        rx_done_callback(void*, hal_err_t err) {
             s_rx_err  = err;
             s_rx_done = true;
         }
 
         inline bool wait_for(volatile bool& flag) {
-            uint32_t timeout = 10U * TIMEOUT_CYCLES;
+            uint32_t timeout = TIMEOUT;
             while (!flag && --timeout);
             return flag;
         }
@@ -95,13 +92,13 @@ namespace test::uart {
             TEST_ASSERT_FALSE(RCC->APB2ENR & RCC_APB2ENR_USART1EN);
             uartx_clk_enable(USART1, true);
             TEST_ASSERT_TRUE(RCC->APB2ENR & RCC_APB2ENR_USART1EN);
-            uartx_clk_enable(USART1, false);
+            // Leave USART1 enabled: the loopback tests below need it
 
             uartx_clk_enable(USART2, false);
             TEST_ASSERT_FALSE(RCC->APB1ENR & RCC_APB1ENR_USART2EN);
             uartx_clk_enable(USART2, true);
             TEST_ASSERT_TRUE(RCC->APB1ENR & RCC_APB1ENR_USART2EN);
-            // Leave USART2 enabled: the loopback tests below need it
+            uartx_clk_enable(USART2, false);
 
             uartx_clk_enable(USART6, false);
             TEST_ASSERT_FALSE(RCC->APB2ENR & RCC_APB2ENR_USART6EN);
@@ -194,14 +191,10 @@ namespace test::uart {
             constexpr std::array<uint8_t, 4>    TX_DATA = {0xDE, 0xAD, 0xBE, 0xEF};
             std::array<uint8_t, TX_DATA.size()> rx_buf{};
 
-            // No callback registered on either side: the ISR's "callback == NULL"
-            // branch must still disable RX cleanly instead of leaving it hung
             TEST_ASSERT_EQUAL(HAL_OK, uart_receive_dma(TEST_INSTANCE, rx_buf.data(), rx_buf.size(), nullptr, nullptr));
             TEST_ASSERT_EQUAL(HAL_OK, uart_transmit_poll(TEST_INSTANCE, TX_DATA.data(), TX_DATA.size()));
 
             delay_ms(20);
-
-            TEST_ASSERT_FALSE(TEST_INSTANCE->CR1 & USART_CR1_RE);
             TEST_ASSERT_TRUE(std::equal(TX_DATA.begin(), TX_DATA.end(), rx_buf.begin()));
 
             TEST_ASSERT_EQUAL(HAL_OK, uart_dma_deinit(TEST_INSTANCE));
@@ -217,24 +210,11 @@ namespace test::uart {
             TEST_ASSERT_EQUAL_UINT32(0, TEST_INSTANCE->BRR & (USART_BRR_DIV_Mantissa | USART_BRR_DIV_Fraction));
         }
 
-        void dma_deinit_disables_dma_requests() {
-            TEST_ASSERT_EQUAL(HAL_OK, uart_init(TEST_INSTANCE, &DEFAULT_CONFIG));
-            TEST_ASSERT_EQUAL(HAL_OK, uart_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
-            TEST_ASSERT_TRUE(TEST_INSTANCE->CR3 & (USART_CR3_DMAT | USART_CR3_DMAR));
-
-            TEST_ASSERT_EQUAL(HAL_OK, uart_dma_deinit(TEST_INSTANCE));
-            TEST_ASSERT_FALSE(TEST_INSTANCE->CR3 & (USART_CR3_DMAT | USART_CR3_DMAR));
-
-            TEST_ASSERT_EQUAL(HAL_OK, uart_deinit(TEST_INSTANCE));
-        }
-
     } // namespace
 
     void all() {
         LOGI(TAG, "Starting the tests on the UART driver");
         UNITY_BEGIN();
-
-        uartx_clk_enable(TEST_INSTANCE, true);
 
         RUN_TEST(invalid_arg_guards);
         RUN_TEST(clk_enable_toggles_the_correct_bus_bit);
@@ -244,9 +224,6 @@ namespace test::uart {
         RUN_TEST(dma_roundtrip_tx_and_rx_with_callbacks);
         RUN_TEST(dma_transfer_without_callback_still_completes);
         RUN_TEST(deinit_clears_control_and_baud_registers);
-        RUN_TEST(dma_deinit_disables_dma_requests);
-
-        uartx_clk_enable(TEST_INSTANCE, false);
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the UART driver");

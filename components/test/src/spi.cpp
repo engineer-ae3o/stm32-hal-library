@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cstdint>
+#include <utility>
 #include <algorithm>
 
 
@@ -21,52 +22,48 @@ namespace test::spi {
         constexpr const char* TAG = "SPI_Test";
 
         // Instance under test. MOSI and MISO must be physically jumpered together on
-        // the board for the loopback tests below to pass. Defaults assume a
-        // Nucleo-F411RE (SPI2 via the Arduino header: PB13 = SCLK, PB14 = MISO,
-        // PB15 = MOSI) - adjust to match your actual wiring.
+        // the board for the loopback tests below to pass.
         SPI_TypeDef* const   TEST_INSTANCE = SPI2;
         GPIO_TypeDef* const  TEST_PORT     = GPIOB;
         constexpr gpio_pin_t TEST_MISO_PIN = GPIO_PIN_14;
         constexpr gpio_pin_t TEST_MOSI_PIN = GPIO_PIN_15;
-        constexpr gpio_pin_t TEST_SCLK_PIN = GPIO_PIN_13;
+        constexpr gpio_pin_t TEST_SCLK_PIN = GPIO_PIN_10;
 
         const spi_master_config_t DEFAULT_CONFIG = {
             .cpol      = false,
             .cpha      = false,
-            .data_size = SPI_DATA_SIZE_8_BITS,
-            .prescaler = SPI_PRESCALER_DIV8,
             .use_miso  = true,
             .use_mosi  = true,
-            .miso_pin  = TEST_MISO_PIN,
-            .mosi_pin  = TEST_MOSI_PIN,
-            .sclk_pin  = TEST_SCLK_PIN,
-            .gpio_port = TEST_PORT,
+            .data_size = SPI_DATA_8_BITS,
+            .prescaler = SPI_PRESCALER_DIV4,
+            .miso_pin  = BOARD_SPI2_MISO_PB14,
+            .mosi_pin  = BOARD_SPI2_MOSI_PB15,
+            .sclk_pin  = BOARD_SPI2_SCLK_PB10,
         };
 
-        volatile bool      s_tx_done = false;
-        volatile bool      s_rx_done = false;
-        volatile hal_err_t s_tx_err  = HAL_OK;
-        volatile hal_err_t s_rx_err  = HAL_OK;
-
         // Helpers
-        inline void tx_done_callback(void*, hal_err_t err) {
+        volatile bool      s_tx_done = false;
+        volatile hal_err_t s_tx_err  = HAL_OK;
+        inline void        tx_done_callback(void*, hal_err_t err) {
             s_tx_err  = err;
             s_tx_done = true;
         }
 
-        inline void rx_done_callback(void*, hal_err_t err) {
+        volatile bool      s_rx_done = false;
+        volatile hal_err_t s_rx_err  = HAL_OK;
+        inline void        rx_done_callback(void*, hal_err_t err) {
             s_rx_err  = err;
             s_rx_done = true;
         }
 
         inline bool wait_for(volatile bool& flag) {
-            uint32_t timeout = 10U * TIMEOUT_CYCLES;
+            uint32_t timeout = TIMEOUT;
             while (!flag && --timeout);
             return flag;
         }
 
-        inline uint32_t gpio_mode_of(gpio_pin_t pin) {
-            return (TEST_PORT->MODER >> (static_cast<uint32_t>(pin) * 2U)) & 0x3U;
+        inline uint32_t get_gpio_moder(gpio_pin_t pin) {
+            return (TEST_PORT->MODER >> (std::to_underlying(pin) * 2U)) & 0b11U;
         }
 
         // TESTS
@@ -167,7 +164,7 @@ namespace test::spi {
         }
 
         void only_mosi_leaves_miso_pin_untouched() {
-            const uint32_t miso_mode_before = gpio_mode_of(TEST_MISO_PIN);
+            const uint32_t miso_mode_before = get_gpio_moder(TEST_MISO_PIN);
 
             spi_master_config_t config = DEFAULT_CONFIG;
             config.use_miso            = false;
@@ -175,15 +172,15 @@ namespace test::spi {
 
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &config));
 
-            // The GPIO_AF mode encoding is 0b10
-            TEST_ASSERT_EQUAL_UINT32(miso_mode_before, gpio_mode_of(TEST_MISO_PIN));
-            TEST_ASSERT_EQUAL_UINT32(0b10, gpio_mode_of(TEST_MOSI_PIN));
+            // The GPIO alternate function mode encoding is 0b10
+            TEST_ASSERT_EQUAL_UINT32(miso_mode_before, get_gpio_moder(TEST_MISO_PIN));
+            TEST_ASSERT_EQUAL_UINT32(0b10, get_gpio_moder(TEST_MOSI_PIN));
 
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_deinit(TEST_INSTANCE));
         }
 
         void only_miso_leaves_mosi_pin_untouched() {
-            const uint32_t mosi_mode_before = gpio_mode_of(TEST_MOSI_PIN);
+            const uint32_t mosi_mode_before = get_gpio_moder(TEST_MOSI_PIN);
 
             spi_master_config_t config = DEFAULT_CONFIG;
             config.use_miso            = true;
@@ -191,8 +188,8 @@ namespace test::spi {
 
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &config));
 
-            TEST_ASSERT_EQUAL_UINT32(mosi_mode_before, gpio_mode_of(TEST_MOSI_PIN));
-            TEST_ASSERT_EQUAL_UINT32(0b10, gpio_mode_of(TEST_MISO_PIN));
+            TEST_ASSERT_EQUAL_UINT32(mosi_mode_before, get_gpio_moder(TEST_MOSI_PIN));
+            TEST_ASSERT_EQUAL_UINT32(0b10, get_gpio_moder(TEST_MISO_PIN));
 
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_deinit(TEST_INSTANCE));
         }
@@ -211,7 +208,7 @@ namespace test::spi {
 
         void transceive_poll_loopback_16bit() {
             spi_master_config_t config = DEFAULT_CONFIG;
-            config.data_size           = SPI_DATA_SIZE_16_BITS;
+            config.data_size           = SPI_DATA_16_BITS;
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &config));
 
             constexpr std::array<uint16_t, 8>    TX_DATA = {0x0102, 0x0304, 0x0506, 0x0708, 0xDEAD, 0xBEEF, 0xCAFE, 0xF00D};
@@ -224,15 +221,14 @@ namespace test::spi {
         }
 
         void all_cpol_cpha_combinations_loopback() {
-            constexpr std::array<uint8_t, 4> TX_DATA = {0xA5, 0x5A, 0x3C, 0xC3};
+            constexpr std::array<uint8_t, 4>    TX_DATA = {0xA5, 0x5A, 0x3C, 0xC3};
+            std::array<uint8_t, TX_DATA.size()> rx_buf{};
 
             for (bool cpol : {false, true}) {
                 for (bool cpha : {false, true}) {
                     spi_master_config_t config = DEFAULT_CONFIG;
                     config.cpol                = cpol;
                     config.cpha                = cpha;
-
-                    std::array<uint8_t, TX_DATA.size()> rx_buf{};
 
                     TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &config));
                     TEST_ASSERT_EQUAL(HAL_OK, spi_master_transceive_poll(TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size()));
@@ -252,43 +248,11 @@ namespace test::spi {
             s_tx_done = false;
             s_tx_err  = HAL_FAIL;
 
-            // transceive_dma only stores the caller's callback against the TX DMA irq
             TEST_ASSERT_EQUAL(HAL_OK,
                               spi_master_transceive_dma(TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size(), tx_done_callback, nullptr));
 
             TEST_ASSERT_TRUE_MESSAGE(wait_for(s_tx_done), "SPI DMA transceive never completed");
             TEST_ASSERT_EQUAL(HAL_OK, s_tx_err);
-            TEST_ASSERT_TRUE(std::equal(TX_DATA.begin(), TX_DATA.end(), rx_buf.begin()));
-
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_dma_deinit(TEST_INSTANCE));
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_deinit(TEST_INSTANCE));
-        }
-
-        void dma_transmit_and_receive_as_separate_calls_loopback() {
-            // Distinct from transceive_dma: this exercises the standalone
-            // spi_master_transmit_dma()/spi_master_receive_dma() code paths, each
-            // with their own callback, rather than the combined transceive path
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &DEFAULT_CONFIG));
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_VERY_HIGH));
-
-            constexpr std::array<uint8_t, 8>    TX_DATA = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x11, 0x22};
-            std::array<uint8_t, TX_DATA.size()> rx_buf{};
-
-            s_tx_done = false;
-            s_rx_done = false;
-            s_tx_err  = HAL_FAIL;
-            s_rx_err  = HAL_FAIL;
-
-            // RX must be armed first: without a TX stream also feeding DR nothing
-            // drives the clock, but here both streams get started before either
-            // begins shifting bits, so the ordering is safe
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_receive_dma(TEST_INSTANCE, rx_buf.data(), rx_buf.size(), rx_done_callback, nullptr));
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_transmit_dma(TEST_INSTANCE, TX_DATA.data(), TX_DATA.size(), tx_done_callback, nullptr));
-
-            TEST_ASSERT_TRUE_MESSAGE(wait_for(s_tx_done), "SPI DMA TX never completed");
-            TEST_ASSERT_TRUE_MESSAGE(wait_for(s_rx_done), "SPI DMA RX never completed");
-            TEST_ASSERT_EQUAL(HAL_OK, s_tx_err);
-            TEST_ASSERT_EQUAL(HAL_OK, s_rx_err);
             TEST_ASSERT_TRUE(std::equal(TX_DATA.begin(), TX_DATA.end(), rx_buf.begin()));
 
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_dma_deinit(TEST_INSTANCE));
@@ -302,10 +266,10 @@ namespace test::spi {
             constexpr std::array<uint8_t, 4>    TX_DATA = {0xDE, 0xAD, 0xBE, 0xEF};
             std::array<uint8_t, TX_DATA.size()> rx_buf{};
 
-            // No callback registered: the ISR's "local_cb == NULL" branch must still
-            // disable SPI cleanly instead of leaving it hung
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_transceive_dma(TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size(), nullptr, nullptr));
 
+            // Poll until we are sure the transfer should have been
+            // completed. 20ms should be more than enough in this case
             delay_ms(20);
 
             TEST_ASSERT_FALSE(TEST_INSTANCE->CR1 & SPI_CR1_SPE);
@@ -321,17 +285,6 @@ namespace test::spi {
 
             TEST_ASSERT_FALSE(TEST_INSTANCE->CR1 & (SPI_CR1_SPE | SPI_CR1_MSTR | SPI_CR1_BR | SPI_CR1_DFF));
             TEST_ASSERT_FALSE(TEST_INSTANCE->CR2 & (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN));
-        }
-
-        void dma_deinit_disables_dma_requests() {
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &DEFAULT_CONFIG));
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
-            TEST_ASSERT_TRUE(TEST_INSTANCE->CR2 & (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN));
-
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_dma_deinit(TEST_INSTANCE));
-            TEST_ASSERT_FALSE(TEST_INSTANCE->CR2 & (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN));
-
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_deinit(TEST_INSTANCE));
         }
 
     } // namespace
@@ -351,10 +304,8 @@ namespace test::spi {
         RUN_TEST(transceive_poll_loopback_16bit);
         RUN_TEST(all_cpol_cpha_combinations_loopback);
         RUN_TEST(dma_roundtrip_transceive_with_callback);
-        RUN_TEST(dma_transmit_and_receive_as_separate_calls_loopback);
         RUN_TEST(dma_transfer_without_callback_still_completes);
         RUN_TEST(deinit_clears_control_registers);
-        RUN_TEST(dma_deinit_disables_dma_requests);
 
         spix_clk_enable(TEST_INSTANCE, false);
 

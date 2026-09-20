@@ -44,7 +44,7 @@ namespace test::crc {
         }
 
         inline bool wait_for_dma_done() {
-            uint32_t timeout = 10U * TIMEOUT_CYCLES;
+            uint32_t timeout = TIMEOUT;
             while (!s_dma_done && --timeout);
             return s_dma_done;
         }

@@ -10,6 +10,7 @@ extern "C" {
 #include "stm32f411xe.h"
 #include "drivers/dma_types.h"
 #include "drivers/gpio.h"
+#include "utils/board.h"
 #include "utils/err.h"
 
 #include <stdint.h>
@@ -19,16 +20,13 @@ extern "C" {
 typedef enum : uint8_t {
     UART_OVER_SAMPLING_8  = 8,
     UART_OVER_SAMPLING_16 = 16,
-} uart_over_sample_t;
+} uart_sample_t;
 
 typedef struct {
-    uint32_t baud_rate;
-
-    GPIO_TypeDef* gpio_port;
-    gpio_pin_t    tx_pin;
-    gpio_pin_t    rx_pin;
-
-    uart_over_sample_t over_sampling;
+    uart_sample_t over_sampling;
+    uint32_t      baud_rate;
+    board_pin_t   tx_pin;
+    board_pin_t   rx_pin;
 } uart_config_t;
 
 // General API

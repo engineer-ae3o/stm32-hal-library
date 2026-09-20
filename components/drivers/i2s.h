@@ -10,6 +10,7 @@ extern "C" {
 #include "stm32f411xe.h"
 #include "drivers/gpio.h"
 #include "drivers/dma.h"
+#include "utils/board.h"
 #include "utils/clock.h"
 #include "utils/err.h"
 
@@ -31,46 +32,41 @@ typedef enum : uint8_t {
 } i2s_mode_t;
 
 typedef enum : uint8_t {
-    I2S_DATA_16_BITS_FRAME_16_BITS = 0b00,
-    I2S_DATA_16_BITS_FRAME_32_BITS = 0b11,
-    I2S_DATA_24_BITS_FRAME_32_BITS = 0b01,
-    I2S_DATA_32_BITS_FRAME_32_BITS = 0b10,
+    I2S_DATA_16_BITS_FRAME_16_BITS = (0b00U << SPI_I2SCFGR_DATLEN_Pos) | (0b0U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b00, CHLEN = 0b0
+    I2S_DATA_16_BITS_FRAME_32_BITS = (0b00U << SPI_I2SCFGR_DATLEN_Pos) | (0b1U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b00, CHLEN = 0b1
+    I2S_DATA_24_BITS_FRAME_32_BITS = (0b01U << SPI_I2SCFGR_DATLEN_Pos) | (0b1U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b01, CHLEN = 0b1
+    I2S_DATA_32_BITS_FRAME_32_BITS = (0b10U << SPI_I2SCFGR_DATLEN_Pos) | (0b1U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b10, CHLEN = 0b1
 } i2s_frame_t;
 
-// Full duplex not supported
 typedef enum : uint8_t {
-    I2S_DIR_HALF_DUPLEX_TX = 0b10,
-    I2S_DIR_HALF_DUPLEX_RX = 0b11,
+    I2S_MASTER_TRANSMIT = 0b10,
+    I2S_MASTER_RECEIVE  = 0b11,
 } i2s_dir_t;
 
-typedef enum : uint8_t {
-    I2S_FREQ_8kHz = 0,
-    I2S_FREQ_16kHz,
-    I2S_FREQ_22kHz, // 22.05kHz
-    I2S_FREQ_32kHz,
-    I2S_FREQ_44kHz, // 44.1kHz
-    I2S_FREQ_48kHz,
-    I2S_FREQ_96kHz,
-    I2S_FREQ_192kHz,
-    I2S_FREQ_COUNT,
-} i2s_frequency_t;
+typedef enum : uint32_t {
+    I2S_FREQ_8kHz  = 8'000,
+    I2S_FREQ_16kHz = 16'000,
+    I2S_FREQ_22kHz = 22'050,
+    I2S_FREQ_32kHz = 32'000,
+    I2S_FREQ_44kHz = 44'100,
+    I2S_FREQ_48kHz = 48'000,
+    I2S_FREQ_96kHz = 96'000,
+} i2s_freq_t;
 
 typedef struct {
-    i2s_dir_t       direction;
-    i2s_mode_t      mode;
-    i2s_frequency_t frequency;
-    i2s_frame_t     frame;
-    audio_clock_t   audio_pll_type;
+    i2s_dir_t     direction;
+    i2s_mode_t    mode;
+    i2s_freq_t    frequency;
+    i2s_frame_t   frame;
+    audio_clock_t audio_clock;
 
     bool cpol;
     bool use_mck;
 
-    gpio_pin_t mck_pin;
-    gpio_pin_t ws_pin;
-    gpio_pin_t sd_pin;
-    gpio_pin_t sck_pin;
-
-    GPIO_TypeDef* gpio_port;
+    board_pin_t ws_pin;
+    board_pin_t sd_pin;
+    board_pin_t mclk_pin;
+    board_pin_t sclk_pin;
 } i2s_master_config_t;
 
 
@@ -82,8 +78,8 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority);
 hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle);
 
 // DMA backed oneshot transfers API.
-hal_err_t i2s_master_transmit(I2S_TypeDef* handle, const void* buf, uint16_t size, dma_done_cb_t callback, void* arg);
-hal_err_t i2s_master_receive(I2S_TypeDef* handle, void* buf, uint16_t size, dma_done_cb_t callback, void* arg);
+hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* data, uint16_t size, dma_done_cb_t callback, void* arg);
+hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* data, uint16_t size, dma_done_cb_t callback, void* arg);
 
 // Double buffering API.
 // NOTE: These APIs are mutually exclusive with the DMA oneshot functions

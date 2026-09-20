@@ -9,9 +9,9 @@
 
 
 typedef enum : uint8_t {
-    DMA_DIR_P_M = 0b00, // Peripheral to memory
-    DMA_DIR_M_P = 0b01, // Memory to peripheral
-    DMA_DIR_M_M = 0b10, // Memory to memory
+    DMA_DIR_P2M = 0b00, // Peripheral to memory
+    DMA_DIR_M2P = 0b01, // Memory to peripheral
+    DMA_DIR_M2M = 0b10, // Memory to memory
 } dma_direction_t;
 
 typedef enum : uint8_t {
@@ -28,17 +28,17 @@ typedef enum : uint8_t {
 } dma_data_size_t;
 
 typedef enum : uint8_t {
-    DMA_MODE_FIFO,
+    DMA_MODE_FIFO = 0,
     DMA_MODE_DIRECT,
 } dma_direct_mode_t;
 
 typedef enum : uint8_t {
-    DMA_FLOW_CONTROLLER_DMA,        // The DMA controller is the flow controller
+    DMA_FLOW_CONTROLLER_DMA = 0,    // The DMA controller is the flow controller
     DMA_FLOW_CONTROLLER_PERIPHERAL, // The peripheral is the flow controller
 } dma_flow_control_t;
 
 typedef enum : uint8_t {
-    DMA_MODE_NO_CIRCULAR,
+    DMA_MODE_ONESHOT = 0,
     DMA_MODE_CIRCULAR,
     DMA_MODE_DOUBLE_BUFFER,
 } dma_circ_mode_t;
@@ -93,8 +93,8 @@ typedef struct {
     bool deconfigure;   // Set to deinitialize the given stream. All other fields are ignored if this is true
     bool enable_stream; // Enable the DMA stream immediately after configuring it
 
-    bool per_addr_incement; // Increment the peripheral address (or source address in memory to memory transfers)
-    bool mem_addr_incement; // Increment the memory address(es) (or destination address(es) in memory to memory transfers)
+    bool per_addr_incement; // Increment the peripheral address (or source address in M2M transfers)
+    bool mem_addr_incement; // Increment the memory address(es) (or destination address(es) in M2M transfers)
 
     bool tc_irq_enable;  // Transfer complete interrupt enable
     bool ht_irq_enable;  // Half transfer interrupt enable
@@ -114,9 +114,9 @@ typedef struct {
     uint32_t channel;
     uint32_t nvic_irq_priority;
 
-    const volatile void* per_addr;
-    const volatile void* mem_buf_0;
-    const volatile void* mem_buf_1;
+    const volatile void* per_addr;  // Peripheral address (or source address in M2M transfers)
+    const volatile void* mem_buf_0; // Memory address 0 (or destination address in M2M transfers)
+    const volatile void* mem_buf_1; // Memory address 1
 } dma_stream_config_t;
 
 
