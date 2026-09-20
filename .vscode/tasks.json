@@ -4,7 +4,7 @@
         {
             "label": "Build",
             "type": "shell",
-            "command": "cmake --build --preset debug-tests",
+            "command": "cmake --build --preset tests",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -16,7 +16,7 @@
         {
             "label": "Flash",
             "type": "shell",
-            "command": "openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c \"program ${workspaceFolder}/build/debug-tests/f411-hal.elf verify reset exit\"",
+            "command": "openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c \"program ${workspaceFolder}/build/tests/f411-hal.elf verify reset exit\"",
             "dependsOn": "Build",
             "problemMatcher": []
         }

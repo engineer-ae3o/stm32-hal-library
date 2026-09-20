@@ -24,8 +24,7 @@ hal_err_t dma_memcpy(void* dest, const void* src, uint16_t len, volatile memcpy_
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (s_user_callback || s_dma_done_flag) {
-        // A DMA transaction is still ongoing
+    if (s_memcpy_dma_map.stream->CR & DMA_SxCR_EN) {
         return HAL_ERR_INVALID_STATE;
     }
 
@@ -72,8 +71,7 @@ hal_err_t dma_memcpy_cb(void* dest, const void* src, uint16_t len, dma_done_cb_t
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (s_user_callback || s_dma_done_flag) {
-        // A DMA transaction is still ongoing
+    if (s_memcpy_dma_map.stream->CR & DMA_SxCR_EN) {
         return HAL_ERR_INVALID_STATE;
     }
 

@@ -104,8 +104,6 @@ void NMI_Handler(void) {
 
         // Reconfigure the main PLL back to whatever value it was on, but its HSI equivalent
         const system_clock_t system_clock = get_system_core_clock_type();
-        const audio_clock_t  audio_clock  = get_audio_pll_clock_type();
-
         switch (system_clock) {
             case HSE_PLL_100MHz:
                 system_core_clock_config(HSI_PLL_100MHz);
@@ -125,13 +123,13 @@ void NMI_Handler(void) {
             case HSE_PLL_DIRECT:
                 system_core_clock_config(HSI_PLL_MATCH_HSE);
                 break;
+            case HSE_PLL_MATCH_HSI:
+                system_core_clock_config(HSI_PLL_DIRECT);
+                break;
             default:
                 system_core_clock_config(system_clock);
                 break;
         }
-
-        // Reconfigure the audio PLL to run at whatever value it was before the CSS fault
-        audio_pll_clock_config(audio_clock);
 
         LOGI(TAG, "Resuming normal operation with the HSI with a system clock of %luMHz", get_system_core_clock() / 1'000'000U);
     }

@@ -30,6 +30,10 @@ hal_err_t crc_get(const uint32_t* data, size_t size, uint32_t* crc32) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    if (s_crc_dma_map.stream->CR & DMA_SxCR_EN) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
     // Reset the CRC peripheral
     CRC->CR |= CRC_CR_RESET;
     __DSB();
@@ -49,8 +53,7 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, dma_priority_t priori
         return HAL_ERR_INVALID_ARG;
     }
 
-    // If s_user_callback points to a valid address, a DMA transaction is still ongoing
-    if (s_user_callback) {
+    if (s_crc_dma_map.stream->CR & DMA_SxCR_EN) {
         return HAL_ERR_INVALID_STATE;
     }
 

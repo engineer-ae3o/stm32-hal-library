@@ -85,8 +85,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
             local_cb(user_data);
         }
 
-        // Clear the JEOCIE and JEOC bits since the interrupt has been serviced
-        handle->SR &= ~ADC_SR_JEOC;
+        // Clear the JEOCIE bit since the interrupt has been serviced and its oneoff
         handle->CR1 &= ~ADC_CR1_JEOCIE;
     }
 
@@ -682,6 +681,8 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data,
             return HAL_ERR_INVALID_ARG;
     }
 
+    // Clear the JEOC bit since the data has been read
+    handle->SR &= ~ADC_SR_JEOC;
     return HAL_OK;
 }
 

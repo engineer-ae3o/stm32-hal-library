@@ -25,8 +25,8 @@ jobs:
           fi
           echo "$FILES" | xargs clang-format-22 --style=file --dry-run --Werror
 
-  build-debug-tests:
-    name: Build (debug-tests)
+  build-tests:
+    name: Build -tests)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,10 +42,10 @@ jobs:
           sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
 
       - name: Configure
-        run: cmake --preset debug-tests
+        run: cmake --preset tests
 
       - name: Build
-        run: cmake --build --preset debug-tests
+        run: cmake --build --preset tests
 
   build-debug:
     name: Build (debug)
@@ -108,7 +108,7 @@ jobs:
           sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi cppcheck
 
       - name: Configure Presets
-        run: cmake --preset debug-tests
+        run: cmake --preset tests
 
       - name: Run Cppcheck Target
-        run: cmake --build --preset debug-tests --target cppcheck
+        run: cmake --build --preset tests --target cppcheck

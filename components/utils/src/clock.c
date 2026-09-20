@@ -425,6 +425,7 @@ done:
 
 // System Clock Configuration
 void system_core_clock_config(system_clock_t clock) {
+    ASSERT(clock < ARRAY_SIZE(s_system_clock_preset_lut));
     system_core_clock_config_preset(&s_system_clock_preset_lut[clock]);
     s_system_core_clock_type = clock;
 }
@@ -484,6 +485,7 @@ void system_core_clock_update(void) {
 
 // Audio PLL Configuration
 void audio_pll_clock_config(audio_clock_t clock) {
+    ASSERT(clock < ARRAY_SIZE(s_audio_clock_preset_lut));
     audio_pll_clock_config_preset(&s_audio_clock_preset_lut[clock]);
     s_audio_pll_clock_type = clock;
 }

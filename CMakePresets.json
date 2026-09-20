@@ -7,11 +7,11 @@
     },
     "configurePresets": [
         {
-            "name": "debug-tests",
+            "name": "tests",
             "displayName": "Debug (with tests)",
             "description": "Debug build with the Unity test suite compiled in",
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/debug-tests",
+            "binaryDir": "${sourceDir}/build/tests",
             "toolchainFile": "${sourceDir}/gcc_toolchain.cmake",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
@@ -45,8 +45,8 @@
     ],
     "buildPresets": [
         {
-            "name": "debug-tests",
-            "configurePreset": "debug-tests"
+            "name": "tests",
+            "configurePreset": "tests"
         },
         {
             "name": "debug",

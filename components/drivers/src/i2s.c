@@ -328,7 +328,7 @@ hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* data, uin
     TRY(spi_master_register_callback(callback, arg, idx, true));
 
     // Enable the DMA stream, SPI requests to the DMA controller,
-    // and finally the I2S peripheral The order mattersa lot.
+    // and finally the I2S peripheral. The order is important.
     TRY(dma_enable_stream(stream));
     ENABLE_SPI_TX_DMA();
     ENABLE_I2S();
@@ -371,7 +371,7 @@ hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* data, uint16_t s
     TRY(spi_master_register_callback(callback, arg, idx, false));
 
     // Enable the DMA stream, SPI requests to the DMA controller,
-    // and finally the I2S peripheral. The order mattersa lot.
+    // and finally the I2S peripheral. The order is important.
     TRY(dma_enable_stream(stream));
     ENABLE_SPI_RX_DMA();
     ENABLE_I2S();

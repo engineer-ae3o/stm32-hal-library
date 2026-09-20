@@ -44,10 +44,9 @@ typedef enum : uint8_t {
     HAL_ERR_UART_TC_FAILED_TO_SET, // The TC bit in the ISR failed to set even after the DMA TX done irq had fired
 
     // DMA extensions
-    HAL_ERR_DMA_TE,          // DMA transfer error
-    HAL_ERR_DMA_DME,         // Direct mode error
-    HAL_ERR_DMA_FE,          // FIFO mode error
-    HAL_ERR_DMA_ERR_UNKNOWN, // A DMA error occurred, but its sources are unknown
+    HAL_ERR_DMA_TE,  // DMA transfer error
+    HAL_ERR_DMA_DME, // Direct mode error
+    HAL_ERR_DMA_FE,  // FIFO mode error
 
     // Sentinel value
     HAL_ERR_COUNT,
