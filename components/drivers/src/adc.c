@@ -1,4 +1,5 @@
 #include "stm32f411xe.h"
+#include "drivers/adc_types.h"
 #include "utils/common.h"
 #include "utils/board.h"
 #include "drivers/dma.h"
@@ -782,6 +783,11 @@ hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // All the calibration data were measured at a resolution of 12 bits
+    // So we have to match that resolution to get the correct readings
+    const adc_resolution_t resolution_before = (handle->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos;
+    handle->CR1                              = (handle->CR1 & ~ADC_CR1_RES) | (ADC_RES_12_BITS << ADC_CR1_RES_Pos);
+
     uint16_t raw_vref = 0;
     TRY(adc_get_v_ref_internal(handle, &raw_vref));
 
@@ -791,6 +797,9 @@ hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
     // Calculate the actual VDDA from the calibration data
     *vdda = (3.3F * (float)VREFINT_CALIBRATION_VALUE) / (float)raw_vref;
 
+    // Reapply the old resolution so as not to interfere with any user settings
+    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) | (uint32_t)(resolution_before << ADC_CR1_RES_Pos);
+
     return HAL_OK;
 }
 
@@ -799,15 +808,20 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // All the calibration data were measured at a resolution of 12 bits
+    // So we have to match that resolution to get the correct readings
+    const adc_resolution_t resolution_before = (handle->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos;
+    handle->CR1                              = (handle->CR1 & ~ADC_CR1_RES) | (ADC_RES_12_BITS << ADC_CR1_RES_Pos);
+
     // Get the raw V_ref_int
     uint16_t v_ref_int = 0;
     TRY(adc_get_v_ref_internal(handle, &v_ref_int));
 
-    // Read the raw ADC temperature value next
+    // Read the raw ADC temperature sensor data
     uint16_t raw_temp = 0;
     TRY(adc_get_temperature(handle, &raw_temp));
 
-    // Normalize the raw temperature sensor data read
+    // Normalize the raw temperature sensor data
     const float normalized = ((float)VREFINT_CALIBRATION_VALUE / (float)v_ref_int) * (float)raw_temp;
 
     // Get the temperature calibration values from their locations in memory
@@ -817,6 +831,9 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
 
     // Get the temperature using linear interpolation with the calibration data at 110C and 30C
     *temp_celsius = (((110.0F - 30.0F) / (float)(temp_cal_110c - temp_cal_30c)) * (normalized - (float)temp_cal_30c)) + 30.0F;
+
+    // Reapply the old resolution so as not to interfere with any user settings
+    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) | (uint32_t)(resolution_before << ADC_CR1_RES_Pos);
 
     return HAL_OK;
 }
