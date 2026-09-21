@@ -180,7 +180,7 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Get the frequency of the bus clock on which the xcurrent uart peripheral instance lives on
+    // Get the frequency of the bus clock on which the current uart peripheral instance lives on
     const uint32_t bus_clock_freq_hz = (handle == USART1 || handle == USART6) ? get_apb2_core_clock() : get_apb1_core_clock();
 
     // Baud rate generator: Get the UART bus divider from the target baud rate and bus clock frequency
@@ -217,13 +217,13 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Configure the GPIO pins
     TRY(gpiox_clk_enable(config->tx_pin.port, true));
-    TRY(gpio_set_alternate_function(config->tx_pin.port, config->tx_pin.pin, config->tx_pin.af));
+    gpio_set_alternate_function(config->tx_pin.port, config->tx_pin.pin, config->tx_pin.af);
     gpio_enable_pullups(config->tx_pin.port, config->tx_pin.pin, true);
     gpio_set_speed_mode(config->tx_pin.port, config->tx_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->tx_pin.port, config->tx_pin.pin, GPIO_PUSH_PULL);
 
     TRY(gpiox_clk_enable(config->rx_pin.port, true));
-    TRY(gpio_set_alternate_function(config->rx_pin.port, config->rx_pin.pin, config->rx_pin.af));
+    gpio_set_alternate_function(config->rx_pin.port, config->rx_pin.pin, config->rx_pin.af);
     gpio_enable_pullups(config->rx_pin.port, config->rx_pin.pin, true);
     gpio_set_speed_mode(config->rx_pin.port, config->rx_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->rx_pin.port, config->rx_pin.pin, GPIO_PUSH_PULL);

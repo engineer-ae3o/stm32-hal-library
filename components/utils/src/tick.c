@@ -14,14 +14,14 @@ void systick_init(void) {
     static bool first_init = true;
     if (gnu_unlikely(first_init)) {
         LOGI("Tick",
-             "Initializing the SysTick as the tick timer source with an HCLK of %luMHz from the %s",
+             "Initializing the SysTick timer as the tick timer source with an HCLK of %luMHz from the %s",
              system_core_clock / 1'000'000U,
              is_sysclk_on_hse() ? "HSE" : "HSI");
         NVIC_SetPriority(SysTick_IRQn, SysTick_NVIC_IRQ_PRIORITY);
         first_init = false;
     } else {
         LOGI("Tick",
-             "Reinitializing the SysTick as the tick timer source with an HCLK of %luMHz from the %s",
+             "Reinitializing the SysTick timer with an HCLK of %luMHz from the %s",
              system_core_clock / 1'000'000U,
              is_sysclk_on_hse() ? "HSE" : "HSI");
     }

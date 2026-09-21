@@ -42,11 +42,17 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
 [[__gnu__::__always_inline__]] static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream) {
     // Get the stream's DMA controller and NVIC interrupt type
     dma_stream_info_t stream_info;
-    TRY(dma_get_stream_info(stream, &stream_info));
+    hal_err_t         ret = dma_get_stream_info(stream, &stream_info);
+    if (ret != HAL_OK) {
+        return ret;
+    }
 
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
-    TRY(dma_get_stream_flags(stream_info.controller, &flags, stream_info.stream_number));
+    ret = dma_get_stream_flags(stream_info.controller, &flags, stream_info.stream_number);
+    if (ret != HAL_OK) {
+        return ret;
+    }
 
     const uint32_t status         = *flags.irq_status_register;
     uint32_t       flags_to_clear = 0;
@@ -96,7 +102,11 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
         return error;
     }
 
-    TRY(dma_disable_stream(stream));
+    ret = dma_disable_stream(stream);
+    if (ret != HAL_OK) {
+        return ret;
+    }
+
     return error;
 }
 

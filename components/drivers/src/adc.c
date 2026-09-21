@@ -1,3 +1,4 @@
+#include "drivers/dma_types.h"
 #include "stm32f411xe.h"
 #include "drivers/adc_types.h"
 #include "utils/common.h"
@@ -480,9 +481,9 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     }
 
     // Enable ADC continuous sampling and DMA mode
-    // Set the DDS bit only if we are in circular mode so the ADC continues
-    // to send DMA requests even after the first buffer is filled.
-    if (config->circular_mode == DMA_MODE_DOUBLE_BUFFER || config->circular_mode == DMA_MODE_CIRCULAR) {
+    // Set the DDS bit only if we are in circular or double buffering mode so
+    // the ADC continues to send DMA requests even after the first buffer is filled.
+    if (config->circular_mode != DMA_MODE_ONESHOT) {
         handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS);
     } else {
         handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);

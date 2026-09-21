@@ -26,6 +26,15 @@ static const IRQn_Type s_exti_irq_lut[] = {
     [GPIO_PIN_15] = EXTI15_10_IRQn,
 };
 
+typedef struct {
+    gpio_exti_cb_t callback;
+    void*          arg;
+} gpio_irq_ctx_t;
+
+static gpio_irq_ctx_t s_gpio_irq_ctx[ARRAY_SIZE(s_exti_irq_lut)] = {};
+
+
+// Public API
 hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
     if (enable) {
         if (port == GPIOA) {
@@ -84,26 +93,20 @@ void gpio_set_analog(GPIO_TypeDef* port, gpio_pin_t pin) {
     }
 }
 
-hal_err_t gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t alt_val) {
-    if (port == NULL) {
-        return HAL_ERR_INVALID_ARG;
+void gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t alt_val) {
+    if (port) {
+        // Set the MODER for alternate mode
+        port->MODER = (port->MODER & ~(0b11UL << (pin * 2))) | (0b10UL << (pin * 2));
+
+        // Set the specified alternate function
+        if (pin <= GPIO_PIN_7) {
+            port->AFR[0] &= ~(0xFUL << (pin * 4UL));
+            port->AFR[0] |= ((alt_val & 0xFUL) << (pin * 4UL));
+        } else {
+            port->AFR[1] &= ~(0xFUL << ((pin - 8) * 4UL));
+            port->AFR[1] |= ((alt_val & 0xFUL) << ((pin - 8) * 4UL));
+        }
     }
-
-    // Set the MODER for alternate mode
-    port->MODER = (port->MODER & ~(0b11UL << (pin * 2))) | (0b10UL << (pin * 2));
-
-    // Set the specified alternate function
-    if (pin <= GPIO_PIN_7) {
-        port->AFR[0] &= ~(0xFUL << (pin * 4UL));
-        port->AFR[0] |= ((alt_val & 0xFUL) << (pin * 4UL));
-    } else if (pin <= GPIO_PIN_15) {
-        port->AFR[1] &= ~(0xFUL << ((pin - 8) * 4UL));
-        port->AFR[1] |= ((alt_val & 0xFUL) << ((pin - 8) * 4UL));
-    } else {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    return HAL_OK;
 }
 
 void gpio_enable_pullups(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
@@ -158,7 +161,7 @@ bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin) {
     return ((port->IDR >> pin) & 0x01U);
 }
 
-hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigger_t edge) {
+hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigger_t edge, gpio_exti_cb_t callback, void* arg) {
     // Extract rising and falling bits from edge variable
     const bool rising  = (uint8_t)edge & 0x1U;
     const bool falling = ((uint8_t)edge >> 0b1U) & 0x1U;
@@ -193,8 +196,7 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigg
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
     // Set external interrupt configuration register
-    SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
-    SYSCFG->EXTICR[reg_idx] |= (uint32_t)(port_code << bit_pos);
+    SYSCFG->EXTICR[reg_idx] = (SYSCFG->EXTICR[reg_idx] & ~(0xFUL << bit_pos)) | (uint32_t)(port_code << bit_pos);
 
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(0b1UL << pin);
@@ -216,33 +218,62 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigg
     NVIC_ClearPendingIRQ(s_exti_irq_lut[pin]);
     NVIC_EnableIRQ(s_exti_irq_lut[pin]);
 
-    // Unmask the EXTi interrupt for the pin
+    // Register the pin's interrupt handler
+    s_gpio_irq_ctx[pin].callback = callback;
+    s_gpio_irq_ctx[pin].arg      = arg;
+
+    // Unmask the EXTI interrupt for the pin
     EXTI->IMR |= (0b1UL << pin);
 
     return HAL_OK;
 }
 
-void gpio_clear_interrupt(GPIO_TypeDef* port, gpio_pin_t pin) {
-    if (port) {
-        // Extract register index and bit position
-        const uint8_t reg_idx = pin / 4;
-        const uint8_t bit_pos = (pin % 4) * 4;
+void gpio_clear_interrupt(gpio_pin_t pin) {
+    // Extract register index and bit position
+    const uint8_t reg_idx = pin / 4;
+    const uint8_t bit_pos = (pin % 4) * 4;
 
-        // Clear external interrupt configuration register
-        SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
+    // Clear external interrupt configuration register
+    SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
 
-        // Clear both interrupt edge registers
-        EXTI->RTSR &= ~(0b1UL << pin);
-        EXTI->FTSR &= ~(0b1UL << pin);
+    // Clear both interrupt edge registers
+    EXTI->RTSR &= ~(0b1UL << pin);
+    EXTI->FTSR &= ~(0b1UL << pin);
 
-        // Clear interrupt flag
-        EXTI->PR = (0b1UL << pin);
+    // Clear interrupt flag
+    EXTI->PR = (0b1UL << pin);
 
-        // Mask interrupts for the pin
-        EXTI->IMR &= ~(0b1UL << pin);
-    }
+    // Mask interrupts for the pin
+    EXTI->IMR &= ~(0b1UL << pin);
+
+    // Clear the pin's interrupt handler
+    s_gpio_irq_ctx[pin].callback = NULL;
+    s_gpio_irq_ctx[pin].arg      = NULL;
 }
 
-IRQn_Type gpio_get_pin_nvic_irq_type(gpio_pin_t pin) {
+IRQn_Type gpio_get_nvic_irq_type(gpio_pin_t pin) {
     return s_exti_irq_lut[pin];
+}
+
+
+// Handle the GPIO EXTI irqs
+void EXTI0_IRQHandler(void) {
+}
+
+void EXTI1_IRQHandler(void) {
+}
+
+void EXTI2_IRQHandler(void) {
+}
+
+void EXTI3_IRQHandler(void) {
+}
+
+void EXTI4_IRQHandler(void) {
+}
+
+void EXTI9_5_IRQHandler(void) {
+}
+
+void EXTI15_10_IRQHandler(void) {
 }

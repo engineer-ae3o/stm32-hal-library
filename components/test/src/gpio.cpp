@@ -126,7 +126,7 @@ namespace test::gpio {
             constexpr uint32_t EXPECTED_NIBBLE = alternate_value & 0xFU; // Only the low nibble should survive
 
             for (const auto pin : ALL_PINS) {
-                TEST_ASSERT_EQUAL(HAL_OK, gpio_set_alternate_function(SCRATCH_PORT, pin, alternate_value));
+                gpio_set_alternate_function(SCRATCH_PORT, pin, alternate_value);
                 TEST_ASSERT_EQUAL_UINT32(0b10U, get_mode_register_bits(SCRATCH_PORT, pin));
 
                 if (pin <= GPIO_PIN_7) {
@@ -139,8 +139,6 @@ namespace test::gpio {
 
                 gpio_set_input(SCRATCH_PORT, pin);
             }
-
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, gpio_set_alternate_function(nullptr, GPIO_PIN_0, 0));
 
             reset_port(SCRATCH_PORT);
             enable_all_port_clocks(false);
@@ -254,9 +252,9 @@ namespace test::gpio {
             constexpr uint8_t    BIT_POS = (PIN % 4) * 4;
 
             for (const auto& pc : PORTS) {
-                TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(pc.port, PIN, GPIO_RISING_FALLING_EDGE));
+                gpio_set_interrupt(pc.port, PIN, GPIO_RISING_FALLING_EDGE, nullptr, nullptr);
                 TEST_ASSERT_EQUAL_UINT32(pc.code, (SYSCFG->EXTICR[REG_IDX] >> BIT_POS) & 0xFUL);
-                gpio_clear_interrupt(pc.port, PIN);
+                gpio_clear_interrupt(PIN);
             }
 
             struct edge_case_t {
@@ -271,14 +269,14 @@ namespace test::gpio {
             }};
 
             for (const auto& e : EDGES) {
-                TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(GPIOA, PIN, e.edge));
+                TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(GPIOA, PIN, e.edge, nullptr, nullptr));
                 TEST_ASSERT_EQUAL(e.rising, (EXTI->RTSR & (1UL << PIN)) != 0);
                 TEST_ASSERT_EQUAL(e.falling, (EXTI->FTSR & (1UL << PIN)) != 0);
                 TEST_ASSERT_TRUE(EXTI->IMR & (1UL << PIN));
-                gpio_clear_interrupt(GPIOA, PIN);
+                gpio_clear_interrupt(PIN);
             }
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, gpio_set_interrupt(nullptr, PIN, GPIO_RISING_FALLING_EDGE));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, gpio_set_interrupt(nullptr, PIN, GPIO_RISING_FALLING_EDGE, nullptr, nullptr));
 
             reset_port(SCRATCH_PORT);
             enable_all_port_clocks(false);
@@ -296,14 +294,14 @@ namespace test::gpio {
             // The register index is 1, so the second register, that is EXTICR2. So
             // SYSCFG_EXTICR2_EXTI5. It's port B, so SYSCFG_EXTICR2_EXTI5_PB.
 
-            TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(PORT, PIN, GPIO_RISING_FALLING_EDGE));
+            TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(PORT, PIN, GPIO_RISING_FALLING_EDGE, nullptr, nullptr));
 
             TEST_ASSERT_EQUAL_UINT32(SYSCFG_EXTICR2_EXTI5_PB, (SYSCFG->EXTICR[REG_IDX] & SYSCFG_EXTICR2_EXTI5));
             TEST_ASSERT_EQUAL_UINT32(EXTI_RTSR_TR5, (EXTI->RTSR & EXTI_RTSR_TR5));
             TEST_ASSERT_EQUAL_UINT32(EXTI_FTSR_TR5, (EXTI->FTSR & EXTI_FTSR_TR5));
             TEST_ASSERT_EQUAL_UINT32(EXTI_IMR_MR5, (EXTI->IMR & EXTI_IMR_MR5));
 
-            gpio_clear_interrupt(PORT, PIN);
+            gpio_clear_interrupt(PIN);
 
             TEST_ASSERT_EQUAL_UINT32(0, (SYSCFG->EXTICR[REG_IDX] & SYSCFG_EXTICR2_EXTI5));
             TEST_ASSERT_EQUAL_UINT32(0, (EXTI->RTSR & EXTI_RTSR_TR5));
