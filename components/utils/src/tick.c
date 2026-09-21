@@ -50,13 +50,16 @@ void dwt_cnt_init(void) {
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-static atomic_ulong s_tick_counter = 0;
+static volatile uint64_t s_tick_counter = 0;
 
 uint64_t ms_since_boot(void) {
-    // Convert to milliseconds
-    return ((uint64_t)atomic_load_explicit(&s_tick_counter, memory_order_relaxed) * 1000ULL) / TICK_RATE_Hz;
+    const uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    const uint64_t ticks = s_tick_counter;
+    __set_PRIMASK(primask);
+    return (ticks * 1000ULL) / TICK_RATE_Hz;
 }
 
 void SysTick_Handler(void) {
-    atomic_fetch_add_explicit(&s_tick_counter, 1, memory_order_relaxed);
+    s_tick_counter++;
 }

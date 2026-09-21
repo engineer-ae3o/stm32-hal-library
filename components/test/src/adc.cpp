@@ -273,7 +273,7 @@ namespace test::adc {
                 const adc_continuous_config_t config{
                     .channels         = {.sequence = sequence.data(), .num_of_channels = count},
                     .trigger          = RG_TRIGGER_SOFTWARE,
-                    .trigger_polarity = RISING_EDGE,
+                    .trigger_polarity = ADC_TRIGGER_RISING_EDGE,
                     .buffer_1         = &buffer,
                     .buffer_2         = nullptr,
                     .buffer_size      = 1,
@@ -318,7 +318,7 @@ namespace test::adc {
             const adc_continuous_config_t base = {
                 .channels         = {.sequence = &channel, .num_of_channels = 1},
                 .trigger          = RG_TRIGGER_SOFTWARE,
-                .trigger_polarity = RISING_EDGE,
+                .trigger_polarity = ADC_TRIGGER_RISING_EDGE,
                 .buffer_1         = buffer.data(),
                 .buffer_2         = nullptr,
                 .buffer_size      = buffer.size(),
@@ -364,7 +364,7 @@ namespace test::adc {
             const adc_continuous_config_t config = {
                 .channels         = {.sequence = CHANNELS.data(), .num_of_channels = CHANNELS.size()},
                 .trigger          = RG_TRIGGER_SOFTWARE,
-                .trigger_polarity = RISING_EDGE,
+                .trigger_polarity = ADC_TRIGGER_RISING_EDGE,
                 .buffer_1         = buffer.data(),
                 .buffer_2         = nullptr,
                 .buffer_size      = static_cast<uint16_t>(buffer.size()),
@@ -410,7 +410,7 @@ namespace test::adc {
                 adc_injected_group_config_t config{};
                 config.channels         = {.sequence = channels.data(), .num_of_channels = count};
                 config.trigger          = JG_TRIGGER_SOFTWARE;
-                config.trigger_polarity = RISING_EDGE;
+                config.trigger_polarity = ADC_TRIGGER_RISING_EDGE;
                 for (size_t i = 0; i < count; i++) {
                     config.offsets[i] = static_cast<uint16_t>(10 * (i + 1));
                 }
@@ -477,7 +477,7 @@ namespace test::adc {
             adc_injected_group_config_t config{};
             config.channels         = {.sequence = channels.data(), .num_of_channels = channels.size()};
             config.trigger          = JG_TRIGGER_SOFTWARE;
-            config.trigger_polarity = RISING_EDGE;
+            config.trigger_polarity = ADC_TRIGGER_RISING_EDGE;
             config.on_conv_complete = injected_done_cb;
             config.arg              = nullptr;
 

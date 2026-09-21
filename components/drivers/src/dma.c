@@ -193,14 +193,21 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
         return HAL_OK;
     }
 
-    if ((config->direction == DMA_DIR_M2M) &&
-        (config->mode == DMA_MODE_DIRECT || config->flow_controller == DMA_FLOW_CONTROLLER_PERIPHERAL || config->circular_mode != DMA_MODE_ONESHOT)) {
-        return HAL_ERR_NOT_SUPPORTED;
+    // Some safety checks:
+    // When in direct mode, the data size on the memory and peripheral size must match
+    // When the direction is memory to memory, direct mode and the peripheral being the flow
+    // controller are not allowed. Additionally, circular and double buffering mode are not allowed.
+    // Also, if we are going to enable the stream here, the transfer size cannot be 0.
+    if ((config->mode == DMA_MODE_DIRECT && (config->per_data_size != config->mem_data_size)) ||
+        ((config->direction == DMA_DIR_M2M) && (config->mode == DMA_MODE_DIRECT || config->flow_controller == DMA_FLOW_CONTROLLER_PERIPHERAL ||
+                                                config->circular_mode != DMA_MODE_ONESHOT)) ||
+        (config->enable_stream && config->buffer_size == 0)) {
+        return HAL_ERR_NOT_ALLOWED;
     }
 
     uint32_t cr_mask = stream->CR;
-    cr_mask |= config->per_addr_incement ? DMA_SxCR_PINC : 0;
-    cr_mask |= config->mem_addr_incement ? DMA_SxCR_MINC : 0;
+    cr_mask |= config->per_addr_increment ? DMA_SxCR_PINC : 0;
+    cr_mask |= config->mem_addr_increment ? DMA_SxCR_MINC : 0;
     cr_mask |= config->tc_irq_enable ? DMA_SxCR_TCIE : 0;
     cr_mask |= config->te_irq_enable ? DMA_SxCR_TEIE : 0;
     cr_mask |= config->ht_irq_enable ? DMA_SxCR_HTIE : 0;

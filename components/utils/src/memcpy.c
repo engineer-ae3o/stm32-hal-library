@@ -33,8 +33,8 @@ hal_err_t dma_memcpy(void* dest, const void* src, uint16_t len, volatile memcpy_
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = true,
-        .mem_addr_incement = true,
+        .per_addr_increment = true,
+        .mem_addr_increment = true,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,
@@ -80,8 +80,8 @@ hal_err_t dma_memcpy_cb(void* dest, const void* src, uint16_t len, dma_done_cb_t
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = true,
-        .mem_addr_incement = true,
+        .per_addr_increment = true,
+        .mem_addr_increment = true,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,
@@ -114,13 +114,13 @@ hal_err_t dma_memcpy_cb(void* dest, const void* src, uint16_t len, dma_done_cb_t
 }
 
 memcpy_state_t dma_memcpy_wait_for_flag(volatile memcpy_state_t* dma_done_flag, uint32_t timeout) {
-    while ((*dma_done_flag == DMA_MEMCPY_NOT_DONE) && --timeout) {
+    for (uint32_t i = 0; i < timeout; i++) {
+        if (*dma_done_flag != DMA_MEMCPY_NOT_DONE) {
+            return *dma_done_flag;
+        }
         __WFI();
     }
-    if (timeout == 0) {
-        return DMA_MEMCPY_TIMEOUT;
-    }
-    return *dma_done_flag;
+    return DMA_MEMCPY_TIMEOUT;
 }
 
 dma_map_t dma_memcpy_get_stream_info(void) {

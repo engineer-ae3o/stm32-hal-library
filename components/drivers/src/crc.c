@@ -62,8 +62,8 @@ hal_err_t crc_get_dma(const uint32_t* data, uint16_t size, dma_priority_t priori
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = true,
-        .mem_addr_incement = false,
+        .per_addr_increment = true,
+        .mem_addr_increment = false,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,

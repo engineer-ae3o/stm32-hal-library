@@ -71,7 +71,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
     if ((handle->SR & ADC_SR_JEOC) && (handle->CR1 & ADC_CR1_JEOCIE)) {
         // Invoke the user callback since the sampling on the injected group is complete
 
-        // Save the user callback so we can clear it's global array position
+        // Save the user callback so we can clear its global array position
         __disable_irq();
         const adc_callback_t local_cb  = s_adc_ctx[idx].injected_done_cb;
         void* const          user_data = s_adc_ctx[idx].injected_done_arg;
@@ -428,7 +428,8 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
 hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config) {
     if (handle == NULL || config == NULL || config->channels.sequence == NULL || config->channels.num_of_channels == 0 ||
         config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL ||
-        (config->circular_mode == DMA_MODE_DOUBLE_BUFFER && config->buffer_2 == NULL) || config->buffer_size == 0) {
+        (config->circular_mode == DMA_MODE_DOUBLE_BUFFER && config->buffer_2 == NULL) || config->buffer_size == 0 ||
+        (config->trigger != RG_TRIGGER_SOFTWARE && config->trigger_polarity == 0)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -487,23 +488,21 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);
     }
 
-    // Enable the interrupts based on what callbacks were passed
-    if (config->callbacks.on_data_overrun != NULL) {
-        handle->CR1 |= ADC_CR1_OVRIE;
-    }
+    // Enable the ADC overrun interrupt
+    handle->CR1 |= ADC_CR1_OVRIE;
 
     // Configure the stream and enable the corresponding interrupts
     const dma_stream_config_t stream_config = {
         .deconfigure   = false,
         .enable_stream = true,
 
-        .per_addr_incement = false,
-        .mem_addr_incement = true,
+        .per_addr_increment = false,
+        .mem_addr_increment = true,
 
-        .tc_irq_enable  = config->callbacks.on_buffer_full != NULL,
+        .tc_irq_enable  = true,
         .ht_irq_enable  = false,
-        .te_irq_enable  = config->callbacks.on_transfer_error != NULL,
-        .dme_irq_enable = config->callbacks.on_direct_mode_error != NULL,
+        .te_irq_enable  = true,
+        .dme_irq_enable = true,
         .fe_irq_enable  = false,
 
         .mode            = DMA_MODE_DIRECT,

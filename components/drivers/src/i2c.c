@@ -429,12 +429,12 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
 
         // When N > 2
         default: {
+            // Read both registers to clear the ADDR bit
+            (void)handle->SR1;
+            (void)handle->SR2;
+
             size_t remaining_bytes = size;
             if (remaining_bytes > 3) {
-                // Read both registers to clear the ADDR bit
-                (void)handle->SR1;
-                (void)handle->SR2;
-
                 // Read RXE up until remaining_bytes is 3
                 for (size_t i = 0; i < (size - 3); i++) {
                     timeout = TIMEOUT;

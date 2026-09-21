@@ -13,17 +13,19 @@ extern "C" {
 
 #include <stdint.h>
 
-    
-// Loop iterations
+
+// Loop iteration based timeout
 #define TIMEOUT (100'000U)
 #define UNUSED(x) (void)(x)
 
 // NVIC interrupt priorities for the different peripherals
 #define SysTick_NVIC_IRQ_PRIORITY (0U)
+#define EXTI_LINE_NVIC_IRQ_PRIORITY (15U)
 #define SPI_DMA_NVIC_IRQ_PRIORITY (6U)
 #define I2S_DMA_NVIC_IRQ_PRIORITY (12U)
 #define UART_DMA_NVIC_IRQ_PRIORITY (10U)
 #define ADC_DMA_NVIC_IRQ_PRIORITY (8U)
+#define ADC_NVIC_IRQ_PRIORITY ADC_DMA_NVIC_IRQ_PRIORITY
 #define CRC_DMA_NVIC_IRQ_PRIORITY (11U)
 #define M2M_DMA_NVIC_IRQ_PRIORITY (15U)
 
@@ -35,9 +37,8 @@ extern "C" {
 // The system tick rate
 #define TICK_RATE_Hz (1000)
 
-// Heap size
-#define HEAP_SIZE_BYTES (32 * 1024)
-
+#define HEAP_SIZE_kB (32)
+#define HEAP_SIZE_BYTES ((HEAP_SIZE_kB) * 1024)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 

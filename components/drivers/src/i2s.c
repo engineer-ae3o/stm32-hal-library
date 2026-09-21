@@ -195,8 +195,8 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority) {
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = false,
-        .mem_addr_incement = true,
+        .per_addr_increment = false,
+        .mem_addr_increment = true,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,
@@ -226,8 +226,8 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority) {
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = false,
-        .mem_addr_incement = true,
+        .per_addr_increment = false,
+        .mem_addr_increment = true,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,

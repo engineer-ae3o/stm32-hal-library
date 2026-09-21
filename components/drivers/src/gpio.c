@@ -1,9 +1,30 @@
+#include "stm32f411xe.h"
 #include "drivers/gpio.h"
+#include "utils/common.h"
 #include "utils/err.h"
 
 #include <stdint.h>
 #include <stddef.h>
 
+
+static const IRQn_Type s_exti_irq_lut[] = {
+    [GPIO_PIN_0]  = EXTI0_IRQn,
+    [GPIO_PIN_1]  = EXTI1_IRQn,
+    [GPIO_PIN_2]  = EXTI2_IRQn,
+    [GPIO_PIN_3]  = EXTI3_IRQn,
+    [GPIO_PIN_4]  = EXTI4_IRQn,
+    [GPIO_PIN_5]  = EXTI9_5_IRQn,
+    [GPIO_PIN_6]  = EXTI9_5_IRQn,
+    [GPIO_PIN_7]  = EXTI9_5_IRQn,
+    [GPIO_PIN_8]  = EXTI9_5_IRQn,
+    [GPIO_PIN_9]  = EXTI9_5_IRQn,
+    [GPIO_PIN_10] = EXTI15_10_IRQn,
+    [GPIO_PIN_11] = EXTI15_10_IRQn,
+    [GPIO_PIN_12] = EXTI15_10_IRQn,
+    [GPIO_PIN_13] = EXTI15_10_IRQn,
+    [GPIO_PIN_14] = EXTI15_10_IRQn,
+    [GPIO_PIN_15] = EXTI15_10_IRQn,
+};
 
 hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
     if (enable) {
@@ -187,11 +208,16 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigg
         EXTI->FTSR |= (0b1UL << pin);
     }
 
-    // Unmask interrupts for the pin
-    EXTI->IMR |= (0b1UL << pin);
-
-    // Clear the interrupt flag
+    // Clear the EXTI interrupt flag
     EXTI->PR = (0b1UL << pin);
+
+    // Enable the pin's corresponding NVIC irq line
+    NVIC_SetPriority(s_exti_irq_lut[pin], EXTI_LINE_NVIC_IRQ_PRIORITY);
+    NVIC_ClearPendingIRQ(s_exti_irq_lut[pin]);
+    NVIC_EnableIRQ(s_exti_irq_lut[pin]);
+
+    // Unmask the EXTi interrupt for the pin
+    EXTI->IMR |= (0b1UL << pin);
 
     return HAL_OK;
 }
@@ -215,4 +241,8 @@ void gpio_clear_interrupt(GPIO_TypeDef* port, gpio_pin_t pin) {
         // Mask interrupts for the pin
         EXTI->IMR &= ~(0b1UL << pin);
     }
+}
+
+IRQn_Type gpio_get_pin_nvic_irq_type(gpio_pin_t pin) {
+    return s_exti_irq_lut[pin];
 }

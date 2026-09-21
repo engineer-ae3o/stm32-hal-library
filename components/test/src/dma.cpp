@@ -57,8 +57,8 @@ namespace test::dma {
                 .deconfigure   = false,
                 .enable_stream = enable,
 
-                .per_addr_incement = true,
-                .mem_addr_incement = true,
+                .per_addr_increment = true,
+                .mem_addr_increment = true,
 
                 .tc_irq_enable  = false,
                 .ht_irq_enable  = false,

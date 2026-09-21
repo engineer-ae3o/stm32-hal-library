@@ -124,9 +124,9 @@ typedef enum : uint8_t {
 // The polarities of the would be trigger source
 // It is ignored if the trigger is RG_TRIGGER_SOFTWARE or JG_TRIGGER_SOFTWARE
 typedef enum : uint8_t {
-    RISING_EDGE         = 0b01,
-    FALLING_EDGE        = 0b10,
-    RISING_FALLING_EDGE = 0b11,
+    ADC_TRIGGER_RISING_EDGE         = 0b01,
+    ADC_TRIGGER_FALLING_EDGE        = 0b10,
+    ADC_TRIGGER_RISING_FALLING_EDGE = 0b11,
 } adc_trigger_polarity_t;
 
 
@@ -169,8 +169,8 @@ typedef struct {
     adc_trigger_polarity_t      trigger_polarity;
 
     // The buffer(s) to store the samples
-    const uint16_t* buffer_1;
-    const uint16_t* buffer_2;
+    uint16_t* buffer_1;
+    uint16_t* buffer_2;
 
     // DMA settings
     uint16_t        buffer_size;
