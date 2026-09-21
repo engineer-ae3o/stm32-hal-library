@@ -53,7 +53,7 @@ void system_init(void) {
 // Provide a weak main function
 [[__gnu__::__noreturn__, __gnu__::__weak__]] int main(void) {
     LOGE("Main", "Application failed to provide a main function. Using the weak stub instead");
-    HALT();
+    halt();
 }
 
 // Fault Handlers
@@ -167,7 +167,7 @@ void NMI_Handler(void) {
     LOGE("Fault", "PSR: 0x%X", psr);
     LOGE("Fault", "CFSR: 0x%X", cfsr);
 
-    HALT();
+    halt();
 }
 
 [[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void bus_fault_dump(const unsigned int* frame) {
@@ -193,7 +193,7 @@ void NMI_Handler(void) {
     LOGE("Fault", "CFSR: 0x%X", cfsr);
     LOGE("Fault", "BFAR: 0x%X", bfar);
 
-    HALT();
+    halt();
 }
 
 [[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void usage_fault_dump(const unsigned int* frame) {
@@ -217,7 +217,7 @@ void NMI_Handler(void) {
     LOGE("Fault", "PC: 0x%X", pc);
     LOGE("Fault", "CFSR: 0x%X", cfsr);
 
-    HALT();
+    halt();
 }
 
 [[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void mem_manage_dump(const unsigned int* frame) {
@@ -241,7 +241,7 @@ void NMI_Handler(void) {
     LOGE("Fault", "PC: 0x%X", pc);
     LOGE("Fault", "MMFAR: 0x%X", mmfar);
 
-    HALT();
+    halt();
 }
 
 // Stub the syscalls needed by newlibc

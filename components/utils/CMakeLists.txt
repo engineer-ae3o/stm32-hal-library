@@ -8,6 +8,7 @@ set(SRCS
     src/clock.c
     src/random.c
     src/memcpy.c
+    src/common.c
     src/syscalls.c
 )
 

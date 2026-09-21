@@ -7,7 +7,6 @@ extern "C" {
 #endif
 
 
-#include "stm32f411xe.h"
 #include "utils/log.h"
 #include "utils/err.h"
 
@@ -42,34 +41,27 @@ extern "C" {
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 
-#define HALT()                                                                                                                                       \
-    do {                                                                                                                                             \
-        __disable_irq();                                                                                                                             \
-        __BKPT(0);                                                                                                                                   \
-        while (true) {                                                                                                                               \
-            __WFI();                                                                                                                                 \
-        }                                                                                                                                            \
-    } while (0)
-
 #define REBOOT()                                                                                                                                     \
     do {                                                                                                                                             \
-        LOGI("Restart", "System reboot requested from %s (%s:%d)", __PRETTY_FUNCTION__, __FILE__, __LINE__);                                         \
-        NVIC_SystemReset();                                                                                                                          \
+        reboot(__PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                                             \
     } while (0)
 
 #define PANIC()                                                                                                                                      \
     do {                                                                                                                                             \
-        LOGE("Panic", "System ran into a fatal error from %s (%s:%d)", __PRETTY_FUNCTION__, __FILE__, __LINE__);                                     \
-        HALT();                                                                                                                                      \
+        panic(__PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                                              \
     } while (0)
 
 #define ASSERT(cond)                                                                                                                                 \
     do {                                                                                                                                             \
-        if (gnu_unlikely(!(cond))) {                                                                                                                 \
-            LOGE("Assert", "Assert (%s) failed", #cond);                                                                                             \
-            PANIC();                                                                                                                                 \
-        }                                                                                                                                            \
+        assert_check((cond), #cond, __PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                        \
     } while (0)
+
+
+[[__gnu__::__noreturn__]] void halt(void);
+[[__gnu__::__noreturn__]] void panic(const char* function, const char* file, int line);
+
+void restart(const char* function, const char* file, int line);
+void assert_check(bool cond, const char* msg, const char* function, const char* file, int line);
 
 
 // RTT buffer for logging. Controls the output buffer parameter
