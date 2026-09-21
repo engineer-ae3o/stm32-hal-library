@@ -54,7 +54,7 @@ static atomic_ulong s_tick_counter = 0;
 
 uint64_t ms_since_boot(void) {
     // Convert to milliseconds
-    return (atomic_load_explicit(&s_tick_counter, memory_order_relaxed) * 1000U) / TICK_RATE_Hz;
+    return ((uint64_t)atomic_load_explicit(&s_tick_counter, memory_order_relaxed) * 1000ULL) / TICK_RATE_Hz;
 }
 
 void SysTick_Handler(void) {

@@ -428,7 +428,7 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
 hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config) {
     if (handle == NULL || config == NULL || config->channels.sequence == NULL || config->channels.num_of_channels == 0 ||
         config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL ||
-        (config->circular_mode == DMA_MODE_DOUBLE_BUFFER && config->buffer_2 == NULL)) {
+        (config->circular_mode == DMA_MODE_DOUBLE_BUFFER && config->buffer_2 == NULL) || config->buffer_size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -441,6 +441,10 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
     if (stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    if (stream->CR & DMA_SxCR_EN) {
+        return HAL_ERR_INVALID_STATE;
     }
 
     // Clear all stale state before proceeding
