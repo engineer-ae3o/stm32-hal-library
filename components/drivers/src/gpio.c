@@ -1,3 +1,4 @@
+#include "drivers/gpio_types.h"
 #include "stm32f411xe.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
@@ -32,6 +33,16 @@ typedef struct {
 } gpio_irq_ctx_t;
 
 static gpio_irq_ctx_t s_gpio_irq_ctx[ARRAY_SIZE(s_exti_irq_lut)] = {};
+
+// Helper
+[[__gnu__::__always_inline__]] static inline void gpio_isr_helper(gpio_pin_t pin) {
+    if (EXTI->PR & (1UL << pin)) {
+        EXTI->PR = (1UL << pin);
+        if (s_gpio_irq_ctx[pin].callback) {
+            s_gpio_irq_ctx[pin].callback(s_gpio_irq_ctx[pin].arg);
+        }
+    }
+}
 
 
 // Public API
@@ -158,7 +169,7 @@ bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin) {
     if (!port) {
         return false;
     }
-    return ((port->IDR >> pin) & 0x01U);
+    return ((port->IDR >> pin) & 0x1U);
 }
 
 hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigger_t edge, gpio_exti_cb_t callback, void* arg) {
@@ -233,22 +244,26 @@ void gpio_clear_interrupt(gpio_pin_t pin) {
     const uint8_t reg_idx = pin / 4;
     const uint8_t bit_pos = (pin % 4) * 4;
 
-    // Clear external interrupt configuration register
+    // Clear the pin's bit field in the EXTI configuration register
     SYSCFG->EXTICR[reg_idx] &= ~(0xFUL << bit_pos);
 
     // Clear both interrupt edge registers
     EXTI->RTSR &= ~(0b1UL << pin);
     EXTI->FTSR &= ~(0b1UL << pin);
 
-    // Clear interrupt flag
+    // Clear the interrupt flag
     EXTI->PR = (0b1UL << pin);
 
-    // Mask interrupts for the pin
+    // Remask the interrupts for the pin
     EXTI->IMR &= ~(0b1UL << pin);
 
     // Clear the pin's interrupt handler
     s_gpio_irq_ctx[pin].callback = NULL;
     s_gpio_irq_ctx[pin].arg      = NULL;
+}
+
+void gpio_generate_software_interrupt(gpio_pin_t pin) {
+    EXTI->SWIER |= (1UL << pin);
 }
 
 IRQn_Type gpio_get_nvic_irq_type(gpio_pin_t pin) {
@@ -258,22 +273,38 @@ IRQn_Type gpio_get_nvic_irq_type(gpio_pin_t pin) {
 
 // Handle the GPIO EXTI irqs
 void EXTI0_IRQHandler(void) {
+    gpio_isr_helper(GPIO_PIN_0);
 }
 
 void EXTI1_IRQHandler(void) {
+    gpio_isr_helper(GPIO_PIN_1);
 }
 
 void EXTI2_IRQHandler(void) {
+    gpio_isr_helper(GPIO_PIN_2);
 }
 
 void EXTI3_IRQHandler(void) {
+    gpio_isr_helper(GPIO_PIN_3);
 }
 
 void EXTI4_IRQHandler(void) {
+    gpio_isr_helper(GPIO_PIN_4);
 }
 
 void EXTI9_5_IRQHandler(void) {
+    gpio_isr_helper(GPIO_PIN_5);
+    gpio_isr_helper(GPIO_PIN_6);
+    gpio_isr_helper(GPIO_PIN_7);
+    gpio_isr_helper(GPIO_PIN_8);
+    gpio_isr_helper(GPIO_PIN_9);
 }
 
 void EXTI15_10_IRQHandler(void) {
+    gpio_isr_helper(GPIO_PIN_10);
+    gpio_isr_helper(GPIO_PIN_11);
+    gpio_isr_helper(GPIO_PIN_12);
+    gpio_isr_helper(GPIO_PIN_13);
+    gpio_isr_helper(GPIO_PIN_14);
+    gpio_isr_helper(GPIO_PIN_15);
 }

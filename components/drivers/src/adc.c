@@ -391,7 +391,7 @@ void adc_clk_configure(adc_prescaler_t clk_prescaler) {
 
 void adc_enable_nvic_irq(bool enable) {
     if (enable) {
-        NVIC_SetPriority(ADC_IRQn, ADC_DMA_NVIC_IRQ_PRIORITY);
+        NVIC_SetPriority(ADC_IRQn, ADC_NVIC_IRQ_PRIORITY);
         NVIC_EnableIRQ(ADC_IRQn);
     } else {
         NVIC_DisableIRQ(ADC_IRQn);

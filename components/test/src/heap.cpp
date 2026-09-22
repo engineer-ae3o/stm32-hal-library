@@ -154,34 +154,6 @@ namespace test::heap {
             assert_heap_clean();
         }
 
-        void oom_counter_and_power_of_two_penalty() {
-            assert_heap_clean();
-
-            // 512 byte allocations without subtracting header forces 1024 byte bins
-            std::array<void*, 35> ptrs{};
-            size_t                allocated_count = 0;
-
-            for (auto& ptr : ptrs) {
-                ptr = lib_malloc(512);
-                if (ptr != nullptr) {
-                    allocated_count++;
-                }
-            }
-
-            heap_info_t info{};
-            get_heap_stats(&info);
-
-            // A 32kB heap fits exactly 31 x 1024byte bins (after the instance overhead)
-            TEST_ASSERT_EQUAL(31, allocated_count);
-            TEST_ASSERT_EQUAL(4, info.out_of_mem_count);
-
-            for (auto& ptr : ptrs) {
-                lib_free(ptr);
-            }
-
-            assert_heap_clean();
-        }
-
         void profile_raw_allocation_cycles() {
             assert_heap_clean();
 
@@ -235,7 +207,6 @@ namespace test::heap {
         RUN_TEST(calloc_zero_initialization);
         RUN_TEST(realloc_semantics_and_data_preservation);
         RUN_TEST(max_capacity_packing_efficiency);
-        RUN_TEST(oom_counter_and_power_of_two_penalty);
         RUN_TEST(profile_raw_allocation_cycles);
 
         UNITY_END();

@@ -33,6 +33,7 @@ bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin);
 
 hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigger_t edge, gpio_exti_cb_t callback, void* arg);
 void      gpio_clear_interrupt(gpio_pin_t pin);
+void      gpio_generate_software_interrupt(gpio_pin_t pin);
 IRQn_Type gpio_get_nvic_irq_type(gpio_pin_t pin);
 
 
