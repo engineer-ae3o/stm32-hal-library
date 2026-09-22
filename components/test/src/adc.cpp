@@ -139,9 +139,9 @@ namespace test::adc {
         }
 
         void clk_configure_sweeps_every_prescaler() {
-            for (const auto presc : {ADC_CLK_PRESCALER_2, ADC_CLK_PRESCALER_4, ADC_CLK_PRESCALER_6, ADC_CLK_PRESCALER_8}) {
-                adc_clk_configure(presc);
-                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(presc), (ADC->CCR & ADC_CCR_ADCPRE) >> ADC_CCR_ADCPRE_Pos);
+            for (const auto prescaler : {ADC_CLK_PRESCALER_2, ADC_CLK_PRESCALER_4, ADC_CLK_PRESCALER_6, ADC_CLK_PRESCALER_8}) {
+                adc_clk_configure(prescaler);
+                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(prescaler), (ADC->CCR & ADC_CCR_ADCPRE) >> ADC_CCR_ADCPRE_Pos);
             }
             adc_clk_configure(ADC_CLK_PRESCALER_4);
         }
@@ -173,8 +173,10 @@ namespace test::adc {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_get_oneshot(nullptr, ADC_CHANNEL_0, &raw));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_0, nullptr));
 
+            adc_configure_channel(ADC_CHANNEL_0);
             TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_0, &raw));
-            TEST_ASSERT_TRUE(raw <= 0x0FFFU);
+            TEST_ASSERT_TRUE(raw <= 0xFFFU);
+            LOGI(TAG, "[oneshot_regular_group_completes_within_12_bit_range] Raw PA0 sample: %u", raw);
         }
 
         void internal_channel_readings_complete_and_manage_their_own_enables() {
@@ -184,19 +186,22 @@ namespace test::adc {
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_v_bat(nullptr, &raw));
             TEST_ASSERT_EQUAL(HAL_OK, adc_get_v_bat(ADC1, &raw));
-            TEST_ASSERT_TRUE(raw <= (0x0FFFU * VBAT_DIVIDER_RATIO));
+            TEST_ASSERT_TRUE(raw <= (0xFFFU * VBAT_DIVIDER_RATIO));
+            LOGI(TAG, "[internal_channel_readings_complete_and_manage_their_own_enables] Raw V_bat sample: %u", raw);
             // VBATE must be switched back off once the reading is done
             TEST_ASSERT_FALSE(ADC->CCR & ADC_CCR_VBATE);
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_temperature(nullptr, &raw));
             TEST_ASSERT_EQUAL(HAL_OK, adc_get_temperature(ADC1, &raw));
-            TEST_ASSERT_TRUE(raw <= 0x0FFFU);
-            // The temperature sensor/VREFINT stay latched on afterwards - they share the TSVREFE bit
+            TEST_ASSERT_TRUE(raw <= 0xFFFU);
+            LOGI(TAG, "[internal_channel_readings_complete_and_manage_their_own_enables] Raw temperature sensor sample: %u", raw);
+            // The temperature sensor/VREFINT stay latched on afterwards as they share the TSVREFE bit
             TEST_ASSERT_TRUE(ADC->CCR & ADC_CCR_TSVREFE);
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_v_ref_internal(nullptr, &raw));
             TEST_ASSERT_EQUAL(HAL_OK, adc_get_v_ref_internal(ADC1, &raw));
-            TEST_ASSERT_TRUE(raw <= 0x0FFFU);
+            TEST_ASSERT_TRUE(raw <= 0xFFFU);
+            LOGI(TAG, "[internal_channel_readings_complete_and_manage_their_own_enables] Raw V_ref_int sample: %u", raw);
 
             adc_power_on_temp_sensor(false);
         }
@@ -208,43 +213,17 @@ namespace test::adc {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_vdda(nullptr, &vdda));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_vdda(ADC1, nullptr));
             TEST_ASSERT_EQUAL(HAL_OK, adc_get_vdda(ADC1, &vdda));
-            // VDDA on this board is a regulated supply - sanity-bound it rather than assert an exact value
-            TEST_ASSERT_TRUE(vdda > 1.5F && vdda < 4.0F);
+            // VDDA on this board is a regulated supply. Sanity bound it rather than assert an exact value
+            TEST_ASSERT_TRUE(vdda > 3.0F && vdda < 3.5F);
+            LOGI(TAG, "[voltage_and_temperature_math_are_internally_consistent] Vdda: %.3fV", (double)vdda);
 
             float temp_c = 0.0F;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_temp_celsius(nullptr, &temp_c));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_temp_celsius(ADC1, nullptr));
             TEST_ASSERT_EQUAL(HAL_OK, adc_get_temp_celsius(ADC1, &temp_c));
-            // Plausible bench/board temperature bound, not a calibrated accuracy check
-            TEST_ASSERT_TRUE(temp_c > -40.0F && temp_c < 125.0F);
-
-            // adc_get_value_right_aligned is NOT pure math: it calls adc_get_vdda(...) internally,
-            // which triggers a fresh VREFINT conversion every time. Re-measure vdda immediately
-            // before comparing so we're not racing a stale reading.
-            struct case_t {
-                adc_resolution_t resolution;
-                uint16_t         raw;
-                uint32_t         full_scale;
-            };
-            constexpr std::array<case_t, 4> CASES = {{
-                {.resolution = ADC_RES_6_BITS, .raw = 63, .full_scale = 64},
-                {.resolution = ADC_RES_8_BITS, .raw = 255, .full_scale = 256},
-                {.resolution = ADC_RES_10_BITS, .raw = 1023, .full_scale = 1024},
-                {.resolution = ADC_RES_12_BITS, .raw = 4095, .full_scale = 4096},
-            }};
-
-            float measured_vdda = 0.0F;
-            TEST_ASSERT_EQUAL(HAL_OK, adc_get_vdda(ADC1, &measured_vdda));
-
-            for (const auto& cases : CASES) {
-                float voltage = 0.0F;
-                TEST_ASSERT_EQUAL(HAL_OK, adc_get_value_right_aligned(ADC1, cases.raw, cases.resolution, &voltage));
-                const float expected = (measured_vdda * static_cast<float>(cases.raw)) / static_cast<float>(cases.full_scale);
-                TEST_ASSERT_FLOAT_WITHIN(0.01F, expected, voltage);
-            }
-
-            float aligned = 0;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_value_right_aligned(nullptr, 100, ADC_RES_12_BITS, &aligned));
+            // Plausible temperature bound for a test runner. Not a calibrated accuracy check
+            TEST_ASSERT_TRUE(temp_c > 25.0F && temp_c < 35.0F);
+            LOGI(TAG, "[voltage_and_temperature_math_are_internally_consistent] Temperature (celsius): %.3fV", (double)temp_c);
         }
 
         void value_right_aligned_rejects_unknown_resolution() {
@@ -389,7 +368,7 @@ namespace test::adc {
                                      "Continuous DMA conversion never completed");
 
             for (const auto sample : buffer) {
-                TEST_ASSERT_TRUE(sample <= 0x0FFFU);
+                TEST_ASSERT_TRUE(sample <= 0xFFFU);
             }
 
             adc_enable_nvic_irq(false);

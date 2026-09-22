@@ -1,7 +1,8 @@
-#include "drivers/dma_types.h"
 #include "stm32f411xe.h"
 #include "drivers/adc_types.h"
+#include "drivers/dma_types.h"
 #include "utils/common.h"
+#include "drivers/gpio.h"
 #include "utils/board.h"
 #include "drivers/dma.h"
 #include "drivers/adc.h"
@@ -27,6 +28,25 @@ static const dma_map_t s_adc_dma_map[] = {
     // ADC3
     {.stream = NULL, .channel = 0},
 #endif
+};
+
+static const gpio_pin_ctx_t s_adc_channels[] = {
+    [ADC_CHANNEL_0]  = {.port = GPIOA, .pin = GPIO_PIN_0},
+    [ADC_CHANNEL_1]  = {.port = GPIOA, .pin = GPIO_PIN_1},
+    [ADC_CHANNEL_2]  = {.port = GPIOA, .pin = GPIO_PIN_2},
+    [ADC_CHANNEL_3]  = {.port = GPIOA, .pin = GPIO_PIN_3},
+    [ADC_CHANNEL_4]  = {.port = GPIOA, .pin = GPIO_PIN_4},
+    [ADC_CHANNEL_5]  = {.port = GPIOA, .pin = GPIO_PIN_5},
+    [ADC_CHANNEL_6]  = {.port = GPIOA, .pin = GPIO_PIN_6},
+    [ADC_CHANNEL_7]  = {.port = GPIOA, .pin = GPIO_PIN_7},
+    [ADC_CHANNEL_8]  = {.port = GPIOB, .pin = GPIO_PIN_0},
+    [ADC_CHANNEL_9]  = {.port = GPIOB, .pin = GPIO_PIN_1},
+    [ADC_CHANNEL_10] = {.port = GPIOC, .pin = GPIO_PIN_0},
+    [ADC_CHANNEL_11] = {.port = GPIOC, .pin = GPIO_PIN_1},
+    [ADC_CHANNEL_12] = {.port = GPIOC, .pin = GPIO_PIN_2},
+    [ADC_CHANNEL_13] = {.port = GPIOC, .pin = GPIO_PIN_3},
+    [ADC_CHANNEL_14] = {.port = GPIOC, .pin = GPIO_PIN_4},
+    [ADC_CHANNEL_15] = {.port = GPIOC, .pin = GPIO_PIN_5},
 };
 
 // User context
@@ -387,6 +407,15 @@ hal_err_t adc_deconfigure(ADC_TypeDef* handle) {
 void adc_clk_configure(adc_prescaler_t clk_prescaler) {
     // Set the ADC clock prescaler
     ADC->CCR = (ADC->CCR & ~ADC_CCR_ADCPRE) | ((uint32_t)clk_prescaler << ADC_CCR_ADCPRE_Pos);
+}
+
+gpio_pin_ctx_t adc_channel_get_gpio(adc_channels_t channel) {
+    return s_adc_channels[channel];
+}
+
+void adc_configure_channel(adc_channels_t channel) {
+    gpiox_clk_enable(s_adc_channels[channel].port, true);
+    gpio_set_analog(s_adc_channels[channel].port, s_adc_channels[channel].pin);
 }
 
 void adc_enable_nvic_irq(bool enable) {

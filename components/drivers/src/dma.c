@@ -51,7 +51,7 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
 }
 
 hal_err_t dma_get_stream_flags(DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number) {
-    if (controller == NULL) {
+    if (controller == NULL || flags == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 

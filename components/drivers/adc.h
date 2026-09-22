@@ -8,6 +8,7 @@ extern "C" {
 
 
 #include "stm32f411xe.h"
+#include "drivers/gpio_types.h"
 #include "drivers/adc_types.h"
 #include "utils/err.h"
 
@@ -21,8 +22,11 @@ hal_err_t adc_deconfigure(ADC_TypeDef* handle);
 
 // General control of all the ADCs. These functions affect all the ADC peripheral instances
 void adc_clk_configure(adc_prescaler_t clk_prescaler);
+void adc_configure_channel(adc_channels_t channel);
 void adc_enable_nvic_irq(bool enable);
 void adc_power_on_temp_sensor(bool on);
+
+gpio_pin_ctx_t adc_channel_get_gpio(adc_channels_t channel);
 
 
 // For use with the external channels

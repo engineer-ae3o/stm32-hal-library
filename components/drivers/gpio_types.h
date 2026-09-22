@@ -2,6 +2,7 @@
 #define GPIO_TYPES_H_
 
 
+#include "stm32f411xe.h"
 #include <stdint.h>
 
 
@@ -43,6 +44,11 @@ typedef enum : uint8_t {
     GPIO_PUSH_PULL = 0,
     GPIO_OPEN_DRAIN,
 } gpio_output_type_t;
+
+typedef struct {
+    GPIO_TypeDef* port;
+    gpio_pin_t    pin;
+} gpio_pin_ctx_t;
 
 
 #endif // GPIO_TYPES_H_
