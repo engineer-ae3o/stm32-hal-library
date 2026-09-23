@@ -22,16 +22,16 @@ hal_err_t adc_deconfigure(ADC_TypeDef* handle);
 
 // General control of all the ADCs. These functions affect all the ADC peripheral instances
 void adc_clk_configure(adc_prescaler_t clk_prescaler);
-void adc_configure_channel(adc_channels_t channel);
+void adc_configure_channel(adc_channel_t channel);
 void adc_enable_nvic_irq(bool enable);
 void adc_power_on_temp_sensor(bool on);
 
-gpio_pin_ctx_t adc_channel_get_gpio(adc_channels_t channel);
+gpio_pin_ctx_t adc_channel_get_gpio(adc_channel_t channel);
 
 
 // For use with the external channels
 // The regular group with oneshot polling mode
-hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* raw_data);
+hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channel_t channel, uint16_t* raw_data);
 
 // The regular group with continuous DMA mode
 hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config);

@@ -39,7 +39,7 @@ typedef enum : uint8_t {
     ADC_CHANNEL_13, // PC3
     ADC_CHANNEL_14, // PC4
     ADC_CHANNEL_15, // PC5
-} adc_channels_t;
+} adc_channel_t;
 
 
 // The ADC resolution. Each extra resolution adds an extra ADCCLK cycles when sampling
@@ -141,8 +141,8 @@ typedef struct {
 
 // The sequence of channels and the number of channels
 typedef struct {
-    const adc_channels_t* sequence;
-    size_t                num_of_channels;
+    const adc_channel_t* sequence;
+    size_t               num_of_channels;
 } adc_channels_config_t;
 
 

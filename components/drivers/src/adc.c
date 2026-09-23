@@ -258,7 +258,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
     }
 }
 
-[[__gnu__::__always_inline__]] static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channels_t channel) {
+[[__gnu__::__always_inline__]] static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channel_t channel) {
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
@@ -409,11 +409,11 @@ void adc_clk_configure(adc_prescaler_t clk_prescaler) {
     ADC->CCR = (ADC->CCR & ~ADC_CCR_ADCPRE) | ((uint32_t)clk_prescaler << ADC_CCR_ADCPRE_Pos);
 }
 
-gpio_pin_ctx_t adc_channel_get_gpio(adc_channels_t channel) {
+gpio_pin_ctx_t adc_channel_get_gpio(adc_channel_t channel) {
     return s_adc_channels[channel];
 }
 
-void adc_configure_channel(adc_channels_t channel) {
+void adc_configure_channel(adc_channel_t channel) {
     gpiox_clk_enable(s_adc_channels[channel].port, true);
     gpio_set_analog(s_adc_channels[channel].port, s_adc_channels[channel].pin);
 }
@@ -438,7 +438,7 @@ void adc_power_on_temp_sensor(bool on) {
 
 
 // For use with the regular group and external channels in polling oneshot mode
-hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* raw_data) {
+hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channel_t channel, uint16_t* raw_data) {
     if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -921,6 +921,10 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_
     // and clear all state before modifying any of the bits in the register(s)
     handle->CR1 &= ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
 
+    // Set the voltage sample thresholds
+    handle->HTR = (handle->HTR & ~ADC_HTR_HT) | ((uint32_t)(config->max_adc_value << ADC_HTR_HT_Pos) & ADC_HTR_HT);
+    handle->LTR = (handle->LTR & ~ADC_LTR_LT) | ((uint32_t)(config->min_adc_value << ADC_LTR_LT_Pos) & ADC_LTR_LT);
+
     if (config->monitor_regular_channels && config->monitor_injected_channels) {
         // Enable monitoring on all channels
         handle->CR1 |= (ADC_CR1_AWDEN | ADC_CR1_JAWDEN);
@@ -933,10 +937,6 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_
     } else {
         return HAL_ERR_INVALID_ARG;
     }
-
-    // Set the voltage thresholds
-    handle->HTR = config->max_adc_value; // Only the lower 12 bits are used
-    handle->LTR = config->min_adc_value; // Only the lower 12 bits are used
 
     // Save the user passed callback
     __disable_irq();

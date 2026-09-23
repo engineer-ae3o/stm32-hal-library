@@ -148,7 +148,7 @@ namespace test::adc {
 
         void nvic_irq_enable_toggles_the_adc_line() {
             auto irq_is_enabled = []() {
-                return (NVIC->ISER[std::to_underlying(ADC_IRQn) >> 5] & (1UL << (std::to_underlying(ADC_IRQn) & 0x1FU))) != 0;
+                return (NVIC->ISER[std::to_underlying(ADC_IRQn) >> 5] & (1UL << (std::to_underlying(ADC_IRQn) & 0x1FU)));
             };
 
             adc_enable_nvic_irq(true);
@@ -240,22 +240,20 @@ namespace test::adc {
 
             // Exercises the SQR3/SQR2 boundary at 6/7 channels, the SQR2/SQR1 boundary at
             // 12/13 channels, and both extremes (1 and the maximum of 16)
-            constexpr auto COUNTS = std::array{1U, 6U, 7U, 12U, 13U, MAX_REGULAR_CHANNELS};
-
-            for (const auto count : COUNTS) {
-                std::array<adc_channels_t, MAX_REGULAR_CHANNELS> sequence{};
+            for (const auto count : {1U, 6U, 7U, 12U, 13U, MAX_REGULAR_CHANNELS}) {
+                std::array<adc_channel_t, MAX_REGULAR_CHANNELS> sequence{};
                 for (size_t i = 0; i < count; i++) {
-                    sequence[i] = static_cast<adc_channels_t>(i);
+                    sequence[i] = static_cast<adc_channel_t>(i);
                 }
 
-                uint16_t                      buffer = 0;
-                const adc_continuous_config_t config = {
+                std::array<uint16_t, MAX_REGULAR_CHANNELS> buffer{};
+                const adc_continuous_config_t              config = {
                     .channels         = {.sequence = sequence.data(), .num_of_channels = count},
                     .trigger          = RG_TRIGGER_SOFTWARE,
                     .trigger_polarity = ADC_POLARITY_NONE,
-                    .buffer_1         = &buffer,
+                    .buffer_1         = buffer.data(),
                     .buffer_2         = nullptr,
-                    .buffer_size      = 1,
+                    .buffer_size      = static_cast<uint16_t>(count),
                     .priority         = DMA_PRIORITY_LOW,
                     .circular_mode    = DMA_MODE_ONESHOT,
                     .callbacks        = {},
@@ -277,6 +275,8 @@ namespace test::adc {
                         actual = (ADC1->SQR3 >> (i * BIT_WIDTH)) & MASK;
                     }
                     TEST_ASSERT_EQUAL_UINT32(expected, actual);
+                    LOGI(TAG, "count: %u", count);
+                    LOGI(TAG, "i: %u", i);
                 }
 
                 TEST_ASSERT_EQUAL_UINT32(count - 1, (ADC1->SQR1 & ADC_SQR1_L) >> ADC_SQR1_L_Pos);
@@ -291,8 +291,8 @@ namespace test::adc {
         void continuous_conversion_arg_guards() {
             reset_to_baseline();
 
-            constexpr adc_channels_t channel = ADC_CHANNEL_0;
-            std::array<uint16_t, 4>  buffer  = {};
+            constexpr adc_channel_t channel = ADC_CHANNEL_0;
+            std::array<uint16_t, 4> buffer  = {};
 
             const adc_continuous_config_t base = {
                 .channels         = {.sequence = &channel, .num_of_channels = 1},
@@ -375,9 +375,9 @@ namespace test::adc {
                 TEST_ASSERT_EQUAL(HAL_OK, adc_get_value_right_aligned(ADC1, buffer[i], ADC_RES_12_BITS, &voltage));
                 // The samples are interleaved: [0][1][0][1]....
                 if ((i & 1) == 0) {
-                    LOGI(TAG, "ADC channel 0: %u: %.3fV. Index: %u", buffer[i], (double)voltage, i);
+                    LOGI(TAG, "ADC channel 0: %u (%.3fV)", buffer[i], (double)voltage);
                 } else {
-                    LOGI(TAG, "ADC channel 1: %u: %.3fV. Index: %u", buffer[i], (double)voltage, i);
+                    LOGI(TAG, "ADC channel 1: %u (%.3fV)", buffer[i], (double)voltage);
                 }
             }
 
@@ -388,18 +388,17 @@ namespace test::adc {
         void injected_group_covers_every_channel_count_and_offset_slot() {
             reset_to_baseline();
 
-            constexpr std::array<size_t, 4> COUNTS{1, 2, 3, 4};
-
-            for (const auto count : COUNTS) {
-                std::array<adc_channels_t, MAX_INJECTED_CHANNELS> channels{};
+            for (const auto count : {1U, 2U, 3U, 4U}) {
+                std::array<adc_channel_t, MAX_INJECTED_CHANNELS> channels{};
                 for (size_t i = 0; i < count; i++) {
-                    channels[i] = static_cast<adc_channels_t>(i);
+                    channels[i] = static_cast<adc_channel_t>(i);
+                    adc_configure_channel(static_cast<adc_channel_t>(i));
                 }
 
                 adc_injected_group_config_t config{};
                 config.channels         = {.sequence = channels.data(), .num_of_channels = count};
                 config.trigger          = JG_TRIGGER_SOFTWARE;
-                config.trigger_polarity = ADC_POLARITY_RISING_EDGE;
+                config.trigger_polarity = ADC_POLARITY_NONE;
                 for (size_t i = 0; i < count; i++) {
                     config.offsets[i] = static_cast<uint16_t>(10 * (i + 1));
                 }
@@ -409,18 +408,19 @@ namespace test::adc {
                 TEST_ASSERT_EQUAL(HAL_OK, adc_injected_group_start_conv(ADC1, &config));
 
                 TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
-                                             return (ADC1->SR & ADC_SR_JEOC) != 0;
+                                             return (ADC1->SR & ADC_SR_JEOC);
                                          }),
                                          "Injected conversion never finished");
 
                 std::array<uint16_t, MAX_INJECTED_CHANNELS> results{};
                 TEST_ASSERT_EQUAL(HAL_OK, adc_injected_group_get_result(ADC1, results.data(), count));
-                for (size_t i = 0; i < count; i++) {
-                    LOGI(TAG, "Sample %zu: %u", i, results[i]);
-                    TEST_ASSERT_TRUE(results[i] <= 0xFFFU);
-                }
 
-                ADC1->SR &= ~ADC_SR_JEOC;
+                for (size_t i = 0; i < count; i++) {
+                    TEST_ASSERT_TRUE(results[i] <= 0xFFFU);
+                    float voltage = 0;
+                    TEST_ASSERT_EQUAL(HAL_OK, adc_get_value_right_aligned(ADC1, results[i], ADC_RES_12_BITS, &voltage));
+                    LOGI(TAG, "Sample %zu: %u (%.3fV)", i, results[i], (double)voltage);
+                }
             }
 
             reset_to_baseline();
@@ -437,7 +437,7 @@ namespace test::adc {
         void injected_group_arg_guards() {
             reset_to_baseline();
 
-            constexpr adc_channels_t    channel = ADC_CHANNEL_0;
+            constexpr adc_channel_t     channel = ADC_CHANNEL_0;
             adc_injected_group_config_t config{};
             config.channels = {.sequence = &channel, .num_of_channels = 1};
             config.trigger  = JG_TRIGGER_SOFTWARE;
@@ -462,11 +462,11 @@ namespace test::adc {
         void injected_group_invokes_the_completion_callback_via_the_isr() {
             reset_to_baseline();
 
-            constexpr auto              channels = std::array{ADC_CHANNEL_0};
+            constexpr adc_channel_t     channels = ADC_CHANNEL_0;
             adc_injected_group_config_t config{};
-            config.channels         = {.sequence = channels.data(), .num_of_channels = channels.size()};
+            config.channels         = {.sequence = &channels, .num_of_channels = 1};
             config.trigger          = JG_TRIGGER_SOFTWARE;
-            config.trigger_polarity = ADC_POLARITY_RISING_EDGE;
+            config.trigger_polarity = ADC_POLARITY_NONE;
             config.on_conv_complete = injected_done_cb;
             config.arg              = nullptr;
 
@@ -477,11 +477,17 @@ namespace test::adc {
             TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
                                          return s_injected_done;
                                      }),
-                                     "Injected-group completion callback never fired");
+                                     "Injected group completion callback never fired");
 
-            // The isr helper must have cleared both the flag and the interrupt enable behind us
-            TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_JEOC);
+            // Only the JEOCIE bit should have been cleared
+            TEST_ASSERT_TRUE(ADC1->SR & ADC_SR_JEOC);
             TEST_ASSERT_FALSE(ADC1->CR1 & ADC_CR1_JEOCIE);
+
+            std::array<uint16_t, MAX_INJECTED_CHANNELS> result{};
+            TEST_ASSERT_EQUAL(HAL_OK, adc_injected_group_get_result(ADC1, result.data(), 1));
+
+            // The JEOC flag should be cleared now by reading the result
+            TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_JEOC);
 
             adc_enable_nvic_irq(false);
             reset_to_baseline();
@@ -489,10 +495,11 @@ namespace test::adc {
 
         void analog_watchdog_validates_thresholds_and_monitor_flags() {
             reset_to_baseline();
+            adc_enable_nvic_irq(true);
 
-            adc_analog_wdg_config_t config{};
+            adc_analog_wdg_config_t config   = {};
             config.min_adc_value             = 100;
-            config.max_adc_value             = 50; // inverted on purpose
+            config.max_adc_value             = 50; // Inverted on purpose
             config.on_thresholds_violated    = wdg_cb;
             config.monitor_regular_channels  = true;
             config.monitor_injected_channels = false;
@@ -528,8 +535,8 @@ namespace test::adc {
                 auto cfg                      = config;
                 cfg.monitor_regular_channels  = combo.regular;
                 cfg.monitor_injected_channels = combo.injected;
-                cfg.min_adc_value             = 0x1234; // deliberately > 12 bits to verify masking
-                cfg.max_adc_value             = 0xFFFF;
+                cfg.min_adc_value             = 0x1234; // Deliberately > 12 bits to verify masking. Should be masked to 0x234
+                cfg.max_adc_value             = 0xFFFF; // Should be masked to 0xFFF
 
                 TEST_ASSERT_EQUAL(HAL_OK, adc_analog_wdg_start(ADC1, &cfg));
                 TEST_ASSERT_EQUAL_UINT32(combo.expected_bits, ADC1->CR1 & (ADC_CR1_AWDEN | ADC_CR1_JAWDEN));
@@ -541,8 +548,31 @@ namespace test::adc {
                 TEST_ASSERT_EQUAL_UINT32(0, ADC1->CR1 & (ADC_CR1_AWDEN | ADC_CR1_JAWDEN | ADC_CR1_AWDIE));
             }
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_analog_wdg_stop(nullptr));
+            // Test to see if the watchdog fires the callback
+            config.max_adc_value             = 1; // Deliberately low so the watchdog fires
+            config.min_adc_value             = 0;
+            config.on_thresholds_violated    = wdg_cb;
+            config.monitor_regular_channels  = true;
+            config.monitor_injected_channels = true;
 
+            s_wdg_triggered = false;
+
+            TEST_ASSERT_EQUAL(HAL_OK, adc_analog_wdg_start(ADC1, &config));
+
+            // Start conversion on any channel
+            constexpr adc_channel_t channel = ADC_CHANNEL_0;
+            uint16_t                raw     = 0;
+            TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_get_oneshot(ADC1, channel, &raw));
+
+            TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
+                                         return s_wdg_triggered;
+                                     }),
+                                     "Analog watchdog never fires");
+
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_analog_wdg_stop(nullptr));
+            TEST_ASSERT_EQUAL(HAL_OK, adc_analog_wdg_stop(ADC1));
+
+            adc_enable_nvic_irq(false);
             reset_to_baseline();
         }
 
