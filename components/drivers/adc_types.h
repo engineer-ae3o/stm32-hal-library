@@ -9,8 +9,8 @@
 
 
 // Number of regular and injected channels supported by the ADC peripheral
-#define MAX_REGULAR_CHANNELS (16)
-#define MAX_INJECTED_CHANNELS (4)
+#define MAX_REGULAR_CHANNELS (16U)
+#define MAX_INJECTED_CHANNELS (4U)
 
 
 // Shape of all callbacks passed to the ADC driver
@@ -124,9 +124,10 @@ typedef enum : uint8_t {
 // The polarities of the would be trigger source
 // It is ignored if the trigger is RG_TRIGGER_SOFTWARE or JG_TRIGGER_SOFTWARE
 typedef enum : uint8_t {
-    ADC_TRIGGER_RISING_EDGE         = 0b01,
-    ADC_TRIGGER_FALLING_EDGE        = 0b10,
-    ADC_TRIGGER_RISING_FALLING_EDGE = 0b11,
+    ADC_POLARITY_NONE                = 0b00,
+    ADC_POLARITY_RISING_EDGE         = 0b01,
+    ADC_POLARITY_FALLING_EDGE        = 0b10,
+    ADC_POLARITY_RISING_FALLING_EDGE = 0b11,
 } adc_trigger_polarity_t;
 
 

@@ -459,7 +459,7 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     if (handle == NULL || config == NULL || config->channels.sequence == NULL || config->channels.num_of_channels == 0 ||
         config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL ||
         (config->circular_mode == DMA_MODE_DOUBLE_BUFFER && config->buffer_2 == NULL) || config->buffer_size == 0 ||
-        (config->trigger != RG_TRIGGER_SOFTWARE && config->trigger_polarity == 0)) {
+        (config->trigger != RG_TRIGGER_SOFTWARE && config->trigger_polarity == ADC_POLARITY_NONE)) {
         return HAL_ERR_INVALID_ARG;
     }
 

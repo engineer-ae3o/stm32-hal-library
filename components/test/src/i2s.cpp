@@ -342,7 +342,7 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
 
-            static std::array<uint16_t, 2000> tx_data{};
+            std::array<uint16_t, 2048> tx_data{};
 
             s_tx_done = false;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_transmit_oneshot(TEST_INSTANCE, tx_data.data(), tx_data.size(), tx_done_callback, nullptr));
@@ -365,7 +365,7 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
 
-            static std::array<uint16_t, 100> tx_data{};
+            std::array<uint16_t, 100> tx_data{};
 
             s_tx_done = false;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_transmit_oneshot(TEST_INSTANCE, tx_data.data(), tx_data.size(), tx_done_callback, nullptr));
@@ -394,7 +394,7 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
 
-            static std::array<uint16_t, 40'000> tx_data{};
+            std::array<uint16_t, 40'000> tx_data{};
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_SIZE, i2s_master_transmit_oneshot(TEST_INSTANCE, tx_data.data(), tx_data.size(), nullptr, nullptr));
 
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));
@@ -406,8 +406,8 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_RX_CONFIG));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
 
-            static std::array<uint16_t, 4> buf_0{};
-            static std::array<uint16_t, 4> buf_1{};
+            std::array<uint16_t, 4> buf_0{};
+            std::array<uint16_t, 4> buf_1{};
 
             s_dbm_completions = 0;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_init(TEST_INSTANCE, buf_0.data(), buf_1.data(), buf_0.size(), dbm_callback, nullptr));
@@ -436,8 +436,8 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_RX_CONFIG));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
 
-            static std::array<uint16_t, 4> buf_0{};
-            static std::array<uint16_t, 4> buf_1{};
+            std::array<uint16_t, 4> buf_0{};
+            std::array<uint16_t, 4> buf_1{};
 
             s_dbm_completions = 0;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_init(TEST_INSTANCE, buf_0.data(), buf_1.data(), buf_0.size(), dbm_callback, nullptr));

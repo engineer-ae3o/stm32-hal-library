@@ -197,7 +197,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
         ((config->direction == DMA_DIR_M2M) && (config->mode == DMA_MODE_DIRECT || config->flow_controller == DMA_FLOW_CONTROLLER_PERIPHERAL ||
                                                 config->circular_mode != DMA_MODE_ONESHOT)) ||
         (config->enable_stream && config->buffer_size == 0)) {
-        return HAL_ERR_NOT_ALLOWED;
+        return HAL_ERR_INVALID_ARG;
     }
 
     uint32_t cr_mask = stream->CR;
