@@ -1,3 +1,4 @@
+#include "drivers/dma_types.h"
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
@@ -255,8 +256,9 @@ namespace test::adc {
                     .buffer_2         = nullptr,
                     .buffer_size      = static_cast<uint16_t>(count),
                     .priority         = DMA_PRIORITY_LOW,
-                    .circular_mode    = DMA_MODE_ONESHOT,
-                    .callbacks        = {},
+                    // Circular mode is used here so the conversion doesn't terminate when the buffer is filled up
+                    .circular_mode = DMA_MODE_CIRCULAR,
+                    .callbacks     = {},
                 };
 
                 TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_start_conv(ADC1, &config));
@@ -275,12 +277,10 @@ namespace test::adc {
                         actual = (ADC1->SQR3 >> (i * BIT_WIDTH)) & MASK;
                     }
                     TEST_ASSERT_EQUAL_UINT32(expected, actual);
-                    LOGI(TAG, "count: %u", count);
-                    LOGI(TAG, "i: %u", i);
                 }
 
                 TEST_ASSERT_EQUAL_UINT32(count - 1, (ADC1->SQR1 & ADC_SQR1_L) >> ADC_SQR1_L_Pos);
-                TEST_ASSERT_EQUAL(count > 1, (ADC1->CR1 & ADC_CR1_SCAN));
+                TEST_ASSERT_EQUAL(count > 1, static_cast<bool>(ADC1->CR1 & ADC_CR1_SCAN));
 
                 TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_end_conv(ADC1));
             }

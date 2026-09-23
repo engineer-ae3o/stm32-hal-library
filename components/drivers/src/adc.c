@@ -481,11 +481,9 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
-    // Enable scan mode if we have more than one channel. Disable otherwise
+    // Enable scan mode if we have more than one channel. Leave disabled otherwise
     if (config->channels.num_of_channels > 1) {
         handle->CR1 |= ADC_CR1_SCAN;
-    } else {
-        handle->CR1 &= ~ADC_CR1_SCAN;
     }
 
     // Set the number of channels/conversions in the L bit positions of the
