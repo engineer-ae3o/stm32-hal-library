@@ -457,9 +457,9 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channel_t chann
 // For use with the regular group and external channels in DMA continuous sampling mode
 hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config) {
     if (handle == NULL || config == NULL || config->channels.sequence == NULL || config->channels.num_of_channels == 0 ||
-        config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL ||
-        (config->circular_mode == DMA_MODE_DOUBLE_BUFFER && config->buffer_2 == NULL) || config->buffer_size == 0 ||
-        (config->trigger != RG_TRIGGER_SOFTWARE && config->trigger_polarity == ADC_POLARITY_NONE)) {
+        config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_0 == NULL ||
+        (config->circular_mode == DMA_MODE_DOUBLE_BUFFERS && config->buffer_1 == NULL) || config->buffer_size == 0 ||
+        (config->trigger != ADC_RG_TRIGGER_SOFTWARE && config->trigger_polarity == ADC_POLARITY_NONE)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -546,8 +546,8 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         .nvic_irq_priority = ADC_DMA_NVIC_IRQ_PRIORITY,
 
         .per_addr  = &handle->DR,
-        .mem_buf_0 = config->buffer_1,
-        .mem_buf_1 = config->circular_mode == DMA_MODE_DOUBLE_BUFFER ? config->buffer_2 : NULL,
+        .mem_buf_0 = config->buffer_0,
+        .mem_buf_1 = config->circular_mode == DMA_MODE_DOUBLE_BUFFERS ? config->buffer_1 : NULL,
     };
     TRY(dma_configure_stream(stream, &stream_config));
 
@@ -557,7 +557,7 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     __enable_irq();
 
     // Finally, set the trigger source
-    if (config->trigger == RG_TRIGGER_SOFTWARE) {
+    if (config->trigger == ADC_RG_TRIGGER_SOFTWARE) {
         // If the trigger is from software, set the SWSTART bit and return as that's all that's needed
         handle->CR2 |= ADC_CR2_SWSTART;
     } else {
@@ -667,7 +667,7 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
         handle->CR1 |= ADC_CR1_JEOCIE;
     }
 
-    if (config->trigger == JG_TRIGGER_SOFTWARE) {
+    if (config->trigger == ADC_JG_TRIGGER_SOFTWARE) {
         // If the trigger is from software, set the JSWSTART bit and return as that's all that's needed
         handle->CR2 |= ADC_CR2_JSWSTART;
     } else {

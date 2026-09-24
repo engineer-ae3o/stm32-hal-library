@@ -406,7 +406,7 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uin
     }
 
     TRY(dma_disable_stream(stream));
-    dma_set_circular_mode(stream, DMA_MODE_DOUBLE_BUFFER);
+    dma_set_circular_mode(stream, DMA_MODE_DOUBLE_BUFFERS);
     dma_set_addresses(stream, &handle->DR, buf_0, buf_1);
     dma_set_trans_length(stream, (uint16_t)actual_size);
 

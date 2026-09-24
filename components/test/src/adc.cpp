@@ -1,14 +1,17 @@
-#include "drivers/dma_types.h"
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
+#include "drivers/gpio_types.h"
+#include "drivers/dma_types.h"
 #include "drivers/adc_types.h"
 #include "utils/common.h"
+#include "drivers/gpio.h"
 #include "drivers/adc.h"
 #include "utils/board.h"
 #include "test/adc.hpp"
 #include "utils/err.h"
 #include "utils/log.h"
+#include "utils/tick.h"
 
 #include <array>
 #include <cstdint>
@@ -232,8 +235,8 @@ namespace test::adc {
 
             float          voltage          = 0.0F;
             constexpr auto bogus_resolution = static_cast<adc_resolution_t>(0xFF);
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_value_right_aligned(ADC1, 100, bogus_resolution, &voltage));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_value_right_aligned(ADC1, 100, ADC_RES_12_BITS, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_value_right_aligned(ADC1, 20, bogus_resolution, &voltage));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_value_right_aligned(ADC1, 20, ADC_RES_12_BITS, nullptr));
         }
 
         void regular_group_channel_sequence_registers_are_placed_correctly() {
@@ -250,10 +253,10 @@ namespace test::adc {
                 std::array<uint16_t, MAX_REGULAR_CHANNELS> buffer{};
                 const adc_continuous_config_t              config = {
                     .channels         = {.sequence = sequence.data(), .num_of_channels = count},
-                    .trigger          = RG_TRIGGER_SOFTWARE,
+                    .trigger          = ADC_RG_TRIGGER_SOFTWARE,
                     .trigger_polarity = ADC_POLARITY_NONE,
-                    .buffer_1         = buffer.data(),
-                    .buffer_2         = nullptr,
+                    .buffer_0         = buffer.data(),
+                    .buffer_1         = nullptr,
                     .buffer_size      = static_cast<uint16_t>(count),
                     .priority         = DMA_PRIORITY_LOW,
                     // Circular mode is used here so the conversion doesn't terminate when the buffer is filled up
@@ -296,10 +299,10 @@ namespace test::adc {
 
             const adc_continuous_config_t base = {
                 .channels         = {.sequence = &channel, .num_of_channels = 1},
-                .trigger          = RG_TRIGGER_SOFTWARE,
+                .trigger          = ADC_RG_TRIGGER_SOFTWARE,
                 .trigger_polarity = ADC_POLARITY_NONE,
-                .buffer_1         = buffer.data(),
-                .buffer_2         = nullptr,
+                .buffer_0         = buffer.data(),
+                .buffer_1         = nullptr,
                 .buffer_size      = buffer.size(),
                 .priority         = DMA_PRIORITY_LOW,
                 .circular_mode    = DMA_MODE_ONESHOT,
@@ -322,12 +325,12 @@ namespace test::adc {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_cont_start_conv(ADC1, &too_many));
 
             auto no_buffer     = base;
-            no_buffer.buffer_1 = nullptr;
+            no_buffer.buffer_0 = nullptr;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_cont_start_conv(ADC1, &no_buffer));
 
             auto missing_second_buffer          = base;
-            missing_second_buffer.circular_mode = DMA_MODE_DOUBLE_BUFFER;
-            missing_second_buffer.buffer_2      = nullptr;
+            missing_second_buffer.circular_mode = DMA_MODE_DOUBLE_BUFFERS;
+            missing_second_buffer.buffer_1      = nullptr;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_regular_group_cont_start_conv(ADC1, &missing_second_buffer));
         }
 
@@ -341,10 +344,10 @@ namespace test::adc {
 
             const adc_continuous_config_t config = {
                 .channels         = {.sequence = CHANNELS.data(), .num_of_channels = CHANNELS.size()},
-                .trigger          = RG_TRIGGER_SOFTWARE,
+                .trigger          = ADC_RG_TRIGGER_SOFTWARE,
                 .trigger_polarity = ADC_POLARITY_NONE,
-                .buffer_1         = buffer.data(),
-                .buffer_2         = nullptr,
+                .buffer_0         = buffer.data(),
+                .buffer_1         = nullptr,
                 .buffer_size      = buffer.size(),
                 .priority         = DMA_PRIORITY_LOW,
                 .circular_mode    = DMA_MODE_ONESHOT,
@@ -397,7 +400,7 @@ namespace test::adc {
 
                 adc_injected_group_config_t config{};
                 config.channels         = {.sequence = channels.data(), .num_of_channels = count};
-                config.trigger          = JG_TRIGGER_SOFTWARE;
+                config.trigger          = ADC_JG_TRIGGER_SOFTWARE;
                 config.trigger_polarity = ADC_POLARITY_NONE;
                 for (size_t i = 0; i < count; i++) {
                     config.offsets[i] = static_cast<uint16_t>(10 * (i + 1));
@@ -440,7 +443,7 @@ namespace test::adc {
             constexpr adc_channel_t     channel = ADC_CHANNEL_0;
             adc_injected_group_config_t config{};
             config.channels = {.sequence = &channel, .num_of_channels = 1};
-            config.trigger  = JG_TRIGGER_SOFTWARE;
+            config.trigger  = ADC_JG_TRIGGER_SOFTWARE;
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_injected_group_start_conv(nullptr, &config));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_injected_group_start_conv(ADC1, nullptr));
@@ -465,7 +468,7 @@ namespace test::adc {
             constexpr adc_channel_t     channels = ADC_CHANNEL_0;
             adc_injected_group_config_t config{};
             config.channels         = {.sequence = &channels, .num_of_channels = 1};
-            config.trigger          = JG_TRIGGER_SOFTWARE;
+            config.trigger          = ADC_JG_TRIGGER_SOFTWARE;
             config.trigger_polarity = ADC_POLARITY_NONE;
             config.on_conv_complete = injected_done_cb;
             config.arg              = nullptr;
@@ -488,6 +491,230 @@ namespace test::adc {
 
             // The JEOC flag should be cleared now by reading the result
             TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_JEOC);
+
+            adc_enable_nvic_irq(false);
+            reset_to_baseline();
+        }
+
+        void injected_group_interrupts_regular_group_without_corruption() {
+        }
+
+        void regular_group_runs_in_circular_and_double_buffering_mode() {
+            reset_to_baseline();
+            adc_enable_nvic_irq(true);
+
+            constexpr auto CHANNELS = std::array{ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_2};
+            for (const auto channel : CHANNELS) {
+                adc_configure_channel(channel);
+            }
+
+            // Double buffering mode
+            // Big enough buffers so it takes a bit of time to get filled up
+            std::array<uint16_t, CHANNELS.size() * 4096> buffer_0{};
+            std::array<uint16_t, buffer_0.size()>        buffer_1{};
+
+            buffer_0.fill(UINT16_MAX);
+            buffer_1.fill(UINT16_MAX);
+
+            const adc_continuous_config_t config = {
+                .channels         = {.sequence = CHANNELS.data(), .num_of_channels = CHANNELS.size()},
+                .trigger          = ADC_RG_TRIGGER_SOFTWARE,
+                .trigger_polarity = ADC_POLARITY_NONE,
+                .buffer_0         = buffer_0.data(),
+                .buffer_1         = buffer_1.data(),
+                .buffer_size      = buffer_0.size(),
+                .priority         = DMA_PRIORITY_LOW,
+                .circular_mode    = DMA_MODE_DOUBLE_BUFFERS,
+                .callbacks =
+                    {
+                        .on_buffer_full       = cont_done_cb,
+                        .on_transfer_error    = nullptr,
+                        .on_direct_mode_error = nullptr,
+                        .on_data_overrun      = nullptr,
+                        .user                 = nullptr,
+                    },
+            };
+
+            TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_start_conv(ADC1, &config));
+
+            // Let the buffers get filled a good number of times
+            for (size_t i = 0; i < 20; i++) {
+                // Wait for the first buffer (buffer_0) to be filled
+                s_cont_done = false;
+                TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
+                                             return s_cont_done;
+                                         }),
+                                         "Continuous DMA conversion: buffer 0 never filled");
+                TEST_ASSERT_EQUAL(0, s_filled_buffer_idx);
+
+                // Wait for the second buffer (buffer_1) to be filled
+                s_cont_done = false;
+                TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
+                                             return s_cont_done;
+                                         }),
+                                         "Continuous DMA conversion: buffer 1 never filled");
+                TEST_ASSERT_EQUAL(1, s_filled_buffer_idx);
+            }
+
+            TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_end_conv(ADC1));
+
+            for (const auto sample : buffer_0) {
+                TEST_ASSERT_TRUE(sample <= 0xFFFU);
+            }
+            for (const auto sample : buffer_1) {
+                TEST_ASSERT_TRUE(sample <= 0xFFFU);
+            }
+
+            // Pure circular mode (buffer_0 acts as a ring buffer)
+            auto circ_config          = config;
+            circ_config.circular_mode = DMA_MODE_CIRCULAR;
+            circ_config.buffer_1      = nullptr;
+
+            buffer_0.fill(UINT16_MAX);
+            TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_start_conv(ADC1, &circ_config));
+
+            for (size_t i = 0; i < 20; i++) {
+                s_cont_done = false;
+                TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
+                                             return s_cont_done;
+                                         }),
+                                         "Continuous DMA conversion: buffer 0 never filled");
+
+                // s_filled_buffer_idx contains garbage when not in double buffer mode, but that value should be constant
+                static const uint8_t filled_buffer_idx = s_filled_buffer_idx;
+                TEST_ASSERT_EQUAL_UINT8(filled_buffer_idx, s_filled_buffer_idx);
+            }
+
+            TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_end_conv(ADC1));
+
+            for (const auto sample : buffer_0) {
+                TEST_ASSERT_TRUE(sample <= 0xFFFU);
+            }
+
+            adc_enable_nvic_irq(false);
+            reset_to_baseline();
+        }
+
+        void external_trigger_source_works_for_regular_and_injected_groups() {
+            reset_to_baseline();
+            adc_enable_nvic_irq(true);
+
+            constexpr auto CHANNELS = std::array{ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_2};
+            for (const auto channel : CHANNELS) {
+                adc_configure_channel(channel);
+            }
+
+            std::array<uint16_t, CHANNELS.size() * 1024> buffer_0{};
+            buffer_0.fill(UINT16_MAX);
+
+            // The regular group
+            const adc_continuous_config_t config = {
+                .channels         = {.sequence = CHANNELS.data(), .num_of_channels = CHANNELS.size()},
+                .trigger          = ADC_RG_TRIGGER_EXTI_LINE_11,
+                .trigger_polarity = ADC_POLARITY_FALLING_EDGE,
+                .buffer_0         = buffer_0.data(),
+                .buffer_1         = nullptr,
+                .buffer_size      = buffer_0.size(),
+                .priority         = DMA_PRIORITY_LOW,
+                .circular_mode    = DMA_MODE_CIRCULAR,
+                .callbacks =
+                    {
+                        .on_buffer_full       = cont_done_cb,
+                        .on_transfer_error    = nullptr,
+                        .on_direct_mode_error = nullptr,
+                        .on_data_overrun      = nullptr,
+                        .user                 = nullptr,
+                    },
+            };
+            TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_start_conv(ADC1, &config));
+            TEST_ASSERT_EQUAL_UINT32(ADC_RG_TRIGGER_EXTI_LINE_11, ((ADC1->CR2 & ADC_CR2_EXTSEL) >> ADC_CR2_EXTSEL_Pos));
+            TEST_ASSERT_EQUAL_UINT32(ADC_POLARITY_FALLING_EDGE, ((ADC1->CR2 & ADC_CR2_EXTEN) >> ADC_CR2_EXTEN_Pos));
+
+            // Conversion should not be started yet. It waits for a falling edge on GPIO_PIN_11 on any port
+            TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_STRT);
+
+            // Generate an EXTI request on EXTI line 11
+            gpiox_clk_enable(GPIOA, true);
+            gpio_set_output(GPIOA, GPIO_PIN_11);
+            gpio_enable_pullups(GPIOA, GPIO_PIN_11, true);
+            gpio_set_interrupt(GPIOA, GPIO_PIN_11, GPIO_FALLING_EDGE, nullptr, nullptr);
+
+            // Get a falling edge on PA11 which is configured as EXTI line 11
+            gpio_set_level(GPIOA, GPIO_PIN_11, true);
+            delay_us(5);
+            gpio_set_level(GPIOA, GPIO_PIN_11, false);
+            delay_us(5);
+
+            // The conversion should be started now, and everything should work as normal
+            TEST_ASSERT_TRUE(ADC1->SR & ADC_SR_STRT);
+
+            for (size_t i = 0; i < 20; i++) {
+                s_cont_done = false;
+                TEST_ASSERT_TRUE(wait_until([]() {
+                    return s_cont_done;
+                }));
+            }
+
+            TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_end_conv(ADC1));
+            TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_STRT);
+            TEST_ASSERT_EQUAL_UINT32(0, ((ADC1->CR2 & ADC_CR2_EXTSEL) >> ADC_CR2_EXTSEL_Pos));
+            TEST_ASSERT_EQUAL_UINT32(0, ((ADC1->CR2 & ADC_CR2_EXTEN) >> ADC_CR2_EXTEN_Pos));
+
+            for (const auto sample : buffer_0) {
+                TEST_ASSERT_TRUE(sample <= 0xFFFU);
+            }
+
+            // The injected group
+            const adc_injected_group_config_t jg_config = {
+                .channels         = {.sequence = CHANNELS.data(), .num_of_channels = CHANNELS.size()},
+                .trigger          = ADC_JG_TRIGGER_EXTI_LINE_15,
+                .trigger_polarity = ADC_POLARITY_FALLING_EDGE,
+                .offsets          = {},
+                .on_conv_complete = injected_done_cb,
+                .arg              = nullptr,
+            };
+            TEST_ASSERT_EQUAL(HAL_OK, adc_injected_group_start_conv(ADC1, &jg_config));
+            TEST_ASSERT_EQUAL_UINT32(ADC_JG_TRIGGER_EXTI_LINE_15, ((ADC1->CR2 & ADC_CR2_JEXTSEL) >> ADC_CR2_JEXTSEL_Pos));
+            TEST_ASSERT_EQUAL_UINT32(ADC_POLARITY_FALLING_EDGE, ((ADC1->CR2 & ADC_CR2_JEXTEN) >> ADC_CR2_JEXTEN_Pos));
+
+            // Conversion should not be started yet. It waits for a falling edge on GPIO_PIN_15 on any port
+            TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_JSTRT);
+
+            // Generate an EXTI request on EXTI line 15
+            gpio_set_input(GPIOA, GPIO_PIN_15);
+            gpio_enable_pullups(GPIOA, GPIO_PIN_15, true);
+            gpio_set_interrupt(GPIOA, GPIO_PIN_15, GPIO_FALLING_EDGE, nullptr, nullptr);
+
+            // Get a falling edge on PA15 which is configured as EXTI line 15
+            gpio_set_level(GPIOA, GPIO_PIN_15, true);
+            delay_us(5);
+            gpio_set_level(GPIOA, GPIO_PIN_15, false);
+            delay_us(5);
+
+            // The conversion should be started now, and everything should work as normal
+            TEST_ASSERT_TRUE(ADC1->SR & ADC_SR_JSTRT);
+            TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_JEOC);
+
+            s_injected_done = false;
+            TEST_ASSERT_TRUE(wait_until([]() {
+                return s_injected_done;
+            }));
+            TEST_ASSERT_TRUE(ADC1->SR & ADC_SR_JEOC);
+
+            std::array<uint16_t, CHANNELS.size()> jg_buffer{};
+            jg_buffer.fill(UINT16_MAX);
+            static_assert(jg_buffer.size() <= MAX_INJECTED_CHANNELS);
+
+            TEST_ASSERT_EQUAL(HAL_OK, adc_injected_group_get_result(ADC1, jg_buffer.data(), jg_buffer.size()));
+            TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_JEOC);
+            TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_JSTRT);
+            TEST_ASSERT_EQUAL_UINT32(0, ((ADC1->CR2 & ADC_CR2_JEXTSEL) >> ADC_CR2_JEXTSEL_Pos));
+            TEST_ASSERT_EQUAL_UINT32(0, ((ADC1->CR2 & ADC_CR2_JEXTEN) >> ADC_CR2_JEXTEN_Pos));
+
+            for (const auto sample : jg_buffer) {
+                TEST_ASSERT_TRUE(sample <= 0xFFFU);
+                LOGI(TAG, "Injected sample: %u", sample);
+            }
 
             adc_enable_nvic_irq(false);
             reset_to_baseline();
@@ -600,6 +827,9 @@ namespace test::adc {
         RUN_TEST(injected_group_result_before_completion_is_not_done);
         RUN_TEST(injected_group_arg_guards);
         RUN_TEST(injected_group_invokes_the_completion_callback_via_the_isr);
+        RUN_TEST(injected_group_interrupts_regular_group_without_corruption);
+        RUN_TEST(regular_group_runs_in_circular_and_double_buffering_mode);
+        RUN_TEST(external_trigger_source_works_for_regular_and_injected_groups);
         RUN_TEST(analog_watchdog_validates_thresholds_and_monitor_flags);
 
         UNITY_END();

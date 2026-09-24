@@ -40,7 +40,7 @@ typedef enum : uint8_t {
 typedef enum : uint8_t {
     DMA_MODE_ONESHOT = 0,
     DMA_MODE_CIRCULAR,
-    DMA_MODE_DOUBLE_BUFFER,
+    DMA_MODE_DOUBLE_BUFFERS,
 } dma_circ_mode_t;
 
 typedef struct {

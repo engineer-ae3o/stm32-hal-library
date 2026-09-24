@@ -213,7 +213,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     cr_mask |= (uint32_t)(config->per_data_size << DMA_SxCR_PSIZE_Pos) & DMA_SxCR_PSIZE;
     cr_mask |= (uint32_t)(config->mem_data_size << DMA_SxCR_MSIZE_Pos) & DMA_SxCR_MSIZE;
     cr_mask |= config->flow_controller == DMA_FLOW_CONTROLLER_DMA ? 0 : DMA_SxCR_PFCTRL;
-    if (config->circular_mode == DMA_MODE_DOUBLE_BUFFER) {
+    if (config->circular_mode == DMA_MODE_DOUBLE_BUFFERS) {
         cr_mask |= (DMA_SxCR_DBM | DMA_SxCR_CIRC);
     } else if (config->circular_mode == DMA_MODE_CIRCULAR) {
         cr_mask |= DMA_SxCR_CIRC;
@@ -233,7 +233,7 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     if (config->mem_buf_0) {
         stream->M0AR = (uint32_t)config->mem_buf_0;
     }
-    if (config->mem_buf_1 && config->circular_mode == DMA_MODE_DOUBLE_BUFFER) {
+    if (config->mem_buf_1 && config->circular_mode == DMA_MODE_DOUBLE_BUFFERS) {
         stream->M1AR = (uint32_t)config->mem_buf_1;
     }
 
@@ -304,7 +304,7 @@ void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler
 void dma_set_circular_mode(DMA_Stream_TypeDef* stream, dma_circ_mode_t circ_mode) {
     if (stream) {
         uint32_t mask = stream->CR & ~(DMA_SxCR_CIRC | DMA_SxCR_DBM);
-        if (circ_mode == DMA_MODE_DOUBLE_BUFFER) {
+        if (circ_mode == DMA_MODE_DOUBLE_BUFFERS) {
             mask |= (DMA_SxCR_DBM | DMA_SxCR_CIRC);
         } else if (circ_mode == DMA_MODE_CIRCULAR) {
             mask |= DMA_SxCR_CIRC;
