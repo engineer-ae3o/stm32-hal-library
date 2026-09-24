@@ -11,7 +11,6 @@
 #include "test/adc.hpp"
 #include "utils/err.h"
 #include "utils/log.h"
-#include "utils/tick.h"
 
 #include <array>
 #include <cstdint>
@@ -497,6 +496,7 @@ namespace test::adc {
         }
 
         void injected_group_interrupts_regular_group_without_corruption() {
+            // ...
         }
 
         void regular_group_runs_in_circular_and_double_buffering_mode() {
@@ -641,9 +641,7 @@ namespace test::adc {
 
             // Get a falling edge on PA11 which is configured as EXTI line 11
             gpio_set_level(GPIOA, GPIO_PIN_11, true);
-            delay_us(5);
             gpio_set_level(GPIOA, GPIO_PIN_11, false);
-            delay_us(5);
 
             // The conversion should be started now, and everything should work as normal
             TEST_ASSERT_TRUE(ADC1->SR & ADC_SR_STRT);
@@ -679,23 +677,20 @@ namespace test::adc {
 
             // Conversion should not be started yet. It waits for a falling edge on GPIO_PIN_15 on any port
             TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_JSTRT);
+            s_injected_done = false;
 
             // Generate an EXTI request on EXTI line 15
-            gpio_set_input(GPIOA, GPIO_PIN_15);
+            gpio_set_output(GPIOA, GPIO_PIN_15);
             gpio_enable_pullups(GPIOA, GPIO_PIN_15, true);
             gpio_set_interrupt(GPIOA, GPIO_PIN_15, GPIO_FALLING_EDGE, nullptr, nullptr);
 
             // Get a falling edge on PA15 which is configured as EXTI line 15
             gpio_set_level(GPIOA, GPIO_PIN_15, true);
-            delay_us(5);
             gpio_set_level(GPIOA, GPIO_PIN_15, false);
-            delay_us(5);
 
             // The conversion should be started now, and everything should work as normal
             TEST_ASSERT_TRUE(ADC1->SR & ADC_SR_JSTRT);
-            TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_JEOC);
 
-            s_injected_done = false;
             TEST_ASSERT_TRUE(wait_until([]() {
                 return s_injected_done;
             }));

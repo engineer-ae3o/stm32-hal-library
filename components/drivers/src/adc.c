@@ -713,8 +713,9 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data,
             return HAL_ERR_INVALID_ARG;
     }
 
-    // Clear the JEOC bit since the data has been read
-    handle->SR &= ~ADC_SR_JEOC;
+    // Cleanup. It clears the JEOC and JSTRT status bits as well
+    clear_state(handle, false, true);
+
     return HAL_OK;
 }
 
