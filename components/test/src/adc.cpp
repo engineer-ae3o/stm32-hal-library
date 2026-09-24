@@ -599,7 +599,7 @@ namespace test::adc {
             reset_to_baseline();
             adc_enable_nvic_irq(true);
 
-            constexpr auto CHANNELS = std::array{ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_2};
+            constexpr auto CHANNELS = std::array{ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_2, ADC_CHANNEL_4};
             for (const auto channel : CHANNELS) {
                 adc_configure_channel(channel);
             }
@@ -607,7 +607,7 @@ namespace test::adc {
             std::array<uint16_t, CHANNELS.size() * 1024> buffer_0{};
             buffer_0.fill(UINT16_MAX);
 
-            // The regular group
+            // The regular group: falling edge
             const adc_continuous_config_t config = {
                 .channels         = {.sequence = CHANNELS.data(), .num_of_channels = CHANNELS.size()},
                 .trigger          = ADC_RG_TRIGGER_EXTI_LINE_11,
@@ -662,31 +662,31 @@ namespace test::adc {
                 TEST_ASSERT_TRUE(sample <= 0xFFFU);
             }
 
-            // The injected group
+            // The injected group: rising edge
             const adc_injected_group_config_t jg_config = {
                 .channels         = {.sequence = CHANNELS.data(), .num_of_channels = CHANNELS.size()},
                 .trigger          = ADC_JG_TRIGGER_EXTI_LINE_15,
-                .trigger_polarity = ADC_POLARITY_FALLING_EDGE,
+                .trigger_polarity = ADC_POLARITY_RISING_EDGE,
                 .offsets          = {},
                 .on_conv_complete = injected_done_cb,
                 .arg              = nullptr,
             };
             TEST_ASSERT_EQUAL(HAL_OK, adc_injected_group_start_conv(ADC1, &jg_config));
             TEST_ASSERT_EQUAL_UINT32(ADC_JG_TRIGGER_EXTI_LINE_15, ((ADC1->CR2 & ADC_CR2_JEXTSEL) >> ADC_CR2_JEXTSEL_Pos));
-            TEST_ASSERT_EQUAL_UINT32(ADC_POLARITY_FALLING_EDGE, ((ADC1->CR2 & ADC_CR2_JEXTEN) >> ADC_CR2_JEXTEN_Pos));
+            TEST_ASSERT_EQUAL_UINT32(ADC_POLARITY_RISING_EDGE, ((ADC1->CR2 & ADC_CR2_JEXTEN) >> ADC_CR2_JEXTEN_Pos));
 
-            // Conversion should not be started yet. It waits for a falling edge on GPIO_PIN_15 on any port
+            // Conversion should not be started yet. It waits for a rising edge on GPIO_PIN_15 on any port
             TEST_ASSERT_FALSE(ADC1->SR & ADC_SR_JSTRT);
             s_injected_done = false;
 
             // Generate an EXTI request on EXTI line 15
             gpio_set_output(GPIOA, GPIO_PIN_15);
             gpio_enable_pullups(GPIOA, GPIO_PIN_15, true);
-            gpio_set_interrupt(GPIOA, GPIO_PIN_15, GPIO_FALLING_EDGE, nullptr, nullptr);
+            gpio_set_interrupt(GPIOA, GPIO_PIN_15, GPIO_RISING_EDGE, nullptr, nullptr);
 
-            // Get a falling edge on PA15 which is configured as EXTI line 15
-            gpio_set_level(GPIOA, GPIO_PIN_15, true);
+            // Get a rising edge on PA15 which is configured as EXTI line 15
             gpio_set_level(GPIOA, GPIO_PIN_15, false);
+            gpio_set_level(GPIOA, GPIO_PIN_15, true);
 
             // The conversion should be started now, and everything should work as normal
             TEST_ASSERT_TRUE(ADC1->SR & ADC_SR_JSTRT);
