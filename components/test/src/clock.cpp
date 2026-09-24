@@ -251,7 +251,7 @@ namespace test::clock {
             }
 
             audio_pll_clock_config(AUDIO_PLL_DISABLE);
-            assert_audio_clock({AUDIO_PLL_DISABLE, 0});
+            assert_audio_clock({.clock = AUDIO_PLL_DISABLE, .audio_pll = 0});
         }
 
         void no_system_clock_preset_affects_any_audio_preset() {
@@ -324,8 +324,8 @@ namespace test::clock {
         UNITY_BEGIN();
 
         // Preserve whatever clock config was active on entry.
-        const system_clock_t original_clock = get_system_core_clock_type();
-        const audio_clock_t  original_audio = get_audio_pll_clock_type();
+        volatile const system_clock_t original_clock = get_system_core_clock_type();
+        volatile const audio_clock_t  original_audio = get_audio_pll_clock_type();
 
         RUN_TEST(each_system_clock_preset_configures_correctly);
         RUN_TEST(direct_to_pll_round_trips_succeed);

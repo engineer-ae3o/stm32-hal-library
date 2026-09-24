@@ -4,8 +4,6 @@
 #include "utils/tick.h"
 #include "utils/log.h"
 
-#include <stdatomic.h>
-
 
 void systick_init(void) {
     SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;

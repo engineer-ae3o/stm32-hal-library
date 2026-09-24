@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 
-#include "drivers/gpio.h"
+#include "drivers/gpio_types.h"
 
 
 // Board specific configuration details
@@ -42,9 +42,9 @@ extern "C" {
 #define TEMP_SENSOR_STARTUP_TIME_US (10U)
 
 // Calibration data for internal ADC reference voltage and the temperature sensor
-#define VREFINT_CALIBRATION_VALUE (uint16_t)(*(uint16_t*)0x1FFF7A2AU)
-#define TEMP_SENSOR_CALIB_30C_VALUE (uint16_t)(*(uint16_t*)0x1FFF7A2CU)
-#define TEMP_SENSOR_CALIB_110C_VALUE (uint16_t)(*(uint16_t*)0x1FFF7A2EU)
+#define VREFINT_CALIBRATION_VALUE (*(uint16_t*)0x1FFF7A2AU)
+#define TEMP_SENSOR_CALIB_30C_VALUE (*(uint16_t*)0x1FFF7A2CU)
+#define TEMP_SENSOR_CALIB_110C_VALUE (*(uint16_t*)0x1FFF7A2EU)
 
 // Bus rise times for I2C
 #define I2C_TRISE_TIME_400kHz_ns (300U)

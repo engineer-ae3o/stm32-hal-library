@@ -221,19 +221,17 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigg
         EXTI->FTSR |= (0b1UL << pin);
     }
 
-    // Clear the EXTI interrupt flag
-    EXTI->PR = (0b1UL << pin);
+    // Register the pin's interrupt handler
+    s_gpio_irq_ctx[pin].callback = callback;
+    s_gpio_irq_ctx[pin].arg      = arg;
 
     // Enable the pin's corresponding NVIC irq line
     NVIC_SetPriority(s_exti_irq_lut[pin], EXTI_LINE_NVIC_IRQ_PRIORITY);
     NVIC_ClearPendingIRQ(s_exti_irq_lut[pin]);
     NVIC_EnableIRQ(s_exti_irq_lut[pin]);
 
-    // Register the pin's interrupt handler
-    s_gpio_irq_ctx[pin].callback = callback;
-    s_gpio_irq_ctx[pin].arg      = arg;
-
-    // Unmask the EXTI interrupt for the pin
+    // Clear the EXTI interrupt flag and unmask the EXTI interrupt for the pin
+    EXTI->PR = (0b1UL << pin);
     EXTI->IMR |= (0b1UL << pin);
 
     return HAL_OK;

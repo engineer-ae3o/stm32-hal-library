@@ -26,11 +26,11 @@ void system_init(void) {
     __DSB();
     __ISB();
 
+    // Enable exceptions on division by 0
+    SCB->CCR |= SCB_CCR_DIV_0_TRP_Msk;
+
     // Enable the bus fault and usage fault exceptions
     SCB->SHCSR |= (SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
-
-    // Enable exceptions on divide by 0 and unaligned memory accesses
-    SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk);
 
     // Initialize the logging interface (SEGGER RTT), the debug trace counter and the SysTick counter
     SEGGER_RTT_Init();

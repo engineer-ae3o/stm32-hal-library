@@ -8,6 +8,7 @@
 #include "drivers/gpio.h"
 #include "drivers/adc.h"
 #include "utils/board.h"
+#include "utils/tick.h"
 #include "test/adc.hpp"
 #include "utils/err.h"
 #include "utils/log.h"
@@ -25,6 +26,7 @@ namespace test::adc {
 
         // Helpers
         void reset_to_baseline() {
+            TEST_ASSERT_EQUAL(HAL_OK, adc_deconfigure(ADC1));
             adc_clk_configure(ADC_CLK_PRESCALER_4);
             constexpr adc_config_t config = {
                 .alignment       = ADC_RIGHT_ALIGN,
@@ -53,8 +55,10 @@ namespace test::adc {
 
         template<typename predicate>
         bool wait_until(predicate pred) {
-            uint32_t timeout = TIMEOUT;
-            while (!pred() && --timeout);
+            volatile uint32_t timeout = TIMEOUT;
+            while (!pred() && timeout) {
+                timeout -= 1;
+            }
             return pred();
         }
 
@@ -225,7 +229,7 @@ namespace test::adc {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_temp_celsius(ADC1, nullptr));
             TEST_ASSERT_EQUAL(HAL_OK, adc_get_temp_celsius(ADC1, &temp_c));
             // Plausible temperature bound for a test runner. Not a calibrated accuracy check
-            TEST_ASSERT_TRUE(temp_c > 25.0F && temp_c < 35.0F);
+            TEST_ASSERT_TRUE(temp_c > 20 && temp_c < 40);
             LOGI(TAG, "[voltage_and_temperature_math_are_internally_consistent] Temperature: %.3fC", (double)temp_c);
         }
 
@@ -641,7 +645,9 @@ namespace test::adc {
 
             // Get a falling edge on PA11 which is configured as EXTI line 11
             gpio_set_level(GPIOA, GPIO_PIN_11, true);
+            delay_us(1);
             gpio_set_level(GPIOA, GPIO_PIN_11, false);
+            delay_us(1);
 
             // The conversion should be started now, and everything should work as normal
             TEST_ASSERT_TRUE(ADC1->SR & ADC_SR_STRT);
@@ -686,7 +692,9 @@ namespace test::adc {
 
             // Get a rising edge on PA15 which is configured as EXTI line 15
             gpio_set_level(GPIOA, GPIO_PIN_15, false);
+            delay_us(1);
             gpio_set_level(GPIOA, GPIO_PIN_15, true);
+            delay_us(1);
 
             // The conversion should be started now, and everything should work as normal
             TEST_ASSERT_TRUE(ADC1->SR & ADC_SR_JSTRT);

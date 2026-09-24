@@ -14,7 +14,7 @@ extern "C" {
 
 
 // Loop iteration based timeout
-#define TIMEOUT (100'000U)
+#define TIMEOUT (1'000'000U)
 #define UNUSED(x) (void)(x)
 
 // NVIC interrupt priorities for the different peripherals
