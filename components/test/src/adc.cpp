@@ -73,6 +73,18 @@ namespace test::adc {
         }
 
         // TESTS
+        void clk_enable_disables_the_peripheral_clock() {
+            TEST_ASSERT_EQUAL(HAL_OK, adcx_clk_enable(ADC1, true));
+            TEST_ASSERT_TRUE(RCC->APB2ENR & RCC_APB2ENR_ADC1EN);
+
+            TEST_ASSERT_EQUAL(HAL_OK, adcx_clk_enable(ADC1, false));
+            TEST_ASSERT_FALSE(RCC->APB2ENR & RCC_APB2ENR_ADC1EN);
+
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adcx_clk_enable(nullptr, false));
+
+            TEST_ASSERT_EQUAL(HAL_OK, adcx_clk_enable(ADC1, true)); // Leave enabled for the rest of the suite
+        }
+
         void clk_enable_rejects_unknown_handles() {
             TEST_ASSERT_EQUAL(HAL_OK, adcx_clk_enable(ADC1, true));
             TEST_ASSERT_TRUE(RCC->APB2ENR & RCC_APB2ENR_ADC1EN);
@@ -195,18 +207,6 @@ namespace test::adc {
             }
         }
 
-        void clk_enable_disables_the_peripheral_clock() {
-            TEST_ASSERT_EQUAL(HAL_OK, adcx_clk_enable(ADC1, true));
-            TEST_ASSERT_TRUE(RCC->APB2ENR & RCC_APB2ENR_ADC1EN);
-
-            TEST_ASSERT_EQUAL(HAL_OK, adcx_clk_enable(ADC1, false));
-            TEST_ASSERT_FALSE(RCC->APB2ENR & RCC_APB2ENR_ADC1EN);
-
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adcx_clk_enable(nullptr, false));
-
-            TEST_ASSERT_EQUAL(HAL_OK, adcx_clk_enable(ADC1, true)); // leave enabled for the rest of the suite
-        }
-
         void regular_group_cont_start_rejects_bad_trigger_polarity() {
             reset_to_baseline();
             constexpr adc_channel_t channel = ADC_CHANNEL_0;
@@ -244,8 +244,8 @@ namespace test::adc {
 
             constexpr adc_channel_t channel = ADC_CHANNEL_0;
             adc_configure_channel(channel);
-            std::array<uint16_t, 64> buffer{};
 
+            std::array<uint16_t, 64>      buffer{};
             const adc_continuous_config_t config = {
                 .channels         = {.sequence = &channel, .num_of_channels = 1},
                 .trigger          = ADC_RG_TRIGGER_SOFTWARE,
@@ -298,6 +298,11 @@ namespace test::adc {
 
             std::array<uint16_t, CHANNELS.size()> result{};
             TEST_ASSERT_EQUAL(HAL_OK, adc_injected_group_get_result(ADC1, result.data(), result.size()));
+            for (size_t i = 0; i < result.size(); i++) {
+                const uint16_t actual = result[i] + (offsets[i] & 0xFFFU);
+                TEST_ASSERT_TRUE(actual <= 0xFFFU);
+                LOGI(TAG, "Injected sample %u: %u", i, actual);
+            }
 
             reset_to_baseline();
         }
@@ -1079,13 +1084,13 @@ namespace test::adc {
         UNITY_BEGIN();
 
         RUN_TEST(clk_enable_rejects_unknown_handles);
+        RUN_TEST(clk_enable_disables_the_peripheral_clock);
         RUN_TEST(power_on_toggles_adon);
         RUN_TEST(configure_covers_every_alignment_resolution_and_sample_time);
         RUN_TEST(deconfigure_powers_down_and_clears_state);
         RUN_TEST(clk_configure_sweeps_every_prescaler);
         RUN_TEST(nvic_irq_enable_toggles_the_adc_line);
         RUN_TEST(channel_get_gpio_matches_the_pin_map);
-        RUN_TEST(clk_enable_disables_the_peripheral_clock);
         RUN_TEST(regular_group_cont_start_rejects_bad_trigger_polarity);
         RUN_TEST(injected_group_start_rejects_bad_trigger_polarity);
         RUN_TEST(regular_group_cont_start_rejects_reentry_while_active);

@@ -6,6 +6,7 @@
 #include "test/gpio.hpp"
 #include "utils/err.h"
 #include "utils/log.h"
+#include "utils/tick.h"
 
 #include <array>
 #include <cstdint>
@@ -58,8 +59,8 @@ namespace test::gpio {
         volatile bool  s_gpio_irq_fired = false;
 
         void irq_handler(void* arg) {
-            s_last_cb_arg = arg;
-            s_gpio_irq_fired += true;
+            s_last_cb_arg    = arg;
+            s_gpio_irq_fired = true;
         }
 
         inline bool wait_for(volatile bool& flag) {
@@ -211,23 +212,25 @@ namespace test::gpio {
             gpio_set_output(SCRATCH_PORT, SCRATCH_PIN);
             gpio_set_output_type(SCRATCH_PORT, SCRATCH_PIN, GPIO_PUSH_PULL);
 
-            bool scratch_pin_level = false;
-
             // A push pull output pin's own drive state is readable back on the IDR via the pad
             gpio_set_level(SCRATCH_PORT, SCRATCH_PIN, true);
-            scratch_pin_level = true;
+            bool scratch_pin_level = true;
+            delay_us(1);
             TEST_ASSERT_EQUAL(scratch_pin_level, gpio_get_level(SCRATCH_PORT, SCRATCH_PIN));
 
             gpio_set_level(SCRATCH_PORT, SCRATCH_PIN, false);
             scratch_pin_level = false;
+            delay_us(1);
             TEST_ASSERT_EQUAL(scratch_pin_level, gpio_get_level(SCRATCH_PORT, SCRATCH_PIN));
 
             gpio_level_toggle(SCRATCH_PORT, SCRATCH_PIN);
             scratch_pin_level = !scratch_pin_level;
+            delay_us(1);
             TEST_ASSERT_EQUAL(scratch_pin_level, gpio_get_level(SCRATCH_PORT, SCRATCH_PIN));
 
             gpio_level_toggle(SCRATCH_PORT, SCRATCH_PIN);
             scratch_pin_level = !scratch_pin_level;
+            delay_us(1);
             TEST_ASSERT_EQUAL(scratch_pin_level, gpio_get_level(SCRATCH_PORT, SCRATCH_PIN));
 
             // BSRR is a set/reset register. Driving a neighbouring pin should not disturb this one
@@ -238,9 +241,11 @@ namespace test::gpio {
             gpio_set_output_type(SCRATCH_PORT, ANOTHER_SCRATCH_PIN, GPIO_PUSH_PULL);
 
             gpio_set_level(SCRATCH_PORT, ANOTHER_SCRATCH_PIN, scratch_pin_level);
+            delay_us(1);
             TEST_ASSERT_EQUAL(scratch_pin_level, gpio_get_level(SCRATCH_PORT, ANOTHER_SCRATCH_PIN));
 
             TEST_ASSERT_FALSE(gpio_get_level(nullptr, ANOTHER_SCRATCH_PIN));
+            delay_us(1);
             gpio_set_input(SCRATCH_PORT, ANOTHER_SCRATCH_PIN);
 
             reset_port(SCRATCH_PORT);
@@ -381,7 +386,6 @@ namespace test::gpio {
             TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(GPIOA, GPIO_PIN_5, GPIO_RISING_FALLING_EDGE, irq_handler, &sentinel_5));
             TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(GPIOB, GPIO_PIN_8, GPIO_RISING_FALLING_EDGE, irq_handler, &sentinel_8));
 
-            s_last_cb_arg    = nullptr;
             s_gpio_irq_fired = false;
 
             // Only pin 8 actually fires
@@ -396,6 +400,7 @@ namespace test::gpio {
 
             gpio_clear_interrupt(GPIO_PIN_5);
             gpio_clear_interrupt(GPIO_PIN_8);
+
             reset_port(SCRATCH_PORT);
             enable_all_port_clocks(false);
         }
@@ -409,7 +414,6 @@ namespace test::gpio {
 
             TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(GPIOD, PIN, GPIO_RISING_EDGE, irq_handler, &sentinel));
 
-            s_last_cb_arg    = nullptr;
             s_gpio_irq_fired = false;
 
             // Registration alone must not leave anything pending

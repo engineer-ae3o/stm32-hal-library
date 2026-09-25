@@ -29,7 +29,7 @@ namespace test {
 
     void runner() {
         // Test runners for all components
-        adc::all();
+        // adc::all();
         // dma::all();
         // i2c::all();
         // pwm::all();

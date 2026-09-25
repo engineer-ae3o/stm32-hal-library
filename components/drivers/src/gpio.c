@@ -166,10 +166,10 @@ void gpio_level_toggle(GPIO_TypeDef* port, gpio_pin_t pin) {
 }
 
 bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin) {
-    if (!port) {
-        return false;
+    if (port) {
+        return ((port->IDR >> pin) & 0x1U);
     }
-    return ((port->IDR >> pin) & 0x1U);
+    return false;
 }
 
 hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigger_t edge, gpio_exti_cb_t callback, void* arg) {
