@@ -5,6 +5,7 @@
 #include "drivers/gpio_types.h"
 #include "drivers/dma_types.h"
 #include "utils/common.h"
+#include "utils/clock.h"
 #include "drivers/i2s.h"
 #include "test/i2s.hpp"
 #include "utils/err.h"
@@ -73,7 +74,7 @@ namespace test::i2s {
         }
 
         inline bool wait_for_count(volatile int& counter, int target) {
-            uint32_t timeout = TIMEOUT;
+            uint32_t timeout = TIMEOUT * 10;
             while ((counter < target) && --timeout);
             return counter >= target;
         }
@@ -139,7 +140,7 @@ namespace test::i2s {
             i2s_master_config_t config = DEFAULT_TX_CONFIG;
             config.audio_clock         = AUDIO_PLL_172MHz;
             config.use_mck             = true;
-            config.frequency           = static_cast<i2s_freq_t>(200'000); // Not a real or supported audio rate
+            config.frequency           = static_cast<i2s_freq_t>(200000); // Not a real or supported audio rate
 
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, i2s_master_init(TEST_INSTANCE, &config));
         }
@@ -297,6 +298,7 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_TX_CONFIG));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
+            audio_pll_clock_config(DEFAULT_TX_CONFIG.audio_clock);
 
             constexpr auto TX_DATA = std::array{0, 1, 2, 3, 4, 5, 6, 7};
 
@@ -316,6 +318,7 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_RX_CONFIG));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
+            audio_pll_clock_config(DEFAULT_RX_CONFIG.audio_clock);
 
             std::array<uint16_t, 8> rx_buf{};
 
@@ -334,23 +337,25 @@ namespace test::i2s {
 
         void oneshot_rejects_a_call_while_a_transfer_is_still_in_flight() {
             // A deliberately slow bit clock (i2sdiv near mid-range, low nominal sample rate) plus a
-            // large buffer keeps the DMA stream genuinely busy for milliseconds -- long enough to
+            // large buffer keeps the DMA stream genuinely busy for milliseconds. Long enough to
             // reliably observe from software without faking any register state.
+
             i2s_master_config_t config = DEFAULT_TX_CONFIG;
             config.audio_clock         = AUDIO_PLL_172MHz;
             config.use_mck             = true;
-            config.frequency           = static_cast<i2s_freq_t>(2'000);
+            config.frequency           = I2S_FREQ_8kHz;
 
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
+            audio_pll_clock_config(config.audio_clock);
 
-            std::array<uint16_t, 2048> tx_data{};
+            std::array<uint16_t, 4096> tx_data{};
 
             s_tx_done = false;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_transmit_oneshot(TEST_INSTANCE, tx_data.data(), tx_data.size(), tx_done_callback, nullptr));
 
-            // Re-entering immediately, before the first transfer has had any real time to finish
+            // Reentering immediately, before the first transfer has had any real time to finish
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, i2s_master_transmit_oneshot(TEST_INSTANCE, tx_data.data(), tx_data.size(), nullptr, nullptr));
 
             TEST_ASSERT_TRUE_MESSAGE(wait_for(s_tx_done), "First I2S DMA oneshot TX never completed");
@@ -367,19 +372,21 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
+            audio_pll_clock_config(config.audio_clock);
 
-            std::array<uint16_t, 100> tx_data{};
+            std::array<uint32_t, 100> tx_data{};
+
+            // get the DMA stream for I2S2 so we can insect the stream's registers
+            dma_stream_map_t dma_map;
+            TEST_ASSERT_EQUAL(HAL_OK, spi_master_get_dma_stream_map(&dma_map, 1)); // idx 1 == I2S2
 
             s_tx_done = false;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_transmit_oneshot(TEST_INSTANCE, tx_data.data(), tx_data.size(), tx_done_callback, nullptr));
 
-            // NDTR is read immediately after starting: for a >16-bit frame the driver must have
-            // programmed double the sample count into the DMA stream, since each sample takes two
-            // half-word DMA beats
-            dma_stream_map_t dma_map;
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_get_dma_stream_map(&dma_map, 1)); // idx 1 == I2S2
-            TEST_ASSERT_TRUE(dma_map.tx.stream->NDTR <= tx_data.size() * 2);
-            TEST_ASSERT_TRUE(dma_map.tx.stream->NDTR > tx_data.size()); // strictly more than 1x confirms doubling happened
+            // NDTR is read immediately after starting: for a >16-bit frame the driver must have programmed
+            // double the sample count into the DMA stream, since each sample takes two half word DMA beats
+            TEST_ASSERT_TRUE(dma_map.tx.stream->NDTR <= (tx_data.size() * 2));
+            TEST_ASSERT_TRUE(dma_map.tx.stream->NDTR > tx_data.size()); // Strictly more than 1x confirms doubling happened
 
             TEST_ASSERT_TRUE_MESSAGE(wait_for(s_tx_done), "I2S DMA oneshot TX never completed");
 
@@ -396,9 +403,11 @@ namespace test::i2s {
 
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
+            audio_pll_clock_config(config.audio_clock);
 
-            std::array<uint16_t, 40'000> tx_data{};
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_SIZE, i2s_master_transmit_oneshot(TEST_INSTANCE, tx_data.data(), tx_data.size(), nullptr, nullptr));
+            std::array<uint32_t, 1024> tx_data{};
+            constexpr uint16_t         oversized = 40'000;
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_SIZE, i2s_master_transmit_oneshot(TEST_INSTANCE, tx_data.data(), oversized, nullptr, nullptr));
 
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, false));
@@ -432,30 +441,35 @@ namespace test::i2s {
         }
 
         void dbm_filled_buffer_index_alternates_across_completions() {
-            // Small buffers at a moderate clock so a handful of half-buffer completions happen
-            // within the wait budget below. Content is irrelevant -- only the CT/buffer-index
-            // bookkeeping is under test.
+            // Small buffers at a moderate clock so a handful of half-buffer completions happen within the
+            // wait budget below. Content is irrelevant. Only the CT/buffer index bookkeeping is under test.
+
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_RX_CONFIG));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
+            audio_pll_clock_config(DEFAULT_RX_CONFIG.audio_clock);
 
-            std::array<uint16_t, 4> buf_0{};
-            std::array<uint16_t, 4> buf_1{};
+            std::array<uint16_t, 1024> buf_0{};
+            std::array<uint16_t, 1024> buf_1{};
 
             s_dbm_completions = 0;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_init(TEST_INSTANCE, buf_0.data(), buf_1.data(), buf_0.size(), dbm_callback, nullptr));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_start(TEST_INSTANCE));
 
-            TEST_ASSERT_TRUE_MESSAGE(wait_for_count(s_dbm_completions, 1), "First I2S DBM half-transfer never completed");
+            TEST_ASSERT_TRUE_MESSAGE(wait_for_count(s_dbm_completions, 1), "First I2S DBM half transfer never completed");
             uint8_t first_idx = 0xFFU;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_get_filled_buffer(TEST_INSTANCE, &first_idx));
 
-            TEST_ASSERT_TRUE_MESSAGE(wait_for_count(s_dbm_completions, 2), "Second I2S DBM half-transfer never completed");
+            TEST_ASSERT_TRUE_MESSAGE(wait_for_count(s_dbm_completions, 2), "Second I2S DBM half transfer never completed");
             uint8_t second_idx = 0xFFU;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_get_filled_buffer(TEST_INSTANCE, &second_idx));
 
             TEST_ASSERT_TRUE(first_idx == 0 || first_idx == 1);
             TEST_ASSERT_NOT_EQUAL(first_idx, second_idx);
+
+            // Ensure multiple buffer swap operations happen
+            s_dbm_completions = 0;
+            TEST_ASSERT_TRUE(wait_for_count(s_dbm_completions, 100));
 
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_stop(TEST_INSTANCE));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_deinit(TEST_INSTANCE));
