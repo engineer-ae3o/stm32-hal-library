@@ -122,7 +122,7 @@ typedef enum : uint8_t {
 
 
 // The polarities of the would be trigger source
-// It is ignored if the trigger is RG_TRIGGER_SOFTWARE or JG_TRIGGER_SOFTWARE
+// It is ignored if the trigger is ADC_RG_TRIGGER_SOFTWARE or ADC_JG_TRIGGER_SOFTWARE
 typedef enum : uint8_t {
     ADC_POLARITY_NONE                = 0b00,
     ADC_POLARITY_RISING_EDGE         = 0b01,
