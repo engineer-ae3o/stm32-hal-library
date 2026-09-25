@@ -340,7 +340,7 @@ namespace test::adc {
             TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_start_conv(ADC1, &config));
 
             // Let a few conversions run, then disable the DMA stream directly so the
-            // next EOC has no consumer for DR -> forces a legitimate OVR
+            // next EOC has no consumer for DR -> forces a legitimate ADC overrun event
             delay_us(50);
             DMA2_Stream0->CR &= ~DMA_SxCR_EN;
 
@@ -765,11 +765,12 @@ namespace test::adc {
                                      }),
                                      "Regular group did not resume after the injected conversion");
 
+            TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_end_conv(ADC1));
+
             for (const auto sample : reg_buffer) {
                 TEST_ASSERT_TRUE(sample <= 0xFFFU);
             }
 
-            TEST_ASSERT_EQUAL(HAL_OK, adc_regular_group_cont_end_conv(ADC1));
             adc_enable_nvic_irq(false);
             reset_to_baseline();
         }

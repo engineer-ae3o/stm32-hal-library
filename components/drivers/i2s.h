@@ -19,11 +19,11 @@ extern "C" {
 
 typedef SPI_TypeDef I2S_TypeDef;
 
-#define I2S1 ((I2S_TypeDef*)SPI1)
-#define I2S2 ((I2S_TypeDef*)SPI2)
-#define I2S3 ((I2S_TypeDef*)SPI3)
-#define I2S4 ((I2S_TypeDef*)SPI4)
-#define I2S5 ((I2S_TypeDef*)SPI5)
+#define I2S1 ((I2S_TypeDef*)(SPI1))
+#define I2S2 ((I2S_TypeDef*)(SPI2))
+#define I2S3 ((I2S_TypeDef*)(SPI3))
+#define I2S4 ((I2S_TypeDef*)(SPI4))
+#define I2S5 ((I2S_TypeDef*)(SPI5))
 
 typedef enum : uint8_t {
     I2S_MODE_PHILIPS         = 0b00,
@@ -60,7 +60,7 @@ typedef struct {
     i2s_frame_t   frame;
     audio_clock_t audio_clock;
 
-    bool cpol;
+    bool ckpol;
     bool use_mck;
 
     board_pin_t ws_pin;

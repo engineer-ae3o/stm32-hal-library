@@ -120,7 +120,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     handle->I2SCFGR |= (((uint32_t)config->direction << SPI_I2SCFGR_I2SCFG_Pos) | // Direction: TX or RX in master mode
                         ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos) |      // I2S mode: Philips, left or right justified
                         (uint32_t)config->frame |                                 // Already encodes data frame size and channel length
-                        ((uint32_t)config->cpol ? SPI_I2SCFGR_CKPOL : 0));        // Clock polarity
+                        ((uint32_t)config->ckpol ? SPI_I2SCFGR_CKPOL : 0));       // Clock polarity
 
     // Disable SPI DMA requests by default
     DISABLE_SPI_DMA();
