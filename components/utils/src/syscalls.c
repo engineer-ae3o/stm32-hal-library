@@ -27,10 +27,10 @@ void system_init(void) {
     __ISB();
 
     // Enable exceptions on division by 0
-    SCB->CCR |= SCB_CCR_DIV_0_TRP_Msk;
+    SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk);
 
-    // Enable the bus fault and usage fault exceptions
-    SCB->SHCSR |= (SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
+    // Enable the MemManage, bus fault, and usage fault exceptions.
+    SCB->SHCSR |= (SCB_SHCSR_MEMFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
 
     // Initialize the logging interface (SEGGER RTT), the debug trace counter and the SysTick counter
     SEGGER_RTT_Init();
@@ -57,37 +57,45 @@ void system_init(void) {
 }
 
 // Fault Handlers
-[[__gnu__::__naked__]] void HardFault_Handler(void) {
-    __asm volatile("tst lr, #4\n"
-                   "ite eq\n"
-                   "mrseq r0, msp\n"
-                   "mrsne r0, psp\n"
-                   "b hard_fault_dump\n");
-}
+//
+// All four route through decode_fault() via a trampoline that resolves whether the
+// fault frame is on the MSP or PSP (EXC_RETURN bit 2) and tags which fault it came
+// from, since CFSR alone can't disambiguate a genuine HardFault from one escalated
+// from a disabled configurable fault handler.
+typedef struct {
+    uint32_t r0;
+    uint32_t r1;
+    uint32_t r2;
+    uint32_t r3;
+    uint32_t r12;
+    uint32_t lr;
+    uint32_t pc;
+    uint32_t xpsr;
+} fault_frame_t;
 
-[[__gnu__::__naked__]] void BusFault_Handler(void) {
-    __asm volatile("tst lr, #4\n"
-                   "ite eq\n"
-                   "mrseq r0, msp\n"
-                   "mrsne r0, psp\n"
-                   "b bus_fault_dump\n");
-}
+typedef enum {
+    FAULT_TYPE_HARD = 0,
+    FAULT_TYPE_MEMMANAGE,
+    FAULT_TYPE_BUS,
+    FAULT_TYPE_USAGE,
+} fault_type_t;
 
-[[__gnu__::__naked__]] void UsageFault_Handler(void) {
-    __asm volatile("tst lr, #4\n"
-                   "ite eq\n"
-                   "mrseq r0, msp\n"
-                   "mrsne r0, psp\n"
-                   "b usage_fault_dump\n");
-}
+#define DEFINE_FAULT_TRAMPOLINE(handler_name, fault_id)                                                                                              \
+    [[__gnu__::__naked__]] void handler_name(void) {                                                                                                 \
+        __asm volatile("tst lr, #4\n"                                                                                                                \
+                       "ite eq\n"                                                                                                                    \
+                       "mrseq r0, msp\n"                                                                                                             \
+                       "mrsne r0, psp\n"                                                                                                             \
+                       "mov r1, lr\n"                                                                                                                \
+                       "movs r2, %0\n"                                                                                                               \
+                       "b decode_fault\n" ::"i"(fault_id)                                                                                            \
+                       : "r0", "r1", "r2");                                                                                                          \
+    }
 
-[[__gnu__::__naked__]] void MemManage_Handler(void) {
-    __asm volatile("tst lr, #4\n"
-                   "ite eq\n"
-                   "mrseq r0, msp\n"
-                   "mrsne r0, psp\n"
-                   "b mem_manage_dump\n");
-}
+DEFINE_FAULT_TRAMPOLINE(HardFault_Handler, FAULT_TYPE_HARD)
+DEFINE_FAULT_TRAMPOLINE(BusFault_Handler, FAULT_TYPE_BUS)
+DEFINE_FAULT_TRAMPOLINE(UsageFault_Handler, FAULT_TYPE_USAGE)
+DEFINE_FAULT_TRAMPOLINE(MemManage_Handler, FAULT_TYPE_MEMMANAGE)
 
 void NMI_Handler(void) {
     LOGI("CPU Exception", "The Non Maskable Interrupt triggered.");
@@ -143,104 +151,114 @@ void NMI_Handler(void) {
     }
 }
 
-// Fault state dumps
-[[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void hard_fault_dump(const unsigned int* frame) {
-    LOGE("CPU Exception", "Hard fault.");
+// Fault decoder. A single entry point for all four handlers above. Reads CFSR/HFSR
+// and, for MemManage/BusFault, the address registers, and logs the specific cause
+// bit by bit rather than a raw hex dump. Weak so a specific application can override
+// with its own recovery logic if it ever needs to.
+[[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void
+decode_fault(const fault_frame_t* frame, uint32_t exc_return, fault_type_t fault_type) {
+    const uint32_t cfsr = SCB->CFSR;
 
-    const unsigned int r0   = frame[0];
-    const unsigned int r1   = frame[1];
-    const unsigned int r2   = frame[2];
-    const unsigned int r3   = frame[3];
-    const unsigned int r12  = frame[4];
-    const unsigned int lr   = frame[5];
-    const unsigned int pc   = frame[6];
-    const unsigned int psr  = frame[7];
-    const unsigned int cfsr = SCB->CFSR;
+    switch (fault_type) {
+        case FAULT_TYPE_HARD: {
+            LOGE("CPU Exception", "Hard fault.");
 
-    LOGE("Fault", "R0: 0x%X", r0);
-    LOGE("Fault", "R1: 0x%X", r1);
-    LOGE("Fault", "R2: 0x%X", r2);
-    LOGE("Fault", "R3: 0x%X", r3);
-    LOGE("Fault", "R12: 0x%X", r12);
-    LOGE("Fault", "LR: 0x%X", lr);
-    LOGE("Fault", "PC: 0x%X", pc);
-    LOGE("Fault", "PSR: 0x%X", psr);
-    LOGE("Fault", "CFSR: 0x%X", cfsr);
+            const uint32_t hfsr = SCB->HFSR;
+            if (hfsr & SCB_HFSR_VECTTBL_Msk) {
+                LOGE("HardFault", "Bus error reading the vector table itself");
+            }
+            if (hfsr & SCB_HFSR_FORCED_Msk) {
+                LOGE("HardFault", "Escalated from a configurable fault");
+            }
+            break;
+        }
 
-    halt();
-}
+        case FAULT_TYPE_MEMMANAGE:
+            LOGE("CPU Exception", "MPU fault.");
 
-[[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void bus_fault_dump(const unsigned int* frame) {
-    LOGE("CPU Exception", "Bus fault.");
+            if (cfsr & SCB_CFSR_IACCVIOL_Msk) {
+                LOGE("MemFault", "Instruction access violation");
+            }
+            if (cfsr & SCB_CFSR_DACCVIOL_Msk) {
+                LOGE("MemFault", "Data access violation");
+            }
+            if (cfsr & SCB_CFSR_MUNSTKERR_Msk) {
+                LOGE("MemFault", "MPU violation on exception return (unstacking)");
+            }
+            if (cfsr & SCB_CFSR_MSTKERR_Msk) {
+                LOGE("MemFault", "MPU violation on exception entry (stacking). Possible stack overflow into a guarded region");
+            }
+            if (cfsr & SCB_CFSR_MLSPERR_Msk) {
+                LOGE("MemFault", "MPU violation during lazy FP state preservation");
+            }
+            if (cfsr & SCB_CFSR_MMARVALID_Msk) {
+                LOGE("MemFault", "MMFAR: 0x%X", (unsigned int)SCB->MMFAR);
+            }
+            break;
 
-    const unsigned int r0   = frame[0];
-    const unsigned int r1   = frame[1];
-    const unsigned int r2   = frame[2];
-    const unsigned int r3   = frame[3];
-    const unsigned int r12  = frame[4];
-    const unsigned int lr   = frame[5];
-    const unsigned int pc   = frame[6];
-    const unsigned int cfsr = SCB->CFSR;
-    const unsigned int bfar = SCB->BFAR;
+        case FAULT_TYPE_BUS:
+            LOGE("CPU Exception", "Bus fault.");
 
-    LOGE("Fault", "R0: 0x%X", r0);
-    LOGE("Fault", "R1: 0x%X", r1);
-    LOGE("Fault", "R2: 0x%X", r2);
-    LOGE("Fault", "R3: 0x%X", r3);
-    LOGE("Fault", "R12: 0x%X", r12);
-    LOGE("Fault", "LR: 0x%X", lr);
-    LOGE("Fault", "PC: 0x%X", pc);
-    LOGE("Fault", "CFSR: 0x%X", cfsr);
-    LOGE("Fault", "BFAR: 0x%X", bfar);
+            if (cfsr & SCB_CFSR_IBUSERR_Msk) {
+                LOGE("BusFault", "Instruction bus error");
+            }
+            if (cfsr & SCB_CFSR_PRECISERR_Msk) {
+                LOGE("BusFault", "Precise data bus error: The PC is the faulting instruction");
+            }
+            if (cfsr & SCB_CFSR_IMPRECISERR_Msk) {
+                LOGE("BusFault", "Imprecise data bus error: The PC is not reliable");
+            }
+            if (cfsr & SCB_CFSR_UNSTKERR_Msk) {
+                LOGE("BusFault", "Bus error on exception return (unstacking)");
+            }
+            if (cfsr & SCB_CFSR_STKERR_Msk) {
+                LOGE("BusFault", "Bus error on exception entry (stacking)");
+            }
+            if (cfsr & SCB_CFSR_LSPERR_Msk) {
+                LOGE("BusFault", "Bus error during lazy FP state preservation");
+            }
+            if (cfsr & SCB_CFSR_BFARVALID_Msk) {
+                LOGE("BusFault", "BFAR: 0x%X", (unsigned int)SCB->BFAR);
+            }
+            break;
 
-    halt();
-}
+        case FAULT_TYPE_USAGE:
+            LOGE("CPU Exception", "Usage fault.");
 
-[[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void usage_fault_dump(const unsigned int* frame) {
-    LOGE("CPU Exception", "Usage fault.");
+            if (cfsr & SCB_CFSR_UNDEFINSTR_Msk) {
+                LOGE("UsageFault", "Undefined instruction");
+            }
+            if (cfsr & SCB_CFSR_INVSTATE_Msk) {
+                LOGE("UsageFault", "Invalid EPSR state (bad Thumb bit / IT block)");
+            }
+            if (cfsr & SCB_CFSR_INVPC_Msk) {
+                LOGE("UsageFault", "Invalid PC load / corrupt exception return");
+            }
+            if (cfsr & SCB_CFSR_NOCP_Msk) {
+                LOGE("UsageFault", "Coprocessor access fault (FPU used without CPACR enabling it)");
+            }
+            if (cfsr & SCB_CFSR_UNALIGNED_Msk) {
+                LOGE("UsageFault", "Unaligned access trap");
+            }
+            if (cfsr & SCB_CFSR_DIVBYZERO_Msk) {
+                LOGE("UsageFault", "Division by zero");
+            }
+            break;
+    }
 
-    const unsigned int r0   = frame[0];
-    const unsigned int r1   = frame[1];
-    const unsigned int r2   = frame[2];
-    const unsigned int r3   = frame[3];
-    const unsigned int r12  = frame[4];
-    const unsigned int lr   = frame[5];
-    const unsigned int pc   = frame[6];
-    const unsigned int cfsr = SCB->CFSR;
+    LOGE("Fault", "R0: 0x%X", (unsigned int)frame->r0);
+    LOGE("Fault", "R1: 0x%X", (unsigned int)frame->r1);
+    LOGE("Fault", "R2: 0x%X", (unsigned int)frame->r2);
+    LOGE("Fault", "R3: 0x%X", (unsigned int)frame->r3);
+    LOGE("Fault", "R12: 0x%X", (unsigned int)frame->r12);
+    LOGE("Fault", "LR: 0x%X", (unsigned int)frame->lr);
+    LOGE("Fault", "PC: 0x%X", (unsigned int)frame->pc);
+    LOGE("Fault", "PSR: 0x%X", (unsigned int)frame->xpsr);
+    LOGE("Fault", "EXC_RETURN: 0x%X", (unsigned int)exc_return);
+    LOGE("Fault", "CFSR: 0x%X", (unsigned int)cfsr);
 
-    LOGE("Fault", "R0: 0x%X", r0);
-    LOGE("Fault", "R1: 0x%X", r1);
-    LOGE("Fault", "R2: 0x%X", r2);
-    LOGE("Fault", "R3: 0x%X", r3);
-    LOGE("Fault", "R12: 0x%X", r12);
-    LOGE("Fault", "LR: 0x%X", lr);
-    LOGE("Fault", "PC: 0x%X", pc);
-    LOGE("Fault", "CFSR: 0x%X", cfsr);
-
-    halt();
-}
-
-[[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void mem_manage_dump(const unsigned int* frame) {
-    LOGE("CPU Exception", "MPU fault.");
-
-    const unsigned int r0    = frame[0];
-    const unsigned int r1    = frame[1];
-    const unsigned int r2    = frame[2];
-    const unsigned int r3    = frame[3];
-    const unsigned int r12   = frame[4];
-    const unsigned int lr    = frame[5];
-    const unsigned int pc    = frame[6];
-    const unsigned int mmfar = SCB->MMFAR;
-
-    LOGE("Fault", "R0: 0x%X", r0);
-    LOGE("Fault", "R1: 0x%X", r1);
-    LOGE("Fault", "R2: 0x%X", r2);
-    LOGE("Fault", "R3: 0x%X", r3);
-    LOGE("Fault", "R12: 0x%X", r12);
-    LOGE("Fault", "LR: 0x%X", lr);
-    LOGE("Fault", "PC: 0x%X", pc);
-    LOGE("Fault", "MMFAR: 0x%X", mmfar);
-
+    // Clear all set bits
+    SCB->CFSR = cfsr;
     halt();
 }
 
@@ -288,6 +306,7 @@ void NMI_Handler(void) {
     return -1;
 }
 
+// Use the heap allocation API in utils/heap.h (uses o1heap)
 [[__gnu__::__weak__]] caddr_t _sbrk(ptrdiff_t increment) {
     (void)increment;
     errno = ENOMEM;
