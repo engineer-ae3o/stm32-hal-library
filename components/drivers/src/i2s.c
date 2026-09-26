@@ -4,7 +4,6 @@
 #include "utils/common.h"
 #include "utils/clock.h"
 #include "drivers/dma.h"
-#include "drivers/spi.h"
 #include "drivers/i2s.h"
 #include "utils/err.h"
 
@@ -121,7 +120,7 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     handle->I2SCFGR |= (((uint32_t)config->direction << SPI_I2SCFGR_I2SCFG_Pos) | // Direction: TX or RX in master mode
                         ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos) |      // I2S mode: Philips, left or right justified
                         (uint32_t)config->frame |                                 // Already encodes data frame size and channel length
-                        ((uint32_t)config->cpol ? SPI_I2SCFGR_CKPOL : 0));        // Clock polarity
+                        ((uint32_t)config->ckpol ? SPI_I2SCFGR_CKPOL : 0));       // Clock polarity
 
     // Disable SPI DMA requests by default
     DISABLE_SPI_DMA();
@@ -129,26 +128,26 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     // Configure the GPIO pins
     if (config->use_mck) {
         TRY(gpiox_clk_enable(config->mclk_pin.port, true));
-        TRY(gpio_set_alternate_function(config->mclk_pin.port, config->mclk_pin.pin, config->mclk_pin.af));
+        gpio_set_alternate_function(config->mclk_pin.port, config->mclk_pin.pin, config->mclk_pin.af);
         gpio_enable_pullups(config->mclk_pin.port, config->mclk_pin.pin, true);
         gpio_set_speed_mode(config->mclk_pin.port, config->mclk_pin.pin, GPIO_FULL_SPEED);
         gpio_set_output_type(config->mclk_pin.port, config->mclk_pin.pin, GPIO_PUSH_PULL);
     }
 
     TRY(gpiox_clk_enable(config->sclk_pin.port, true));
-    TRY(gpio_set_alternate_function(config->sclk_pin.port, config->sclk_pin.pin, config->sclk_pin.af));
+    gpio_set_alternate_function(config->sclk_pin.port, config->sclk_pin.pin, config->sclk_pin.af);
     gpio_enable_pullups(config->sclk_pin.port, config->sclk_pin.pin, true);
     gpio_set_speed_mode(config->sclk_pin.port, config->sclk_pin.pin, GPIO_FULL_SPEED);
     gpio_set_output_type(config->sclk_pin.port, config->sclk_pin.pin, GPIO_PUSH_PULL);
 
     TRY(gpiox_clk_enable(config->ws_pin.port, true));
-    TRY(gpio_set_alternate_function(config->ws_pin.port, config->ws_pin.pin, config->ws_pin.af));
+    gpio_set_alternate_function(config->ws_pin.port, config->ws_pin.pin, config->ws_pin.af);
     gpio_enable_pullups(config->ws_pin.port, config->ws_pin.pin, true);
     gpio_set_speed_mode(config->ws_pin.port, config->ws_pin.pin, GPIO_FULL_SPEED);
     gpio_set_output_type(config->ws_pin.port, config->ws_pin.pin, GPIO_PUSH_PULL);
 
     TRY(gpiox_clk_enable(config->sd_pin.port, true));
-    TRY(gpio_set_alternate_function(config->sd_pin.port, config->sd_pin.pin, config->sd_pin.af));
+    gpio_set_alternate_function(config->sd_pin.port, config->sd_pin.pin, config->sd_pin.af);
     gpio_enable_pullups(config->sd_pin.port, config->sd_pin.pin, true);
     gpio_set_speed_mode(config->sd_pin.port, config->sd_pin.pin, GPIO_FULL_SPEED);
     gpio_set_output_type(config->sd_pin.port, config->sd_pin.pin, GPIO_PUSH_PULL);
@@ -196,8 +195,8 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority) {
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = false,
-        .mem_addr_incement = true,
+        .per_addr_increment = false,
+        .mem_addr_increment = true,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,
@@ -227,8 +226,8 @@ hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority) {
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = false,
-        .mem_addr_incement = true,
+        .per_addr_increment = false,
+        .mem_addr_increment = true,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,
@@ -328,7 +327,7 @@ hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* data, uin
     TRY(spi_master_register_callback(callback, arg, idx, true));
 
     // Enable the DMA stream, SPI requests to the DMA controller,
-    // and finally the I2S peripheral The order mattersa lot.
+    // and finally the I2S peripheral. The order is important.
     TRY(dma_enable_stream(stream));
     ENABLE_SPI_TX_DMA();
     ENABLE_I2S();
@@ -371,7 +370,7 @@ hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* data, uint16_t s
     TRY(spi_master_register_callback(callback, arg, idx, false));
 
     // Enable the DMA stream, SPI requests to the DMA controller,
-    // and finally the I2S peripheral. The order mattersa lot.
+    // and finally the I2S peripheral. The order is important.
     TRY(dma_enable_stream(stream));
     ENABLE_SPI_RX_DMA();
     ENABLE_I2S();
@@ -407,7 +406,7 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uin
     }
 
     TRY(dma_disable_stream(stream));
-    dma_set_circular_mode(stream, DMA_MODE_DOUBLE_BUFFER);
+    dma_set_circular_mode(stream, DMA_MODE_DOUBLE_BUFFERS);
     dma_set_addresses(stream, &handle->DR, buf_0, buf_1);
     dma_set_trans_length(stream, (uint16_t)actual_size);
 

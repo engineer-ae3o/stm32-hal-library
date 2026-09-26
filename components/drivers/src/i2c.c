@@ -95,11 +95,11 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
 
     // Configure pins for I2C
     // The pins already have their ports enabled and have been set as open drain already. No need to repeat here
-    TRY(gpio_set_alternate_function(config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af));
+    gpio_set_alternate_function(config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af);
     gpio_set_speed_mode(config->sda_pin.port, config->sda_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_enable_pullups(config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
 
-    TRY(gpio_set_alternate_function(config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af));
+    gpio_set_alternate_function(config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af);
     gpio_set_speed_mode(config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_enable_pullups(config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
@@ -429,12 +429,12 @@ static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, s
 
         // When N > 2
         default: {
+            // Read both registers to clear the ADDR bit
+            (void)handle->SR1;
+            (void)handle->SR2;
+
             size_t remaining_bytes = size;
             if (remaining_bytes > 3) {
-                // Read both registers to clear the ADDR bit
-                (void)handle->SR1;
-                (void)handle->SR2;
-
                 // Read RXE up until remaining_bytes is 3
                 for (size_t i = 0; i < (size - 3); i++) {
                     timeout = TIMEOUT;

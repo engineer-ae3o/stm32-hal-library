@@ -244,6 +244,7 @@ static const audio_clock_preset_t s_audio_clock_preset_lut[] = {
 
 // Helpers
 static inline void system_core_clock_config_preset(const system_clock_preset_t* preset) {
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
     // Temporarily switch the SYSCLK source to the HSI so we can safely disable the PLLs.
@@ -352,7 +353,7 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
         ASSERT(0);
     }
 
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     // Update the global variables tracking the system clock and reconfigure
     // the audio PLL to its old state since it was disabled here.
@@ -361,6 +362,7 @@ static inline void system_core_clock_config_preset(const system_clock_preset_t* 
 }
 
 static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* preset) {
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
     // Disable the audio PLL and clear all state
@@ -418,13 +420,14 @@ static inline void audio_pll_clock_config_preset(const audio_clock_preset_t* pre
     __ISB();
 
 done:
-    __enable_irq();
+    __set_PRIMASK(primask);
     audio_pll_clock_update();
 }
 
 
 // System Clock Configuration
 void system_core_clock_config(system_clock_t clock) {
+    ASSERT(clock < ARRAY_SIZE(s_system_clock_preset_lut));
     system_core_clock_config_preset(&s_system_clock_preset_lut[clock]);
     s_system_core_clock_type = clock;
 }
@@ -467,11 +470,12 @@ void system_core_clock_update(void) {
     }
 
     // Compute the HCLK, APB1 and APB2 bus frequencies
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_system_core_clock = sysclk >> s_ahb_presc_lut[(RCC->CFGR & RCC_CFGR_HPRE) >> RCC_CFGR_HPRE_Pos];
     s_apb1_core_clock   = s_system_core_clock >> s_apb_presc_lut[(RCC->CFGR & RCC_CFGR_PPRE1) >> RCC_CFGR_PPRE1_Pos];
     s_apb2_core_clock   = s_system_core_clock >> s_apb_presc_lut[(RCC->CFGR & RCC_CFGR_PPRE2) >> RCC_CFGR_PPRE2_Pos];
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     ASSERT(s_system_core_clock <= MAX_SYSTEM_CLOCK_Hz);
     ASSERT(s_apb1_core_clock <= MAX_APB1_CLOCK_Hz);
@@ -484,6 +488,7 @@ void system_core_clock_update(void) {
 
 // Audio PLL Configuration
 void audio_pll_clock_config(audio_clock_t clock) {
+    ASSERT(clock < ARRAY_SIZE(s_audio_clock_preset_lut));
     audio_pll_clock_config_preset(&s_audio_clock_preset_lut[clock]);
     s_audio_pll_clock_type = clock;
 }

@@ -3,7 +3,7 @@
     "configurations": [
         {
             "cwd": "${workspaceFolder}",
-            "executable": "${workspaceFolder}/build/debug-tests/f411-hal.elf",
+            "executable": "${workspaceFolder}/build/tests/f411-hal.elf",
             "name": "Debug with OpenOCD",
             "gdbPath": "arm-none-eabi-gdb",
             "serverpath": "openocd",

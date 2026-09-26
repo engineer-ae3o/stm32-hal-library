@@ -40,7 +40,7 @@ typedef enum : uint8_t {
 typedef enum : uint8_t {
     DMA_MODE_ONESHOT = 0,
     DMA_MODE_CIRCULAR,
-    DMA_MODE_DOUBLE_BUFFER,
+    DMA_MODE_DOUBLE_BUFFERS,
 } dma_circ_mode_t;
 
 typedef struct {
@@ -93,8 +93,8 @@ typedef struct {
     bool deconfigure;   // Set to deinitialize the given stream. All other fields are ignored if this is true
     bool enable_stream; // Enable the DMA stream immediately after configuring it
 
-    bool per_addr_incement; // Increment the peripheral address (or source address in M2M transfers)
-    bool mem_addr_incement; // Increment the memory address(es) (or destination address(es) in M2M transfers)
+    bool per_addr_increment; // Increment the peripheral address (or source address in M2M transfers)
+    bool mem_addr_increment; // Increment the memory address(es) (or destination address(es) in M2M transfers)
 
     bool tc_irq_enable;  // Transfer complete interrupt enable
     bool ht_irq_enable;  // Half transfer interrupt enable

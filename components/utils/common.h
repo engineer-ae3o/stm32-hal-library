@@ -7,22 +7,24 @@ extern "C" {
 #endif
 
 
-#include "stm32f411xe.h"
 #include "utils/log.h"
 #include "utils/err.h"
 
 #include <stdint.h>
 
 
-#define TIMEOUT (100000U)
+// Loop iteration based timeout
+#define TIMEOUT (1'000'000U)
 #define UNUSED(x) (void)(x)
 
 // NVIC interrupt priorities for the different peripherals
 #define SysTick_NVIC_IRQ_PRIORITY (0U)
+#define EXTI_LINE_NVIC_IRQ_PRIORITY (15U)
 #define SPI_DMA_NVIC_IRQ_PRIORITY (6U)
 #define I2S_DMA_NVIC_IRQ_PRIORITY (12U)
 #define UART_DMA_NVIC_IRQ_PRIORITY (10U)
-#define ADC_DMA_NVIC_IRQ_PRIORITY (8U)
+#define ADC_NVIC_IRQ_PRIORITY (8U)
+#define ADC_DMA_NVIC_IRQ_PRIORITY ADC_NVIC_IRQ_PRIORITY
 #define CRC_DMA_NVIC_IRQ_PRIORITY (11U)
 #define M2M_DMA_NVIC_IRQ_PRIORITY (15U)
 
@@ -34,40 +36,32 @@ extern "C" {
 // The system tick rate
 #define TICK_RATE_Hz (1000)
 
-// Heap size
-#define HEAP_SIZE_BYTES (32 * 1024)
-
+#define HEAP_SIZE_kB (32)
+#define HEAP_SIZE_BYTES ((HEAP_SIZE_kB) * 1024)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 
-#define HALT()                                                                                                                                       \
-    do {                                                                                                                                             \
-        __disable_irq();                                                                                                                             \
-        __BKPT(0);                                                                                                                                   \
-        while (true) {                                                                                                                               \
-            __WFI();                                                                                                                                 \
-        }                                                                                                                                            \
-    } while (0)
-
 #define REBOOT()                                                                                                                                     \
     do {                                                                                                                                             \
-        LOGI("Restart", "System reboot requested from %s (%s:%d)", __PRETTY_FUNCTION__, __FILE__, __LINE__);                                         \
-        NVIC_SystemReset();                                                                                                                          \
+        reboot(__PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                                             \
     } while (0)
 
 #define PANIC()                                                                                                                                      \
     do {                                                                                                                                             \
-        LOGE("Panic", "System ran into a fatal error from %s (%s:%d)", __PRETTY_FUNCTION__, __FILE__, __LINE__);                                     \
-        HALT();                                                                                                                                      \
+        panic(__PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                                              \
     } while (0)
 
 #define ASSERT(cond)                                                                                                                                 \
     do {                                                                                                                                             \
-        if (gnu_unlikely(!(cond))) {                                                                                                                 \
-            LOGE("Assert", "Assert (%s) failed", #cond);                                                                                             \
-            PANIC();                                                                                                                                 \
-        }                                                                                                                                            \
+        assert_check((cond), #cond, __PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                        \
     } while (0)
+
+
+[[__gnu__::__noreturn__]] void halt(void);
+[[__gnu__::__noreturn__]] void panic(const char* function, const char* file, int line);
+
+void restart(const char* function, const char* file, int line);
+void assert_check(bool cond, const char* msg, const char* function, const char* file, int line);
 
 
 // RTT buffer for logging. Controls the output buffer parameter

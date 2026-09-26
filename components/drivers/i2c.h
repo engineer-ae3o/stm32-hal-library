@@ -22,7 +22,7 @@ typedef enum : uint32_t {
 } i2c_frequency_t;
 
 typedef enum : uint8_t {
-    I2C_DIGITAL_FILTER_0 = 0, // Digiter filter disabled
+    I2C_DIGITAL_FILTER_0 = 0, // Digital filter disabled
     I2C_DIGITAL_FILTER_1,
     I2C_DIGITAL_FILTER_2,
     I2C_DIGITAL_FILTER_3,

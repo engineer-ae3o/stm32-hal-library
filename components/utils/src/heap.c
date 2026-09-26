@@ -18,7 +18,7 @@ static const char* TAG = "O1heap";
 [[__gnu__::__constructor__]] static void heap_init() {
     LOGI(TAG, "Initializing the heap");
 
-    static alignas(O1HEAP_ALIGNMENT) uint8_t s_heap_buffer[HEAP_SIZE_BYTES] = {};
+    static alignas(O1HEAP_ALIGNMENT) uint8_t s_heap_buffer[HEAP_SIZE_BYTES + O1HEAP_ALIGNMENT] = {};
 
     s_heap_handle = o1heapInit(s_heap_buffer, sizeof(s_heap_buffer));
     if (s_heap_handle == NULL) {

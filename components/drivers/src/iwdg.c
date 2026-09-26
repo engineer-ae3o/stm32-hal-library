@@ -6,7 +6,7 @@
 
 
 hal_err_t iwdg_start(iwdg_prescaler_t prescaler, uint32_t timeout_ms) {
-    if (prescaler > IWDG_PRESCALER_DIV256) {
+    if (prescaler > IWDG_PRESCALER_DIV256 || timeout_ms == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 

@@ -9,8 +9,8 @@
 
 
 // Number of regular and injected channels supported by the ADC peripheral
-#define MAX_REGULAR_CHANNELS (16)
-#define MAX_INJECTED_CHANNELS (4)
+#define MAX_REGULAR_CHANNELS (16U)
+#define MAX_INJECTED_CHANNELS (4U)
 
 
 // Shape of all callbacks passed to the ADC driver
@@ -39,7 +39,7 @@ typedef enum : uint8_t {
     ADC_CHANNEL_13, // PC3
     ADC_CHANNEL_14, // PC4
     ADC_CHANNEL_15, // PC5
-} adc_channels_t;
+} adc_channel_t;
 
 
 // The ADC resolution. Each extra resolution adds an extra ADCCLK cycles when sampling
@@ -84,49 +84,50 @@ typedef enum : uint8_t {
 
 // The various trigger sources for channels in the regular group
 typedef enum : uint8_t {
-    RG_TRIGGER_TIM1_CH1     = 0b0000,
-    RG_TRIGGER_TIM1_CH2     = 0b0001,
-    RG_TRIGGER_TIM1_CH3     = 0b0010,
-    RG_TRIGGER_TIM2_CH2     = 0b0011,
-    RG_TRIGGER_TIM2_CH3     = 0b0100,
-    RG_TRIGGER_TIM2_CH4     = 0b0101,
-    RG_TRIGGER_TIM2_TRGO    = 0b0110,
-    RG_TRIGGER_TIM3_CH1     = 0b0111,
-    RG_TRIGGER_TIM3_TRGO    = 0b1000,
-    RG_TRIGGER_TIM4_CH4     = 0b1001,
-    RG_TRIGGER_TIM5_CH1     = 0b1010,
-    RG_TRIGGER_TIM5_CH2     = 0b1011,
-    RG_TRIGGER_TIM5_CH3     = 0b1100,
-    RG_TRIGGER_SOFTWARE     = 0b1101,
-    RG_TRIGGER_EXTI_LINE_11 = 0b1111,
+    ADC_RG_TRIGGER_TIM1_CH1     = 0b0000,
+    ADC_RG_TRIGGER_TIM1_CH2     = 0b0001,
+    ADC_RG_TRIGGER_TIM1_CH3     = 0b0010,
+    ADC_RG_TRIGGER_TIM2_CH2     = 0b0011,
+    ADC_RG_TRIGGER_TIM2_CH3     = 0b0100,
+    ADC_RG_TRIGGER_TIM2_CH4     = 0b0101,
+    ADC_RG_TRIGGER_TIM2_TRGO    = 0b0110,
+    ADC_RG_TRIGGER_TIM3_CH1     = 0b0111,
+    ADC_RG_TRIGGER_TIM3_TRGO    = 0b1000,
+    ADC_RG_TRIGGER_TIM4_CH4     = 0b1001,
+    ADC_RG_TRIGGER_TIM5_CH1     = 0b1010,
+    ADC_RG_TRIGGER_TIM5_CH2     = 0b1011,
+    ADC_RG_TRIGGER_TIM5_CH3     = 0b1100,
+    ADC_RG_TRIGGER_SOFTWARE     = 0b1101,
+    ADC_RG_TRIGGER_EXTI_LINE_11 = 0b1111,
 } adc_regular_group_trigger_t;
 
 
 // The various trigger sources for channels in the injected group
 typedef enum : uint8_t {
-    JG_TRIGGER_TIM1_CH4     = 0b0000,
-    JG_TRIGGER_TIM1_TRGO    = 0b0001,
-    JG_TRIGGER_TIM2_CH1     = 0b0010,
-    JG_TRIGGER_TIM2_TRGO    = 0b0011,
-    JG_TRIGGER_TIM3_CH2     = 0b0100,
-    JG_TRIGGER_TIM3_CH4     = 0b0101,
-    JG_TRIGGER_TIM4_CH1     = 0b0110,
-    JG_TRIGGER_TIM4_CH2     = 0b0111,
-    JG_TRIGGER_TIM4_CH3     = 0b1000,
-    JG_TRIGGER_TIM4_TRGO    = 0b1001,
-    JG_TRIGGER_TIM5_CH4     = 0b1010,
-    JG_TRIGGER_TIM5_TRGO    = 0b1011,
-    JG_TRIGGER_SOFTWARE     = 0b1101,
-    JG_TRIGGER_EXTI_LINE_15 = 0b1111,
+    ADC_JG_TRIGGER_TIM1_CH4     = 0b0000,
+    ADC_JG_TRIGGER_TIM1_TRGO    = 0b0001,
+    ADC_JG_TRIGGER_TIM2_CH1     = 0b0010,
+    ADC_JG_TRIGGER_TIM2_TRGO    = 0b0011,
+    ADC_JG_TRIGGER_TIM3_CH2     = 0b0100,
+    ADC_JG_TRIGGER_TIM3_CH4     = 0b0101,
+    ADC_JG_TRIGGER_TIM4_CH1     = 0b0110,
+    ADC_JG_TRIGGER_TIM4_CH2     = 0b0111,
+    ADC_JG_TRIGGER_TIM4_CH3     = 0b1000,
+    ADC_JG_TRIGGER_TIM4_TRGO    = 0b1001,
+    ADC_JG_TRIGGER_TIM5_CH4     = 0b1010,
+    ADC_JG_TRIGGER_TIM5_TRGO    = 0b1011,
+    ADC_JG_TRIGGER_SOFTWARE     = 0b1101,
+    ADC_JG_TRIGGER_EXTI_LINE_15 = 0b1111,
 } adc_injected_group_trigger_t;
 
 
 // The polarities of the would be trigger source
-// It is ignored if the trigger is RG_TRIGGER_SOFTWARE or JG_TRIGGER_SOFTWARE
+// It is ignored if the trigger is ADC_RG_TRIGGER_SOFTWARE or ADC_JG_TRIGGER_SOFTWARE
 typedef enum : uint8_t {
-    RISING_EDGE         = 0b01,
-    FALLING_EDGE        = 0b10,
-    RISING_FALLING_EDGE = 0b11,
+    ADC_POLARITY_NONE                = 0b00,
+    ADC_POLARITY_RISING_EDGE         = 0b01,
+    ADC_POLARITY_FALLING_EDGE        = 0b10,
+    ADC_POLARITY_RISING_FALLING_EDGE = 0b11,
 } adc_trigger_polarity_t;
 
 
@@ -140,8 +141,8 @@ typedef struct {
 
 // The sequence of channels and the number of channels
 typedef struct {
-    const adc_channels_t* sequence;
-    size_t                num_of_channels;
+    const adc_channel_t* sequence;
+    size_t               num_of_channels;
 } adc_channels_config_t;
 
 
@@ -169,8 +170,8 @@ typedef struct {
     adc_trigger_polarity_t      trigger_polarity;
 
     // The buffer(s) to store the samples
-    const uint16_t* buffer_1;
-    const uint16_t* buffer_2;
+    uint16_t* buffer_0;
+    uint16_t* buffer_1;
 
     // DMA settings
     uint16_t        buffer_size;

@@ -91,7 +91,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
 
     __disable_irq();
 
-    // Save the user callback so we can clear it's global array position
+    // Save the user callback so we can clear its global array position
     const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].tx.callback;
     void* const         local_arg = s_dma_stream_ctx[idx].tx.arg;
 
@@ -123,7 +123,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
 
     __disable_irq();
 
-    // Save the user callback so we can clear it's global array position
+    // Save the user callback so we can clear its global array position
     const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].rx.callback;
     void* const         local_arg = s_dma_stream_ctx[idx].rx.arg;
 
@@ -301,14 +301,14 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 
     // Configure the GPIO pins
     TRY(gpiox_clk_enable(config->sclk_pin.port, true));
-    TRY(gpio_set_alternate_function(config->sclk_pin.port, config->sclk_pin.pin, config->sclk_pin.af));
+    gpio_set_alternate_function(config->sclk_pin.port, config->sclk_pin.pin, config->sclk_pin.af);
     gpio_enable_pullups(config->sclk_pin.port, config->sclk_pin.pin, true);
     gpio_set_speed_mode(config->sclk_pin.port, config->sclk_pin.pin, GPIO_FULL_SPEED);
     gpio_set_output_type(config->sclk_pin.port, config->sclk_pin.pin, GPIO_PUSH_PULL);
 
     if (config->use_mosi) {
         TRY(gpiox_clk_enable(config->mosi_pin.port, true));
-        TRY(gpio_set_alternate_function(config->mosi_pin.port, config->mosi_pin.pin, config->mosi_pin.af));
+        gpio_set_alternate_function(config->mosi_pin.port, config->mosi_pin.pin, config->mosi_pin.af);
         gpio_enable_pullups(config->mosi_pin.port, config->mosi_pin.pin, true);
         gpio_set_speed_mode(config->mosi_pin.port, config->mosi_pin.pin, GPIO_FULL_SPEED);
         gpio_set_output_type(config->mosi_pin.port, config->mosi_pin.pin, GPIO_PUSH_PULL);
@@ -316,7 +316,7 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 
     if (config->use_miso) {
         TRY(gpiox_clk_enable(config->miso_pin.port, true));
-        TRY(gpio_set_alternate_function(config->miso_pin.port, config->miso_pin.pin, config->miso_pin.af));
+        gpio_set_alternate_function(config->miso_pin.port, config->miso_pin.pin, config->miso_pin.af);
         gpio_enable_pullups(config->miso_pin.port, config->miso_pin.pin, true);
         gpio_set_speed_mode(config->miso_pin.port, config->miso_pin.pin, GPIO_FULL_SPEED);
         gpio_set_output_type(config->miso_pin.port, config->miso_pin.pin, GPIO_PUSH_PULL);
@@ -360,8 +360,8 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = false,
-        .mem_addr_incement = true,
+        .per_addr_increment = false,
+        .mem_addr_increment = true,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,
@@ -391,8 +391,8 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = false,
-        .mem_addr_incement = true,
+        .per_addr_increment = false,
+        .mem_addr_increment = true,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,

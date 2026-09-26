@@ -98,7 +98,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
         return;
     }
 
-    // Save the user callback so we can clear it's global array position
+    // Save the user callback so we can clear its global array position
     const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].tx.callback;
     void* const         local_arg = s_dma_stream_ctx[idx].tx.arg;
 
@@ -131,7 +131,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
         return;
     }
 
-    // Save the user callback so we can clear it's global array position
+    // Save the user callback so we can clear its global array position
     const dma_done_cb_t local_cb  = s_dma_stream_ctx[idx].rx.callback;
     void* const         local_arg = s_dma_stream_ctx[idx].rx.arg;
 
@@ -180,7 +180,7 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Get the frequency of the bus clock on which the xcurrent uart peripheral instance lives on
+    // Get the frequency of the bus clock on which the current uart peripheral instance lives on
     const uint32_t bus_clock_freq_hz = (handle == USART1 || handle == USART6) ? get_apb2_core_clock() : get_apb1_core_clock();
 
     // Baud rate generator: Get the UART bus divider from the target baud rate and bus clock frequency
@@ -188,8 +188,8 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Get the mantissa and the fractional parts of the uart clock divider
     const uint16_t mantissa = (uint16_t)divisor;
-    const uint16_t fraction = (uint16_t)((divisor - (float)mantissa) * (float)config->over_sampling);
-    if (mantissa > 0xFFFUL || fraction > 0xFUL) {
+    const uint16_t fraction = (uint16_t)(((divisor - (float)mantissa) * (float)config->over_sampling) + 0.5F);
+    if (mantissa > 0xFFFUL || mantissa == 0 || fraction > 0xFUL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -217,13 +217,13 @@ hal_err_t uart_init(USART_TypeDef* handle, const uart_config_t* config) {
 
     // Configure the GPIO pins
     TRY(gpiox_clk_enable(config->tx_pin.port, true));
-    TRY(gpio_set_alternate_function(config->tx_pin.port, config->tx_pin.pin, config->tx_pin.af));
+    gpio_set_alternate_function(config->tx_pin.port, config->tx_pin.pin, config->tx_pin.af);
     gpio_enable_pullups(config->tx_pin.port, config->tx_pin.pin, true);
     gpio_set_speed_mode(config->tx_pin.port, config->tx_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->tx_pin.port, config->tx_pin.pin, GPIO_PUSH_PULL);
 
     TRY(gpiox_clk_enable(config->rx_pin.port, true));
-    TRY(gpio_set_alternate_function(config->rx_pin.port, config->rx_pin.pin, config->rx_pin.af));
+    gpio_set_alternate_function(config->rx_pin.port, config->rx_pin.pin, config->rx_pin.af);
     gpio_enable_pullups(config->rx_pin.port, config->rx_pin.pin, true);
     gpio_set_speed_mode(config->rx_pin.port, config->rx_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_set_output_type(config->rx_pin.port, config->rx_pin.pin, GPIO_PUSH_PULL);
@@ -243,6 +243,10 @@ hal_err_t uart_deinit(USART_TypeDef* handle) {
 
     handle->CR1 &= ~(USART_CR1_SBK | USART_CR1_RWU | USART_CR1_RE | USART_CR1_TE | USART_CR1_IDLEIE | USART_CR1_RXNEIE | USART_CR1_TCIE |
                      USART_CR1_TXEIE | USART_CR1_PEIE | USART_CR1_PS | USART_CR1_PCE | USART_CR1_WAKE | USART_CR1_M | USART_CR1_OVER8);
+    handle->CR2 &= ~(USART_CR2_ADD | USART_CR2_LBDL | USART_CR2_LBDIE | USART_CR2_LBCL | USART_CR2_CPHA | USART_CR2_CPOL | USART_CR2_CLKEN |
+                     USART_CR2_STOP | USART_CR2_LINEN);
+    handle->CR3 &= ~(USART_CR3_EIE | USART_CR3_IREN | USART_CR3_IRLP | USART_CR3_HDSEL | USART_CR3_NACK | USART_CR3_SCEN | USART_CR3_DMAT |
+                     USART_CR3_DMAR | USART_CR3_RTSE | USART_CR3_CTSE | USART_CR3_CTSIE | USART_CR3_ONEBIT);
     handle->BRR &= ~(USART_BRR_DIV_Fraction | USART_BRR_DIV_Mantissa);
     handle->SR = ~(USART_SR_TC | USART_SR_TXE | USART_SR_RXNE);
 
@@ -268,8 +272,8 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = false,
-        .mem_addr_incement = true,
+        .per_addr_increment = false,
+        .mem_addr_increment = true,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,
@@ -299,8 +303,8 @@ hal_err_t uart_dma_init(USART_TypeDef* handle, dma_priority_t priority) {
         .deconfigure   = false,
         .enable_stream = false,
 
-        .per_addr_incement = false,
-        .mem_addr_incement = true,
+        .per_addr_increment = false,
+        .mem_addr_increment = true,
 
         .tc_irq_enable  = true,
         .ht_irq_enable  = false,
@@ -368,9 +372,13 @@ hal_err_t uart_transmit_byte(USART_TypeDef* handle, uint8_t byte) {
     }
 
     // Wait till the data register is empty
-    while (!(handle->SR & USART_SR_TXE));
-    handle->DR = byte;
+    uint32_t timeout = TIMEOUT;
+    while (!(handle->SR & USART_SR_TXE) && --timeout);
+    if (!(handle->SR & USART_SR_TXE) || (timeout == 0)) {
+        return HAL_ERR_TIMEOUT;
+    }
 
+    handle->DR = byte;
     return HAL_OK;
 }
 
@@ -380,13 +388,20 @@ hal_err_t uart_transmit_poll(USART_TypeDef* handle, const uint8_t* data, size_t 
     }
 
     for (size_t i = 0; i < size; i++) {
-        // Wait till the data register is empty
-        while (!(handle->SR & USART_SR_TXE));
+        uint32_t timeout = TIMEOUT;
+        while (!(handle->SR & USART_SR_TXE) && --timeout);
+        if (!(handle->SR & USART_SR_TXE) || (timeout == 0)) {
+            return HAL_ERR_TIMEOUT;
+        }
         handle->DR = data[i];
     }
 
     // Wait till all bytes have been fully transmitted and clear the status flags
-    while (!(handle->SR & USART_SR_TC));
+    uint32_t timeout = TIMEOUT;
+    while (!(handle->SR & USART_SR_TC) && --timeout);
+    if (!(handle->SR & USART_SR_TC) || (timeout == 0)) {
+        return HAL_ERR_TIMEOUT;
+    }
     handle->SR = ~USART_SR_TC;
 
     return HAL_OK;
@@ -404,6 +419,10 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
     DMA_Stream_TypeDef* stream = s_uart_dma_map[idx].tx.stream;
     if (stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    if (stream->CR & DMA_SxCR_EN) {
+        return HAL_ERR_INVALID_STATE;
     }
 
     dma_set_addresses(stream, &handle->DR, data, NULL);
@@ -434,6 +453,10 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
     DMA_Stream_TypeDef* stream = s_uart_dma_map[idx].rx.stream;
     if (stream == NULL) {
         return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    if (stream->CR & DMA_SxCR_EN) {
+        return HAL_ERR_INVALID_STATE;
     }
 
     dma_set_addresses(stream, &handle->DR, data, NULL);

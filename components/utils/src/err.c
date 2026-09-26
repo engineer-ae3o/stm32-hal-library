@@ -1,4 +1,5 @@
 #include "utils/common.h"
+#include <assert.h>
 #include "utils/err.h"
 
 
@@ -25,12 +26,13 @@ static const char* s_err_code_lut[] = {
     [HAL_ERR_DMA_TE]                  = "HAL_ERR_DMA_TE",
     [HAL_ERR_DMA_DME]                 = "HAL_ERR_DMA_DME",
     [HAL_ERR_DMA_FE]                  = "HAL_ERR_DMA_FE",
-    [HAL_ERR_DMA_ERR_UNKNOWN]         = "HAL_ERR_DMA_ERR_UNKNOWN",
 };
 
-_Static_assert(HAL_ERR_COUNT == ARRAY_SIZE(s_err_code_lut));
+static_assert(HAL_ERR_COUNT == ARRAY_SIZE(s_err_code_lut));
 
-const char* hal_err_to_string(hal_err_t err) {
-    ASSERT(err < ARRAY_SIZE(s_err_code_lut));
-    return s_err_code_lut[err];
+const char* hal_err_to_string(hal_err_t error) {
+    if (error >= ARRAY_SIZE(s_err_code_lut)) {
+        return "HAL_ERR_UNKNOWN";
+    }
+    return s_err_code_lut[error];
 }

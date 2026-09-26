@@ -24,6 +24,7 @@ hal_err_t dma_get_stream_info(DMA_Stream_TypeDef* stream, dma_stream_info_t* str
 hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_config_t* config);
 hal_err_t dma_get_stream_flags(DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number);
 
+// Low level setters. They do not validate the arguments passed in. They no-op if the stream is NULL
 void dma_set_channel(DMA_Stream_TypeDef* stream, uint32_t channel);
 void dma_set_direct_mode(DMA_Stream_TypeDef* stream, bool direct_mode);
 void dma_set_trans_length(DMA_Stream_TypeDef* stream, uint16_t length);
@@ -38,14 +39,20 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
 
 
 // Helper to assist with the checking and clearing of interrupt flags and propagation of errors
-[[__gnu__::__always_inline__]] inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream) {
+[[__gnu__::__always_inline__]] static inline hal_err_t dma_isr_helper(DMA_Stream_TypeDef* stream) {
     // Get the stream's DMA controller and NVIC interrupt type
     dma_stream_info_t stream_info;
-    TRY(dma_get_stream_info(stream, &stream_info));
+    hal_err_t         ret = dma_get_stream_info(stream, &stream_info);
+    if (ret != HAL_OK) {
+        return ret;
+    }
 
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
-    TRY(dma_get_stream_flags(stream_info.controller, &flags, stream_info.stream_number));
+    ret = dma_get_stream_flags(stream_info.controller, &flags, stream_info.stream_number);
+    if (ret != HAL_OK) {
+        return ret;
+    }
 
     const uint32_t status         = *flags.irq_status_register;
     uint32_t       flags_to_clear = 0;
@@ -95,7 +102,11 @@ void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, con
         return error;
     }
 
-    TRY(dma_disable_stream(stream));
+    ret = dma_disable_stream(stream);
+    if (ret != HAL_OK) {
+        return ret;
+    }
+
     return error;
 }
 

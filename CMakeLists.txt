@@ -34,7 +34,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # Build flags for the different build modes
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g3 -ggdb -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O2 -Wl,-s -DNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O3 -Wl,-s -DNDEBUG")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
@@ -45,7 +45,7 @@ set(CMAKE_C_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
                    -Wall -Wstrict-aliasing=2 -Wduplicated-branches -Wduplicated-cond -Werror \
                    -Wlogical-op -Wextra -Wshadow -Wno-conversion -Wwrite-strings -Wformat=2 \
                    -fstrict-overflow -fstrict-aliasing -Wdouble-promotion -fstack-usage \
-                   -Wnull-dereference -Wcast-align -Wno-sign-conversion -Wno-unused-function")
+                   -Wnull-dereference -Wcast-align ")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 

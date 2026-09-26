@@ -37,6 +37,7 @@ namespace test::i2c {
             constexpr std::array<uint8_t, 4> data{};
             std::array<uint8_t, 4>           rx_buf{};
 
+            // cppcheck-suppress intToPointerCast
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2cx_clk_enable(reinterpret_cast<I2C_TypeDef*>(1), true));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_init(nullptr, &PORT_CONFIG));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_init(TEST_PORT, nullptr));

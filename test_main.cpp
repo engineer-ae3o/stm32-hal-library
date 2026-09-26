@@ -14,6 +14,6 @@ int main() {
 
     // Halt once tests are finished since nothing else to do.
     LOGI("Main", "Done with all tests. Halting...");
-    HALT();
+    halt();
 }
 }

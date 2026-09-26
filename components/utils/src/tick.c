@@ -4,8 +4,6 @@
 #include "utils/tick.h"
 #include "utils/log.h"
 
-#include <stdatomic.h>
-
 
 void systick_init(void) {
     SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;
@@ -14,14 +12,14 @@ void systick_init(void) {
     static bool first_init = true;
     if (gnu_unlikely(first_init)) {
         LOGI("Tick",
-             "Initializing the SysTick as the tick timer source with an HCLK of %luMHz from the %s",
+             "Initializing the SysTick timer as the tick timer source with an HCLK of %luMHz from the %s",
              system_core_clock / 1'000'000U,
              is_sysclk_on_hse() ? "HSE" : "HSI");
         NVIC_SetPriority(SysTick_IRQn, SysTick_NVIC_IRQ_PRIORITY);
         first_init = false;
     } else {
         LOGI("Tick",
-             "Reinitializing the SysTick as the tick timer source with an HCLK of %luMHz from the %s",
+             "Reinitializing the SysTick timer with an HCLK of %luMHz from the %s",
              system_core_clock / 1'000'000U,
              is_sysclk_on_hse() ? "HSE" : "HSI");
     }
@@ -50,13 +48,16 @@ void dwt_cnt_init(void) {
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
-static atomic_ulong s_tick_counter = 0;
+static volatile uint64_t s_tick_counter = 0;
 
 uint64_t ms_since_boot(void) {
-    // Convert to milliseconds
-    return (atomic_load_explicit(&s_tick_counter, memory_order_relaxed) * 1000U) / TICK_RATE_Hz;
+    const uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    const uint64_t ticks = s_tick_counter;
+    __set_PRIMASK(primask);
+    return (ticks * 1000ULL) / TICK_RATE_Hz;
 }
 
 void SysTick_Handler(void) {
-    atomic_fetch_add_explicit(&s_tick_counter, 1, memory_order_relaxed);
+    s_tick_counter++;
 }

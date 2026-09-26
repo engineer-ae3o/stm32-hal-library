@@ -26,13 +26,14 @@ void system_init(void) {
     __DSB();
     __ISB();
 
+    // Enable exceptions on division by 0
+    SCB->CCR |= SCB_CCR_DIV_0_TRP_Msk;
+
     // Enable the bus fault and usage fault exceptions
     SCB->SHCSR |= (SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
 
-    // Enable exceptions on divide by 0 and unaligned memory accesses
-    SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk);
-
-    // Initialize the debug trace counter and the SysTick counter
+    // Initialize the logging interface (SEGGER RTT), the debug trace counter and the SysTick counter
+    SEGGER_RTT_Init();
     systick_init();
     dwt_cnt_init();
 
@@ -40,20 +41,19 @@ void system_init(void) {
     system_core_clock_config(HSE_PLL_100MHz);
     audio_pll_clock_config(AUDIO_PLL_DISABLE);
 
-    SEGGER_RTT_Init();
     LOGI("System_Init", "------------------- FPU, PLL and system clock setup complete -------------------");
     LOGI("System_Init",
          "System Clock: %luMHz, APB1 Bus Clock: %luMHz, APB2 Bus Clock: %luMHz from the %s",
-         (get_system_core_clock() / 1'000'000),
-         (get_apb1_core_clock() / 1'000'000),
-         (get_apb2_core_clock() / 1'000'000),
+         (get_system_core_clock() / 1'000'000U),
+         (get_apb1_core_clock() / 1'000'000U),
+         (get_apb2_core_clock() / 1'000'000U),
          is_sysclk_on_hse() ? "HSE" : "HSI");
 }
 
 // Provide a weak main function
 [[__gnu__::__noreturn__, __gnu__::__weak__]] int main(void) {
     LOGE("Main", "Application failed to provide a main function. Using the weak stub instead");
-    HALT();
+    halt();
 }
 
 // Fault Handlers
@@ -81,6 +81,14 @@ void system_init(void) {
                    "b usage_fault_dump\n");
 }
 
+[[__gnu__::__naked__]] void MemManage_Handler(void) {
+    __asm volatile("tst lr, #4\n"
+                   "ite eq\n"
+                   "mrseq r0, msp\n"
+                   "mrsne r0, psp\n"
+                   "b mem_manage_dump\n");
+}
+
 void NMI_Handler(void) {
     LOGI("CPU Exception", "The Non Maskable Interrupt triggered.");
 
@@ -104,8 +112,6 @@ void NMI_Handler(void) {
 
         // Reconfigure the main PLL back to whatever value it was on, but its HSI equivalent
         const system_clock_t system_clock = get_system_core_clock_type();
-        const audio_clock_t  audio_clock  = get_audio_pll_clock_type();
-
         switch (system_clock) {
             case HSE_PLL_100MHz:
                 system_core_clock_config(HSI_PLL_100MHz);
@@ -125,13 +131,13 @@ void NMI_Handler(void) {
             case HSE_PLL_DIRECT:
                 system_core_clock_config(HSI_PLL_MATCH_HSE);
                 break;
+            case HSE_PLL_MATCH_HSI:
+                system_core_clock_config(HSI_PLL_DIRECT);
+                break;
             default:
                 system_core_clock_config(system_clock);
                 break;
         }
-
-        // Reconfigure the audio PLL to run at whatever value it was before the CSS fault
-        audio_pll_clock_config(audio_clock);
 
         LOGI(TAG, "Resuming normal operation with the HSI with a system clock of %luMHz", get_system_core_clock() / 1'000'000U);
     }
@@ -161,7 +167,7 @@ void NMI_Handler(void) {
     LOGE("Fault", "PSR: 0x%X", psr);
     LOGE("Fault", "CFSR: 0x%X", cfsr);
 
-    HALT();
+    halt();
 }
 
 [[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void bus_fault_dump(const unsigned int* frame) {
@@ -187,7 +193,7 @@ void NMI_Handler(void) {
     LOGE("Fault", "CFSR: 0x%X", cfsr);
     LOGE("Fault", "BFAR: 0x%X", bfar);
 
-    HALT();
+    halt();
 }
 
 [[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void usage_fault_dump(const unsigned int* frame) {
@@ -211,7 +217,31 @@ void NMI_Handler(void) {
     LOGE("Fault", "PC: 0x%X", pc);
     LOGE("Fault", "CFSR: 0x%X", cfsr);
 
-    HALT();
+    halt();
+}
+
+[[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void mem_manage_dump(const unsigned int* frame) {
+    LOGE("CPU Exception", "MPU fault.");
+
+    const unsigned int r0    = frame[0];
+    const unsigned int r1    = frame[1];
+    const unsigned int r2    = frame[2];
+    const unsigned int r3    = frame[3];
+    const unsigned int r12   = frame[4];
+    const unsigned int lr    = frame[5];
+    const unsigned int pc    = frame[6];
+    const unsigned int mmfar = SCB->MMFAR;
+
+    LOGE("Fault", "R0: 0x%X", r0);
+    LOGE("Fault", "R1: 0x%X", r1);
+    LOGE("Fault", "R2: 0x%X", r2);
+    LOGE("Fault", "R3: 0x%X", r3);
+    LOGE("Fault", "R12: 0x%X", r12);
+    LOGE("Fault", "LR: 0x%X", lr);
+    LOGE("Fault", "PC: 0x%X", pc);
+    LOGE("Fault", "MMFAR: 0x%X", mmfar);
+
+    halt();
 }
 
 // Stub the syscalls needed by newlibc

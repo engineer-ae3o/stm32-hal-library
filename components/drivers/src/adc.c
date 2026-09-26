@@ -1,5 +1,8 @@
 #include "stm32f411xe.h"
+#include "drivers/adc_types.h"
+#include "drivers/dma_types.h"
 #include "utils/common.h"
+#include "drivers/gpio.h"
 #include "utils/board.h"
 #include "drivers/dma.h"
 #include "drivers/adc.h"
@@ -13,10 +16,8 @@
 
 // Mapping for the DMA channels for the ADC peripheral instances
 static const dma_map_t s_adc_dma_map[] = {
-#if defined(ADC1)
     // ADC1
     {.stream = DMA2_Stream0, .channel = 0},
-#endif
 #if defined(ADC2)
     // ADC2
     {.stream = NULL, .channel = 0},
@@ -25,6 +26,25 @@ static const dma_map_t s_adc_dma_map[] = {
     // ADC3
     {.stream = NULL, .channel = 0},
 #endif
+};
+
+static const gpio_pin_ctx_t s_adc_channels[] = {
+    [ADC_CHANNEL_0]  = {.port = GPIOA, .pin = GPIO_PIN_0},
+    [ADC_CHANNEL_1]  = {.port = GPIOA, .pin = GPIO_PIN_1},
+    [ADC_CHANNEL_2]  = {.port = GPIOA, .pin = GPIO_PIN_2},
+    [ADC_CHANNEL_3]  = {.port = GPIOA, .pin = GPIO_PIN_3},
+    [ADC_CHANNEL_4]  = {.port = GPIOA, .pin = GPIO_PIN_4},
+    [ADC_CHANNEL_5]  = {.port = GPIOA, .pin = GPIO_PIN_5},
+    [ADC_CHANNEL_6]  = {.port = GPIOA, .pin = GPIO_PIN_6},
+    [ADC_CHANNEL_7]  = {.port = GPIOA, .pin = GPIO_PIN_7},
+    [ADC_CHANNEL_8]  = {.port = GPIOB, .pin = GPIO_PIN_0},
+    [ADC_CHANNEL_9]  = {.port = GPIOB, .pin = GPIO_PIN_1},
+    [ADC_CHANNEL_10] = {.port = GPIOC, .pin = GPIO_PIN_0},
+    [ADC_CHANNEL_11] = {.port = GPIOC, .pin = GPIO_PIN_1},
+    [ADC_CHANNEL_12] = {.port = GPIOC, .pin = GPIO_PIN_2},
+    [ADC_CHANNEL_13] = {.port = GPIOC, .pin = GPIO_PIN_3},
+    [ADC_CHANNEL_14] = {.port = GPIOC, .pin = GPIO_PIN_4},
+    [ADC_CHANNEL_15] = {.port = GPIOC, .pin = GPIO_PIN_5},
 };
 
 // User context
@@ -43,11 +63,9 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
 
 // Inline helpers
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(const ADC_TypeDef* handle) {
-#if defined(ADC1)
     if (handle == ADC1) {
         return 0U;
     }
-#endif
 #if defined(ADC2)
     if (handle == ADC2) {
         return 1U;
@@ -70,7 +88,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
     if ((handle->SR & ADC_SR_JEOC) && (handle->CR1 & ADC_CR1_JEOCIE)) {
         // Invoke the user callback since the sampling on the injected group is complete
 
-        // Save the user callback so we can clear it's global array position
+        // Save the user callback so we can clear its global array position
         __disable_irq();
         const adc_callback_t local_cb  = s_adc_ctx[idx].injected_done_cb;
         void* const          user_data = s_adc_ctx[idx].injected_done_arg;
@@ -85,8 +103,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
             local_cb(user_data);
         }
 
-        // Clear the JEOCIE and JEOC bits since the interrupt has been serviced
-        handle->SR &= ~ADC_SR_JEOC;
+        // Clear the JEOCIE bit since the interrupt has been serviced and its oneoff
         handle->CR1 &= ~ADC_CR1_JEOCIE;
     }
 
@@ -237,14 +254,15 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
     }
 }
 
-[[__gnu__::__always_inline__]] static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channels_t channel) {
+[[__gnu__::__always_inline__]] static inline uint16_t oneshot_regular_group(ADC_TypeDef* handle, adc_channel_t channel) {
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
     // Set the number of channels to be converted
     // An L[3:0] value of 0b0000 means 1 channel/conversion, a value of 0b0011 means 4
     // conversions etc. Which is why 0b0000 is used despite the sampling being for 1 channel
-    handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
+    // But as ORing in 0 is a no-op, its ok to not do anything here
+    // handle->SQR1 |= 0b0000U << ADC_SQR1_L_Pos;
 
     // Set the channel
     handle->SQR3 |= (uint32_t)channel << ADC_SQR3_SQ1_Pos;
@@ -262,18 +280,16 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
     }
 
     // Get the final result
-    return (uint16_t)handle->DR & 0xFFFU;
+    return handle->DR & 0xFFFU;
 }
 
 
 // General ADC use
 hal_err_t adcx_clk_enable(ADC_TypeDef* handle, bool enable) {
     if (enable) {
-#if defined(ADC1)
         if (handle == ADC1) {
             RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
         }
-#endif
 #if defined(ADC2)
         else if (handle == ADC2) {
             RCC->APB2ENR |= RCC_APB2ENR_ADC2EN;
@@ -288,11 +304,9 @@ hal_err_t adcx_clk_enable(ADC_TypeDef* handle, bool enable) {
             return HAL_ERR_INVALID_ARG;
         }
     } else {
-#if defined(ADC1)
         if (handle == ADC1) {
             RCC->APB2ENR &= ~RCC_APB2ENR_ADC1EN;
         }
-#endif
 #if defined(ADC2)
         else if (handle == ADC2) {
             RCC->APB2ENR &= ~RCC_APB2ENR_ADC2EN;
@@ -340,20 +354,23 @@ hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
     }
 
     // Set the ADC resolution
-    handle->CR1 &= ~ADC_CR1_RES;
-    handle->CR1 |= ((uint32_t)config->resolution << ADC_CR1_RES_Pos);
+    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) | ((uint32_t)config->resolution << ADC_CR1_RES_Pos);
 
     // Set the sampling cycles for all external channels
     // Clear all the bit positions first
-    handle->SMPR1 &= ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15);
+    handle->SMPR1 &= ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15 | ADC_SMPR1_SMP16 |
+                       ADC_SMPR1_SMP17 | ADC_SMPR1_SMP18);
     handle->SMPR2 &= ~(ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 | ADC_SMPR2_SMP4 | ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 |
                        ADC_SMPR2_SMP7 | ADC_SMPR2_SMP8 | ADC_SMPR2_SMP9);
 
     const uint32_t time = config->sampling_cycles;
 
-    // Apply the sample cycles to all external channels
+    // Apply the sample cycles to all external channels, but set the time for the internal channels to 480 cycles
+    // This is because sampling on the internal channels requires a strict minimum interval, and the only sampling
+    // cycle time that meets this requirement at any reasonable ADCCLK is 480 cycles.
     handle->SMPR1 |= ((time << ADC_SMPR1_SMP10_Pos) | (time << ADC_SMPR1_SMP11_Pos) | (time << ADC_SMPR1_SMP12_Pos) | (time << ADC_SMPR1_SMP13_Pos) |
-                      (time << ADC_SMPR1_SMP14_Pos) | (time << ADC_SMPR1_SMP15_Pos));
+                      (time << ADC_SMPR1_SMP14_Pos) | (time << ADC_SMPR1_SMP15_Pos) | (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP16_Pos) |
+                      (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP17_Pos) | (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP18_Pos));
 
     handle->SMPR2 |= ((time << ADC_SMPR2_SMP0_Pos) | (time << ADC_SMPR2_SMP1_Pos) | (time << ADC_SMPR2_SMP2_Pos) | (time << ADC_SMPR2_SMP3_Pos) |
                       (time << ADC_SMPR2_SMP4_Pos) | (time << ADC_SMPR2_SMP5_Pos) | (time << ADC_SMPR2_SMP6_Pos) | (time << ADC_SMPR2_SMP7_Pos) |
@@ -369,14 +386,15 @@ hal_err_t adc_deconfigure(ADC_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    TRY(adc_power_on(handle, false));
+
     clear_state(handle, true, true);
     handle->CR1 &= ~ADC_CR1_RES;
     handle->CR2 &= ~ADC_CR2_ALIGN;
-    handle->SMPR1 &= ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15);
+    handle->SMPR1 &= ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15 | ADC_SMPR1_SMP16 |
+                       ADC_SMPR1_SMP17 | ADC_SMPR1_SMP18);
     handle->SMPR2 &= ~(ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 | ADC_SMPR2_SMP4 | ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 |
                        ADC_SMPR2_SMP7 | ADC_SMPR2_SMP8 | ADC_SMPR2_SMP9);
-
-    TRY(adc_power_on(handle, false));
 
     return HAL_OK;
 }
@@ -388,9 +406,19 @@ void adc_clk_configure(adc_prescaler_t clk_prescaler) {
     ADC->CCR = (ADC->CCR & ~ADC_CCR_ADCPRE) | ((uint32_t)clk_prescaler << ADC_CCR_ADCPRE_Pos);
 }
 
+gpio_pin_ctx_t adc_channel_get_gpio(adc_channel_t channel) {
+    return s_adc_channels[channel];
+}
+
+void adc_configure_channel(adc_channel_t channel) {
+    gpiox_clk_enable(s_adc_channels[channel].port, true);
+    gpio_set_analog(s_adc_channels[channel].port, s_adc_channels[channel].pin);
+}
+
 void adc_enable_nvic_irq(bool enable) {
     if (enable) {
-        NVIC_SetPriority(ADC_IRQn, ADC_DMA_NVIC_IRQ_PRIORITY);
+        NVIC_SetPriority(ADC_IRQn, ADC_NVIC_IRQ_PRIORITY);
+        NVIC_ClearPendingIRQ(ADC_IRQn);
         NVIC_EnableIRQ(ADC_IRQn);
     } else {
         NVIC_DisableIRQ(ADC_IRQn);
@@ -408,7 +436,7 @@ void adc_power_on_temp_sensor(bool on) {
 
 
 // For use with the regular group and external channels in polling oneshot mode
-hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t channel, uint16_t* raw_data) {
+hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channel_t channel, uint16_t* raw_data) {
     if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -427,8 +455,9 @@ hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channels_t chan
 // For use with the regular group and external channels in DMA continuous sampling mode
 hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_continuous_config_t* config) {
     if (handle == NULL || config == NULL || config->channels.sequence == NULL || config->channels.num_of_channels == 0 ||
-        config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_1 == NULL ||
-        (config->circular_mode == DMA_MODE_DOUBLE_BUFFER && config->buffer_2 == NULL)) {
+        config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_0 == NULL ||
+        (config->circular_mode == DMA_MODE_DOUBLE_BUFFERS && config->buffer_1 == NULL) || config->buffer_size == 0 ||
+        (config->trigger != ADC_RG_TRIGGER_SOFTWARE && config->trigger_polarity == ADC_POLARITY_NONE)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -443,14 +472,16 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         return HAL_ERR_NOT_SUPPORTED;
     }
 
+    if (stream->CR & DMA_SxCR_EN) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
-    // Enable scan mode if we have more than one channel. Disable otherwise
+    // Enable scan mode if we have more than one channel. Leave disabled otherwise
     if (config->channels.num_of_channels > 1) {
         handle->CR1 |= ADC_CR1_SCAN;
-    } else {
-        handle->CR1 &= ~ADC_CR1_SCAN;
     }
 
     // Set the number of channels/conversions in the L bit positions of the
@@ -475,31 +506,29 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     }
 
     // Enable ADC continuous sampling and DMA mode
-    // Set the DDS bit only if we are in circular mode so the ADC continues
-    // to send DMA requests even after the first buffer is filled.
-    if (config->circular_mode == DMA_MODE_DOUBLE_BUFFER || config->circular_mode == DMA_MODE_CIRCULAR) {
+    // Set the DDS bit only if we are in circular or double buffering mode so
+    // the ADC continues to send DMA requests even after the first buffer is filled.
+    if (config->circular_mode != DMA_MODE_ONESHOT) {
         handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA | ADC_CR2_DDS);
     } else {
         handle->CR2 |= (ADC_CR2_CONT | ADC_CR2_DMA);
     }
 
-    // Enable the interrupts based on what callbacks were passed
-    if (config->callbacks.on_data_overrun != NULL) {
-        handle->CR1 |= ADC_CR1_OVRIE;
-    }
+    // Enable the ADC overrun interrupt
+    handle->CR1 |= ADC_CR1_OVRIE;
 
     // Configure the stream and enable the corresponding interrupts
     const dma_stream_config_t stream_config = {
         .deconfigure   = false,
         .enable_stream = true,
 
-        .per_addr_incement = false,
-        .mem_addr_incement = true,
+        .per_addr_increment = false,
+        .mem_addr_increment = true,
 
-        .tc_irq_enable  = config->callbacks.on_buffer_full != NULL,
+        .tc_irq_enable  = true,
         .ht_irq_enable  = false,
-        .te_irq_enable  = config->callbacks.on_transfer_error != NULL,
-        .dme_irq_enable = config->callbacks.on_direct_mode_error != NULL,
+        .te_irq_enable  = true,
+        .dme_irq_enable = true,
         .fe_irq_enable  = false,
 
         .mode            = DMA_MODE_DIRECT,
@@ -515,8 +544,8 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
         .nvic_irq_priority = ADC_DMA_NVIC_IRQ_PRIORITY,
 
         .per_addr  = &handle->DR,
-        .mem_buf_0 = config->buffer_1,
-        .mem_buf_1 = config->circular_mode == DMA_MODE_DOUBLE_BUFFER ? config->buffer_2 : NULL,
+        .mem_buf_0 = config->buffer_0,
+        .mem_buf_1 = config->circular_mode == DMA_MODE_DOUBLE_BUFFERS ? config->buffer_1 : NULL,
     };
     TRY(dma_configure_stream(stream, &stream_config));
 
@@ -526,7 +555,7 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     __enable_irq();
 
     // Finally, set the trigger source
-    if (config->trigger == RG_TRIGGER_SOFTWARE) {
+    if (config->trigger == ADC_RG_TRIGGER_SOFTWARE) {
         // If the trigger is from software, set the SWSTART bit and return as that's all that's needed
         handle->CR2 |= ADC_CR2_SWSTART;
     } else {
@@ -570,7 +599,8 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
 // For use with the injected group and external channels with interrupts
 hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_group_config_t* config) {
     if (handle == NULL || config == NULL || config->channels.sequence == NULL || config->channels.num_of_channels == 0 ||
-        config->channels.num_of_channels > MAX_INJECTED_CHANNELS) {
+        (config->channels.num_of_channels > MAX_INJECTED_CHANNELS) ||
+        (config->trigger != ADC_JG_TRIGGER_SOFTWARE && config->trigger_polarity == ADC_POLARITY_NONE)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -636,7 +666,7 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
         handle->CR1 |= ADC_CR1_JEOCIE;
     }
 
-    if (config->trigger == JG_TRIGGER_SOFTWARE) {
+    if (config->trigger == ADC_JG_TRIGGER_SOFTWARE) {
         // If the trigger is from software, set the JSWSTART bit and return as that's all that's needed
         handle->CR2 |= ADC_CR2_JSWSTART;
     } else {
@@ -682,6 +712,9 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data,
             return HAL_ERR_INVALID_ARG;
     }
 
+    // Cleanup. It clears the JEOC and JSTRT status bits as well
+    clear_state(handle, false, true);
+
     return HAL_OK;
 }
 
@@ -698,11 +731,6 @@ hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data) {
 
     // Enable V_bat so the ADC can measure it
     ADC->CCR |= ADC_CCR_VBATE;
-
-    // Set the number of sampling cycles to 480 cycles.
-    // This is done because the internal channels require
-    // a much higher sampling time than the external channels
-    handle->SMPR1 = (handle->SMPR1 & ~ADC_SMPR1_SMP18) | (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP18_Pos);
 
     // Get the raw ADC data
     const uint16_t raw = oneshot_regular_group(handle, ADC_CHANNEL_VBAT);
@@ -732,11 +760,6 @@ hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data) {
         adc_power_on_temp_sensor(true);
     }
 
-    // Set the number of sampling cycles to 480 cycles.
-    // This is done because the internal channels require
-    // a much higher sampling time than the external channels
-    handle->SMPR1 = (handle->SMPR1 & ~ADC_SMPR1_SMP16) | (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP16_Pos);
-
     // Get the raw ADC data
     const uint16_t raw = oneshot_regular_group(handle, ADC_CHANNEL_TEMP);
     if (raw == UINT16_MAX) {
@@ -758,11 +781,6 @@ hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_data) {
         adc_power_on_temp_sensor(true);
     }
 
-    // Set the number of sampling cycles to 480 cycles.
-    // This is done because the internal channels require
-    // a much higher sampling time than the external channels
-    handle->SMPR1 = (handle->SMPR1 & ~ADC_SMPR1_SMP17) | (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP17_Pos);
-
     // Get the raw ADC data
     const uint16_t raw = oneshot_regular_group(handle, ADC_CHANNEL_VREF);
     if (raw == UINT16_MAX) {
@@ -781,6 +799,11 @@ hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // All the calibration data were measured at a resolution of 12 bits
+    // So we have to match that resolution to get the correct readings
+    const adc_resolution_t resolution_before = (handle->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos;
+    handle->CR1                              = (handle->CR1 & ~ADC_CR1_RES) | (ADC_RES_12_BITS << ADC_CR1_RES_Pos);
+
     uint16_t raw_vref = 0;
     TRY(adc_get_v_ref_internal(handle, &raw_vref));
 
@@ -790,6 +813,9 @@ hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
     // Calculate the actual VDDA from the calibration data
     *vdda = (3.3F * (float)VREFINT_CALIBRATION_VALUE) / (float)raw_vref;
 
+    // Reapply the old resolution so as not to interfere with any user settings
+    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) | (uint32_t)(resolution_before << ADC_CR1_RES_Pos);
+
     return HAL_OK;
 }
 
@@ -798,15 +824,20 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // All the calibration data were measured at a resolution of 12 bits
+    // So we have to match that resolution to get the correct readings
+    const adc_resolution_t resolution_before = (handle->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos;
+    handle->CR1                              = (handle->CR1 & ~ADC_CR1_RES) | (ADC_RES_12_BITS << ADC_CR1_RES_Pos);
+
     // Get the raw V_ref_int
     uint16_t v_ref_int = 0;
     TRY(adc_get_v_ref_internal(handle, &v_ref_int));
 
-    // Read the raw ADC temperature value next
+    // Read the raw ADC temperature sensor data
     uint16_t raw_temp = 0;
     TRY(adc_get_temperature(handle, &raw_temp));
 
-    // Normalize the raw temperature sensor data read
+    // Normalize the raw temperature sensor data
     const float normalized = ((float)VREFINT_CALIBRATION_VALUE / (float)v_ref_int) * (float)raw_temp;
 
     // Get the temperature calibration values from their locations in memory
@@ -817,6 +848,9 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
     // Get the temperature using linear interpolation with the calibration data at 110C and 30C
     *temp_celsius = (((110.0F - 30.0F) / (float)(temp_cal_110c - temp_cal_30c)) * (normalized - (float)temp_cal_30c)) + 30.0F;
 
+    // Reapply the old resolution so as not to interfere with any user settings
+    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) | (uint32_t)(resolution_before << ADC_CR1_RES_Pos);
+
     return HAL_OK;
 }
 
@@ -824,10 +858,6 @@ hal_err_t adc_get_value_right_aligned(ADC_TypeDef* handle, uint16_t raw_data, ad
     if (handle == NULL || voltage == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
-
-    // Get the VDDA first
-    float vdda = 0.0F;
-    TRY(adc_get_vdda(handle, &vdda));
 
     uint16_t resolution_value = 0;
     switch (resolution) {
@@ -846,6 +876,10 @@ hal_err_t adc_get_value_right_aligned(ADC_TypeDef* handle, uint16_t raw_data, ad
         default:
             return HAL_ERR_INVALID_ARG;
     }
+
+    // Get VDDA
+    float vdda = 0.0F;
+    TRY(adc_get_vdda(handle, &vdda));
 
     // Calculate the final voltage
     *voltage = (vdda * (float)raw_data) / (float)(1UL << resolution_value);
@@ -870,6 +904,10 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_
     // and clear all state before modifying any of the bits in the register(s)
     handle->CR1 &= ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
 
+    // Set the voltage sample thresholds
+    handle->HTR = (handle->HTR & ~ADC_HTR_HT) | ((uint32_t)(config->max_adc_value << ADC_HTR_HT_Pos) & ADC_HTR_HT);
+    handle->LTR = (handle->LTR & ~ADC_LTR_LT) | ((uint32_t)(config->min_adc_value << ADC_LTR_LT_Pos) & ADC_LTR_LT);
+
     if (config->monitor_regular_channels && config->monitor_injected_channels) {
         // Enable monitoring on all channels
         handle->CR1 |= (ADC_CR1_AWDEN | ADC_CR1_JAWDEN);
@@ -882,10 +920,6 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_
     } else {
         return HAL_ERR_INVALID_ARG;
     }
-
-    // Set the voltage thresholds
-    handle->HTR = config->max_adc_value; // Only the lower 12 bits are used
-    handle->LTR = config->min_adc_value; // Only the lower 12 bits are used
 
     // Save the user passed callback
     __disable_irq();
@@ -926,9 +960,7 @@ hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle) {
 
 // Interrupt handlers
 void ADC_IRQHandler(void) {
-#if defined(ADC1)
     adcx_isr_helper(ADC1);
-#endif
 #if defined(ADC2)
     adcx_isr_helper(ADC2);
 #endif

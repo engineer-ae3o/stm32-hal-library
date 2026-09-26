@@ -57,8 +57,8 @@ namespace test::dma {
                 .deconfigure   = false,
                 .enable_stream = enable,
 
-                .per_addr_incement = true,
-                .mem_addr_incement = true,
+                .per_addr_increment = true,
+                .mem_addr_increment = true,
 
                 .tc_irq_enable  = false,
                 .ht_irq_enable  = false,
@@ -243,7 +243,7 @@ namespace test::dma {
             dma_set_increment(nullptr, true, true);
             dma_set_flow_controller(nullptr, true);
             dma_set_stream_priority(nullptr, DMA_PRIORITY_HIGH);
-            dma_set_circular_mode(nullptr, DMA_MODE_DOUBLE_BUFFER);
+            dma_set_circular_mode(nullptr, DMA_MODE_DOUBLE_BUFFERS);
             dma_set_per_mem_size(nullptr, DMA_SIZE_BYTE, DMA_SIZE_WORD);
             dma_enable_irqs(nullptr, true, true, true, true);
             dma_set_addresses(nullptr, nullptr, nullptr, nullptr);
@@ -286,7 +286,7 @@ namespace test::dma {
                 TEST_ASSERT_EQUAL_UINT32(std::to_underlying(priority), (stream->CR & DMA_SxCR_PL) >> DMA_SxCR_PL_Pos);
             }
 
-            dma_set_circular_mode(stream, DMA_MODE_DOUBLE_BUFFER);
+            dma_set_circular_mode(stream, DMA_MODE_DOUBLE_BUFFERS);
             TEST_ASSERT_TRUE(stream->CR & DMA_SxCR_CIRC);
             TEST_ASSERT_TRUE(stream->CR & DMA_SxCR_DBM);
             dma_set_circular_mode(stream, DMA_MODE_CIRCULAR);
