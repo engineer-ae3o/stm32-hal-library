@@ -453,9 +453,15 @@ namespace test::timer {
 
             delay_us(50);
             TEST_ASSERT_EQUAL(HAL_OK, timer_restart(TEST_INSTANCE, 1000)); // much shorter this time
+            const uint32_t cnt_after_restart = TEST_INSTANCE->CNT;         // sampled first, before any other assertion adds overhead
+
             constexpr uint32_t expected_bits = TIM_CR1_CEN | TIM_CR1_OPM;
             TEST_ASSERT_EQUAL_UINT32(expected_bits, TEST_INSTANCE->CR1 & expected_bits);
-            TEST_ASSERT_TRUE(TEST_INSTANCE->CNT < 100); // restarted from (near) zero
+
+            // Restarted from (near) zero, not continuing from wherever the old 1s-period counter had drifted to.
+            // Threshold is a fraction of the new period's ARR rather than an absolute tick count, so it
+            // doesn't depend on the timer's clock rate or on debug-build instruction overhead.
+            TEST_ASSERT_TRUE(cnt_after_restart < (TEST_INSTANCE->ARR / 10));
 
             TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
                                          return s_update_done;

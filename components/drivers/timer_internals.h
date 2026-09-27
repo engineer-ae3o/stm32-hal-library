@@ -8,7 +8,6 @@ extern "C" {
 
 
 #include "drivers/timer.h"
-#include "utils/common.h"
 #include "utils/err.h"
 
 #include <stdint.h>

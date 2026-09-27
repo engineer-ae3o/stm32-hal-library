@@ -190,7 +190,10 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
 
     // Disable the timer's NVIC interrupt
     if (handle == TIM1 || handle == TIM10) {
-        NVIC_DisableIRQ(TIM1_UP_TIM10_IRQn);
+        // Since this is shared between two different timer hardware blocks,
+        // we can't reliably disable the NVIC interrupt request since we could
+        // take down the other. So nothing is done here and its left up to the
+        // caller to disable it as they please.
     } else {
         NVIC_DisableIRQ(s_timer_cb_ctx[idx].irq_type);
     }
@@ -349,7 +352,7 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
 
     // Get the maximum width of the prescaler and auto-reload registers
     const uint32_t max_psc_plus_1 = UINT16_MAX + 1;
-    const uint64_t max_arr_plus_1 = (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX) + 1;
+    const uint64_t max_arr_plus_1 = (uint64_t)(is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX) + 1;
 
     // Bounds check the arguments against the width of the timers' registers
     const uint64_t max_psc_times_arr = max_psc_plus_1 * max_arr_plus_1;
