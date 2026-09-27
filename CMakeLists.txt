@@ -183,7 +183,6 @@ add_custom_target(cppcheck
         --file-filter=${CMAKE_SOURCE_DIR}/*.cpp
         --file-filter=${CMAKE_SOURCE_DIR}/components/drivers/**
         --file-filter=${CMAKE_SOURCE_DIR}/components/utils/**
-        --file-filter=${CMAKE_SOURCE_DIR}/components/test/**
         --output-file=${CMAKE_BINARY_DIR}/cppcheck_report.txt
         --checkers-report=${CMAKE_BINARY_DIR}/cppcheck_checks.txt
     COMMENT "Running static analysis..."

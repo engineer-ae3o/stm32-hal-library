@@ -237,10 +237,11 @@ namespace test::timer {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM1, false));
         }
 
-        void deinit_on_tim10_disables_the_shared_irq_line_that_tim1_uses() {
-            // TIM1 and TIM10 share one NVIC line (TIM1_UP_TIM10_IRQn). Deiniting TIM10
-            // unconditionally disables that whole line, even when TIM1 -- not TIM10 -- is
-            // the one actually depending on it. This test documents that as-is behavior.
+        void deinit_on_tim10_does_not_touch_the_shared_irq_line_that_tim1_uses() {
+            // TIM1 and TIM10 share one NVIC line (TIM1_UP_TIM10_IRQn). Deiniting either one
+            // must leave that line alone -- disabling it unconditionally would silently kill
+            // the other timer's interrupt if it's still running. This is a deliberate
+            // limitation of the driver, not an oversight: verify it stays that way.
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM1, true));
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM10, true));
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM1));
@@ -251,15 +252,16 @@ namespace test::timer {
             TEST_ASSERT_EQUAL(HAL_OK, timer_start_oneshot(TIM1, 1000));
             TEST_ASSERT_TRUE(NVIC->ISER[TIM1_UP_TIM10_IRQn >> 5] & (1UL << (TIM1_UP_TIM10_IRQn & 0x1FU)));
 
-            // TIM10 was never started, but deiniting it still rips out the shared IRQ line
+            // Deiniting TIM10 must NOT rip out the line TIM1 still depends on
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM10));
-            TEST_ASSERT_FALSE(NVIC->ISER[TIM1_UP_TIM10_IRQn >> 5] & (1UL << (TIM1_UP_TIM10_IRQn & 0x1FU)));
+            TEST_ASSERT_TRUE(NVIC->ISER[TIM1_UP_TIM10_IRQn >> 5] & (1UL << (TIM1_UP_TIM10_IRQn & 0x1FU)));
 
-            delay_us(2000); // comfortably past TIM1's 1ms one-pulse timeout
-
-            TEST_ASSERT_FALSE(TIM1->CR1 & TIM_CR1_CEN); // hardware still completes the pulse on its own...
-            TEST_ASSERT_TRUE(TIM1->SR & TIM_SR_UIF);    // ...but the flag is never serviced...
-            TEST_ASSERT_FALSE(s_update_done);           // ...so the callback never runs
+            // And TIM1's still-pending oneshot actually completes and fires its callback
+            TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
+                                         return s_update_done;
+                                     }),
+                                     "TIM1 oneshot never fired after TIM10 was deinited");
+            TEST_ASSERT_FALSE(TIM1->CR1 & TIM_CR1_CEN);
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM1));
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM1, false));
@@ -608,7 +610,7 @@ namespace test::timer {
         RUN_TEST(deinit_clears_the_registered_callback);
         RUN_TEST(deinit_stops_a_timer_that_is_currently_running);
         RUN_TEST(deinit_clears_rcr_on_tim1_only);
-        RUN_TEST(deinit_on_tim10_disables_the_shared_irq_line_that_tim1_uses);
+        RUN_TEST(deinit_on_tim10_does_not_touch_the_shared_irq_line_that_tim1_uses);
         RUN_TEST(start_oneshot_rejects_invalid_arguments);
         RUN_TEST(start_oneshot_rejects_when_already_running);
         RUN_TEST(start_oneshot_rejects_a_timeout_that_overflows_the_prescaler_range);
