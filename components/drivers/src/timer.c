@@ -175,28 +175,13 @@ hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us) {
         return HAL_ERR_INVALID_STATE;
     }
 
-    // Get the (PSC + 1) * (ARR + 1) value from the timer's clock frequency and the timeout
-    uint32_t timer_freq_hz = 0;
-    TRY(timer_get_frequency_hz(handle, &timer_freq_hz));
-    const uint32_t psc_times_arr = (timer_freq_hz / 1'000'000U) * timeout_us;
+    // Set the auto-reload and prescaler values
+    TRY(timer_set_arr_and_psc(handle, timeout_us));
 
-    // Get the maximum width of the prescaler and auto-reload registers
-    const uint32_t max_psc_plus_1 = UINT16_MAX + 1;
-    const uint64_t max_arr_plus_1 = (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX) + 1;
-
-    // Bounds check the arguments against the width of the timers' registers
-    const uint64_t max_psc_times_arr = max_psc_plus_1 * max_arr_plus_1;
-    if (psc_times_arr > max_psc_times_arr) {
-        return HAL_ERR_NOT_SUPPORTED;
-    }
-
-    // Compute suitable auto-reload and prescaler values
-    uint32_t arr_plus_1 = 0;
-    uint32_t psc_plus_1 = 0;
-
-    // Get the actual prescaler and auto-rload values
-    handle->ARR = arr_plus_1 - 1;
-    handle->PSC = psc_plus_1 - 1;
+    // Enable update generation and update event interrupt, and clear the update interrupt flag
+    handle->EGR |= TIM_EGR_UG;
+    handle->SR &= ~TIM_SR_UIF;
+    handle->DIER |= TIM_DIER_UIE;
 
     // Enable the timer's NVIC interrupt
     IRQn_Type irq_type = 0;
@@ -209,17 +194,15 @@ hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us) {
     NVIC_ClearPendingIRQ(irq_type);
     NVIC_EnableIRQ(irq_type);
 
-    // Enable the update event interrupt
-    handle->DIER |= TIM_DIER_UIE;
-
-    // Set OPM mode and enable the counter, and disable auto-reload preload
-    handle->CR1 = (TIM_CR1_CEN | TIM_CR1_OPM) | (handle->CR1 & ~TIM_CR1_ARPE);
+    // Set OPM mode and enable the counter and auto-reload preload
+    handle->CR1 |= (TIM_CR1_CEN | TIM_CR1_OPM | TIM_CR1_ARPE);
 
     return HAL_OK;
 }
 
 hal_err_t timer_start_periodic(TIM_TypeDef* handle, uint32_t timeout_us) {
-    if (handle == NULL || timeout_us == 0) {
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU || timeout_us == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -227,10 +210,27 @@ hal_err_t timer_start_periodic(TIM_TypeDef* handle, uint32_t timeout_us) {
         return HAL_ERR_INVALID_STATE;
     }
 
-    // TODO: Handle the starting of the timer in periodic mode
+    // Set the auto-reload and prescaler values
+    TRY(timer_set_arr_and_psc(handle, timeout_us));
 
-    // Disable OPM mode and enable the counter
-    handle->CR1 = TIM_CR1_CEN | (handle->CR1 & ~(TIM_CR1_OPM | TIM_CR1_ARPE));
+    // Enable update generation and update event interrupt, and clear the update interrupt flag
+    handle->EGR |= TIM_EGR_UG;
+    handle->SR &= ~TIM_SR_UIF;
+    handle->DIER |= TIM_DIER_UIE;
+
+    // Enable the timer's NVIC interrupt
+    IRQn_Type irq_type = 0;
+    if (handle == TIM1 || handle == TIM10) {
+        irq_type = TIM1_UP_TIM10_IRQn;
+    } else {
+        irq_type = s_timer_cb_ctx[idx].irq_type;
+    }
+    NVIC_SetPriority(irq_type, TIMERS_NVIC_IRQ_PRIORITY);
+    NVIC_ClearPendingIRQ(irq_type);
+    NVIC_EnableIRQ(irq_type);
+
+    // Disable OPM mode and enable the counter and auto-reload preload
+    handle->CR1 = (TIM_CR1_CEN | TIM_CR1_ARPE) | (handle->CR1 & ~TIM_CR1_OPM);
 
     return HAL_OK;
 }
@@ -264,10 +264,11 @@ hal_err_t timer_restart(TIM_TypeDef* handle, uint32_t timeout_us) {
     return HAL_OK;
 }
 
-bool is_timer_32_bits(TIM_TypeDef* handle) {
+// Internal helpers
+bool is_timer_on_apb1(TIM_TypeDef* handle) {
     bool result = true;
     if (handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) {
-        result = true;
+        // result = true; // Already true. Just no-op
     } else if (handle == TIM1 || handle == TIM9 || handle == TIM10 || handle == TIM11) {
         result = false;
     } else {
@@ -276,12 +277,80 @@ bool is_timer_32_bits(TIM_TypeDef* handle) {
     return result;
 }
 
-hal_err_t timer_get_frequency_hz(TIM_TypeDef* handle, uint32_t* frequency) {
-    if (handle == NULL || frequency == NULL) {
+bool is_timer_32_bits(TIM_TypeDef* handle) {
+    bool result = true;
+    if (handle == TIM2 || handle == TIM5) {
+        // result = true; // Already true. Just no-op
+    } else if (handle == TIM1 || handle == TIM3 || handle == TIM4 || handle == TIM9 || handle == TIM10 || handle == TIM11) {
+        result = false;
+    } else {
+        ASSERT(false);
+    }
+    return result;
+}
+
+hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
+    // Get the (PSC + 1) * (ARR + 1) value from the timer's clock frequency and the timeout
+    uint32_t timer_freq_hz = 0;
+    TRY(timer_get_frequency_hz(handle, &timer_freq_hz));
+    const uint64_t psc_times_arr = ((uint64_t)timer_freq_hz * timeout_us) / 1'000'000U;
+
+    // Get the maximum width of the prescaler and auto-reload registers
+    const uint32_t max_psc_plus_1 = UINT16_MAX + 1;
+    const uint64_t max_arr_plus_1 = (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX) + 1;
+
+    // Bounds check the arguments against the width of the timers' registers
+    const uint64_t max_psc_times_arr = max_psc_plus_1 * max_arr_plus_1;
+    if (psc_times_arr > max_psc_times_arr) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // TODO: Compute suitable auto-reload and prescaler values
+    uint32_t arr_plus_1 = 1;
+    uint32_t psc_plus_1 = 1;
+
+    // Set the actual prescaler and auto-reload values
+    handle->ARR = arr_plus_1 - 1;
+    handle->PSC = psc_plus_1 - 1;
+
+    // Clear existing state
+    handle->CNT  = 0;
+    handle->CCR1 = 0;
+    handle->CCR2 = 0;
+    handle->CCR3 = 0;
+    handle->CCR4 = 0;
+
+    return HAL_OK;
+}
+
+hal_err_t timer_get_frequency_hz(TIM_TypeDef* handle, uint32_t* timer_freq_hz) {
+    if (handle == NULL || timer_freq_hz == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    *frequency = 0;
+    const uint32_t system_core_clock = get_system_core_clock();
+    const uint32_t apb_clock_hz      = is_timer_on_apb1(handle) ? get_apb1_core_clock() : get_apb2_core_clock();
+
+    if (RCC->DCKCFGR & RCC_DCKCFGR_TIMPRE) {
+        // High frequency timer mode
+        if ((system_core_clock == apb_clock_hz) || ((system_core_clock / apb_clock_hz) == 2)) {
+            // The APB prescaler is either 1 or 2
+            *timer_freq_hz = system_core_clock;
+        } else {
+            // The APB prescaler is greater than 2
+            *timer_freq_hz = apb_clock_hz * 4;
+        }
+    } else {
+        // Standard frequency timer mode
+        if (system_core_clock == apb_clock_hz) {
+            // The APB prescaler is 1
+            *timer_freq_hz = apb_clock_hz;
+        } else {
+            // The APB prescaler is greater than 1
+            *timer_freq_hz = apb_clock_hz * 2;
+        }
+    }
+
     return HAL_OK;
 }
 
