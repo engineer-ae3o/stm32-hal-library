@@ -89,6 +89,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         }
     }
 
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
     // Save the user callback so we can clear its global array position
@@ -106,7 +107,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         DISABLE_I2S();
     }
 
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     if (local_cb) {
         // Finally, invoke the user callback
@@ -121,6 +122,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
     // Clear any flags that were set and get the error status
     hal_err_t ret = dma_isr_helper(s_spi_i2s_dma_map[idx].rx.stream);
 
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
     // Save the user callback so we can clear its global array position
@@ -138,7 +140,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
         DISABLE_I2S();
     }
 
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     if (local_cb) {
         // Finally, invoke the user callback
@@ -447,9 +449,10 @@ hal_err_t spi_master_dma_deinit(SPI_TypeDef* handle) {
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));
 
     // Zero out all stored callbacks
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     memset(&s_dma_stream_ctx[idx], 0, sizeof(s_dma_stream_ctx[idx]));
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     return HAL_OK;
 }
@@ -553,10 +556,11 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
     // that the last bit of the data has been transmitted. Its only then
     // we can safely disable the SPI peripheral. isr_rx_helper(...) has
     // no such checks, so isr_tx_helper(...) is better for our usage here.
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_dma_stream_ctx[idx].tx.callback = cb;
     s_dma_stream_ctx[idx].tx.arg      = arg;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     TRY(dma_enable_stream(rx_stream));
     TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
@@ -609,10 +613,11 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size,
     // that the last bit of the data has been transmitted. Its only then
     // we can safely disable the SPI peripheral. isr_rx_helper(...) has
     // no such checks, so isr_tx_helper(...) is better for our usage here.
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_dma_stream_ctx[idx].tx.callback = cb;
     s_dma_stream_ctx[idx].tx.arg      = arg;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     TRY(dma_enable_stream(rx_stream));
     TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
@@ -658,10 +663,11 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     // that the last bit of the data has been transmitted. Its only then
     // we can safely disable the SPI peripheral. isr_rx_helper(...) has
     // no such checks, so isr_tx_helper(...) is better for our usage here.
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_dma_stream_ctx[idx].tx.callback = cb;
     s_dma_stream_ctx[idx].tx.arg      = arg;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     TRY(dma_enable_stream(rx_stream));
     TRY_WITH_FUNC(dma_enable_stream(tx_stream), dma_disable_stream(rx_stream));
@@ -678,6 +684,7 @@ hal_err_t spi_master_register_callback(dma_done_cb_t callback, void* arg, uint8_
     if (idx >= ARRAY_SIZE(s_spi_i2s_dma_map)) {
         return HAL_ERR_INVALID_ARG;
     }
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     if (is_tx) {
         s_dma_stream_ctx[idx].tx.callback = callback;
@@ -686,7 +693,7 @@ hal_err_t spi_master_register_callback(dma_done_cb_t callback, void* arg, uint8_
         s_dma_stream_ctx[idx].rx.callback = callback;
         s_dma_stream_ctx[idx].rx.arg      = arg;
     }
-    __enable_irq();
+    __set_PRIMASK(primask);
     return HAL_OK;
 }
 

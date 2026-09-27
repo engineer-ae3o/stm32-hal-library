@@ -89,6 +89,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
         // Invoke the user callback since the sampling on the injected group is complete
 
         // Save the user callback so we can clear its global array position
+        const uint32_t primask = __get_PRIMASK();
         __disable_irq();
         const adc_callback_t local_cb  = s_adc_ctx[idx].injected_done_cb;
         void* const          user_data = s_adc_ctx[idx].injected_done_arg;
@@ -96,7 +97,7 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
         // Clear the user passed callback since this is a one-off event
         s_adc_ctx[idx].injected_done_cb  = NULL;
         s_adc_ctx[idx].injected_done_arg = NULL;
-        __enable_irq();
+        __set_PRIMASK(primask);
 
         // Finally, invoke the user callback
         if (local_cb) {
@@ -109,10 +110,11 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
 
     // Check if the AWD bit is set and interrupts for the analog watchdog are enabled.
     if ((handle->SR & ADC_SR_AWD) && (handle->CR1 & ADC_CR1_AWDIE)) {
+        const uint32_t primask = __get_PRIMASK();
         __disable_irq();
         const adc_callback_t local_cb  = s_adc_ctx[idx].analog_wdg_cb;
         void* const          user_data = s_adc_ctx[idx].analog_wdg_arg;
-        __enable_irq();
+        __set_PRIMASK(primask);
 
         // The callback isn't cleared since this is not a one-off
         // event. To clear, adc_analog_wdg_stop() should be used.
@@ -130,10 +132,11 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
     // Check if the OVR bit is set and interrupts for data overrun are enabled.
     if ((handle->SR & ADC_SR_OVR) && (handle->CR1 & ADC_CR1_OVRIE)) {
         // Save the user callback so it's global array position can be cleared safely
+        const uint32_t primask = __get_PRIMASK();
         __disable_irq();
         const adc_cont_err_cb_t local_cb  = s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun;
         void* const             user_data = s_adc_ctx[idx].continuous_mode_callbacks.user;
-        __enable_irq();
+        __set_PRIMASK(primask);
 
         // Get the user paramters before clearing all state with adc_regular_group_cont_end_conv(...)
         DMA_Stream_TypeDef* stream = s_adc_dma_map[idx].stream;
@@ -170,12 +173,13 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
     const uint8_t  filled_buffer_idx = (stream->CR & DMA_SxCR_CT) ? 0 : 1;
     const uint16_t num_of_items_left = (uint16_t)stream->NDTR;
 
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     const adc_cont_done_cb_t tc_local_cb  = s_adc_ctx[idx].continuous_mode_callbacks.on_buffer_full;
     const adc_cont_err_cb_t  te_local_cb  = s_adc_ctx[idx].continuous_mode_callbacks.on_transfer_error;
     const adc_cont_err_cb_t  dme_local_cb = s_adc_ctx[idx].continuous_mode_callbacks.on_direct_mode_error;
     void* const              user_data    = s_adc_ctx[idx].continuous_mode_callbacks.user;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     // Get the stream's DMA controller and NVIC interrupt type
     dma_stream_info_t stream_info;
@@ -550,9 +554,10 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef* handle, const adc_conti
     TRY(dma_configure_stream(stream, &stream_config));
 
     // Copy the registered callbacks
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_adc_ctx[idx].continuous_mode_callbacks = config->callbacks;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     // Finally, set the trigger source
     if (config->trigger == ADC_RG_TRIGGER_SOFTWARE) {
@@ -588,9 +593,10 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
     TRY(dma_configure_stream(stream, &stream_config));
 
     // Clear all user passed callbacks
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     memset(&s_adc_ctx[idx].continuous_mode_callbacks, 0, sizeof(s_adc_ctx[idx].continuous_mode_callbacks));
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     return HAL_OK;
 }
@@ -655,10 +661,11 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef* handle, const adc_injected_
     }
 
     // Save the user passed callback
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_adc_ctx[idx].injected_done_cb  = config->on_conv_complete;
     s_adc_ctx[idx].injected_done_arg = config->arg;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     // Enable interrupts for the injected group on conversion
     // completion only if a callback was passed in.
@@ -922,10 +929,11 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_
     }
 
     // Save the user passed callback
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_adc_ctx[idx].analog_wdg_cb  = config->on_thresholds_violated;
     s_adc_ctx[idx].analog_wdg_arg = config->arg;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     // Enable the analog watchdog interrupt and clear any pending interrupts
     handle->SR &= ~ADC_SR_AWD;
@@ -949,10 +957,11 @@ hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle) {
     handle->LTR &= ~ADC_LTR_LT; // Set to lowest value possible
 
     // Clear the user passed callback
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_adc_ctx[idx].analog_wdg_cb  = NULL;
     s_adc_ctx[idx].analog_wdg_arg = NULL;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     return HAL_OK;
 }

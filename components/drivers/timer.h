@@ -8,11 +8,29 @@ extern "C" {
 
 
 #include "stm32f411xe.h"
+#include "utils/err.h"
 
 #include <stdint.h>
 
 
-// TODO
+typedef enum : uint8_t {
+    TIMER_COUNTER_UP,
+    TIMER_COUNTER_DOWN,
+} timer_counter_dir_t;
+
+typedef void (*timer_cb_t)(void* arg);
+
+hal_err_t timer_clock_enable(TIM_TypeDef* handle, bool enable);
+
+hal_err_t timer_init(TIM_TypeDef* handle, timer_counter_dir_t direction, timer_cb_t callback, void* arg);
+hal_err_t timer_deinit(TIM_TypeDef* handle);
+
+hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us);
+hal_err_t timer_start_periodic(TIM_TypeDef* handle, uint32_t timeout_us);
+
+hal_err_t timer_pause(TIM_TypeDef* handle);
+hal_err_t timer_resume(TIM_TypeDef* handle);
+hal_err_t timer_restart(TIM_TypeDef* handle, uint32_t timeout_us);
 
 
 #ifdef __cplusplus

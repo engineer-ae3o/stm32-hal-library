@@ -19,22 +19,24 @@ extern "C" {
 
 // NVIC interrupt priorities for the different peripherals
 #define SysTick_NVIC_IRQ_PRIORITY (0U)
-#define EXTI_LINE_NVIC_IRQ_PRIORITY (15U)
+#define TIMER_NVIC_IRQ_PRIORITY (15U)
+#define EXTI_LINE_NVIC_IRQ_PRIORITY (14U)
 #define SPI_DMA_NVIC_IRQ_PRIORITY (6U)
 #define I2S_DMA_NVIC_IRQ_PRIORITY (12U)
 #define UART_DMA_NVIC_IRQ_PRIORITY (10U)
 #define ADC_NVIC_IRQ_PRIORITY (8U)
 #define ADC_DMA_NVIC_IRQ_PRIORITY ADC_NVIC_IRQ_PRIORITY
 #define CRC_DMA_NVIC_IRQ_PRIORITY (11U)
-#define M2M_DMA_NVIC_IRQ_PRIORITY (15U)
+#define M2M_DMA_NVIC_IRQ_PRIORITY (13U)
 
 
+// "Branch prediction" hints (technically, no branch predictor exists on this hardware, but it
+// would help gcc order the branches in a more efficient manner, causing better I-cache locality)
 #define gnu_likely(x) __builtin_expect(!!(x), 1)
 #define gnu_unlikely(x) __builtin_expect(!!(x), 0)
 
-
 // The system tick rate
-#define TICK_RATE_Hz (1000)
+#define TICK_RATE_Hz (1'000)
 
 #define HEAP_SIZE_kB (32)
 #define HEAP_SIZE_BYTES ((HEAP_SIZE_kB) * 1024)
