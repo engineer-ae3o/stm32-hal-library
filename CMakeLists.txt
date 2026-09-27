@@ -45,7 +45,7 @@ set(CMAKE_C_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
                    -Wall -Wstrict-aliasing=2 -Wduplicated-branches -Wduplicated-cond -Werror \
                    -Wlogical-op -Wextra -Wshadow -Wno-conversion -Wwrite-strings -Wformat=2 \
                    -fstrict-overflow -fstrict-aliasing -Wdouble-promotion -fstack-usage \
-                   -Wnull-dereference -Wcast-align ")
+                   -Wnull-dereference -Wcast-align -Wunused-variable -Wunused-parameter ")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 
