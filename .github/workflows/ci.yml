@@ -102,10 +102,28 @@ jobs:
       - name: Setup Latest CMake & Ninja
         uses: lukka/get-cmake@latest
 
-      - name: Install Toolchain & Cppcheck
+      - name: Install Toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi cppcheck
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
+
+      - name: Cache Cppcheck Build
+        id: cache-cppcheck
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/cppcheck
+          key: cppcheck-main-build
+
+      - name: Install Latest Cppcheck
+        if: steps.cache-cppcheck.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/cppcheck-opensource/cppcheck.git /tmp/cppcheck
+          cmake -S /tmp/cppcheck -B /tmp/cppcheck/build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DUSE_MATCHCOMPILER=ON
+          cmake --build /tmp/cppcheck/build
+          sudo cmake --install /tmp/cppcheck/build
 
       - name: Configure Presets
         run: cmake --preset tests
