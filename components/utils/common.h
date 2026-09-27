@@ -19,7 +19,7 @@ extern "C" {
 
 // NVIC interrupt priorities for the different peripherals
 #define SysTick_NVIC_IRQ_PRIORITY (0U)
-#define TIMERS_NVIC_IRQ_PRIORITY (15U)
+#define TIMER_NVIC_IRQ_PRIORITY (15U)
 #define EXTI_LINE_NVIC_IRQ_PRIORITY (14U)
 #define SPI_DMA_NVIC_IRQ_PRIORITY (6U)
 #define I2S_DMA_NVIC_IRQ_PRIORITY (12U)

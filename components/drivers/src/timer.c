@@ -117,15 +117,22 @@ hal_err_t timer_clock_enable(TIM_TypeDef* handle, bool enable) {
     return HAL_OK;
 }
 
-hal_err_t timer_init(TIM_TypeDef* handle, const timer_config_t* config, timer_cb_t callback, void* arg) {
+hal_err_t timer_init(TIM_TypeDef* handle, timer_counter_dir_t direction, timer_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU || config == NULL || callback == NULL) {
+    if (idx == 0xFFU || callback == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    if ((handle == TIM9 || handle == TIM10 || handle == TIM11) && config->mode != TIMER_COUNTER_UP) {
+    if (handle->CR1 & TIM_CR1_CEN) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
+    if ((handle == TIM9 || handle == TIM10 || handle == TIM11) && direction != TIMER_COUNTER_UP) {
         return HAL_ERR_NOT_SUPPORTED;
     }
+
+    // Set the counting direction
+    handle->CR1 = (uint32_t)(direction << TIM_CR1_DIR_Pos) | (handle->CR1 & ~TIM_CR1_DIR);
 
     // Register the callback for the current timer instance
     __disable_irq();
@@ -151,10 +158,24 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
           TIM_DIER_UDE | TIM_DIER_CC1DE | TIM_DIER_CC2DE | TIM_DIER_CC3DE | TIM_DIER_CC4DE | TIM_DIER_COMDE | TIM_DIER_TDE);
     handle->SR &= ~(TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF | TIM_SR_CC3IF | TIM_SR_CC4IF | TIM_SR_COMIF | TIM_SR_TIF | TIM_SR_BIF | TIM_SR_CC1OF |
                     TIM_SR_CC2OF | TIM_SR_CC3OF | TIM_SR_CC4OF);
-    handle->CNT &= ~TIM_CNT_CNT;
-    handle->PSC &= ~TIM_PSC_PSC;
-    handle->ARR &= ~TIM_ARR_ARR;
-    handle->RCR &= ~TIM_RCR_REP;
+    handle->EGR &= ~(TIM_EGR_UG | TIM_EGR_CC1G | TIM_EGR_CC2G | TIM_EGR_CC3G | TIM_EGR_CC4G | TIM_EGR_COMG | TIM_EGR_TG | TIM_EGR_BG);
+    handle->CNT  = 0;
+    handle->PSC  = 0;
+    handle->ARR  = 0;
+    handle->CCR1 = 0;
+    handle->CCR2 = 0;
+    handle->CCR3 = 0;
+    handle->CCR4 = 0;
+    if (handle == TIM1) {
+        handle->RCR &= ~TIM_RCR_REP;
+    }
+
+    // Disable the timer's NVIC interrupt
+    if (handle == TIM1 || handle == TIM10) {
+        NVIC_DisableIRQ(TIM1_UP_TIM10_IRQn);
+    } else {
+        NVIC_DisableIRQ(s_timer_cb_ctx[idx].irq_type);
+    }
 
     // Clear the registered callback for the current timer instance
     __disable_irq();
@@ -178,7 +199,7 @@ hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Set the auto-reload and prescaler values
     TRY(timer_set_arr_and_psc(handle, timeout_us));
 
-    // Enable update generation and update event interrupt, and clear the update interrupt flag
+    // Enable update generation and the update event interrupt, and clear the update interrupt flag
     handle->EGR |= TIM_EGR_UG;
     handle->SR &= ~TIM_SR_UIF;
     handle->DIER |= TIM_DIER_UIE;
@@ -190,13 +211,12 @@ hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us) {
     } else {
         irq_type = s_timer_cb_ctx[idx].irq_type;
     }
-    NVIC_SetPriority(irq_type, TIMERS_NVIC_IRQ_PRIORITY);
+    NVIC_SetPriority(irq_type, TIMER_NVIC_IRQ_PRIORITY);
     NVIC_ClearPendingIRQ(irq_type);
     NVIC_EnableIRQ(irq_type);
 
-    // Set OPM mode and enable the counter and auto-reload preload
-    handle->CR1 |= (TIM_CR1_CEN | TIM_CR1_OPM | TIM_CR1_ARPE);
-
+    // Set OPM mode, and enable the counter and auto-reload preload, and set URS so only a UEV triggers an interrupt
+    handle->CR1 |= (TIM_CR1_CEN | TIM_CR1_OPM | TIM_CR1_ARPE | TIM_CR1_URS);
     return HAL_OK;
 }
 
@@ -213,7 +233,7 @@ hal_err_t timer_start_periodic(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Set the auto-reload and prescaler values
     TRY(timer_set_arr_and_psc(handle, timeout_us));
 
-    // Enable update generation and update event interrupt, and clear the update interrupt flag
+    // Enable update generation and the update event interrupt, and clear the update interrupt flag
     handle->EGR |= TIM_EGR_UG;
     handle->SR &= ~TIM_SR_UIF;
     handle->DIER |= TIM_DIER_UIE;
@@ -225,17 +245,16 @@ hal_err_t timer_start_periodic(TIM_TypeDef* handle, uint32_t timeout_us) {
     } else {
         irq_type = s_timer_cb_ctx[idx].irq_type;
     }
-    NVIC_SetPriority(irq_type, TIMERS_NVIC_IRQ_PRIORITY);
+    NVIC_SetPriority(irq_type, TIMER_NVIC_IRQ_PRIORITY);
     NVIC_ClearPendingIRQ(irq_type);
     NVIC_EnableIRQ(irq_type);
 
-    // Disable OPM mode and enable the counter and auto-reload preload
-    handle->CR1 = (TIM_CR1_CEN | TIM_CR1_ARPE) | (handle->CR1 & ~TIM_CR1_OPM);
-
+    // Disable OPM mode, and enable the counter and auto-reload preload, and set URS so only a UEV triggers an interrupt
+    handle->CR1 = (TIM_CR1_CEN | TIM_CR1_ARPE | TIM_CR1_URS) | (handle->CR1 & ~TIM_CR1_OPM);
     return HAL_OK;
 }
 
-hal_err_t timer_stop(TIM_TypeDef* handle) {
+hal_err_t timer_pause(TIM_TypeDef* handle) {
     if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -244,15 +263,28 @@ hal_err_t timer_stop(TIM_TypeDef* handle) {
         return HAL_ERR_INVALID_STATE;
     }
 
-    // Disable the counter. Pretty straightforward
+    // Pause the timer by disabling its counter
     handle->CR1 &= ~TIM_CR1_CEN;
+    return HAL_OK;
+}
 
+hal_err_t timer_resume(TIM_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    if (handle->CR1 & TIM_CR1_CEN) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
+    // Resume the timer by re-enabling its counter
+    handle->CR1 |= TIM_CR1_CEN;
     return HAL_OK;
 }
 
 hal_err_t timer_restart(TIM_TypeDef* handle, uint32_t timeout_us) {
-    // Stop the timer first
-    TRY(timer_stop(handle));
+    // Pause the timer first
+    TRY(timer_pause(handle));
 
     // Then restart based on what mode it was counting in previously
     if (handle->CR1 & TIM_CR1_OPM) {
