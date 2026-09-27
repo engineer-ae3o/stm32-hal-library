@@ -32,17 +32,17 @@ namespace test {
         // adc::all();
         // dma::all();
         // i2c::all();
-        // pwm::all();
+        pwm::all();
         // crc::all();
         // spi::all();
-        i2s::all();
+        // i2s::all();
         // iwdg::all();
         // heap::all();
         // uart::all();
         // gpio::all();
         // clock::all();
-        // timer::all();
-        // timer_ext::all();
+        timer::all();
+        timer_ext::all();
     }
 
 } // namespace test

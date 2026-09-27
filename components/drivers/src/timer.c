@@ -360,7 +360,7 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Compute suitable auto-reload and prescaler values
     // Minimum PSC such that ARR can cover the remainder: ceiling division
     uint64_t psc_plus_1 = (psc_times_arr + max_arr_plus_1 - 1) / max_arr_plus_1;
-    if (gnu_unlikely(psc_plus_1 == 0)) {
+    if (psc_plus_1 == 0) {
         psc_plus_1 = 1; // Clamp to 1
     }
 
