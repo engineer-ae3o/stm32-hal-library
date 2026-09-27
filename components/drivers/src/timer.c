@@ -357,13 +357,22 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // TODO: Compute suitable auto-reload and prescaler values
-    uint32_t arr_plus_1 = 1;
-    uint32_t psc_plus_1 = 1;
+    // Compute suitable auto-reload and prescaler values
+    // Minimum PSC such that ARR can cover the remainder: ceiling division
+    uint64_t psc_plus_1 = (psc_times_arr + max_arr_plus_1 - 1) / max_arr_plus_1;
+    if (gnu_unlikely(psc_plus_1 == 0)) {
+        psc_plus_1 = 1; // Clamp to 1
+    }
+
+    // Round to nearest instead of floor to halve the worst case error
+    uint64_t arr_plus_1 = (psc_times_arr + (psc_plus_1 / 2)) / psc_plus_1;
+    if (gnu_unlikely(arr_plus_1 == 0)) {
+        arr_plus_1 = 1; // Clamp to 1
+    }
 
     // Set the actual prescaler and auto-reload values
-    handle->ARR = arr_plus_1 - 1;
-    handle->PSC = psc_plus_1 - 1;
+    handle->ARR = (uint32_t)(arr_plus_1 - 1);
+    handle->PSC = (uint32_t)(psc_plus_1 - 1);
 
     // Clear existing state
     handle->CNT  = 0;
