@@ -90,11 +90,12 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     }
 
     DISABLE_UART_DMA_TX();
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].tx.callback == NULL) {
-        __enable_irq();
+        __set_PRIMASK(primask);
         return;
     }
 
@@ -106,7 +107,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     s_dma_stream_ctx[idx].tx.callback = NULL;
     s_dma_stream_ctx[idx].tx.arg      = NULL;
 
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
@@ -123,11 +124,12 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     handle->SR = ~USART_SR_RXNE;
 
     DISABLE_UART_DMA_RX();
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
     // Return if no callback registered
     if (s_dma_stream_ctx[idx].rx.callback == NULL) {
-        __enable_irq();
+        __set_PRIMASK(primask);
         return;
     }
 
@@ -139,7 +141,7 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
     s_dma_stream_ctx[idx].rx.callback = NULL;
     s_dma_stream_ctx[idx].rx.arg      = NULL;
 
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     // Finally, invoke the user callback
     local_cb(local_arg, ret);
@@ -357,9 +359,10 @@ hal_err_t uart_dma_deinit(USART_TypeDef* handle) {
     TRY(dma_configure_stream(tx_stream, &tx_stream_config));
     TRY(dma_configure_stream(rx_stream, &rx_stream_config));
 
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     memset(&s_dma_stream_ctx[idx], 0, sizeof(s_dma_stream_ctx[idx]));
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     return HAL_OK;
 }
@@ -428,10 +431,11 @@ hal_err_t uart_transmit_dma(USART_TypeDef* handle, const uint8_t* data, uint16_t
     dma_set_addresses(stream, &handle->DR, data, NULL);
     dma_set_trans_length(stream, size);
 
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_dma_stream_ctx[idx].tx.callback = callback;
     s_dma_stream_ctx[idx].tx.arg      = arg;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     // Clear the status flag before starting
     handle->SR = ~USART_SR_TC;
@@ -462,10 +466,11 @@ hal_err_t uart_receive_dma(USART_TypeDef* handle, uint8_t* data, uint16_t size, 
     dma_set_addresses(stream, &handle->DR, data, NULL);
     dma_set_trans_length(stream, size);
 
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_dma_stream_ctx[idx].rx.callback = callback;
     s_dma_stream_ctx[idx].rx.arg      = arg;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     // Clear the status flag before starting
     handle->SR = ~USART_SR_RXNE;

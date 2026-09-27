@@ -9,15 +9,14 @@
 #include <stdint.h>
 
 
-// Table of registered callbacks
+// Table of registered callbacks and state for the timer instance
 typedef struct {
     timer_cb_t      callback;
     void*           arg;
     const IRQn_Type irq_type;
-} cb_ctx_t;
+} timer_ctx_t;
 
-// There are 8 TIMx peripherals
-static cb_ctx_t s_timer_cb_ctx[8] = {
+static timer_ctx_t s_timer_cb_ctx[] = {
     // TIM1
     {.callback = NULL, .arg = NULL, .irq_type = TIM1_CC_IRQn},
     // TIM2
@@ -64,7 +63,25 @@ static cb_ctx_t s_timer_cb_ctx[8] = {
     const uint8_t idx = get_index(handle);
     ASSERT(idx != 0xFFU);
 
-    // TODO: Handle the timer interrupts
+    const uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    const timer_cb_t local_cb  = s_timer_cb_ctx[idx].callback;
+    void* const      local_arg = s_timer_cb_ctx[idx].arg;
+
+    // Clear only if in one pulse mode
+    if (handle->CR1 & TIM_CR1_OPM) {
+        s_timer_cb_ctx[idx].callback = NULL;
+        s_timer_cb_ctx[idx].arg      = NULL;
+    }
+    __set_PRIMASK(primask);
+
+    // Update event interrupt: underflow or overflow
+    if (handle->SR & TIM_SR_UIF) {
+        handle->SR &= ~TIM_SR_UIF;
+        if (local_cb) {
+            local_cb(local_arg);
+        }
+    }
 }
 
 
@@ -135,10 +152,11 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_counter_dir_t direction, timer_c
     handle->CR1 = (uint32_t)(direction << TIM_CR1_DIR_Pos) | (handle->CR1 & ~TIM_CR1_DIR);
 
     // Register the callback for the current timer instance
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_timer_cb_ctx[idx].callback = callback;
     s_timer_cb_ctx[idx].arg      = arg;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     return HAL_OK;
 }
@@ -178,10 +196,11 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     }
 
     // Clear the registered callback for the current timer instance
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_timer_cb_ctx[idx].callback = NULL;
     s_timer_cb_ctx[idx].arg      = NULL;
-    __enable_irq();
+    __set_PRIMASK(primask);
 
     return HAL_OK;
 }
@@ -296,6 +315,7 @@ hal_err_t timer_restart(TIM_TypeDef* handle, uint32_t timeout_us) {
     return HAL_OK;
 }
 
+
 // Internal helpers
 bool is_timer_on_apb1(TIM_TypeDef* handle) {
     bool result = true;
@@ -390,15 +410,16 @@ hal_err_t timer_register_callback(timer_cb_t callback, void* arg, uint8_t idx) {
     if (idx >= ARRAY_SIZE(s_timer_cb_ctx)) {
         return HAL_ERR_INVALID_ARG;
     }
+    const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_timer_cb_ctx[idx].callback = callback;
     s_timer_cb_ctx[idx].arg      = arg;
-    __enable_irq();
+    __set_PRIMASK(primask);
     return HAL_OK;
 }
 
 
-// Interrupt handlers for all timers
+// Interrupt handlers
 void TIM1_CC_IRQHandler(void) {
     timer_isr_helper(TIM1);
 }
