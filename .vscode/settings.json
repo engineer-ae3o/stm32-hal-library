@@ -10,7 +10,7 @@
     "clangd.arguments": [
         "--background-index",
         "--query-driver=/usr/bin/arm-none-eabi-g*",
-        "--compile-commands-dir=${workspaceFolder}/build/tests/"
+        "--compile-commands-dir=${workspaceFolder}/build/tests-debug/"
     ],
     "[cpp]": {
         "editor.defaultFormatter": "xaver.clang-format",

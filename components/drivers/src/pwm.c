@@ -1,4 +1,5 @@
 #include "stm32f411xe.h"
+#include "drivers/timer_internals.h"
 #include "drivers/pwm.h"
 
 

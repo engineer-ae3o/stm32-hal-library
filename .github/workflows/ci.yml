@@ -25,8 +25,8 @@ jobs:
           fi
           echo "$FILES" | xargs clang-format-22 --style=file --dry-run --Werror
 
-  build-tests:
-    name: Build (tests)
+  build-tests-debug:
+    name: Build (tests in debug build)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,10 +42,32 @@ jobs:
           sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
 
       - name: Configure
-        run: cmake --preset tests
+        run: cmake --preset tests-debug
 
       - name: Build
-        run: cmake --build --preset tests
+        run: cmake --build --preset tests-debug
+
+  build-tests-release:
+    name: Build (tests in release build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Latest CMake & Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Install Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
+
+      - name: Configure
+        run: cmake --preset tests-release
+
+      - name: Build
+        run: cmake --build --preset tests-release
 
   build-debug:
     name: Build (debug)
@@ -119,7 +141,7 @@ jobs:
           cppcheck --version
 
       - name: Configure Presets
-        run: cmake --preset tests
+        run: cmake --preset tests-debug
 
       - name: Run Cppcheck Target
-        run: cmake --build --preset tests --target cppcheck
+        run: cmake --build --preset tests-debug --target cppcheck

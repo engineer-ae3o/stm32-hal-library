@@ -63,23 +63,11 @@ static timer_ctx_t s_timer_cb_ctx[] = {
     const uint8_t idx = get_index(handle);
     ASSERT(idx != 0xFFU);
 
-    const uint32_t primask = __get_PRIMASK();
-    __disable_irq();
-    const timer_cb_t local_cb  = s_timer_cb_ctx[idx].callback;
-    void* const      local_arg = s_timer_cb_ctx[idx].arg;
-
-    // Clear only if in one pulse mode
-    if (handle->CR1 & TIM_CR1_OPM) {
-        s_timer_cb_ctx[idx].callback = NULL;
-        s_timer_cb_ctx[idx].arg      = NULL;
-    }
-    __set_PRIMASK(primask);
-
     // Update event interrupt: underflow or overflow
     if (handle->SR & TIM_SR_UIF) {
         handle->SR &= ~TIM_SR_UIF;
-        if (local_cb) {
-            local_cb(local_arg);
+        if (s_timer_cb_ctx[idx].callback) {
+            s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg);
         }
     }
 }
@@ -189,11 +177,10 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     }
 
     // Disable the timer's NVIC interrupt
-    if (handle == TIM1 || handle == TIM10) {
-        // Since this is shared between two different timer hardware blocks,
-        // we can't reliably disable the NVIC interrupt request since we could
-        // take down the other. So nothing is done here and its left up to the
-        // caller to disable it as they please.
+    if (handle == TIM1 || handle == TIM9 || handle == TIM10 || handle == TIM11) {
+        // Since these timers share an NVIC line amongst themselves, we can't
+        // knowingly disable the NVIC irq line since we could take out the other
+        // timer. So its left up to the user to disable it as they please.
     } else {
         NVIC_DisableIRQ(s_timer_cb_ctx[idx].irq_type);
     }

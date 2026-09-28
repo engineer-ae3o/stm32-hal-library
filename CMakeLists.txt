@@ -21,6 +21,8 @@ set(CMAKE_PROJECT_NAME f4-hal-library)
 project(${CMAKE_PROJECT_NAME})
 enable_language(C CXX ASM)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
 set(EXE_NAME f411-hal)
 set(LIB_ELF_NAME "${EXE_NAME}") # CMake appends .a automatically
 set(EXE_ASM_NAME "${EXE_NAME}.s")
@@ -29,12 +31,9 @@ set(EXE_BIN_NAME "${EXE_NAME}.bin")
 set(EXE_MAP_NAME "${EXE_NAME}.map")
 
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-
-
 # Build flags for the different build modes
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g3 -ggdb -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O3 -Wl,-s -DNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
@@ -45,7 +44,7 @@ set(CMAKE_C_FLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
                    -Wall -Wstrict-aliasing=2 -Wduplicated-branches -Wduplicated-cond -Werror \
                    -Wlogical-op -Wextra -Wshadow -Wno-conversion -Wwrite-strings -Wformat=2 \
                    -fstrict-overflow -fstrict-aliasing -Wdouble-promotion -fstack-usage \
-                   -Wnull-dereference -Wcast-align -Wunused-variable -Wunused-parameter ")
+                   -Wnull-dereference -Wcast-align -Wunused-variable -Wunused-parameter")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 
@@ -65,16 +64,6 @@ message("Build type: ${CMAKE_BUILD_TYPE}")
 # Enable tests to be built. Overridable via -DBUILD_TESTS=ON/OFF.
 option(BUILD_TESTS "Build the Unity test suite" ON)
 
-# Tests pull in Unity, take up extra flash/RAM, and are meant for interactive
-# debug sessions. A release image with tests baked in isn't a real release
-# artifact, so refuse to configure that combination.
-if(BUILD_TESTS AND CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(FATAL_ERROR
-        "BUILD_TESTS=ON is incompatible with CMAKE_BUILD_TYPE=Release. "
-        "Tests are for Debug builds only; use -DBUILD_TESTS=OFF for Release, "
-        "or build Debug if you need the test suite.")
-endif()
-
 set(DEFINES STM32F411xE __ARM_ARCH_7M__=1 __ARM_ARCH_7EM__=1 RTT_USE_ASM=1)
 
 if (BUILD_TESTS)
@@ -92,7 +81,12 @@ add_executable(${EXE_ELF_NAME} test_main.cpp stm32f411_startup.s)
 target_link_libraries(${EXE_ELF_NAME} PUBLIC tests unity drivers utils rtt o1heap printf)
 target_compile_definitions(${EXE_ELF_NAME} PUBLIC ${DEFINES})
 target_link_options(${EXE_ELF_NAME} PUBLIC -Wl,--no-warn-rwx-segments -Wl,--gc-sections)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+target_compile_options(${EXE_ELF_NAME} PUBLIC -fdata-sections -ffunction-sections -flto)
+else()
 target_compile_options(${EXE_ELF_NAME} PUBLIC -fdata-sections -ffunction-sections)
+endif()
 
 # The tests are C++
 set_target_properties(${EXE_ELF_NAME} PROPERTIES

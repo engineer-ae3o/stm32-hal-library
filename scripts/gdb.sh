@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-ELF="build/tests/f411-hal.elf"
+ELF="build/tests-debug/f411-hal.elf"
 GDB_PORT=3333
 RTT_PORT=9090
 
@@ -22,8 +22,8 @@ open_terminal() {
     return 1
 }
 
-cmake --build --preset tests
-cmake --build --preset tests --target flash
+cmake --build --preset tests-debug
+cmake --build --preset tests-debug --target flash
 
 openocd -f interface/stlink.cfg -f target/stm32f4x.cfg > /tmp/openocd.log 2>&1 &
 OPENOCD_PID=$!

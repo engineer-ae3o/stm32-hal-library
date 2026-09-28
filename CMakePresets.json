@@ -7,14 +7,26 @@
     },
     "configurePresets": [
         {
-            "name": "tests",
+            "name": "tests-debug",
             "displayName": "Debug (with tests)",
             "description": "Debug build with the Unity test suite compiled in",
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/tests",
+            "binaryDir": "${sourceDir}/build/tests-debug",
             "toolchainFile": "${sourceDir}/gcc_toolchain.cmake",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TESTS": "ON"
+            }
+        },
+        {
+            "name": "tests-release",
+            "displayName": "Release (with tests)",
+            "description": "Release build with the Unity test suite compiled in",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/tests-release",
+            "toolchainFile": "${sourceDir}/gcc_toolchain.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
                 "BUILD_TESTS": "ON"
             }
         },
@@ -33,7 +45,7 @@
         {
             "name": "release",
             "displayName": "Release (no tests)",
-            "description": "Release build; tests are not permitted in Release, see CMakeLists.txt",
+            "description": "Release build without the Unity test suite",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/release",
             "toolchainFile": "${sourceDir}/gcc_toolchain.cmake",
@@ -45,8 +57,12 @@
     ],
     "buildPresets": [
         {
-            "name": "tests",
-            "configurePreset": "tests"
+            "name": "tests-debug",
+            "configurePreset": "tests-debug"
+        },
+        {
+            "name": "tests-release",
+            "configurePreset": "tests-release"
         },
         {
             "name": "debug",
