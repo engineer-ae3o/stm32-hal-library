@@ -136,8 +136,11 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_counter_dir_t direction, timer_c
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Set the counting direction
-    handle->CR1 = (uint32_t)(direction << TIM_CR1_DIR_Pos) | (handle->CR1 & ~TIM_CR1_DIR);
+    // Clear all residual state
+    TRY(timer_deinit(handle));
+
+    // Set the counting direction. Edge aligned (up or downcounting)
+    handle->CR1 = (uint32_t)(direction << TIM_CR1_DIR_Pos);
 
     // Register the callback for the current timer instance
     const uint32_t primask = __get_PRIMASK();
@@ -174,6 +177,7 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     handle->CCR4 = 0;
     if (handle == TIM1) {
         handle->RCR &= ~TIM_RCR_REP;
+        handle->BDTR &= ~(TIM_BDTR_DTG | TIM_BDTR_LOCK | TIM_BDTR_OSSI | TIM_BDTR_OSSR | TIM_BDTR_BKE | TIM_BDTR_BKP | TIM_BDTR_AOE | TIM_BDTR_MOE);
     }
 
     // Disable the timer's NVIC interrupt
@@ -348,17 +352,10 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     }
 
     // Compute suitable auto-reload and prescaler values
-    // Minimum PSC such that ARR can cover the remainder: ceiling division
-    uint64_t psc_plus_1 = (psc_times_arr + max_arr_plus_1 - 1) / max_arr_plus_1;
-    if (psc_plus_1 == 0) {
-        psc_plus_1 = 1; // Clamp to 1
-    }
-
-    // Round to nearest instead of floor to halve the worst case error
-    uint64_t arr_plus_1 = (psc_times_arr + (psc_plus_1 / 2)) / psc_plus_1;
-    if (gnu_unlikely(arr_plus_1 == 0)) {
-        arr_plus_1 = 1; // Clamp to 1
-    }
+    // Minimum PSC such that ARR can cover the remainder: ceiling division to find PSC
+    // Round to nearest instead of floor to halve the worst case error to get the ARR
+    const uint64_t psc_plus_1 = (psc_times_arr + max_arr_plus_1 - 1) / max_arr_plus_1;
+    const uint64_t arr_plus_1 = (psc_times_arr + (psc_plus_1 / 2)) / psc_plus_1;
 
     // Set the actual prescaler and auto-reload values
     handle->ARR = (uint32_t)(arr_plus_1 - 1);
