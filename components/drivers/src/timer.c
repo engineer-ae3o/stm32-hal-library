@@ -216,7 +216,7 @@ hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us) {
     TRY(timer_set_arr_and_psc(handle, timeout_us));
 
     // Enable update generation and the update event interrupt, and clear the update interrupt flag
-    handle->EGR |= TIM_EGR_UG;
+    handle->EGR = TIM_EGR_UG;
     handle->SR &= ~TIM_SR_UIF;
     handle->DIER |= TIM_DIER_UIE;
 
@@ -239,7 +239,7 @@ hal_err_t timer_start_periodic(TIM_TypeDef* handle, uint32_t timeout_us) {
     TRY(timer_set_arr_and_psc(handle, timeout_us));
 
     // Enable update generation and the update event interrupt, and clear the update interrupt flag
-    handle->EGR |= TIM_EGR_UG;
+    handle->EGR = TIM_EGR_UG;
     handle->SR &= ~TIM_SR_UIF;
     handle->DIER |= TIM_DIER_UIE;
 

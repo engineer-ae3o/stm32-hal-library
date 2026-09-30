@@ -1,3 +1,4 @@
+#include "drivers/pwm_types.h"
 #include "stm32f411xe.h"
 #include "drivers/timer_internals.h"
 #include "drivers/timer.h"
@@ -9,6 +10,28 @@
 #include <stdint.h>
 
 
+// Helper
+[[__gnu__::__always_inline__]] static inline uint32_t get_max_duty_cycle(TIM_TypeDef* handle) {
+    if (handle->CR1 & TIM_CR1_CMS) {
+        // Center aligned PWM
+        return handle->ARR;
+    } else {
+        // Edge aligned PWM
+        // Doing it like this introduces an off by one error at the edge, but it only happens
+        // when the timer is 32 bits and and ARR happens to hold its maximum value. I do
+        // it like this because using uint64_t would be much slower for a case that will almost
+        // never occur in any real usage. The maximum duty cycle is ARR + 1, hence the off
+        // by one at the boundary of 32 bits. The off by one error is a non factor regardless.
+        if (gnu_unlikely(handle->ARR == UINT32_MAX)) {
+            return handle->ARR;
+        } else {
+            return handle->ARR + 1;
+        }
+    }
+}
+
+
+// Public API
 hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_config_t* config) {
     if (handle == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
@@ -31,7 +54,11 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
     }
 
     // TIM9-TIM11 only support upcounting edge aligned upcounting
-    if ((handle == TIM9 || handle == TIM10 || handle == TIM11) && config->pwm_count_mode != PWM_EDGE_ALIGNED_UPCOUNTING) {
+    // TIM1-TIM5 all have 4 main PWM channels, TIM9 has 2 and TIM10-TIM11 have 1 each
+    if (((handle == TIM9 || handle == TIM10 || handle == TIM11) && (config->pwm_count_mode != PWM_EDGE_ALIGNED_UPCOUNTING)) ||
+        ((handle == TIM1 || handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) && (config->num_channels > MAX_TIM1_CHANNELS)) ||
+        ((handle == TIM9) && (config->num_channels > MAX_TIM9_CHANNELS)) ||
+        ((handle == TIM10 || handle == TIM11) && (config->num_channels > MAX_TIM10_CHANNELS))) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
@@ -48,15 +75,31 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
         switch (config->channels[i].channel) {
             case PWM_CHANNEL_0:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
+                ccer |= TIM_CCER_CC1E;
+                if (config->channels[i].invert_output) {
+                    ccer |= TIM_CCER_CC1P;
+                }
                 break;
             case PWM_CHANNEL_1:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
+                ccer |= TIM_CCER_CC2E;
+                if (config->channels[i].invert_output) {
+                    ccer |= TIM_CCER_CC2P;
+                }
                 break;
             case PWM_CHANNEL_2:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
+                ccer |= TIM_CCER_CC3E;
+                if (config->channels[i].invert_output) {
+                    ccer |= TIM_CCER_CC3P;
+                }
                 break;
             case PWM_CHANNEL_3:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
+                ccer |= TIM_CCER_CC4E;
+                if (config->channels[i].invert_output) {
+                    ccer |= TIM_CCER_CC4P;
+                }
                 break;
             default:
                 return HAL_ERR_INVALID_ARG;
@@ -68,9 +111,6 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
         gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
         gpio_set_speed_mode(gpio.port, gpio.pin, GPIO_FULL_SPEED);
         gpio_set_output_type(gpio.port, gpio.pin, GPIO_PUSH_PULL);
-
-        // Set the starting PWM duty cycle to 0
-        TRY(pwm_set_duty_cycle(handle, config->channels[i].channel, 0));
     }
 
     // Final writeback
@@ -94,6 +134,7 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
         return HAL_ERR_INVALID_ARG;
     }
 
+    // This requires that the timer be explicitly frozen/disabled
     if (handle->CR1 & TIM_CR1_CEN) {
         return HAL_ERR_INVALID_STATE;
     }
@@ -135,31 +176,21 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
     handle->PSC = (uint32_t)(psc_plus_1 - 1);
 
     // Generate an update event after modifying the auto reload and prescaler registers
-    handle->EGR |= TIM_EGR_UG;
+    handle->EGR = TIM_EGR_UG;
     handle->SR &= ~TIM_SR_UIF;
 
-    if (is_center_aligned_pwm) {
-        *max_duty_cycle = handle->ARR;
-    } else {
-        // Doing it like this introduces an off by one error at the edge, but it only happens
-        // when the timer is 32 bits and and ARR happens to hold its maximum value. I do
-        // it like this because using uint64_t would be much slower for a case that will almost
-        // never occur in any real usage. The maximum duty cycle is ARR + 1, hence the off
-        // by one at the boundary of 32 bits. The off by one error is a non factor regardless.
-        if (gnu_unlikely(handle->ARR == UINT32_MAX)) {
-            *max_duty_cycle = handle->ARR;
-        } else {
-            *max_duty_cycle = handle->ARR + 1;
-        }
-    }
+    // Set all channels' duty cycles to 0 since starting afresh with a new frequency
+    handle->CCR1 = 0;
+    handle->CCR2 = 0;
+    handle->CCR3 = 0;
+    handle->CCR4 = 0;
 
-    // Enable the main output for TIM1
-    if (handle == TIM1) {
-        TIM1->BDTR |= TIM_BDTR_MOE;
-    }
+    // Derive the maximum duty cycle from the auto-reload register
+    *max_duty_cycle = get_max_duty_cycle(handle);
 
-    // Enable the timer's counter
-    handle->CR1 |= TIM_CR1_CEN;
+    // Enable the timer's output
+    TRY(pwm_unfreeze_timer(handle));
+
     return HAL_OK;
 }
 
@@ -168,18 +199,7 @@ hal_err_t pwm_set_duty_cycle(TIM_TypeDef* handle, pwm_channel_t channel, uint32_
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Get the maximum duty cycle to bounds check the passed in duty cycle
-    uint32_t max_duty_cycle = 0;
-    if (handle->CR1 & TIM_CR1_CMS) {
-        max_duty_cycle = handle->ARR;
-    } else {
-        if (gnu_unlikely(handle->ARR == UINT32_MAX)) {
-            max_duty_cycle = handle->ARR;
-        } else {
-            max_duty_cycle = handle->ARR + 1;
-        }
-    }
-    if (duty_cycle > max_duty_cycle) {
+    if (duty_cycle > get_max_duty_cycle(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -203,7 +223,7 @@ hal_err_t pwm_set_duty_cycle(TIM_TypeDef* handle, pwm_channel_t channel, uint32_
     return HAL_OK;
 }
 
-hal_err_t pwm_pause(TIM_TypeDef* handle) {
+hal_err_t pwm_freeze_timer(TIM_TypeDef* handle) {
     if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -212,12 +232,16 @@ hal_err_t pwm_pause(TIM_TypeDef* handle) {
         return HAL_ERR_INVALID_STATE;
     }
 
-    // Pause the PWM output by disabling the timer's counter
+    // Freeze the counter and disable TIM1's main output
+    if (handle == TIM1) {
+        handle->BDTR &= ~TIM_BDTR_MOE;
+    }
     handle->CR1 &= ~TIM_CR1_CEN;
+
     return HAL_OK;
 }
 
-hal_err_t pwm_resume(TIM_TypeDef* handle) {
+hal_err_t pwm_unfreeze_timer(TIM_TypeDef* handle) {
     if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -226,7 +250,33 @@ hal_err_t pwm_resume(TIM_TypeDef* handle) {
         return HAL_ERR_INVALID_STATE;
     }
 
-    // Resume the PWM output by re-enabling the timer's counter
+    // Unfreeze the counter and enable TIM1's main output
+    if (handle == TIM1) {
+        handle->BDTR |= TIM_BDTR_MOE;
+    }
     handle->CR1 |= TIM_CR1_CEN;
+
+    return HAL_OK;
+}
+
+hal_err_t pwm_pause_channel(TIM_TypeDef* handle, pwm_channel_t channel) {
+    if (handle == NULL || channel > PWM_CHANNEL_3) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    // Disable the channel's output
+    handle->CCER &= ~(1UL << (channel * 4));
+
+    return HAL_OK;
+}
+
+hal_err_t pwm_resume_channel(TIM_TypeDef* handle, pwm_channel_t channel) {
+    if (handle == NULL || channel > PWM_CHANNEL_3) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    // Enable the channel's output
+    handle->CCER |= (1UL << (channel * 4));
+
     return HAL_OK;
 }
