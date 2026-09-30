@@ -1,9 +1,11 @@
 #include "stm32f411xe.h"
 #include "drivers/timer_internals.h"
 #include "drivers/timer.h"
+#include "drivers/gpio.h"
 #include "utils/common.h"
 #include "drivers/pwm.h"
 #include "utils/err.h"
+
 #include <stdint.h>
 
 
@@ -24,12 +26,54 @@ hal_err_t pwm_advanced_timers_init(TIM_TypeDef* handle, const pwm_advanced_timer
 }
 
 hal_err_t pwm_other_timers_init(TIM_TypeDef* handle, const pwm_other_timer_config_t* config) {
-    if (handle == NULL || config == NULL) {
+    if (handle == NULL || config == NULL || config->num_channels == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Clear all remnant state before proceeding
+    if ((handle == TIM9 || handle == TIM10 || handle == TIM11) && config->pwm_count_mode != PWM_EDGE_ALIGNED_UPCOUNTING) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Clear all residual state before proceeding
     TRY(pwm_deinit(handle));
+
+    // Set the output compare PWM mode characteristics
+    uint32_t ccmr1 = handle->CCMR1;
+    uint32_t ccmr2 = handle->CCMR2;
+    uint32_t ccer  = handle->CCER;
+
+    for (size_t i = 0; i < config->num_channels; i++) {
+        switch (config->num_channels) {
+            case 4:
+                ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
+            case 3:
+                ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
+            case 2:
+                ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
+            case 1:
+                ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
+                break;
+            default:
+                return HAL_ERR_INVALID_ARG;
+        }
+
+        // Configure the physical GPIO pins for PWM alternate function
+        TRY(gpiox_clk_enable(config->channels[i].gpio_pin.port, true));
+        gpio_set_alternate_function(config->channels[i].gpio_pin.port, config->channels[i].gpio_pin.pin, config->channels[i].gpio_pin.af);
+        gpio_set_speed_mode(config->channels[i].gpio_pin.port, config->channels[i].gpio_pin.pin, GPIO_FULL_SPEED);
+        gpio_set_output_type(config->channels[i].gpio_pin.port, config->channels[i].gpio_pin.pin, GPIO_PUSH_PULL);
+
+        // Set the starting PWM duty cycle to 0
+        TRY(pwm_set_duty_cycle(handle, config->channels[i].channel, 0));
+    }
+
+    // Final writeback
+    handle->CCMR1 = ccmr1;
+    handle->CCMR2 = ccmr2;
+    handle->CCER  = ccer;
+
+    // Set the timer's counting mode, and enable auto-reload register buffering and interrupts only on update events
+    handle->CR1 |= (config->pwm_count_mode | TIM_CR1_ARPE | TIM_CR1_URS);
 
     return HAL_OK;
 }
@@ -42,6 +86,10 @@ hal_err_t pwm_deinit(TIM_TypeDef* handle) {
 hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_duty_cycle) {
     if (handle == NULL || frequency_hz == 0 || max_duty_cycle == NULL) {
         return HAL_ERR_INVALID_ARG;
+    }
+
+    if (handle->CR1 & TIM_CR1_CEN) {
+        return HAL_ERR_INVALID_STATE;
     }
 
     uint32_t timer_freq_hz = 0;
@@ -87,11 +135,11 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
     if (is_center_aligned_pwm) {
         *max_duty_cycle = handle->ARR;
     } else {
-        // Doing it like this introduces an off by one at the edge, but it only happens
+        // Doing it like this introduces an off by one error at the edge, but it only happens
         // when the timer is 32 bits and and ARR happens to hold its maximum value. I do
-        // it like this because using uint64_t would be slower for a case that will almost
+        // it like this because using uint64_t would be much slower for a case that will almost
         // never occur in any real usage. The maximum duty cycle is ARR + 1, hence the off
-        // by one at the boundary of 32 bits. The off by one is a non factor regardless.
+        // by one at the boundary of 32 bits. The off by one error is a non factor regardless.
         if (gnu_unlikely(handle->ARR == UINT32_MAX)) {
             *max_duty_cycle = handle->ARR;
         } else {
@@ -99,7 +147,11 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
         }
     }
 
-    // Start the PWM output
+    if (handle == TIM1) {
+        TIM1->BDTR |= TIM_BDTR_MOE;
+    }
+
+    // Enable the timer's counter
     handle->CR1 |= TIM_CR1_CEN;
 
     return HAL_OK;
