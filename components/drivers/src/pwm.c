@@ -1,6 +1,6 @@
-#include "drivers/pwm_types.h"
 #include "stm32f411xe.h"
 #include "drivers/timer_internals.h"
+#include "drivers/pwm_types.h"
 #include "drivers/timer.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
@@ -33,7 +33,7 @@
 
 // Public API
 hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_config_t* config) {
-    if (handle == NULL || config == NULL) {
+    if (handle == NULL || config == NULL || config->num_channels == 0 || config->num_channels > MAX_TIM1_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -42,7 +42,7 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Clear all remnant state before proceeding
+    // Clear all residual state before proceeding
     TRY(pwm_deinit(handle));
 
     return HAL_OK;
@@ -135,6 +135,7 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
     }
 
     // This requires that the timer be explicitly frozen/disabled
+    // It also unfreezes the timer when done with the frequency setup
     if (handle->CR1 & TIM_CR1_CEN) {
         return HAL_ERR_INVALID_STATE;
     }
@@ -148,27 +149,33 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
     // Get the denominator as it has different meanings depending on whether its center or edge aligned PWM
     const uint32_t total_ticks_per_period = ((2 * timer_freq_hz) + frequency_hz) / (2 * frequency_hz);
 
-    // Get the maximum width of the auto-reload registers
-    const uint64_t max_arr_plus_1 = (uint64_t)(is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX) + 1;
+    // Get the maximum width of the auto-reload register since it varies per timer
+    const uint32_t max_arr        = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+    const uint64_t max_arr_plus_1 = (uint64_t)max_arr + 1;
 
     // Compute suitable auto-reload and prescaler values
-    // Ceiling division is used to get the minimum PSC value possible
-    const uint32_t psc_plus_1 = (uint32_t)((total_ticks_per_period + max_arr_plus_1 - 1) / max_arr_plus_1);
-    if (psc_plus_1 > (UINT16_MAX + 1)) {
-        return HAL_ERR_NOT_SUPPORTED; // Frequency too low for timer clock
-    }
-
-    // The leftover after (PSC + 1) has been factored out depends on the PWM mode
-    // Then a plain rounding integer division is used to find the leftover
+    uint32_t psc_plus_1 = 0;
     uint64_t arr_plus_1 = 0;
 
-    const bool is_center_aligned_pwm = handle->CR1 & TIM_CR1_CMS;
-    if (is_center_aligned_pwm) {
-        // The denominator is equal to 2 * (PSC + 1) * ARR
-        arr_plus_1 = ((total_ticks_per_period + psc_plus_1) / (psc_plus_1 * 2)) + 1;
+    // Ceiling division is used to get the minimum PSC value possible
+    // Then a plain rounding integer division is used to find the leftover
+    if (handle->CR1 & TIM_CR1_CMS) {
+        // Center aligned PWM
+        // The denominator is equal to 2 * (PSC + 1) * ARR, so we divide by (2 * ARR), where ARR is max_arr
+        psc_plus_1 = (uint32_t)ceil_div_u64(total_ticks_per_period, 2ULL * max_arr);
+        // Then divide by 2 * (PSC + 1), where (PSC + 1) is the just gotten psc_plus_1
+        arr_plus_1 = round_div_u64(total_ticks_per_period, 2ULL * psc_plus_1) + 1;
     } else {
-        // The denominator is equal to (PSC + 1) * (ARR * 1)
-        arr_plus_1 = ((2ULL * total_ticks_per_period) + psc_plus_1) / (2ULL * psc_plus_1);
+        // Edge aligned PWM
+        // The denominator is equal to (PSC + 1) * (ARR + 1), so we divide by (ARR + 1), where (ARR + 1) is max_arr_plus_1
+        psc_plus_1 = (uint32_t)ceil_div_u64(total_ticks_per_period, max_arr_plus_1);
+        // Then divide by (PSC + 1), where (PSC + 1) is the just gotten psc_plus_1
+        arr_plus_1 = round_div_u64(total_ticks_per_period, psc_plus_1);
+    }
+
+    // Bounds check the prescaler
+    if ((psc_plus_1 > (UINT16_MAX + 1)) || (arr_plus_1 > max_arr_plus_1)) {
+        return HAL_ERR_NOT_SUPPORTED; // Frequency too low for timer clock
     }
 
     // Set the actual reload and prescaler values
