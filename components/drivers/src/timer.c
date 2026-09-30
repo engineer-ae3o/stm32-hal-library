@@ -122,24 +122,24 @@ hal_err_t timer_clock_enable(TIM_TypeDef* handle, bool enable) {
     return HAL_OK;
 }
 
-hal_err_t timer_init(TIM_TypeDef* handle, timer_counter_dir_t direction, timer_cb_t callback, void* arg) {
+hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_t callback, void* arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU || callback == NULL) {
         return HAL_ERR_INVALID_ARG;
-    }
-
-    if (handle->CR1 & TIM_CR1_CEN) {
-        return HAL_ERR_INVALID_STATE;
     }
 
     if ((handle == TIM9 || handle == TIM10 || handle == TIM11) && direction != TIMER_COUNTER_UP) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
+    if (handle->CR1 & TIM_CR1_CEN) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
     // Clear all residual state
     TRY(timer_deinit(handle));
 
-    // Register the callback for the current timer instance
+    // Register the callback
     TRY(timer_register_callback(handle, callback, arg));
 
     // Set the counting direction. Edge aligned (up or downcounting)

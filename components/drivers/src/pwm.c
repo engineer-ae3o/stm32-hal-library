@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 
-hal_err_t pwm_advanced_timers_init(TIM_TypeDef* handle, const pwm_advanced_timer_config_t* config) {
+hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_config_t* config) {
     if (handle == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -25,11 +25,12 @@ hal_err_t pwm_advanced_timers_init(TIM_TypeDef* handle, const pwm_advanced_timer
     return HAL_OK;
 }
 
-hal_err_t pwm_other_timers_init(TIM_TypeDef* handle, const pwm_other_timer_config_t* config) {
+hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) {
     if (handle == NULL || config == NULL || config->num_channels == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // TIM9-TIM11 only support upcounting edge aligned upcounting
     if ((handle == TIM9 || handle == TIM10 || handle == TIM11) && config->pwm_count_mode != PWM_EDGE_ALIGNED_UPCOUNTING) {
         return HAL_ERR_NOT_SUPPORTED;
     }
@@ -43,28 +44,30 @@ hal_err_t pwm_other_timers_init(TIM_TypeDef* handle, const pwm_other_timer_confi
     uint32_t ccer  = handle->CCER;
 
     for (size_t i = 0; i < config->num_channels; i++) {
+        // Configure the channel in the CCMRx register
         switch (config->channels[i].channel) {
-            case PWM_CHANNEL_3:
-                ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
-                break;
-            case PWM_CHANNEL_2:
-                ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
+            case PWM_CHANNEL_0:
+                ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
                 break;
             case PWM_CHANNEL_1:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
                 break;
-            case PWM_CHANNEL_0:
-                ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
+            case PWM_CHANNEL_2:
+                ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
+                break;
+            case PWM_CHANNEL_3:
+                ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
                 break;
             default:
                 return HAL_ERR_INVALID_ARG;
         }
 
         // Configure the physical GPIO pin for PWM alternate function
-        TRY(gpiox_clk_enable(config->channels[i].gpio_pin.port, true));
-        gpio_set_alternate_function(config->channels[i].gpio_pin.port, config->channels[i].gpio_pin.pin, config->channels[i].gpio_pin.af);
-        gpio_set_speed_mode(config->channels[i].gpio_pin.port, config->channels[i].gpio_pin.pin, GPIO_FULL_SPEED);
-        gpio_set_output_type(config->channels[i].gpio_pin.port, config->channels[i].gpio_pin.pin, GPIO_PUSH_PULL);
+        const board_pin_t gpio = config->channels[i].gpio_pin;
+        TRY(gpiox_clk_enable(gpio.port, true));
+        gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
+        gpio_set_speed_mode(gpio.port, gpio.pin, GPIO_FULL_SPEED);
+        gpio_set_output_type(gpio.port, gpio.pin, GPIO_PUSH_PULL);
 
         // Set the starting PWM duty cycle to 0
         TRY(pwm_set_duty_cycle(handle, config->channels[i].channel, 0));
@@ -150,13 +153,13 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
         }
     }
 
+    // Enable the main output for TIM1
     if (handle == TIM1) {
         TIM1->BDTR |= TIM_BDTR_MOE;
     }
 
     // Enable the timer's counter
     handle->CR1 |= TIM_CR1_CEN;
-
     return HAL_OK;
 }
 

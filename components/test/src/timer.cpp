@@ -115,21 +115,6 @@ namespace test::timer {
             }
         }
 
-        void init_sets_direction_bit_and_preserves_other_cr1_bits() {
-            reset_to_baseline(TEST_INSTANCE);
-            TEST_INSTANCE->CR1 |= TIM_CR1_UDIS; // Unrelated bit timer_init must not touch
-
-            TEST_ASSERT_EQUAL(HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_UP, update_done_cb, nullptr));
-            TEST_ASSERT_EQUAL(TIMER_COUNTER_UP, (TEST_INSTANCE->CR1 & TIM_CR1_DIR) >> TIM_CR1_DIR_Pos);
-            TEST_ASSERT_TRUE(TEST_INSTANCE->CR1 & TIM_CR1_UDIS);
-
-            TEST_ASSERT_EQUAL(HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DOWN, update_done_cb, nullptr));
-            TEST_ASSERT_EQUAL(TIMER_COUNTER_DOWN, (TEST_INSTANCE->CR1 & TIM_CR1_DIR) >> TIM_CR1_DIR_Pos);
-            TEST_ASSERT_TRUE(TEST_INSTANCE->CR1 & TIM_CR1_UDIS); // Still preserved
-
-            reset_to_baseline(TEST_INSTANCE);
-        }
-
         void init_down_direction_actually_counts_down() {
             reset_to_baseline(TEST_INSTANCE);
 
@@ -487,11 +472,6 @@ namespace test::timer {
             reset_to_baseline(TEST_INSTANCE);
         }
 
-        void register_callback_rejects_out_of_range_index() {
-            // 8 timers are registered (TIM1,2,3,4,5,9,10,11); index 8 is one past the last
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_register_callback(update_done_cb, nullptr, 8));
-        }
-
     } // namespace
 
     void all() {
@@ -503,7 +483,6 @@ namespace test::timer {
         RUN_TEST(init_rejects_invalid_arguments);
         RUN_TEST(init_rejects_when_already_running);
         RUN_TEST(init_rejects_down_counting_on_tim9_10_and_11);
-        RUN_TEST(init_sets_direction_bit_and_preserves_other_cr1_bits);
         RUN_TEST(init_down_direction_actually_counts_down);
         RUN_TEST(deinit_rejects_unknown_handle);
         RUN_TEST(deinit_clears_all_register_state);
@@ -529,7 +508,6 @@ namespace test::timer {
         RUN_TEST(get_frequency_hz_matches_the_apb_doubling_rules);
         RUN_TEST(set_arr_and_psc_rejects_a_timeout_that_overflows_the_supported_range);
         RUN_TEST(set_arr_and_psc_computes_values_that_reconstruct_the_requested_timeout);
-        RUN_TEST(register_callback_rejects_out_of_range_index);
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the timer driver");

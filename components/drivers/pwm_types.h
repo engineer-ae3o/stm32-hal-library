@@ -54,7 +54,7 @@ typedef enum : uint8_t {
 typedef struct {
     pwm_channel_t channel;
     board_pin_t   gpio_pin;
-    bool          invert_output; // The PWM output becomes active low
+    bool          invert_output; // The PWM output becomes active low when this is true
 } pwm_channel_config_t;
 
 
@@ -64,11 +64,11 @@ typedef struct {
     pwm_count_mode_t pwm_count_mode;
     uint8_t          repetition_cnt;
 
-    // Main Channels
+    // Main channels
     pwm_channel_config_t channels[MAX_TIM1_CHANNELS];
     size_t               num_channels;
 
-    // Complementary Channels. Depends on num_channels
+    // Complementary channels. Depends on num_channels
     struct {
         bool        enabled;         // Whether or not to even use the complementary channels
         board_pin_t gpio_pin;        // The complementary pin
@@ -99,7 +99,7 @@ typedef struct {
 
     pwm_channel_config_t channels[MAX_TIM2_CHANNELS];
     size_t               num_channels;
-} pwm_other_timer_config_t;
+} pwm_timer_config_t;
 
 
 #endif // PWM_TYPES_H_
