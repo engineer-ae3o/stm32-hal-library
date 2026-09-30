@@ -43,21 +43,24 @@ hal_err_t pwm_other_timers_init(TIM_TypeDef* handle, const pwm_other_timer_confi
     uint32_t ccer  = handle->CCER;
 
     for (size_t i = 0; i < config->num_channels; i++) {
-        switch (config->num_channels) {
-            case 4:
+        switch (config->channels[i].channel) {
+            case PWM_CHANNEL_3:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
-            case 3:
+                break;
+            case PWM_CHANNEL_2:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
-            case 2:
+                break;
+            case PWM_CHANNEL_1:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
-            case 1:
+                break;
+            case PWM_CHANNEL_0:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
                 break;
             default:
                 return HAL_ERR_INVALID_ARG;
         }
 
-        // Configure the physical GPIO pins for PWM alternate function
+        // Configure the physical GPIO pin for PWM alternate function
         TRY(gpiox_clk_enable(config->channels[i].gpio_pin.port, true));
         gpio_set_alternate_function(config->channels[i].gpio_pin.port, config->channels[i].gpio_pin.pin, config->channels[i].gpio_pin.af);
         gpio_set_speed_mode(config->channels[i].gpio_pin.port, config->channels[i].gpio_pin.pin, GPIO_FULL_SPEED);

@@ -139,15 +139,11 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_counter_dir_t direction, timer_c
     // Clear all residual state
     TRY(timer_deinit(handle));
 
+    // Register the callback for the current timer instance
+    TRY(timer_register_callback(handle, callback, arg));
+
     // Set the counting direction. Edge aligned (up or downcounting)
     handle->CR1 = (uint32_t)(direction << TIM_CR1_DIR_Pos);
-
-    // Register the callback for the current timer instance
-    const uint32_t primask = __get_PRIMASK();
-    __disable_irq();
-    s_timer_cb_ctx[idx].callback = callback;
-    s_timer_cb_ctx[idx].arg      = arg;
-    __set_PRIMASK(primask);
 
     return HAL_OK;
 }
@@ -167,7 +163,13 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
           TIM_DIER_UDE | TIM_DIER_CC1DE | TIM_DIER_CC2DE | TIM_DIER_CC3DE | TIM_DIER_CC4DE | TIM_DIER_COMDE | TIM_DIER_TDE);
     handle->SR &= ~(TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF | TIM_SR_CC3IF | TIM_SR_CC4IF | TIM_SR_COMIF | TIM_SR_TIF | TIM_SR_BIF | TIM_SR_CC1OF |
                     TIM_SR_CC2OF | TIM_SR_CC3OF | TIM_SR_CC4OF);
-    handle->EGR &= ~(TIM_EGR_UG | TIM_EGR_CC1G | TIM_EGR_CC2G | TIM_EGR_CC3G | TIM_EGR_CC4G | TIM_EGR_COMG | TIM_EGR_TG | TIM_EGR_BG);
+    handle->CCER &=
+        ~(TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NE | TIM_CCER_CC1NP | TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC2NP | TIM_CCER_CC2NE |
+          TIM_CCER_CC3E | TIM_CCER_CC3P | TIM_CCER_CC3NE | TIM_CCER_CC3NP | TIM_CCER_CC4E | TIM_CCER_CC4P | TIM_CCER_CC4NP);
+    handle->CCMR1 &= ~(TIM_CCMR1_CC1S | TIM_CCMR1_OC1FE | TIM_CCMR1_OC1PE | TIM_CCMR1_OC1M | TIM_CCMR1_OC1CE | TIM_CCMR1_CC2S | TIM_CCMR1_OC2FE |
+                       TIM_CCMR1_OC2PE | TIM_CCMR1_OC2M | TIM_CCMR1_OC2CE);
+    handle->CCMR2 &= ~(TIM_CCMR2_CC3S | TIM_CCMR2_OC3FE | TIM_CCMR2_OC3PE | TIM_CCMR2_OC3M | TIM_CCMR2_OC3CE | TIM_CCMR2_CC4S | TIM_CCMR2_OC4FE |
+                       TIM_CCMR2_OC4PE | TIM_CCMR2_OC4M | TIM_CCMR2_OC4CE);
     handle->CNT  = 0;
     handle->PSC  = 0;
     handle->ARR  = 0;
@@ -175,6 +177,7 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     handle->CCR2 = 0;
     handle->CCR3 = 0;
     handle->CCR4 = 0;
+
     if (handle == TIM1) {
         handle->RCR &= ~TIM_RCR_REP;
         handle->BDTR &= ~(TIM_BDTR_DTG | TIM_BDTR_LOCK | TIM_BDTR_OSSI | TIM_BDTR_OSSR | TIM_BDTR_BKE | TIM_BDTR_BKP | TIM_BDTR_AOE | TIM_BDTR_MOE);
@@ -217,17 +220,6 @@ hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us) {
     handle->SR &= ~TIM_SR_UIF;
     handle->DIER |= TIM_DIER_UIE;
 
-    // Enable the timer's NVIC interrupt
-    IRQn_Type irq_type = 0;
-    if (handle == TIM1 || handle == TIM10) {
-        irq_type = TIM1_UP_TIM10_IRQn;
-    } else {
-        irq_type = s_timer_cb_ctx[idx].irq_type;
-    }
-    NVIC_SetPriority(irq_type, TIMER_NVIC_IRQ_PRIORITY);
-    NVIC_ClearPendingIRQ(irq_type);
-    NVIC_EnableIRQ(irq_type);
-
     // Set OPM mode, and enable the counter and auto-reload preload, and set URS so only a UEV triggers an interrupt
     handle->CR1 |= (TIM_CR1_CEN | TIM_CR1_OPM | TIM_CR1_ARPE | TIM_CR1_URS);
     return HAL_OK;
@@ -250,17 +242,6 @@ hal_err_t timer_start_periodic(TIM_TypeDef* handle, uint32_t timeout_us) {
     handle->EGR |= TIM_EGR_UG;
     handle->SR &= ~TIM_SR_UIF;
     handle->DIER |= TIM_DIER_UIE;
-
-    // Enable the timer's NVIC interrupt
-    IRQn_Type irq_type = 0;
-    if (handle == TIM1 || handle == TIM10) {
-        irq_type = TIM1_UP_TIM10_IRQn;
-    } else {
-        irq_type = s_timer_cb_ctx[idx].irq_type;
-    }
-    NVIC_SetPriority(irq_type, TIMER_NVIC_IRQ_PRIORITY);
-    NVIC_ClearPendingIRQ(irq_type);
-    NVIC_EnableIRQ(irq_type);
 
     // Disable OPM mode, and enable the counter and auto-reload preload, and set URS so only a UEV triggers an interrupt
     handle->CR1 = (TIM_CR1_CEN | TIM_CR1_ARPE | TIM_CR1_URS) | (handle->CR1 & ~TIM_CR1_OPM);
@@ -402,15 +383,30 @@ hal_err_t timer_get_frequency_hz(TIM_TypeDef* handle, uint32_t* timer_freq_hz) {
     return HAL_OK;
 }
 
-hal_err_t timer_register_callback(timer_cb_t callback, void* arg, uint8_t idx) {
-    if (idx >= ARRAY_SIZE(s_timer_cb_ctx)) {
+hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void* arg) {
+    const uint8_t idx = get_index(handle);
+    if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
     }
+
+    // Register the callback
     const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_timer_cb_ctx[idx].callback = callback;
     s_timer_cb_ctx[idx].arg      = arg;
     __set_PRIMASK(primask);
+
+    // Enable the timer's NVIC interrupt
+    IRQn_Type irq_type = 0;
+    if (handle == TIM1 || handle == TIM10) {
+        irq_type = TIM1_UP_TIM10_IRQn;
+    } else {
+        irq_type = s_timer_cb_ctx[idx].irq_type;
+    }
+    NVIC_SetPriority(irq_type, TIMER_NVIC_IRQ_PRIORITY);
+    NVIC_ClearPendingIRQ(irq_type);
+    NVIC_EnableIRQ(irq_type);
+
     return HAL_OK;
 }
 
