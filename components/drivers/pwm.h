@@ -16,9 +16,8 @@ extern "C" {
 #include <stddef.h>
 
 
-hal_err_t pwm_advanced_timers_init(TIM_TypeDef* handle, const pwm_advanced_timers_config_t* config);
-hal_err_t pwm_general_timers_init(TIM_TypeDef* handle, const pwm_general_timers_config_t* config);
-hal_err_t pwm_lite_timers_init(TIM_TypeDef* handle, const pwm_lite_timers_config_t* config);
+hal_err_t pwm_advanced_timers_init(TIM_TypeDef* handle, const pwm_advanced_timer_config_t* config);
+hal_err_t pwm_other_timers_init(TIM_TypeDef* handle, const pwm_other_timer_config_t* config);
 
 hal_err_t pwm_deinit(TIM_TypeDef* handle);
 

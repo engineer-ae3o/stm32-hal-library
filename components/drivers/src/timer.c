@@ -336,7 +336,7 @@ bool is_timer_32_bits(TIM_TypeDef* handle) {
 }
 
 hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
-    // Get the (PSC + 1) * (ARR + 1) value from the timer's clock frequency and the timeout
+    // Set the (PSC + 1) * (ARR + 1) value from the timer's clock frequency and the timeout
     uint32_t timer_freq_hz = 0;
     TRY(timer_get_frequency_hz(handle, &timer_freq_hz));
     const uint64_t psc_times_arr = ((uint64_t)timer_freq_hz * timeout_us) / 1'000'000U;
@@ -355,7 +355,7 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Minimum PSC such that ARR can cover the remainder: ceiling division to find PSC
     // Round to nearest instead of floor to halve the worst case error to get the ARR
     const uint64_t psc_plus_1 = (psc_times_arr + max_arr_plus_1 - 1) / max_arr_plus_1;
-    const uint64_t arr_plus_1 = (psc_times_arr + (psc_plus_1 / 2)) / psc_plus_1;
+    const uint64_t arr_plus_1 = ((2 * psc_times_arr) + psc_plus_1) / (2 * psc_plus_1);
 
     // Set the actual prescaler and auto-reload values
     handle->ARR = (uint32_t)(arr_plus_1 - 1);

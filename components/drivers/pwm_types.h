@@ -46,36 +46,52 @@ typedef enum : uint32_t {
 
 
 typedef struct {
-    board_pin_t   channel_pins[MAX_TIM1_CHANNELS];
-    pwm_channel_t channels[MAX_TIM1_CHANNELS];
-    size_t        num_of_channels;
-
-    bool       invert_output[MAX_TIM1_CHANNELS];
-    pwm_mode_t mode;
-
-    bool        use_inverted_channels;
-    board_pin_t inverted_output_pins[MAX_TIM1_COMPLEMENTARY_CHANNELS];
-} pwm_advanced_timers_config_t;
+    pwm_channel_t channel;
+    board_pin_t   pin;
+    bool          invert_output; // Main pin active low
+} pwm_channel_config_t;
 
 
+// Advanced timers complementary channel configuration
 typedef struct {
-    board_pin_t   channel_pins[MAX_TIM1_CHANNELS];
-    pwm_channel_t channels[MAX_TIM1_CHANNELS];
-    size_t        num_of_channels;
-
-    bool       invert_output[MAX_TIM1_CHANNELS];
-    pwm_mode_t mode;
-} pwm_general_timers_config_t;
+    bool        enabled;         // Whether or not to even use the complementary channels
+    board_pin_t pin;             // The complementary pin
+    bool        invert_output;   // Complementary pin active low
+    bool        idle_state_high; // Idle state when Break/MOE occurs
+} pwm_complementary_channel_config_t;
 
 
+// Advanced Timers Configuration (TIM1)
 typedef struct {
-    board_pin_t   channel_pins[MAX_TIM1_CHANNELS];
-    pwm_channel_t channels[MAX_TIM1_CHANNELS];
-    size_t        num_of_channels;
-
-    bool       invert_output[MAX_TIM1_CHANNELS];
     pwm_mode_t mode;
-} pwm_lite_timers_config_t;
+    uint8_t    repetition_cnt;
+
+    // Main Channels
+    pwm_channel_config_t channels[MAX_TIM1_CHANNELS];
+    size_t               num_channels;
+
+    // Complementary Channels. Depends on num_channels
+    pwm_complementary_channel_config_t complementary_channels[MAX_TIM1_COMPLEMENTARY_CHANNELS];
+
+    // Dead time Insertion
+    bool     use_dead_time;
+    uint32_t dead_time_ns; // Dead time in nanoseconds
+
+    // Break protection
+    bool        use_break_input;
+    bool        break_input_active_low; // Whether or not the break input pin is avtive low or not
+    bool        break_auto_rearm;       // Restart the PWM automatically
+    board_pin_t break_input_pin;        // The break input gpio pin
+} pwm_advanced_timer_config_t;
+
+
+// General Purpose & Lite Timers Configuration (TIM2-TIM5, TIM9-TIM11)
+typedef struct {
+    pwm_mode_t mode;
+
+    pwm_channel_config_t channels[MAX_TIM2_CHANNELS];
+    size_t               num_channels;
+} pwm_other_timer_config_t;
 
 
 #endif // PWM_TYPES_H_
