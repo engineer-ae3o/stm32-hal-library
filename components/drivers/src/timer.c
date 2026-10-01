@@ -215,9 +215,7 @@ hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Set the auto-reload and prescaler values
     TRY(timer_set_arr_and_psc(handle, timeout_us));
 
-    // Enable update generation and the update event interrupt, and clear the update interrupt flag
-    handle->EGR = TIM_EGR_UG;
-    handle->SR &= ~TIM_SR_UIF;
+    // Enable the update event interrupt
     handle->DIER |= TIM_DIER_UIE;
 
     // Set OPM mode, and enable the counter and auto-reload preload, and set URS so only a UEV triggers an interrupt
@@ -238,9 +236,7 @@ hal_err_t timer_start_periodic(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Set the auto-reload and prescaler values
     TRY(timer_set_arr_and_psc(handle, timeout_us));
 
-    // Enable update generation and the update event interrupt, and clear the update interrupt flag
-    handle->EGR = TIM_EGR_UG;
-    handle->SR &= ~TIM_SR_UIF;
+    // Enable the update event interrupt
     handle->DIER |= TIM_DIER_UIE;
 
     // Disable OPM mode, and enable the counter and auto-reload preload, and set URS so only a UEV triggers an interrupt
@@ -316,6 +312,10 @@ bool is_timer_32_bits(TIM_TypeDef* handle) {
     return result;
 }
 
+bool is_timer_advanced(TIM_TypeDef* handle) {
+    return handle == TIM1;
+}
+
 hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Set the (PSC + 1) * (ARR + 1) value from the timer's clock frequency and the timeout
     uint32_t timer_freq_hz = 0;
@@ -335,12 +335,17 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Compute suitable auto-reload and prescaler values
     // Minimum PSC such that ARR can cover the remainder: ceiling division to find PSC
     // Round to nearest instead of floor to halve the worst case error to get the ARR
-    const uint64_t psc_plus_1 = (psc_times_arr + max_arr_plus_1 - 1) / max_arr_plus_1;
-    const uint64_t arr_plus_1 = ((2 * psc_times_arr) + psc_plus_1) / (2 * psc_plus_1);
+    const uint64_t psc_plus_1 = ceil_div_u64(psc_times_arr, max_arr_plus_1);
+    const uint64_t arr_plus_1 = round_div_u64(psc_times_arr, psc_plus_1);
 
     // Set the actual prescaler and auto-reload values
     handle->ARR = (uint32_t)(arr_plus_1 - 1);
     handle->PSC = (uint32_t)(psc_plus_1 - 1);
+
+    // Generate an update event and clear the update interrupt
+    // flag since the ARR and PSC registers contain new values
+    handle->EGR = TIM_EGR_UG;
+    handle->SR &= ~TIM_SR_UIF;
 
     // Clear existing state
     handle->CNT  = 0;

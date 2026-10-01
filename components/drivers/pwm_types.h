@@ -69,8 +69,8 @@ typedef struct {
     size_t               num_channels;
 
     // Complementary channels. Depends on num_channels
+    bool use_complementary_channels; // Whether or not to even use the complementary channels
     struct {
-        bool        enabled;         // Whether or not to even use the complementary channels
         board_pin_t gpio_pin;        // The complementary pin
         bool        invert_output;   // Complementary pin active low
         bool        idle_state_high; // Idle state when Break/MOE occurs

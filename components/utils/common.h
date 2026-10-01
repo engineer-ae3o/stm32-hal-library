@@ -37,9 +37,9 @@ extern "C" {
 #define gnu_unlikely(x) __builtin_expect(!!(x), 0)
 
 // The system tick rate
-#define TICK_RATE_Hz (1'000)
+#define TICK_RATE_Hz (1000U)
 
-#define HEAP_SIZE_kB (32)
+#define HEAP_SIZE_kB (32U)
 #define HEAP_SIZE_BYTES ((HEAP_SIZE_kB) * 1024)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
