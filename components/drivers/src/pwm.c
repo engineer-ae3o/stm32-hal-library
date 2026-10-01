@@ -3,8 +3,8 @@
 #include "drivers/pwm_types.h"
 #include "drivers/timer.h"
 #include "drivers/gpio.h"
-#include "utils/board.h"
 #include "utils/common.h"
+#include "utils/board.h"
 #include "drivers/pwm.h"
 #include "utils/err.h"
 
@@ -23,7 +23,7 @@
         // it like this because using uint64_t would be much slower for a case that will almost
         // never occur in any real usage. The maximum duty cycle is ARR + 1, hence the off
         // by one at the boundary of 32 bits. The off by one error is a non factor regardless.
-        if (gnu_unlikely(handle->ARR == UINT32_MAX)) {
+        if (gnu_unlikely(handle->ARR == (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX))) {
             return handle->ARR;
         } else {
             return handle->ARR + 1;
@@ -122,6 +122,11 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     if (config->break_input.use_break_input) {
         // Enable the break input, set the polarity and auto re-arm status
         handle->BDTR |= TIM_BDTR_BKE | (config->break_input.active_low ? 0 : TIM_BDTR_BKP) | (config->break_input.auto_rearm ? TIM_BDTR_AOE : 0);
+
+        // Enable interrupts on a break event and register the break event callback
+        handle->DIER |= TIM_DIER_BIE;
+        TRY(timer_register_callback(handle, config->break_input.callback, config->break_input.user, BREAK_EVENT));
+
         // Configure the physical break input GPIO pin
         TRY(config_pwm_pin(config->break_input.gpio_pin));
     }
@@ -275,9 +280,6 @@ hal_err_t pwm_set_duty_cycle(TIM_TypeDef* handle, pwm_channel_t channel, uint32_
     if (handle == NULL || duty_cycle > get_max_duty_cycle(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
-
-    // Clamp to the maximum register width of the timer to be on the safe side
-    duty_cycle = duty_cycle & (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX);
 
     switch (channel) {
         case PWM_CHANNEL_0:

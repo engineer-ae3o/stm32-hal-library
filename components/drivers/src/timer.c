@@ -70,6 +70,17 @@ static timer_ctx_t s_timer_cb_ctx[] = {
             s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg);
         }
     }
+
+    // Only available on the advanced timers
+    if (is_timer_advanced(handle)) {
+        // Break event interrupt
+        if (handle->SR & TIM_SR_BIF) {
+            handle->SR &= ~TIM_SR_BIF;
+            if (s_timer_cb_ctx[idx].callback) {
+                s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg);
+            }
+        }
+    }
 }
 
 
@@ -140,7 +151,7 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_
     TRY(timer_deinit(handle));
 
     // Register the callback
-    TRY(timer_register_callback(handle, callback, arg));
+    TRY(timer_register_callback(handle, callback, arg, UPDATE_EVENT));
 
     // Set the counting direction. Edge aligned (up or downcounting)
     handle->CR1 = (uint32_t)(direction << TIM_CR1_DIR_Pos);
@@ -388,7 +399,7 @@ hal_err_t timer_get_frequency_hz(TIM_TypeDef* handle, uint32_t* timer_freq_hz) {
     return HAL_OK;
 }
 
-hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void* arg) {
+hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void* arg, advanced_timer_irq_type_t type) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -401,13 +412,28 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void
     s_timer_cb_ctx[idx].arg      = arg;
     __set_PRIMASK(primask);
 
-    // Enable the timer's NVIC interrupt
+    // Get the irq type for the current timer instance
     IRQn_Type irq_type = 0;
-    if (handle == TIM1 || handle == TIM10) {
-        irq_type = TIM1_UP_TIM10_IRQn;
+    if (handle == TIM1) {
+        switch (type) {
+            case UPDATE_EVENT:
+                irq_type = TIM1_UP_TIM10_IRQn;
+                break;
+            case BREAK_EVENT:
+                irq_type = TIM1_BRK_TIM9_IRQn;
+                break;
+            case CAPTURE_COMPARE:
+                irq_type = TIM1_CC_IRQn;
+                break;
+            case TRG_COM_EVENT:
+                irq_type = TIM1_TRG_COM_TIM11_IRQn;
+                break;
+        }
     } else {
         irq_type = s_timer_cb_ctx[idx].irq_type;
     }
+
+    // Enable the timer's NVIC interrupt
     NVIC_SetPriority(irq_type, TIMER_NVIC_IRQ_PRIORITY);
     NVIC_ClearPendingIRQ(irq_type);
     NVIC_EnableIRQ(irq_type);

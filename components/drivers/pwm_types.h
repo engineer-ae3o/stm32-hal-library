@@ -3,6 +3,7 @@
 
 
 #include "stm32f411xe.h"
+#include "drivers/timer.h"
 #include "utils/board.h"
 
 #include <stdint.h>
@@ -85,6 +86,9 @@ typedef struct {
         bool        active_low;
         bool        auto_rearm; // Restart the PWM automatically
         board_pin_t gpio_pin;   // The break input gpio pin
+        // Callback fired on a break event
+        timer_cb_t callback;
+        void*      user;
     } break_input;
 } pwm_advanced_timer_config_t;
 
