@@ -342,17 +342,17 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     handle->ARR = (uint32_t)(arr_plus_1 - 1);
     handle->PSC = (uint32_t)(psc_plus_1 - 1);
 
-    // Generate an update event and clear the update interrupt
-    // flag since the ARR and PSC registers contain new values
-    handle->EGR = TIM_EGR_UG;
-    handle->SR &= ~TIM_SR_UIF;
-
     // Clear existing state
     handle->CNT  = 0;
     handle->CCR1 = 0;
     handle->CCR2 = 0;
     handle->CCR3 = 0;
     handle->CCR4 = 0;
+
+    // Generate an update event and clear the update interrupt
+    // flag since the ARR and PSC registers contain new values
+    handle->EGR = TIM_EGR_UG;
+    handle->SR &= ~TIM_SR_UIF;
 
     return HAL_OK;
 }
