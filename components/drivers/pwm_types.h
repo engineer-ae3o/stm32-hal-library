@@ -58,7 +58,7 @@ typedef struct {
 } pwm_channel_config_t;
 
 
-// Advanced Timers Configuration (TIM1)
+// Advanced Timers Configuration
 typedef struct {
     pwm_mode_t       pwm_mode;
     pwm_count_mode_t pwm_count_mode;
@@ -77,10 +77,7 @@ typedef struct {
     } complementary_channels[MAX_TIM1_COMPLEMENTARY_CHANNELS];
 
     // Dead time Insertion
-    struct {
-        bool     use_dead_time;
-        uint32_t dead_time_ns; // The dead time in nanoseconds
-    } dead_time;
+    uint32_t dead_time_ns; // The dead time in nanoseconds
 
     // Break protection
     struct {
@@ -92,7 +89,7 @@ typedef struct {
 } pwm_advanced_timer_config_t;
 
 
-// General Purpose & Lite Timers Configuration (TIM2-TIM5, TIM9-TIM11)
+// General Purpose & Lite Timers Configuration
 typedef struct {
     pwm_mode_t       pwm_mode;
     pwm_count_mode_t pwm_count_mode;

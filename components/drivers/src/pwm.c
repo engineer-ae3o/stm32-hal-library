@@ -49,38 +49,42 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     uint32_t ccmr2 = handle->CCMR2;
     uint32_t ccer  = handle->CCER;
 
-    const bool use_complementary_channels = config->use_complementary_channels;
-
     // Configure the main and compementary PWM channels
     for (size_t i = 0; i < config->num_channels; i++) {
-        switch (config->channels[i].channel) {
+        const pwm_channel_t channel = config->channels[i].channel;
+
+        switch (channel) {
             case PWM_CHANNEL_0:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
-                ccer |= use_complementary_channels ? (TIM_CCER_CC1E | TIM_CCER_CC1NE) : TIM_CCER_CC1E;
-                if (config->channels[i].invert_output) {
-                    ccer |= use_complementary_channels ? (TIM_CCER_CC1P | TIM_CCER_CC1NP) : TIM_CCER_CC1P;
+                // Main channel
+                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC1E | TIM_CCER_CC1P) : (TIM_CCER_CC1E);
+                // Complementary channel
+                if (config->use_complementary_channels) {
+                    ccer |= config->complementary_channels[i].invert_output ? (TIM_CCER_CC1NE | TIM_CCER_CC1NP) : (TIM_CCER_CC1NE);
                 }
                 break;
             case PWM_CHANNEL_1:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
-                ccer |= use_complementary_channels ? (TIM_CCER_CC2E | TIM_CCER_CC2NE) : TIM_CCER_CC2E;
-                if (config->channels[i].invert_output) {
-                    ccer |= use_complementary_channels ? (TIM_CCER_CC2P | TIM_CCER_CC2NP) : TIM_CCER_CC2P;
+                // Main channel
+                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC2E | TIM_CCER_CC2P) : (TIM_CCER_CC2E);
+                // Complementary channel
+                if (config->use_complementary_channels) {
+                    ccer |= config->complementary_channels[i].invert_output ? (TIM_CCER_CC2NE | TIM_CCER_CC2NP) : (TIM_CCER_CC2NE);
                 }
                 break;
             case PWM_CHANNEL_2:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
-                ccer |= use_complementary_channels ? (TIM_CCER_CC3E | TIM_CCER_CC3NE) : TIM_CCER_CC3E;
-                if (config->channels[i].invert_output) {
-                    ccer |= use_complementary_channels ? (TIM_CCER_CC3P | TIM_CCER_CC3NP) : TIM_CCER_CC3P;
+                // Main channel
+                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC3E | TIM_CCER_CC3P) : (TIM_CCER_CC3E);
+                // Complementary channel
+                if (config->use_complementary_channels) {
+                    ccer |= config->complementary_channels[i].invert_output ? (TIM_CCER_CC3NE | TIM_CCER_CC3NP) : (TIM_CCER_CC3NE);
                 }
                 break;
             case PWM_CHANNEL_3:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
-                ccer |= TIM_CCER_CC4E;
-                if (config->channels[i].invert_output) {
-                    ccer |= TIM_CCER_CC4P;
-                }
+                // Main channel
+                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
                 break;
             default:
                 return HAL_ERR_INVALID_ARG;
@@ -92,8 +96,15 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
         gpio_set_speed_mode(gpio.port, gpio.pin, GPIO_FULL_SPEED);
         gpio_set_output_type(gpio.port, gpio.pin, GPIO_PUSH_PULL);
-    }
 
+        if (config->use_complementary_channels && (channel != PWM_CHANNEL_3)) {
+            const board_pin_t comp_gpio = config->complementary_channels[i].gpio_pin;
+            TRY(gpiox_clk_enable(comp_gpio.port, true));
+            gpio_set_alternate_function(comp_gpio.port, comp_gpio.pin, comp_gpio.af);
+            gpio_set_speed_mode(comp_gpio.port, comp_gpio.pin, GPIO_FULL_SPEED);
+            gpio_set_output_type(comp_gpio.port, comp_gpio.pin, GPIO_PUSH_PULL);
+        }
+    }
 
     // Final writeback
     handle->CCMR1 = ccmr1;
@@ -101,7 +112,7 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     handle->CCER  = ccer;
 
     // TODO: Configure the break time
-    if (config->dead_time.use_dead_time) {
+    if (config->dead_time_ns != 0) {
         handle->BDTR |= 0;
     }
 
@@ -144,31 +155,19 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
         switch (config->channels[i].channel) {
             case PWM_CHANNEL_0:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
-                ccer |= TIM_CCER_CC1E;
-                if (config->channels[i].invert_output) {
-                    ccer |= TIM_CCER_CC1P;
-                }
+                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC1E | TIM_CCER_CC1P) : (TIM_CCER_CC1E);
                 break;
             case PWM_CHANNEL_1:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
-                ccer |= TIM_CCER_CC2E;
-                if (config->channels[i].invert_output) {
-                    ccer |= TIM_CCER_CC2P;
-                }
+                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC2E | TIM_CCER_CC2P) : (TIM_CCER_CC2E);
                 break;
             case PWM_CHANNEL_2:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
-                ccer |= TIM_CCER_CC3E;
-                if (config->channels[i].invert_output) {
-                    ccer |= TIM_CCER_CC3P;
-                }
+                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC3E | TIM_CCER_CC3P) : (TIM_CCER_CC3E);
                 break;
             case PWM_CHANNEL_3:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
-                ccer |= TIM_CCER_CC4E;
-                if (config->channels[i].invert_output) {
-                    ccer |= TIM_CCER_CC4P;
-                }
+                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
                 break;
             default:
                 return HAL_ERR_INVALID_ARG;
