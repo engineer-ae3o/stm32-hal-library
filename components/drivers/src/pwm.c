@@ -57,6 +57,7 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     uint32_t ccmr1 = handle->CCMR1;
     uint32_t ccmr2 = handle->CCMR2;
     uint32_t ccer  = handle->CCER;
+    uint32_t bdtr  = handle->BDTR;
     uint32_t cr2   = handle->CR2;
 
     // Configure the main and compementary PWM channels
@@ -102,6 +103,7 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
                 // Main channel
                 ccer |= config->channels[i].invert_output ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
                 cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS4 : 0;
+                // PWM channel 3 has no corresponding complementary channel
                 break;
             default:
                 return HAL_ERR_INVALID_ARG;
@@ -116,24 +118,18 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         }
     }
 
-    // Final writeback
-    handle->CCMR1 = ccmr1;
-    handle->CCMR2 = ccmr2;
-    handle->CCER  = ccer;
-    handle->CR2   = cr2;
+    // Configure the run and idle off-state selection of the channels and the write protection level
+    bdtr |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0) | (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos);
 
-    // Configure the run and idle off-state selection of the channels
-    handle->BDTR |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0);
-
-    // TODO: Configure the break time
+    // TODO: Configure the dead time
     if (config->dead_time_ns != 0) {
-        handle->BDTR |= 0;
+        bdtr |= 0;
     }
 
     // Configure the break input
     if (config->break_input.use_break_input) {
         // Enable the break input, set the polarity and auto re-arm status
-        handle->BDTR |= TIM_BDTR_BKE | (config->break_input.active_low ? 0 : TIM_BDTR_BKP) | (config->break_input.auto_rearm ? TIM_BDTR_AOE : 0);
+        bdtr |= TIM_BDTR_BKE | (config->break_input.active_low ? 0 : TIM_BDTR_BKP) | (config->break_input.auto_rearm ? TIM_BDTR_AOE : 0);
 
         // Enable interrupts on a break event and register the break event callback
         handle->DIER |= TIM_DIER_BIE;
@@ -150,6 +146,13 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
             gpio_enable_pulldowns(brk_gpio.port, brk_gpio.pin, true);
         }
     }
+
+    // Final writeback
+    handle->CCMR1 = ccmr1;
+    handle->CCMR2 = ccmr2;
+    handle->CCER  = ccer;
+    handle->BDTR  = bdtr;
+    handle->CR2   = cr2;
 
     // Set the timer's counting mode, and enable auto-reload register buffering,
     // interrupts only on update events and set the repition counter.
@@ -180,6 +183,7 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
     uint32_t ccmr1 = handle->CCMR1;
     uint32_t ccmr2 = handle->CCMR2;
     uint32_t ccer  = handle->CCER;
+    uint32_t cr2   = handle->CR2;
 
     for (size_t i = 0; i < config->num_channels; i++) {
         // Configure the channel in the CCMRx register
@@ -187,18 +191,22 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
             case PWM_CHANNEL_0:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
                 ccer |= config->channels[i].invert_output ? (TIM_CCER_CC1E | TIM_CCER_CC1P) : (TIM_CCER_CC1E);
+                cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS1 : 0;
                 break;
             case PWM_CHANNEL_1:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
                 ccer |= config->channels[i].invert_output ? (TIM_CCER_CC2E | TIM_CCER_CC2P) : (TIM_CCER_CC2E);
+                cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS2 : 0;
                 break;
             case PWM_CHANNEL_2:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
                 ccer |= config->channels[i].invert_output ? (TIM_CCER_CC3E | TIM_CCER_CC3P) : (TIM_CCER_CC3E);
+                cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS3 : 0;
                 break;
             case PWM_CHANNEL_3:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
                 ccer |= config->channels[i].invert_output ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
+                cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS4 : 0;
                 break;
             default:
                 return HAL_ERR_INVALID_ARG;
@@ -212,6 +220,7 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
     handle->CCMR1 = ccmr1;
     handle->CCMR2 = ccmr2;
     handle->CCER  = ccer;
+    handle->CR2   = cr2;
 
     // Set the timer's counting mode, and enable auto-reload register buffering and interrupts only on update events
     handle->CR1 |= (config->pwm_count_mode | TIM_CR1_ARPE | TIM_CR1_URS);

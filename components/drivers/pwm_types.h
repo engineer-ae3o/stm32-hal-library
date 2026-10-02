@@ -52,10 +52,18 @@ typedef enum : uint8_t {
 } pwm_mode_t;
 
 
+typedef enum : uint8_t {
+    WP_OFF          = 0b00,
+    WP_LOCK_LEVEL_1 = 0b01,
+    WP_LOCK_LEVEL_2 = 0b10,
+    WP_LOCK_LEVEL_3 = 0b11,
+} pwm_write_protection_t;
+
+
 typedef struct {
     pwm_channel_t channel;
     bool          invert_output;     // Main channel output active low (when this is true)
-    bool          output_idle_state; // State of the channel when MOE is disabled (only relevant for advanced timers)
+    bool          output_idle_state; // State of the gpio pin when its channel is disabled
     board_pin_t   gpio_pin;
 } pwm_channel_config_t;
 
@@ -69,16 +77,18 @@ typedef struct {
     bool ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
     bool ossi; // State of all channels when the timer is inactive
 
+    pwm_write_protection_t wp_level; // Write protection on the timer's registers to prevent accidental software writes
+
     // Complementary channels. Depends on num_channels
-    bool use_complementary_channels; // Whether or not to even use the complementary channels
+    bool use_complementary_channels; // Whether or not to use the complementary channels
     struct {
         bool        invert_output;     // Complementary channel output active low (when this is true)
         bool        output_idle_state; // State of the channel when MOE is disabled
         bool        idle_state_high;   // Idle state when the timer is inactive
-        board_pin_t gpio_pin;          // The complementary pin
+        board_pin_t gpio_pin;          // The physical complementary channel's GPIO pin
     } complementary_channels[MAX_TIM1_COMPLEMENTARY_CHANNELS];
 
-    // Dead time Insertion
+    // Dead time insertion
     uint32_t dead_time_ns; // The dead time in nanoseconds
 
     // Main channels
