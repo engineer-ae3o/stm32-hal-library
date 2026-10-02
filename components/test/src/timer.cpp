@@ -416,12 +416,6 @@ namespace test::timer {
             }
         }
 
-        void get_frequency_hz_rejects_null_arguments() {
-            uint32_t freq = 0;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_get_frequency_hz(nullptr, &freq));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_get_frequency_hz(TEST_INSTANCE, nullptr));
-        }
-
         void get_frequency_hz_matches_the_apb_doubling_rules() {
             const uint32_t sysclk = get_system_core_clock();
             const uint32_t apb1   = get_apb1_core_clock();
@@ -429,13 +423,15 @@ namespace test::timer {
 
             const uint32_t timpre_before = RCC->DCKCFGR & RCC_DCKCFGR_TIMPRE;
 
-            RCC->DCKCFGR &= ~RCC_DCKCFGR_TIMPRE;                                     // Standard mode
-            TEST_ASSERT_EQUAL(HAL_OK, timer_get_frequency_hz(TEST_INSTANCE, &freq)); // TIM2 is on APB1
+            RCC->DCKCFGR &= ~RCC_DCKCFGR_TIMPRE;          // Standard mode
+            freq = timer_get_frequency_hz(TEST_INSTANCE); // TIM2 is on APB1
+
             const uint32_t expected_std_f = (sysclk == apb1) ? apb1 : (apb1 * 2);
             TEST_ASSERT_EQUAL_UINT32(expected_std_f, freq);
 
             RCC->DCKCFGR |= RCC_DCKCFGR_TIMPRE; // High frequency mode
-            TEST_ASSERT_EQUAL(HAL_OK, timer_get_frequency_hz(TEST_INSTANCE, &freq));
+            freq = timer_get_frequency_hz(TEST_INSTANCE);
+
             const uint32_t expected_hf = ((sysclk == apb1) || ((sysclk / apb1) == 2)) ? sysclk : (apb1 * 4);
             TEST_ASSERT_EQUAL_UINT32(expected_hf, freq);
 
@@ -458,8 +454,7 @@ namespace test::timer {
             constexpr uint32_t REQUESTED_TIMEOUT_US = 5000;
             TEST_ASSERT_EQUAL(HAL_OK, timer_set_arr_and_psc(TEST_INSTANCE, REQUESTED_TIMEOUT_US));
 
-            uint32_t freq_hz = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, timer_get_frequency_hz(TEST_INSTANCE, &freq_hz));
+            const uint32_t freq_hz = timer_get_frequency_hz(TEST_INSTANCE);
 
             const uint64_t psc_plus_1          = (uint64_t)TEST_INSTANCE->PSC + 1;
             const uint64_t arr_plus_1          = (uint64_t)TEST_INSTANCE->ARR + 1;
@@ -504,7 +499,6 @@ namespace test::timer {
         RUN_TEST(restart_reapplies_periodic_mode_and_keeps_repeating);
         RUN_TEST(is_timer_on_apb1_matches_the_bus_map);
         RUN_TEST(is_timer_32_bits_matches_the_counter_width_map);
-        RUN_TEST(get_frequency_hz_rejects_null_arguments);
         RUN_TEST(get_frequency_hz_matches_the_apb_doubling_rules);
         RUN_TEST(set_arr_and_psc_rejects_a_timeout_that_overflows_the_supported_range);
         RUN_TEST(set_arr_and_psc_computes_values_that_reconstruct_the_requested_timeout);

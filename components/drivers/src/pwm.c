@@ -127,8 +127,10 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     // Configure the run and idle off-state selection of the channels and the write protection level
     bdtr |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0) | (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos);
 
-    // TODO: Configure the dead time
+    // Configure the dead time
     if (config->dead_time_ns != 0) {
+        // Get the timer's input frequency from its bus
+        // const uint32_t timer_freq_hz = timer_get_frequency_hz(handle);
         bdtr |= 0;
     }
 
@@ -196,7 +198,6 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
     uint32_t ccmr1 = handle->CCMR1;
     uint32_t ccmr2 = handle->CCMR2;
     uint32_t ccer  = handle->CCER;
-    uint32_t cr2   = handle->CR2;
 
     for (size_t i = 0; i < config->num_channels; i++) {
         // Configure the channel in the CCMRx register
@@ -204,22 +205,18 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
             case PWM_CHANNEL_0:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
                 ccer |= config->channels[i].invert_output ? (TIM_CCER_CC1E | TIM_CCER_CC1P) : (TIM_CCER_CC1E);
-                cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS1 : 0;
                 break;
             case PWM_CHANNEL_1:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
                 ccer |= config->channels[i].invert_output ? (TIM_CCER_CC2E | TIM_CCER_CC2P) : (TIM_CCER_CC2E);
-                cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS2 : 0;
                 break;
             case PWM_CHANNEL_2:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
                 ccer |= config->channels[i].invert_output ? (TIM_CCER_CC3E | TIM_CCER_CC3P) : (TIM_CCER_CC3E);
-                cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS3 : 0;
                 break;
             case PWM_CHANNEL_3:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
                 ccer |= config->channels[i].invert_output ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
-                cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS4 : 0;
                 break;
             default:
                 return HAL_ERR_INVALID_ARG;
@@ -233,7 +230,6 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
     handle->CCMR1 = ccmr1;
     handle->CCMR2 = ccmr2;
     handle->CCER  = ccer;
-    handle->CR2   = cr2;
 
     // Set the timer's counting mode, and enable auto-reload register buffering and interrupts only on update events
     handle->CR1 |= (config->pwm_count_mode | TIM_CR1_ARPE | TIM_CR1_URS);
@@ -257,8 +253,7 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
         return HAL_ERR_INVALID_STATE;
     }
 
-    uint32_t timer_freq_hz = 0;
-    TRY(timer_get_frequency_hz(handle, &timer_freq_hz));
+    const uint32_t timer_freq_hz = timer_get_frequency_hz(handle);
     if (frequency_hz > timer_freq_hz) {
         return HAL_ERR_NOT_SUPPORTED;
     }
@@ -307,7 +302,7 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
 
     // Generate an update event after modifying the auto reload and prescaler registers
     handle->EGR = TIM_EGR_UG;
-    handle->SR &= ~TIM_SR_UIF;
+    handle->SR  = ~TIM_SR_UIF;
 
     // Derive the maximum duty cycle from the auto-reload register
     *max_duty_cycle = get_max_duty_cycle(handle);

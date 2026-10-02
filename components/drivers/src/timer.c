@@ -220,8 +220,8 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     handle->DIER &=
         ~(TIM_DIER_UIE | TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_CC3IE | TIM_DIER_CC4IE | TIM_DIER_COMIE | TIM_DIER_TIE | TIM_DIER_BIE |
           TIM_DIER_UDE | TIM_DIER_CC1DE | TIM_DIER_CC2DE | TIM_DIER_CC3DE | TIM_DIER_CC4DE | TIM_DIER_COMDE | TIM_DIER_TDE);
-    handle->SR &= ~(TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF | TIM_SR_CC3IF | TIM_SR_CC4IF | TIM_SR_COMIF | TIM_SR_TIF | TIM_SR_BIF | TIM_SR_CC1OF |
-                    TIM_SR_CC2OF | TIM_SR_CC3OF | TIM_SR_CC4OF);
+    handle->SR = ~(TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF | TIM_SR_CC3IF | TIM_SR_CC4IF | TIM_SR_COMIF | TIM_SR_TIF | TIM_SR_BIF | TIM_SR_CC1OF |
+                   TIM_SR_CC2OF | TIM_SR_CC3OF | TIM_SR_CC4OF);
     handle->CCER &=
         ~(TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NE | TIM_CCER_CC1NP | TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC2NP | TIM_CCER_CC2NE |
           TIM_CCER_CC3E | TIM_CCER_CC3P | TIM_CCER_CC3NE | TIM_CCER_CC3NP | TIM_CCER_CC4E | TIM_CCER_CC4P | TIM_CCER_CC4NP);
@@ -380,11 +380,25 @@ bool is_timer_advanced(TIM_TypeDef* handle) {
     return handle == TIM1;
 }
 
+uint32_t timer_get_frequency_hz(TIM_TypeDef* handle) {
+    ASSERT(handle);
+
+    const uint32_t system_core_clock = get_system_core_clock();
+    const uint32_t apb_clock_hz      = is_timer_on_apb1(handle) ? get_apb1_core_clock() : get_apb2_core_clock();
+    const uint32_t prescaler         = system_core_clock / apb_clock_hz;
+
+    if (RCC->DCKCFGR & RCC_DCKCFGR_TIMPRE) {
+        // High frequency timer mode
+        return (prescaler > 2) ? (apb_clock_hz * 4) : system_core_clock;
+    } else {
+        // Standard frequency timer mode
+        return (prescaler == 1) ? apb_clock_hz : (apb_clock_hz * 2);
+    }
+}
+
 hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Set the (PSC + 1) * (ARR + 1) value from the timer's clock frequency and the timeout
-    uint32_t timer_freq_hz = 0;
-    TRY(timer_get_frequency_hz(handle, &timer_freq_hz));
-    const uint64_t psc_times_arr = ((uint64_t)timer_freq_hz * timeout_us) / 1'000'000U;
+    const uint64_t psc_times_arr = ((uint64_t)timer_get_frequency_hz(handle) * timeout_us) / 1'000'000U;
 
     // Get the maximum width of the prescaler and auto-reload registers
     const uint32_t max_psc_plus_1 = UINT16_MAX + 1;
@@ -416,38 +430,7 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Generate an update event and clear the update interrupt
     // flag since the ARR and PSC registers contain new values
     handle->EGR = TIM_EGR_UG;
-    handle->SR &= ~TIM_SR_UIF;
-
-    return HAL_OK;
-}
-
-hal_err_t timer_get_frequency_hz(TIM_TypeDef* handle, uint32_t* timer_freq_hz) {
-    if (handle == NULL || timer_freq_hz == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    const uint32_t system_core_clock = get_system_core_clock();
-    const uint32_t apb_clock_hz      = is_timer_on_apb1(handle) ? get_apb1_core_clock() : get_apb2_core_clock();
-
-    if (RCC->DCKCFGR & RCC_DCKCFGR_TIMPRE) {
-        // High frequency timer mode
-        if ((system_core_clock == apb_clock_hz) || ((system_core_clock / apb_clock_hz) == 2)) {
-            // The APB prescaler is either 1 or 2
-            *timer_freq_hz = system_core_clock;
-        } else {
-            // The APB prescaler is greater than 2
-            *timer_freq_hz = apb_clock_hz * 4;
-        }
-    } else {
-        // Standard frequency timer mode
-        if (system_core_clock == apb_clock_hz) {
-            // The APB prescaler is 1
-            *timer_freq_hz = apb_clock_hz;
-        } else {
-            // The APB prescaler is greater than 1
-            *timer_freq_hz = apb_clock_hz * 2;
-        }
-    }
+    handle->SR  = ~TIM_SR_UIF;
 
     return HAL_OK;
 }
@@ -458,7 +441,7 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void
         return HAL_ERR_INVALID_ARG;
     }
 
-    // DIsable all interrupts
+    // Disable all interrupts
     const uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
