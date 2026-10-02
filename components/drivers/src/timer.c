@@ -18,6 +18,7 @@ typedef struct {
 
 static timer_ctx_t s_timer_cb_ctx[] = {
     // TIM1
+    // NOTE: None of TIM1's callbacks are stored innthis table. Refer below
     {.callback = NULL, .arg = NULL, .irq_type = TIM1_CC_IRQn},
     // TIM2
     {.callback = NULL, .arg = NULL, .irq_type = TIM2_IRQn},
@@ -28,13 +29,36 @@ static timer_ctx_t s_timer_cb_ctx[] = {
     // TIM5
     {.callback = NULL, .arg = NULL, .irq_type = TIM5_IRQn},
     // TIM9
+    // NOTE: Only TIM9's callbacks are stored here
     {.callback = NULL, .arg = NULL, .irq_type = TIM1_BRK_TIM9_IRQn},
     // TIM10
+    // NOTE: Only TIM10's callbacks are stored here
     {.callback = NULL, .arg = NULL, .irq_type = TIM1_UP_TIM10_IRQn},
     // TIM11
+    // NOTE: Only TIM11's callbacks are stored here
     {.callback = NULL, .arg = NULL, .irq_type = TIM1_TRG_COM_TIM11_IRQn},
 };
 
+// Since the interrupt vectors are shared, we have to find
+// and store the interrupt callbacks for TIM1 separately
+typedef struct {
+    timer_cb_t capture_compare_cb;
+    void*      cc_arg;
+
+    timer_cb_t break_input_cb;
+    void*      brk_arg;
+
+    timer_cb_t update_event_cb;
+    void*      up_arg;
+
+    timer_cb_t trigger_cb;
+    void*      trg_arg;
+
+    timer_cb_t commutation_cb;
+    void*      com_arg;
+} tim1_cb_ctx_t;
+
+static tim1_cb_ctx_t tim1_callbacks = {};
 
 // Helpers
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(TIM_TypeDef* handle) {
@@ -60,25 +84,47 @@ static timer_ctx_t s_timer_cb_ctx[] = {
 }
 
 [[__gnu__::__always_inline__]] static inline void timer_isr_helper(TIM_TypeDef* handle) {
+    // Only available on the advanced timers (TIM1)
+    if (is_timer_advanced(handle)) {
+        // Update event interrupt
+        if (handle->SR & TIM_SR_UIF) {
+            handle->SR &= ~TIM_SR_UIF;
+            if (tim1_callbacks.update_event_cb) {
+                tim1_callbacks.update_event_cb(tim1_callbacks.up_arg);
+            }
+        }
+        // Break event interrupt
+        if (handle->SR & TIM_SR_BIF) {
+            handle->SR &= ~TIM_SR_BIF;
+            if (tim1_callbacks.break_input_cb) {
+                tim1_callbacks.break_input_cb(tim1_callbacks.brk_arg);
+            }
+        }
+        // Commutation event interrupt
+        if (handle->SR & TIM_SR_COMIF) {
+            handle->SR &= ~TIM_SR_COMIF;
+            if (tim1_callbacks.commutation_cb) {
+                tim1_callbacks.commutation_cb(tim1_callbacks.com_arg);
+            }
+        }
+        // Trigger event interrupt
+        if (handle->SR & TIM_SR_TIF) {
+            handle->SR &= ~TIM_SR_TIF;
+            if (tim1_callbacks.trigger_cb) {
+                tim1_callbacks.trigger_cb(tim1_callbacks.trg_arg);
+            }
+        }
+        return;
+    }
+
     const uint8_t idx = get_index(handle);
     ASSERT(idx != 0xFFU);
 
-    // Update event interrupt: underflow or overflow
+    // Update event interrupt for the other timers
     if (handle->SR & TIM_SR_UIF) {
         handle->SR &= ~TIM_SR_UIF;
         if (s_timer_cb_ctx[idx].callback) {
             s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg);
-        }
-    }
-
-    // Only available on the advanced timers
-    if (is_timer_advanced(handle)) {
-        // Break event interrupt
-        if (handle->SR & TIM_SR_BIF) {
-            handle->SR &= ~TIM_SR_BIF;
-            if (s_timer_cb_ctx[idx].callback) {
-                s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg);
-            }
         }
     }
 }
@@ -405,12 +451,9 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Register the callback
+    // DIsable all interrupts
     const uint32_t primask = __get_PRIMASK();
     __disable_irq();
-    s_timer_cb_ctx[idx].callback = callback;
-    s_timer_cb_ctx[idx].arg      = arg;
-    __set_PRIMASK(primask);
 
     // Get the irq type for the current timer instance
     IRQn_Type irq_type = 0;
@@ -418,20 +461,44 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void
         switch (type) {
             case UPDATE_EVENT:
                 irq_type = TIM1_UP_TIM10_IRQn;
+                // Register the update event callback for TIM1
+                tim1_callbacks.update_event_cb = callback;
+                tim1_callbacks.up_arg          = arg;
                 break;
             case BREAK_EVENT:
                 irq_type = TIM1_BRK_TIM9_IRQn;
+                // Register the break event callback for TIM1
+                tim1_callbacks.break_input_cb = callback;
+                tim1_callbacks.brk_arg        = arg;
                 break;
             case CAPTURE_COMPARE:
                 irq_type = TIM1_CC_IRQn;
+                // Register the capture compare event callback for TIM1
+                tim1_callbacks.capture_compare_cb = callback;
+                tim1_callbacks.cc_arg             = arg;
                 break;
-            case TRG_COM_EVENT:
+            case TRIGGER_EVENT:
                 irq_type = TIM1_TRG_COM_TIM11_IRQn;
+                // Register the trigger event callback for TIM1
+                tim1_callbacks.trigger_cb = callback;
+                tim1_callbacks.trg_arg    = arg;
+                break;
+            case COMMUTATION_EVENT:
+                irq_type = TIM1_TRG_COM_TIM11_IRQn;
+                // Register the commutation event callback for TIM1
+                tim1_callbacks.commutation_cb = callback;
+                tim1_callbacks.com_arg        = arg;
                 break;
         }
     } else {
         irq_type = s_timer_cb_ctx[idx].irq_type;
+        // Register the callback for the timer in the global array
+        s_timer_cb_ctx[idx].callback = callback;
+        s_timer_cb_ctx[idx].arg      = arg;
     }
+
+    // Restore the interrupts to its previous state
+    __set_PRIMASK(primask);
 
     // Enable the timer's NVIC interrupt
     NVIC_SetPriority(irq_type, TIMER_NVIC_IRQ_PRIORITY);

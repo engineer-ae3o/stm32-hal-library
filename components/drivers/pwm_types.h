@@ -80,12 +80,19 @@ typedef struct {
     // Dead time Insertion
     uint32_t dead_time_ns; // The dead time in nanoseconds
 
+    bool ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
+    bool ossi; // State of all channels when the timer is inactive
+
     // Break protection
     struct {
-        bool        use_break_input;
-        bool        active_low;
-        bool        auto_rearm; // Restart the PWM automatically
-        board_pin_t gpio_pin;   // The break input gpio pin
+        bool use_break_input;
+        bool active_low;        // The break input pin is active when low
+        bool auto_rearm;        // Restart the PWM automatically
+        bool output_idle_state; // On a break event, whether the output are set to high or low state
+
+        // The break input gpio pin
+        board_pin_t gpio_pin;
+
         // Callback fired on a break event
         timer_cb_t callback;
         void*      user;

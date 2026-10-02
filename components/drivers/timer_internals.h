@@ -26,7 +26,8 @@ typedef enum : uint8_t {
     UPDATE_EVENT,
     BREAK_EVENT,
     CAPTURE_COMPARE,
-    TRG_COM_EVENT,
+    TRIGGER_EVENT,
+    COMMUTATION_EVENT,
 } advanced_timer_irq_type_t;
 
 hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void* arg, advanced_timer_irq_type_t type);
