@@ -47,6 +47,13 @@ typedef enum : uint8_t {
 
 
 typedef enum : uint8_t {
+    TIM_CLK_DIV_1 = 0b00,
+    TIM_CLK_DIV_2 = 0b01,
+    TIM_CLK_DIV_4 = 0b10,
+} pwm_clk_div_t;
+
+
+typedef enum : uint8_t {
     PWM_MODE_1 = 0b110, // The PWM channel is high when the timer's counter value is less than the duty cycle, but low otherwise
     PWM_MODE_2 = 0b111, // The PWM channel is low when the timer's counter value is less than the duty cycle, but high otherwise
 } pwm_mode_t;
@@ -77,6 +84,8 @@ typedef struct {
 
     bool ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
     bool ossi; // State of all channels when the timer is inactive
+
+    pwm_clk_div_t clk_div; // The timer clock divider to use when configuring the dead time
 
     pwm_write_protection_t wp_level; // Write protection on the timer's registers to prevent accidental software writes
     // NOTE: Once set, the timer cannot be reconfigured again till a reset (for the most part). Refer to the TRM for more details.

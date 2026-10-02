@@ -49,7 +49,7 @@ typedef enum : uint8_t {
     HAL_ERR_DMA_FE,  // FIFO mode error
 
     // Sentinel value
-    HAL_ERR_COUNT,
+    HAL_SENTINEL_COUNT,
 } hal_err_t;
 
 

@@ -67,6 +67,34 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     uint32_t bdtr  = handle->BDTR;
     uint32_t cr2   = handle->CR2;
 
+    // Configure the dead time
+    if (config->dead_time_ns != 0) {
+        // Get the timer's input frequency from its bus and calculate the target tick rate
+        const uint32_t timer_freq_hz = timer_get_frequency_hz(handle);
+        const uint32_t target_tick   = (uint32_t)((uint64_t)config->dead_time_ns * timer_freq_hz) / ((1 << config->clk_div) * 1'000'000'000U);
+        // Get the actual value for the dead time generator
+        uint8_t dtg = 0;
+        if (target_tick <= 127U) {
+            // Range 1: step = 1 tick, direct encoding
+            dtg = (uint8_t)target_tick;
+        } else if (target_tick <= 254U) {
+            // Range 2: step = 2 ticks, DTG[5:0] = offset from 64
+            const uint32_t field = (target_tick + 1U) / 2U - 64U; // ceiling division by 2
+            dtg                  = (uint8_t)(0x80U | (field & 0x3FU));
+        } else if (target_tick <= 504U) {
+            // Range 3: step = 8 ticks, DTG[4:0] = offset from 32
+            const uint32_t field = (target_tick + 7U) / 8U - 32U; // ceiling division by 8
+            dtg                  = (uint8_t)(0xC0U | (field & 0x1FU));
+        } else if (target_tick <= 1008U) {
+            // Range 4: step = 16 ticks, DTG[4:0] = offset from 32
+            const uint32_t field = (target_tick + 15U) / 16U - 32U; // ceiling division by 16
+            dtg                  = (uint8_t)(0xE0U | (field & 0x1FU));
+        } else {
+            return HAL_ERR_NOT_SUPPORTED;
+        }
+        bdtr |= (uint32_t)(dtg << TIM_BDTR_DTG_Pos);
+    }
+
     // Configure the main and compementary PWM channels
     for (size_t i = 0; i < config->num_channels; i++) {
         const pwm_channel_t channel = config->channels[i].channel;
@@ -127,13 +155,6 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     // Configure the run and idle off-state selection of the channels and the write protection level
     bdtr |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0) | (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos);
 
-    // Configure the dead time
-    if (config->dead_time_ns != 0) {
-        // Get the timer's input frequency from its bus
-        // const uint32_t timer_freq_hz = timer_get_frequency_hz(handle);
-        bdtr |= 0;
-    }
-
     // Configure the break input
     if (config->break_input.use_break_input) {
         // Enable the break input, set the polarity and auto re-arm status
@@ -163,7 +184,7 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
 
     // Set the timer's counting mode, and enable auto-reload register buffering,
     // interrupts only on update events and set the repition counter.
-    handle->CR1 |= (config->pwm_count_mode | TIM_CR1_ARPE | TIM_CR1_URS);
+    handle->CR1 |= (config->pwm_count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE | TIM_CR1_URS);
     handle->RCR = config->repetition_cnt;
 
     // Configre the BDTR last, since the write protection could lock us out from modifying any of the other registers
