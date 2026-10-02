@@ -54,41 +54,41 @@ typedef enum : uint8_t {
 
 typedef struct {
     pwm_channel_t channel;
-    board_pin_t   gpio_pin;
     bool          invert_output; // The PWM output becomes active low when this is true
+    board_pin_t   gpio_pin;
 } pwm_channel_config_t;
 
 
 // Advanced Timers Configuration
 typedef struct {
-    pwm_mode_t       pwm_mode;
-    pwm_count_mode_t pwm_count_mode;
-    uint8_t          repetition_cnt;
+    pwm_mode_t pwm_mode;       // The state of the channels when a capture compare event occurs
+    uint8_t    repetition_cnt; // The repition counter
+
+    bool ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
+    bool ossi; // State of all channels when the timer is inactive
+
+    // Complementary channels. Depends on num_channels
+    bool use_complementary_channels; // Whether or not to even use the complementary channels
+    struct {
+        bool        invert_output;   // Complementary pin active low
+        bool        idle_state_high; // Idle state when the timer is inactive
+        board_pin_t gpio_pin;        // The complementary pin
+    } complementary_channels[MAX_TIM1_COMPLEMENTARY_CHANNELS];
+
+    pwm_count_mode_t pwm_count_mode; // How the timer counts
+
+    // Dead time Insertion
+    uint32_t dead_time_ns; // The dead time in nanoseconds
 
     // Main channels
     pwm_channel_config_t channels[MAX_TIM1_CHANNELS];
     size_t               num_channels;
 
-    // Complementary channels. Depends on num_channels
-    bool use_complementary_channels; // Whether or not to even use the complementary channels
-    struct {
-        board_pin_t gpio_pin;        // The complementary pin
-        bool        invert_output;   // Complementary pin active low
-        bool        idle_state_high; // Idle state when Break/MOE occurs
-    } complementary_channels[MAX_TIM1_COMPLEMENTARY_CHANNELS];
-
-    // Dead time Insertion
-    uint32_t dead_time_ns; // The dead time in nanoseconds
-
-    bool ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
-    bool ossi; // State of all channels when the timer is inactive
-
     // Break protection
     struct {
         bool use_break_input;
-        bool active_low;        // The break input pin is active when low
-        bool auto_rearm;        // Restart the PWM automatically
-        bool output_idle_state; // On a break event, whether the output are set to high or low state
+        bool active_low; // The break input pin is active when low
+        bool auto_rearm; // Restart the PWM automatically
 
         // The break input gpio pin
         board_pin_t gpio_pin;

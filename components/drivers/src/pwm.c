@@ -128,7 +128,15 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         TRY(timer_register_callback(handle, config->break_input.callback, config->break_input.user, BREAK_EVENT));
 
         // Configure the physical break input GPIO pin
-        TRY(config_pwm_pin(config->break_input.gpio_pin));
+        const board_pin_t brk_gpio = config->break_input.gpio_pin;
+        TRY(gpiox_clk_enable(brk_gpio.port, true));
+        gpio_set_alternate_function(brk_gpio.port, brk_gpio.pin, brk_gpio.af);
+        gpio_set_speed_mode(brk_gpio.port, brk_gpio.pin, GPIO_FULL_SPEED);
+        if (config->break_input.active_low) {
+            gpio_enable_pullups(brk_gpio.port, brk_gpio.pin, true);
+        } else {
+            gpio_enable_pulldowns(brk_gpio.port, brk_gpio.pin, true);
+        }
     }
 
     // Configure the run and idle off-state selection of the channels

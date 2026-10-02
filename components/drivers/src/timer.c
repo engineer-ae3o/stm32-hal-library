@@ -114,6 +114,7 @@ static tim1_cb_ctx_t tim1_callbacks = {};
                 tim1_callbacks.trigger_cb(tim1_callbacks.trg_arg);
             }
         }
+        // TODO: Handle the capture compare interrupt flags
         return;
     }
 
