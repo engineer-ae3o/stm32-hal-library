@@ -61,9 +61,10 @@ typedef enum : uint8_t {
 
 
 typedef struct {
+    bool invert_output;     // Main channel output active low (when this is true)
+    bool output_idle_state; // State of the gpio pin when its channel is disabled (only relevant for the advanced timers)
+    // The actual PWM channel and its physical gpio pin
     pwm_channel_t channel;
-    bool          invert_output;     // Main channel output active low (when this is true)
-    bool          output_idle_state; // State of the gpio pin when its channel is disabled
     board_pin_t   gpio_pin;
 } pwm_channel_config_t;
 
@@ -78,6 +79,7 @@ typedef struct {
     bool ossi; // State of all channels when the timer is inactive
 
     pwm_write_protection_t wp_level; // Write protection on the timer's registers to prevent accidental software writes
+    // NOTE: Once set, the timer cannot be reconfigured again till a reset (for the most part). Refer to the TRM for more details.
 
     // Complementary channels. Depends on num_channels
     bool use_complementary_channels; // Whether or not to use the complementary channels
@@ -111,7 +113,7 @@ typedef struct {
 } pwm_advanced_timer_config_t;
 
 
-// General Purpose & Lite Timers Configuration (can still be used with the advanced timers for minimal configuration)
+// General Purpose and Lite Timers configuration (can still be used with the advanced timers for minimal configuration)
 typedef struct {
     pwm_mode_t       pwm_mode;
     pwm_count_mode_t pwm_count_mode;

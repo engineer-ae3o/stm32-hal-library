@@ -50,6 +50,13 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         return HAL_ERR_NOT_SUPPORTED;
     }
 
+    // Once write protection has been set the first time and LOCK bits have been written to,
+    // this function becomes unuseable as it has to write to most of the registers, but they
+    // would have become write only because of the write protection in place.
+    if (handle->BDTR & TIM_BDTR_LOCK) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
     // Clear all residual state before proceeding
     TRY(pwm_deinit(handle));
 
@@ -63,7 +70,6 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     // Configure the main and compementary PWM channels
     for (size_t i = 0; i < config->num_channels; i++) {
         const pwm_channel_t channel = config->channels[i].channel;
-
         switch (channel) {
             case PWM_CHANNEL_0:
                 ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
@@ -151,13 +157,15 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     handle->CCMR1 = ccmr1;
     handle->CCMR2 = ccmr2;
     handle->CCER  = ccer;
-    handle->BDTR  = bdtr;
     handle->CR2   = cr2;
 
     // Set the timer's counting mode, and enable auto-reload register buffering,
     // interrupts only on update events and set the repition counter.
     handle->CR1 |= (config->pwm_count_mode | TIM_CR1_ARPE | TIM_CR1_URS);
     handle->RCR = config->repetition_cnt;
+
+    // Configre the BDTR last, since the write protection could lock us out from modifying any of the other registers
+    handle->BDTR = bdtr;
 
     return HAL_OK;
 }
@@ -174,6 +182,11 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
         ((handle == TIM9) && (config->num_channels > MAX_TIM9_CHANNELS)) ||
         ((handle == TIM10 || handle == TIM11) && (config->num_channels > MAX_TIM10_CHANNELS))) {
         return HAL_ERR_INVALID_ARG;
+    }
+
+    // Refer to pwm_advanced_timer_init(...) for the explanation for this
+    if (is_timer_advanced(handle) && (handle->BDTR & TIM_BDTR_LOCK)) {
+        return HAL_ERR_INVALID_STATE;
     }
 
     // Clear all residual state before proceeding
