@@ -31,7 +31,7 @@
     }
 }
 
-static inline hal_err_t config_pwm_pin(board_pin_t gpio) {
+static hal_err_t config_pwm_pin(board_pin_t gpio) {
     TRY(gpiox_clk_enable(gpio.port, true));
     gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
     gpio_set_speed_mode(gpio.port, gpio.pin, GPIO_FULL_SPEED);
@@ -46,7 +46,7 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (!is_timer_advanced(handle) || (config->use_complementary_channels && (config->num_channels < MAX_TIM1_COMPLEMENTARY_CHANNELS))) {
+    if (!is_timer_advanced(handle)) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
@@ -71,23 +71,23 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     if (config->dead_time_ns != 0) {
         // Get the timer's input frequency from its bus and calculate the target tick rate
         const uint32_t timer_freq_hz = timer_get_frequency_hz(handle);
-        const uint32_t target_tick   = (uint32_t)((uint64_t)config->dead_time_ns * timer_freq_hz) / ((1 << config->clk_div) * 1'000'000'000U);
+        const uint32_t target = (uint32_t)ceil_div_u64((uint64_t)config->dead_time_ns * timer_freq_hz, (1 << config->clk_div) * 1'000'000'000ULL);
         // Get the actual value for the dead time generator
         uint8_t dtg = 0;
-        if (target_tick <= 127U) {
+        if (target <= 127U) {
             // Range 1: step = 1 tick, direct encoding
-            dtg = (uint8_t)target_tick;
-        } else if (target_tick <= 254U) {
+            dtg = (uint8_t)target;
+        } else if (target <= 254U) {
             // Range 2: step = 2 ticks, DTG[5:0] = offset from 64
-            const uint32_t field = (target_tick + 1U) / 2U - 64U; // ceiling division by 2
+            const uint32_t field = ((target + 1U) / 2U) - 64U; // ceiling division by 2
             dtg                  = (uint8_t)(0x80U | (field & 0x3FU));
-        } else if (target_tick <= 504U) {
+        } else if (target <= 504U) {
             // Range 3: step = 8 ticks, DTG[4:0] = offset from 32
-            const uint32_t field = (target_tick + 7U) / 8U - 32U; // ceiling division by 8
+            const uint32_t field = ((target + 7U) / 8U) - 32U; // ceiling division by 8
             dtg                  = (uint8_t)(0xC0U | (field & 0x1FU));
-        } else if (target_tick <= 1008U) {
+        } else if (target <= 1008U) {
             // Range 4: step = 16 ticks, DTG[4:0] = offset from 32
-            const uint32_t field = (target_tick + 15U) / 16U - 32U; // ceiling division by 16
+            const uint32_t field = ((target + 15U) / 16U) - 32U; // ceiling division by 16
             dtg                  = (uint8_t)(0xE0U | (field & 0x1FU));
         } else {
             return HAL_ERR_NOT_SUPPORTED;
@@ -401,7 +401,22 @@ hal_err_t pwm_pause_channel(TIM_TypeDef* handle, pwm_channel_t channel) {
     }
 
     // Disable the channel's output
-    handle->CCER &= ~(1UL << (channel * 4));
+    switch (channel) {
+        case PWM_CHANNEL_0:
+            handle->CCER &= ~(is_timer_advanced(handle) ? (TIM_CCER_CC1E | TIM_CCER_CC1NE) : TIM_CCER_CC1E);
+            break;
+        case PWM_CHANNEL_1:
+            handle->CCER &= ~(is_timer_advanced(handle) ? (TIM_CCER_CC2E | TIM_CCER_CC2NE) : TIM_CCER_CC2E);
+            break;
+        case PWM_CHANNEL_2:
+            handle->CCER &= ~(is_timer_advanced(handle) ? (TIM_CCER_CC3E | TIM_CCER_CC3NE) : TIM_CCER_CC3E);
+            break;
+        case PWM_CHANNEL_3:
+            handle->CCER &= ~TIM_CCER_CC4E;
+            break;
+        default:
+            return HAL_ERR_INVALID_ARG;
+    }
 
     return HAL_OK;
 }
@@ -412,7 +427,22 @@ hal_err_t pwm_resume_channel(TIM_TypeDef* handle, pwm_channel_t channel) {
     }
 
     // Enable the channel's output
-    handle->CCER |= (1UL << (channel * 4));
+    switch (channel) {
+        case PWM_CHANNEL_0:
+            handle->CCER |= (is_timer_advanced(handle) ? (TIM_CCER_CC1E | TIM_CCER_CC1NE) : TIM_CCER_CC1E);
+            break;
+        case PWM_CHANNEL_1:
+            handle->CCER |= (is_timer_advanced(handle) ? (TIM_CCER_CC2E | TIM_CCER_CC2NE) : TIM_CCER_CC2E);
+            break;
+        case PWM_CHANNEL_2:
+            handle->CCER |= (is_timer_advanced(handle) ? (TIM_CCER_CC3E | TIM_CCER_CC3NE) : TIM_CCER_CC3E);
+            break;
+        case PWM_CHANNEL_3:
+            handle->CCER |= TIM_CCER_CC4E;
+            break;
+        default:
+            return HAL_ERR_INVALID_ARG;
+    }
 
     return HAL_OK;
 }

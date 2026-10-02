@@ -9,7 +9,7 @@
     "clangd.path": "clangd",
     "clangd.arguments": [
         "--background-index",
-        "--query-driver=/usr/bin/arm-none-eabi-g*",
+        "--query-driver=arm-none-eabi-g*",
         "--compile-commands-dir=${workspaceFolder}/build/tests-debug/"
     ],
     "[cpp]": {

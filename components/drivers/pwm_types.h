@@ -95,7 +95,6 @@ typedef struct {
     struct {
         bool        invert_output;     // Complementary channel output active low (when this is true)
         bool        output_idle_state; // State of the channel when MOE is disabled
-        bool        idle_state_high;   // Idle state when the timer is inactive
         board_pin_t gpio_pin;          // The physical complementary channel's GPIO pin
     } complementary_channels[MAX_TIM1_COMPLEMENTARY_CHANNELS];
 
