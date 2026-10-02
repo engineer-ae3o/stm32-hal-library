@@ -5,6 +5,7 @@
 #include "utils/clock.h"
 #include "utils/err.h"
 
+#include <string.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -18,7 +19,7 @@ typedef struct {
 
 static timer_ctx_t s_timer_cb_ctx[] = {
     // TIM1
-    // NOTE: None of TIM1's callbacks are stored innthis table. Refer below
+    // NOTE: None of TIM1's callbacks are stored in this table. Refer below
     {.callback = NULL, .arg = NULL, .irq_type = TIM1_CC_IRQn},
     // TIM2
     {.callback = NULL, .arg = NULL, .irq_type = TIM2_IRQn},
@@ -58,7 +59,7 @@ typedef struct {
     void*      com_arg;
 } tim1_cb_ctx_t;
 
-static tim1_cb_ctx_t tim1_callbacks = {};
+static tim1_cb_ctx_t s_advanced_timer_cb = {};
 
 // Helpers
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(TIM_TypeDef* handle) {
@@ -88,30 +89,30 @@ static tim1_cb_ctx_t tim1_callbacks = {};
     if (is_timer_advanced(handle)) {
         // Update event interrupt
         if (handle->SR & TIM_SR_UIF) {
-            handle->SR &= ~TIM_SR_UIF;
-            if (tim1_callbacks.update_event_cb) {
-                tim1_callbacks.update_event_cb(tim1_callbacks.up_arg);
+            handle->SR = ~TIM_SR_UIF;
+            if (s_advanced_timer_cb.update_event_cb) {
+                s_advanced_timer_cb.update_event_cb(s_advanced_timer_cb.up_arg);
             }
         }
         // Break event interrupt
         if (handle->SR & TIM_SR_BIF) {
-            handle->SR &= ~TIM_SR_BIF;
-            if (tim1_callbacks.break_input_cb) {
-                tim1_callbacks.break_input_cb(tim1_callbacks.brk_arg);
+            handle->SR = ~TIM_SR_BIF;
+            if (s_advanced_timer_cb.break_input_cb) {
+                s_advanced_timer_cb.break_input_cb(s_advanced_timer_cb.brk_arg);
             }
         }
         // Commutation event interrupt
         if (handle->SR & TIM_SR_COMIF) {
-            handle->SR &= ~TIM_SR_COMIF;
-            if (tim1_callbacks.commutation_cb) {
-                tim1_callbacks.commutation_cb(tim1_callbacks.com_arg);
+            handle->SR = ~TIM_SR_COMIF;
+            if (s_advanced_timer_cb.commutation_cb) {
+                s_advanced_timer_cb.commutation_cb(s_advanced_timer_cb.com_arg);
             }
         }
         // Trigger event interrupt
         if (handle->SR & TIM_SR_TIF) {
-            handle->SR &= ~TIM_SR_TIF;
-            if (tim1_callbacks.trigger_cb) {
-                tim1_callbacks.trigger_cb(tim1_callbacks.trg_arg);
+            handle->SR = ~TIM_SR_TIF;
+            if (s_advanced_timer_cb.trigger_cb) {
+                s_advanced_timer_cb.trigger_cb(s_advanced_timer_cb.trg_arg);
             }
         }
         // TODO: Handle the capture compare interrupt flags
@@ -123,7 +124,7 @@ static tim1_cb_ctx_t tim1_callbacks = {};
 
     // Update event interrupt for the other timers
     if (handle->SR & TIM_SR_UIF) {
-        handle->SR &= ~TIM_SR_UIF;
+        handle->SR = ~TIM_SR_UIF;
         if (s_timer_cb_ctx[idx].callback) {
             s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg);
         }
@@ -236,7 +237,8 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     handle->CCR3 = 0;
     handle->CCR4 = 0;
 
-    if (handle == TIM1) {
+    const bool timer_advanced = is_timer_advanced(handle);
+    if (timer_advanced) {
         handle->RCR &= ~TIM_RCR_REP;
         handle->BDTR &= ~(TIM_BDTR_DTG | TIM_BDTR_LOCK | TIM_BDTR_OSSI | TIM_BDTR_OSSR | TIM_BDTR_BKE | TIM_BDTR_BKP | TIM_BDTR_AOE | TIM_BDTR_MOE);
     }
@@ -255,6 +257,10 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     __disable_irq();
     s_timer_cb_ctx[idx].callback = NULL;
     s_timer_cb_ctx[idx].arg      = NULL;
+
+    if (timer_advanced) {
+        memset(&s_advanced_timer_cb, 0, sizeof(s_advanced_timer_cb));
+    }
     __set_PRIMASK(primask);
 
     return HAL_OK;
@@ -463,32 +469,32 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void
             case UPDATE_EVENT:
                 irq_type = TIM1_UP_TIM10_IRQn;
                 // Register the update event callback for TIM1
-                tim1_callbacks.update_event_cb = callback;
-                tim1_callbacks.up_arg          = arg;
+                s_advanced_timer_cb.update_event_cb = callback;
+                s_advanced_timer_cb.up_arg          = arg;
                 break;
             case BREAK_EVENT:
                 irq_type = TIM1_BRK_TIM9_IRQn;
                 // Register the break event callback for TIM1
-                tim1_callbacks.break_input_cb = callback;
-                tim1_callbacks.brk_arg        = arg;
+                s_advanced_timer_cb.break_input_cb = callback;
+                s_advanced_timer_cb.brk_arg        = arg;
                 break;
             case CAPTURE_COMPARE:
                 irq_type = TIM1_CC_IRQn;
                 // Register the capture compare event callback for TIM1
-                tim1_callbacks.capture_compare_cb = callback;
-                tim1_callbacks.cc_arg             = arg;
+                s_advanced_timer_cb.capture_compare_cb = callback;
+                s_advanced_timer_cb.cc_arg             = arg;
                 break;
             case TRIGGER_EVENT:
                 irq_type = TIM1_TRG_COM_TIM11_IRQn;
                 // Register the trigger event callback for TIM1
-                tim1_callbacks.trigger_cb = callback;
-                tim1_callbacks.trg_arg    = arg;
+                s_advanced_timer_cb.trigger_cb = callback;
+                s_advanced_timer_cb.trg_arg    = arg;
                 break;
             case COMMUTATION_EVENT:
                 irq_type = TIM1_TRG_COM_TIM11_IRQn;
                 // Register the commutation event callback for TIM1
-                tim1_callbacks.commutation_cb = callback;
-                tim1_callbacks.com_arg        = arg;
+                s_advanced_timer_cb.commutation_cb = callback;
+                s_advanced_timer_cb.com_arg        = arg;
                 break;
         }
     } else {

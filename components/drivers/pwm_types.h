@@ -27,14 +27,14 @@
 
 
 typedef enum : uint8_t {
-    PWM_CHANNEL_0,
+    PWM_CHANNEL_0 = 0,
     PWM_CHANNEL_1,
     PWM_CHANNEL_2,
     PWM_CHANNEL_3,
 } pwm_channel_t;
 
 
-typedef enum : uint32_t {
+typedef enum : uint8_t {
     // Edge aligned Modes (CMS = 00)
     PWM_EDGE_ALIGNED_UPCOUNTING   = (0b00U << TIM_CR1_CMS_Pos) | (0b0U << TIM_CR1_DIR_Pos), // Left aligned PWM
     PWM_EDGE_ALIGNED_DOWNCOUNTING = (0b00U << TIM_CR1_CMS_Pos) | (0b1U << TIM_CR1_DIR_Pos), // Right aligned PWM
@@ -54,15 +54,17 @@ typedef enum : uint8_t {
 
 typedef struct {
     pwm_channel_t channel;
-    bool          invert_output; // The PWM output becomes active low when this is true
+    bool          invert_output;     // Main channel output active low (when this is true)
+    bool          output_idle_state; // State of the channel when MOE is disabled (only relevant for advanced timers)
     board_pin_t   gpio_pin;
 } pwm_channel_config_t;
 
 
 // Advanced Timers Configuration
 typedef struct {
-    pwm_mode_t pwm_mode;       // The state of the channels when a capture compare event occurs
-    uint8_t    repetition_cnt; // The repition counter
+    pwm_mode_t       pwm_mode;       // The state of the channels when a capture compare event occurs
+    uint8_t          repetition_cnt; // The repetition counter
+    pwm_count_mode_t pwm_count_mode; // How the timer counts
 
     bool ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
     bool ossi; // State of all channels when the timer is inactive
@@ -70,12 +72,11 @@ typedef struct {
     // Complementary channels. Depends on num_channels
     bool use_complementary_channels; // Whether or not to even use the complementary channels
     struct {
-        bool        invert_output;   // Complementary pin active low
-        bool        idle_state_high; // Idle state when the timer is inactive
-        board_pin_t gpio_pin;        // The complementary pin
+        bool        invert_output;     // Complementary channel output active low (when this is true)
+        bool        output_idle_state; // State of the channel when MOE is disabled
+        bool        idle_state_high;   // Idle state when the timer is inactive
+        board_pin_t gpio_pin;          // The complementary pin
     } complementary_channels[MAX_TIM1_COMPLEMENTARY_CHANNELS];
-
-    pwm_count_mode_t pwm_count_mode; // How the timer counts
 
     // Dead time Insertion
     uint32_t dead_time_ns; // The dead time in nanoseconds
@@ -100,7 +101,7 @@ typedef struct {
 } pwm_advanced_timer_config_t;
 
 
-// General Purpose & Lite Timers Configuration
+// General Purpose & Lite Timers Configuration (can still be used with the advanced timers for minimal configuration)
 typedef struct {
     pwm_mode_t       pwm_mode;
     pwm_count_mode_t pwm_count_mode;
