@@ -510,6 +510,7 @@ namespace test::pwm {
 
         void advanced_timer_init_configures_the_break_input_and_fires_the_callback() {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            reset_pwm(TIM_ADV);
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
@@ -554,6 +555,7 @@ namespace test::pwm {
 
         void advanced_timer_init_active_low_break_clears_bkp() {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            reset_pwm(TIM_ADV);
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
@@ -850,6 +852,10 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
             reset_pwm(TIM_ADV);
 
+            // Reset TIM1 since the LOCK bits have been written to it in previous tests
+            RCC->APB2RSTR |= RCC_APB2RSTR_TIM1RST;
+            RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM1RST;
+
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
@@ -875,7 +881,7 @@ namespace test::pwm {
             gp_config.num_channels   = 1;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, pwm_timer_init(TIM_ADV, &gp_config));
 
-            // Recover via a TIM1-local peripheral reset
+            // Recover via a TIM1 local peripheral reset
             RCC->APB2RSTR |= RCC_APB2RSTR_TIM1RST;
             RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM1RST;
 

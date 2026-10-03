@@ -83,9 +83,6 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Clear all residual state before proceeding
-    TRY(pwm_deinit(handle));
-
     // Set the output compare PWM mode characteristics
     uint32_t ccmr1 = handle->CCMR1;
     uint32_t ccmr2 = handle->CCMR2;
