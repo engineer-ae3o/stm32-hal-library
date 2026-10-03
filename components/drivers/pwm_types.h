@@ -27,10 +27,10 @@
 
 
 typedef enum : uint8_t {
-    PWM_CHANNEL_0 = 0,
-    PWM_CHANNEL_1,
+    PWM_CHANNEL_1 = 0,
     PWM_CHANNEL_2,
     PWM_CHANNEL_3,
+    PWM_CHANNEL_4,
 } pwm_channel_t;
 
 

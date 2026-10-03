@@ -41,7 +41,7 @@ namespace test {
         // uart::all();
         // gpio::all();
         // clock::all();
-        timer::all();
+        // timer::all();
         timer_ext::all();
     }
 

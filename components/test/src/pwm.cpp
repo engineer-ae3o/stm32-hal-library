@@ -4,8 +4,8 @@
 #include "drivers/timer_internals.h"
 #include "drivers/gpio_types.h"
 #include "drivers/pwm_types.h"
-#include "utils/common.h"
 #include "drivers/timer.h"
+#include "utils/common.h"
 #include "utils/board.h"
 #include "drivers/pwm.h"
 #include "test/pwm.hpp"
@@ -30,7 +30,7 @@ namespace test::pwm {
         TIM_TypeDef* const TIM_LITE1 = TIM10; // lite, 1 channel
 
         // Helpers
-        void reset_pwm(TIM_TypeDef* handle) {
+        inline void reset_pwm(TIM_TypeDef* handle) {
             TEST_ASSERT_EQUAL(HAL_OK, pwm_deinit(handle));
         }
 
@@ -48,79 +48,88 @@ namespace test::pwm {
         // any correct implementation has to target.
         struct channel_regs_t {
             volatile uint32_t* ccmr;
-            uint32_t           ccxs_pos;
-            uint32_t           ocxpe;
-            uint32_t           ocxm_pos;
-            uint32_t           ocxm_mask;
-            uint32_t           ccxe;
-            uint32_t           ccxp;
-            uint32_t           ccxne;
-            uint32_t           ccxnp;
-            uint32_t           oisx;
-            uint32_t           oisxn;
+            // Bit masks/positions
+            uint32_t ccxs_pos;
+            uint32_t ocxpe;
+            uint32_t ocxm_pos;
+            uint32_t ocxm_mask;
+            uint32_t ccxe;
+            uint32_t ccxp;
+            uint32_t ccxne;
+            uint32_t ccxnp;
+            uint32_t oisx;
+            uint32_t oisxn;
         };
 
-        channel_regs_t get_channel_regs(TIM_TypeDef* handle, pwm_channel_t ch) {
-            switch (ch) {
-                case PWM_CHANNEL_0:
-                    return {&handle->CCMR1,
-                            TIM_CCMR1_CC1S_Pos,
-                            TIM_CCMR1_OC1PE,
-                            TIM_CCMR1_OC1M_Pos,
-                            TIM_CCMR1_OC1M,
-                            TIM_CCER_CC1E,
-                            TIM_CCER_CC1P,
-                            TIM_CCER_CC1NE,
-                            TIM_CCER_CC1NP,
-                            TIM_CR2_OIS1,
-                            TIM_CR2_OIS1N};
+        channel_regs_t get_channel_regs(TIM_TypeDef* handle, pwm_channel_t channel) {
+            switch (channel) {
                 case PWM_CHANNEL_1:
-                    return {&handle->CCMR1,
-                            TIM_CCMR1_CC2S_Pos,
-                            TIM_CCMR1_OC2PE,
-                            TIM_CCMR1_OC2M_Pos,
-                            TIM_CCMR1_OC2M,
-                            TIM_CCER_CC2E,
-                            TIM_CCER_CC2P,
-                            TIM_CCER_CC2NE,
-                            TIM_CCER_CC2NP,
-                            TIM_CR2_OIS2,
-                            TIM_CR2_OIS2N};
+                    return {
+                        .ccmr      = &handle->CCMR1,
+                        .ccxs_pos  = TIM_CCMR1_CC1S_Pos,
+                        .ocxpe     = TIM_CCMR1_OC1PE,
+                        .ocxm_pos  = TIM_CCMR1_OC1M_Pos,
+                        .ocxm_mask = TIM_CCMR1_OC1M,
+                        .ccxe      = TIM_CCER_CC1E,
+                        .ccxp      = TIM_CCER_CC1P,
+                        .ccxne     = TIM_CCER_CC1NE,
+                        .ccxnp     = TIM_CCER_CC1NP,
+                        .oisx      = TIM_CR2_OIS1,
+                        .oisxn     = TIM_CR2_OIS1N,
+                    };
                 case PWM_CHANNEL_2:
-                    return {&handle->CCMR2,
-                            TIM_CCMR2_CC3S_Pos,
-                            TIM_CCMR2_OC3PE,
-                            TIM_CCMR2_OC3M_Pos,
-                            TIM_CCMR2_OC3M,
-                            TIM_CCER_CC3E,
-                            TIM_CCER_CC3P,
-                            TIM_CCER_CC3NE,
-                            TIM_CCER_CC3NP,
-                            TIM_CR2_OIS3,
-                            TIM_CR2_OIS3N};
+                    return {
+                        .ccmr      = &handle->CCMR1,
+                        .ccxs_pos  = TIM_CCMR1_CC2S_Pos,
+                        .ocxpe     = TIM_CCMR1_OC2PE,
+                        .ocxm_pos  = TIM_CCMR1_OC2M_Pos,
+                        .ocxm_mask = TIM_CCMR1_OC2M,
+                        .ccxe      = TIM_CCER_CC2E,
+                        .ccxp      = TIM_CCER_CC2P,
+                        .ccxne     = TIM_CCER_CC2NE,
+                        .ccxnp     = TIM_CCER_CC2NP,
+                        .oisx      = TIM_CR2_OIS2,
+                        .oisxn     = TIM_CR2_OIS2N,
+                    };
                 case PWM_CHANNEL_3:
+                    return {
+                        .ccmr      = &handle->CCMR2,
+                        .ccxs_pos  = TIM_CCMR2_CC3S_Pos,
+                        .ocxpe     = TIM_CCMR2_OC3PE,
+                        .ocxm_pos  = TIM_CCMR2_OC3M_Pos,
+                        .ocxm_mask = TIM_CCMR2_OC3M,
+                        .ccxe      = TIM_CCER_CC3E,
+                        .ccxp      = TIM_CCER_CC3P,
+                        .ccxne     = TIM_CCER_CC3NE,
+                        .ccxnp     = TIM_CCER_CC3NP,
+                        .oisx      = TIM_CR2_OIS3,
+                        .oisxn     = TIM_CR2_OIS3N,
+                    };
+                case PWM_CHANNEL_4:
                 default:
-                    return {&handle->CCMR2,
-                            TIM_CCMR2_CC4S_Pos,
-                            TIM_CCMR2_OC4PE,
-                            TIM_CCMR2_OC4M_Pos,
-                            TIM_CCMR2_OC4M,
-                            TIM_CCER_CC4E,
-                            TIM_CCER_CC4P,
-                            0,
-                            0,
-                            TIM_CR2_OIS4,
-                            0};
+                    return {
+                        .ccmr      = &handle->CCMR2,
+                        .ccxs_pos  = TIM_CCMR2_CC4S_Pos,
+                        .ocxpe     = TIM_CCMR2_OC4PE,
+                        .ocxm_pos  = TIM_CCMR2_OC4M_Pos,
+                        .ocxm_mask = TIM_CCMR2_OC4M,
+                        .ccxe      = TIM_CCER_CC4E,
+                        .ccxp      = TIM_CCER_CC4P,
+                        .ccxne     = 0,
+                        .ccxnp     = 0,
+                        .oisx      = TIM_CR2_OIS4,
+                        .oisxn     = 0,
+                    };
             }
         }
 
-        volatile uint32_t* get_ccr(TIM_TypeDef* handle, pwm_channel_t ch) {
-            switch (ch) {
-                case PWM_CHANNEL_0:
-                    return &handle->CCR1;
+        volatile uint32_t* get_ccr(TIM_TypeDef* handle, pwm_channel_t channel) {
+            switch (channel) {
                 case PWM_CHANNEL_1:
-                    return &handle->CCR2;
+                    return &handle->CCR1;
                 case PWM_CHANNEL_2:
+                    return &handle->CCR2;
+                case PWM_CHANNEL_3:
                     return &handle->CCR3;
                 default:
                     return &handle->CCR4;
@@ -155,8 +164,8 @@ namespace test::pwm {
             return pred();
         }
 
-        constexpr pwm_channel_config_t make_channel(pwm_channel_t ch, board_pin_t pin, bool invert = false, bool idle = false) {
-            return {.invert_output = invert, .output_idle_state = idle, .channel = ch, .gpio_pin = pin};
+        constexpr pwm_channel_config_t make_channel(pwm_channel_t channel, board_pin_t pin, bool invert = false, bool idle = false) {
+            return {.invert_output = invert, .output_idle_state = idle, .channel = channel, .gpio_pin = pin};
         }
 
         // TESTS
@@ -165,7 +174,7 @@ namespace test::pwm {
             pwm_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
-            config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM3_CH1_PA6);
+            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH1_PA6);
             config.num_channels   = 1;
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_timer_init(nullptr, &config));
@@ -207,7 +216,7 @@ namespace test::pwm {
 
             pwm_timer_config_t config{};
             config.pwm_mode     = PWM_MODE_1;
-            config.channels[0]  = make_channel(PWM_CHANNEL_0, BOARD_TIM10_CH1_PB8);
+            config.channels[0]  = make_channel(PWM_CHANNEL_1, BOARD_TIM10_CH1_PB8);
             config.num_channels = 1;
 
             for (const auto mode : {PWM_EDGE_ALIGNED_DOWNCOUNTING, PWM_CENTER_ALIGNED_MODE_1, PWM_CENTER_ALIGNED_MODE_2, PWM_CENTER_ALIGNED_MODE_3}) {
@@ -245,10 +254,10 @@ namespace test::pwm {
             config.pwm_mode       = PWM_MODE_2;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
 
-            config.channels[0]  = make_channel(PWM_CHANNEL_0, BOARD_TIM3_CH1_PA6, /*invert=*/false);
-            config.channels[1]  = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH2_PA7, /*invert=*/true);
-            config.channels[2]  = make_channel(PWM_CHANNEL_2, BOARD_TIM3_CH3_PB0, /*invert=*/false);
-            config.channels[3]  = make_channel(PWM_CHANNEL_3, BOARD_TIM3_CH4_PB1, /*invert=*/true);
+            config.channels[0]  = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH1_PA6, /*invert=*/false);
+            config.channels[1]  = make_channel(PWM_CHANNEL_2, BOARD_TIM3_CH2_PA7, /*invert=*/true);
+            config.channels[2]  = make_channel(PWM_CHANNEL_3, BOARD_TIM3_CH3_PB0, /*invert=*/false);
+            config.channels[3]  = make_channel(PWM_CHANNEL_4, BOARD_TIM3_CH4_PB1, /*invert=*/true);
             config.num_channels = 4;
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_timer_init(TIM_GP16, &config));
@@ -282,7 +291,7 @@ namespace test::pwm {
             pwm_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
-            config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM3_CH1_PA6);
+            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH1_PA6);
             config.num_channels   = 1;
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_timer_init(TIM_GP16, &config));
@@ -302,7 +311,7 @@ namespace test::pwm {
             pwm_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
-            config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM3_CH1_PA6);
+            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH1_PA6);
             config.num_channels   = 1;
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_timer_init(TIM_GP16, &config));
@@ -320,7 +329,7 @@ namespace test::pwm {
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
             config.wp_level       = WP_OFF; // never anything else -- see note above the test suite
-            config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM1_CH1_PA8);
+            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_advanced_timer_init(nullptr, &config));
@@ -348,10 +357,10 @@ namespace test::pwm {
             config.wp_level                   = WP_OFF;
             config.use_complementary_channels = true;
 
-            config.channels[0]  = make_channel(PWM_CHANNEL_0, BOARD_TIM1_CH1_PA8, /*invert=*/false);
-            config.channels[1]  = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH2_PA9, /*invert=*/true);
-            config.channels[2]  = make_channel(PWM_CHANNEL_2, BOARD_TIM1_CH3_PA10, /*invert=*/false);
-            config.channels[3]  = make_channel(PWM_CHANNEL_3, BOARD_TIM1_CH4_PA11, /*invert=*/true);
+            config.channels[0]  = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8, /*invert=*/false);
+            config.channels[1]  = make_channel(PWM_CHANNEL_2, BOARD_TIM1_CH2_PA9, /*invert=*/true);
+            config.channels[2]  = make_channel(PWM_CHANNEL_3, BOARD_TIM1_CH3_PA10, /*invert=*/false);
+            config.channels[3]  = make_channel(PWM_CHANNEL_4, BOARD_TIM1_CH4_PA11, /*invert=*/true);
             config.num_channels = 4;
 
             config.complementary_channels[0] = {.invert_output = true, .output_idle_state = true, .gpio_pin = BOARD_TIM1_CH1N_PA7};
@@ -369,9 +378,9 @@ namespace test::pwm {
 
             // Channels 0-2 have complementary outputs
             for (size_t i = 0; i < 3; i++) {
-                const auto  ch   = static_cast<pwm_channel_t>(i);
-                const auto  regs = get_channel_regs(TIM_ADV, ch);
-                const auto& comp = config.complementary_channels[i];
+                const auto  channel = static_cast<pwm_channel_t>(i);
+                const auto  regs    = get_channel_regs(TIM_ADV, channel);
+                const auto& comp    = config.complementary_channels[i];
                 TEST_ASSERT_TRUE(TIM_ADV->CCER & regs.ccxne);
                 TEST_ASSERT_EQUAL(comp.invert_output, static_cast<bool>(TIM_ADV->CCER & regs.ccxnp));
                 TEST_ASSERT_EQUAL(comp.output_idle_state, static_cast<bool>(TIM_ADV->CR2 & regs.oisxn));
@@ -395,7 +404,7 @@ namespace test::pwm {
             config.ossi           = true;
             config.clk_div        = TIM_CLK_DIV_4;
             config.repetition_cnt = 7;
-            config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM1_CH1_PA8);
+            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &config));
@@ -438,7 +447,7 @@ namespace test::pwm {
                 config.wp_level       = WP_OFF;
                 config.clk_div        = TIM_CLK_DIV_1;
                 config.dead_time_ns   = dead_time_ns;
-                config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM1_CH1_PA8);
+                config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
                 config.num_channels   = 1;
 
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &config));
@@ -465,7 +474,7 @@ namespace test::pwm {
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
             config.wp_level       = WP_OFF;
             config.dead_time_ns   = 0;
-            config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM1_CH1_PA8);
+            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &config));
@@ -490,7 +499,7 @@ namespace test::pwm {
             config.wp_level       = WP_OFF;
             config.clk_div        = TIM_CLK_DIV_1;
             config.dead_time_ns   = dead_time_ns;
-            config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM1_CH1_PA8);
+            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
 
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, pwm_advanced_timer_init(TIM_ADV, &config));
@@ -506,7 +515,7 @@ namespace test::pwm {
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
             config.wp_level       = WP_OFF;
-            config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM1_CH1_PA8);
+            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
 
             config.break_input.use_break_input = true;
@@ -550,7 +559,7 @@ namespace test::pwm {
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
             config.wp_level       = WP_OFF;
-            config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM1_CH1_PA8);
+            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
 
             config.break_input.use_break_input = true;
@@ -682,8 +691,8 @@ namespace test::pwm {
             reset_pwm(TIM_GP16);
             TIM_GP16->ARR = 999; // edge aligned by default (CMS == 0): max duty == 1000
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(nullptr, PWM_CHANNEL_0, 500));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, PWM_CHANNEL_0, 1001));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(nullptr, PWM_CHANNEL_1, 500));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, PWM_CHANNEL_1, 1001));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, static_cast<pwm_channel_t>(0xFF), 500));
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
@@ -694,8 +703,8 @@ namespace test::pwm {
             reset_pwm(TIM_GP16);
             TIM_GP16->ARR = 999; // CMS == 0: edge aligned, max == 1000
 
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, PWM_CHANNEL_0, 1000));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, PWM_CHANNEL_0, 1001));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, PWM_CHANNEL_1, 1000));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, PWM_CHANNEL_1, 1001));
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
         }
@@ -706,8 +715,8 @@ namespace test::pwm {
             TIM_GP16->ARR = 999;
             TIM_GP16->CR1 |= std::to_underlying(PWM_CENTER_ALIGNED_MODE_1); // CMS != 0: center aligned, max == 999
 
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, PWM_CHANNEL_0, 999));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, PWM_CHANNEL_0, 1000));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, PWM_CHANNEL_1, 999));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, PWM_CHANNEL_1, 1000));
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
         }
@@ -719,7 +728,7 @@ namespace test::pwm {
             reset_pwm(TIM_GP32);
             TIM_GP32->ARR = UINT32_MAX;
 
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP32, PWM_CHANNEL_0, UINT32_MAX));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP32, PWM_CHANNEL_1, UINT32_MAX));
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP32, false));
         }
@@ -729,9 +738,9 @@ namespace test::pwm {
             reset_pwm(TIM_GP16);
             TIM_GP16->ARR = 999;
 
-            for (const auto ch : {PWM_CHANNEL_0, PWM_CHANNEL_1, PWM_CHANNEL_2, PWM_CHANNEL_3}) {
-                TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, ch, 250));
-                TEST_ASSERT_EQUAL_UINT32(250, *get_ccr(TIM_GP16, ch));
+            for (const auto channel : {PWM_CHANNEL_1, PWM_CHANNEL_2, PWM_CHANNEL_3, PWM_CHANNEL_4}) {
+                TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, channel, 250));
+                TEST_ASSERT_EQUAL_UINT32(250, *get_ccr(TIM_GP16, channel));
             }
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
@@ -784,8 +793,8 @@ namespace test::pwm {
         }
 
         void pause_and_resume_channel_reject_invalid_arguments() {
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_pause_channel(nullptr, PWM_CHANNEL_0));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_resume_channel(nullptr, PWM_CHANNEL_0));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_pause_channel(nullptr, PWM_CHANNEL_1));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_resume_channel(nullptr, PWM_CHANNEL_1));
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_pause_channel(TIM_GP16, static_cast<pwm_channel_t>(4)));
@@ -798,12 +807,12 @@ namespace test::pwm {
             reset_pwm(TIM_GP16);
             TIM_GP16->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E;
 
-            for (const auto ch : {PWM_CHANNEL_0, PWM_CHANNEL_1, PWM_CHANNEL_2, PWM_CHANNEL_3}) {
-                const auto regs = get_channel_regs(TIM_GP16, ch);
-                TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_channel(TIM_GP16, ch));
+            for (const auto channel : {PWM_CHANNEL_1, PWM_CHANNEL_2, PWM_CHANNEL_3, PWM_CHANNEL_4}) {
+                const auto regs = get_channel_regs(TIM_GP16, channel);
+                TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_channel(TIM_GP16, channel));
                 TEST_ASSERT_FALSE(TIM_GP16->CCER & regs.ccxe);
 
-                TEST_ASSERT_EQUAL(HAL_OK, pwm_resume_channel(TIM_GP16, ch));
+                TEST_ASSERT_EQUAL(HAL_OK, pwm_resume_channel(TIM_GP16, channel));
                 TEST_ASSERT_TRUE(TIM_GP16->CCER & regs.ccxe);
             }
 
@@ -815,14 +824,14 @@ namespace test::pwm {
             reset_pwm(TIM_ADV);
             TIM_ADV->CCER = TIM_CCER_CC1E | TIM_CCER_CC1NE | TIM_CCER_CC4E;
 
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_channel(TIM_ADV, PWM_CHANNEL_0));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_channel(TIM_ADV, PWM_CHANNEL_1));
             TEST_ASSERT_FALSE(TIM_ADV->CCER & (TIM_CCER_CC1E | TIM_CCER_CC1NE));
 
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_resume_channel(TIM_ADV, PWM_CHANNEL_0));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_resume_channel(TIM_ADV, PWM_CHANNEL_1));
             TEST_ASSERT_TRUE(TIM_ADV->CCER & (TIM_CCER_CC1E | TIM_CCER_CC1NE));
 
             // Channel 3 has no complementary output: pausing it must not touch bits outside CC4E
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_channel(TIM_ADV, PWM_CHANNEL_3));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_channel(TIM_ADV, PWM_CHANNEL_4));
             TEST_ASSERT_FALSE(TIM_ADV->CCER & TIM_CCER_CC4E);
             TEST_ASSERT_TRUE(TIM_ADV->CCER & TIM_CCER_CC1E); // untouched by the channel-3 call
 
@@ -845,7 +854,7 @@ namespace test::pwm {
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
             config.wp_level       = WP_LOCK_LEVEL_1;
-            config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM1_CH1_PA8);
+            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &config));
@@ -862,7 +871,7 @@ namespace test::pwm {
             pwm_timer_config_t gp_config{};
             gp_config.pwm_mode       = PWM_MODE_1;
             gp_config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
-            gp_config.channels[0]    = make_channel(PWM_CHANNEL_0, BOARD_TIM1_CH1_PA8);
+            gp_config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             gp_config.num_channels   = 1;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, pwm_timer_init(TIM_ADV, &gp_config));
 
@@ -922,6 +931,7 @@ namespace test::pwm {
         RUN_TEST(pause_and_resume_channel_reject_invalid_arguments);
         RUN_TEST(pause_and_resume_channel_toggle_only_the_main_output_on_general_purpose_timers);
         RUN_TEST(pause_and_resume_channel_also_toggle_the_complementary_output_on_the_advanced_timer);
+
         RUN_TEST(advanced_timer_init_rejects_reinit_once_locked_but_recovers_after_a_peripheral_reset);
 
         UNITY_END();
