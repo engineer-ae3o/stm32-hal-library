@@ -128,7 +128,7 @@ typedef struct {
 
     pwm_channel_config_t channels[MAX_TIM2_CHANNELS];
     size_t               num_channels;
-} pwm_timer_config_t;
+} pwm_gp_timer_config_t;
 
 
 #endif // PWM_TYPES_H_

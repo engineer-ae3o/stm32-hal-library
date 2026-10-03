@@ -15,7 +15,7 @@ extern "C" {
 
 
 hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_config_t* config);
-hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config);
+hal_err_t pwm_gp_timer_init(TIM_TypeDef* handle, const pwm_gp_timer_config_t* config);
 hal_err_t pwm_deinit(TIM_TypeDef* handle);
 
 hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_duty_cycle);

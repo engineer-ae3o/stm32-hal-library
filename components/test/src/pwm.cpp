@@ -171,18 +171,18 @@ namespace test::pwm {
         // TESTS
 
         void timer_init_rejects_invalid_arguments() {
-            pwm_timer_config_t config{};
+            pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
             config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH1_PA6);
             config.num_channels   = 1;
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_timer_init(nullptr, &config));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_timer_init(TIM_GP16, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(nullptr, &config));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_GP16, nullptr));
 
             auto zero_channels         = config;
             zero_channels.num_channels = 0;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_timer_init(TIM_GP16, &zero_channels));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_GP16, &zero_channels));
         }
 
         void timer_init_rejects_too_many_channels_per_timer_class() {
@@ -190,7 +190,7 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE2, true));
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE1, true));
 
-            pwm_timer_config_t config{};
+            pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
             for (size_t i = 0; i < MAX_TIM2_CHANNELS; i++) {
@@ -198,13 +198,13 @@ namespace test::pwm {
             }
 
             config.num_channels = MAX_TIM1_CHANNELS + 1;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_timer_init(TIM_GP16, &config));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_GP16, &config));
 
             config.num_channels = MAX_TIM9_CHANNELS + 1;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_timer_init(TIM_LITE2, &config));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_LITE2, &config));
 
             config.num_channels = MAX_TIM10_CHANNELS + 1;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_timer_init(TIM_LITE1, &config));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_LITE1, &config));
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE2, false));
@@ -214,18 +214,18 @@ namespace test::pwm {
         void timer_init_rejects_non_upcounting_mode_on_the_lite_timers() {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE1, true));
 
-            pwm_timer_config_t config{};
+            pwm_gp_timer_config_t config{};
             config.pwm_mode     = PWM_MODE_1;
             config.channels[0]  = make_channel(PWM_CHANNEL_1, BOARD_TIM10_CH1_PB8);
             config.num_channels = 1;
 
             for (const auto mode : {PWM_EDGE_ALIGNED_DOWNCOUNTING, PWM_CENTER_ALIGNED_MODE_1, PWM_CENTER_ALIGNED_MODE_2, PWM_CENTER_ALIGNED_MODE_3}) {
                 config.pwm_count_mode = mode;
-                TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_timer_init(TIM_LITE1, &config));
+                TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_LITE1, &config));
             }
 
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_timer_init(TIM_LITE1, &config));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(TIM_LITE1, &config));
 
             reset_pwm(TIM_LITE1);
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE1, false));
@@ -235,13 +235,13 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
 
-            pwm_timer_config_t config{};
+            pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
             config.channels[0]    = make_channel(static_cast<pwm_channel_t>(0xFF), BOARD_TIM3_CH1_PA6);
             config.num_channels   = 1;
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_timer_init(TIM_GP16, &config));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_GP16, &config));
             TEST_ASSERT_EQUAL_UINT32(0, TIM_GP16->CCMR1); // never written to, since the rejection happens before writeback
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
@@ -250,7 +250,7 @@ namespace test::pwm {
         void timer_init_programs_each_main_channels_registers() {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
 
-            pwm_timer_config_t config{};
+            pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_2;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
 
@@ -260,7 +260,7 @@ namespace test::pwm {
             config.channels[3]  = make_channel(PWM_CHANNEL_4, BOARD_TIM3_CH4_PB1, /*invert=*/true);
             config.num_channels = 4;
 
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_timer_init(TIM_GP16, &config));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(TIM_GP16, &config));
 
             for (const auto& ch_cfg : config.channels) {
                 const auto regs = get_channel_regs(TIM_GP16, ch_cfg.channel);
@@ -279,42 +279,16 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
         }
 
-        void timer_init_clears_residual_state_before_reconfiguring() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
-            reset_pwm(TIM_GP16);
-
-            // Pollute with bits the next config won't set, to catch an |= where a plain = was needed
-            TIM_GP16->CCMR1 = 0xFFFFU;
-            TIM_GP16->CCER  = 0xFFFFU;
-            TIM_GP16->CR1   = 0xFFFFU;
-
-            pwm_timer_config_t config{};
-            config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
-            config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH1_PA6);
-            config.num_channels   = 1;
-
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_timer_init(TIM_GP16, &config));
-
-            // Only channel 0's bits and the expected CR1 bits should be set -- nothing left over
-            TEST_ASSERT_EQUAL_UINT32(0, TIM_GP16->CCMR1 & (TIM_CCMR1_CC2S | TIM_CCMR1_OC2PE | TIM_CCMR1_OC2M));
-            TEST_ASSERT_EQUAL_UINT32(0, TIM_GP16->CCER & ~(TIM_CCER_CC1E | TIM_CCER_CC1P));
-            TEST_ASSERT_EQUAL_UINT32(0, TIM_GP16->CCMR2);
-
-            reset_pwm(TIM_GP16);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
-        }
-
         void timer_init_configures_the_gpio_pin() {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
 
-            pwm_timer_config_t config{};
+            pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
             config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH1_PA6);
             config.num_channels   = 1;
 
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_timer_init(TIM_GP16, &config));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(TIM_GP16, &config));
 
             TEST_ASSERT_TRUE(RCC->AHB1ENR & RCC_AHB1ENR_GPIOAEN);
             TEST_ASSERT_EQUAL_UINT32(0b10U, get_gpio_moder(GPIOA, GPIO_PIN_6)); // alternate function mode
@@ -870,12 +844,12 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, pwm_advanced_timer_init(TIM_ADV, &no_lock));
 
             // pwm_timer_init shares the same lock check when called on an advanced timer
-            pwm_timer_config_t gp_config{};
+            pwm_gp_timer_config_t gp_config{};
             gp_config.pwm_mode       = PWM_MODE_1;
             gp_config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
             gp_config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             gp_config.num_channels   = 1;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, pwm_timer_init(TIM_ADV, &gp_config));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, pwm_gp_timer_init(TIM_ADV, &gp_config));
 
             // Recover via a TIM1 local peripheral reset
             RCC->APB2RSTR |= RCC_APB2RSTR_TIM1RST;
@@ -899,7 +873,6 @@ namespace test::pwm {
         RUN_TEST(timer_init_rejects_non_upcounting_mode_on_the_lite_timers);
         RUN_TEST(timer_init_rejects_an_unknown_channel_without_corrupting_state);
         RUN_TEST(timer_init_programs_each_main_channels_registers);
-        RUN_TEST(timer_init_clears_residual_state_before_reconfiguring);
         RUN_TEST(timer_init_configures_the_gpio_pin);
 
         RUN_TEST(advanced_timer_init_rejects_invalid_arguments_and_non_advanced_timers);

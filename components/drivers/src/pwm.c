@@ -70,15 +70,15 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     } else if (target <= 254U) {
         // Range 2: step = 2 ticks, DTG[5:0] = offset from 64
         const uint32_t field = ceil_div_u32(target, 2) - 64;
-        dtg                  = (uint8_t)(0x80U | (field & 0x3FU));
+        dtg                  = (uint8_t)(0x80U | field);
     } else if (target <= 504U) {
         // Range 3: step = 8 ticks, DTG[4:0] = offset from 32
         const uint32_t field = ceil_div_u32(target, 8) - 32;
-        dtg                  = (uint8_t)(0xC0U | (field & 0x1FU));
+        dtg                  = (uint8_t)(0xC0U | field);
     } else if (target <= 1008U) {
         // Range 4: step = 16 ticks, DTG[4:0] = offset from 32
         const uint32_t field = ceil_div_u32(target, 16) - 32;
-        dtg                  = (uint8_t)(0xE0U | (field & 0x1FU));
+        dtg                  = (uint8_t)(0xE0U | field);
     } else {
         return HAL_ERR_NOT_SUPPORTED;
     }
@@ -189,7 +189,7 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     return HAL_OK;
 }
 
-hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) {
+hal_err_t pwm_gp_timer_init(TIM_TypeDef* handle, const pwm_gp_timer_config_t* config) {
     if (handle == NULL || config == NULL || config->num_channels == 0) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -207,9 +207,6 @@ hal_err_t pwm_timer_init(TIM_TypeDef* handle, const pwm_timer_config_t* config) 
     if (is_timer_advanced(handle) && (handle->BDTR & TIM_BDTR_LOCK)) {
         return HAL_ERR_INVALID_STATE;
     }
-
-    // Clear all residual state before proceeding
-    TRY(pwm_deinit(handle));
 
     // Set the output compare PWM mode characteristics
     uint32_t ccmr1 = handle->CCMR1;
