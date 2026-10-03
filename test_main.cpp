@@ -1,20 +1,20 @@
-#include "drivers/pwm_types.h"
 #include "test/profile.hpp"
 #include "test/runner.hpp"
-#include "utils/board.h"
 #include "utils/common.h"
+#include "test/demo.hpp"
 #include "utils/log.h"
-
-#include "drivers/pwm.h"
 
 
 extern "C" {
 int main() {
     // Run all the hardware driver tests
-    test::runner();
+    // test::runner();
 
     // Run the profile tests
     // profile::all();
+
+    // Run the hardware demos
+    demo::all();
 
     // Halt once tests are finished since nothing else to do.
     LOGI("Main", "Done with all tests. Halting...");

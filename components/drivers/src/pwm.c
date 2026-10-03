@@ -261,12 +261,6 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
         return HAL_ERR_INVALID_ARG;
     }
 
-    // This requires that the timer be explicitly frozen/disabled
-    // It also unfreezes the timer when done with the frequency setup
-    if (handle->CR1 & TIM_CR1_CEN) {
-        return HAL_ERR_INVALID_STATE;
-    }
-
     const uint32_t timer_freq_hz = timer_get_frequency_hz(handle);
     if (frequency_hz > timer_freq_hz) {
         return HAL_ERR_NOT_SUPPORTED;
@@ -299,10 +293,13 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
         arr_plus_1 = round_div_u64(total_ticks_per_period, psc_plus_1);
     }
 
-    // Bounds check the prescaler and reload value
+    // Bounds check the prescaler and reload values
     if ((psc_plus_1 > (UINT16_MAX + 1)) || (arr_plus_1 > max_arr_plus_1)) {
         return HAL_ERR_NOT_SUPPORTED; // Frequency too low for timer clock
     }
+
+    // Freeze the timer's output before writing to any of its registers
+    TRY(pwm_freeze_timer(handle));
 
     // Set the actual reload and prescaler values
     handle->ARR = (uint32_t)(arr_plus_1 - 1);
@@ -318,11 +315,11 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
     handle->EGR = TIM_EGR_UG;
     handle->SR  = ~TIM_SR_UIF;
 
-    // Derive the maximum duty cycle from the auto-reload register
-    *max_duty_cycle = get_max_duty_cycle(handle);
-
     // Enable the timer's output
     TRY(pwm_unfreeze_timer(handle));
+
+    // Derive the maximum duty cycle from the auto-reload register
+    *max_duty_cycle = get_max_duty_cycle(handle);
 
     return HAL_OK;
 }
@@ -357,10 +354,6 @@ hal_err_t pwm_freeze_timer(TIM_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (!(handle->CR1 & TIM_CR1_CEN)) {
-        return HAL_ERR_INVALID_STATE;
-    }
-
     // Freeze the counter and disable the timer's main output
     if (is_timer_advanced(handle)) {
         handle->BDTR &= ~TIM_BDTR_MOE;
@@ -373,10 +366,6 @@ hal_err_t pwm_freeze_timer(TIM_TypeDef* handle) {
 hal_err_t pwm_unfreeze_timer(TIM_TypeDef* handle) {
     if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
-    }
-
-    if (handle->CR1 & TIM_CR1_CEN) {
-        return HAL_ERR_INVALID_STATE;
     }
 
     // Unfreeze the counter and enable the timer's main output
