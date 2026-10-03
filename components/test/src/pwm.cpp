@@ -536,12 +536,8 @@ namespace test::pwm {
             TEST_ASSERT_TRUE(RCC->AHB1ENR & RCC_AHB1ENR_GPIOAEN);
             TEST_ASSERT_EQUAL_UINT32(1U, get_gpio_afr(GPIOA, GPIO_PIN_6)); // AF1, per BOARD_TIM1_BKIN_PA6
 
-            // Force the break condition and the NVIC pend directly: there's no safe way to
-            // drive the physical BKIN pin from here, so this exercises the ISR dispatch path
-            // (TIM1_BRK_TIM9_IRQn -> timer_isr_helper -> s_advanced_timer_cb.break_input_cb),
-            // not the analog/digital break detection itself.
-            TIM_ADV->SR |= TIM_SR_BIF;
-            NVIC_SetPendingIRQ(TIM1_BRK_TIM9_IRQn);
+            // Simulate a break event with the BG bit in the event generation register.
+            TIM_ADV->EGR = TIM_EGR_BG;
 
             TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
                                          return s_brk_fired;
