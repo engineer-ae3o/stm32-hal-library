@@ -19,7 +19,7 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable);
 void gpio_set_output(GPIO_TypeDef* port, gpio_pin_t pin);
 void gpio_set_input(GPIO_TypeDef* port, gpio_pin_t pin);
 void gpio_set_analog(GPIO_TypeDef* port, gpio_pin_t pin);
-void gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t alt_val);
+void gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t af);
 
 void gpio_enable_pullups(GPIO_TypeDef* port, gpio_pin_t pin, bool enable);
 void gpio_enable_pulldowns(GPIO_TypeDef* port, gpio_pin_t pin, bool enable);

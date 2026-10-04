@@ -104,7 +104,7 @@ void gpio_set_analog(GPIO_TypeDef* port, gpio_pin_t pin) {
     }
 }
 
-void gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t alt_val) {
+void gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t af) {
     if (port) {
         // Set the MODER for alternate mode
         port->MODER = (port->MODER & ~(0b11UL << (pin * 2))) | (0b10UL << (pin * 2));
@@ -112,10 +112,10 @@ void gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t alt
         // Set the specified alternate function
         if (pin <= GPIO_PIN_7) {
             port->AFR[0] &= ~(0xFUL << (pin * 4UL));
-            port->AFR[0] |= ((alt_val & 0xFUL) << (pin * 4UL));
+            port->AFR[0] |= ((af & 0xFUL) << (pin * 4UL));
         } else {
             port->AFR[1] &= ~(0xFUL << ((pin - 8) * 4UL));
-            port->AFR[1] |= ((alt_val & 0xFUL) << ((pin - 8) * 4UL));
+            port->AFR[1] |= ((af & 0xFUL) << ((pin - 8) * 4UL));
         }
     }
 }

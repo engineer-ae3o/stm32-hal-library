@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 
+#include "stm32f411xe.h"
 #include "utils/log.h"
 #include "utils/err.h"
 
@@ -36,11 +37,32 @@ extern "C" {
 #define gnu_unlikely(x) __builtin_expect(!!(x), 0)
 
 // The system tick rate
-#define TICK_RATE_Hz (1'000)
+#define TICK_RATE_Hz (1000U)
 
-#define HEAP_SIZE_kB (32)
+#define HEAP_SIZE_kB (32U)
 #define HEAP_SIZE_BYTES ((HEAP_SIZE_kB) * 1024)
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+
+// Ceiling division: smallest integer >= a/b.
+// Assumes a + b - 1 does not overflow the type.
+[[__gnu__::__always_inline__]] static inline uint32_t ceil_div_u32(uint32_t a, uint32_t b) {
+    return (a + (b - 1)) / b;
+}
+
+[[__gnu__::__always_inline__]] static inline uint64_t ceil_div_u64(uint64_t a, uint64_t b) {
+    return (a + (b - 1)) / b;
+}
+
+// Round half up division: nearest integer to a/b.
+// Assumes a + b/2 does not overflow the type.
+[[__gnu__::__always_inline__]] static inline uint32_t round_div_u32(uint32_t a, uint32_t b) {
+    return (a + (b / 2)) / b;
+}
+
+[[__gnu__::__always_inline__]] static inline uint64_t round_div_u64(uint64_t a, uint64_t b) {
+    return (a + (b / 2)) / b;
+}
 
 
 #define REBOOT()                                                                                                                                     \
@@ -59,7 +81,16 @@ extern "C" {
     } while (0)
 
 
-[[__gnu__::__noreturn__]] void halt(void);
+[[__gnu__::__noreturn__, __gnu__::__always_inline__]] static inline void halt(void) {
+    __disable_irq();
+#if defined(DEBUG)
+    __BKPT(0);
+#endif
+    while (true) {
+        __WFI();
+    }
+}
+
 [[__gnu__::__noreturn__]] void panic(const char* function, const char* file, int line);
 
 void restart(const char* function, const char* file, int line);

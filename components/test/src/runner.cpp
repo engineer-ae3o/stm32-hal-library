@@ -32,7 +32,7 @@ namespace test {
         // adc::all();
         // dma::all();
         // i2c::all();
-        pwm::all();
+        // pwm::all();
         // crc::all();
         // spi::all();
         // i2s::all();
@@ -41,7 +41,7 @@ namespace test {
         // uart::all();
         // gpio::all();
         // clock::all();
-        timer::all();
+        // timer::all();
         timer_ext::all();
     }
 

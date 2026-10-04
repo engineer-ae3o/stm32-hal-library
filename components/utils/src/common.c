@@ -3,16 +3,6 @@
 #include "utils/log.h"
 
 
-void halt(void) {
-    __disable_irq();
-#if defined(DEBUG)
-    __BKPT(0);
-#endif
-    while (true) {
-        __WFI();
-    }
-}
-
 void panic(const char* function, const char* file, int line) {
     LOGE("Panic", "Fatal error from %s (%s:%d)", function, file, line);
     halt();

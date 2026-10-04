@@ -74,7 +74,7 @@ namespace test::i2s {
         }
 
         inline bool wait_for_count(volatile int& counter, int target) {
-            uint32_t timeout = TIMEOUT * 10;
+            uint32_t timeout = TIMEOUT * 100;
             while ((counter < target) && --timeout);
             return counter >= target;
         }

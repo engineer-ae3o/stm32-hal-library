@@ -10,6 +10,7 @@ set(SRCS
     src/pwm.cpp
     src/adc.cpp
     src/dma.cpp
+    src/demo.cpp
     src/heap.cpp
     src/gpio.cpp
     src/uart.cpp
