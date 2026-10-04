@@ -8,13 +8,13 @@
 extern "C" {
 int main() {
     // Run all the hardware driver tests
-    // test::runner();
+    test::runner();
 
     // Run the profile tests
     // profile::all();
 
     // Run the hardware demos
-    demo::all();
+    // demo::all();
 
     // Halt once tests are finished since nothing else to do.
     LOGI("Main", "Done with all tests. Halting...");

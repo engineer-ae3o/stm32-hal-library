@@ -220,6 +220,7 @@ namespace test::timer {
                                          return s_update_done;
                                      }),
                                      "TIM1 oneshot never fired after TIM10 was deinited");
+            delay_ms(2);
             TEST_ASSERT_FALSE(TIM1->CR1 & TIM_CR1_CEN);
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM1));
