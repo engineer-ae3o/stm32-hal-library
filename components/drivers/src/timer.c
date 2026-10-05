@@ -247,7 +247,9 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     const bool timer_advanced = is_timer_advanced(handle);
     if (timer_advanced) {
         handle->RCR &= ~TIM_RCR_REP;
-        handle->BDTR &= ~(TIM_BDTR_DTG | TIM_BDTR_LOCK | TIM_BDTR_OSSI | TIM_BDTR_OSSR | TIM_BDTR_BKE | TIM_BDTR_BKP | TIM_BDTR_AOE | TIM_BDTR_MOE);
+        // The BDTR register cannot be cleared because the LOCK bits in it can only be written once.
+        // They require a full peripheral or chip level reset before they can be written to.
+        // Clearing it here could be hazardous and use up that only write we have.
     }
 
     // Disable the timer's NVIC interrupt

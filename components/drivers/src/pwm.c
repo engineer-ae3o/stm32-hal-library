@@ -64,6 +64,9 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         return HAL_ERR_NOT_SUPPORTED;
     }
 
+    // Clear all residual state
+    TRY(pwm_deinit(handle));
+
     // Set the output compare PWM mode characteristics
     uint32_t ccmr1 = handle->CCMR1;
     uint32_t ccmr2 = handle->CCMR2;
@@ -129,8 +132,8 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     }
 
     // Configure the run and idle off-state selection of the channels and the write protection level
-    bdtr |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0) | (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos) |
-            (uint32_t)(dtg << TIM_BDTR_DTG_Pos);
+    bdtr = (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0) | (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos) |
+           (uint32_t)(dtg << TIM_BDTR_DTG_Pos) | ~(bdtr & TIM_BDTR_MOE);
 
     // Configure the break input
     if (config->break_input.use_break_input) {
@@ -188,6 +191,9 @@ hal_err_t pwm_gp_timer_init(TIM_TypeDef* handle, const pwm_gp_timer_config_t* co
     if (is_timer_advanced(handle) && (handle->BDTR & TIM_BDTR_LOCK)) {
         return HAL_ERR_INVALID_STATE;
     }
+
+    // Clear all residual state
+    TRY(pwm_deinit(handle));
 
     // Set the output compare PWM mode characteristics
     uint32_t ccmr1 = handle->CCMR1;
