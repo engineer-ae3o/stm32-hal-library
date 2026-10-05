@@ -202,7 +202,7 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_
     TRY(timer_register_callback(handle, callback, arg, UPDATE_EVENT));
 
     // Set the counting direction. Edge aligned (up or downcounting)
-    handle->CR1 = (uint32_t)(direction << TIM_CR1_DIR_Pos);
+    handle->CR1 = (uint32_t)direction | ~(handle->CR1 & TIM_CR1_CMS);
 
     return HAL_OK;
 }
@@ -233,9 +233,16 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     handle->PSC  = 0;
     handle->ARR  = 0;
     handle->CCR1 = 0;
-    handle->CCR2 = 0;
-    handle->CCR3 = 0;
-    handle->CCR4 = 0;
+
+    // TIM10 and TIM11 only have CCR1
+    if (!(handle == TIM10 || handle == TIM11)) {
+        handle->CCR2 = 0;
+        // TIM9 only has CCR1 and CCR2
+        if (handle != TIM9) {
+            handle->CCR3 = 0;
+            handle->CCR4 = 0;
+        }
+    }
 
     const bool timer_advanced = is_timer_advanced(handle);
     if (timer_advanced) {

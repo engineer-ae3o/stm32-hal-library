@@ -12,25 +12,6 @@
 
 
 // Helper
-[[__gnu__::__always_inline__]] static inline uint32_t get_max_duty_cycle(TIM_TypeDef* handle) {
-    if (handle->CR1 & TIM_CR1_CMS) {
-        // Center aligned PWM
-        return handle->ARR;
-    } else {
-        // Edge aligned PWM
-        // Doing it like this introduces an off by one error at the edge, but it only happens
-        // when the timer is 32 bits and and ARR happens to hold its maximum value. I do
-        // it like this because using uint64_t would be much slower for a case that will almost
-        // never occur in any real usage. The maximum duty cycle is ARR + 1, hence the off
-        // by one at the boundary of 32 bits. The off by one error is a non factor regardless.
-        if (gnu_unlikely(handle->ARR == (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX))) {
-            return handle->ARR;
-        } else {
-            return handle->ARR + 1;
-        }
-    }
-}
-
 static hal_err_t config_pwm_pin(board_pin_t gpio) {
     TRY(gpiox_clk_enable(gpio.port, true));
     gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
@@ -252,8 +233,7 @@ hal_err_t pwm_gp_timer_init(TIM_TypeDef* handle, const pwm_gp_timer_config_t* co
 }
 
 hal_err_t pwm_deinit(TIM_TypeDef* handle) {
-    TRY(timer_deinit(handle));
-    return HAL_OK;
+    return timer_deinit(handle);
 }
 
 hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_duty_cycle) {
@@ -267,7 +247,7 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
     }
 
     // Get the denominator as it has different meanings depending on whether its center or edge aligned PWM
-    const uint32_t total_ticks_per_period = ((2 * timer_freq_hz) + frequency_hz) / (2 * frequency_hz);
+    const uint32_t total_ticks_per_period = round_div_u32(timer_freq_hz, frequency_hz);
 
     // Get the maximum width of the auto-reload register since it varies per timer
     const uint32_t max_arr        = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
@@ -319,13 +299,13 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
     TRY(pwm_unfreeze_timer(handle));
 
     // Derive the maximum duty cycle from the auto-reload register
-    *max_duty_cycle = get_max_duty_cycle(handle);
+    *max_duty_cycle = timer_get_max_duty_cycle(handle);
 
     return HAL_OK;
 }
 
 hal_err_t pwm_set_duty_cycle(TIM_TypeDef* handle, pwm_channel_t channel, uint32_t duty_cycle) {
-    if (handle == NULL || duty_cycle > get_max_duty_cycle(handle)) {
+    if (handle == NULL || duty_cycle > timer_get_max_duty_cycle(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -358,6 +338,7 @@ hal_err_t pwm_freeze_timer(TIM_TypeDef* handle) {
     if (is_timer_advanced(handle)) {
         handle->BDTR &= ~TIM_BDTR_MOE;
     }
+    handle->CCER &= ~(TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
     handle->CR1 &= ~TIM_CR1_CEN;
 
     return HAL_OK;
@@ -372,6 +353,7 @@ hal_err_t pwm_unfreeze_timer(TIM_TypeDef* handle) {
     if (is_timer_advanced(handle)) {
         handle->BDTR |= TIM_BDTR_MOE;
     }
+    handle->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
     handle->CR1 |= TIM_CR1_CEN;
 
     return HAL_OK;
@@ -427,4 +409,24 @@ hal_err_t pwm_resume_channel(TIM_TypeDef* handle, pwm_channel_t channel) {
     }
 
     return HAL_OK;
+}
+
+// Internal helper
+uint32_t timer_get_max_duty_cycle(TIM_TypeDef* handle) {
+    if (handle->CR1 & TIM_CR1_CMS) {
+        // Center aligned PWM
+        return handle->ARR;
+    } else {
+        // Edge aligned PWM
+        // Doing it like this introduces an off by one error at the edge, but it only happens
+        // when the timer is 32 bits and and ARR happens to hold its maximum value. I do
+        // it like this because using uint64_t would be much slower for a case that will almost
+        // never occur in any real usage. The maximum duty cycle is ARR + 1, hence the off
+        // by one at the boundary of 32 bits. The off by one error is a non factor regardless.
+        if (gnu_unlikely(handle->ARR == (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX))) {
+            return handle->ARR;
+        } else {
+            return handle->ARR + 1;
+        }
+    }
 }

@@ -14,8 +14,8 @@ extern "C" {
 
 
 typedef enum : uint8_t {
-    TIMER_COUNTER_UP,
-    TIMER_COUNTER_DOWN,
+    TIMER_COUNTER_UP   = 0b0 << TIM_CR1_DIR_Pos,
+    TIMER_COUNTER_DOWN = 0b1 << TIM_CR1_DIR_Pos,
 } timer_count_dir_t;
 
 typedef void (*timer_cb_t)(void* arg);
