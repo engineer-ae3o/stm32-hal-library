@@ -143,12 +143,6 @@ hal_err_t timer_oc_start(TIM_TypeDef* handle, uint32_t tick_rate_hz, uint32_t* m
     handle->ARR = (uint32_t)(arr_plus_1 - 1);
     handle->PSC = (uint32_t)(psc_plus_1 - 1);
 
-    // Set all channels' duty cycles to 0 since starting afresh with a new frequency
-    handle->CCR1 = 0;
-    handle->CCR2 = 0;
-    handle->CCR3 = 0;
-    handle->CCR4 = 0;
-
     // Generate an update event after modifying the auto reload and prescaler registers
     handle->EGR = TIM_EGR_UG;
     handle->SR  = ~TIM_SR_UIF;
@@ -212,7 +206,6 @@ hal_err_t timer_oc_freeze_timer(TIM_TypeDef* handle) {
     if (is_timer_advanced(handle)) {
         handle->BDTR &= ~TIM_BDTR_MOE;
     }
-    handle->CCER &= ~(TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
     handle->CR1 &= ~TIM_CR1_CEN;
 
     return HAL_OK;
@@ -227,7 +220,6 @@ hal_err_t timer_oc_unfreeze_timer(TIM_TypeDef* handle) {
     if (is_timer_advanced(handle)) {
         handle->BDTR |= TIM_BDTR_MOE;
     }
-    handle->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
     handle->CR1 |= TIM_CR1_CEN;
 
     return HAL_OK;

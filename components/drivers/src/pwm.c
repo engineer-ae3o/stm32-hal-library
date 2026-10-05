@@ -133,7 +133,7 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
 
     // Configure the run and idle off-state selection of the channels and the write protection level
     bdtr = (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0) | (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos) |
-           (uint32_t)(dtg << TIM_BDTR_DTG_Pos) | ~(bdtr & TIM_BDTR_MOE);
+           (uint32_t)(dtg << TIM_BDTR_DTG_Pos);
 
     // Configure the break input
     if (config->break_input.use_break_input) {
@@ -344,7 +344,6 @@ hal_err_t pwm_freeze_timer(TIM_TypeDef* handle) {
     if (is_timer_advanced(handle)) {
         handle->BDTR &= ~TIM_BDTR_MOE;
     }
-    handle->CCER &= ~(TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
     handle->CR1 &= ~TIM_CR1_CEN;
 
     return HAL_OK;
@@ -359,7 +358,6 @@ hal_err_t pwm_unfreeze_timer(TIM_TypeDef* handle) {
     if (is_timer_advanced(handle)) {
         handle->BDTR |= TIM_BDTR_MOE;
     }
-    handle->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E);
     handle->CR1 |= TIM_CR1_CEN;
 
     return HAL_OK;
