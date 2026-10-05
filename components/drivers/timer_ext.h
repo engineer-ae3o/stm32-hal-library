@@ -21,10 +21,13 @@ extern "C" {
 // Output Compare
 hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config);
 hal_err_t timer_oc_deinit(TIM_TypeDef* handle);
+
 hal_err_t timer_oc_start(TIM_TypeDef* handle, uint32_t tick_rate_hz, uint32_t* max_compare_level);
 hal_err_t timer_oc_set_compare(TIM_TypeDef* handle, timer_oc_channel_t channel, uint32_t compare_level);
+
 hal_err_t timer_oc_pause_channel(TIM_TypeDef* handle, timer_oc_channel_t channel);
 hal_err_t timer_oc_resume_channel(TIM_TypeDef* handle, timer_oc_channel_t channel);
+
 hal_err_t timer_oc_freeze_timer(TIM_TypeDef* handle);
 hal_err_t timer_oc_unfreeze_timer(TIM_TypeDef* handle);
 

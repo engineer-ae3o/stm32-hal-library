@@ -10,21 +10,20 @@
 #include <stddef.h>
 
 
-// TIM1 PWM channels
+// TIM1 channels
 #define MAX_TIM1_CHANNELS (4U)
 #define MAX_TIM1_COMPLEMENTARY_CHANNELS (3U)
 
-// General purpose timers PWM channels
+// General purpose timers channels
 #define MAX_TIM2_CHANNELS (4U)
 #define MAX_TIM3_CHANNELS (4U)
 #define MAX_TIM4_CHANNELS (4U)
 #define MAX_TIM5_CHANNELS (4U)
 
-// Lite timers PWM channels
+// Lite timers channels
 #define MAX_TIM9_CHANNELS (2U)
 #define MAX_TIM10_CHANNELS (1U)
 #define MAX_TIM11_CHANNELS (1U)
-
 
 typedef enum : uint8_t {
     PWM_CHANNEL_1 = 0,
@@ -36,8 +35,8 @@ typedef enum : uint8_t {
 
 typedef enum : uint8_t {
     // Edge aligned Modes (CMS = 00)
-    PWM_EDGE_ALIGNED_UPCOUNTING   = (0b00U << TIM_CR1_CMS_Pos) | (0b0U << TIM_CR1_DIR_Pos), // Left aligned PWM
-    PWM_EDGE_ALIGNED_DOWNCOUNTING = (0b00U << TIM_CR1_CMS_Pos) | (0b1U << TIM_CR1_DIR_Pos), // Right aligned PWM
+    PWM_EDGE_LEFT_ALIGNED  = (0b00U << TIM_CR1_CMS_Pos) | (0b0U << TIM_CR1_DIR_Pos), // Upcounting
+    PWM_EDGE_RIGHT_ALIGNED = (0b00U << TIM_CR1_CMS_Pos) | (0b1U << TIM_CR1_DIR_Pos), // Downcounting
 
     // Center aligned Modes (CMS != 00; DIR is controlled by the timer hardware)
     PWM_CENTER_ALIGNED_MODE_1 = (0b01U << TIM_CR1_CMS_Pos), // Center aligned PWM (Interrupt compare flag set only on downcount)

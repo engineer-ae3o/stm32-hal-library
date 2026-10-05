@@ -177,7 +177,7 @@ hal_err_t pwm_gp_timer_init(TIM_TypeDef* handle, const pwm_gp_timer_config_t* co
 
     // TIM9-TIM11 only support upcounting edge aligned upcounting
     // TIM1-TIM5 all have 4 main PWM channels, TIM9 has 2 and TIM10-TIM11 have 1 each
-    if (((handle == TIM9 || handle == TIM10 || handle == TIM11) && (config->pwm_count_mode != PWM_EDGE_ALIGNED_UPCOUNTING)) ||
+    if (((handle == TIM9 || handle == TIM10 || handle == TIM11) && (config->pwm_count_mode != PWM_EDGE_LEFT_ALIGNED)) ||
         ((handle == TIM1 || handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) && (config->num_channels > MAX_TIM1_CHANNELS)) ||
         ((handle == TIM9) && (config->num_channels > MAX_TIM9_CHANNELS)) ||
         ((handle == TIM10 || handle == TIM11) && (config->num_channels > MAX_TIM10_CHANNELS))) {
@@ -299,13 +299,13 @@ hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_du
     TRY(pwm_unfreeze_timer(handle));
 
     // Derive the maximum duty cycle from the auto-reload register
-    *max_duty_cycle = timer_get_max_duty_cycle(handle);
+    *max_duty_cycle = timer_get_max_compare_level(handle);
 
     return HAL_OK;
 }
 
 hal_err_t pwm_set_duty_cycle(TIM_TypeDef* handle, pwm_channel_t channel, uint32_t duty_cycle) {
-    if (handle == NULL || duty_cycle > timer_get_max_duty_cycle(handle)) {
+    if (handle == NULL || duty_cycle > timer_get_max_compare_level(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -412,7 +412,7 @@ hal_err_t pwm_resume_channel(TIM_TypeDef* handle, pwm_channel_t channel) {
 }
 
 // Internal helper
-uint32_t timer_get_max_duty_cycle(TIM_TypeDef* handle) {
+uint32_t timer_get_max_compare_level(TIM_TypeDef* handle) {
     if (handle->CR1 & TIM_CR1_CMS) {
         // Center aligned PWM
         return handle->ARR;

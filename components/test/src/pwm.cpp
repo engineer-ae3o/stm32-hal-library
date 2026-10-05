@@ -175,7 +175,7 @@ namespace test::pwm {
         void timer_init_rejects_invalid_arguments() {
             pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH1_PA6);
             config.num_channels   = 1;
 
@@ -194,7 +194,7 @@ namespace test::pwm {
 
             pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             for (size_t i = 0; i < MAX_TIM2_CHANNELS; i++) {
                 config.channels[i] = make_channel(static_cast<pwm_channel_t>(i), BOARD_TIM3_CH1_PA6);
             }
@@ -221,12 +221,12 @@ namespace test::pwm {
             config.channels[0]  = make_channel(PWM_CHANNEL_1, BOARD_TIM10_CH1_PB8);
             config.num_channels = 1;
 
-            for (const auto mode : {PWM_EDGE_ALIGNED_DOWNCOUNTING, PWM_CENTER_ALIGNED_MODE_1, PWM_CENTER_ALIGNED_MODE_2, PWM_CENTER_ALIGNED_MODE_3}) {
+            for (const auto mode : {PWM_EDGE_RIGHT_ALIGNED, PWM_CENTER_ALIGNED_MODE_1, PWM_CENTER_ALIGNED_MODE_2, PWM_CENTER_ALIGNED_MODE_3}) {
                 config.pwm_count_mode = mode;
                 TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_LITE1, &config));
             }
 
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(TIM_LITE1, &config));
 
             reset_pwm(TIM_LITE1);
@@ -239,7 +239,7 @@ namespace test::pwm {
 
             pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             config.channels[0]    = make_channel(static_cast<pwm_channel_t>(0xFF), BOARD_TIM3_CH1_PA6);
             config.num_channels   = 1;
 
@@ -254,7 +254,7 @@ namespace test::pwm {
 
             pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_2;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
 
             config.channels[0]  = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH1_PA6, /*invert=*/false);
             config.channels[1]  = make_channel(PWM_CHANNEL_2, BOARD_TIM3_CH2_PA7, /*invert=*/true);
@@ -275,7 +275,7 @@ namespace test::pwm {
 
             TEST_ASSERT_TRUE(TIM_GP16->CR1 & TIM_CR1_ARPE);
             TEST_ASSERT_TRUE(TIM_GP16->CR1 & TIM_CR1_URS);
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(PWM_EDGE_ALIGNED_UPCOUNTING), TIM_GP16->CR1 & (TIM_CR1_CMS | TIM_CR1_DIR));
+            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(PWM_EDGE_LEFT_ALIGNED), TIM_GP16->CR1 & (TIM_CR1_CMS | TIM_CR1_DIR));
 
             reset_pwm(TIM_GP16);
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
@@ -286,7 +286,7 @@ namespace test::pwm {
 
             pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM3_CH1_PA6);
             config.num_channels   = 1;
 
@@ -303,7 +303,7 @@ namespace test::pwm {
         void advanced_timer_init_rejects_invalid_arguments_and_non_advanced_timers() {
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             config.wp_level       = WP_OFF; // Never anything else yet. See note above the test suite
             config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
@@ -329,7 +329,7 @@ namespace test::pwm {
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode                   = PWM_MODE_1;
-            config.pwm_count_mode             = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode             = PWM_EDGE_LEFT_ALIGNED;
             config.wp_level                   = WP_OFF;
             config.use_complementary_channels = true;
 
@@ -419,7 +419,7 @@ namespace test::pwm {
 
                 pwm_advanced_timer_config_t config{};
                 config.pwm_mode       = PWM_MODE_1;
-                config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+                config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
                 config.wp_level       = WP_OFF;
                 config.clk_div        = TIM_CLK_DIV_1;
                 config.dead_time_ns   = dead_time_ns;
@@ -447,7 +447,7 @@ namespace test::pwm {
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             config.wp_level       = WP_OFF;
             config.dead_time_ns   = 0;
             config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
@@ -471,7 +471,7 @@ namespace test::pwm {
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             config.wp_level       = WP_OFF;
             config.clk_div        = TIM_CLK_DIV_1;
             config.dead_time_ns   = dead_time_ns;
@@ -490,7 +490,7 @@ namespace test::pwm {
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             config.wp_level       = WP_OFF;
             config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
@@ -531,7 +531,7 @@ namespace test::pwm {
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             config.wp_level       = WP_OFF;
             config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
@@ -806,7 +806,7 @@ namespace test::pwm {
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
-            config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             config.wp_level       = WP_LOCK_LEVEL_3;
             config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             config.num_channels   = 1;
@@ -824,7 +824,7 @@ namespace test::pwm {
             // pwm_timer_init shares the same lock check when called on an advanced timer
             pwm_gp_timer_config_t gp_config{};
             gp_config.pwm_mode       = PWM_MODE_1;
-            gp_config.pwm_count_mode = PWM_EDGE_ALIGNED_UPCOUNTING;
+            gp_config.pwm_count_mode = PWM_EDGE_LEFT_ALIGNED;
             gp_config.channels[0]    = make_channel(PWM_CHANNEL_1, BOARD_TIM1_CH1_PA8);
             gp_config.num_channels   = 1;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, pwm_gp_timer_init(TIM_ADV, &gp_config));
