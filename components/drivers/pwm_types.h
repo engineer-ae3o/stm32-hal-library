@@ -3,34 +3,11 @@
 
 
 #include "stm32f411xe.h"
-#include "drivers/timer.h"
+#include "drivers/timer_types.h"
 #include "utils/board.h"
 
 #include <stdint.h>
 #include <stddef.h>
-
-
-// TIM1 channels
-#define MAX_TIM1_CHANNELS (4U)
-#define MAX_TIM1_COMPLEMENTARY_CHANNELS (3U)
-
-// General purpose timers channels
-#define MAX_TIM2_CHANNELS (4U)
-#define MAX_TIM3_CHANNELS (4U)
-#define MAX_TIM4_CHANNELS (4U)
-#define MAX_TIM5_CHANNELS (4U)
-
-// Lite timers channels
-#define MAX_TIM9_CHANNELS (2U)
-#define MAX_TIM10_CHANNELS (1U)
-#define MAX_TIM11_CHANNELS (1U)
-
-typedef enum : uint8_t {
-    PWM_CHANNEL_1 = 0,
-    PWM_CHANNEL_2,
-    PWM_CHANNEL_3,
-    PWM_CHANNEL_4,
-} pwm_channel_t;
 
 
 typedef enum : uint8_t {
@@ -70,8 +47,8 @@ typedef struct {
     bool invert_output;     // Main channel output active low (when this is true)
     bool output_idle_state; // State of the gpio pin when its channel is disabled (only relevant for the advanced timers)
     // The actual PWM channel and its physical gpio pin
-    pwm_channel_t channel;
-    board_pin_t   gpio_pin;
+    timer_channel_t channel;
+    board_pin_t     gpio_pin;
 } pwm_channel_config_t;
 
 

@@ -1,3 +1,4 @@
+#include "drivers/timer_types.h"
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
@@ -32,7 +33,7 @@ namespace test::timer {
         volatile int   s_update_count = 0;
         volatile void* s_last_arg     = nullptr;
 
-        void update_done_cb(void* arg) {
+        void update_done_cb(void* arg, timer_channel_t) {
             s_update_done = true;
             s_update_count += 1;
             s_last_arg = arg;

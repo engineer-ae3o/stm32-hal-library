@@ -8,17 +8,11 @@ extern "C" {
 
 
 #include "stm32f411xe.h"
+#include "drivers/timer_types.h"
 #include "utils/err.h"
 
 #include <stdint.h>
 
-
-typedef enum : uint8_t {
-    TIMER_COUNTER_UP   = 0b0 << TIM_CR1_DIR_Pos,
-    TIMER_COUNTER_DOWN = 0b1 << TIM_CR1_DIR_Pos,
-} timer_count_dir_t;
-
-typedef void (*timer_cb_t)(void* arg);
 
 hal_err_t timer_clock_enable(TIM_TypeDef* handle, bool enable);
 

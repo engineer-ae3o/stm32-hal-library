@@ -50,10 +50,10 @@ namespace demo {
             // Channels
             // channels[0..num_channels) are driven, in this order. Lag is applied by position in this list.
             std::array<pwm_channel_config_t, MAX_TIM1_CHANNELS> channels     = {{
-                {.invert_output = false, .output_idle_state = false, .channel = PWM_CHANNEL_1, .gpio_pin = BOARD_TIM1_CH1_PA8},
-                {.invert_output = false, .output_idle_state = false, .channel = PWM_CHANNEL_2, .gpio_pin = BOARD_TIM1_CH2_PA9},
-                {.invert_output = false, .output_idle_state = false, .channel = PWM_CHANNEL_3, .gpio_pin = BOARD_TIM1_CH3_PA10},
-                {.invert_output = false, .output_idle_state = false, .channel = PWM_CHANNEL_4, .gpio_pin = BOARD_TIM1_CH4_PA11},
+                {.invert_output = false, .output_idle_state = false, .channel = TIMER_CHANNEL_1, .gpio_pin = BOARD_TIM1_CH1_PA8},
+                {.invert_output = false, .output_idle_state = false, .channel = TIMER_CHANNEL_2, .gpio_pin = BOARD_TIM1_CH2_PA9},
+                {.invert_output = false, .output_idle_state = false, .channel = TIMER_CHANNEL_3, .gpio_pin = BOARD_TIM1_CH3_PA10},
+                {.invert_output = false, .output_idle_state = false, .channel = TIMER_CHANNEL_4, .gpio_pin = BOARD_TIM1_CH4_PA11},
             }};
             size_t                                              num_channels = MAX_TIM1_CHANNELS;
 
@@ -70,7 +70,7 @@ namespace demo {
             bool        break_active_low = true;
             bool        break_auto_rearm = true;
             board_pin_t break_pin        = BOARD_TIM1_BKIN_PA6;
-            timer_cb_t  break_callback   = [](void*) {
+            timer_cb_t  break_callback   = [](void*, timer_channel_t) {
                 LOGW(TAG, "Break event detected");
             };
             void* break_user = nullptr;
@@ -131,7 +131,7 @@ namespace demo {
             uint32_t seen = 0;
             for (size_t i = 0; i < c.num_channels; i++) {
                 const uint32_t bit = 1U << static_cast<uint32_t>(c.channels[i].channel);
-                if (c.channels[i].channel > PWM_CHANNEL_4 || (seen & bit)) {
+                if (c.channels[i].channel > TIMER_CHANNEL_4 || (seen & bit)) {
                     return HAL_ERR_INVALID_ARG;
                 }
                 seen |= bit;

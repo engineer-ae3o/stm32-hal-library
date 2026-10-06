@@ -91,28 +91,28 @@ static tim1_cb_ctx_t s_advanced_timer_cb = {};
         if (handle->SR & TIM_SR_UIF) {
             handle->SR = ~TIM_SR_UIF;
             if (s_advanced_timer_cb.update_event_cb) {
-                s_advanced_timer_cb.update_event_cb(s_advanced_timer_cb.up_arg);
+                s_advanced_timer_cb.update_event_cb(s_advanced_timer_cb.up_arg, 0);
             }
         }
         // Break event interrupt
         if (handle->SR & TIM_SR_BIF) {
             handle->SR = ~TIM_SR_BIF;
             if (s_advanced_timer_cb.break_input_cb) {
-                s_advanced_timer_cb.break_input_cb(s_advanced_timer_cb.brk_arg);
+                s_advanced_timer_cb.break_input_cb(s_advanced_timer_cb.brk_arg, 0);
             }
         }
         // Commutation event interrupt
         if (handle->SR & TIM_SR_COMIF) {
             handle->SR = ~TIM_SR_COMIF;
             if (s_advanced_timer_cb.commutation_cb) {
-                s_advanced_timer_cb.commutation_cb(s_advanced_timer_cb.com_arg);
+                s_advanced_timer_cb.commutation_cb(s_advanced_timer_cb.com_arg, 0);
             }
         }
         // Trigger event interrupt
         if (handle->SR & TIM_SR_TIF) {
             handle->SR = ~TIM_SR_TIF;
             if (s_advanced_timer_cb.trigger_cb) {
-                s_advanced_timer_cb.trigger_cb(s_advanced_timer_cb.trg_arg);
+                s_advanced_timer_cb.trigger_cb(s_advanced_timer_cb.trg_arg, 0);
             }
         }
         // TODO: Handle the capture compare interrupt flags
@@ -126,7 +126,7 @@ static tim1_cb_ctx_t s_advanced_timer_cb = {};
     if (handle->SR & TIM_SR_UIF) {
         handle->SR = ~TIM_SR_UIF;
         if (s_timer_cb_ctx[idx].callback) {
-            s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg);
+            s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg, 0);
         }
     }
 }
@@ -202,7 +202,7 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_
     TRY(timer_register_callback(handle, callback, arg, UPDATE_EVENT));
 
     // Set the counting direction. Edge aligned (up or downcounting)
-    handle->CR1 = (uint32_t)direction | ~(handle->CR1 & TIM_CR1_CMS);
+    handle->CR1 |= (uint32_t)direction;
 
     return HAL_OK;
 }
