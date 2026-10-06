@@ -142,7 +142,7 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
 
         // Enable interrupts on a break event and register the break event callback
         handle->DIER |= TIM_DIER_BIE;
-        TRY(timer_register_callback(handle, config->break_input.callback, config->break_input.user, BREAK_EVENT));
+        TRY(timer_register_callback(handle, config->break_input.callback, BREAK_EVENT));
 
         // Configure the physical break input GPIO pin
         const board_pin_t brk_gpio = config->break_input.gpio_pin;

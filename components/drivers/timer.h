@@ -16,7 +16,7 @@ extern "C" {
 
 hal_err_t timer_clock_enable(TIM_TypeDef* handle, bool enable);
 
-hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_t callback, void* arg);
+hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_t callback);
 hal_err_t timer_deinit(TIM_TypeDef* handle);
 
 hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us);

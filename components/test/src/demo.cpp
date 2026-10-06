@@ -70,10 +70,13 @@ namespace demo {
             bool        break_active_low = true;
             bool        break_auto_rearm = true;
             board_pin_t break_pin        = BOARD_TIM1_BKIN_PA6;
-            timer_cb_t  break_callback   = [](void*, timer_channel_t) {
-                LOGW(TAG, "Break event detected");
+            timer_cb_t  break_callback   = {
+                .cb =
+                    [](void*, timer_channel_t) {
+                        LOGW(TAG, "Break event detected");
+                    },
+                .arg = nullptr,
             };
-            void* break_user = nullptr;
 
             // Sweep
             wave_form_t waveform       = wave_form_t::TRIANGLE;
@@ -204,7 +207,6 @@ namespace demo {
                 .auto_rearm      = c.break_auto_rearm,
                 .gpio_pin        = c.break_pin,
                 .callback        = c.break_callback,
-                .user            = c.break_user,
             };
 
             TRY(timer_clock_enable(c.timer, true));

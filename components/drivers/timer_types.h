@@ -43,7 +43,10 @@ typedef enum : uint8_t {
 } timer_channel_t;
 
 // The channel parameter only has meaning when the interrupt is a capture compare interrupt
-typedef void (*timer_cb_t)(void* arg, timer_channel_t channel);
+typedef struct {
+    void (*cb)(void* arg, timer_channel_t channel);
+    void* arg;
+} timer_cb_t;
 
 
 // Output Compare types
@@ -84,7 +87,6 @@ typedef struct {
     size_t                 num_channels;
 
     timer_cb_t callback;
-    void*      arg;
 } timer_oc_config_t;
 
 

@@ -92,7 +92,6 @@ typedef struct {
 
         // Callback fired on a break event
         timer_cb_t callback;
-        void*      user;
     } break_input;
 } pwm_advanced_timer_config_t;
 

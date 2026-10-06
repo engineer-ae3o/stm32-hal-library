@@ -499,8 +499,7 @@ namespace test::pwm {
             config.break_input.active_low      = false;
             config.break_input.auto_rearm      = true;
             config.break_input.gpio_pin        = BOARD_TIM1_BKIN_PA6;
-            config.break_input.callback        = brk_cb;
-            config.break_input.user            = nullptr;
+            config.break_input.callback        = {.cb = brk_cb, .arg = nullptr};
 
             s_brk_fired = false;
             TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &config));
@@ -539,7 +538,7 @@ namespace test::pwm {
             config.break_input.use_break_input = true;
             config.break_input.active_low      = true;
             config.break_input.gpio_pin        = BOARD_TIM1_BKIN_PA6;
-            config.break_input.callback        = brk_cb;
+            config.break_input.callback        = {.cb = brk_cb, .arg = nullptr};
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &config));
             TEST_ASSERT_FALSE(TIM_ADV->BDTR & TIM_BDTR_BKP);

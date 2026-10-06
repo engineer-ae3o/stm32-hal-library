@@ -13,50 +13,40 @@
 // Table of registered callbacks and state for the timer instance
 typedef struct {
     timer_cb_t      callback;
-    void*           arg;
     const IRQn_Type irq_type;
 } timer_ctx_t;
 
 static timer_ctx_t s_timer_cb_ctx[] = {
     // TIM1
     // NOTE: None of TIM1's callbacks are stored in this table. Refer below
-    {.callback = NULL, .arg = NULL, .irq_type = TIM1_CC_IRQn},
+    {.callback = {}, .irq_type = TIM1_CC_IRQn},
     // TIM2
-    {.callback = NULL, .arg = NULL, .irq_type = TIM2_IRQn},
+    {.callback = {}, .irq_type = TIM2_IRQn},
     // TIM3
-    {.callback = NULL, .arg = NULL, .irq_type = TIM3_IRQn},
+    {.callback = {}, .irq_type = TIM3_IRQn},
     // TIM4
-    {.callback = NULL, .arg = NULL, .irq_type = TIM4_IRQn},
+    {.callback = {}, .irq_type = TIM4_IRQn},
     // TIM5
-    {.callback = NULL, .arg = NULL, .irq_type = TIM5_IRQn},
+    {.callback = {}, .irq_type = TIM5_IRQn},
     // TIM9
     // NOTE: Only TIM9's callbacks are stored here
-    {.callback = NULL, .arg = NULL, .irq_type = TIM1_BRK_TIM9_IRQn},
+    {.callback = {}, .irq_type = TIM1_BRK_TIM9_IRQn},
     // TIM10
     // NOTE: Only TIM10's callbacks are stored here
-    {.callback = NULL, .arg = NULL, .irq_type = TIM1_UP_TIM10_IRQn},
+    {.callback = {}, .irq_type = TIM1_UP_TIM10_IRQn},
     // TIM11
     // NOTE: Only TIM11's callbacks are stored here
-    {.callback = NULL, .arg = NULL, .irq_type = TIM1_TRG_COM_TIM11_IRQn},
+    {.callback = {}, .irq_type = TIM1_TRG_COM_TIM11_IRQn},
 };
 
 // Since the interrupt vectors are shared, we have to find
 // and store the interrupt callbacks for TIM1 separately
 typedef struct {
-    timer_cb_t capture_compare_cb;
-    void*      cc_arg;
-
-    timer_cb_t break_input_cb;
-    void*      brk_arg;
-
-    timer_cb_t update_event_cb;
-    void*      up_arg;
-
-    timer_cb_t trigger_cb;
-    void*      trg_arg;
-
-    timer_cb_t commutation_cb;
-    void*      com_arg;
+    timer_cb_t update;
+    timer_cb_t trigger;
+    timer_cb_t commutation;
+    timer_cb_t break_input;
+    timer_cb_t capture_compare;
 } tim1_cb_ctx_t;
 
 static tim1_cb_ctx_t s_advanced_timer_cb = {};
@@ -90,92 +80,93 @@ static tim1_cb_ctx_t s_advanced_timer_cb = {};
         // Update event interrupt
         if (handle->SR & TIM_SR_UIF) {
             handle->SR = ~TIM_SR_UIF;
-            if (s_advanced_timer_cb.update_event_cb) {
-                s_advanced_timer_cb.update_event_cb(s_advanced_timer_cb.up_arg, 0);
+            if (s_advanced_timer_cb.update.cb) {
+                s_advanced_timer_cb.update.cb(s_advanced_timer_cb.update.arg, 0);
             }
         }
         // Break event interrupt
         if (handle->SR & TIM_SR_BIF) {
             handle->SR = ~TIM_SR_BIF;
-            if (s_advanced_timer_cb.break_input_cb) {
-                s_advanced_timer_cb.break_input_cb(s_advanced_timer_cb.brk_arg, 0);
+            if (s_advanced_timer_cb.break_input.cb) {
+                s_advanced_timer_cb.break_input.cb(s_advanced_timer_cb.break_input.arg, 0);
             }
         }
         // Commutation event interrupt
         if (handle->SR & TIM_SR_COMIF) {
             handle->SR = ~TIM_SR_COMIF;
-            if (s_advanced_timer_cb.commutation_cb) {
-                s_advanced_timer_cb.commutation_cb(s_advanced_timer_cb.com_arg, 0);
+            if (s_advanced_timer_cb.commutation.cb) {
+                s_advanced_timer_cb.commutation.cb(s_advanced_timer_cb.commutation.arg, 0);
             }
         }
         // Trigger event interrupt
         if (handle->SR & TIM_SR_TIF) {
             handle->SR = ~TIM_SR_TIF;
-            if (s_advanced_timer_cb.trigger_cb) {
-                s_advanced_timer_cb.trigger_cb(s_advanced_timer_cb.trg_arg, 0);
+            if (s_advanced_timer_cb.trigger.cb) {
+                s_advanced_timer_cb.trigger.cb(s_advanced_timer_cb.trigger.arg, 0);
             }
         }
         // Capture compare interrupt(s)
         if (handle->SR & TIM_SR_CC1IF) {
             handle->SR = ~TIM_SR_CC1IF;
-            if (s_advanced_timer_cb.capture_compare_cb) {
-                s_advanced_timer_cb.capture_compare_cb(s_advanced_timer_cb.cc_arg, TIMER_CHANNEL_1);
+            if (s_advanced_timer_cb.capture_compare.cb) {
+                s_advanced_timer_cb.capture_compare.cb(s_advanced_timer_cb.capture_compare.arg, TIMER_CHANNEL_1);
             }
         }
         if (handle->SR & TIM_SR_CC2IF) {
             handle->SR = ~TIM_SR_CC2IF;
-            if (s_advanced_timer_cb.capture_compare_cb) {
-                s_advanced_timer_cb.capture_compare_cb(s_advanced_timer_cb.cc_arg, TIMER_CHANNEL_2);
+            if (s_advanced_timer_cb.capture_compare.cb) {
+                s_advanced_timer_cb.capture_compare.cb(s_advanced_timer_cb.capture_compare.arg, TIMER_CHANNEL_2);
             }
         }
         if (handle->SR & TIM_SR_CC3IF) {
             handle->SR = ~TIM_SR_CC3IF;
-            if (s_advanced_timer_cb.capture_compare_cb) {
-                s_advanced_timer_cb.capture_compare_cb(s_advanced_timer_cb.cc_arg, TIMER_CHANNEL_3);
+            if (s_advanced_timer_cb.capture_compare.cb) {
+                s_advanced_timer_cb.capture_compare.cb(s_advanced_timer_cb.capture_compare.arg, TIMER_CHANNEL_3);
             }
         }
         if (handle->SR & TIM_SR_CC4IF) {
             handle->SR = ~TIM_SR_CC4IF;
-            if (s_advanced_timer_cb.capture_compare_cb) {
-                s_advanced_timer_cb.capture_compare_cb(s_advanced_timer_cb.cc_arg, TIMER_CHANNEL_4);
+            if (s_advanced_timer_cb.capture_compare.cb) {
+                s_advanced_timer_cb.capture_compare.cb(s_advanced_timer_cb.capture_compare.arg, TIMER_CHANNEL_4);
             }
         }
         return;
     }
 
+    // Other non-advanced timers
     const uint8_t idx = get_index(handle);
     ASSERT(idx != 0xFFU);
 
     // Update event interrupt
     if (handle->SR & TIM_SR_UIF) {
         handle->SR = ~TIM_SR_UIF;
-        if (s_timer_cb_ctx[idx].callback) {
-            s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg, 0);
+        if (s_timer_cb_ctx[idx].callback.cb) {
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, 0);
         }
     }
     // Capture compare interrupt(s)
     if (handle->SR & TIM_SR_CC1IF) {
         handle->SR = ~TIM_SR_CC1IF;
-        if (s_timer_cb_ctx[idx].callback) {
-            s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg, TIMER_CHANNEL_1);
+        if (s_timer_cb_ctx[idx].callback.cb) {
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_1);
         }
     }
     if (handle->SR & TIM_SR_CC2IF) {
         handle->SR = ~TIM_SR_CC2IF;
-        if (s_timer_cb_ctx[idx].callback) {
-            s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg, TIMER_CHANNEL_2);
+        if (s_timer_cb_ctx[idx].callback.cb) {
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_2);
         }
     }
     if (handle->SR & TIM_SR_CC3IF) {
         handle->SR = ~TIM_SR_CC3IF;
-        if (s_timer_cb_ctx[idx].callback) {
-            s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg, TIMER_CHANNEL_3);
+        if (s_timer_cb_ctx[idx].callback.cb) {
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_3);
         }
     }
     if (handle->SR & TIM_SR_CC4IF) {
         handle->SR = ~TIM_SR_CC4IF;
-        if (s_timer_cb_ctx[idx].callback) {
-            s_timer_cb_ctx[idx].callback(s_timer_cb_ctx[idx].arg, TIMER_CHANNEL_4);
+        if (s_timer_cb_ctx[idx].callback.cb) {
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_4);
         }
     }
 }
@@ -230,9 +221,9 @@ hal_err_t timer_clock_enable(TIM_TypeDef* handle, bool enable) {
     return HAL_OK;
 }
 
-hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_t callback, void* arg) {
+hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_t callback) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU || callback == NULL) {
+    if (idx == 0xFFU || callback.cb == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -248,7 +239,7 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_
     TRY(timer_deinit(handle));
 
     // Register the callback
-    TRY(timer_register_callback(handle, callback, arg, UPDATE_EVENT));
+    TRY(timer_register_callback(handle, callback, UPDATE_EVENT));
 
     // Set the counting direction. Edge aligned (up or downcounting)
     handle->CR1 |= (uint32_t)direction;
@@ -313,8 +304,8 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     // Clear the registered callback for the current timer instance
     const uint32_t primask = __get_PRIMASK();
     __disable_irq();
-    s_timer_cb_ctx[idx].callback = NULL;
-    s_timer_cb_ctx[idx].arg      = NULL;
+    s_timer_cb_ctx[idx].callback.cb  = NULL;
+    s_timer_cb_ctx[idx].callback.arg = NULL;
 
     if (timer_advanced) {
         memset(&s_advanced_timer_cb, 0, sizeof(s_advanced_timer_cb));
@@ -493,7 +484,7 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     return HAL_OK;
 }
 
-hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void* arg, advanced_timer_irq_type_t type) {
+hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, advanced_timer_irq_type_t type) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -510,42 +501,33 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, void
             case UPDATE_EVENT:
                 irq_type = TIM1_UP_TIM10_IRQn;
                 // Register the update event callback for TIM1
-                s_advanced_timer_cb.update_event_cb = callback;
-                s_advanced_timer_cb.up_arg          = arg;
+                s_advanced_timer_cb.update = callback;
                 break;
             case BREAK_EVENT:
                 irq_type = TIM1_BRK_TIM9_IRQn;
                 // Register the break event callback for TIM1
-                s_advanced_timer_cb.break_input_cb = callback;
-                s_advanced_timer_cb.brk_arg        = arg;
+                s_advanced_timer_cb.break_input = callback;
                 break;
             case CAPTURE_COMPARE:
                 irq_type = TIM1_CC_IRQn;
                 // Register the capture compare event callback for TIM1
-                s_advanced_timer_cb.capture_compare_cb = callback;
-                s_advanced_timer_cb.cc_arg             = arg;
+                s_advanced_timer_cb.capture_compare = callback;
                 break;
             case TRIGGER_EVENT:
                 irq_type = TIM1_TRG_COM_TIM11_IRQn;
                 // Register the trigger event callback for TIM1
-                s_advanced_timer_cb.trigger_cb = callback;
-                s_advanced_timer_cb.trg_arg    = arg;
+                s_advanced_timer_cb.trigger = callback;
                 break;
             case COMMUTATION_EVENT:
                 irq_type = TIM1_TRG_COM_TIM11_IRQn;
                 // Register the commutation event callback for TIM1
-                s_advanced_timer_cb.commutation_cb = callback;
-                s_advanced_timer_cb.com_arg        = arg;
+                s_advanced_timer_cb.commutation = callback;
                 break;
-            default:
-                __set_PRIMASK(primask);
-                return HAL_ERR_INVALID_ARG;
         }
     } else {
         irq_type = s_timer_cb_ctx[idx].irq_type;
-        // Register the callback for the timer in the global callback array
+        // Register the irq callback for the non advanced timers
         s_timer_cb_ctx[idx].callback = callback;
-        s_timer_cb_ctx[idx].arg      = arg;
     }
 
     // Restore the interrupts to its previous state
