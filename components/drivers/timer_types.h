@@ -73,6 +73,8 @@ typedef struct {
 
 
 // Pulse Counter
+typedef struct {
+} pcnt_config_t;
 
 
 // Quadrature decoder (encoder mode)
