@@ -38,6 +38,7 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
     uint32_t dier  = handle->DIER;
 
     const bool enable_cc_irq = config->callback != NULL;
+    timer_register_callback(handle, config->callback, config->arg, CAPTURE_COMPARE);
 
     for (size_t i = 0; i < config->num_channels; i++) {
         // Configure the channel in the CCMRx register
