@@ -11,6 +11,28 @@
 #include <stdint.h>
 
 
+// Helper
+[[__gnu__::__always_inline__]] static inline uint32_t get_max_compare_level(TIM_TypeDef* handle) {
+    if (handle->CR1 & TIM_CR1_CMS) {
+        // Center aligned PWM
+        return handle->ARR;
+    } else {
+        // Edge aligned PWM
+        // Doing it like this introduces an off by one error at the edge, but it only happens
+        // when the timer is 32 bits and and ARR happens to hold its maximum value. I do
+        // it like this because using uint64_t would be much slower for a case that will almost
+        // never occur in any real usage. The maximum duty cycle is ARR + 1, hence the off
+        // by one at the boundary of 32 bits. The off by one error is a non factor regardless.
+        if (gnu_unlikely(handle->ARR == (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX))) {
+            return handle->ARR;
+        } else {
+            return handle->ARR + 1;
+        }
+    }
+}
+
+
+// Public API
 hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
     if (handle == NULL || config == NULL || config->num_channels == 0) {
         return HAL_ERR_INVALID_ARG;
@@ -154,13 +176,13 @@ hal_err_t timer_oc_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_
     TRY(timer_oc_unfreeze_timer(handle));
 
     // Derive the compare level (doubles as max duty cycle in PWM mode) from the auto-reload register
-    *max_compare_level = timer_get_max_compare_level(handle);
+    *max_compare_level = get_max_compare_level(handle);
 
     return HAL_OK;
 }
 
 hal_err_t timer_oc_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uint32_t compare_level) {
-    if (handle == NULL || compare_level > timer_get_max_compare_level(handle)) {
+    if (handle == NULL || compare_level > get_max_compare_level(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -181,22 +203,6 @@ hal_err_t timer_oc_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uin
             return HAL_ERR_INVALID_ARG;
     }
 
-    return HAL_OK;
-}
-
-hal_err_t timer_oc_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
-    if (handle == NULL || channel > TIMER_CHANNEL_4) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    handle->CCER &= ~(1UL << (channel * 4));
-    return HAL_OK;
-}
-
-hal_err_t timer_oc_resume_channel(TIM_TypeDef* handle, timer_channel_t channel) {
-    if (handle == NULL || channel > TIMER_CHANNEL_4) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    handle->CCER |= (1UL << (channel * 4));
     return HAL_OK;
 }
 
@@ -225,5 +231,21 @@ hal_err_t timer_oc_unfreeze_timer(TIM_TypeDef* handle) {
     }
     handle->CR1 |= TIM_CR1_CEN;
 
+    return HAL_OK;
+}
+
+hal_err_t timer_oc_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
+    if (handle == NULL || channel > TIMER_CHANNEL_4) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    handle->CCER &= ~(1UL << (channel * 4));
+    return HAL_OK;
+}
+
+hal_err_t timer_oc_resume_channel(TIM_TypeDef* handle, timer_channel_t channel) {
+    if (handle == NULL || channel > TIMER_CHANNEL_4) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    handle->CCER |= (1UL << (channel * 4));
     return HAL_OK;
 }

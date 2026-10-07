@@ -624,28 +624,6 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
         }
 
-        void start_zeroes_all_four_compare_registers() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
-            reset_pwm(TIM_GP16);
-
-            TIM_GP16->CCR1 = 111;
-            TIM_GP16->CCR2 = 222;
-            TIM_GP16->CCR3 = 333;
-            TIM_GP16->CCR4 = 444;
-
-            uint32_t max_duty = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_start(TIM_GP16, 1000, &max_duty));
-
-            TEST_ASSERT_EQUAL_UINT32(0, TIM_GP16->CCR1);
-            TEST_ASSERT_EQUAL_UINT32(0, TIM_GP16->CCR2);
-            TEST_ASSERT_EQUAL_UINT32(0, TIM_GP16->CCR3);
-            TEST_ASSERT_EQUAL_UINT32(0, TIM_GP16->CCR4);
-
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_freeze_timer(TIM_GP16));
-            reset_pwm(TIM_GP16);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
-        }
-
         void set_duty_cycle_rejects_invalid_arguments() {
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
@@ -866,7 +844,6 @@ namespace test::pwm {
         RUN_TEST(start_rejects_a_frequency_above_the_timer_clock);
         RUN_TEST(start_edge_aligned_hits_the_requested_frequency_on_16_and_32_bit_timers);
         RUN_TEST(start_center_aligned_uses_the_doubled_period_formula);
-        RUN_TEST(start_zeroes_all_four_compare_registers);
         RUN_TEST(set_duty_cycle_rejects_invalid_arguments);
         RUN_TEST(set_duty_cycle_edge_aligned_boundary_is_arr_plus_one);
         RUN_TEST(set_duty_cycle_center_aligned_boundary_is_arr);
