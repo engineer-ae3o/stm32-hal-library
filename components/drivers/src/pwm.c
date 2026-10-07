@@ -132,8 +132,8 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     }
 
     // Configure the run and idle off-state selection of the channels and the write protection level
-    bdtr = (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0) | (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos) |
-           (uint32_t)(dtg << TIM_BDTR_DTG_Pos);
+    bdtr |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0) | (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos) |
+            (uint32_t)(dtg << TIM_BDTR_DTG_Pos);
 
     // Configure the break input
     if (config->break_input.use_break_input) {

@@ -1,12 +1,14 @@
 #include "stm32f411xe.h"
 #include "drivers/timer_internals.h"
-#include "drivers/timer_ext.h"
+#include "drivers/timer_extended.h"
+#include "drivers/timer_types.h"
 #include "drivers/timer.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
 #include "utils/err.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 
 hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
@@ -95,18 +97,18 @@ hal_err_t timer_oc_deinit(TIM_TypeDef* handle) {
     return timer_deinit(handle);
 }
 
-hal_err_t timer_oc_start(TIM_TypeDef* handle, uint32_t tick_rate_hz, uint32_t* max_compare_level) {
-    if (handle == NULL || tick_rate_hz == 0 || max_compare_level == NULL) {
+hal_err_t timer_oc_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_compare_level) {
+    if (handle == NULL || period_hz == 0 || max_compare_level == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
     const uint32_t timer_freq_hz = timer_get_frequency_hz(handle);
-    if (tick_rate_hz > timer_freq_hz) {
+    if (period_hz > timer_freq_hz) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
     // Get the denominator as it has different meanings depending on whether its center or edge aligned Output Compare
-    const uint32_t total_ticks_per_period = round_div_u32(timer_freq_hz, tick_rate_hz);
+    const uint32_t total_ticks_per_period = round_div_u32(timer_freq_hz, period_hz);
 
     // Get the maximum width of the auto-reload register since it varies per timer
     const uint32_t max_arr        = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;

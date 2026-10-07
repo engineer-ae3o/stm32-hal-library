@@ -8,6 +8,7 @@ extern "C" {
 
 
 #include "stm32f411xe.h"
+#include "utils/tick.h"
 #include "utils/log.h"
 #include "utils/err.h"
 
@@ -63,6 +64,15 @@ extern "C" {
 [[__gnu__::__always_inline__]] static inline uint64_t round_div_u64(uint64_t a, uint64_t b) {
     return (a + (b / 2)) / b;
 }
+
+// Reset a peripheral
+#define reset_peripheral(register, bit_mask)                                                                                                         \
+    do {                                                                                                                                             \
+        (register) |= (bit_mask);                                                                                                                    \
+        delay_us(1);                                                                                                                                 \
+        (register) &= ~(bit_mask);                                                                                                                   \
+        delay_us(1);                                                                                                                                 \
+    } while (0)
 
 
 #define REBOOT()                                                                                                                                     \

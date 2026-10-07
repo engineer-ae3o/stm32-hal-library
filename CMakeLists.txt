@@ -50,7 +50,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 
 
 # Set linker flags
-set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/stm32411_linker.ld")
+set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/stm32f411_linker.ld")
 set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${EXE_MAP_NAME} -Wl,--cref \
                             -Wl,--gc-sections --specs=nano.specs")
 

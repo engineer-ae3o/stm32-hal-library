@@ -1,6 +1,6 @@
 #include "stm32f411xe.h"
 #include "drivers/timer_internals.h"
-#include "drivers/timer_ext.h"
+#include "drivers/timer_extended.h"
 #include "drivers/timer.h"
 #include "utils/err.h"
 

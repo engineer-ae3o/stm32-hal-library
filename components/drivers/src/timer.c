@@ -1,12 +1,12 @@
 #include "stm32f411xe.h"
 #include "drivers/timer_internals.h"
+#include "drivers/timer_types.h"
 #include "drivers/timer.h"
 #include "utils/common.h"
 #include "utils/clock.h"
 #include "utils/err.h"
 
 #include <string.h>
-#include <stddef.h>
 #include <stdint.h>
 
 
@@ -40,7 +40,7 @@ static timer_ctx_t s_timer_cb_ctx[] = {
 };
 
 // Since the interrupt vectors are shared, we have to find
-// and store the interrupt callbacks for TIM1 separately
+// and store the interrupt callbacks separately
 typedef struct {
     timer_cb_t update;
     timer_cb_t trigger;
@@ -75,56 +75,56 @@ static tim1_cb_ctx_t s_advanced_timer_cb = {};
 }
 
 [[__gnu__::__always_inline__]] static inline void timer_isr_helper(TIM_TypeDef* handle) {
-    // Only available on the advanced timers (TIM1)
+    // Only available on the advanced timers
     if (is_timer_advanced(handle)) {
         // Update event interrupt
-        if (handle->SR & TIM_SR_UIF) {
+        if ((handle->DIER & TIM_DIER_UIE) && (handle->SR & TIM_SR_UIF)) {
             handle->SR = ~TIM_SR_UIF;
             if (s_advanced_timer_cb.update.cb) {
                 s_advanced_timer_cb.update.cb(s_advanced_timer_cb.update.arg, 0);
             }
         }
         // Break event interrupt
-        if (handle->SR & TIM_SR_BIF) {
+        if ((handle->DIER & TIM_DIER_BIE) && (handle->SR & TIM_SR_BIF)) {
             handle->SR = ~TIM_SR_BIF;
             if (s_advanced_timer_cb.break_input.cb) {
                 s_advanced_timer_cb.break_input.cb(s_advanced_timer_cb.break_input.arg, 0);
             }
         }
         // Commutation event interrupt
-        if (handle->SR & TIM_SR_COMIF) {
+        if ((handle->DIER & TIM_DIER_COMIE) && (handle->SR & TIM_SR_COMIF)) {
             handle->SR = ~TIM_SR_COMIF;
             if (s_advanced_timer_cb.commutation.cb) {
                 s_advanced_timer_cb.commutation.cb(s_advanced_timer_cb.commutation.arg, 0);
             }
         }
         // Trigger event interrupt
-        if (handle->SR & TIM_SR_TIF) {
+        if ((handle->DIER & TIM_DIER_TIE) && (handle->SR & TIM_SR_TIF)) {
             handle->SR = ~TIM_SR_TIF;
             if (s_advanced_timer_cb.trigger.cb) {
                 s_advanced_timer_cb.trigger.cb(s_advanced_timer_cb.trigger.arg, 0);
             }
         }
         // Capture compare interrupt(s)
-        if (handle->SR & TIM_SR_CC1IF) {
+        if ((handle->DIER & TIM_DIER_CC1IE) && (handle->SR & TIM_SR_CC1IF)) {
             handle->SR = ~TIM_SR_CC1IF;
             if (s_advanced_timer_cb.capture_compare.cb) {
                 s_advanced_timer_cb.capture_compare.cb(s_advanced_timer_cb.capture_compare.arg, TIMER_CHANNEL_1);
             }
         }
-        if (handle->SR & TIM_SR_CC2IF) {
+        if ((handle->DIER & TIM_DIER_CC2IE) && (handle->SR & TIM_SR_CC2IF)) {
             handle->SR = ~TIM_SR_CC2IF;
             if (s_advanced_timer_cb.capture_compare.cb) {
                 s_advanced_timer_cb.capture_compare.cb(s_advanced_timer_cb.capture_compare.arg, TIMER_CHANNEL_2);
             }
         }
-        if (handle->SR & TIM_SR_CC3IF) {
+        if ((handle->DIER & TIM_DIER_CC3IE) && (handle->SR & TIM_SR_CC3IF)) {
             handle->SR = ~TIM_SR_CC3IF;
             if (s_advanced_timer_cb.capture_compare.cb) {
                 s_advanced_timer_cb.capture_compare.cb(s_advanced_timer_cb.capture_compare.arg, TIMER_CHANNEL_3);
             }
         }
-        if (handle->SR & TIM_SR_CC4IF) {
+        if ((handle->DIER & TIM_DIER_CC4IE) && (handle->SR & TIM_SR_CC4IF)) {
             handle->SR = ~TIM_SR_CC4IF;
             if (s_advanced_timer_cb.capture_compare.cb) {
                 s_advanced_timer_cb.capture_compare.cb(s_advanced_timer_cb.capture_compare.arg, TIMER_CHANNEL_4);
@@ -138,32 +138,32 @@ static tim1_cb_ctx_t s_advanced_timer_cb = {};
     ASSERT(idx != 0xFFU);
 
     // Update event interrupt
-    if (handle->SR & TIM_SR_UIF) {
+    if ((handle->DIER & TIM_DIER_UIE) && (handle->SR & TIM_SR_UIF)) {
         handle->SR = ~TIM_SR_UIF;
         if (s_timer_cb_ctx[idx].callback.cb) {
             s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, 0);
         }
     }
     // Capture compare interrupt(s)
-    if (handle->SR & TIM_SR_CC1IF) {
+    if ((handle->DIER & TIM_DIER_CC1IE) && (handle->SR & TIM_SR_CC1IF)) {
         handle->SR = ~TIM_SR_CC1IF;
         if (s_timer_cb_ctx[idx].callback.cb) {
             s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_1);
         }
     }
-    if (handle->SR & TIM_SR_CC2IF) {
+    if ((handle->DIER & TIM_DIER_CC2IE) && (handle->SR & TIM_SR_CC2IF)) {
         handle->SR = ~TIM_SR_CC2IF;
         if (s_timer_cb_ctx[idx].callback.cb) {
             s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_2);
         }
     }
-    if (handle->SR & TIM_SR_CC3IF) {
+    if ((handle->DIER & TIM_DIER_CC3IE) && (handle->SR & TIM_SR_CC3IF)) {
         handle->SR = ~TIM_SR_CC3IF;
         if (s_timer_cb_ctx[idx].callback.cb) {
             s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_3);
         }
     }
-    if (handle->SR & TIM_SR_CC4IF) {
+    if ((handle->DIER & TIM_DIER_CC4IE) && (handle->SR & TIM_SR_CC4IF)) {
         handle->SR = ~TIM_SR_CC4IF;
         if (s_timer_cb_ctx[idx].callback.cb) {
             s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_4);
@@ -253,7 +253,28 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Clear all state
+    // Reset the timer
+    if (handle == TIM1) {
+        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM1RST);
+    } else if (handle == TIM2) {
+        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM2RST);
+    } else if (handle == TIM3) {
+        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM3RST);
+    } else if (handle == TIM4) {
+        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM4RST);
+    } else if (handle == TIM5) {
+        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM5RST);
+    } else if (handle == TIM9) {
+        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM9RST);
+    } else if (handle == TIM10) {
+        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM10RST);
+    } else if (handle == TIM11) {
+        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM11RST);
+    } else {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    // Clear all the mapped bits of the timer's registers to 0
     handle->CR1 &= ~(TIM_CR1_CEN | TIM_CR1_UDIS | TIM_CR1_URS | TIM_CR1_OPM | TIM_CR1_DIR | TIM_CR1_CMS | TIM_CR1_ARPE | TIM_CR1_CKD);
     handle->CR2 &= ~(TIM_CR2_CCPC | TIM_CR2_CCUS | TIM_CR2_CCDS | TIM_CR2_MMS | TIM_CR2_TI1S | TIM_CR2_OIS1 | TIM_CR2_OIS1N | TIM_CR2_OIS2 |
                      TIM_CR2_OIS2N | TIM_CR2_OIS3 | TIM_CR2_OIS3N | TIM_CR2_OIS4);
@@ -288,8 +309,7 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     if (timer_advanced) {
         handle->RCR &= ~TIM_RCR_REP;
         // The BDTR register cannot be cleared because the LOCK bits in it can only be written once.
-        // They require a full peripheral or chip level reset before they can be written to.
-        // Clearing it here could be hazardous and use up that only write we have.
+        // The RCC reset register(s) have already reset it so no need to bother.
     }
 
     // Disable the timer's NVIC interrupt
@@ -304,11 +324,10 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     // Clear the registered callback for the current timer instance
     const uint32_t primask = __get_PRIMASK();
     __disable_irq();
-    s_timer_cb_ctx[idx].callback.cb  = NULL;
-    s_timer_cb_ctx[idx].callback.arg = NULL;
-
     if (timer_advanced) {
         memset(&s_advanced_timer_cb, 0, sizeof(s_advanced_timer_cb));
+    } else {
+        memset(&s_timer_cb_ctx[idx].callback, 0, sizeof(s_timer_cb_ctx[idx].callback));
     }
     __set_PRIMASK(primask);
 
@@ -387,7 +406,7 @@ hal_err_t timer_resume(TIM_TypeDef* handle) {
 
 hal_err_t timer_restart(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Pause the timer first
-    TRY(timer_pause(handle));
+    handle->CR1 &= ~TIM_CR1_CEN;
 
     // Then restart based on what mode it was counting in previously
     if (handle->CR1 & TIM_CR1_OPM) {
@@ -426,7 +445,7 @@ bool is_timer_32_bits(TIM_TypeDef* handle) {
 }
 
 bool is_timer_advanced(TIM_TypeDef* handle) {
-    return handle == TIM1;
+    return (handle == TIM1);
 }
 
 uint32_t timer_get_frequency_hz(TIM_TypeDef* handle) {
@@ -496,31 +515,31 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, adva
 
     // Get the irq type for the current timer instance
     IRQn_Type irq_type = 0;
-    if (handle == TIM1) {
+    if (is_timer_advanced(handle)) {
         switch (type) {
             case UPDATE_EVENT:
                 irq_type = TIM1_UP_TIM10_IRQn;
-                // Register the update event callback for TIM1
+                // Register the update event callback
                 s_advanced_timer_cb.update = callback;
                 break;
             case BREAK_EVENT:
                 irq_type = TIM1_BRK_TIM9_IRQn;
-                // Register the break event callback for TIM1
+                // Register the break event callback
                 s_advanced_timer_cb.break_input = callback;
                 break;
             case CAPTURE_COMPARE:
                 irq_type = TIM1_CC_IRQn;
-                // Register the capture compare event callback for TIM1
+                // Register the capture compare event callback
                 s_advanced_timer_cb.capture_compare = callback;
                 break;
             case TRIGGER_EVENT:
                 irq_type = TIM1_TRG_COM_TIM11_IRQn;
-                // Register the trigger event callback for TIM1
+                // Register the trigger event callback
                 s_advanced_timer_cb.trigger = callback;
                 break;
             case COMMUTATION_EVENT:
                 irq_type = TIM1_TRG_COM_TIM11_IRQn;
-                // Register the commutation event callback for TIM1
+                // Register the commutation event callback
                 s_advanced_timer_cb.commutation = callback;
                 break;
         }
@@ -530,13 +549,15 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, adva
         s_timer_cb_ctx[idx].callback = callback;
     }
 
-    // Restore the interrupts to its previous state
+    // Restore the interrupts to their previous state
     __set_PRIMASK(primask);
 
-    // Enable the timer's NVIC interrupt
-    NVIC_SetPriority(irq_type, TIMER_NVIC_IRQ_PRIORITY);
-    NVIC_ClearPendingIRQ(irq_type);
-    NVIC_EnableIRQ(irq_type);
+    // Enable the timer's NVIC interrupt only if the callback is valid
+    if (callback.cb != NULL) {
+        NVIC_SetPriority(irq_type, TIMER_NVIC_IRQ_PRIORITY);
+        NVIC_ClearPendingIRQ(irq_type);
+        NVIC_EnableIRQ(irq_type);
+    }
 
     return HAL_OK;
 }

@@ -1,8 +1,8 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
-#include "drivers/timer_ext.h"
-#include "test/timer_ext.hpp"
+#include "drivers/timer_extended.h"
+#include "test/timer_extended.hpp"
 #include "utils/log.h"
 
 

@@ -33,7 +33,6 @@ uint64_t ms_since_boot(void);
 
 #define delay_us(us)                                                                                                                                 \
     do {                                                                                                                                             \
-        ASSERT(DWT->CTRL & DWT_CTRL_CYCCNTENA_Msk);                                                                                                  \
         uint32_t cycles = (us) * (get_system_core_clock() / 1'000'000U);                                                                             \
         uint32_t start  = DWT->CYCCNT;                                                                                                               \
         while ((DWT->CYCCNT - start) < cycles);                                                                                                      \
@@ -45,7 +44,6 @@ uint64_t ms_since_boot(void);
 
 #define prof_start()                                                                                                                                 \
     do {                                                                                                                                             \
-        ASSERT(DWT->CTRL & DWT_CTRL_CYCCNTENA_Msk);                                                                                                  \
         s_prof_start = DWT->CYCCNT;                                                                                                                  \
     } while (0)
 

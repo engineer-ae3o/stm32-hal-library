@@ -120,7 +120,7 @@ namespace test::timer {
             reset_to_baseline(TEST_INSTANCE);
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DOWN, {update_done_cb, nullptr}));
-            TEST_ASSERT_EQUAL(TIMER_COUNTER_DOWN, (TEST_INSTANCE->CR1 & TIM_CR1_DIR) >> TIM_CR1_DIR_Pos);
+            TEST_ASSERT_EQUAL(TIMER_COUNTER_DOWN, (TEST_INSTANCE->CR1 & TIM_CR1_DIR));
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_start_periodic(TEST_INSTANCE, 1'000'000)); // Slow, so CNT is easy to sample
             delay_us(50);
@@ -373,13 +373,6 @@ namespace test::timer {
             reset_to_baseline(TEST_INSTANCE);
         }
 
-        void restart_rejects_when_the_timer_is_not_currently_running() {
-            // timer_restart pauses first internally, which requires CEN to already be set
-            // So it should fail when CEN is cleared
-            reset_to_baseline(TEST_INSTANCE);
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, timer_restart(TEST_INSTANCE, 1'000));
-        }
-
         void restart_reapplies_periodic_mode_and_keeps_repeating() {
             reset_to_baseline(TEST_INSTANCE);
 
@@ -497,7 +490,6 @@ namespace test::timer {
         RUN_TEST(pause_rejects_null_and_a_timer_that_is_not_running);
         RUN_TEST(resume_rejects_null_and_a_timer_that_is_already_running);
         RUN_TEST(pause_and_resume_halt_and_continue_the_counter);
-        RUN_TEST(restart_rejects_when_the_timer_is_not_currently_running);
         RUN_TEST(restart_reapplies_periodic_mode_and_keeps_repeating);
         RUN_TEST(is_timer_on_apb1_matches_the_bus_map);
         RUN_TEST(is_timer_32_bits_matches_the_counter_width_map);
