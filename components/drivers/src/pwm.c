@@ -220,53 +220,25 @@ hal_err_t pwm_unfreeze_timer(TIM_TypeDef* handle) {
 }
 
 hal_err_t pwm_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
-    if (handle == NULL || channel > TIMER_CHANNEL_4) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    // Disable the channel's output
-    switch (channel) {
-        case TIMER_CHANNEL_1:
-            handle->CCER &= ~(is_timer_advanced(handle) ? (TIM_CCER_CC1E | TIM_CCER_CC1NE) : TIM_CCER_CC1E);
-            break;
-        case TIMER_CHANNEL_2:
-            handle->CCER &= ~(is_timer_advanced(handle) ? (TIM_CCER_CC2E | TIM_CCER_CC2NE) : TIM_CCER_CC2E);
-            break;
-        case TIMER_CHANNEL_3:
-            handle->CCER &= ~(is_timer_advanced(handle) ? (TIM_CCER_CC3E | TIM_CCER_CC3NE) : TIM_CCER_CC3E);
-            break;
-        case TIMER_CHANNEL_4:
-            handle->CCER &= ~TIM_CCER_CC4E;
-            break;
-        default:
-            return HAL_ERR_INVALID_ARG;
-    }
-
-    return HAL_OK;
+    return timer_oc_pause_channel(handle, channel);
 }
 
 hal_err_t pwm_resume_channel(TIM_TypeDef* handle, timer_channel_t channel) {
-    if (handle == NULL || channel > TIMER_CHANNEL_4) {
+    return timer_oc_resume_channel(handle, channel);
+}
+
+hal_err_t pwm_pause_complementary_channel(TIM_TypeDef* handle, timer_channel_t channel) {
+    if (!is_timer_advanced(handle) || channel > TIMER_CHANNEL_3) {
         return HAL_ERR_INVALID_ARG;
     }
+    handle->CCER &= ~(1UL << ((channel * 4) + 2));
+    return HAL_OK;
+}
 
-    // Enable the channel's output
-    switch (channel) {
-        case TIMER_CHANNEL_1:
-            handle->CCER |= (is_timer_advanced(handle) ? (TIM_CCER_CC1E | TIM_CCER_CC1NE) : TIM_CCER_CC1E);
-            break;
-        case TIMER_CHANNEL_2:
-            handle->CCER |= (is_timer_advanced(handle) ? (TIM_CCER_CC2E | TIM_CCER_CC2NE) : TIM_CCER_CC2E);
-            break;
-        case TIMER_CHANNEL_3:
-            handle->CCER |= (is_timer_advanced(handle) ? (TIM_CCER_CC3E | TIM_CCER_CC3NE) : TIM_CCER_CC3E);
-            break;
-        case TIMER_CHANNEL_4:
-            handle->CCER |= TIM_CCER_CC4E;
-            break;
-        default:
-            return HAL_ERR_INVALID_ARG;
+hal_err_t pwm_resume_complementary_channel(TIM_TypeDef* handle, timer_channel_t channel) {
+    if (!is_timer_advanced(handle) || channel > TIMER_CHANNEL_3) {
+        return HAL_ERR_INVALID_ARG;
     }
-
+    handle->CCER |= (1UL << ((channel * 4) + 2));
     return HAL_OK;
 }

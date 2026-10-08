@@ -30,6 +30,9 @@ hal_err_t pwm_unfreeze_timer(TIM_TypeDef* handle);
 hal_err_t pwm_pause_channel(TIM_TypeDef* handle, timer_channel_t channel);
 hal_err_t pwm_resume_channel(TIM_TypeDef* handle, timer_channel_t channel);
 
+hal_err_t pwm_pause_complementary_channel(TIM_TypeDef* handle, timer_channel_t channel);
+hal_err_t pwm_resume_complementary_channel(TIM_TypeDef* handle, timer_channel_t channel);
+
 
 #ifdef __cplusplus
 }

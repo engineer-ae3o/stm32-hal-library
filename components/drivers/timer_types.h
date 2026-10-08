@@ -31,16 +31,19 @@ extern "C" {
 
 
 typedef enum : uint8_t {
-    TIMER_COUNTER_UP   = 0b0 << TIM_CR1_DIR_Pos,
-    TIMER_COUNTER_DOWN = 0b1 << TIM_CR1_DIR_Pos,
+    TIMER_COUNTER_UP   = (0b0 << TIM_CR1_DIR_Pos),
+    TIMER_COUNTER_DOWN = (0b1 << TIM_CR1_DIR_Pos),
 } timer_count_dir_t;
 
+
 typedef enum : uint8_t {
-    TIMER_CHANNEL_1 = 0,
-    TIMER_CHANNEL_2,
-    TIMER_CHANNEL_3,
-    TIMER_CHANNEL_4,
+    TIMER_CHANNEL_1  = 0,
+    TIMER_CHANNEL_2  = 1,
+    TIMER_CHANNEL_3  = 2,
+    TIMER_CHANNEL_4  = 3,
+    TIMER_CHANNEL_NC = 0xFF,
 } timer_channel_t;
+
 
 // The channel parameter only has meaning when the interrupt is a capture compare interrupt
 typedef struct {

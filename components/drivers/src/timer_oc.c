@@ -116,7 +116,7 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
 
     if (timer_advanced) {
         handle->CR2 = cr2;
-        // Configure the run and idle off-state selection of the channels and the write protection level
+        // Configure the run and idle off-state selection of the channels
         handle->BDTR |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0);
     }
 
@@ -226,7 +226,7 @@ hal_err_t timer_oc_freeze_timer(TIM_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Freeze the counter and disable all the channels' output
+    // Freeze the counter and disable the main output for advanced timers
     if (is_timer_advanced(handle)) {
         handle->BDTR &= ~TIM_BDTR_MOE;
     }
@@ -240,7 +240,7 @@ hal_err_t timer_oc_unfreeze_timer(TIM_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Unfreeze the counter and enable all the channels' output
+    // Unfreeze the counter and enable the main output for advanced timers
     if (is_timer_advanced(handle)) {
         handle->BDTR |= TIM_BDTR_MOE;
     }

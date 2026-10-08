@@ -19,24 +19,24 @@ typedef struct {
 static timer_ctx_t s_timer_cb_ctx[] = {
     // TIM1
     // NOTE: None of TIM1's callbacks are stored in this table. Refer below
-    {.callback = {}, .irq_type = TIM1_CC_IRQn},
+    [0] = {.callback = {}, .irq_type = TIM1_CC_IRQn},
     // TIM2
-    {.callback = {}, .irq_type = TIM2_IRQn},
+    [1] = {.callback = {}, .irq_type = TIM2_IRQn},
     // TIM3
-    {.callback = {}, .irq_type = TIM3_IRQn},
+    [2] = {.callback = {}, .irq_type = TIM3_IRQn},
     // TIM4
-    {.callback = {}, .irq_type = TIM4_IRQn},
+    [3] = {.callback = {}, .irq_type = TIM4_IRQn},
     // TIM5
-    {.callback = {}, .irq_type = TIM5_IRQn},
+    [4] = {.callback = {}, .irq_type = TIM5_IRQn},
     // TIM9
     // NOTE: Only TIM9's callbacks are stored here
-    {.callback = {}, .irq_type = TIM1_BRK_TIM9_IRQn},
+    [5] = {.callback = {}, .irq_type = TIM1_BRK_TIM9_IRQn},
     // TIM10
     // NOTE: Only TIM10's callbacks are stored here
-    {.callback = {}, .irq_type = TIM1_UP_TIM10_IRQn},
+    [6] = {.callback = {}, .irq_type = TIM1_UP_TIM10_IRQn},
     // TIM11
     // NOTE: Only TIM11's callbacks are stored here
-    {.callback = {}, .irq_type = TIM1_TRG_COM_TIM11_IRQn},
+    [7] = {.callback = {}, .irq_type = TIM1_TRG_COM_TIM11_IRQn},
 };
 
 // Since the interrupt vectors are shared, we have to find
@@ -50,6 +50,7 @@ typedef struct {
 } tim1_cb_ctx_t;
 
 static tim1_cb_ctx_t s_advanced_timer_cb = {};
+
 
 // Helpers
 [[__gnu__::__always_inline__]] static inline uint8_t get_index(TIM_TypeDef* handle) {
@@ -81,28 +82,28 @@ static tim1_cb_ctx_t s_advanced_timer_cb = {};
         if ((handle->DIER & TIM_DIER_UIE) && (handle->SR & TIM_SR_UIF)) {
             handle->SR = ~TIM_SR_UIF;
             if (s_advanced_timer_cb.update.cb) {
-                s_advanced_timer_cb.update.cb(s_advanced_timer_cb.update.arg, 0);
+                s_advanced_timer_cb.update.cb(s_advanced_timer_cb.update.arg, TIMER_CHANNEL_NC);
             }
         }
         // Break event interrupt
         if ((handle->DIER & TIM_DIER_BIE) && (handle->SR & TIM_SR_BIF)) {
             handle->SR = ~TIM_SR_BIF;
             if (s_advanced_timer_cb.break_input.cb) {
-                s_advanced_timer_cb.break_input.cb(s_advanced_timer_cb.break_input.arg, 0);
+                s_advanced_timer_cb.break_input.cb(s_advanced_timer_cb.break_input.arg, TIMER_CHANNEL_NC);
             }
         }
         // Commutation event interrupt
         if ((handle->DIER & TIM_DIER_COMIE) && (handle->SR & TIM_SR_COMIF)) {
             handle->SR = ~TIM_SR_COMIF;
             if (s_advanced_timer_cb.commutation.cb) {
-                s_advanced_timer_cb.commutation.cb(s_advanced_timer_cb.commutation.arg, 0);
+                s_advanced_timer_cb.commutation.cb(s_advanced_timer_cb.commutation.arg, TIMER_CHANNEL_NC);
             }
         }
         // Trigger event interrupt
         if ((handle->DIER & TIM_DIER_TIE) && (handle->SR & TIM_SR_TIF)) {
             handle->SR = ~TIM_SR_TIF;
             if (s_advanced_timer_cb.trigger.cb) {
-                s_advanced_timer_cb.trigger.cb(s_advanced_timer_cb.trigger.arg, 0);
+                s_advanced_timer_cb.trigger.cb(s_advanced_timer_cb.trigger.arg, TIMER_CHANNEL_NC);
             }
         }
         // Capture compare interrupt(s)
@@ -141,7 +142,7 @@ static tim1_cb_ctx_t s_advanced_timer_cb = {};
     if ((handle->DIER & TIM_DIER_UIE) && (handle->SR & TIM_SR_UIF)) {
         handle->SR = ~TIM_SR_UIF;
         if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, 0);
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_NC);
         }
     }
     // Capture compare interrupt(s)

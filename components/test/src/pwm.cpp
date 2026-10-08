@@ -748,15 +748,21 @@ namespace test::pwm {
             TIM_ADV->CCER = TIM_CCER_CC1E | TIM_CCER_CC1NE | TIM_CCER_CC4E;
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_channel(TIM_ADV, TIMER_CHANNEL_1));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_complementary_channel(TIM_ADV, TIMER_CHANNEL_1));
             TEST_ASSERT_FALSE(TIM_ADV->CCER & (TIM_CCER_CC1E | TIM_CCER_CC1NE));
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_resume_channel(TIM_ADV, TIMER_CHANNEL_1));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_resume_complementary_channel(TIM_ADV, TIMER_CHANNEL_1));
             TEST_ASSERT_TRUE(TIM_ADV->CCER & (TIM_CCER_CC1E | TIM_CCER_CC1NE));
 
-            // Channel 3 has no complementary output: pausing it must not touch bits outside CC4E
+            // Channel 4 has no complementary output: pausing it must not touch bits outside CC4E
             TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_channel(TIM_ADV, TIMER_CHANNEL_4));
             TEST_ASSERT_FALSE(TIM_ADV->CCER & TIM_CCER_CC4E);
             TEST_ASSERT_TRUE(TIM_ADV->CCER & TIM_CCER_CC1E); // untouched by the channel-3 call
+
+            // Channel 4 has no complementary output, so *_complementary* API should fail with it
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_pause_complementary_channel(TIM_ADV, TIMER_CHANNEL_4));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_resume_complementary_channel(TIM_ADV, TIMER_CHANNEL_4));
 
             reset_pwm(TIM_ADV);
             TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
