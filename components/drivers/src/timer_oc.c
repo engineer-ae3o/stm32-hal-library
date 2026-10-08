@@ -210,7 +210,7 @@ hal_err_t timer_oc_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_
 }
 
 hal_err_t timer_oc_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uint32_t compare_level) {
-    if (handle == NULL || compare_level > get_max_compare_level(handle)) {
+    if (handle == NULL || channel >= timer_get_num_channels(handle) || compare_level > get_max_compare_level(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -263,7 +263,7 @@ hal_err_t timer_oc_unfreeze_timer(TIM_TypeDef* handle) {
 }
 
 hal_err_t timer_oc_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
-    if (handle == NULL || channel > TIMER_CHANNEL_4) {
+    if (handle == NULL || channel >= timer_get_num_channels(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
     handle->CCER &= ~(1UL << (channel * 4));
@@ -271,7 +271,7 @@ hal_err_t timer_oc_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
 }
 
 hal_err_t timer_oc_resume_channel(TIM_TypeDef* handle, timer_channel_t channel) {
-    if (handle == NULL || channel > TIMER_CHANNEL_4) {
+    if (handle == NULL || channel >= timer_get_num_channels(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
     handle->CCER |= (1UL << (channel * 4));

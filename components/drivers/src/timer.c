@@ -453,7 +453,7 @@ bool is_timer_lite(TIM_TypeDef* handle) {
     return (handle == TIM9 || handle == TIM10 || handle == TIM11);
 }
 
-uint32_t timer_get_num_channels(TIM_TypeDef* handle) {
+uint8_t timer_get_num_channels(TIM_TypeDef* handle) {
     if (handle == TIM1) {
         return MAX_TIM1_CHANNELS;
     } else if (handle == TIM2) {

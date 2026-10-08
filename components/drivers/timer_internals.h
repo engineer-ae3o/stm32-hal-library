@@ -28,7 +28,7 @@ bool is_timer_advanced(TIM_TypeDef* handle);
 bool is_timer_on_apb1(TIM_TypeDef* handle);
 bool is_timer_32_bits(TIM_TypeDef* handle);
 
-uint32_t timer_get_num_channels(TIM_TypeDef* handle);
+uint8_t  timer_get_num_channels(TIM_TypeDef* handle);
 uint32_t timer_get_frequency_hz(TIM_TypeDef* handle);
 
 hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us);

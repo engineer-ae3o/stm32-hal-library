@@ -2,13 +2,25 @@
 #include "drivers/timer_internals.h"
 #include "drivers/timer_extended.h"
 #include "drivers/timer.h"
+#include "utils/common.h"
 #include "utils/err.h"
+
+#include <stdint.h>
 
 
 hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
     if (handle == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
+
+    // Clear all residual state
+    TRY(pcnt_deinit(handle));
+
+    // Since the counter should be free running, use the maximum reload value
+    // The zero out the counter and start the timer's counter
+    handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+    handle->CNT = 0;
+    handle->CR1 |= TIM_CR1_CEN;
 
     return HAL_OK;
 }
