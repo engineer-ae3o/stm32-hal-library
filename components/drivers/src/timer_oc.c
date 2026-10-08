@@ -38,17 +38,17 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // TIM9-TIM11 only support upcounting edge aligned upcounting
-    // TIM1-TIM5 all have 4 main channels, TIM9 has 2 and TIM10-TIM11 have 1 each
-    if (((handle == TIM9 || handle == TIM10 || handle == TIM11) && (config->count_mode != TIMER_OC_EDGE_LEFT_ALIGNED)) ||
-        ((handle == TIM1 || handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) && (config->num_channels > MAX_TIM1_CHANNELS)) ||
-        ((handle == TIM9) && (config->num_channels > MAX_TIM9_CHANNELS)) ||
-        ((handle == TIM10 || handle == TIM11) && (config->num_channels > MAX_TIM10_CHANNELS))) {
+    const bool timer_advanced = is_timer_advanced(handle);
+    const bool timer_lite     = is_timer_lite(handle);
+
+    // The lite timers (TIM9-TIM11) only support edge aligned upcounting
+    // TIM1 has 4 main channels. TIM2-TIM5 all have 4 main channels,
+    // TIM9 has 2 and the extra lite timers (TIM10-TIM11) have 1 each
+    if ((timer_lite && (config->count_mode != TIMER_OC_EDGE_LEFT_ALIGNED)) || (config->num_channels > timer_get_num_channels(handle))) {
         return HAL_ERR_INVALID_ARG;
     }
 
     // Refer to pwm_advanced_timer_init(...) (drivers/pwm.c) for the explanation for this
-    const bool timer_advanced = is_timer_advanced(handle);
     if (timer_advanced && (handle->BDTR & TIM_BDTR_LOCK)) {
         return HAL_ERR_INVALID_STATE;
     }
@@ -57,11 +57,11 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
     TRY(timer_oc_deinit(handle));
 
     // Set the output compare mode characteristics
-    uint32_t ccmr1 = handle->CCMR1;
-    uint32_t ccmr2 = handle->CCMR2;
-    uint32_t ccer  = handle->CCER;
-    uint32_t dier  = handle->DIER;
-    uint32_t cr2   = handle->CR2;
+    uint32_t ccmr1 = 0;
+    uint32_t ccmr2 = 0;
+    uint32_t ccer  = 0;
+    uint32_t dier  = 0;
+    uint32_t cr2   = 0;
 
     const bool enable_cc_irq = (config->callback.cb != NULL);
 
@@ -76,6 +76,9 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
                 cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS1 : 0;
                 break;
             case TIMER_CHANNEL_2:
+                if (handle == TIM10 || handle == TIM11) {
+                    return HAL_ERR_INVALID_ARG;
+                }
                 ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | (uint32_t)(config->buffer_compare_reload ? TIM_CCMR1_OC2PE : 0) |
                          (uint32_t)(config->mode << TIM_CCMR1_OC2M_Pos);
                 ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC2E | TIM_CCER_CC2P) : (TIM_CCER_CC2E);
@@ -83,6 +86,9 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
                 cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS2 : 0;
                 break;
             case TIMER_CHANNEL_3:
+                if (timer_lite) {
+                    return HAL_ERR_INVALID_ARG;
+                }
                 ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC3PE : 0) |
                          (uint32_t)(config->mode << TIM_CCMR2_OC3M_Pos);
                 ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC3E | TIM_CCER_CC3P) : (TIM_CCER_CC3E);
@@ -90,6 +96,9 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
                 cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS3 : 0;
                 break;
             case TIMER_CHANNEL_4:
+                if (timer_lite) {
+                    return HAL_ERR_INVALID_ARG;
+                }
                 ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC4PE : 0) |
                          (uint32_t)(config->mode << TIM_CCMR2_OC4M_Pos);
                 ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
@@ -109,13 +118,17 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
     }
 
     // Final writeback
-    handle->CCMR1 = ccmr1;
-    handle->CCMR2 = ccmr2;
-    handle->CCER  = ccer;
-    handle->DIER  = dier;
+    handle->CCER |= ccer;
+    handle->DIER |= dier;
+    handle->CCMR1 |= ccmr1;
+
+    if (!timer_lite) {
+        // The lite timers do not have a CCMR2 register
+        handle->CCMR2 |= ccmr2;
+    }
 
     if (timer_advanced) {
-        handle->CR2 = cr2;
+        handle->CR2 |= cr2;
         // Configure the run and idle off-state selection of the channels
         handle->BDTR |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0);
     }
@@ -241,10 +254,10 @@ hal_err_t timer_oc_unfreeze_timer(TIM_TypeDef* handle) {
     }
 
     // Unfreeze the counter and enable the main output for advanced timers
+    handle->CR1 |= TIM_CR1_CEN;
     if (is_timer_advanced(handle)) {
         handle->BDTR |= TIM_BDTR_MOE;
     }
-    handle->CR1 |= TIM_CR1_CEN;
 
     return HAL_OK;
 }

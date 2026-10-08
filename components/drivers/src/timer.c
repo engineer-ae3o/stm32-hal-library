@@ -228,7 +228,7 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_
         return HAL_ERR_INVALID_ARG;
     }
 
-    if ((handle == TIM9 || handle == TIM10 || handle == TIM11) && direction != TIMER_COUNTER_UP) {
+    if (is_timer_lite(handle) && direction != TIMER_COUNTER_UP) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
@@ -447,6 +447,33 @@ bool is_timer_32_bits(TIM_TypeDef* handle) {
 
 bool is_timer_advanced(TIM_TypeDef* handle) {
     return (handle == TIM1);
+}
+
+bool is_timer_lite(TIM_TypeDef* handle) {
+    return (handle == TIM9 || handle == TIM10 || handle == TIM11);
+}
+
+uint32_t timer_get_num_channels(TIM_TypeDef* handle) {
+    if (handle == TIM1) {
+        return MAX_TIM1_CHANNELS;
+    } else if (handle == TIM2) {
+        return MAX_TIM2_CHANNELS;
+    } else if (handle == TIM3) {
+        return MAX_TIM3_CHANNELS;
+    } else if (handle == TIM4) {
+        return MAX_TIM4_CHANNELS;
+    } else if (handle == TIM5) {
+        return MAX_TIM5_CHANNELS;
+    } else if (handle == TIM9) {
+        return MAX_TIM9_CHANNELS;
+    } else if (handle == TIM10) {
+        return MAX_TIM10_CHANNELS;
+    } else if (handle == TIM11) {
+        return MAX_TIM11_CHANNELS;
+    } else {
+        ASSERT(false);
+        return 0;
+    }
 }
 
 uint32_t timer_get_frequency_hz(TIM_TypeDef* handle) {
