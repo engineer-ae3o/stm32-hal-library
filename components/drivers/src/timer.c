@@ -239,7 +239,7 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_
     TRY(timer_deinit(handle));
 
     // Register the callback
-    TRY(timer_register_callback(handle, callback, UPDATE_EVENT));
+    TRY(timer_register_callback(handle, callback, TIMER_IRQ_UPDATE_EVENT));
 
     // Set the counting direction. Edge aligned (up or downcounting)
     handle->CR1 |= (uint32_t)direction;
@@ -523,27 +523,27 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, adva
     IRQn_Type irq_type = 0;
     if (is_timer_advanced(handle)) {
         switch (type) {
-            case UPDATE_EVENT:
+            case TIMER_IRQ_UPDATE_EVENT:
                 irq_type = TIM1_UP_TIM10_IRQn;
                 // Register the update event callback
                 s_advanced_timer_cb.update = callback;
                 break;
-            case BREAK_EVENT:
+            case TIMER_IRQ_BREAK_EVENT:
                 irq_type = TIM1_BRK_TIM9_IRQn;
                 // Register the break event callback
                 s_advanced_timer_cb.break_input = callback;
                 break;
-            case CAPTURE_COMPARE:
+            case TIMER_IRQ_CAPTURE_COMPARE:
                 irq_type = TIM1_CC_IRQn;
                 // Register the capture compare event callback
                 s_advanced_timer_cb.capture_compare = callback;
                 break;
-            case TRIGGER_EVENT:
+            case TIMER_IRQ_TRIGGER_EVENT:
                 irq_type = TIM1_TRG_COM_TIM11_IRQn;
                 // Register the trigger event callback
                 s_advanced_timer_cb.trigger = callback;
                 break;
-            case COMMUTATION_EVENT:
+            case TIMER_IRQ_COMMUTATION_EVENT:
                 irq_type = TIM1_TRG_COM_TIM11_IRQn;
                 // Register the commutation event callback
                 s_advanced_timer_cb.commutation = callback;

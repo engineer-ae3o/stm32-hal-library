@@ -15,11 +15,11 @@ extern "C" {
 
 
 typedef enum : uint8_t {
-    UPDATE_EVENT,
-    BREAK_EVENT,
-    CAPTURE_COMPARE,
-    TRIGGER_EVENT,
-    COMMUTATION_EVENT,
+    TIMER_IRQ_UPDATE_EVENT,
+    TIMER_IRQ_BREAK_EVENT,
+    TIMER_IRQ_CAPTURE_COMPARE,
+    TIMER_IRQ_TRIGGER_EVENT,
+    TIMER_IRQ_COMMUTATION_EVENT,
 } advanced_timer_irq_type_t;
 
 bool is_timer_on_apb1(TIM_TypeDef* handle);
