@@ -179,6 +179,9 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
 }
 
 hal_err_t pwm_gp_timer_init(TIM_TypeDef* handle, const pwm_gp_timer_config_t* config) {
+    if (handle == NULL || config == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
     const timer_oc_config_t pwm_cfg = {
         .buffer_compare_reload = true,
         .mode                  = (timer_oc_mode_t)config->pwm_mode,

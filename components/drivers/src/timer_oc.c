@@ -63,9 +63,6 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
     uint32_t cr2   = handle->CR2;
 
     const bool enable_cc_irq = (config->callback.cb != NULL);
-    if (enable_cc_irq) {
-        TRY(timer_register_callback(handle, config->callback, CAPTURE_COMPARE));
-    }
 
     for (size_t i = 0; i < config->num_channels; i++) {
         // Configure the channel in the CCMRx register
@@ -82,21 +79,21 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
                          (uint32_t)(config->mode << TIM_CCMR1_OC2M_Pos);
                 ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC2E | TIM_CCER_CC2P) : (TIM_CCER_CC2E);
                 dier |= enable_cc_irq ? TIM_DIER_CC2IE : 0;
-                cr2 |= (is_timer_advanced(handle) && config->channels[i].output_idle_state) ? TIM_CR2_OIS1 : 0;
+                cr2 |= (is_timer_advanced(handle) && config->channels[i].output_idle_state) ? TIM_CR2_OIS2 : 0;
                 break;
             case TIMER_CHANNEL_3:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC3PE : 0) |
                          (uint32_t)(config->mode << TIM_CCMR2_OC3M_Pos);
                 ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC3E | TIM_CCER_CC3P) : (TIM_CCER_CC3E);
                 dier |= enable_cc_irq ? TIM_DIER_CC3IE : 0;
-                cr2 |= (is_timer_advanced(handle) && config->channels[i].output_idle_state) ? TIM_CR2_OIS1 : 0;
+                cr2 |= (is_timer_advanced(handle) && config->channels[i].output_idle_state) ? TIM_CR2_OIS3 : 0;
                 break;
             case TIMER_CHANNEL_4:
                 ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC4PE : 0) |
                          (uint32_t)(config->mode << TIM_CCMR2_OC4M_Pos);
                 ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
                 dier |= enable_cc_irq ? TIM_DIER_CC4IE : 0;
-                cr2 |= (is_timer_advanced(handle) && config->channels[i].output_idle_state) ? TIM_CR2_OIS1 : 0;
+                cr2 |= (is_timer_advanced(handle) && config->channels[i].output_idle_state) ? TIM_CR2_OIS4 : 0;
                 break;
             default:
                 return HAL_ERR_INVALID_ARG;
@@ -115,10 +112,21 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
     handle->CCMR2 = ccmr2;
     handle->CCER  = ccer;
     handle->DIER  = dier;
-    handle->CR2   = cr2;
+    if (is_timer_advanced(handle)) {
+        handle->CR2 = cr2;
+    }
+
+    if (enable_cc_irq) {
+        TRY(timer_register_callback(handle, config->callback, CAPTURE_COMPARE));
+    }
 
     // Set the timer's counting mode, and enable auto-reload register buffering and interrupts only on update events
     handle->CR1 |= (config->count_mode | TIM_CR1_ARPE | TIM_CR1_URS);
+
+    if (is_timer_advanced(handle)) {
+        // Configure the run and idle off-state selection of the channels and the write protection level
+        handle->BDTR |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0);
+    }
 
     return HAL_OK;
 }

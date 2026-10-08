@@ -87,7 +87,11 @@ typedef struct {
 
 
 typedef struct {
-    bool buffer_compare_reload;
+    bool buffer_compare_reload; // Buffer writes to the CCxR registers
+
+    // Only relevant for the advanced timers
+    bool ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
+    bool ossi; // State of all channels when the timer is inactive
 
     timer_oc_mode_t       mode;
     timer_oc_count_mode_t count_mode;

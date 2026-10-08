@@ -406,7 +406,7 @@ hal_err_t timer_resume(TIM_TypeDef* handle) {
 
 hal_err_t timer_restart(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Pause the timer first
-    handle->CR1 &= ~TIM_CR1_CEN;
+    TRY(timer_pause(handle));
 
     // Then restart based on what mode it was counting in previously
     if (handle->CR1 & TIM_CR1_OPM) {
@@ -491,9 +491,15 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Clear existing state
     handle->CNT  = 0;
     handle->CCR1 = 0;
-    handle->CCR2 = 0;
-    handle->CCR3 = 0;
-    handle->CCR4 = 0;
+    // TIM10 and TIM11 only have CCR1
+    if (!(handle == TIM10 || handle == TIM11)) {
+        handle->CCR2 = 0;
+        // TIM9 only has CCR1 and CCR2
+        if (handle != TIM9) {
+            handle->CCR3 = 0;
+            handle->CCR4 = 0;
+        }
+    }
 
     // Generate an update event and clear the update interrupt
     // flag since the ARR and PSC registers contain new values
