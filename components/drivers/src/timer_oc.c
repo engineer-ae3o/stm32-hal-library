@@ -33,7 +33,7 @@
 
 
 // Public API
-hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
+hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t* config) {
     if (handle == NULL || config == NULL || config->num_channels == 0) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -44,7 +44,7 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
     // The lite timers (TIM9-TIM11) only support edge aligned upcounting
     // TIM1 has 4 main channels. TIM2-TIM5 all have 4 main channels,
     // TIM9 has 2 and the extra lite timers (TIM10-TIM11) have 1 each
-    if ((timer_lite && (config->count_mode != TIMER_OC_EDGE_LEFT_ALIGNED)) || (config->num_channels > timer_get_num_channels(handle))) {
+    if ((timer_lite && (config->count_mode != OUTPUT_COMPARE_EDGE_LEFT_ALIGNED)) || (config->num_channels > timer_get_num_channels(handle))) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -54,7 +54,7 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
     }
 
     // Clear all residual state
-    TRY(timer_oc_deinit(handle));
+    TRY(output_compare_deinit(handle));
 
     // Set the output compare mode characteristics
     uint32_t ccmr1 = 0;
@@ -143,11 +143,11 @@ hal_err_t timer_oc_init(TIM_TypeDef* handle, const timer_oc_config_t* config) {
     return HAL_OK;
 }
 
-hal_err_t timer_oc_deinit(TIM_TypeDef* handle) {
+hal_err_t output_compare_deinit(TIM_TypeDef* handle) {
     return timer_deinit(handle);
 }
 
-hal_err_t timer_oc_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_compare_level) {
+hal_err_t output_compare_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_compare_level) {
     if (handle == NULL || period_hz == 0 || max_compare_level == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -190,7 +190,7 @@ hal_err_t timer_oc_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_
     }
 
     // Freeze the timer's output before writing to any of its registers
-    TRY(timer_oc_freeze_timer(handle));
+    TRY(output_compare_freeze_timer(handle));
 
     // Set the actual reload and prescaler values
     handle->ARR = (uint32_t)(arr_plus_1 - 1);
@@ -201,7 +201,7 @@ hal_err_t timer_oc_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_
     handle->SR  = ~TIM_SR_UIF;
 
     // Enable the timer's output
-    TRY(timer_oc_unfreeze_timer(handle));
+    TRY(output_compare_unfreeze_timer(handle));
 
     // Derive the compare level (doubles as max duty cycle in PWM mode) from the auto-reload register
     *max_compare_level = get_max_compare_level(handle);
@@ -209,7 +209,7 @@ hal_err_t timer_oc_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_
     return HAL_OK;
 }
 
-hal_err_t timer_oc_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uint32_t compare_level) {
+hal_err_t output_compare_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uint32_t compare_level) {
     if (handle == NULL || channel >= timer_get_num_channels(handle) || compare_level > get_max_compare_level(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -234,7 +234,7 @@ hal_err_t timer_oc_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uin
     return HAL_OK;
 }
 
-hal_err_t timer_oc_freeze_timer(TIM_TypeDef* handle) {
+hal_err_t output_compare_freeze_timer(TIM_TypeDef* handle) {
     if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -248,7 +248,7 @@ hal_err_t timer_oc_freeze_timer(TIM_TypeDef* handle) {
     return HAL_OK;
 }
 
-hal_err_t timer_oc_unfreeze_timer(TIM_TypeDef* handle) {
+hal_err_t output_compare_unfreeze_timer(TIM_TypeDef* handle) {
     if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -262,7 +262,7 @@ hal_err_t timer_oc_unfreeze_timer(TIM_TypeDef* handle) {
     return HAL_OK;
 }
 
-hal_err_t timer_oc_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
+hal_err_t output_compare_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
     if (handle == NULL || channel >= timer_get_num_channels(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -270,7 +270,7 @@ hal_err_t timer_oc_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
     return HAL_OK;
 }
 
-hal_err_t timer_oc_resume_channel(TIM_TypeDef* handle, timer_channel_t channel) {
+hal_err_t output_compare_resume_channel(TIM_TypeDef* handle, timer_channel_t channel) {
     if (handle == NULL || channel >= timer_get_num_channels(handle)) {
         return HAL_ERR_INVALID_ARG;
     }

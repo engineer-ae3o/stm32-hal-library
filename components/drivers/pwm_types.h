@@ -18,8 +18,8 @@ typedef enum : uint8_t {
 
 
 typedef enum : uint8_t {
-    PWM_MODE_1 = TIMER_OC_PWM_MODE_1, // The PWM channel is high when the timer's counter value is less than the duty cycle, but low otherwise
-    PWM_MODE_2 = TIMER_OC_PWM_MODE_2, // The PWM channel is low when the timer's counter value is less than the duty cycle, but high otherwise
+    PWM_MODE_1 = OUTPUT_COMPARE_PWM_MODE_1, // The PWM channel is high when the timer's counter value is less than the duty cycle, but low otherwise
+    PWM_MODE_2 = OUTPUT_COMPARE_PWM_MODE_2, // The PWM channel is low when the timer's counter value is less than the duty cycle, but high otherwise
 } pwm_mode_t;
 
 
@@ -33,8 +33,10 @@ typedef enum : uint8_t {
 
 // General Purpose and Lite Timers configuration (can still be used with the advanced timers for minimal configuration)
 typedef struct {
-    pwm_mode_t            pwm_mode;
-    timer_oc_count_mode_t pwm_count_mode;
+    // How the timer hardware reacts to a compare event
+    pwm_mode_t pwm_mode;
+    // How the timer counts and in what direction
+    output_compare_count_mode_t pwm_count_mode;
 
     timer_channel_config_t channels[MAX_TIM2_CHANNELS];
     size_t                 num_channels;
@@ -43,9 +45,12 @@ typedef struct {
 
 // Advanced Timers Configuration
 typedef struct {
-    pwm_mode_t            pwm_mode;       // The state of the channels when a capture compare event occurs
-    uint8_t               repetition_cnt; // The repetition counter
-    timer_oc_count_mode_t pwm_count_mode; // How the timer counts
+    // The state of the channels when a capture compare event occurs
+    pwm_mode_t pwm_mode;
+    // The repetition counter
+    uint8_t repetition_cnt;
+    // How the timer counts and in what direction
+    output_compare_count_mode_t pwm_count_mode;
 
     bool ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
     bool ossi; // State of all channels when the timer is inactive

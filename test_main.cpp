@@ -13,7 +13,7 @@ int main() {
     // Run the profile tests
     // profile::all();
 
-    // Run the hardware demos
+    // Run the hardware demo
     // demo::all();
 
     // Halt once tests are finished since nothing else to do.

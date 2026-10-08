@@ -182,9 +182,9 @@ hal_err_t pwm_gp_timer_init(TIM_TypeDef* handle, const pwm_gp_timer_config_t* co
     if (handle == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
-    const timer_oc_config_t pwm_cfg = {
+    const output_compare_config_t pwm_cfg = {
         .buffer_compare_reload = true,
-        .mode                  = (timer_oc_mode_t)config->pwm_mode,
+        .mode                  = (output_compare_mode_t)config->pwm_mode,
         .count_mode            = config->pwm_count_mode,
         .channels =
             {
@@ -196,35 +196,35 @@ hal_err_t pwm_gp_timer_init(TIM_TypeDef* handle, const pwm_gp_timer_config_t* co
         .num_channels = config->num_channels,
         .callback     = {},
     };
-    return timer_oc_init(handle, &pwm_cfg);
+    return output_compare_init(handle, &pwm_cfg);
 }
 
 hal_err_t pwm_deinit(TIM_TypeDef* handle) {
-    return timer_oc_deinit(handle);
+    return output_compare_deinit(handle);
 }
 
 hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_duty_cycle) {
-    return timer_oc_start(handle, frequency_hz, max_duty_cycle);
+    return output_compare_start(handle, frequency_hz, max_duty_cycle);
 }
 
 hal_err_t pwm_set_duty_cycle(TIM_TypeDef* handle, timer_channel_t channel, uint32_t duty_cycle) {
-    return timer_oc_set_compare(handle, channel, duty_cycle);
+    return output_compare_set_compare(handle, channel, duty_cycle);
 }
 
 hal_err_t pwm_freeze_timer(TIM_TypeDef* handle) {
-    return timer_oc_freeze_timer(handle);
+    return output_compare_freeze_timer(handle);
 }
 
 hal_err_t pwm_unfreeze_timer(TIM_TypeDef* handle) {
-    return timer_oc_unfreeze_timer(handle);
+    return output_compare_unfreeze_timer(handle);
 }
 
 hal_err_t pwm_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
-    return timer_oc_pause_channel(handle, channel);
+    return output_compare_pause_channel(handle, channel);
 }
 
 hal_err_t pwm_resume_channel(TIM_TypeDef* handle, timer_channel_t channel) {
-    return timer_oc_resume_channel(handle, channel);
+    return output_compare_resume_channel(handle, channel);
 }
 
 hal_err_t pwm_pause_complementary_channel(TIM_TypeDef* handle, timer_channel_t channel) {
