@@ -188,9 +188,9 @@ namespace test::pwm {
         }
 
         void timer_init_rejects_too_many_channels_per_timer_class() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE2, true));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE1, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_LITE2, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_LITE1, true));
 
             pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
@@ -208,13 +208,13 @@ namespace test::pwm {
             config.num_channels = MAX_TIM10_CHANNELS + 1;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_LITE1, &config));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE2, false));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE1, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_LITE2, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_LITE1, false));
         }
 
         void timer_init_rejects_non_upcounting_mode_on_the_lite_timers() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE1, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_LITE1, true));
 
             pwm_gp_timer_config_t config{};
             config.pwm_mode     = PWM_MODE_1;
@@ -233,11 +233,11 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(TIM_LITE1, &config));
 
             reset_pwm(TIM_LITE1);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_LITE1, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_LITE1, false));
         }
 
         void timer_init_rejects_an_unknown_channel_without_corrupting_state() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
 
             pwm_gp_timer_config_t config{};
@@ -249,11 +249,11 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_GP16, &config));
             TEST_ASSERT_EQUAL_UINT32(0, TIM_GP16->CCMR1); // Never written to, since the rejection happens before writeback
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void timer_init_programs_each_main_channels_registers() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
 
             pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_2;
@@ -281,11 +281,11 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL_UINT32(std::to_underlying(OUTPUT_COMPARE_EDGE_LEFT_ALIGNED), TIM_GP16->CR1 & (TIM_CR1_CMS | TIM_CR1_DIR));
 
             reset_pwm(TIM_GP16);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void timer_init_configures_the_gpio_pin() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
 
             pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
@@ -300,7 +300,7 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL_UINT32(2U, get_gpio_afr(GPIOA, GPIO_PIN_6));      // AF2, per BOARD_TIM3_CH1_PA6
 
             reset_pwm(TIM_GP16);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void advanced_timer_init_rejects_invalid_arguments_and_non_advanced_timers() {
@@ -322,13 +322,13 @@ namespace test::pwm {
             too_many.num_channels = MAX_TIM1_CHANNELS + 1;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_advanced_timer_init(TIM_ADV, &too_many));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP32, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP32, true));
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, pwm_advanced_timer_init(TIM_GP32, &config)); // not an advanced timer
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP32, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP32, false));
         }
 
         void advanced_timer_init_programs_main_and_complementary_channels() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, true));
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode                   = PWM_MODE_1;
@@ -369,11 +369,11 @@ namespace test::pwm {
             TEST_ASSERT_FALSE(TIM_ADV->CCER & TIM_CCER_CC4NP);
 
             reset_pwm(TIM_ADV);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, false));
         }
 
         void advanced_timer_init_programs_ossr_ossi_repetition_and_clk_div() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, true));
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
@@ -395,11 +395,11 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL_UINT32(std::to_underlying(OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1), TIM_ADV->CR1 & TIM_CR1_CMS);
 
             reset_pwm(TIM_ADV);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, false));
         }
 
         void advanced_timer_init_dead_time_lands_in_the_correct_encoding_range() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, true));
             const uint32_t timer_freq_hz = timer_get_frequency_hz(TIM_ADV);
 
             struct range_t {
@@ -441,11 +441,11 @@ namespace test::pwm {
             }
 
             reset_pwm(TIM_ADV);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, false));
         }
 
         void advanced_timer_init_dead_time_zero_leaves_dtg_untouched() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, true));
             reset_pwm(TIM_ADV);
 
             pwm_advanced_timer_config_t config{};
@@ -460,11 +460,11 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL_UINT32(0, TIM_ADV->BDTR & TIM_BDTR_DTG);
 
             reset_pwm(TIM_ADV);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, false));
         }
 
         void advanced_timer_init_rejects_dead_time_beyond_the_max_encodable_range() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, true));
             reset_pwm(TIM_ADV);
             const uint32_t timer_freq_hz = timer_get_frequency_hz(TIM_ADV);
 
@@ -484,11 +484,11 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, pwm_advanced_timer_init(TIM_ADV, &config));
             TEST_ASSERT_EQUAL_UINT32(0, TIM_ADV->BDTR); // Rejected before BDTR is ever written
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, false));
         }
 
         void advanced_timer_init_configures_the_break_input_and_fires_the_callback() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, true));
             reset_pwm(TIM_ADV);
 
             pwm_advanced_timer_config_t config{};
@@ -524,11 +524,11 @@ namespace test::pwm {
             TEST_ASSERT_FALSE(TIM_ADV->SR & TIM_SR_BIF);
 
             reset_pwm(TIM_ADV);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, false));
         }
 
         void advanced_timer_init_active_low_break_clears_bkp() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, true));
             reset_pwm(TIM_ADV);
 
             pwm_advanced_timer_config_t config{};
@@ -547,7 +547,7 @@ namespace test::pwm {
             TEST_ASSERT_FALSE(TIM_ADV->BDTR & TIM_BDTR_BKP);
 
             reset_pwm(TIM_ADV);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, false));
         }
 
         void deinit_forwards_the_invalid_handle_error() {
@@ -563,19 +563,19 @@ namespace test::pwm {
         }
 
         void start_rejects_a_frequency_above_the_timer_clock() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
             const uint32_t timer_freq_hz = timer_get_frequency_hz(TIM_GP16);
 
             uint32_t max_duty = 0;
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, pwm_start(TIM_GP16, timer_freq_hz + 1, &max_duty));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void start_edge_aligned_hits_the_requested_frequency_on_16_and_32_bit_timers() {
             for (auto* const handle : {TIM_GP16, TIM_GP32}) {
-                TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(handle, true));
+                TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(handle, true));
                 reset_pwm(handle);
 
                 constexpr uint32_t REQUESTED_HZ = 1000;
@@ -598,12 +598,12 @@ namespace test::pwm {
 
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_freeze_timer(handle));
                 reset_pwm(handle);
-                TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(handle, false));
+                TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(handle, false));
             }
         }
 
         void start_center_aligned_uses_the_doubled_period_formula() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
             TIM_GP16->CR1 |= std::to_underlying(OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1); // Fake the mode directly; pwm_start only reads CMS
 
@@ -624,11 +624,11 @@ namespace test::pwm {
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_freeze_timer(TIM_GP16));
             reset_pwm(TIM_GP16);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void set_duty_cycle_rejects_invalid_arguments() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
             TIM_GP16->ARR = 999; // Edge aligned by default (CMS == 0): max duty == 1000
 
@@ -636,22 +636,22 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 999 + 2));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, static_cast<timer_channel_t>(0xFF), 500));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void set_duty_cycle_edge_aligned_boundary_is_arr_plus_one() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
             TIM_GP16->ARR = 999; // CMS == 0: edge aligned, max == 1000
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 1000));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 1001));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void set_duty_cycle_center_aligned_boundary_is_arr() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
             TIM_GP16->ARR = 999;
             TIM_GP16->CR1 |= std::to_underlying(OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1); // CMS != 0: center aligned, max == ARR == 999
@@ -659,23 +659,23 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 999));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 1000));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void set_duty_cycle_edge_aligned_off_by_one_at_the_32_bit_ceiling() {
             // On a 32 bit timer with ARR at its absolute max, edge aligned max duty is clamped
             // to ARR itself (not ARR + 1, which would wrap to 0). See get_max_duty_cycle's comment.
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP32, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP32, true));
             reset_pwm(TIM_GP32);
             TIM_GP32->ARR = UINT32_MAX;
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP32, TIMER_CHANNEL_1, UINT32_MAX));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP32, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP32, false));
         }
 
         void set_duty_cycle_writes_the_correct_compare_register() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
             TIM_GP16->ARR = 999;
 
@@ -684,11 +684,11 @@ namespace test::pwm {
                 TEST_ASSERT_EQUAL_UINT32(250, *get_ccr(TIM_GP16, channel));
             }
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void freeze_and_unfreeze_toggle_cen_and_moe_on_the_advanced_timer() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, true));
             reset_pwm(TIM_ADV);
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_unfreeze_timer(TIM_ADV));
@@ -700,11 +700,11 @@ namespace test::pwm {
             TEST_ASSERT_FALSE(TIM_ADV->BDTR & TIM_BDTR_MOE);
 
             reset_pwm(TIM_ADV);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, false));
         }
 
         void freeze_and_unfreeze_toggle_only_cen_on_general_purpose_timers() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_unfreeze_timer(TIM_GP16));
@@ -714,21 +714,21 @@ namespace test::pwm {
             TEST_ASSERT_FALSE(TIM_GP16->CR1 & TIM_CR1_CEN);
 
             reset_pwm(TIM_GP16);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void pause_and_resume_channel_reject_invalid_arguments() {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_pause_channel(nullptr, TIMER_CHANNEL_1));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_resume_channel(nullptr, TIMER_CHANNEL_1));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_pause_channel(TIM_GP16, static_cast<timer_channel_t>(4)));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_resume_channel(TIM_GP16, static_cast<timer_channel_t>(4)));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void pause_and_resume_channel_toggle_only_the_main_output_on_general_purpose_timers() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
             TIM_GP16->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E;
 
@@ -741,11 +741,11 @@ namespace test::pwm {
                 TEST_ASSERT_TRUE(TIM_GP16->CCER & regs.ccxe);
             }
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_GP16, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_GP16, false));
         }
 
         void pause_and_resume_channel_also_toggle_the_complementary_output_on_the_advanced_timer() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, true));
             reset_pwm(TIM_ADV);
             TIM_ADV->CCER = TIM_CCER_CC1E | TIM_CCER_CC1NE | TIM_CCER_CC4E;
 
@@ -767,7 +767,7 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_resume_complementary_channel(TIM_ADV, TIMER_CHANNEL_4));
 
             reset_pwm(TIM_ADV);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, false));
         }
 
         void advanced_timer_init_rejects_reinit_once_locked_but_recovers_after_a_peripheral_reset() {
@@ -778,7 +778,7 @@ namespace test::pwm {
             // without resetting the rest of the MCU. This is the only test in the suite that pokes
             // RCC reset directly, so it's kept last among the TIM1 tests even though it cleans up
             // fully after itself.
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, true));
             reset_pwm(TIM_ADV);
 
             auto reset_tim1 = []() {
@@ -825,7 +825,7 @@ namespace test::pwm {
             reset_pwm(TIM_ADV);
             reset_tim1();
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM_ADV, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM_ADV, false));
         }
 
     } // namespace

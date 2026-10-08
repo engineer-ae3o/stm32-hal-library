@@ -174,7 +174,7 @@ static tim1_cb_ctx_t s_advanced_timer_cb = {};
 
 
 // Public API
-hal_err_t timer_clock_enable(TIM_TypeDef* handle, bool enable) {
+hal_err_t timx_clock_enable(TIM_TypeDef* handle, bool enable) {
     if (enable) {
         if (handle == TIM1) {
             RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
@@ -277,8 +277,6 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
 
     // Clear all the mapped bits of the timer's registers to 0
     handle->CR1 &= ~(TIM_CR1_CEN | TIM_CR1_UDIS | TIM_CR1_URS | TIM_CR1_OPM | TIM_CR1_DIR | TIM_CR1_CMS | TIM_CR1_ARPE | TIM_CR1_CKD);
-    handle->CR2 &= ~(TIM_CR2_CCPC | TIM_CR2_CCUS | TIM_CR2_CCDS | TIM_CR2_MMS | TIM_CR2_TI1S | TIM_CR2_OIS1 | TIM_CR2_OIS1N | TIM_CR2_OIS2 |
-                     TIM_CR2_OIS2N | TIM_CR2_OIS3 | TIM_CR2_OIS3N | TIM_CR2_OIS4);
     handle->DIER &=
         ~(TIM_DIER_UIE | TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_CC3IE | TIM_DIER_CC4IE | TIM_DIER_COMIE | TIM_DIER_TIE | TIM_DIER_BIE |
           TIM_DIER_UDE | TIM_DIER_CC1DE | TIM_DIER_CC2DE | TIM_DIER_CC3DE | TIM_DIER_CC4DE | TIM_DIER_COMDE | TIM_DIER_TDE);
@@ -289,8 +287,7 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
           TIM_CCER_CC3E | TIM_CCER_CC3P | TIM_CCER_CC3NE | TIM_CCER_CC3NP | TIM_CCER_CC4E | TIM_CCER_CC4P | TIM_CCER_CC4NP);
     handle->CCMR1 &= ~(TIM_CCMR1_CC1S | TIM_CCMR1_OC1FE | TIM_CCMR1_OC1PE | TIM_CCMR1_OC1M | TIM_CCMR1_OC1CE | TIM_CCMR1_CC2S | TIM_CCMR1_OC2FE |
                        TIM_CCMR1_OC2PE | TIM_CCMR1_OC2M | TIM_CCMR1_OC2CE);
-    handle->CCMR2 &= ~(TIM_CCMR2_CC3S | TIM_CCMR2_OC3FE | TIM_CCMR2_OC3PE | TIM_CCMR2_OC3M | TIM_CCMR2_OC3CE | TIM_CCMR2_CC4S | TIM_CCMR2_OC4FE |
-                       TIM_CCMR2_OC4PE | TIM_CCMR2_OC4M | TIM_CCMR2_OC4CE);
+    handle->SMCR &= ~(TIM_SMCR_SMS | TIM_SMCR_TS | TIM_SMCR_MSM | TIM_SMCR_ETF | TIM_SMCR_ETPS | TIM_SMCR_ECE | TIM_SMCR_ETP);
     handle->CNT  = 0;
     handle->PSC  = 0;
     handle->ARR  = 0;
@@ -298,9 +295,16 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
 
     // TIM10 and TIM11 only have CCR1
     if (!(handle == TIM10 || handle == TIM11)) {
-        handle->CCR2 = 0;
         // TIM9 only has CCR1 and CCR2
+        handle->CCR2 = 0;
         if (handle != TIM9) {
+            // The lite timers don't have a CR2, CCMR2, DCR, CCR3, CCR4 or DMAR register
+            handle->CR2 &= ~(TIM_CR2_CCPC | TIM_CR2_CCUS | TIM_CR2_CCDS | TIM_CR2_MMS | TIM_CR2_TI1S | TIM_CR2_OIS1 | TIM_CR2_OIS1N | TIM_CR2_OIS2 |
+                             TIM_CR2_OIS2N | TIM_CR2_OIS3 | TIM_CR2_OIS3N | TIM_CR2_OIS4);
+            handle->CCMR2 &= ~(TIM_CCMR2_CC3S | TIM_CCMR2_OC3FE | TIM_CCMR2_OC3PE | TIM_CCMR2_OC3M | TIM_CCMR2_OC3CE | TIM_CCMR2_CC4S |
+                               TIM_CCMR2_OC4FE | TIM_CCMR2_OC4PE | TIM_CCMR2_OC4M | TIM_CCMR2_OC4CE);
+            handle->DCR &= ~(TIM_DCR_DBA | TIM_DCR_DBL);
+            handle->DMAR &= ~TIM_DMAR_DMAB;
             handle->CCR3 = 0;
             handle->CCR4 = 0;
         }

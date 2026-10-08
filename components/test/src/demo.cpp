@@ -209,7 +209,7 @@ namespace demo {
                 .callback        = c.break_callback,
             };
 
-            TRY(timer_clock_enable(c.timer, true));
+            TRY(timx_clock_enable(c.timer, true));
             TRY(pwm_advanced_timer_init(c.timer, &drv));
 
             // pwm_start() zeroes every CCR, so call it once and only touch the duties afterwards

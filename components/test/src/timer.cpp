@@ -51,10 +51,10 @@ namespace test::timer {
         // TESTS
         void clk_enable_rejects_unknown_handles() {
             auto* const bogus = reinterpret_cast<TIM_TypeDef*>(1);
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_clock_enable(bogus, true));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_clock_enable(bogus, false));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timx_clock_enable(bogus, true));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timx_clock_enable(bogus, false));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TEST_INSTANCE, true)); // Leave enabled for the other tests
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TEST_INSTANCE, true)); // Leave enabled for the other tests
         }
 
         void clk_enable_toggles_every_valid_timer_bus_bit() {
@@ -75,13 +75,13 @@ namespace test::timer {
             }};
 
             for (const auto& combo : combos) {
-                TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(combo.handle, false));
+                TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(combo.handle, false));
                 TEST_ASSERT_FALSE(*combo.enable_reg & combo.enable_bit);
-                TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(combo.handle, true));
+                TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(combo.handle, true));
                 TEST_ASSERT_TRUE(*combo.enable_reg & combo.enable_bit);
             }
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TEST_INSTANCE, true)); // Leave TEST_INSTANCE enabled
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TEST_INSTANCE, true)); // Leave TEST_INSTANCE enabled
         }
 
         void init_rejects_invalid_arguments() {
@@ -101,7 +101,7 @@ namespace test::timer {
 
         void init_rejects_down_counting_on_tim9_10_and_11() {
             for (auto* const handle : {TIM9, TIM10, TIM11}) {
-                TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(handle, true));
+                TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(handle, true));
                 TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(handle));
 
                 const uint32_t cr1_before = handle->CR1;
@@ -112,7 +112,7 @@ namespace test::timer {
                 TEST_ASSERT_EQUAL(TIMER_COUNTER_UP, (handle->CR1 & TIM_CR1_DIR) >> TIM_CR1_DIR_Pos);
 
                 TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(handle));
-                TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(handle, false));
+                TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(handle, false));
             }
         }
 
@@ -191,21 +191,21 @@ namespace test::timer {
         }
 
         void deinit_clears_rcr_on_tim1_only() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM1, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM1, true));
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM1));
 
             TIM1->RCR = 0x55;
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM1));
             TEST_ASSERT_EQUAL_UINT32(0, TIM1->RCR & TIM_RCR_REP);
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM1, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM1, false));
         }
 
         void deinit_on_tim10_does_not_touch_the_shared_irq_line_that_tim1_uses() {
             // TIM1 and TIM10 share one NVIC line (TIM1_UP_TIM10_IRQn).
             // Deinitializing either one must leave that line alone
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM1, true));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM10, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM1, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM10, true));
 
             s_update_done = false;
             TEST_ASSERT_EQUAL(HAL_OK, timer_init(TIM1, TIMER_COUNTER_UP, {update_done_cb, nullptr}));
@@ -225,8 +225,8 @@ namespace test::timer {
             TEST_ASSERT_FALSE(TIM1->CR1 & TIM_CR1_CEN);
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM1));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM1, false));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM10, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM1, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM10, false));
         }
 
         void start_oneshot_rejects_invalid_arguments() {
@@ -247,14 +247,14 @@ namespace test::timer {
         void start_oneshot_rejects_a_timeout_that_overflows_the_prescaler_range() {
             // TIM3 is a 16 bit timer: PSC and ARR are both capped at UINT16_MAX, so their
             // product can't come close to covering a UINT32_MAX microsecond timeout at any bus clock.
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM3, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM3, true));
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM3));
 
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, timer_start_oneshot(TIM3, UINT32_MAX));
             TEST_ASSERT_FALSE(TIM3->CR1 & TIM_CR1_CEN);
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM3));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM3, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM3, false));
         }
 
         void start_oneshot_completes_stops_itself_and_invokes_the_callback() {
@@ -282,7 +282,7 @@ namespace test::timer {
         }
 
         void start_oneshot_uses_the_shared_irq_for_tim1() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM1, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM1, true));
 
             s_update_done = false;
             TEST_ASSERT_EQUAL(HAL_OK, timer_init(TIM1, TIMER_COUNTER_UP, {update_done_cb, nullptr}));
@@ -297,7 +297,7 @@ namespace test::timer {
                                      "TIM1 oneshot never fired via the shared IRQ");
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM1));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM1, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM1, false));
         }
 
         void start_periodic_rejects_invalid_arguments() {
@@ -438,9 +438,9 @@ namespace test::timer {
         }
 
         void set_arr_and_psc_rejects_a_timeout_that_overflows_the_supported_range() {
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM3, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM3, true));
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, timer_set_arr_and_psc(TIM3, UINT32_MAX));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_clock_enable(TIM3, false));
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clock_enable(TIM3, false));
         }
 
         void set_arr_and_psc_computes_values_that_reconstruct_the_requested_timeout() {

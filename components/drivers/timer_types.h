@@ -63,7 +63,6 @@ typedef enum : uint8_t {
     OUTPUT_COMPARE_CENTER_ALIGNED_MODE_3 = (0b11U << TIM_CR1_CMS_Pos), // Center aligned (Interrupt compare flag set both on up and downcount)
 } output_compare_count_mode_t;
 
-
 typedef enum : uint8_t {
     OUTPUT_COMPARE_FROZEN          = 0b000, // The channel is ignored on a match
     OUTPUT_COMPARE_HIGH_ON_MATCH   = 0b001, // The channel is forced high on a match
@@ -74,7 +73,6 @@ typedef enum : uint8_t {
     OUTPUT_COMPARE_PWM_MODE_1      = 0b110, // The channel is high when the timer's counter value is less than the compare value
     OUTPUT_COMPARE_PWM_MODE_2      = 0b111, // The channel is low when the timer's counter value is less than the compare value
 } output_compare_mode_t;
-
 
 typedef struct {
     // Timer output is active HIGH when this is false, active LOW otherwise
@@ -87,7 +85,6 @@ typedef struct {
     timer_channel_t channel;
     board_pin_t     gpio_pin;
 } timer_channel_config_t;
-
 
 typedef struct {
     bool buffer_compare_reload; // Buffer writes to the CCxR registers
@@ -105,7 +102,6 @@ typedef struct {
     timer_cb_t callback;
 } output_compare_config_t;
 
-
 // Input Capture types
 
 
@@ -115,7 +111,17 @@ typedef struct {
 
 
 // Quadrature decoder (encoder mode) types
+typedef enum : uint8_t {
+    ENCODER_CLOCKWISE,
+    ENCODER_ANTICLOCKWISE,
+} encoder_dir_t;
+
+typedef void (*encoder_cb_t)(void* arg, encoder_dir_t direction);
+
 typedef struct {
+
+    encoder_cb_t cb;
+    void*        arg;
 } encoder_config_t;
 
 

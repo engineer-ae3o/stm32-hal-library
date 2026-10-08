@@ -19,16 +19,29 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
     // TODO: Handle the initialization for the timer to function as a pulse counter
 
     // Since the counter should be free running, use the maximum reload value
-    // Then zero out the counter and start the timer's counter
     handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
-    handle->CNT = 0;
-    handle->CR1 |= TIM_CR1_CEN;
 
     return HAL_OK;
 }
 
 hal_err_t pcnt_deinit(TIM_TypeDef* handle) {
     return timer_deinit(handle);
+}
+
+hal_err_t pcnt_start(TIM_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    handle->CR1 |= TIM_CR1_CEN;
+    return HAL_OK;
+}
+
+hal_err_t pcnt_stop(TIM_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    handle->CR1 &= ~TIM_CR1_CEN;
+    return HAL_OK;
 }
 
 hal_err_t pcnt_set_count(TIM_TypeDef* handle, uint32_t count) {

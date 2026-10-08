@@ -39,6 +39,9 @@ hal_err_t output_compare_unfreeze_timer(TIM_TypeDef* handle);
 hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config);
 hal_err_t pcnt_deinit(TIM_TypeDef* handle);
 
+hal_err_t pcnt_start(TIM_TypeDef* handle);
+hal_err_t pcnt_stop(TIM_TypeDef* handle);
+
 hal_err_t pcnt_set_count(TIM_TypeDef* handle, uint32_t count);
 hal_err_t pcnt_get_count(TIM_TypeDef* handle, uint32_t* count);
 
