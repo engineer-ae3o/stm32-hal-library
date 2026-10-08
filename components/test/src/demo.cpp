@@ -26,7 +26,7 @@ namespace demo {
         };
 
         struct complementary_channel_t {
-            bool        invert_output     = false;
+            bool        output_polarity   = false;
             bool        output_idle_state = false;
             board_pin_t gpio_pin{};
         };
@@ -35,34 +35,34 @@ namespace demo {
         //   pwm_sweep({.frequency_hz = 5'000, .dead_time_ns = 2'000, .clk_div = TIM_CLK_DIV_1, .lag_steps = -10});
         struct swwep_config_t {
             // Timer
-            TIM_TypeDef*     timer          = TIM1; // Must be an advanced timer
-            uint32_t         frequency_hz   = 20'000U;
-            uint32_t         dead_time_ns   = 1000U;
-            pwm_clk_div_t    clk_div        = TIM_CLK_DIV_4; // DIV_1 tops out near 10 us of dead time at 100MHz
-            pwm_mode_t       pwm_mode       = PWM_MODE_1;
-            pwm_count_mode_t count_mode     = PWM_CENTER_ALIGNED_MODE_3;
-            uint8_t          repetition_cnt = 10;
-            bool             ossr           = true;
-            bool             ossi           = true;
+            TIM_TypeDef*          timer          = TIM1; // Must be an advanced timer
+            uint32_t              frequency_hz   = 20'000U;
+            uint32_t              dead_time_ns   = 1000U;
+            pwm_clk_div_t         clk_div        = TIM_CLK_DIV_4; // DIV_1 tops out near 10 us of dead time at 100MHz
+            pwm_mode_t            pwm_mode       = PWM_MODE_1;
+            timer_oc_count_mode_t count_mode     = TIMER_OC_CENTER_ALIGNED_MODE_3;
+            uint8_t               repetition_cnt = 10;
+            bool                  ossr           = true;
+            bool                  ossi           = true;
 
             pwm_write_protection_t wp_level = WP_OFF;
 
             // Channels
             // channels[0..num_channels) are driven, in this order. Lag is applied by position in this list.
-            std::array<pwm_channel_config_t, MAX_TIM1_CHANNELS> channels     = {{
-                {.invert_output = false, .output_idle_state = false, .channel = TIMER_CHANNEL_1, .gpio_pin = BOARD_TIM1_CH1_PA8},
-                {.invert_output = false, .output_idle_state = false, .channel = TIMER_CHANNEL_2, .gpio_pin = BOARD_TIM1_CH2_PA9},
-                {.invert_output = false, .output_idle_state = false, .channel = TIMER_CHANNEL_3, .gpio_pin = BOARD_TIM1_CH3_PA10},
-                {.invert_output = false, .output_idle_state = false, .channel = TIMER_CHANNEL_4, .gpio_pin = BOARD_TIM1_CH4_PA11},
+            std::array<timer_channel_config_t, MAX_TIM1_CHANNELS> channels     = {{
+                {.output_polarity = false, .output_idle_state = false, .channel = TIMER_CHANNEL_1, .gpio_pin = BOARD_TIM1_CH1_PA8},
+                {.output_polarity = false, .output_idle_state = false, .channel = TIMER_CHANNEL_2, .gpio_pin = BOARD_TIM1_CH2_PA9},
+                {.output_polarity = false, .output_idle_state = false, .channel = TIMER_CHANNEL_3, .gpio_pin = BOARD_TIM1_CH3_PA10},
+                {.output_polarity = false, .output_idle_state = false, .channel = TIMER_CHANNEL_4, .gpio_pin = BOARD_TIM1_CH4_PA11},
             }};
-            size_t                                              num_channels = MAX_TIM1_CHANNELS;
+            size_t                                                num_channels = MAX_TIM1_CHANNELS;
 
             bool use_complementary_channels = true;
             // Indexed by channel number (CH1N..CH3N), as the driver does. CH4 has none.
             std::array<complementary_channel_t, MAX_TIM1_COMPLEMENTARY_CHANNELS> complementary_channels = {{
-                {.invert_output = false, .output_idle_state = false, .gpio_pin = BOARD_TIM1_CH1N_PB13},
-                {.invert_output = false, .output_idle_state = false, .gpio_pin = BOARD_TIM1_CH2N_PB14},
-                {.invert_output = false, .output_idle_state = false, .gpio_pin = BOARD_TIM1_CH3N_PB15},
+                {.output_polarity = false, .output_idle_state = false, .gpio_pin = BOARD_TIM1_CH1N_PB13},
+                {.output_polarity = false, .output_idle_state = false, .gpio_pin = BOARD_TIM1_CH2N_PB14},
+                {.output_polarity = false, .output_idle_state = false, .gpio_pin = BOARD_TIM1_CH3N_PB15},
             }};
 
             // Break input
@@ -194,7 +194,7 @@ namespace demo {
                 const size_t ch = static_cast<size_t>(c.channels[i].channel);
                 if (c.use_complementary_channels && ch < c.complementary_channels.size()) {
                     drv.complementary_channels[ch] = {
-                        .invert_output     = c.complementary_channels[ch].invert_output,
+                        .output_polarity   = c.complementary_channels[ch].output_polarity,
                         .output_idle_state = c.complementary_channels[ch].output_idle_state,
                         .gpio_pin          = c.complementary_channels[ch].gpio_pin,
                     };
