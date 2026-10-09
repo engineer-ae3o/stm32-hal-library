@@ -44,6 +44,12 @@ typedef enum : uint8_t {
     TIMER_CHANNEL_NC = 0xFF,
 } timer_channel_t;
 
+typedef enum : uint8_t {
+    TIM_CLK_DIV_1 = 0b00,
+    TIM_CLK_DIV_2 = 0b01,
+    TIM_CLK_DIV_4 = 0b10,
+} tim_clk_div_t;
+
 // The channel parameter only has meaning when the interrupt is a capture compare interrupt
 typedef struct {
     void (*cb)(void* arg, timer_channel_t channel);
@@ -124,8 +130,9 @@ typedef enum : uint8_t {
 } encoder_pull_t;
 
 typedef struct {
-    encoder_mode_t mode; // The decoder resolution
-    encoder_pull_t pull; // Use a pullup or down resistor
+    encoder_mode_t mode;    // The decoder resolution
+    encoder_pull_t pull;    // Use a pullup or down resistor
+    tim_clk_div_t  clk_div; // The timer clock divider
 
     bool     invert_direction; // Whether or not to invert the rotational polarity/direction
     uint32_t filter_ns;        // Any pulse shorter than this is ignored

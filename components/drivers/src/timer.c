@@ -174,7 +174,7 @@ static tim1_cb_ctx_t s_advanced_timer_cb = {};
 
 
 // Public API
-hal_err_t timx_clock_enable(TIM_TypeDef* handle, bool enable) {
+hal_err_t timx_clk_enable(TIM_TypeDef* handle, bool enable) {
     if (enable) {
         if (handle == TIM1) {
             RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
@@ -486,22 +486,32 @@ uint32_t timer_get_frequency_hz(TIM_TypeDef* handle) {
     }
 }
 
-hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef* handle, uint32_t filter_ns, uint8_t* code) {
-    if (handle == NULL || code == NULL) {
+hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef* handle, tim_clk_div_t clk_div, uint32_t filter_ns, uint32_t* code) {
+    if (handle == NULL || clk_div > TIM_CLK_DIV_4 || code == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
-
     if (filter_ns == 0) {
         *code = 0;
         return HAL_OK;
     }
 
-    const uint32_t clock_divisor     = (handle->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos;
-    const uint32_t timer_frequency   = timer_get_frequency_hz(handle);
-    const uint32_t actual_timer_freq = timer_frequency / (1UL << clock_divisor);
+    // Get the frequency feeding the input capture filter from the timer's frequency and the clock divisor
+    // The use that to get the target ticks to get the input capture code
+    const uint32_t real_divisor    = (1UL << clk_div);
+    const uint32_t timer_frequency = timer_get_frequency_hz(handle);
+    const uint32_t target_ticks = (uint32_t)ceil_div_u64((uint64_t)timer_frequency * (uint64_t)filter_ns, (uint64_t)real_divisor * 1'000'000'000ULL);
+    const uint32_t filter_multipliers[] = {1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 128, 160, 192, 256};
 
-    *code = (uint8_t)actual_timer_freq;
-    return HAL_OK;
+    for (uint32_t i = 0; i < ARRAY_SIZE(filter_multipliers); i++) {
+        // Use the smallest hardware filter that meets or just exceeds the target filter ticks
+        if (filter_multipliers[i] >= target_ticks) {
+            *code = i;
+            return HAL_OK;
+        }
+    }
+
+    // No viable filter multiplier
+    return HAL_ERR_NOT_SUPPORTED;
 }
 
 hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {

@@ -38,7 +38,7 @@ namespace demo {
             TIM_TypeDef*                timer          = TIM1; // Must be an advanced timer
             uint32_t                    frequency_hz   = 20'000U;
             uint32_t                    dead_time_ns   = 1000U;
-            pwm_clk_div_t               clk_div        = TIM_CLK_DIV_4; // DIV_1 tops out near 10 us of dead time at 100MHz
+            tim_clk_div_t               clk_div        = TIM_CLK_DIV_4; // DIV_1 tops out near 10 us of dead time at 100MHz
             pwm_mode_t                  pwm_mode       = PWM_MODE_1;
             output_compare_count_mode_t count_mode     = OUTPUT_COMPARE_CENTER_ALIGNED_MODE_3;
             uint8_t                     repetition_cnt = 10;
@@ -209,7 +209,7 @@ namespace demo {
                 .callback        = c.break_callback,
             };
 
-            TRY(timx_clock_enable(c.timer, true));
+            TRY(timx_clk_enable(c.timer, true));
             TRY(pwm_advanced_timer_init(c.timer, &drv));
 
             // pwm_start() zeroes every CCR, so call it once and only touch the duties afterwards

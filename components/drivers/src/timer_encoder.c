@@ -16,16 +16,19 @@ hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
+    // Calculate the digital filter code
+    uint32_t ic_filter_code = 0;
+    TRY(timer_filter_ns_to_ic_code(handle, config->clk_div, config->filter_ns, &ic_filter_code));
+
     // Clear all residual state
     TRY(encoder_deinit(handle));
 
-    // Calculate the digital filter code
-    uint8_t filter_code = 0;
-    TRY(timer_filter_ns_to_ic_code(handle, config->filter_ns, &filter_code));
-
     // Set timer channels 1 and 2 to input mode and set the digital filters
-    handle->CCMR1 |= ((0b01U << TIM_CCMR1_CC1S_Pos) | ((uint32_t)filter_code << TIM_CCMR1_IC1F_Pos)) |
-                     ((0b01U << TIM_CCMR1_CC2S_Pos) | ((uint32_t)filter_code << TIM_CCMR1_IC2F_Pos));
+    handle->CCMR1 |= ((0b01U << TIM_CCMR1_CC1S_Pos) | (ic_filter_code << TIM_CCMR1_IC1F_Pos)) |
+                     ((0b01U << TIM_CCMR1_CC2S_Pos) | (ic_filter_code << TIM_CCMR1_IC2F_Pos));
+
+    // Set the timer clock divider
+    handle->CR1 |= (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos);
 
     // Set the rotational polarity
     handle->CCER |= config->invert_direction ? (TIM_CCER_CC1P | TIM_CCER_CC2P) : 0;
@@ -54,7 +57,7 @@ hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config) {
         gpio_enable_pulldown(channel_a.port, channel_a.pin, true);
         gpio_enable_pulldown(channel_b.port, channel_b.pin, true);
     } else {
-        // The false parameter to gpio_enable_pullup and gpio_enable_pulldown do the same thing: disables pull resisteors
+        // The false parameter to gpio_enable_pullup and gpio_enable_pulldown do the same thing: disables all pull resistors
         gpio_enable_pullup(channel_a.port, channel_a.pin, false);
         gpio_enable_pullup(channel_b.port, channel_b.pin, false);
     }

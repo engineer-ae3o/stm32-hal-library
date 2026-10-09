@@ -15,7 +15,7 @@ extern "C" {
 
 
 // To enable or disable the timer's clock, make use
-// of the timx_clock_enable function in timer.h.
+// of the timx_clk_enable(...) in timer.h.
 
 hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_config_t* config);
 hal_err_t pwm_gp_timer_init(TIM_TypeDef* handle, const pwm_gp_timer_config_t* config);

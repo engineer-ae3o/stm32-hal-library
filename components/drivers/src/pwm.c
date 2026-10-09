@@ -13,7 +13,7 @@
 
 
 // Helper
-static hal_err_t config_pwm_pin(board_pin_t gpio) {
+static inline hal_err_t config_pwm_pin(board_pin_t gpio) {
     TRY(gpiox_clk_enable(gpio.port, true));
     gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
     gpio_set_speed_mode(gpio.port, gpio.pin, GPIO_FULL_SPEED);
