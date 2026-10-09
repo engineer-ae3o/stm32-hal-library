@@ -32,6 +32,7 @@ uint8_t  timer_get_num_channels(TIM_TypeDef* handle);
 uint32_t timer_get_frequency_hz(TIM_TypeDef* handle);
 
 hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us);
+hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef* handle, uint32_t filter_ns, uint8_t* code);
 hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, advanced_timer_irq_type_t type);
 
 

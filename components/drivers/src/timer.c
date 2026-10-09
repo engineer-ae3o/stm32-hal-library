@@ -287,7 +287,6 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
           TIM_CCER_CC3E | TIM_CCER_CC3P | TIM_CCER_CC3NE | TIM_CCER_CC3NP | TIM_CCER_CC4E | TIM_CCER_CC4P | TIM_CCER_CC4NP);
     handle->CCMR1 &= ~(TIM_CCMR1_CC1S | TIM_CCMR1_OC1FE | TIM_CCMR1_OC1PE | TIM_CCMR1_OC1M | TIM_CCMR1_OC1CE | TIM_CCMR1_CC2S | TIM_CCMR1_OC2FE |
                        TIM_CCMR1_OC2PE | TIM_CCMR1_OC2M | TIM_CCMR1_OC2CE);
-    handle->SMCR &= ~(TIM_SMCR_SMS | TIM_SMCR_TS | TIM_SMCR_MSM | TIM_SMCR_ETF | TIM_SMCR_ETPS | TIM_SMCR_ECE | TIM_SMCR_ETP);
     handle->CNT  = 0;
     handle->PSC  = 0;
     handle->ARR  = 0;
@@ -295,8 +294,9 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
 
     // TIM10 and TIM11 only have CCR1
     if (!(handle == TIM10 || handle == TIM11)) {
-        // TIM9 only has CCR1 and CCR2
+        // TIM10 and TIM11 don't have a CR2 and SMCR register whilst TIM9 does
         handle->CCR2 = 0;
+        handle->SMCR &= ~(TIM_SMCR_SMS | TIM_SMCR_TS | TIM_SMCR_MSM | TIM_SMCR_ETF | TIM_SMCR_ETPS | TIM_SMCR_ECE | TIM_SMCR_ETP);
         if (handle != TIM9) {
             // The lite timers don't have a CR2, CCMR2, DCR, CCR3, CCR4 or DMAR register
             handle->CR2 &= ~(TIM_CR2_CCPC | TIM_CR2_CCUS | TIM_CR2_CCDS | TIM_CR2_MMS | TIM_CR2_TI1S | TIM_CR2_OIS1 | TIM_CR2_OIS1N | TIM_CR2_OIS2 |
@@ -458,22 +458,12 @@ bool is_timer_lite(TIM_TypeDef* handle) {
 }
 
 uint8_t timer_get_num_channels(TIM_TypeDef* handle) {
-    if (handle == TIM1) {
+    if (handle == TIM1 || handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) {
         return MAX_TIM1_CHANNELS;
-    } else if (handle == TIM2) {
-        return MAX_TIM2_CHANNELS;
-    } else if (handle == TIM3) {
-        return MAX_TIM3_CHANNELS;
-    } else if (handle == TIM4) {
-        return MAX_TIM4_CHANNELS;
-    } else if (handle == TIM5) {
-        return MAX_TIM5_CHANNELS;
     } else if (handle == TIM9) {
         return MAX_TIM9_CHANNELS;
-    } else if (handle == TIM10) {
+    } else if (handle == TIM10 || handle == TIM11) {
         return MAX_TIM10_CHANNELS;
-    } else if (handle == TIM11) {
-        return MAX_TIM11_CHANNELS;
     } else {
         ASSERT(false);
         return 0;
@@ -494,6 +484,24 @@ uint32_t timer_get_frequency_hz(TIM_TypeDef* handle) {
         // Standard frequency timer mode
         return (prescaler == 1) ? apb_clock_hz : (apb_clock_hz * 2);
     }
+}
+
+hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef* handle, uint32_t filter_ns, uint8_t* code) {
+    if (handle == NULL || code == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    if (filter_ns == 0) {
+        *code = 0;
+        return HAL_OK;
+    }
+
+    const uint32_t clock_divisor     = (handle->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos;
+    const uint32_t timer_frequency   = timer_get_frequency_hz(handle);
+    const uint32_t actual_timer_freq = timer_frequency / (1UL << clock_divisor);
+
+    *code = (uint8_t)actual_timer_freq;
+    return HAL_OK;
 }
 
 hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {

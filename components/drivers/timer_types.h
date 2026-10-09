@@ -124,11 +124,11 @@ typedef enum : uint8_t {
 } encoder_pull_t;
 
 typedef struct {
-    bool    invert_direction; // Whether or not to invert the rotational polarity/direction
-    uint8_t digital_filter;   //
-
     encoder_mode_t mode; // The decoder resolution
     encoder_pull_t pull; // Use a pullup or down resistor
+
+    bool     invert_direction; // Whether or not to invert the rotational polarity/direction
+    uint32_t filter_ns;        // Any pulse shorter than this is ignored
 
     board_pin_t channel_a; // Maps to TIMER_CHANNEL_1
     board_pin_t channel_b; // Maps to TIMER_CHANNEL_2
