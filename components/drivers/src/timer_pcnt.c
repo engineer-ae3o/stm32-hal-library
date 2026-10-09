@@ -3,6 +3,8 @@
 #include "drivers/timer_extended.h"
 #include "drivers/timer.h"
 #include "utils/common.h"
+#include "drivers/gpio.h"
+#include "utils/board.h"
 #include "utils/err.h"
 
 #include <stdint.h>
@@ -20,6 +22,12 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
 
     // Since the counter should be free running, use the maximum reload value
     handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+
+    // Configure the input pulse pin
+    const board_pin_t gpio = config->pulse_gpio;
+    TRY(gpiox_clk_enable(gpio.port, true));
+    gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
+    gpio_set_speed_mode(gpio.port, gpio.pin, GPIO_FULL_SPEED);
 
     return HAL_OK;
 }

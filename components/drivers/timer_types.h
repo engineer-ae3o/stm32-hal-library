@@ -106,11 +106,32 @@ typedef struct {
 
 // Pulse Counter types
 typedef struct {
+    board_pin_t pulse_gpio;
 } pcnt_config_t;
 
 
 // Quadrature decoder (encoder mode) types
+typedef enum : uint8_t {
+    ENCODER_MODE_1 = (0b01 << TIM_SMCR_SMS_Pos), // The timer counts on the rising and falling edges of only the first channel (2x resolution)
+    ENCODER_MODE_2 = (0b10 << TIM_SMCR_SMS_Pos), // The timer counts on the rising and falling edges of only the second channel (2x resolution)
+    ENCODER_MODE_3 = (0b11 << TIM_SMCR_SMS_Pos), // The timer counts on the rising and falling edges of the first and second channels (4x resolution)
+} encoder_mode_t;
+
+typedef enum : uint8_t {
+    ENCODER_NONE = 0,
+    ENCODER_USE_PULLUP,
+    ENCODER_USE_PULLDOWN,
+} encoder_pull_t;
+
 typedef struct {
+    bool    invert_direction; // Whether or not to invert the rotational polarity/direction
+    uint8_t digital_filter;   //
+
+    encoder_mode_t mode; // The decoder resolution
+    encoder_pull_t pull; // Use a pullup or down resistor
+
+    board_pin_t channel_a; // Maps to TIMER_CHANNEL_1
+    board_pin_t channel_b; // Maps to TIMER_CHANNEL_2
 } encoder_config_t;
 
 

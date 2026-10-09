@@ -912,7 +912,7 @@ namespace test::adc {
             // Generate an EXTI request on EXTI line 11
             gpiox_clk_enable(GPIOA, true);
             gpio_set_output(GPIOA, GPIO_PIN_11);
-            gpio_enable_pullups(GPIOA, GPIO_PIN_11, true);
+            gpio_enable_pullup(GPIOA, GPIO_PIN_11, true);
             gpio_set_interrupt(GPIOA, GPIO_PIN_11, GPIO_FALLING_EDGE, nullptr, nullptr);
 
             // Get a falling edge on PA11 which is configured as EXTI line 11
@@ -959,7 +959,7 @@ namespace test::adc {
 
             // Generate an EXTI request on EXTI line 15
             gpio_set_output(GPIOA, GPIO_PIN_15);
-            gpio_enable_pullups(GPIOA, GPIO_PIN_15, true);
+            gpio_enable_pullup(GPIOA, GPIO_PIN_15, true);
             gpio_set_interrupt(GPIOA, GPIO_PIN_15, GPIO_RISING_EDGE, nullptr, nullptr);
 
             // Get a rising edge on PA15 which is configured as EXTI line 15

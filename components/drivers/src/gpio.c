@@ -120,7 +120,7 @@ void gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t af)
     }
 }
 
-void gpio_enable_pullups(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
+void gpio_enable_pullup(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
     if (port) {
         if (enable) {
             port->PUPDR = (port->PUPDR & ~(0b11UL << (pin * 2))) | (0b1UL << (pin * 2));
@@ -130,7 +130,7 @@ void gpio_enable_pullups(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
     }
 }
 
-void gpio_enable_pulldowns(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
+void gpio_enable_pulldown(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
     if (port) {
         if (enable) {
             port->PUPDR = (port->PUPDR & ~(0b11UL << (pin * 2))) | (0b10UL << (pin * 2));

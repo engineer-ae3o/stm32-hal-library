@@ -1,6 +1,9 @@
 #include "stm32f411xe.h"
+#include "drivers/timer_internals.h"
 #include "drivers/timer_extended.h"
+#include "drivers/timer_types.h"
 #include "utils/common.h"
+#include "drivers/gpio.h"
 #include "utils/err.h"
 
 
@@ -9,10 +12,48 @@ hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    if (handle == TIM10 || handle == TIM11) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
     // Clear all residual state
     TRY(encoder_deinit(handle));
 
-    // TODO: Handle the initialization for the timer to function as a quadrature decoder
+    // Set timer channels 1 and 2 to input mode and set the digital filters
+    handle->CCMR1 |= ((0b01U << TIM_CCMR1_CC1S_Pos) | ((uint32_t)config->digital_filter << TIM_CCMR1_IC1F_Pos)) |
+                     ((0b01U << TIM_CCMR1_CC2S_Pos) | ((uint32_t)config->digital_filter << TIM_CCMR1_IC2F_Pos));
+
+    // Set the rotational polarity
+    handle->CCER |= config->invert_direction ? (TIM_CCER_CC1P | TIM_CCER_CC2P) : 0;
+
+    // Apply the encoder mode
+    handle->SMCR |= config->mode;
+
+    // Since the counter should be free running, use the maximum reload value
+    handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+
+    // Configure the physical gpio channels
+    const board_pin_t channel_a = config->channel_a;
+    TRY(gpiox_clk_enable(channel_a.port, true));
+    gpio_set_alternate_function(channel_a.port, channel_a.pin, channel_a.af);
+    gpio_set_speed_mode(channel_a.port, channel_a.pin, GPIO_FULL_SPEED);
+
+    const board_pin_t channel_b = config->channel_b;
+    TRY(gpiox_clk_enable(channel_b.port, true));
+    gpio_set_alternate_function(channel_b.port, channel_b.pin, channel_b.af);
+    gpio_set_speed_mode(channel_b.port, channel_b.pin, GPIO_FULL_SPEED);
+
+    if (config->pull == ENCODER_USE_PULLUP) {
+        gpio_enable_pullup(channel_a.port, channel_a.pin, true);
+        gpio_enable_pullup(channel_b.port, channel_b.pin, true);
+    } else if (config->pull == ENCODER_USE_PULLDOWN) {
+        gpio_enable_pulldown(channel_a.port, channel_a.pin, true);
+        gpio_enable_pulldown(channel_b.port, channel_b.pin, true);
+    } else {
+        // The false argument to gpio_enable_pullup and gpio_enable_pulldown do the same thing
+        gpio_enable_pullup(channel_a.port, channel_a.pin, false);
+        gpio_enable_pullup(channel_b.port, channel_b.pin, false);
+    }
 
     return HAL_OK;
 }

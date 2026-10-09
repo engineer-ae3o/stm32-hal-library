@@ -155,9 +155,9 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         gpio_set_alternate_function(brk_gpio.port, brk_gpio.pin, brk_gpio.af);
         gpio_set_speed_mode(brk_gpio.port, brk_gpio.pin, GPIO_FULL_SPEED);
         if (config->break_input.active_low) {
-            gpio_enable_pullups(brk_gpio.port, brk_gpio.pin, true);
+            gpio_enable_pullup(brk_gpio.port, brk_gpio.pin, true);
         } else {
-            gpio_enable_pulldowns(brk_gpio.port, brk_gpio.pin, true);
+            gpio_enable_pulldown(brk_gpio.port, brk_gpio.pin, true);
         }
     }
 

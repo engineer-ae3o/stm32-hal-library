@@ -97,11 +97,11 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     // The pins already have their ports enabled and have been set as open drain already. No need to repeat here
     gpio_set_alternate_function(config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af);
     gpio_set_speed_mode(config->sda_pin.port, config->sda_pin.pin, GPIO_MEDIUM_SPEED);
-    gpio_enable_pullups(config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
+    gpio_enable_pullup(config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
 
     gpio_set_alternate_function(config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af);
     gpio_set_speed_mode(config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
-    gpio_enable_pullups(config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
+    gpio_enable_pullup(config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
     // Enable the I2C peripheral after all setup
     handle->CR1 |= I2C_CR1_PE;
@@ -157,12 +157,12 @@ hal_err_t i2c_master_hardware_reset(GPIO_TypeDef* scl_port, gpio_pin_t scl_pin, 
     TRY(gpiox_clk_enable(scl_port, true));
     gpio_set_output(scl_port, scl_pin);
     gpio_set_output_type(scl_port, scl_pin, GPIO_OPEN_DRAIN);
-    gpio_enable_pullups(scl_port, scl_pin, true);
+    gpio_enable_pullup(scl_port, scl_pin, true);
 
     TRY(gpiox_clk_enable(sda_port, true));
     gpio_set_output(sda_port, sda_pin);
     gpio_set_output_type(sda_port, sda_pin, GPIO_OPEN_DRAIN);
-    gpio_enable_pullups(sda_port, sda_pin, true);
+    gpio_enable_pullup(sda_port, sda_pin, true);
 
     // Release the SDA line ourselves so it doesn't interfer with the recovery loop
     gpio_set_level(sda_port, sda_pin, true);

@@ -167,17 +167,17 @@ namespace test::gpio {
             reset_port(SCRATCH_PORT);
 
             for (const auto pin : ALL_PINS) {
-                gpio_enable_pullups(SCRATCH_PORT, pin, true);
+                gpio_enable_pullup(SCRATCH_PORT, pin, true);
                 TEST_ASSERT_EQUAL_UINT32(0b01U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
                 // Enabling the pulldown must replace the pullup bit, not OR into it
-                gpio_enable_pulldowns(SCRATCH_PORT, pin, true);
+                gpio_enable_pulldown(SCRATCH_PORT, pin, true);
                 TEST_ASSERT_EQUAL_UINT32(0b10U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
-                gpio_enable_pulldowns(SCRATCH_PORT, pin, false);
+                gpio_enable_pulldown(SCRATCH_PORT, pin, false);
                 TEST_ASSERT_EQUAL_UINT32(0b00U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
-                gpio_enable_pullups(SCRATCH_PORT, pin, false);
+                gpio_enable_pullup(SCRATCH_PORT, pin, false);
                 TEST_ASSERT_EQUAL_UINT32(0b00U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
             }
 
