@@ -30,11 +30,11 @@ extern "C" {
 #define MAX_TIM11_CHANNELS (1U)
 
 
+// General timer types
 typedef enum : uint8_t {
     TIMER_COUNTER_UP   = (0b0 << TIM_CR1_DIR_Pos),
     TIMER_COUNTER_DOWN = (0b1 << TIM_CR1_DIR_Pos),
 } timer_count_dir_t;
-
 
 typedef enum : uint8_t {
     TIMER_CHANNEL_1  = 0,
@@ -44,12 +44,23 @@ typedef enum : uint8_t {
     TIMER_CHANNEL_NC = 0xFF,
 } timer_channel_t;
 
-
 // The channel parameter only has meaning when the interrupt is a capture compare interrupt
 typedef struct {
     void (*cb)(void* arg, timer_channel_t channel);
     void* arg;
 } timer_cb_t;
+
+typedef struct {
+    // Timer output is active HIGH when this is false, active LOW otherwise
+    bool output_polarity;
+
+    // State of the gpio pin when its channel is disabled (only relevant for the advanced timers)
+    bool output_idle_state;
+
+    // The actual channel
+    timer_channel_t channel;
+    board_pin_t     gpio_pin;
+} timer_channel_config_t;
 
 
 // Output Compare types
@@ -73,18 +84,6 @@ typedef enum : uint8_t {
     OUTPUT_COMPARE_PWM_MODE_1      = 0b110, // The channel is high when the timer's counter value is less than the compare value
     OUTPUT_COMPARE_PWM_MODE_2      = 0b111, // The channel is low when the timer's counter value is less than the compare value
 } output_compare_mode_t;
-
-typedef struct {
-    // Timer output is active HIGH when this is false, active LOW otherwise
-    bool output_polarity;
-
-    // State of the gpio pin when its channel is disabled (only relevant for the advanced timers)
-    bool output_idle_state;
-
-    // The actual channel
-    timer_channel_t channel;
-    board_pin_t     gpio_pin;
-} timer_channel_config_t;
 
 typedef struct {
     bool buffer_compare_reload; // Buffer writes to the CCxR registers
@@ -111,17 +110,7 @@ typedef struct {
 
 
 // Quadrature decoder (encoder mode) types
-typedef enum : uint8_t {
-    ENCODER_CLOCKWISE,
-    ENCODER_ANTICLOCKWISE,
-} encoder_dir_t;
-
-typedef void (*encoder_cb_t)(void* arg, encoder_dir_t direction);
-
 typedef struct {
-
-    encoder_cb_t cb;
-    void*        arg;
 } encoder_config_t;
 
 

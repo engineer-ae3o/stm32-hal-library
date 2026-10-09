@@ -29,7 +29,7 @@ static const dma_stream_map_t s_uart_dma_map[] = {
     },
 };
 
-// The UaRT instances: The ISRs invoked when a DMA event occurred
+// The UART instances: The ISRs invoked when a DMA event occurred
 static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_uart_dma_map)] = {};
 
 #define ENABLE_UART_DMA_TX()                                                                                                                         \

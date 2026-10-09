@@ -1,6 +1,5 @@
 #include "stm32f411xe.h"
 #include "drivers/timer_extended.h"
-#include "drivers/timer.h"
 #include "utils/common.h"
 #include "utils/err.h"
 
@@ -11,7 +10,7 @@ hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config) {
     }
 
     // Clear all residual state
-    TRY(pcnt_deinit(handle));
+    TRY(encoder_deinit(handle));
 
     // TODO: Handle the initialization for the timer to function as a quadrature decoder
 
@@ -19,21 +18,21 @@ hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config) {
 }
 
 hal_err_t encoder_deinit(TIM_TypeDef* handle) {
-    return timer_deinit(handle);
+    return pcnt_deinit(handle);
 }
 
 hal_err_t encoder_start(TIM_TypeDef* handle) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    handle->CR1 |= TIM_CR1_CEN;
-    return HAL_OK;
+    return pcnt_start(handle);
 }
 
 hal_err_t encoder_stop(TIM_TypeDef* handle) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    handle->CR1 &= ~TIM_CR1_CEN;
-    return HAL_OK;
+    return pcnt_stop(handle);
+}
+
+hal_err_t encoder_set_count(TIM_TypeDef* handle, uint32_t count) {
+    return pcnt_set_count(handle, count);
+}
+
+hal_err_t encoder_get_count(TIM_TypeDef* handle, uint32_t* count) {
+    return pcnt_get_count(handle, count);
 }

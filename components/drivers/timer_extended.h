@@ -53,6 +53,9 @@ hal_err_t encoder_deinit(TIM_TypeDef* handle);
 hal_err_t encoder_start(TIM_TypeDef* handle);
 hal_err_t encoder_stop(TIM_TypeDef* handle);
 
+hal_err_t encoder_set_count(TIM_TypeDef* handle, uint32_t count);
+hal_err_t encoder_get_count(TIM_TypeDef* handle, uint32_t* count);
+
 
 #ifdef __cplusplus
 }
