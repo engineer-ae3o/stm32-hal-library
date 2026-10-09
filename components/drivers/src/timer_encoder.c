@@ -4,6 +4,7 @@
 #include "drivers/timer_types.h"
 #include "utils/common.h"
 #include "drivers/gpio.h"
+#include "utils/board.h"
 #include "utils/err.h"
 
 #include <stdint.h>

@@ -33,7 +33,7 @@ set(EXE_MAP_NAME "${EXE_NAME}.map")
 
 # Build flags for the different build modes
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g3 -ggdb -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-O3 -flto -DNDEBUG")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")

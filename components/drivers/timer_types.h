@@ -114,6 +114,7 @@ typedef struct {
     timer_cb_t callback;
 } output_compare_config_t;
 
+
 // Input Capture types
 typedef struct {
     // TODO: Fill in the input capture struct
@@ -122,14 +123,13 @@ typedef struct {
 
 // Pulse Counter types
 typedef enum : uint8_t {
-    PCNT_MODE_1 = 0, // The timer is clocked from an input capture pin through the slave mode controller
+    PCNT_MODE_1 = 0, // The timer is clocked from an input capture pin (can be channel 1 or 2) through the slave mode controller
     PCNT_MODE_2,     // The timer is clocked directly by external pulses applied to the ETR pin
 } pcnt_mode_t;
 
 typedef enum : uint8_t {
     PCNT_RISING_EDGE = 0,
     PCNT_FALLING_EDGE,
-    PCNT_RISING_FALLING_EDGE,
 } pcnt_edge_t;
 
 typedef struct {
@@ -138,7 +138,10 @@ typedef struct {
     timer_pull_t  pull;    // Use a pullup or down resistor; or none
     tim_clk_div_t clk_div; // The timer clock divider
 
+    uint32_t    filter_ns;  // Any pulse shorter than this is ignored
     board_pin_t pulse_gpio; // The physical gpio pin
+    // In mode 1, this pin can only be either a BOARD_TIMx_CH1_Pxx or BOARD_TIMx_CH2_Pxx (refer to utils/board.h)
+    // In mode 2, this pin can only be a BOARD_TIMx_ETR_Pxx (refer to utils/board.h)
 
     // Mode specific settings
     union {
@@ -146,12 +149,16 @@ typedef struct {
             enum : uint8_t {
                 PCNT_CHANNEL_1 = TIM_CCMR1_CC1S_Pos,
                 PCNT_CHANNEL_2 = TIM_CCMR1_CC2S_Pos,
-            } channel;          // Equivalent to TIMER_CHANNEL_1 and TIMER_CHANNEL_2
-            uint32_t filter_ns; // Any pulse shorter than this is ignored
+            } channel; // Equivalent to TIMER_CHANNEL_1 and TIMER_CHANNEL_2
         } mode_1;
 
         struct {
-
+            enum : uint8_t {
+                PCNT_ETR_DIV_1 = 0b00,
+                PCNT_ETR_DIV_2 = 0b01,
+                PCNT_ETR_DIV_4 = 0b10,
+                PCNT_ETR_DIV_8 = 0b11,
+            } prescaler;
         } mode_2;
     } settings;
 } pcnt_config_t;
