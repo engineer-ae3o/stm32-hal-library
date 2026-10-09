@@ -6,6 +6,8 @@
 #include "drivers/gpio.h"
 #include "utils/err.h"
 
+#include <stdint.h>
+
 
 hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config) {
     if (handle == NULL || config == NULL) {
@@ -23,12 +25,12 @@ hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config) {
     // Clear all residual state
     TRY(encoder_deinit(handle));
 
+    // Set the timer clock divider
+    handle->CR1 |= (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos);
+
     // Set timer channels 1 and 2 to input mode and set the digital filters
     handle->CCMR1 |= ((0b01U << TIM_CCMR1_CC1S_Pos) | (ic_filter_code << TIM_CCMR1_IC1F_Pos)) |
                      ((0b01U << TIM_CCMR1_CC2S_Pos) | (ic_filter_code << TIM_CCMR1_IC2F_Pos));
-
-    // Set the timer clock divider
-    handle->CR1 |= (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos);
 
     // Set the rotational polarity
     handle->CCER |= config->invert_direction ? (TIM_CCER_CC1P | TIM_CCER_CC2P) : 0;
@@ -57,7 +59,7 @@ hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config) {
         gpio_enable_pulldown(channel_a.port, channel_a.pin, true);
         gpio_enable_pulldown(channel_b.port, channel_b.pin, true);
     } else {
-        // The false parameter to gpio_enable_pullup and gpio_enable_pulldown do the same thing: disables all pull resistors
+        // The false parameter to gpio_enable_pullup and gpio_enable_pulldown does the same thing: disables all pull resistors
         gpio_enable_pullup(channel_a.port, channel_a.pin, false);
         gpio_enable_pullup(channel_b.port, channel_b.pin, false);
     }

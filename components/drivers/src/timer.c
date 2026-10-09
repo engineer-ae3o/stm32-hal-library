@@ -496,13 +496,13 @@ hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef* handle, tim_clk_div_t clk_div,
     }
 
     // Get the frequency feeding the input capture filter from the timer's frequency and the clock divisor
-    // The use that to get the target ticks to get the input capture code
+    // Then use that to get the target ticks to get the input capture code
     const uint32_t real_divisor    = (1UL << clk_div);
     const uint32_t timer_frequency = timer_get_frequency_hz(handle);
     const uint32_t target_ticks = (uint32_t)ceil_div_u64((uint64_t)timer_frequency * (uint64_t)filter_ns, (uint64_t)real_divisor * 1'000'000'000ULL);
     const uint32_t filter_multipliers[] = {1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 128, 160, 192, 256};
 
-    for (uint32_t i = 0; i < ARRAY_SIZE(filter_multipliers); i++) {
+    for (uint32_t i = 1; i < ARRAY_SIZE(filter_multipliers); i++) {
         // Use the smallest hardware filter that meets or just exceeds the target filter ticks
         if (filter_multipliers[i] >= target_ticks) {
             *code = i;

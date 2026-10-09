@@ -87,8 +87,9 @@ typedef enum : uint8_t {
     OUTPUT_COMPARE_TOGGLE_ON_MATCH = 0b011, // The channel is toggled on a match
     OUTPUT_COMPARE_FORCE_LOW       = 0b100, // The channel is forced low always, regardless of a match
     OUTPUT_COMPARE_FORCE_HIGH      = 0b101, // The channel is forced high always, regardless of a match
-    OUTPUT_COMPARE_PWM_MODE_1      = 0b110, // The channel is high when the timer's counter value is less than the compare value
-    OUTPUT_COMPARE_PWM_MODE_2      = 0b111, // The channel is low when the timer's counter value is less than the compare value
+    OUTPUT_COMPARE_PWM_MODE_1      = 0b110, // The channel is forced high when the timer's counter value is less than the compare value
+    OUTPUT_COMPARE_PWM_MODE_2      = 0b111, // The channel is forced low when the timer's counter value is less than the compare value
+    // NOTE: A match occurs when the timer's counter value is equal to the compare value
 } output_compare_mode_t;
 
 typedef struct {
@@ -108,10 +109,14 @@ typedef struct {
 } output_compare_config_t;
 
 // Input Capture types
+typedef struct {
+    // TODO: Fill in the input cpature struct
+} input_capture_config_t;
 
 
 // Pulse Counter types
 typedef struct {
+    // TODO: Fill in the pulse counter struct
     board_pin_t pulse_gpio;
 } pcnt_config_t;
 
@@ -134,7 +139,7 @@ typedef struct {
     encoder_pull_t pull;    // Use a pullup or down resistor
     tim_clk_div_t  clk_div; // The timer clock divider
 
-    bool     invert_direction; // Whether or not to invert the rotational polarity/direction
+    bool     invert_direction; // Invert the rotational polarity/direction
     uint32_t filter_ns;        // Any pulse shorter than this is ignored
 
     board_pin_t channel_a; // Maps to TIMER_CHANNEL_1

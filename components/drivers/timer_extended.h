@@ -15,9 +15,9 @@ extern "C" {
 
 
 // The extended timer module
-// Implements extra functionality from the timer
-// To enable or disable the timer clock, make
-// use of timx_clk_enable(...) in timer.h
+// Implements extra functionality from the timers
+// To enable or disable the timer clock, make use of timx_clk_enable(...) in timer.h
+// NOTE: The different modes and their API are mutually exclusive
 
 
 // Output Compare
@@ -35,6 +35,8 @@ hal_err_t output_compare_unfreeze_timer(TIM_TypeDef* handle);
 
 
 // Input Capture
+hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* config);
+hal_err_t input_capture_deinit(TIM_TypeDef* handle);
 
 
 // Pulse Counting
