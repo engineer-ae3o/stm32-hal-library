@@ -52,10 +52,10 @@ hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config) {
     gpio_set_alternate_function(channel_b.port, channel_b.pin, channel_b.af);
     gpio_set_speed_mode(channel_b.port, channel_b.pin, GPIO_FULL_SPEED);
 
-    if (config->pull == ENCODER_USE_PULLUP) {
+    if (config->pull == TIMER_USE_PULLUP) {
         gpio_enable_pullup(channel_a.port, channel_a.pin, true);
         gpio_enable_pullup(channel_b.port, channel_b.pin, true);
-    } else if (config->pull == ENCODER_USE_PULLDOWN) {
+    } else if (config->pull == TIMER_USE_PULLDOWN) {
         gpio_enable_pulldown(channel_a.port, channel_a.pin, true);
         gpio_enable_pulldown(channel_b.port, channel_b.pin, true);
     } else {

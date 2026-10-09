@@ -45,6 +45,12 @@ typedef enum : uint8_t {
 } timer_channel_t;
 
 typedef enum : uint8_t {
+    TIMER_PULL_NONE = 0,
+    TIMER_USE_PULLUP,
+    TIMER_USE_PULLDOWN,
+} timer_pull_t;
+
+typedef enum : uint8_t {
     TIM_CLK_DIV_1 = 0b00,
     TIM_CLK_DIV_2 = 0b01,
     TIM_CLK_DIV_4 = 0b10,
@@ -110,14 +116,44 @@ typedef struct {
 
 // Input Capture types
 typedef struct {
-    // TODO: Fill in the input cpature struct
+    // TODO: Fill in the input capture struct
 } input_capture_config_t;
 
 
 // Pulse Counter types
+typedef enum : uint8_t {
+    PCNT_MODE_1 = 0, // The timer is clocked from an input capture pin through the slave mode controller
+    PCNT_MODE_2,     // The timer is clocked directly by external pulses applied to the ETR pin
+} pcnt_mode_t;
+
+typedef enum : uint8_t {
+    PCNT_RISING_EDGE = 0,
+    PCNT_FALLING_EDGE,
+    PCNT_RISING_FALLING_EDGE,
+} pcnt_edge_t;
+
 typedef struct {
-    // TODO: Fill in the pulse counter struct
-    board_pin_t pulse_gpio;
+    pcnt_mode_t   mode;    // How the timer, channel and the gpio gets configured
+    pcnt_edge_t   edge;    // What edge to count as a valid pulse
+    timer_pull_t  pull;    // Use a pullup or down resistor; or none
+    tim_clk_div_t clk_div; // The timer clock divider
+
+    board_pin_t pulse_gpio; // The physical gpio pin
+
+    // Mode specific settings
+    union {
+        struct {
+            enum : uint8_t {
+                PCNT_CHANNEL_1 = TIM_CCMR1_CC1S_Pos,
+                PCNT_CHANNEL_2 = TIM_CCMR1_CC2S_Pos,
+            } channel;          // Equivalent to TIMER_CHANNEL_1 and TIMER_CHANNEL_2
+            uint32_t filter_ns; // Any pulse shorter than this is ignored
+        } mode_1;
+
+        struct {
+
+        } mode_2;
+    } settings;
 } pcnt_config_t;
 
 
@@ -128,15 +164,9 @@ typedef enum : uint8_t {
     ENCODER_MODE_3 = (0b11 << TIM_SMCR_SMS_Pos), // The timer counts on the rising and falling edges of the first and second channels (4x resolution)
 } encoder_mode_t;
 
-typedef enum : uint8_t {
-    ENCODER_NONE = 0,
-    ENCODER_USE_PULLUP,
-    ENCODER_USE_PULLDOWN,
-} encoder_pull_t;
-
 typedef struct {
     encoder_mode_t mode;    // The decoder resolution
-    encoder_pull_t pull;    // Use a pullup or down resistor
+    timer_pull_t   pull;    // Use a pullup or down resistor; or none
     tim_clk_div_t  clk_div; // The timer clock divider
 
     bool     invert_direction; // Invert the rotational polarity/direction
