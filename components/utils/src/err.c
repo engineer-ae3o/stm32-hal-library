@@ -1,5 +1,4 @@
 #include "utils/common.h"
-#include <assert.h>
 #include "utils/err.h"
 
 

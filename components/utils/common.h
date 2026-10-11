@@ -77,7 +77,7 @@ extern "C" {
 
 #define REBOOT()                                                                                                                                     \
     do {                                                                                                                                             \
-        reboot(__PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                                             \
+        restart(__PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                                            \
     } while (0)
 
 #define PANIC()                                                                                                                                      \
@@ -87,7 +87,7 @@ extern "C" {
 
 #define ASSERT(cond)                                                                                                                                 \
     do {                                                                                                                                             \
-        assert_check((cond), #cond, __PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                        \
+        __assert((cond), #cond, __PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                            \
     } while (0)
 
 
@@ -104,7 +104,7 @@ extern "C" {
 [[__gnu__::__noreturn__]] void panic(const char* function, const char* file, int line);
 
 void restart(const char* function, const char* file, int line);
-void assert_check(bool cond, const char* msg, const char* function, const char* file, int line);
+void __assert(bool cond, const char* msg, const char* function, const char* file, int line);
 
 
 // RTT buffer for logging. Controls the output buffer parameter

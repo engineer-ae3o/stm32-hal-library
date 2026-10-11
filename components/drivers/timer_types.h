@@ -119,7 +119,7 @@ typedef struct {
 
 // Input Capture types
 typedef struct {
-    // TODO: Fill in the input capture struct
+
 } input_capture_config_t;
 
 

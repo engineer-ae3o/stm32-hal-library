@@ -15,3 +15,19 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
 hal_err_t input_capture_deinit(TIM_TypeDef* handle) {
     return timer_deinit(handle);
 }
+
+hal_err_t input_capture_start(TIM_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    handle->CR1 |= TIM_CR1_CEN;
+    return HAL_OK;
+}
+
+hal_err_t input_capture_stop(TIM_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    handle->CR1 &= ~TIM_CR1_CEN;
+    return HAL_OK;
+}

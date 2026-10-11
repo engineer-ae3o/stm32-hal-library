@@ -1,5 +1,5 @@
 #include "stm32f411xe.h"
-#include "drivers/spi_internals.h"
+#include "drivers/src/spi_internals.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
 #include "drivers/spi.h"

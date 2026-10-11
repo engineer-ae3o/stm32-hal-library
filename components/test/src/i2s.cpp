@@ -1,7 +1,7 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
-#include "drivers/spi_internals.h"
+#include "drivers/src/spi_internals.h"
 #include "drivers/gpio_types.h"
 #include "drivers/dma_types.h"
 #include "utils/common.h"

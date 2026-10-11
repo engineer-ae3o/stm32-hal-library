@@ -14,8 +14,7 @@ extern "C" {
 #include <stdint.h>
 
 
-// The extended timer module
-// Implements extra functionality from the timers
+// The extended timer module: Implements extra functionality from the timers
 // To enable or disable the timer clock, make use of timx_clk_enable(...) in timer.h
 // NOTE: The different modes and their API are mutually exclusive
 

@@ -1,5 +1,5 @@
 #include "stm32f411xe.h"
-#include "drivers/timer_internals.h"
+#include "drivers/src/timer_internals.h"
 #include "drivers/timer_types.h"
 #include "drivers/timer.h"
 #include "utils/common.h"
@@ -500,8 +500,9 @@ hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef* handle, tim_clk_div_t clk_div,
     const uint32_t real_divisor    = (1UL << clk_div);
     const uint32_t timer_frequency = timer_get_frequency_hz(handle);
     const uint32_t target_ticks = (uint32_t)ceil_div_u64((uint64_t)timer_frequency * (uint64_t)filter_ns, (uint64_t)real_divisor * 1'000'000'000ULL);
-    const uint32_t filter_multipliers[] = {1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 128, 160, 192, 256};
+    static const uint16_t filter_multipliers[] = {1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 128, 160, 192, 256};
 
+    // We start at 1, otherwise, we risk giving a filter code of 0 if the even when the requested filter time isn't
     for (uint32_t i = 1; i < ARRAY_SIZE(filter_multipliers); i++) {
         // Use the smallest hardware filter that meets or just exceeds the target filter ticks
         if (filter_multipliers[i] >= target_ticks) {

@@ -2,7 +2,7 @@
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
-#include "drivers/timer_internals.h"
+#include "drivers/src/timer_internals.h"
 #include "drivers/gpio_types.h"
 #include "drivers/pwm_types.h"
 #include "drivers/timer.h"
