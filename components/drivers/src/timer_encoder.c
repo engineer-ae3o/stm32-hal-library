@@ -19,6 +19,11 @@ hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
+    // Refer to pwm_advanced_timer_init(...) (drivers/pwm.c) for the explanation for this
+    if (is_timer_advanced(handle) && (handle->BDTR & TIM_BDTR_LOCK)) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
     // Calculate the digital filter code
     uint32_t ic_filter_code = 0;
     TRY(timer_filter_ns_to_ic_code(handle, config->clk_div, config->filter_ns, &ic_filter_code));

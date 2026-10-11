@@ -40,6 +40,8 @@ hal_err_t input_capture_deinit(TIM_TypeDef* handle);
 hal_err_t input_capture_start(TIM_TypeDef* handle);
 hal_err_t input_capture_stop(TIM_TypeDef* handle);
 
+hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, uint32_t* result);
+
 
 // Pulse Counting
 hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config);

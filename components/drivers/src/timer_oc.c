@@ -34,17 +34,18 @@
 
 // Public API
 hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t* config) {
-    if (handle == NULL || config == NULL || config->num_channels == 0) {
+    if (handle == NULL || config == NULL || config->num_channels == 0 || config->num_channels > timer_get_num_channels(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    const bool timer_advanced = is_timer_advanced(handle);
-    const bool timer_lite     = is_timer_lite(handle);
+    const bool timer_advanced   = is_timer_advanced(handle);
+    const bool timer_extra_lite = is_timer_extra_lite(handle);
+    const bool timer_lite       = is_timer_lite(handle);
 
     // The lite timers (TIM9-TIM11) only support edge aligned upcounting
     // TIM1 has 4 main channels. TIM2-TIM5 all have 4 main channels,
     // TIM9 has 2 and the extra lite timers (TIM10-TIM11) have 1 each
-    if ((timer_lite && (config->count_mode != OUTPUT_COMPARE_EDGE_LEFT_ALIGNED)) || (config->num_channels > timer_get_num_channels(handle))) {
+    if (timer_lite && (config->count_mode != OUTPUT_COMPARE_EDGE_LEFT_ALIGNED)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -76,7 +77,7 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
                 cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS1 : 0;
                 break;
             case TIMER_CHANNEL_2:
-                if (handle == TIM10 || handle == TIM11) {
+                if (timer_extra_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
                 ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | (uint32_t)(config->buffer_compare_reload ? TIM_CCMR1_OC2PE : 0) |
@@ -137,8 +138,12 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
         TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
     }
 
-    // Set the timer's counting mode, and enable auto-reload register buffering and interrupts only on update events
-    handle->CR1 |= (config->count_mode | TIM_CR1_ARPE | TIM_CR1_URS);
+    // Generate an update event so the timer's internal registers start afresh, and clear the update status flag
+    handle->EGR = TIM_EGR_UG;
+    handle->SR  = ~TIM_SR_UIF;
+
+    // Set the timer's counting mode, and enable auto-reload register buffering
+    handle->CR1 |= (config->count_mode | TIM_CR1_ARPE);
 
     return HAL_OK;
 }

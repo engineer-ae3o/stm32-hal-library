@@ -16,8 +16,13 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    if ((handle == TIM10 || handle == TIM11) || (config->mode == PCNT_MODE_2 && (handle == TIM5 || handle == TIM9))) {
+    if (is_timer_extra_lite(handle) || (config->mode == PCNT_MODE_2 && (handle == TIM5 || handle == TIM9))) {
         return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Refer to pwm_advanced_timer_init(...) (drivers/pwm.c) for the explanation for this
+    if (is_timer_advanced(handle) && (handle->BDTR & TIM_BDTR_LOCK)) {
+        return HAL_ERR_INVALID_STATE;
     }
 
     // Calculate the digital filter code

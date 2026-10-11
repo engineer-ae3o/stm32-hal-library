@@ -24,6 +24,7 @@ typedef enum : uint8_t {
 
 bool is_timer_lite(TIM_TypeDef* handle);
 bool is_timer_advanced(TIM_TypeDef* handle);
+bool is_timer_extra_lite(TIM_TypeDef* handle); // Lol
 
 bool is_timer_on_apb1(TIM_TypeDef* handle);
 bool is_timer_32_bits(TIM_TypeDef* handle);

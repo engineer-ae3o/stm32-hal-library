@@ -232,6 +232,11 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_
         return HAL_ERR_NOT_SUPPORTED;
     }
 
+    // Refer to pwm_advanced_timer_init(...) (drivers/pwm.c) for the explanation for this
+    if (is_timer_advanced(handle) && (handle->BDTR & TIM_BDTR_LOCK)) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
     if (handle->CR1 & TIM_CR1_CEN) {
         return HAL_ERR_INVALID_STATE;
     }
@@ -293,7 +298,7 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     handle->CCR1 = 0;
 
     // TIM10 and TIM11 only have CCR1
-    if (!(handle == TIM10 || handle == TIM11)) {
+    if (!is_timer_extra_lite(handle)) {
         // TIM10 and TIM11 don't have a CR2 and SMCR register whilst TIM9 does
         handle->CCR2 = 0;
         handle->SMCR &= ~(TIM_SMCR_SMS | TIM_SMCR_TS | TIM_SMCR_MSM | TIM_SMCR_ETF | TIM_SMCR_ETPS | TIM_SMCR_ECE | TIM_SMCR_ETP);
@@ -433,6 +438,10 @@ bool is_timer_advanced(TIM_TypeDef* handle) {
     return (handle == TIM1);
 }
 
+bool is_timer_extra_lite(TIM_TypeDef* handle) {
+    return (handle == TIM10 || handle == TIM11);
+}
+
 bool is_timer_on_apb1(TIM_TypeDef* handle) {
     bool result = true;
     if (handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) {
@@ -514,7 +523,7 @@ hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     handle->CNT  = 0;
     handle->CCR1 = 0;
     // TIM10 and TIM11 only have CCR1
-    if (!(handle == TIM10 || handle == TIM11)) {
+    if (!is_timer_extra_lite(handle)) {
         handle->CCR2 = 0;
         // TIM9 only has CCR1 and CCR2
         if (handle != TIM9) {

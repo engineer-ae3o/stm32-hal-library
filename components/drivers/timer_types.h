@@ -118,8 +118,36 @@ typedef struct {
 
 
 // Input Capture types
-typedef struct {
+typedef enum : uint8_t {
+    IC_PRESCALER_DIV_1 = 0b00,
+    IC_PRESCALER_DIV_2 = 0b01,
+    IC_PRESCALER_DIV_4 = 0b10,
+    IC_PRESCALER_DIV_8 = 0b11,
+} ic_prescaler_t;
 
+typedef enum : uint8_t {
+    IC_EDGE_RISING = 0,
+    IC_EDGE_FALLING,
+    IC_EDGE_RISING_FALLING,
+} ic_edge_t;
+
+typedef struct {
+    ic_edge_t       edge;
+    timer_pull_t    pull;
+    ic_prescaler_t  prescaler;
+    timer_channel_t channel;
+    board_pin_t     gpio_pin;
+    uint32_t        filter_ns;
+} ic_channel_config_t;
+
+typedef struct {
+    tim_clk_div_t     clk_div;
+    timer_count_dir_t count_mode;
+
+    ic_channel_config_t channels[MAX_TIM2_CHANNELS];
+    size_t              num_channels;
+
+    timer_cb_t callback;
 } input_capture_config_t;
 
 
@@ -134,6 +162,19 @@ typedef enum : uint8_t {
     PCNT_FALLING_EDGE,
 } pcnt_edge_t;
 
+typedef enum : uint8_t {
+    // Equivalent to TIMER_CHANNEL_1 and TIMER_CHANNEL_2
+    PCNT_CHANNEL_1 = TIM_CCMR1_CC1S_Pos,
+    PCNT_CHANNEL_2 = TIM_CCMR1_CC2S_Pos,
+} pcnt_channel_t;
+
+typedef enum : uint8_t {
+    PCNT_ETR_DIV_1 = 0b00,
+    PCNT_ETR_DIV_2 = 0b01,
+    PCNT_ETR_DIV_4 = 0b10,
+    PCNT_ETR_DIV_8 = 0b11,
+} pcnt_prescale_t;
+
 typedef struct {
     pcnt_mode_t   mode;    // How the timer, channel and the gpio gets configured
     pcnt_edge_t   edge;    // What edge to count as a valid pulse
@@ -144,19 +185,11 @@ typedef struct {
     union {
         // Fill in respect to the PCNT mode chosen
         struct {
-            enum : uint8_t {
-                PCNT_CHANNEL_1 = TIM_CCMR1_CC1S_Pos,
-                PCNT_CHANNEL_2 = TIM_CCMR1_CC2S_Pos,
-            } channel; // Equivalent to TIMER_CHANNEL_1 and TIMER_CHANNEL_2
+            pcnt_channel_t channel;
         } mode_1;
 
         struct {
-            enum : uint8_t {
-                PCNT_ETR_DIV_1 = 0b00,
-                PCNT_ETR_DIV_2 = 0b01,
-                PCNT_ETR_DIV_4 = 0b10,
-                PCNT_ETR_DIV_8 = 0b11,
-            } prescaler;
+            pcnt_prescale_t prescaler;
         } mode_2;
     } settings;
 
