@@ -159,6 +159,34 @@ namespace test::clock {
             {.clock = AUDIO_PLL_172MHz, .audio_pll = 172'000'000UL},
         }};
 
+        // Presets whose PLLQ output must be exactly 48MHz so USB can be used
+        constexpr auto USB_CLOCKS = std::array<system_clock_t, 8>{
+            HSE_PLL_96MHz,
+            HSE_PLL_84MHz,
+            HSE_PLL_64MHz,
+            HSE_PLL_48MHz,
+            HSI_PLL_96MHz,
+            HSI_PLL_84MHz,
+            HSI_PLL_64MHz,
+            HSI_PLL_48MHz,
+        };
+
+        struct pll_view_t {
+            uint32_t input_hz; // After PLLM
+            uint32_t vco_hz;   // After PLLN
+            uint32_t pllq_hz;  // After PLLQ
+        };
+
+        // Decodes the live main PLL registers, independently of the driver's own bookkeeping
+        inline pll_view_t read_main_pll() {
+            const uint32_t cfgr = RCC->PLLCFGR;
+            const uint32_t src  = (cfgr & RCC_PLLCFGR_PLLSRC) == RCC_PLLCFGR_PLLSRC_HSE ? HSE_VALUE_Hz : HSI_VALUE_Hz;
+            const uint32_t pllm = (cfgr & RCC_PLLCFGR_PLLM) >> RCC_PLLCFGR_PLLM_Pos;
+            const uint32_t plln = (cfgr & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos;
+            const uint32_t pllq = (cfgr & RCC_PLLCFGR_PLLQ) >> RCC_PLLCFGR_PLLQ_Pos;
+            return {.input_hz = src / pllm, .vco_hz = (src / pllm) * plln, .pllq_hz = ((src / pllm) * plln) / pllq};
+        }
+
         // Helpers
         inline void assert_system_clock(const system_clock_case_t& expected) {
             TEST_ASSERT_EQUAL(expected.clock, get_system_core_clock_type());
@@ -204,6 +232,25 @@ namespace test::clock {
 
             system_core_clock_config(HSI_PLL_DIRECT);
             assert_system_clock({HSI_PLL_DIRECT, HSI_VALUE_Hz, HSI_VALUE_Hz, HSI_VALUE_Hz, false});
+        }
+
+        void pll_presets_respect_vco_limits() {
+            for (const auto& test_case : SYSTEM_CLOCK_CASES) {
+                system_core_clock_config(test_case.clock);
+                if ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) {
+                    continue; // Direct sources do not use the main PLL
+                }
+                const pll_view_t pll = read_main_pll();
+                TEST_ASSERT_TRUE(pll.input_hz >= 1'000'000UL && pll.input_hz <= 2'000'000UL);
+                TEST_ASSERT_TRUE(pll.vco_hz >= 100'000'000UL && pll.vco_hz <= 432'000'000UL);
+            }
+        }
+
+        void usb_presets_provide_exactly_48mhz() {
+            for (const auto clock : USB_CLOCKS) {
+                system_core_clock_config(clock);
+                TEST_ASSERT_EQUAL_UINT32(48'000'000UL, read_main_pll().pllq_hz);
+            }
         }
 
         void reconfiguring_same_preset_is_idempotent() {
@@ -302,7 +349,7 @@ namespace test::clock {
             const uint32_t sysclk_before = get_system_core_clock();
             const uint32_t apb1_before   = get_apb1_core_clock();
             const uint32_t apb2_before   = get_apb2_core_clock();
-            const uint32_t audio_before  = get_audio_pll_clock_type();
+            const uint32_t audio_before  = get_audio_pll_clock();
 
             // Calling the *_update() functions directly (bypassing *_config()) must be a
             // pure re derivation from the live registers, not a source of drift.
@@ -312,7 +359,7 @@ namespace test::clock {
             TEST_ASSERT_EQUAL_UINT32(sysclk_before, get_system_core_clock());
             TEST_ASSERT_EQUAL_UINT32(apb1_before, get_apb1_core_clock());
             TEST_ASSERT_EQUAL_UINT32(apb2_before, get_apb2_core_clock());
-            TEST_ASSERT_EQUAL_UINT32(audio_before, get_audio_pll_clock_type());
+            TEST_ASSERT_EQUAL_UINT32(audio_before, get_audio_pll_clock());
 
             audio_pll_clock_config(AUDIO_PLL_DISABLE);
         }
@@ -329,6 +376,8 @@ namespace test::clock {
 
         RUN_TEST(each_system_clock_preset_configures_correctly);
         RUN_TEST(direct_to_pll_round_trips_succeed);
+        RUN_TEST(pll_presets_respect_vco_limits);
+        RUN_TEST(usb_presets_provide_exactly_48mhz);
         RUN_TEST(reconfiguring_same_preset_is_idempotent);
         RUN_TEST(is_sysclk_on_hse_survives_a_stale_pllcfgr);
         RUN_TEST(match_presets_report_their_actual_source_not_their_frequency);
