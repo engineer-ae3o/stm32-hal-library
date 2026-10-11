@@ -1,5 +1,5 @@
-#ifndef TIMER_EXT_H_
-#define TIMER_EXT_H_
+#ifndef TIMER_EXTENDED_H_
+#define TIMER_EXTENDED_H_
 
 
 #ifdef __cplusplus
@@ -68,4 +68,4 @@ hal_err_t encoder_get_count(TIM_TypeDef* handle, uint32_t* count);
 #endif
 
 
-#endif // TIMER_EXT_H_
+#endif // TIMER_EXTENDED_H_

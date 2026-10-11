@@ -425,6 +425,14 @@ hal_err_t timer_restart(TIM_TypeDef* handle, uint32_t timeout_us) {
 
 
 // Internal helpers
+bool is_timer_lite(TIM_TypeDef* handle) {
+    return (handle == TIM9 || handle == TIM10 || handle == TIM11);
+}
+
+bool is_timer_advanced(TIM_TypeDef* handle) {
+    return (handle == TIM1);
+}
+
 bool is_timer_on_apb1(TIM_TypeDef* handle) {
     bool result = true;
     if (handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) {
@@ -447,14 +455,6 @@ bool is_timer_32_bits(TIM_TypeDef* handle) {
         ASSERT(false);
     }
     return result;
-}
-
-bool is_timer_advanced(TIM_TypeDef* handle) {
-    return (handle == TIM1);
-}
-
-bool is_timer_lite(TIM_TypeDef* handle) {
-    return (handle == TIM9 || handle == TIM10 || handle == TIM11);
 }
 
 uint8_t timer_get_num_channels(TIM_TypeDef* handle) {
@@ -484,35 +484,6 @@ uint32_t timer_get_frequency_hz(TIM_TypeDef* handle) {
         // Standard frequency timer mode
         return (prescaler == 1) ? apb_clock_hz : (apb_clock_hz * 2);
     }
-}
-
-hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef* handle, tim_clk_div_t clk_div, uint32_t filter_ns, uint32_t* code) {
-    if (handle == NULL || clk_div > TIM_CLK_DIV_4 || code == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    if (filter_ns == 0) {
-        *code = 0;
-        return HAL_OK;
-    }
-
-    // Get the frequency feeding the input capture filter from the timer's frequency and the clock divisor
-    // Then use that to get the target ticks to get the input capture code
-    const uint32_t real_divisor    = (1UL << clk_div);
-    const uint32_t timer_frequency = timer_get_frequency_hz(handle);
-    const uint32_t target_ticks = (uint32_t)ceil_div_u64((uint64_t)timer_frequency * (uint64_t)filter_ns, (uint64_t)real_divisor * 1'000'000'000ULL);
-    static const uint16_t filter_multipliers[] = {1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 128, 160, 192, 256};
-
-    // We start at 1, otherwise, we risk giving a filter code of 0 if the even when the requested filter time isn't
-    for (uint32_t i = 1; i < ARRAY_SIZE(filter_multipliers); i++) {
-        // Use the smallest hardware filter that meets or just exceeds the target filter ticks
-        if (filter_multipliers[i] >= target_ticks) {
-            *code = i;
-            return HAL_OK;
-        }
-    }
-
-    // No viable filter multiplier
-    return HAL_ERR_NOT_SUPPORTED;
 }
 
 hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
@@ -617,6 +588,38 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, adva
     }
 
     return HAL_OK;
+}
+
+hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef* handle, tim_clk_div_t clk_div, uint32_t filter_ns, uint32_t* code) {
+    if (handle == NULL || clk_div > TIM_CLK_DIV_4 || code == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    if (filter_ns == 0) {
+        *code = 0;
+        return HAL_OK;
+    }
+
+    // The filter multiplier table. Gotten from the TRM. The needed code value is the index into this array whose filter value
+    // meets or just exceeds the number of ticks (derived from the timer's frequency and the requested filter time in ns)
+    static const uint16_t filter_multipliers[] = {1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 128, 160, 192, 256};
+
+    // Get the target ticks from the requested filter time, the timer frequency and clock divider
+    // Target number of ticks directly from the timer clock
+    const uint32_t target_cnt_ticks = (uint32_t)ceil_div_u64((uint64_t)timer_get_frequency_hz(handle) * filter_ns, 1'000'000'000ULL);
+    // Target number of ticks from the divided down timer clock
+    const uint32_t target_dts_ticks = ceil_div_u32(target_cnt_ticks, (1UL << clk_div));
+
+    // We start at 1, otherwise, we risk using a filter code of 0 even when the requested filter time (ns) isn't 0
+    for (uint32_t i = 1; i < ARRAY_SIZE(filter_multipliers); i++) {
+        // Code values (indexes) 0-3 are mapped to a prescaler of 1, which uses the timer clock directly
+        if (filter_multipliers[i] >= ((i <= 3) ? target_cnt_ticks : target_dts_ticks)) {
+            *code = i;
+            return HAL_OK;
+        }
+    }
+
+    // No viable filter multiplier
+    return HAL_ERR_NOT_SUPPORTED;
 }
 
 
