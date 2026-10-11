@@ -32,8 +32,9 @@ extern "C" {
 
 // General timer types
 typedef enum : uint8_t {
-    TIMER_COUNTER_UP   = (0b0 << TIM_CR1_DIR_Pos),
-    TIMER_COUNTER_DOWN = (0b1 << TIM_CR1_DIR_Pos),
+    TIMER_COUNTER_DIR_UP   = (0b0 << TIM_CR1_DIR_Pos),
+    TIMER_COUNTER_DIR_DOWN = (0b1 << TIM_CR1_DIR_Pos),
+    TIMER_COUNTER_DIR_NONE = 0xFFU, // Sentinel value
 } timer_count_dir_t;
 
 typedef enum : uint8_t {
@@ -41,7 +42,7 @@ typedef enum : uint8_t {
     TIMER_CHANNEL_2  = 1,
     TIMER_CHANNEL_3  = 2,
     TIMER_CHANNEL_4  = 3,
-    TIMER_CHANNEL_NC = 0xFF,
+    TIMER_CHANNEL_NC = 0xFF, // Sentinel value
 } timer_channel_t;
 
 typedef enum : uint8_t {
@@ -57,8 +58,9 @@ typedef enum : uint8_t {
 } tim_clk_div_t;
 
 // The channel parameter only has meaning when the interrupt is a capture compare interrupt
+// The direction parameter only has meaning when the interrupt is an update event
 typedef struct {
-    void (*cb)(void* arg, timer_channel_t channel);
+    void (*cb)(void* arg, timer_channel_t channel, timer_count_dir_t direction);
     void* arg;
 } timer_cb_t;
 
@@ -138,13 +140,9 @@ typedef struct {
     timer_pull_t  pull;    // Use a pullup or down resistor; or none
     tim_clk_div_t clk_div; // The timer clock divider
 
-    uint32_t    filter_ns;  // Any pulse shorter than this is ignored
-    board_pin_t pulse_gpio; // The physical gpio pin
-    // In mode 1, this pin can only be either a BOARD_TIMx_CH1_Pxx or BOARD_TIMx_CH2_Pxx (refer to utils/board.h)
-    // In mode 2, this pin can only be a BOARD_TIMx_ETR_Pxx (refer to utils/board.h)
-
     // Mode specific settings
     union {
+        // Fill in respect to the PCNT mode chosen
         struct {
             enum : uint8_t {
                 PCNT_CHANNEL_1 = TIM_CCMR1_CC1S_Pos,
@@ -161,6 +159,13 @@ typedef struct {
             } prescaler;
         } mode_2;
     } settings;
+
+    uint32_t    filter_ns;  // Any pulse shorter than this is ignored
+    board_pin_t pulse_gpio; // The physical gpio pin
+    // In mode 1, this pin can only be either a BOARD_TIMx_CH1_Pxx or BOARD_TIMx_CH2_Pxx (refer to utils/board.h)
+    // In mode 2, this pin can only be a BOARD_TIMx_ETR_Pxx (refer to utils/board.h)
+
+    timer_cb_t callback; // Called on an overflow of the timer's counter
 } pcnt_config_t;
 
 
@@ -181,6 +186,8 @@ typedef struct {
 
     board_pin_t channel_a; // Maps to TIMER_CHANNEL_1
     board_pin_t channel_b; // Maps to TIMER_CHANNEL_2
+
+    timer_cb_t callback; // Called on an update event (overflow or underflow of the timer's counter)
 } encoder_config_t;
 
 

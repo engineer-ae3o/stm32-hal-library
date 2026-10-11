@@ -1,3 +1,4 @@
+#include "drivers/timer_types.h"
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
@@ -154,7 +155,7 @@ namespace test::pwm {
         }
 
         volatile bool s_brk_fired = false;
-        void          brk_cb(void*, timer_channel_t) {
+        void          brk_cb(void*, timer_channel_t, timer_count_dir_t) {
             s_brk_fired = true;
         }
 

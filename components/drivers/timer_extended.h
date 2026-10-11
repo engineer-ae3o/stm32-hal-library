@@ -38,6 +38,9 @@ hal_err_t output_compare_unfreeze_timer(TIM_TypeDef* handle);
 hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* config);
 hal_err_t input_capture_deinit(TIM_TypeDef* handle);
 
+hal_err_t input_capture_start(TIM_TypeDef* handle);
+hal_err_t input_capture_stop(TIM_TypeDef* handle);
+
 
 // Pulse Counting
 hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config);

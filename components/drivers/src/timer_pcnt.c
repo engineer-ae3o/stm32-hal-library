@@ -62,6 +62,17 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
     // Since the counter should be free running, use the maximum reload value
     handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
 
+    if (config->callback.cb) {
+        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_UPDATE_EVENT));
+        // Enable the update event callback and URS so only update events trigger an interrupt
+        handle->DIER |= TIM_DIER_UIE;
+        handle->CR1 |= TIM_CR1_URS;
+    }
+
+    // Generate an update event so the timer's internal registers start afresh, and clear the update status flag
+    handle->EGR = TIM_EGR_UG;
+    handle->SR  = ~TIM_SR_UIF;
+
     // Configure the input pulse pin
     const board_pin_t gpio = config->pulse_gpio;
     TRY(gpiox_clk_enable(gpio.port, true));

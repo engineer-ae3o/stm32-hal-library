@@ -1,4 +1,5 @@
 #include "drivers/timer.h"
+#include "drivers/timer_types.h"
 #include "utils/common.h"
 #include "test/demo.hpp"
 #include "drivers/pwm.h"
@@ -72,7 +73,7 @@ namespace demo {
             board_pin_t break_pin        = BOARD_TIM1_BKIN_PA6;
             timer_cb_t  break_callback   = {
                 .cb =
-                    [](void*, timer_channel_t) {
+                    [](void*, timer_channel_t, timer_count_dir_t) {
                         LOGW(TAG, "Break event detected");
                     },
                 .arg = nullptr,
