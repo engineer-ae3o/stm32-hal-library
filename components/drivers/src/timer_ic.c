@@ -46,35 +46,62 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
 
         // Configure the channel in the CCMRx register
         switch (channel.channel) {
-            case TIMER_CHANNEL_1:
+            case TIMER_CHANNEL_1: {
                 ccmr1 |= (0b01U << TIM_CCMR1_CC1S_Pos) | (filter_code << TIM_CCMR1_IC1F_Pos) | (uint32_t)(channel.prescaler << TIM_CCMR1_IC1PSC_Pos);
-                ccer |= channel.edge ? (TIM_CCER_CC1E | TIM_CCER_CC1P) : (TIM_CCER_CC1E);
+                uint32_t polarity = 0;
+                if (channel.edge == IC_EDGE_RISING_FALLING) {
+                    polarity = TIM_CCER_CC1P | TIM_CCER_CC1NP;
+                } else if (channel.edge == IC_EDGE_FALLING) {
+                    polarity = TIM_CCER_CC1P;
+                }
+                ccer |= polarity | TIM_CCER_CC2E;
                 dier |= enable_cc_irq ? TIM_DIER_CC1IE : 0;
                 break;
-            case TIMER_CHANNEL_2:
+            }
+            case TIMER_CHANNEL_2: {
                 if (timer_extra_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
                 ccmr1 |= (0b01U << TIM_CCMR1_CC2S_Pos) | (filter_code << TIM_CCMR1_IC2F_Pos) | (uint32_t)(channel.prescaler << TIM_CCMR1_IC2PSC_Pos);
-                ccer |= channel.edge ? (TIM_CCER_CC2E | TIM_CCER_CC2P) : (TIM_CCER_CC2E);
+                uint32_t polarity = 0;
+                if (channel.edge == IC_EDGE_RISING_FALLING) {
+                    polarity = TIM_CCER_CC2P | TIM_CCER_CC2NP;
+                } else if (channel.edge == IC_EDGE_FALLING) {
+                    polarity = TIM_CCER_CC2P;
+                }
+                ccer |= polarity | TIM_CCER_CC2E;
                 dier |= enable_cc_irq ? TIM_DIER_CC2IE : 0;
                 break;
-            case TIMER_CHANNEL_3:
+            }
+            case TIMER_CHANNEL_3: {
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
                 ccmr2 |= (0b01U << TIM_CCMR2_CC3S_Pos) | (filter_code << TIM_CCMR2_IC3F_Pos) | (uint32_t)(channel.prescaler << TIM_CCMR2_IC3PSC_Pos);
-                ccer |= channel.edge ? (TIM_CCER_CC3E | TIM_CCER_CC3P) : (TIM_CCER_CC3E);
+                uint32_t polarity = 0;
+                if (channel.edge == IC_EDGE_RISING_FALLING) {
+                    polarity = TIM_CCER_CC3P | TIM_CCER_CC3NP;
+                } else if (channel.edge == IC_EDGE_FALLING) {
+                    polarity = TIM_CCER_CC3P;
+                }
+                ccer |= polarity | TIM_CCER_CC2E;
                 dier |= enable_cc_irq ? TIM_DIER_CC3IE : 0;
-                break;
-            case TIMER_CHANNEL_4:
+            } break;
+            case TIMER_CHANNEL_4: {
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
                 ccmr2 |= (0b01U << TIM_CCMR2_CC4S_Pos) | (filter_code << TIM_CCMR2_IC4F_Pos) | (uint32_t)(channel.prescaler << TIM_CCMR2_IC4PSC_Pos);
-                ccer |= channel.edge ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
+                uint32_t polarity = 0;
+                if (channel.edge == IC_EDGE_RISING_FALLING) {
+                    polarity = TIM_CCER_CC4P | TIM_CCER_CC4NP;
+                } else if (channel.edge == IC_EDGE_FALLING) {
+                    polarity = TIM_CCER_CC4P;
+                }
+                ccer |= polarity | TIM_CCER_CC4E;
                 dier |= enable_cc_irq ? TIM_DIER_CC4IE : 0;
                 break;
+            }
             default:
                 return HAL_ERR_INVALID_ARG;
         }
