@@ -20,7 +20,9 @@ typedef enum : uint8_t {
     TIMER_IRQ_CAPTURE_COMPARE,
     TIMER_IRQ_TRIGGER_EVENT,
     TIMER_IRQ_COMMUTATION_EVENT,
+    TIMER_IRQ_CLEAR_ALL, // Clears all registered callbacks for the given timer instance
 } advanced_timer_irq_type_t;
+
 
 bool is_timer_lite(TIM_TypeDef* handle);
 bool is_timer_advanced(TIM_TypeDef* handle);
@@ -29,10 +31,12 @@ bool is_timer_extra_lite(TIM_TypeDef* handle); // Lol
 bool is_timer_on_apb1(TIM_TypeDef* handle);
 bool is_timer_32_bits(TIM_TypeDef* handle);
 
-uint8_t  timer_get_num_channels(TIM_TypeDef* handle);
+uint32_t timer_get_num_channels(TIM_TypeDef* handle);
 uint32_t timer_get_frequency_hz(TIM_TypeDef* handle);
 
-hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us);
+hal_err_t timer_stop_counter(TIM_TypeDef* handle);
+hal_err_t timer_start_counter(TIM_TypeDef* handle);
+
 hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, advanced_timer_irq_type_t type);
 hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef* handle, tim_clk_div_t clk_div, uint32_t filter_ns, uint32_t* code);
 

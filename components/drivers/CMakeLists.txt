@@ -15,7 +15,7 @@ set(SRCS
     src/timer_oc.c
     src/timer_ic.c
     src/timer_pcnt.c
-    src/timer_encoder.c
+    src/timer_internals.c
 )
 
 set(INC

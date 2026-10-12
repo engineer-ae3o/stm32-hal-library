@@ -1,7 +1,7 @@
 #include "stm32f411xe.h"
 #include "drivers/src/timer_internals.h"
-#include "drivers/timer_extended.h"
 #include "drivers/timer_types.h"
+#include "drivers/timer_pcnt.h"
 #include "drivers/timer.h"
 #include "utils/common.h"
 #include "drivers/gpio.h"
@@ -95,24 +95,90 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
     return HAL_OK;
 }
 
+hal_err_t qdec_init(TIM_TypeDef* handle, const encoder_config_t* config) {
+    if (handle == NULL || config == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    if (is_timer_lite(handle)) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Refer to pwm_advanced_timer_init(...) (drivers/pwm.c) for the explanation for this
+    if (is_timer_advanced(handle) && (handle->BDTR & TIM_BDTR_LOCK)) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
+    // Calculate the digital filter code
+    uint32_t ic_filter_code = 0;
+    TRY(timer_filter_ns_to_ic_code(handle, config->clk_div, config->filter_ns, &ic_filter_code));
+
+    // Clear all residual state
+    TRY(pcnt_deinit(handle));
+
+    // Set the timer clock divider
+    handle->CR1 |= (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos);
+
+    // Set timer channels 1 and 2 to input mode and set the digital filters
+    handle->CCMR1 |= ((0b01U << TIM_CCMR1_CC1S_Pos) | (ic_filter_code << TIM_CCMR1_IC1F_Pos)) |
+                     ((0b01U << TIM_CCMR1_CC2S_Pos) | (ic_filter_code << TIM_CCMR1_IC2F_Pos));
+
+    // Set the rotational polarity
+    handle->CCER |= config->invert_direction ? (TIM_CCER_CC1P | TIM_CCER_CC2P) : 0;
+
+    // Apply the encoder mode
+    handle->SMCR |= config->mode;
+
+    // Since the counter should be free running, the maximum reload value is used
+    handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+
+    if (config->callback.cb) {
+        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_UPDATE_EVENT));
+        // Enable the update event callback and URS so only update events trigger an interrupt
+        handle->DIER |= TIM_DIER_UIE;
+        handle->CR1 |= TIM_CR1_URS;
+    }
+
+    // Generate an update event so the timer's internal registers start afresh, and clear the update status flag
+    handle->EGR = TIM_EGR_UG;
+    handle->SR  = ~TIM_SR_UIF;
+
+    // Configure the physical gpio channels
+    const board_pin_t channel_a = config->channel_a;
+    TRY(gpiox_clk_enable(channel_a.port, true));
+    gpio_set_alternate_function(channel_a.port, channel_a.pin, channel_a.af);
+    gpio_set_speed_mode(channel_a.port, channel_a.pin, GPIO_FULL_SPEED);
+
+    const board_pin_t channel_b = config->channel_b;
+    TRY(gpiox_clk_enable(channel_b.port, true));
+    gpio_set_alternate_function(channel_b.port, channel_b.pin, channel_b.af);
+    gpio_set_speed_mode(channel_b.port, channel_b.pin, GPIO_FULL_SPEED);
+
+    if (config->pull == TIMER_USE_PULLUP) {
+        gpio_enable_pullup(channel_a.port, channel_a.pin, true);
+        gpio_enable_pullup(channel_b.port, channel_b.pin, true);
+    } else if (config->pull == TIMER_USE_PULLDOWN) {
+        gpio_enable_pulldown(channel_a.port, channel_a.pin, true);
+        gpio_enable_pulldown(channel_b.port, channel_b.pin, true);
+    } else {
+        // The false parameter to gpio_enable_pullup and gpio_enable_pulldown does the same thing: disables all pull resistors
+        gpio_enable_pullup(channel_a.port, channel_a.pin, false);
+        gpio_enable_pullup(channel_b.port, channel_b.pin, false);
+    }
+
+    return HAL_OK;
+}
+
 hal_err_t pcnt_deinit(TIM_TypeDef* handle) {
     return timer_deinit(handle);
 }
 
 hal_err_t pcnt_start(TIM_TypeDef* handle) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    handle->CR1 |= TIM_CR1_CEN;
-    return HAL_OK;
+    return timer_start_counter(handle);
 }
 
 hal_err_t pcnt_stop(TIM_TypeDef* handle) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    handle->CR1 &= ~TIM_CR1_CEN;
-    return HAL_OK;
+    return timer_stop_counter(handle);
 }
 
 hal_err_t pcnt_set_count(TIM_TypeDef* handle, uint32_t count) {

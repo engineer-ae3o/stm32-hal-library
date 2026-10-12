@@ -58,28 +58,6 @@ hal_err_t pwm_input_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency
 // Anything else would result in the reading of garbage or stale data.
 
 
-// Pulse Counting
-hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config);
-hal_err_t pcnt_deinit(TIM_TypeDef* handle);
-
-hal_err_t pcnt_start(TIM_TypeDef* handle);
-hal_err_t pcnt_stop(TIM_TypeDef* handle);
-
-hal_err_t pcnt_set_count(TIM_TypeDef* handle, uint32_t count);
-hal_err_t pcnt_get_count(TIM_TypeDef* handle, uint32_t* count);
-
-
-// Quadrature decoder (encoder mode)
-hal_err_t encoder_init(TIM_TypeDef* handle, const encoder_config_t* config);
-hal_err_t encoder_deinit(TIM_TypeDef* handle);
-
-hal_err_t encoder_start(TIM_TypeDef* handle);
-hal_err_t encoder_stop(TIM_TypeDef* handle);
-
-hal_err_t encoder_set_count(TIM_TypeDef* handle, uint32_t count);
-hal_err_t encoder_get_count(TIM_TypeDef* handle, uint32_t* count);
-
-
 #ifdef __cplusplus
 }
 #endif

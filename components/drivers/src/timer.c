@@ -3,173 +3,56 @@
 #include "drivers/timer_types.h"
 #include "drivers/timer.h"
 #include "utils/common.h"
-#include "utils/clock.h"
 #include "utils/err.h"
 
 #include <string.h>
 #include <stdint.h>
 
 
-// Table of registered callbacks and state for the timer instance
-typedef struct {
-    timer_cb_t      callback;
-    const IRQn_Type irq_type;
-} timer_ctx_t;
+// Helper
+static inline hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
+    // Set the (PSC + 1) * (ARR + 1) value from the timer's clock frequency and the timeout
+    const uint64_t psc_times_arr = ((uint64_t)timer_get_frequency_hz(handle) * timeout_us) / 1'000'000U;
 
-static timer_ctx_t s_timer_cb_ctx[] = {
-    // TIM1
-    // NOTE: None of TIM1's callbacks are stored in this table. Refer below
-    [0] = {.callback = {}, .irq_type = TIM1_CC_IRQn},
-    // TIM2
-    [1] = {.callback = {}, .irq_type = TIM2_IRQn},
-    // TIM3
-    [2] = {.callback = {}, .irq_type = TIM3_IRQn},
-    // TIM4
-    [3] = {.callback = {}, .irq_type = TIM4_IRQn},
-    // TIM5
-    [4] = {.callback = {}, .irq_type = TIM5_IRQn},
-    // TIM9
-    // NOTE: Only TIM9's callbacks are stored here
-    [5] = {.callback = {}, .irq_type = TIM1_BRK_TIM9_IRQn},
-    // TIM10
-    // NOTE: Only TIM10's callbacks are stored here
-    [6] = {.callback = {}, .irq_type = TIM1_UP_TIM10_IRQn},
-    // TIM11
-    // NOTE: Only TIM11's callbacks are stored here
-    [7] = {.callback = {}, .irq_type = TIM1_TRG_COM_TIM11_IRQn},
-};
+    // Get the maximum width of the prescaler and auto-reload registers
+    const uint32_t max_psc_plus_1 = UINT16_MAX + 1;
+    const uint64_t max_arr_plus_1 = (uint64_t)(is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX) + 1;
 
-// Since the interrupt vectors are shared, we have to find
-// and store the interrupt callbacks separately
-typedef struct {
-    timer_cb_t update;
-    timer_cb_t trigger;
-    timer_cb_t commutation;
-    timer_cb_t break_input;
-    timer_cb_t capture_compare;
-} advanced_tim_cb_ctx_t;
-
-static advanced_tim_cb_ctx_t s_tim1_cb_ctx = {};
-
-
-// Helpers
-[[__gnu__::__always_inline__]] static inline uint8_t get_index(TIM_TypeDef* handle) {
-    if (handle == TIM1) {
-        return 0U;
-    } else if (handle == TIM2) {
-        return 1U;
-    } else if (handle == TIM3) {
-        return 2U;
-    } else if (handle == TIM4) {
-        return 3U;
-    } else if (handle == TIM5) {
-        return 4U;
-    } else if (handle == TIM9) {
-        return 5U;
-    } else if (handle == TIM10) {
-        return 6U;
-    } else if (handle == TIM11) {
-        return 7U;
-    } else {
-        return 0xFFU;
-    }
-}
-
-[[__gnu__::__always_inline__]] static inline void timer_isr_helper(TIM_TypeDef* handle) {
-    // Only available on the advanced timers
-    if (is_timer_advanced(handle)) {
-        // Update event interrupt
-        if ((handle->DIER & TIM_DIER_UIE) && (handle->SR & TIM_SR_UIF)) {
-            handle->SR = ~TIM_SR_UIF;
-            if (s_tim1_cb_ctx.update.cb) {
-                s_tim1_cb_ctx.update.cb(s_tim1_cb_ctx.update.arg, TIMER_CHANNEL_NC, handle->CR1 & TIM_CR1_DIR);
-            }
-        }
-        // Break event interrupt
-        if ((handle->DIER & TIM_DIER_BIE) && (handle->SR & TIM_SR_BIF)) {
-            handle->SR = ~TIM_SR_BIF;
-            if (s_tim1_cb_ctx.break_input.cb) {
-                s_tim1_cb_ctx.break_input.cb(s_tim1_cb_ctx.break_input.arg, TIMER_CHANNEL_NC, TIMER_COUNTER_DIR_NONE);
-            }
-        }
-        // Commutation event interrupt
-        if ((handle->DIER & TIM_DIER_COMIE) && (handle->SR & TIM_SR_COMIF)) {
-            handle->SR = ~TIM_SR_COMIF;
-            if (s_tim1_cb_ctx.commutation.cb) {
-                s_tim1_cb_ctx.commutation.cb(s_tim1_cb_ctx.commutation.arg, TIMER_CHANNEL_NC, TIMER_COUNTER_DIR_NONE);
-            }
-        }
-        // Trigger event interrupt
-        if ((handle->DIER & TIM_DIER_TIE) && (handle->SR & TIM_SR_TIF)) {
-            handle->SR = ~TIM_SR_TIF;
-            if (s_tim1_cb_ctx.trigger.cb) {
-                s_tim1_cb_ctx.trigger.cb(s_tim1_cb_ctx.trigger.arg, TIMER_CHANNEL_NC, TIMER_COUNTER_DIR_NONE);
-            }
-        }
-        // Capture compare interrupt(s)
-        if ((handle->DIER & TIM_DIER_CC1IE) && (handle->SR & TIM_SR_CC1IF)) {
-            handle->SR = ~TIM_SR_CC1IF;
-            if (s_tim1_cb_ctx.capture_compare.cb) {
-                s_tim1_cb_ctx.capture_compare.cb(s_tim1_cb_ctx.capture_compare.arg, TIMER_CHANNEL_1, TIMER_COUNTER_DIR_NONE);
-            }
-        }
-        if ((handle->DIER & TIM_DIER_CC2IE) && (handle->SR & TIM_SR_CC2IF)) {
-            handle->SR = ~TIM_SR_CC2IF;
-            if (s_tim1_cb_ctx.capture_compare.cb) {
-                s_tim1_cb_ctx.capture_compare.cb(s_tim1_cb_ctx.capture_compare.arg, TIMER_CHANNEL_2, TIMER_COUNTER_DIR_NONE);
-            }
-        }
-        if ((handle->DIER & TIM_DIER_CC3IE) && (handle->SR & TIM_SR_CC3IF)) {
-            handle->SR = ~TIM_SR_CC3IF;
-            if (s_tim1_cb_ctx.capture_compare.cb) {
-                s_tim1_cb_ctx.capture_compare.cb(s_tim1_cb_ctx.capture_compare.arg, TIMER_CHANNEL_3, TIMER_COUNTER_DIR_NONE);
-            }
-        }
-        if ((handle->DIER & TIM_DIER_CC4IE) && (handle->SR & TIM_SR_CC4IF)) {
-            handle->SR = ~TIM_SR_CC4IF;
-            if (s_tim1_cb_ctx.capture_compare.cb) {
-                s_tim1_cb_ctx.capture_compare.cb(s_tim1_cb_ctx.capture_compare.arg, TIMER_CHANNEL_4, TIMER_COUNTER_DIR_NONE);
-            }
-        }
-        return;
+    // Bounds check the arguments against the width of the timers' registers
+    const uint64_t max_psc_times_arr = max_psc_plus_1 * max_arr_plus_1;
+    if (psc_times_arr > max_psc_times_arr) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Other non-advanced timers
-    const uint8_t idx = get_index(handle);
-    ASSERT(idx != 0xFFU);
+    // Compute suitable auto-reload and prescaler values
+    // Minimum PSC such that ARR can cover the remainder: ceiling division to find PSC
+    // Round to nearest instead of floor to halve the worst case error to get the ARR
+    const uint64_t psc_plus_1 = ceil_div_u64(psc_times_arr, max_arr_plus_1);
+    const uint64_t arr_plus_1 = round_div_u64(psc_times_arr, psc_plus_1);
 
-    // Update event interrupt
-    if ((handle->DIER & TIM_DIER_UIE) && (handle->SR & TIM_SR_UIF)) {
-        handle->SR = ~TIM_SR_UIF;
-        if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_NC, handle->CR1 & TIM_CR1_DIR);
+    // Set the actual prescaler and auto-reload values
+    handle->ARR = (uint32_t)(arr_plus_1 - 1);
+    handle->PSC = (uint32_t)(psc_plus_1 - 1);
+
+    // Clear existing state
+    handle->CNT  = 0;
+    handle->CCR1 = 0;
+    // TIM10 and TIM11 only have CCR1
+    if (!is_timer_extra_lite(handle)) {
+        handle->CCR2 = 0;
+        // TIM9 only has CCR1 and CCR2
+        if (handle != TIM9) {
+            handle->CCR3 = 0;
+            handle->CCR4 = 0;
         }
     }
-    // Capture compare interrupt(s)
-    if ((handle->DIER & TIM_DIER_CC1IE) && (handle->SR & TIM_SR_CC1IF)) {
-        handle->SR = ~TIM_SR_CC1IF;
-        if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_1, TIMER_COUNTER_DIR_NONE);
-        }
-    }
-    if ((handle->DIER & TIM_DIER_CC2IE) && (handle->SR & TIM_SR_CC2IF)) {
-        handle->SR = ~TIM_SR_CC2IF;
-        if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_2, TIMER_COUNTER_DIR_NONE);
-        }
-    }
-    if ((handle->DIER & TIM_DIER_CC3IE) && (handle->SR & TIM_SR_CC3IF)) {
-        handle->SR = ~TIM_SR_CC3IF;
-        if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_3, TIMER_COUNTER_DIR_NONE);
-        }
-    }
-    if ((handle->DIER & TIM_DIER_CC4IE) && (handle->SR & TIM_SR_CC4IF)) {
-        handle->SR = ~TIM_SR_CC4IF;
-        if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_4, TIMER_COUNTER_DIR_NONE);
-        }
-    }
+
+    // Generate an update event and clear the update interrupt
+    // flag since the ARR and PSC registers contain new values
+    handle->EGR = TIM_EGR_UG;
+    handle->SR  = ~TIM_SR_UIF;
+
+    return HAL_OK;
 }
 
 
@@ -223,8 +106,7 @@ hal_err_t timx_clk_enable(TIM_TypeDef* handle, bool enable) {
 }
 
 hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_t callback) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU || callback.cb == NULL) {
+    if (handle == NULL || callback.cb == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -237,6 +119,8 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_
         return HAL_ERR_INVALID_STATE;
     }
 
+    // Fail if the timer is active. Caller should explictly call
+    // timer_deinit(...) or timer_pause(...) before calling this
     if (handle->CR1 & TIM_CR1_CEN) {
         return HAL_ERR_INVALID_STATE;
     }
@@ -247,15 +131,18 @@ hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_
     // Register the callback
     TRY(timer_register_callback(handle, callback, TIMER_IRQ_UPDATE_EVENT));
 
+    // Enable the update event interrupt
+    handle->DIER |= TIM_DIER_UIE;
+
     // Set the counting direction. Edge aligned (up or downcounting)
-    handle->CR1 |= (uint32_t)direction;
+    // Enable the ARR preload, and set URS so only a UEV triggers an interrupt
+    handle->CR1 |= (uint32_t)direction | TIM_CR1_ARPE | TIM_CR1_URS;
 
     return HAL_OK;
 }
 
 hal_err_t timer_deinit(TIM_TypeDef* handle) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
+    if (handle == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -298,27 +185,13 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     if (timer_advanced) {
         handle->RCR &= ~TIM_RCR_REP;
         // The BDTR register cannot be cleared because the LOCK bits in it can only be written once.
-        // The RCC reset register(s) have already reset it so no need to bother.
-    }
-
-    // Disable the timer's NVIC interrupt
-    if (handle == TIM1 || handle == TIM9 || handle == TIM10 || handle == TIM11) {
-        // Since these timers share an NVIC line amongst themselves, we can't
-        // knowingly disable the NVIC irq line since we could take out the other
-        // timer. So its left up to the user to disable it as they please.
-    } else {
-        NVIC_DisableIRQ(s_timer_cb_ctx[idx].irq_type);
+        // To clear it, make use of the time_reset(...) function since it performs a bus level reset
+        // of the given timer handle.
     }
 
     // Clear the registered callback for the current timer instance
-    const uint32_t primask = __get_PRIMASK();
-    __disable_irq();
-    if (timer_advanced) {
-        memset(&s_tim1_cb_ctx, 0, sizeof(s_tim1_cb_ctx));
-    } else {
-        memset(&s_timer_cb_ctx[idx].callback, 0, sizeof(s_timer_cb_ctx[idx].callback));
-    }
-    __set_PRIMASK(primask);
+    const timer_cb_t callback = {};
+    TRY(timer_register_callback(handle, callback, TIMER_IRQ_CLEAR_ALL));
 
     return HAL_OK;
 }
@@ -347,11 +220,12 @@ hal_err_t timer_reset(TIM_TypeDef* handle) {
 }
 
 hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU || timeout_us == 0) {
+    if (handle == NULL || timeout_us == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Fail if the timer is already running
+    // If needed to set a new timeout while the timer is still active, use timer_restart(...)
     if (handle->CR1 & TIM_CR1_CEN) {
         return HAL_ERR_INVALID_STATE;
     }
@@ -359,20 +233,19 @@ hal_err_t timer_start_oneshot(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Set the auto-reload and prescaler values
     TRY(timer_set_arr_and_psc(handle, timeout_us));
 
-    // Enable the update event interrupt
-    handle->DIER |= TIM_DIER_UIE;
+    // Enable OPM and start the counter
+    handle->CR1 |= (TIM_CR1_CEN | TIM_CR1_OPM);
 
-    // Set OPM mode, and enable the counter and auto-reload preload, and set URS so only a UEV triggers an interrupt
-    handle->CR1 |= (TIM_CR1_CEN | TIM_CR1_OPM | TIM_CR1_ARPE | TIM_CR1_URS);
     return HAL_OK;
 }
 
 hal_err_t timer_start_periodic(TIM_TypeDef* handle, uint32_t timeout_us) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU || timeout_us == 0) {
+    if (handle == NULL || timeout_us == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // Fail if the timer is already running
+    // If needed to set a new timeout while the timer is still active, use timer_restart(...)
     if (handle->CR1 & TIM_CR1_CEN) {
         return HAL_ERR_INVALID_STATE;
     }
@@ -380,47 +253,25 @@ hal_err_t timer_start_periodic(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Set the auto-reload and prescaler values
     TRY(timer_set_arr_and_psc(handle, timeout_us));
 
-    // Enable the update event interrupt
-    handle->DIER |= TIM_DIER_UIE;
+    // Disable OPM and start the counter
+    handle->CR1 = TIM_CR1_CEN | (handle->CR1 & ~TIM_CR1_OPM);
 
-    // Disable OPM mode, and enable the counter and auto-reload preload, and set URS so only a UEV triggers an interrupt
-    handle->CR1 = (TIM_CR1_CEN | TIM_CR1_ARPE | TIM_CR1_URS) | (handle->CR1 & ~TIM_CR1_OPM);
     return HAL_OK;
 }
 
 hal_err_t timer_pause(TIM_TypeDef* handle) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    if (!(handle->CR1 & TIM_CR1_CEN)) {
-        return HAL_ERR_INVALID_STATE;
-    }
-
-    // Pause the timer by disabling its counter
-    handle->CR1 &= ~TIM_CR1_CEN;
-    return HAL_OK;
+    return timer_stop_counter(handle);
 }
 
 hal_err_t timer_resume(TIM_TypeDef* handle) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    if (handle->CR1 & TIM_CR1_CEN) {
-        return HAL_ERR_INVALID_STATE;
-    }
-
-    // Resume the timer by re-enabling its counter
-    handle->CR1 |= TIM_CR1_CEN;
-    return HAL_OK;
+    return timer_start_counter(handle);
 }
 
 hal_err_t timer_restart(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Pause the timer first
     TRY(timer_pause(handle));
 
-    // Then restart based on what mode it was counting in previously
+    // Then restart based on whatever mode it was counting in previously
     if (handle->CR1 & TIM_CR1_OPM) {
         TRY(timer_start_oneshot(handle, timeout_us));
     } else {
@@ -428,244 +279,4 @@ hal_err_t timer_restart(TIM_TypeDef* handle, uint32_t timeout_us) {
     }
 
     return HAL_OK;
-}
-
-
-// Internal helpers
-bool is_timer_lite(TIM_TypeDef* handle) {
-    return (handle == TIM9 || handle == TIM10 || handle == TIM11);
-}
-
-bool is_timer_advanced(TIM_TypeDef* handle) {
-    return (handle == TIM1);
-}
-
-bool is_timer_extra_lite(TIM_TypeDef* handle) {
-    return (handle == TIM10 || handle == TIM11);
-}
-
-bool is_timer_on_apb1(TIM_TypeDef* handle) {
-    bool result = true;
-    if (handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) {
-        // result = true; // Already true. Just no-op
-    } else if (handle == TIM1 || handle == TIM9 || handle == TIM10 || handle == TIM11) {
-        result = false;
-    } else {
-        ASSERT(false);
-    }
-    return result;
-}
-
-bool is_timer_32_bits(TIM_TypeDef* handle) {
-    bool result = true;
-    if (handle == TIM2 || handle == TIM5) {
-        // result = true; // Already true. Just no-op
-    } else if (handle == TIM1 || handle == TIM3 || handle == TIM4 || handle == TIM9 || handle == TIM10 || handle == TIM11) {
-        result = false;
-    } else {
-        ASSERT(false);
-    }
-    return result;
-}
-
-uint8_t timer_get_num_channels(TIM_TypeDef* handle) {
-    if (handle == TIM1 || handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) {
-        return MAX_TIM1_CHANNELS;
-    } else if (handle == TIM9) {
-        return MAX_TIM9_CHANNELS;
-    } else if (handle == TIM10 || handle == TIM11) {
-        return MAX_TIM10_CHANNELS;
-    } else {
-        ASSERT(false);
-        return 0;
-    }
-}
-
-uint32_t timer_get_frequency_hz(TIM_TypeDef* handle) {
-    ASSERT(handle);
-
-    const uint32_t system_core_clock = get_system_core_clock();
-    const uint32_t apb_clock_hz      = is_timer_on_apb1(handle) ? get_apb1_core_clock() : get_apb2_core_clock();
-    const uint32_t prescaler         = system_core_clock / apb_clock_hz;
-
-    if (RCC->DCKCFGR & RCC_DCKCFGR_TIMPRE) {
-        // High frequency timer mode
-        return (prescaler > 2) ? (apb_clock_hz * 4) : system_core_clock;
-    } else {
-        // Standard frequency timer mode
-        return (prescaler == 1) ? apb_clock_hz : (apb_clock_hz * 2);
-    }
-}
-
-hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
-    // Set the (PSC + 1) * (ARR + 1) value from the timer's clock frequency and the timeout
-    const uint64_t psc_times_arr = ((uint64_t)timer_get_frequency_hz(handle) * timeout_us) / 1'000'000U;
-
-    // Get the maximum width of the prescaler and auto-reload registers
-    const uint32_t max_psc_plus_1 = UINT16_MAX + 1;
-    const uint64_t max_arr_plus_1 = (uint64_t)(is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX) + 1;
-
-    // Bounds check the arguments against the width of the timers' registers
-    const uint64_t max_psc_times_arr = max_psc_plus_1 * max_arr_plus_1;
-    if (psc_times_arr > max_psc_times_arr) {
-        return HAL_ERR_NOT_SUPPORTED;
-    }
-
-    // Compute suitable auto-reload and prescaler values
-    // Minimum PSC such that ARR can cover the remainder: ceiling division to find PSC
-    // Round to nearest instead of floor to halve the worst case error to get the ARR
-    const uint64_t psc_plus_1 = ceil_div_u64(psc_times_arr, max_arr_plus_1);
-    const uint64_t arr_plus_1 = round_div_u64(psc_times_arr, psc_plus_1);
-
-    // Set the actual prescaler and auto-reload values
-    handle->ARR = (uint32_t)(arr_plus_1 - 1);
-    handle->PSC = (uint32_t)(psc_plus_1 - 1);
-
-    // Clear existing state
-    handle->CNT  = 0;
-    handle->CCR1 = 0;
-    // TIM10 and TIM11 only have CCR1
-    if (!is_timer_extra_lite(handle)) {
-        handle->CCR2 = 0;
-        // TIM9 only has CCR1 and CCR2
-        if (handle != TIM9) {
-            handle->CCR3 = 0;
-            handle->CCR4 = 0;
-        }
-    }
-
-    // Generate an update event and clear the update interrupt
-    // flag since the ARR and PSC registers contain new values
-    handle->EGR = TIM_EGR_UG;
-    handle->SR  = ~TIM_SR_UIF;
-
-    return HAL_OK;
-}
-
-hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, advanced_timer_irq_type_t type) {
-    const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    // Disable all interrupts
-    const uint32_t primask = __get_PRIMASK();
-    __disable_irq();
-
-    // Get the irq type for the current timer instance
-    IRQn_Type irq_type = 0;
-    if (is_timer_advanced(handle)) {
-        switch (type) {
-            case TIMER_IRQ_UPDATE_EVENT:
-                irq_type = TIM1_UP_TIM10_IRQn;
-                // Register the update event callback
-                s_tim1_cb_ctx.update = callback;
-                break;
-            case TIMER_IRQ_BREAK_EVENT:
-                irq_type = TIM1_BRK_TIM9_IRQn;
-                // Register the break event callback
-                s_tim1_cb_ctx.break_input = callback;
-                break;
-            case TIMER_IRQ_CAPTURE_COMPARE:
-                irq_type = TIM1_CC_IRQn;
-                // Register the capture compare event callback
-                s_tim1_cb_ctx.capture_compare = callback;
-                break;
-            case TIMER_IRQ_TRIGGER_EVENT:
-                irq_type = TIM1_TRG_COM_TIM11_IRQn;
-                // Register the trigger event callback
-                s_tim1_cb_ctx.trigger = callback;
-                break;
-            case TIMER_IRQ_COMMUTATION_EVENT:
-                irq_type = TIM1_TRG_COM_TIM11_IRQn;
-                // Register the commutation event callback
-                s_tim1_cb_ctx.commutation = callback;
-                break;
-        }
-    } else {
-        irq_type = s_timer_cb_ctx[idx].irq_type;
-        // Register the irq callback for the non advanced timers
-        s_timer_cb_ctx[idx].callback = callback;
-    }
-
-    // Restore the interrupts to their previous state
-    __set_PRIMASK(primask);
-
-    // Enable the timer's NVIC interrupt only if the callback is valid
-    if (callback.cb != NULL) {
-        NVIC_SetPriority(irq_type, TIMER_NVIC_IRQ_PRIORITY);
-        NVIC_ClearPendingIRQ(irq_type);
-        NVIC_EnableIRQ(irq_type);
-    }
-
-    return HAL_OK;
-}
-
-hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef* handle, tim_clk_div_t clk_div, uint32_t filter_ns, uint32_t* code) {
-    if (handle == NULL || clk_div > TIM_CLK_DIV_4 || code == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    if (filter_ns == 0) {
-        *code = 0;
-        return HAL_OK;
-    }
-
-    // The filter multiplier table. Gotten from the TRM. The needed code value is the index into this array whose filter value
-    // meets or just exceeds the number of ticks (derived from the timer's frequency and the requested filter time in ns)
-    static const uint16_t filter_multipliers[] = {1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 128, 160, 192, 256};
-
-    // Get the target ticks from the requested filter time, the timer frequency and clock divider
-    // Target number of ticks directly from the timer clock
-    const uint32_t target_cnt_ticks = (uint32_t)ceil_div_u64((uint64_t)timer_get_frequency_hz(handle) * filter_ns, 1'000'000'000ULL);
-    // Target number of ticks from the divided down timer clock
-    const uint32_t target_dts_ticks = ceil_div_u32(target_cnt_ticks, (1UL << clk_div));
-
-    // We start at 1, otherwise, we risk using a filter code of 0 even when the requested filter time (ns) isn't 0
-    for (uint32_t i = 1; i < ARRAY_SIZE(filter_multipliers); i++) {
-        // Code values (indexes) 0-3 are mapped to a prescaler of 1, which uses the timer clock directly
-        if (filter_multipliers[i] >= ((i <= 3) ? target_cnt_ticks : target_dts_ticks)) {
-            *code = i;
-            return HAL_OK;
-        }
-    }
-
-    // No viable filter multiplier
-    return HAL_ERR_NOT_SUPPORTED;
-}
-
-
-// Interrupt handlers
-void TIM1_CC_IRQHandler(void) {
-    timer_isr_helper(TIM1);
-}
-
-void TIM2_IRQHandler(void) {
-    timer_isr_helper(TIM2);
-}
-
-void TIM3_IRQHandler(void) {
-    timer_isr_helper(TIM3);
-}
-
-void TIM4_IRQHandler(void) {
-    timer_isr_helper(TIM4);
-}
-
-void TIM5_IRQHandler(void) {
-    timer_isr_helper(TIM5);
-}
-
-void TIM1_BRK_TIM9_IRQHandler(void) {
-    timer_isr_helper(TIM1);
-    timer_isr_helper(TIM9);
-}
-
-void TIM1_UP_TIM10_IRQHandler(void) {
-    timer_isr_helper(TIM1);
-    timer_isr_helper(TIM10);
-}
-
-void TIM1_TRG_COM_TIM11_IRQHandler(void) {
-    timer_isr_helper(TIM1);
-    timer_isr_helper(TIM11);
 }
