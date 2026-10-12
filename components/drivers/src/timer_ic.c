@@ -169,7 +169,7 @@ hal_err_t input_capture_stop(TIM_TypeDef* handle) {
     return HAL_OK;
 }
 
-hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, uint32_t* result) {
+hal_err_t input_capture_get_sample(TIM_TypeDef* handle, timer_channel_t channel, uint32_t* result) {
     if (handle == NULL || result == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -181,7 +181,7 @@ hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, 
         case TIMER_CHANNEL_1:
             *result = handle->CCR1;
             if (handle->SR & TIM_SR_CC1OF) {
-                handle->SR = ~TIM_SR_CC1OF;
+                handle->SR = ~(TIM_SR_CC1IF | TIM_SR_CC1OF);
                 error      = HAL_ERR_TIM_OVER_CAPTURE;
             }
             break;
@@ -191,7 +191,7 @@ hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, 
             }
             *result = handle->CCR2;
             if (handle->SR & TIM_SR_CC2OF) {
-                handle->SR = ~TIM_SR_CC2OF;
+                handle->SR = ~(TIM_SR_CC2IF | TIM_SR_CC2OF);
                 error      = HAL_ERR_TIM_OVER_CAPTURE;
             }
             break;
@@ -201,7 +201,7 @@ hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, 
             }
             *result = handle->CCR3;
             if (handle->SR & TIM_SR_CC3OF) {
-                handle->SR = ~TIM_SR_CC3OF;
+                handle->SR = ~(TIM_SR_CC3IF | TIM_SR_CC3OF);
                 error      = HAL_ERR_TIM_OVER_CAPTURE;
             }
             break;
@@ -211,7 +211,7 @@ hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, 
             }
             *result = handle->CCR4;
             if (handle->SR & TIM_SR_CC4OF) {
-                handle->SR = ~TIM_SR_CC4OF;
+                handle->SR = ~(TIM_SR_CC4IF | TIM_SR_CC4OF);
                 error      = HAL_ERR_TIM_OVER_CAPTURE;
             }
             break;
@@ -221,3 +221,29 @@ hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, 
 
     return error;
 }
+
+hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz) {
+    if (handle == NULL || frequency_hz == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    *frequency_hz = timer_get_frequency_hz(handle);
+    return HAL_OK;
+}
+
+
+// PWM input mode
+hal_err_t pwm_input_init(TIM_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    return HAL_OK;
+}
+
+hal_err_t pwm_input_get_data(TIM_TypeDef* handle) {
+    if (handle == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    return HAL_OK;
+};
