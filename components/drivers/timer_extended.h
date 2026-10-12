@@ -53,6 +53,9 @@ hal_err_t pwm_input_stop(TIM_TypeDef* handle);
 
 hal_err_t pwm_input_get_data(TIM_TypeDef* handle, pwm_input_data_t* data);
 hal_err_t pwm_input_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz);
+// NOTE: It's only safe to call pwm_input_get_data(...) to get the captured data after
+// the capture event interrupt for channel 1 and 2 have both fired for a given cycle.
+// Anything else would result in the reading of garbage or stale data.
 
 
 // Pulse Counting

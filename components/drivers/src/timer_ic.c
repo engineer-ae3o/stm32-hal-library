@@ -241,6 +241,63 @@ hal_err_t pwm_input_init(TIM_TypeDef* handle, const pwm_input_config_t* config) 
         return HAL_ERR_NOT_SUPPORTED;
     }
 
+    // Refer to pwm_advanced_timer_init(...) (drivers/pwm.c) for the explanation for this
+    if (is_timer_advanced(handle) && (handle->BDTR & TIM_BDTR_LOCK)) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
+    // Clear all residual state
+    TRY(input_capture_deinit(handle));
+
+    // Calculate the digital filter code
+    uint32_t filter_code = 0;
+    TRY(timer_filter_ns_to_ic_code(handle, config->clk_div, config->filter_ns, &filter_code));
+
+    // Set the output compare mode characteristics
+    uint32_t ccmr1 = 0;
+    uint32_t ccer  = 0;
+
+    // Configure the first input capture channel to get the rising edges from our channel
+    ccmr1 |= (0b01U << TIM_CCMR1_CC1S_Pos) | (filter_code << TIM_CCMR1_IC1F_Pos) | (uint32_t)(config->prescaler << TIM_CCMR1_IC1PSC_Pos);
+    ccer |= TIM_CCER_CC1E;
+
+    // Configure the second input capture channel to get the falling edges from our channel
+    ccmr1 |= (0b01U << TIM_CCMR1_CC2S_Pos) | (filter_code << TIM_CCMR1_IC2F_Pos) | (uint32_t)(config->prescaler << TIM_CCMR1_IC2PSC_Pos);
+    ccer |= TIM_CCER_CC2E | TIM_CCER_CC2P;
+
+    // Final writeback
+    handle->CCER |= ccer;
+    handle->CCMR1 |= ccmr1;
+
+    if (config->callback.cb != NULL) {
+        handle->DIER |= TIM_DIER_CC1IE | TIM_DIER_CC2IE;
+        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
+    }
+
+    // Since the counter should be free running, the maximum reload value is used
+    handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+
+    // Set the timer's counting mode, apply the clock divider, and enable auto-reload register buffering
+    handle->CR1 |= (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE);
+
+    // Generate an update event so the timer's internal registers start afresh, and clear the update status flag
+    handle->EGR = TIM_EGR_UG;
+    handle->SR  = ~TIM_SR_UIF;
+
+    // Configure the input PWM pin
+    const board_pin_t gpio = config->gpio_pin;
+    TRY(gpiox_clk_enable(gpio.port, true));
+    gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
+    gpio_set_speed_mode(gpio.port, gpio.pin, GPIO_FULL_SPEED);
+
+    if (config->pull == TIMER_USE_PULLUP) {
+        gpio_enable_pullup(gpio.port, gpio.pin, true);
+    } else if (config->pull == TIMER_USE_PULLDOWN) {
+        gpio_enable_pulldown(gpio.port, gpio.pin, true);
+    } else {
+        gpio_enable_pullup(gpio.port, gpio.pin, false);
+    }
+
     return HAL_OK;
 }
 

@@ -151,12 +151,17 @@ typedef struct {
 } input_capture_config_t;
 
 
-// PWM Input mde types
+// PWM Input mode types
 typedef struct {
+    timer_pull_t      pull;
     tim_clk_div_t     clk_div;
+    ic_prescaler_t    prescaler;
     timer_count_dir_t count_mode;
 
-    ic_channel_config_t channel;
+    uint32_t filter_ns;
+
+    // Can only be BOARD_TIMx_CH1_Pxx
+    board_pin_t gpio_pin;
 
     timer_cb_t callback;
 } pwm_input_config_t;
@@ -164,7 +169,7 @@ typedef struct {
 typedef struct {
     uint32_t pulse_width_us; // Signal HIGH time
     uint32_t period_us;      // Signal HIGH + LOW time (1 / PWM frequency)
-    // Duty cycle = (pulse_width_us * 100%) / period_us
+    // Duty cycle (%) = (pulse_width_us * 100%) / period_us
 } pwm_input_data_t;
 
 
