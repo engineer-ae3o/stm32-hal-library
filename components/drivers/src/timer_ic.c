@@ -54,7 +54,7 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
                 } else if (channel.edge == IC_EDGE_FALLING) {
                     polarity = TIM_CCER_CC1P;
                 }
-                ccer |= polarity | TIM_CCER_CC2E;
+                ccer |= polarity | TIM_CCER_CC1E;
                 dier |= enable_cc_irq ? TIM_DIER_CC1IE : 0;
                 break;
             }
@@ -84,9 +84,10 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
                 } else if (channel.edge == IC_EDGE_FALLING) {
                     polarity = TIM_CCER_CC3P;
                 }
-                ccer |= polarity | TIM_CCER_CC2E;
+                ccer |= polarity | TIM_CCER_CC3E;
                 dier |= enable_cc_irq ? TIM_DIER_CC3IE : 0;
-            } break;
+                break;
+            }
             case TIMER_CHANNEL_4: {
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
@@ -138,12 +139,12 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
     // Since the counter should be free running, the maximum reload value is used
     handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
 
+    // Set the timer's counting mode, apply the clock divider, and enable auto-reload register buffering
+    handle->CR1 |= (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE);
+
     // Generate an update event so the timer's internal registers start afresh, and clear the update status flag
     handle->EGR = TIM_EGR_UG;
     handle->SR  = ~TIM_SR_UIF;
-
-    // Set the timer's counting mode, apply the clock divider, and enable auto-reload register buffering
-    handle->CR1 |= (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE);
 
     return HAL_OK;
 }
@@ -179,7 +180,7 @@ hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, 
     switch (channel) {
         case TIMER_CHANNEL_1:
             *result = handle->CCR1;
-            if (handle->SR & ~TIM_SR_CC1OF) {
+            if (handle->SR & TIM_SR_CC1OF) {
                 handle->SR = ~TIM_SR_CC1OF;
                 error      = HAL_ERR_TIM_OVER_CAPTURE;
             }
@@ -189,7 +190,7 @@ hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, 
                 return HAL_ERR_NOT_SUPPORTED;
             }
             *result = handle->CCR2;
-            if (handle->SR & ~TIM_SR_CC2OF) {
+            if (handle->SR & TIM_SR_CC2OF) {
                 handle->SR = ~TIM_SR_CC2OF;
                 error      = HAL_ERR_TIM_OVER_CAPTURE;
             }
@@ -199,7 +200,7 @@ hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, 
                 return HAL_ERR_NOT_SUPPORTED;
             }
             *result = handle->CCR3;
-            if (handle->SR & ~TIM_SR_CC3OF) {
+            if (handle->SR & TIM_SR_CC3OF) {
                 handle->SR = ~TIM_SR_CC3OF;
                 error      = HAL_ERR_TIM_OVER_CAPTURE;
             }
@@ -209,7 +210,7 @@ hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, 
                 return HAL_ERR_NOT_SUPPORTED;
             }
             *result = handle->CCR4;
-            if (handle->SR & ~TIM_SR_CC4OF) {
+            if (handle->SR & TIM_SR_CC4OF) {
                 handle->SR = ~TIM_SR_CC4OF;
                 error      = HAL_ERR_TIM_OVER_CAPTURE;
             }
