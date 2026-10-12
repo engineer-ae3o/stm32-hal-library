@@ -44,6 +44,17 @@ hal_err_t input_capture_get_sample(TIM_TypeDef* handle, timer_channel_t channel,
 hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz);
 
 
+// PWM Input mode
+hal_err_t pwm_input_init(TIM_TypeDef* handle, const pwm_input_config_t* config);
+hal_err_t pwm_input_deinit(TIM_TypeDef* handle);
+
+hal_err_t pwm_input_start(TIM_TypeDef* handle);
+hal_err_t pwm_input_stop(TIM_TypeDef* handle);
+
+hal_err_t pwm_input_get_data(TIM_TypeDef* handle, pwm_input_data_t* data);
+hal_err_t pwm_input_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz);
+
+
 // Pulse Counting
 hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config);
 hal_err_t pcnt_deinit(TIM_TypeDef* handle);

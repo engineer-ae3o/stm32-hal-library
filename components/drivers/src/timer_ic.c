@@ -232,18 +232,47 @@ hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequ
 
 
 // PWM input mode
-hal_err_t pwm_input_init(TIM_TypeDef* handle) {
-    if (handle == NULL) {
+hal_err_t pwm_input_init(TIM_TypeDef* handle, const pwm_input_config_t* config) {
+    if (handle == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
+    }
+
+    if (is_timer_extra_lite(handle)) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
 
     return HAL_OK;
 }
 
-hal_err_t pwm_input_get_data(TIM_TypeDef* handle) {
-    if (handle == NULL) {
+hal_err_t pwm_input_deinit(TIM_TypeDef* handle) {
+    return input_capture_deinit(handle);
+}
+
+hal_err_t pwm_input_start(TIM_TypeDef* handle) {
+    return input_capture_start(handle);
+}
+
+hal_err_t pwm_input_stop(TIM_TypeDef* handle) {
+    return input_capture_stop(handle);
+}
+
+hal_err_t pwm_input_get_data(TIM_TypeDef* handle, pwm_input_data_t* data) {
+    if (handle == NULL || data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    if (is_timer_extra_lite(handle)) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // The first cpature compare channel measures the distance between two consecutive HIGH pulses
+    // The second channel measures
+    data->pulse_width_us = handle->CCR1;
+    data->period_us      = handle->CCR2;
+
     return HAL_OK;
-};
+}
+
+hal_err_t pwm_input_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz) {
+    return input_capture_get_timer_frequency(handle, frequency_hz);
+}

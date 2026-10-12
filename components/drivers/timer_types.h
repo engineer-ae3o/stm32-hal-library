@@ -151,6 +151,23 @@ typedef struct {
 } input_capture_config_t;
 
 
+// PWM Input mde types
+typedef struct {
+    tim_clk_div_t     clk_div;
+    timer_count_dir_t count_mode;
+
+    ic_channel_config_t channel;
+
+    timer_cb_t callback;
+} pwm_input_config_t;
+
+typedef struct {
+    uint32_t pulse_width_us; // Signal HIGH time
+    uint32_t period_us;      // Signal HIGH + LOW time (1 / PWM frequency)
+    // Duty cycle = (pulse_width_us * 100%) / period_us
+} pwm_input_data_t;
+
+
 // Pulse Counter types
 typedef enum : uint8_t {
     PCNT_MODE_1 = 0, // The timer is clocked from an input capture pin (can be channel 1 or 2) through the slave mode controller
