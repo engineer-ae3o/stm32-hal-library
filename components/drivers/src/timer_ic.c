@@ -146,31 +146,50 @@ hal_err_t input_capture_get_value(TIM_TypeDef* handle, timer_channel_t channel, 
         return HAL_ERR_INVALID_ARG;
     }
 
+    hal_err_t error = HAL_OK;
+
+    // Read the compare value and check for an ovecapture
     switch (channel) {
         case TIMER_CHANNEL_1:
             *result = handle->CCR1;
+            if (handle->SR & ~TIM_SR_CC1OF) {
+                handle->SR = ~TIM_SR_CC1OF;
+                error      = HAL_ERR_TIM_OVER_CAPTURE;
+            }
             break;
         case TIMER_CHANNEL_2:
             if (is_timer_extra_lite(handle)) {
                 return HAL_ERR_NOT_SUPPORTED;
             }
             *result = handle->CCR2;
+            if (handle->SR & ~TIM_SR_CC2OF) {
+                handle->SR = ~TIM_SR_CC2OF;
+                error      = HAL_ERR_TIM_OVER_CAPTURE;
+            }
             break;
         case TIMER_CHANNEL_3:
             if (is_timer_lite(handle)) {
                 return HAL_ERR_NOT_SUPPORTED;
             }
             *result = handle->CCR3;
+            if (handle->SR & ~TIM_SR_CC3OF) {
+                handle->SR = ~TIM_SR_CC3OF;
+                error      = HAL_ERR_TIM_OVER_CAPTURE;
+            }
             break;
         case TIMER_CHANNEL_4:
             if (is_timer_lite(handle)) {
                 return HAL_ERR_NOT_SUPPORTED;
             }
             *result = handle->CCR4;
+            if (handle->SR & ~TIM_SR_CC4OF) {
+                handle->SR = ~TIM_SR_CC4OF;
+                error      = HAL_ERR_TIM_OVER_CAPTURE;
+            }
             break;
         default:
             return HAL_ERR_INVALID_ARG;
     }
 
-    return HAL_OK;
+    return error;
 }

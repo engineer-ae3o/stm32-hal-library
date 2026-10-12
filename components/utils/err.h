@@ -48,6 +48,9 @@ typedef enum : uint8_t {
     HAL_ERR_DMA_DME, // Direct mode error
     HAL_ERR_DMA_FE,  // FIFO mode error
 
+    // Timer extension
+    HAL_ERR_TIM_OVER_CAPTURE, // Overcapture in input capture
+
     // Sentinel value
     HAL_SENTINEL_COUNT,
 } hal_err_t;
