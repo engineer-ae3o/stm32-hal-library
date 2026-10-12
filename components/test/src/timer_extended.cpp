@@ -8,7 +8,11 @@
 
 namespace test::timer_ext {
 
-    constexpr const char* TAG = "Timer extended Test";
+    namespace {
+
+        constexpr const char* TAG = "Timer_ext_Test";
+
+    } // namespace
 
     void all() {
         LOGI(TAG, "Starting the tests on the extended timer driver");

@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 
+// Public API
 hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
     if (handle == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;

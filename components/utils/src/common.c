@@ -13,7 +13,7 @@ void restart(const char* function, const char* file, int line) {
     NVIC_SystemReset();
 }
 
-void __assert(bool cond, const char* msg, const char* function, const char* file, int line) {
+void assert_check(bool cond, const char* msg, const char* function, const char* file, int line) {
     if (gnu_unlikely(!cond)) {
         LOGE("Assert", "Assert (%s) failed", msg);
         panic(function, file, line);

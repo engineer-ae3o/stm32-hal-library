@@ -40,8 +40,8 @@ hal_err_t input_capture_deinit(TIM_TypeDef* handle);
 hal_err_t input_capture_start(TIM_TypeDef* handle);
 hal_err_t input_capture_stop(TIM_TypeDef* handle);
 
-hal_err_t input_capture_get_sample(TIM_TypeDef* handle, timer_channel_t channel, uint32_t* result);
 hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz);
+hal_err_t input_capture_get_sample(TIM_TypeDef* handle, timer_channel_t channel, uint32_t* result);
 
 
 #ifdef __cplusplus

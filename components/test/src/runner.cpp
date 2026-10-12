@@ -14,6 +14,7 @@
 #include "test/timer.hpp"
 #include "test/clock.hpp"
 #include "test/runner.hpp"
+#include "test/timer_pcnt.hpp"
 #include "test/timer_extended.hpp"
 
 
@@ -43,6 +44,7 @@ namespace test {
         // clock::all();
         timer::all();
         timer_ext::all();
+        timer_pcnt::all();
     }
 
 } // namespace test

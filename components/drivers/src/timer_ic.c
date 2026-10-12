@@ -12,6 +12,7 @@
 #include <string.h>
 
 
+// Public API
 hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* config) {
     if (handle == NULL || config == NULL || config->num_channels == 0 || config->num_channels > timer_get_num_channels(handle)) {
         return HAL_ERR_INVALID_ARG;
@@ -169,6 +170,14 @@ hal_err_t input_capture_stop(TIM_TypeDef* handle) {
     return HAL_OK;
 }
 
+hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz) {
+    if (handle == NULL || frequency_hz == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    *frequency_hz = timer_get_frequency_hz(handle);
+    return HAL_OK;
+}
+
 hal_err_t input_capture_get_sample(TIM_TypeDef* handle, timer_channel_t channel, uint32_t* result) {
     if (handle == NULL || result == NULL) {
         return HAL_ERR_INVALID_ARG;
@@ -220,12 +229,4 @@ hal_err_t input_capture_get_sample(TIM_TypeDef* handle, timer_channel_t channel,
     }
 
     return error;
-}
-
-hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz) {
-    if (handle == NULL || frequency_hz == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    *frequency_hz = timer_get_frequency_hz(handle);
-    return HAL_OK;
 }
