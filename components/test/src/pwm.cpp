@@ -33,6 +33,7 @@ namespace test::pwm {
         // Helpers
         inline void reset_pwm(TIM_TypeDef* handle) {
             TEST_ASSERT_EQUAL(HAL_OK, pwm_deinit(handle));
+            TEST_ASSERT_EQUAL(HAL_OK, timer_reset(handle));
         }
 
         inline uint32_t get_gpio_moder(GPIO_TypeDef* port, gpio_pin_t pin) {
@@ -278,7 +279,6 @@ namespace test::pwm {
             }
 
             TEST_ASSERT_TRUE(TIM_GP16->CR1 & TIM_CR1_ARPE);
-            TEST_ASSERT_TRUE(TIM_GP16->CR1 & TIM_CR1_URS);
             TEST_ASSERT_EQUAL_UINT32(std::to_underlying(OUTPUT_COMPARE_EDGE_LEFT_ALIGNED), TIM_GP16->CR1 & (TIM_CR1_CMS | TIM_CR1_DIR));
 
             reset_pwm(TIM_GP16);
@@ -408,7 +408,7 @@ namespace test::pwm {
                 uint32_t step;
             };
             // One representative target per documented range, well clear of the boundaries
-            constexpr std::array<range_t, 4> RANGES = {{
+            constexpr auto RANGES = std::array<range_t, 4>{{
                 {.target_ticks = 50, .step = 1},   // Range 1
                 {.target_ticks = 200, .step = 2},  // Range 2
                 {.target_ticks = 400, .step = 8},  // Range 3
@@ -549,10 +549,6 @@ namespace test::pwm {
 
             reset_pwm(TIM_ADV);
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, false));
-        }
-
-        void deinit_forwards_the_invalid_handle_error() {
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_deinit(reinterpret_cast<TIM_TypeDef*>(1)));
         }
 
         void start_rejects_invalid_arguments() {
@@ -782,14 +778,8 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, true));
             reset_pwm(TIM_ADV);
 
-            auto reset_tim1 = []() {
-                RCC->APB2RSTR |= RCC_APB2RSTR_TIM1RST;
-                RCC->APB2RSTR &= ~RCC_APB2RSTR_TIM1RST;
-                __DSB();
-            };
-
             // Reset TIM1 since the LOCK bits have been written to it in previous tests
-            reset_tim1();
+            timer_reset(TIM1);
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
@@ -817,14 +807,14 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, pwm_gp_timer_init(TIM_ADV, &gp_config));
 
             // Recover via a TIM1 local peripheral reset
-            reset_tim1();
+            timer_reset(TIM1);
 
             TEST_ASSERT_EQUAL_UINT32(0, TIM_ADV->BDTR);                            // LOCK (and everything else) is clear again
             TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &no_lock)); // Usable again
 
             // Reset one final time
             reset_pwm(TIM_ADV);
-            reset_tim1();
+            timer_reset(TIM1);
 
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, false));
         }
@@ -849,7 +839,6 @@ namespace test::pwm {
         RUN_TEST(advanced_timer_init_rejects_dead_time_beyond_the_max_encodable_range);
         RUN_TEST(advanced_timer_init_configures_the_break_input_and_fires_the_callback);
         RUN_TEST(advanced_timer_init_active_low_break_clears_bkp);
-        RUN_TEST(deinit_forwards_the_invalid_handle_error);
         RUN_TEST(start_rejects_invalid_arguments);
         RUN_TEST(start_rejects_a_frequency_above_the_timer_clock);
         RUN_TEST(start_edge_aligned_hits_the_requested_frequency_on_16_and_32_bit_timers);

@@ -270,8 +270,8 @@ hal_err_t pwm_input_init(TIM_TypeDef* handle, const pwm_input_config_t* config) 
     handle->CCMR1 |= ccmr1;
 
     if (config->callback.cb != NULL) {
-        handle->DIER |= TIM_DIER_CC1IE | TIM_DIER_CC2IE;
         TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
+        handle->DIER |= TIM_DIER_CC1IE | TIM_DIER_CC2IE;
     }
 
     // Since the counter should be free running, the maximum reload value is used

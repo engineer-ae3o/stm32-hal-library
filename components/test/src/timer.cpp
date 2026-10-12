@@ -134,10 +134,6 @@ namespace test::timer {
             reset_to_baseline(TEST_INSTANCE);
         }
 
-        void deinit_rejects_unknown_handle() {
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_deinit(reinterpret_cast<TIM_TypeDef*>(1)));
-        }
-
         void deinit_clears_all_register_state() {
             reset_to_baseline(TEST_INSTANCE);
 
@@ -474,7 +470,6 @@ namespace test::timer {
         RUN_TEST(init_rejects_when_already_running);
         RUN_TEST(init_rejects_down_counting_on_tim9_10_and_11);
         RUN_TEST(init_down_direction_actually_counts_down);
-        RUN_TEST(deinit_rejects_unknown_handle);
         RUN_TEST(deinit_clears_all_register_state);
         RUN_TEST(deinit_stops_a_timer_that_is_currently_running);
         RUN_TEST(deinit_clears_rcr_on_tim1_only);

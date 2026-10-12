@@ -259,27 +259,6 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Reset the timer
-    if (handle == TIM1) {
-        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM1RST);
-    } else if (handle == TIM2) {
-        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM2RST);
-    } else if (handle == TIM3) {
-        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM3RST);
-    } else if (handle == TIM4) {
-        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM4RST);
-    } else if (handle == TIM5) {
-        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM5RST);
-    } else if (handle == TIM9) {
-        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM9RST);
-    } else if (handle == TIM10) {
-        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM10RST);
-    } else if (handle == TIM11) {
-        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM11RST);
-    } else {
-        return HAL_ERR_INVALID_ARG;
-    }
-
     // Clear all the mapped bits of the timer's registers to 0
     handle->CR1 &= ~(TIM_CR1_CEN | TIM_CR1_UDIS | TIM_CR1_URS | TIM_CR1_OPM | TIM_CR1_DIR | TIM_CR1_CMS | TIM_CR1_ARPE | TIM_CR1_CKD);
     handle->DIER &=
@@ -341,6 +320,29 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     }
     __set_PRIMASK(primask);
 
+    return HAL_OK;
+}
+
+hal_err_t timer_reset(TIM_TypeDef* handle) {
+    if (handle == TIM1) {
+        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM1RST);
+    } else if (handle == TIM2) {
+        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM2RST);
+    } else if (handle == TIM3) {
+        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM3RST);
+    } else if (handle == TIM4) {
+        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM4RST);
+    } else if (handle == TIM5) {
+        reset_peripheral(RCC->APB1RSTR, RCC_APB1RSTR_TIM5RST);
+    } else if (handle == TIM9) {
+        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM9RST);
+    } else if (handle == TIM10) {
+        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM10RST);
+    } else if (handle == TIM11) {
+        reset_peripheral(RCC->APB2RSTR, RCC_APB2RSTR_TIM11RST);
+    } else {
+        return HAL_ERR_INVALID_ARG;
+    }
     return HAL_OK;
 }
 
