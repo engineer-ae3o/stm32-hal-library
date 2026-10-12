@@ -181,8 +181,7 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
         }
     }
 
-    const bool timer_advanced = is_timer_advanced(handle);
-    if (timer_advanced) {
+    if (is_timer_advanced(handle)) {
         handle->RCR &= ~TIM_RCR_REP;
         // The BDTR register cannot be cleared because the LOCK bits in it can only be written once.
         // To clear it, make use of the time_reset(...) function since it performs a bus level reset

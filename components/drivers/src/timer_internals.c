@@ -297,6 +297,7 @@ hal_err_t timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, adva
             case TIMER_IRQ_CLEAR_ALL:
                 // Clear all state regardless of the callback passed in
                 memset(&s_tim1_cb_ctx, 0, sizeof(s_tim1_cb_ctx));
+                goto disable_nvic_irq;
                 break;
             default:
                 __set_PRIMASK(primask);

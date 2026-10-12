@@ -1,6 +1,6 @@
 #include "stm32f411xe.h"
 #include "drivers/src/timer_internals.h"
-#include "drivers/timer_types.h"
+#include "drivers/timer_pcnt_types.h"
 #include "drivers/timer_pcnt.h"
 #include "drivers/timer.h"
 #include "utils/common.h"
@@ -95,7 +95,7 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
     return HAL_OK;
 }
 
-hal_err_t qdec_init(TIM_TypeDef* handle, const encoder_config_t* config) {
+hal_err_t qdec_init(TIM_TypeDef* handle, const qdec_config_t* config) {
     if (handle == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
     }

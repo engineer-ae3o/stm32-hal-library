@@ -22,7 +22,7 @@ static inline hal_err_t config_pwm_pin(board_pin_t gpio) {
 }
 
 
-// Public API
+// PWM output mode
 hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_config_t* config) {
     if (handle == NULL || config == NULL || config->num_channels == 0 || config->num_channels > MAX_TIM1_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
@@ -240,5 +240,105 @@ hal_err_t pwm_resume_complementary_channel(TIM_TypeDef* handle, timer_channel_t 
         return HAL_ERR_INVALID_ARG;
     }
     handle->CCER |= (1UL << ((channel * 4) + 2));
+    return HAL_OK;
+}
+
+
+// PWM input mode
+hal_err_t pwm_input_init(TIM_TypeDef* handle, const pwm_input_config_t* config) {
+    if (handle == NULL || config == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    if (is_timer_extra_lite(handle)) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    // Refer to pwm_advanced_timer_init(...) (drivers/pwm.c) for the explanation for this
+    if (is_timer_advanced(handle) && (handle->BDTR & TIM_BDTR_LOCK)) {
+        return HAL_ERR_INVALID_STATE;
+    }
+
+    // Clear all residual state
+    TRY(pwm_input_deinit(handle));
+
+    // Calculate the digital filter code
+    uint32_t filter_code = 0;
+    TRY(timer_filter_ns_to_ic_code(handle, config->clk_div, config->filter_ns, &filter_code));
+
+    // Configure the first input capture channel to get the rising edges and the second
+    // input capture channel to get the falling edges from the first physical channel
+    handle->CCMR1 |= (0b01U << TIM_CCMR1_CC1S_Pos) | (filter_code << TIM_CCMR1_IC1F_Pos) | (uint32_t)(IC_PRESCALER_DIV_1 << TIM_CCMR1_IC1PSC_Pos) |
+                     (0b10U << TIM_CCMR1_CC2S_Pos) | (filter_code << TIM_CCMR1_IC2F_Pos) | (uint32_t)(IC_PRESCALER_DIV_1 << TIM_CCMR1_IC2PSC_Pos);
+    handle->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC2P);
+
+    // COnfigure the slave controller to reset mode, and feed the trigger from the first input capture channel
+    handle->SMCR |= (0b100U << TIM_SMCR_SMS_Pos) | (0b101U << TIM_SMCR_TS_Pos);
+
+    if (config->callback.cb != NULL) {
+        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
+        handle->DIER |= TIM_DIER_CC1IE | TIM_DIER_CC2IE;
+    }
+
+    // Since the counter should be free running, the maximum reload value is used
+    handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+    handle->PSC = config->timer_prescaler - 1;
+
+    // Set the timer's counting mode, apply the clock divider, and enable auto-reload register buffering
+    handle->CR1 |= (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE);
+
+    // Generate an update event so the timer's internal registers start afresh, and clear the update status flag
+    handle->EGR = TIM_EGR_UG;
+    handle->SR  = ~TIM_SR_UIF;
+
+    // Configure the input PWM pin
+    const board_pin_t gpio = config->gpio_pin;
+    TRY(gpiox_clk_enable(gpio.port, true));
+    gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
+    gpio_set_speed_mode(gpio.port, gpio.pin, GPIO_FULL_SPEED);
+
+    if (config->pull == TIMER_USE_PULLUP) {
+        gpio_enable_pullup(gpio.port, gpio.pin, true);
+    } else if (config->pull == TIMER_USE_PULLDOWN) {
+        gpio_enable_pulldown(gpio.port, gpio.pin, true);
+    } else {
+        gpio_enable_pullup(gpio.port, gpio.pin, false);
+    }
+
+    return HAL_OK;
+}
+
+hal_err_t pwm_input_deinit(TIM_TypeDef* handle) {
+    return pwm_deinit(handle);
+}
+
+hal_err_t pwm_input_start(TIM_TypeDef* handle) {
+    return timer_start_counter(handle);
+}
+
+hal_err_t pwm_input_stop(TIM_TypeDef* handle) {
+    return timer_stop_counter(handle);
+}
+
+hal_err_t pwm_input_get_data(TIM_TypeDef* handle, pwm_input_data_t* data) {
+    if (handle == NULL || data == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+
+    if (is_timer_extra_lite(handle)) {
+        return HAL_ERR_NOT_SUPPORTED;
+    }
+
+    data->pulse  = handle->CCR2;
+    data->period = handle->CCR1;
+
+    return HAL_OK;
+}
+
+hal_err_t pwm_input_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz) {
+    if (handle == NULL || frequency_hz == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    *frequency_hz = timer_get_frequency_hz(handle);
     return HAL_OK;
 }

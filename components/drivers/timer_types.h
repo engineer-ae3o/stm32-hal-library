@@ -37,6 +37,7 @@ typedef enum : uint8_t {
     TIMER_COUNTER_DIR_NONE = 0xFFU, // Sentinel value
 } timer_count_dir_t;
 
+
 typedef enum : uint8_t {
     TIMER_CHANNEL_1  = 0,
     TIMER_CHANNEL_2  = 1,
@@ -45,11 +46,13 @@ typedef enum : uint8_t {
     TIMER_CHANNEL_NC = 0xFF, // Sentinel value
 } timer_channel_t;
 
+
 typedef enum : uint8_t {
     TIMER_PULL_NONE = 0,
     TIMER_USE_PULLUP,
     TIMER_USE_PULLDOWN,
 } timer_pull_t;
+
 
 typedef enum : uint8_t {
     TIM_CLK_DIV_1 = 0b00,
@@ -57,12 +60,14 @@ typedef enum : uint8_t {
     TIM_CLK_DIV_4 = 0b10,
 } tim_clk_div_t;
 
+
 // The channel parameter only has meaning when the interrupt is a capture compare interrupt
 // The direction parameter only has meaning when the interrupt is an update event
 typedef struct {
     void (*cb)(void* arg, timer_channel_t channel, timer_count_dir_t direction);
     void* arg;
 } timer_cb_t;
+
 
 typedef struct {
     // Timer output is active HIGH when this is false, active LOW otherwise
@@ -88,6 +93,7 @@ typedef enum : uint8_t {
     OUTPUT_COMPARE_CENTER_ALIGNED_MODE_3 = (0b11U << TIM_CR1_CMS_Pos), // Center aligned (Interrupt compare flag set both on up and downcount)
 } output_compare_count_mode_t;
 
+
 typedef enum : uint8_t {
     OUTPUT_COMPARE_FROZEN          = 0b000, // The channel is ignored on a match
     OUTPUT_COMPARE_HIGH_ON_MATCH   = 0b001, // The channel is forced high on a match
@@ -99,6 +105,7 @@ typedef enum : uint8_t {
     OUTPUT_COMPARE_PWM_MODE_2      = 0b111, // The channel is forced low when the timer's counter value is less than the compare value
     // NOTE: A match occurs when the timer's counter value is equal to the compare value
 } output_compare_mode_t;
+
 
 typedef struct {
     bool buffer_compare_reload; // Buffer writes to the CCxR registers
@@ -125,11 +132,13 @@ typedef enum : uint8_t {
     IC_PRESCALER_DIV_8 = 0b11,
 } ic_prescaler_t;
 
+
 typedef enum : uint8_t {
     IC_EDGE_RISING = 0,
     IC_EDGE_FALLING,
     IC_EDGE_RISING_FALLING,
 } ic_edge_t;
+
 
 typedef struct {
     ic_edge_t       edge;
@@ -140,6 +149,7 @@ typedef struct {
     uint32_t        filter_ns;
 } ic_channel_config_t;
 
+
 typedef struct {
     tim_clk_div_t     clk_div;
     timer_count_dir_t count_mode;
@@ -149,101 +159,6 @@ typedef struct {
 
     timer_cb_t callback;
 } input_capture_config_t;
-
-
-// PWM Input mode types
-typedef struct {
-    timer_pull_t      pull;
-    tim_clk_div_t     clk_div;
-    timer_count_dir_t count_mode;
-
-    uint16_t timer_prescaler;
-    uint32_t filter_ns;
-
-    // Can only be BOARD_TIMx_CH1_Pxx
-    board_pin_t gpio_pin;
-
-    timer_cb_t callback;
-} pwm_input_config_t;
-
-typedef struct {
-    uint32_t pulse;  // Signal HIGH time
-    uint32_t period; // Signal HIGH + LOW time (1 / PWM frequency)
-    // Duty cycle (%) = (pulse_width_us * 100%) / period_us
-} pwm_input_data_t;
-
-
-// Pulse Counter types
-typedef enum : uint8_t {
-    PCNT_MODE_1 = 0, // The timer is clocked from an input capture pin (can be channel 1 or 2) through the slave mode controller
-    PCNT_MODE_2,     // The timer is clocked directly by external pulses applied to the ETR pin
-} pcnt_mode_t;
-
-typedef enum : uint8_t {
-    PCNT_RISING_EDGE = 0,
-    PCNT_FALLING_EDGE,
-} pcnt_edge_t;
-
-typedef enum : uint8_t {
-    // Equivalent to TIMER_CHANNEL_1 and TIMER_CHANNEL_2
-    PCNT_CHANNEL_1 = TIM_CCMR1_CC1S_Pos,
-    PCNT_CHANNEL_2 = TIM_CCMR1_CC2S_Pos,
-} pcnt_channel_t;
-
-typedef enum : uint8_t {
-    PCNT_ETR_DIV_1 = 0b00,
-    PCNT_ETR_DIV_2 = 0b01,
-    PCNT_ETR_DIV_4 = 0b10,
-    PCNT_ETR_DIV_8 = 0b11,
-} pcnt_prescale_t;
-
-typedef struct {
-    pcnt_mode_t   mode;    // How the timer, channel and the gpio gets configured
-    pcnt_edge_t   edge;    // What edge to count as a valid pulse
-    timer_pull_t  pull;    // Use a pullup or down resistor; or none
-    tim_clk_div_t clk_div; // The timer clock divider
-
-    // Mode specific settings
-    union {
-        // Fill in respect to the PCNT mode chosen
-        struct {
-            pcnt_channel_t channel;
-        } mode_1;
-
-        struct {
-            pcnt_prescale_t prescaler;
-        } mode_2;
-    } settings;
-
-    uint32_t    filter_ns;  // Any pulse shorter than this is ignored
-    board_pin_t pulse_gpio; // The physical gpio pin
-    // In mode 1, this pin can only be either a BOARD_TIMx_CH1_Pxx or BOARD_TIMx_CH2_Pxx (refer to utils/board.h)
-    // In mode 2, this pin can only be a BOARD_TIMx_ETR_Pxx (refer to utils/board.h)
-
-    timer_cb_t callback; // Called on an overflow of the timer's counter
-} pcnt_config_t;
-
-
-// Quadrature decoder (encoder mode) types
-typedef enum : uint8_t {
-    ENCODER_MODE_1 = (0b01 << TIM_SMCR_SMS_Pos), // The timer counts on the rising and falling edges of only the first channel (2x resolution)
-    ENCODER_MODE_2 = (0b10 << TIM_SMCR_SMS_Pos), // The timer counts on the rising and falling edges of only the second channel (2x resolution)
-    ENCODER_MODE_3 = (0b11 << TIM_SMCR_SMS_Pos), // The timer counts on the rising and falling edges of the first and second channels (4x resolution)
-} encoder_mode_t;
-
-typedef struct {
-    encoder_mode_t mode;    // The decoder resolution
-    timer_pull_t   pull;    // Use a pullup or down resistor; or none
-    tim_clk_div_t  clk_div; // The timer clock divider
-
-    bool     invert_direction; // Invert the rotational polarity/direction
-    uint32_t filter_ns;        // Any pulse shorter than this is ignored
-
-    board_pin_t channel_a; // Maps to TIMER_CHANNEL_1
-    board_pin_t channel_b; // Maps to TIMER_CHANNEL_2
-
-    timer_cb_t callback; // Called on an update event (overflow or underflow of the timer's counter)
-} encoder_config_t;
 
 
 #ifdef __cplusplus

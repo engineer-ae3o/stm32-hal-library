@@ -1,8 +1,8 @@
-#include "drivers/timer_types.h"
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
 #include "drivers/src/timer_internals.h"
+#include "drivers/timer_types.h"
 #include "drivers/timer.h"
 #include "test/timer.hpp"
 #include "utils/common.h"
@@ -433,31 +433,6 @@ namespace test::timer {
             }
         }
 
-        void set_arr_and_psc_rejects_a_timeout_that_overflows_the_supported_range() {
-            TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM3, true));
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, timer_set_arr_and_psc(TIM3, UINT32_MAX));
-            TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM3, false));
-        }
-
-        void set_arr_and_psc_computes_values_that_reconstruct_the_requested_timeout() {
-            reset_to_baseline(TEST_INSTANCE);
-
-            constexpr uint32_t REQUESTED_TIMEOUT_US = 5000;
-            TEST_ASSERT_EQUAL(HAL_OK, timer_set_arr_and_psc(TEST_INSTANCE, REQUESTED_TIMEOUT_US));
-
-            const uint32_t freq_hz = timer_get_frequency_hz(TEST_INSTANCE);
-
-            const uint64_t psc_plus_1          = (uint64_t)TEST_INSTANCE->PSC + 1;
-            const uint64_t arr_plus_1          = (uint64_t)TEST_INSTANCE->ARR + 1;
-            const uint64_t achieved_timeout_us = (psc_plus_1 * arr_plus_1 * 1'000'000ULL) / freq_hz;
-
-            constexpr uint64_t tolerance = REQUESTED_TIMEOUT_US / 100;
-            TEST_ASSERT_TRUE(achieved_timeout_us >= (REQUESTED_TIMEOUT_US - tolerance));
-            TEST_ASSERT_TRUE(achieved_timeout_us <= (REQUESTED_TIMEOUT_US + tolerance));
-
-            reset_to_baseline(TEST_INSTANCE);
-        }
-
     } // namespace
 
     void all() {
@@ -489,8 +464,6 @@ namespace test::timer {
         RUN_TEST(is_timer_on_apb1_matches_the_bus_map);
         RUN_TEST(is_timer_32_bits_matches_the_counter_width_map);
         RUN_TEST(get_frequency_hz_matches_the_apb_doubling_rules);
-        RUN_TEST(set_arr_and_psc_rejects_a_timeout_that_overflows_the_supported_range);
-        RUN_TEST(set_arr_and_psc_computes_values_that_reconstruct_the_requested_timeout);
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the timer driver");

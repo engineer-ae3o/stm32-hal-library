@@ -14,7 +14,7 @@ extern "C" {
 #include <stdint.h>
 
 
-// The extended timer module: Implements extra functionality from the timers
+// The extended timer module: Implements output compare and input capture.
 // To enable or disable the timer clock, make use of timx_clk_enable(...) in timer.h
 // NOTE: The different modes and their API are mutually exclusive
 
@@ -42,20 +42,6 @@ hal_err_t input_capture_stop(TIM_TypeDef* handle);
 
 hal_err_t input_capture_get_sample(TIM_TypeDef* handle, timer_channel_t channel, uint32_t* result);
 hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz);
-
-
-// PWM Input mode
-hal_err_t pwm_input_init(TIM_TypeDef* handle, const pwm_input_config_t* config);
-hal_err_t pwm_input_deinit(TIM_TypeDef* handle);
-
-hal_err_t pwm_input_start(TIM_TypeDef* handle);
-hal_err_t pwm_input_stop(TIM_TypeDef* handle);
-
-hal_err_t pwm_input_get_data(TIM_TypeDef* handle, pwm_input_data_t* data);
-hal_err_t pwm_input_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz);
-// NOTE: It's only safe to call pwm_input_get_data(...) to get the captured data after
-// the capture event interrupt for channel 1 and 2 have both fired for a given cycle.
-// Anything else would result in the reading of garbage or stale data.
 
 
 #ifdef __cplusplus
