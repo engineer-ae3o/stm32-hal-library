@@ -155,9 +155,9 @@ typedef struct {
 typedef struct {
     timer_pull_t      pull;
     tim_clk_div_t     clk_div;
-    ic_prescaler_t    prescaler;
     timer_count_dir_t count_mode;
 
+    uint16_t timer_prescaler;
     uint32_t filter_ns;
 
     // Can only be BOARD_TIMx_CH1_Pxx
@@ -167,8 +167,8 @@ typedef struct {
 } pwm_input_config_t;
 
 typedef struct {
-    uint32_t pulse_width_us; // Signal HIGH time
-    uint32_t period_us;      // Signal HIGH + LOW time (1 / PWM frequency)
+    uint32_t pulse;  // Signal HIGH time
+    uint32_t period; // Signal HIGH + LOW time (1 / PWM frequency)
     // Duty cycle (%) = (pulse_width_us * 100%) / period_us
 } pwm_input_data_t;
 

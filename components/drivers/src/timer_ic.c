@@ -253,21 +253,14 @@ hal_err_t pwm_input_init(TIM_TypeDef* handle, const pwm_input_config_t* config) 
     uint32_t filter_code = 0;
     TRY(timer_filter_ns_to_ic_code(handle, config->clk_div, config->filter_ns, &filter_code));
 
-    // Set the output compare mode characteristics
-    uint32_t ccmr1 = 0;
-    uint32_t ccer  = 0;
+    // Configure the first input capture channel to get the rising edges and the second
+    // input capture channel to get the falling edges from the first physical channel
+    handle->CCMR1 |= (0b01U << TIM_CCMR1_CC1S_Pos) | (filter_code << TIM_CCMR1_IC1F_Pos) | (uint32_t)(IC_PRESCALER_DIV_1 << TIM_CCMR1_IC1PSC_Pos) |
+                     (0b10U << TIM_CCMR1_CC2S_Pos) | (filter_code << TIM_CCMR1_IC2F_Pos) | (uint32_t)(IC_PRESCALER_DIV_1 << TIM_CCMR1_IC2PSC_Pos);
+    handle->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC2P);
 
-    // Configure the first input capture channel to get the rising edges from our channel
-    ccmr1 |= (0b01U << TIM_CCMR1_CC1S_Pos) | (filter_code << TIM_CCMR1_IC1F_Pos) | (uint32_t)(config->prescaler << TIM_CCMR1_IC1PSC_Pos);
-    ccer |= TIM_CCER_CC1E;
-
-    // Configure the second input capture channel to get the falling edges from our channel
-    ccmr1 |= (0b01U << TIM_CCMR1_CC2S_Pos) | (filter_code << TIM_CCMR1_IC2F_Pos) | (uint32_t)(config->prescaler << TIM_CCMR1_IC2PSC_Pos);
-    ccer |= TIM_CCER_CC2E | TIM_CCER_CC2P;
-
-    // Final writeback
-    handle->CCER |= ccer;
-    handle->CCMR1 |= ccmr1;
+    // COnfigure the slave controller to reset mode, and feed the trigger from the first input capture channel
+    handle->SMCR |= (0b100U << TIM_SMCR_SMS_Pos) | (0b101U << TIM_SMCR_TS_Pos);
 
     if (config->callback.cb != NULL) {
         TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
@@ -276,6 +269,7 @@ hal_err_t pwm_input_init(TIM_TypeDef* handle, const pwm_input_config_t* config) 
 
     // Since the counter should be free running, the maximum reload value is used
     handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+    handle->PSC = config->timer_prescaler - 1;
 
     // Set the timer's counting mode, apply the clock divider, and enable auto-reload register buffering
     handle->CR1 |= (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE);
@@ -322,10 +316,8 @@ hal_err_t pwm_input_get_data(TIM_TypeDef* handle, pwm_input_data_t* data) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // The first cpature compare channel measures the distance between two consecutive HIGH pulses
-    // The second channel measures
-    data->pulse_width_us = handle->CCR1;
-    data->period_us      = handle->CCR2;
+    data->pulse  = handle->CCR2;
+    data->period = handle->CCR1;
 
     return HAL_OK;
 }
