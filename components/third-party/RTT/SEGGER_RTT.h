@@ -100,7 +100,7 @@ Purpose : Implementation of SEGGER real-time transfer which allows
 #define _CORE_HAS_RTT_ASM_SUPPORT 1
 #define _CORE_NEEDS_DMB 1
 #define RTT__DMB() __asm volatile("dmb\n" : : :);
-#elif ((defined __ARM_ARCH_7A__) || (defined __ARM_ARCH_7R__)) ||                                  \
+#elif ((defined __ARM_ARCH_7A__) || (defined __ARM_ARCH_7R__)) ||              \
     ((defined __ARM_ARCH_8A__) || (defined __ARM_ARCH_8R__))
 //
 // Cortex-A/R ARMv7-A/R & ARMv8-A/R
@@ -120,7 +120,8 @@ Purpose : Implementation of SEGGER real-time transfer which allows
 #define _CORE_HAS_RTT_ASM_SUPPORT 1
 #elif (defined __ARM_ARCH_7EM__) // Cortex-M4/M7
 #define _CORE_HAS_RTT_ASM_SUPPORT 1
-#define _CORE_NEEDS_DMB 1 // Only Cortex-M7 needs a DMB but we cannot distinguish M4 and M7 here...
+#define _CORE_NEEDS_DMB                                                        \
+    1 // Only Cortex-M7 needs a DMB but we cannot distinguish M4 and M7 here...
 #define RTT__DMB() __asm volatile("dmb\n" : : :);
 #elif (defined __ARM_ARCH_8M_BASE__) // Cortex-M23
 #define _CORE_HAS_RTT_ASM_SUPPORT 0
@@ -134,8 +135,8 @@ Purpose : Implementation of SEGGER real-time transfer which allows
 #define _CORE_HAS_RTT_ASM_SUPPORT 1
 #define _CORE_NEEDS_DMB 1
 #define RTT__DMB() __asm volatile("dmb\n" : : :);
-#elif (defined __ARM_ARCH_7A__) || (defined __ARM_ARCH_7R__) || (defined __ARM_ARCH_8A__) ||       \
-    (defined __ARM_ARCH_8R__)
+#elif (defined __ARM_ARCH_7A__) || (defined __ARM_ARCH_7R__) ||                \
+    (defined __ARM_ARCH_8A__) || (defined __ARM_ARCH_8R__)
 //
 // Cortex-A/R ARMv7-A/R & ARMv8-A/R
 //
@@ -154,7 +155,8 @@ Purpose : Implementation of SEGGER real-time transfer which allows
 #else
 #define VOLATILE volatile
 #endif
-#if (defined __ARM7M__)     // Needed for old versions that do not know the define yet
+#if (defined                                                                   \
+         __ARM7M__) // Needed for old versions that do not know the define yet
 #if (__CORE__ == __ARM7M__) // Cortex-M3
 #define _CORE_HAS_RTT_ASM_SUPPORT 1
 #endif
@@ -187,9 +189,9 @@ Purpose : Implementation of SEGGER real-time transfer which allows
 #define RTT__DMB() asm VOLATILE("DMB");
 #endif
 #endif
-#if ((defined __ARM7A__) && (__CORE__ == __ARM7A__)) ||                                            \
-    ((defined __ARM7R__) && (__CORE__ == __ARM7R__)) ||                                            \
-    ((defined __ARM8A__) && (__CORE__ == __ARM8A__)) ||                                            \
+#if ((defined __ARM7A__) && (__CORE__ == __ARM7A__)) ||                        \
+    ((defined __ARM7R__) && (__CORE__ == __ARM7R__)) ||                        \
+    ((defined __ARM8A__) && (__CORE__ == __ARM8A__)) ||                        \
     ((defined __ARM8R__) && (__CORE__ == __ARM8R__))
 //
 // Cortex-A/R ARMv7-A/R & ARMv8-A/R
@@ -230,13 +232,14 @@ Purpose : Implementation of SEGGER real-time transfer which allows
 #endif
 
 #ifndef SEGGER_RTT_CPU_CACHE_LINE_SIZE
-#define SEGGER_RTT_CPU_CACHE_LINE_SIZE                                                             \
+#define SEGGER_RTT_CPU_CACHE_LINE_SIZE                                         \
     (0) // On most target systems where RTT is used, we do not have a CPU cache, therefore 0 is a good default here
 #endif
 
 #ifndef SEGGER_RTT_UNCACHED_OFF
 #if SEGGER_RTT_CPU_CACHE_LINE_SIZE
-#error "SEGGER_RTT_UNCACHED_OFF must be defined when setting SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
+#error                                                                         \
+    "SEGGER_RTT_UNCACHED_OFF must be defined when setting SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
 #else
 #define SEGGER_RTT_UNCACHED_OFF (0)
 #endif
@@ -267,16 +270,19 @@ Purpose : Implementation of SEGGER real-time transfer which allows
 //           U8/U16/U32* = 4B
 //
 #if SEGGER_RTT_CPU_CACHE_LINE_SIZE // Avoid division by zero in case we do not have any cache
-#define SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(NumBytes)                                           \
-    (((NumBytes + SEGGER_RTT_CPU_CACHE_LINE_SIZE - 1) / SEGGER_RTT_CPU_CACHE_LINE_SIZE) *          \
+#define SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(NumBytes)                       \
+    (((NumBytes + SEGGER_RTT_CPU_CACHE_LINE_SIZE - 1) /                        \
+      SEGGER_RTT_CPU_CACHE_LINE_SIZE) *                                        \
      SEGGER_RTT_CPU_CACHE_LINE_SIZE)
 #else
 #define SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(NumBytes) (NumBytes)
 #endif
-#define SEGGER_RTT__CB_SIZE                                                                        \
-    (16 + 4 + 4 + (SEGGER_RTT_MAX_NUM_UP_BUFFERS * 24) + (SEGGER_RTT_MAX_NUM_DOWN_BUFFERS * 24))
-#define SEGGER_RTT__CB_PADDING                                                                     \
-    (SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(SEGGER_RTT__CB_SIZE) - SEGGER_RTT__CB_SIZE)
+#define SEGGER_RTT__CB_SIZE                                                    \
+    (16 + 4 + 4 + (SEGGER_RTT_MAX_NUM_UP_BUFFERS * 24) +                       \
+     (SEGGER_RTT_MAX_NUM_DOWN_BUFFERS * 24))
+#define SEGGER_RTT__CB_PADDING                                                 \
+    (SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(SEGGER_RTT__CB_SIZE) -             \
+     SEGGER_RTT__CB_SIZE)
 
 /*********************************************************************
 *
@@ -291,7 +297,7 @@ Purpose : Implementation of SEGGER real-time transfer which allows
 //
 typedef struct {
     const char*
-          sName; // Optional name. Standard names so far are: "Terminal", "SysView", "J-Scope_t4i4"
+        sName; // Optional name. Standard names so far are: "Terminal", "SysView", "J-Scope_t4i4"
     char* pBuffer; // Pointer to start of buffer
     unsigned
         SizeOfBuffer; // Buffer size in bytes. Note that one byte is lost, as this implementation does not fill up the buffer in order to avoid the problem of being unable to distinguish between full and empty.
@@ -308,7 +314,7 @@ typedef struct {
 //
 typedef struct {
     const char*
-          sName; // Optional name. Standard names so far are: "Terminal", "SysView", "J-Scope_t4i4"
+        sName; // Optional name. Standard names so far are: "Terminal", "SysView", "J-Scope_t4i4"
     char* pBuffer; // Pointer to start of buffer
     unsigned
         SizeOfBuffer; // Buffer size in bytes. Note that one byte is lost, as this implementation does not fill up the buffer in order to avoid the problem of being unable to distinguish between full and empty.
@@ -325,9 +331,9 @@ typedef struct {
 //
 //
 typedef struct {
-    char acID[16];          // Initialized to "SEGGER RTT"
-    int  MaxNumUpBuffers;   // Initialized to SEGGER_RTT_MAX_NUM_UP_BUFFERS (type. 2)
-    int  MaxNumDownBuffers; // Initialized to SEGGER_RTT_MAX_NUM_DOWN_BUFFERS (type. 2)
+    char acID[16];       // Initialized to "SEGGER RTT"
+    int MaxNumUpBuffers; // Initialized to SEGGER_RTT_MAX_NUM_UP_BUFFERS (type. 2)
+    int MaxNumDownBuffers; // Initialized to SEGGER_RTT_MAX_NUM_DOWN_BUFFERS (type. 2)
     SEGGER_RTT_BUFFER_UP aUp
         [SEGGER_RTT_MAX_NUM_UP_BUFFERS]; // Up buffers, transferring information up from target via debug probe to host
     SEGGER_RTT_BUFFER_DOWN
@@ -355,32 +361,49 @@ extern SEGGER_RTT_CB _SEGGER_RTT;
 #ifdef __cplusplus
 extern "C" {
 #endif
-int SEGGER_RTT_AllocDownBuffer(const char* sName,
-                               void*       pBuffer,
-                               unsigned    BufferSize,
-                               unsigned    Flags);
-int SEGGER_RTT_AllocUpBuffer(const char* sName, void* pBuffer, unsigned BufferSize, unsigned Flags);
-int SEGGER_RTT_ConfigUpBuffer(
-    unsigned BufferIndex, const char* sName, void* pBuffer, unsigned BufferSize, unsigned Flags);
-int SEGGER_RTT_ConfigDownBuffer(
-    unsigned BufferIndex, const char* sName, void* pBuffer, unsigned BufferSize, unsigned Flags);
+int      SEGGER_RTT_AllocDownBuffer(const char* sName,
+                                    void*       pBuffer,
+                                    unsigned    BufferSize,
+                                    unsigned    Flags);
+int      SEGGER_RTT_AllocUpBuffer(const char* sName,
+                                  void*       pBuffer,
+                                  unsigned    BufferSize,
+                                  unsigned    Flags);
+int      SEGGER_RTT_ConfigUpBuffer(unsigned    BufferIndex,
+                                   const char* sName,
+                                   void*       pBuffer,
+                                   unsigned    BufferSize,
+                                   unsigned    Flags);
+int      SEGGER_RTT_ConfigDownBuffer(unsigned    BufferIndex,
+                                     const char* sName,
+                                     void*       pBuffer,
+                                     unsigned    BufferSize,
+                                     unsigned    Flags);
 int      SEGGER_RTT_GetKey(void);
 unsigned SEGGER_RTT_HasData(unsigned BufferIndex);
 int      SEGGER_RTT_HasKey(void);
 unsigned SEGGER_RTT_HasDataUp(unsigned BufferIndex);
 void     SEGGER_RTT_Init(void);
-unsigned SEGGER_RTT_Read(unsigned BufferIndex, void* pBuffer, unsigned BufferSize);
-unsigned SEGGER_RTT_ReadNoLock(unsigned BufferIndex, void* pData, unsigned BufferSize);
-int      SEGGER_RTT_SetNameDownBuffer(unsigned BufferIndex, const char* sName);
-int      SEGGER_RTT_SetNameUpBuffer(unsigned BufferIndex, const char* sName);
-int      SEGGER_RTT_SetFlagsDownBuffer(unsigned BufferIndex, unsigned Flags);
-int      SEGGER_RTT_SetFlagsUpBuffer(unsigned BufferIndex, unsigned Flags);
-int      SEGGER_RTT_WaitKey(void);
-unsigned SEGGER_RTT_Write(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
-unsigned SEGGER_RTT_WriteNoLock(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
-unsigned SEGGER_RTT_WriteSkipNoLock(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
 unsigned
-SEGGER_RTT_ASM_WriteSkipNoLock(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
+SEGGER_RTT_Read(unsigned BufferIndex, void* pBuffer, unsigned BufferSize);
+unsigned
+SEGGER_RTT_ReadNoLock(unsigned BufferIndex, void* pData, unsigned BufferSize);
+int SEGGER_RTT_SetNameDownBuffer(unsigned BufferIndex, const char* sName);
+int SEGGER_RTT_SetNameUpBuffer(unsigned BufferIndex, const char* sName);
+int SEGGER_RTT_SetFlagsDownBuffer(unsigned BufferIndex, unsigned Flags);
+int SEGGER_RTT_SetFlagsUpBuffer(unsigned BufferIndex, unsigned Flags);
+int SEGGER_RTT_WaitKey(void);
+unsigned
+SEGGER_RTT_Write(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
+unsigned SEGGER_RTT_WriteNoLock(unsigned    BufferIndex,
+                                const void* pBuffer,
+                                unsigned    NumBytes);
+unsigned SEGGER_RTT_WriteSkipNoLock(unsigned    BufferIndex,
+                                    const void* pBuffer,
+                                    unsigned    NumBytes);
+unsigned SEGGER_RTT_ASM_WriteSkipNoLock(unsigned    BufferIndex,
+                                        const void* pBuffer,
+                                        unsigned    NumBytes);
 unsigned SEGGER_RTT_WriteString(unsigned BufferIndex, const char* s);
 void     SEGGER_RTT_WriteWithOverwriteNoLock(unsigned    BufferIndex,
                                              const void* pBuffer,
@@ -393,10 +416,12 @@ unsigned SEGGER_RTT_GetBytesInBuffer(unsigned BufferIndex);
 //
 // Function macro for performance optimization
 //
-#define SEGGER_RTT_HASDATA(n)                                                                      \
-    (((SEGGER_RTT_BUFFER_DOWN*)((uintptr_t)&_SEGGER_RTT.aDown[n] + SEGGER_RTT_UNCACHED_OFF))       \
-         ->WrOff -                                                                                 \
-     ((SEGGER_RTT_BUFFER_DOWN*)((uintptr_t)&_SEGGER_RTT.aDown[n] + SEGGER_RTT_UNCACHED_OFF))       \
+#define SEGGER_RTT_HASDATA(n)                                                  \
+    (((SEGGER_RTT_BUFFER_DOWN*)((uintptr_t)&_SEGGER_RTT.aDown[n] +             \
+                                SEGGER_RTT_UNCACHED_OFF))                      \
+         ->WrOff -                                                             \
+     ((SEGGER_RTT_BUFFER_DOWN*)((uintptr_t)&_SEGGER_RTT.aDown[n] +             \
+                                SEGGER_RTT_UNCACHED_OFF))                      \
          ->RdOff)
 
 #if RTT_USE_ASM
@@ -409,15 +434,25 @@ unsigned SEGGER_RTT_GetBytesInBuffer(unsigned BufferIndex);
 *
 **********************************************************************
 */
-unsigned SEGGER_RTT_ReadUpBuffer(unsigned BufferIndex, void* pBuffer, unsigned BufferSize);
-unsigned SEGGER_RTT_ReadUpBufferNoLock(unsigned BufferIndex, void* pData, unsigned BufferSize);
-unsigned SEGGER_RTT_WriteDownBuffer(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
-unsigned
-SEGGER_RTT_WriteDownBufferNoLock(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes);
+unsigned SEGGER_RTT_ReadUpBuffer(unsigned BufferIndex,
+                                 void*    pBuffer,
+                                 unsigned BufferSize);
+unsigned SEGGER_RTT_ReadUpBufferNoLock(unsigned BufferIndex,
+                                       void*    pData,
+                                       unsigned BufferSize);
+unsigned SEGGER_RTT_WriteDownBuffer(unsigned    BufferIndex,
+                                    const void* pBuffer,
+                                    unsigned    NumBytes);
+unsigned SEGGER_RTT_WriteDownBufferNoLock(unsigned    BufferIndex,
+                                          const void* pBuffer,
+                                          unsigned    NumBytes);
 
-#define SEGGER_RTT_HASDATA_UP(n)                                                                   \
-    (((SEGGER_RTT_BUFFER_UP*)((uintptr_t)&_SEGGER_RTT.aUp[n] + SEGGER_RTT_UNCACHED_OFF))->WrOff -  \
-     ((SEGGER_RTT_BUFFER_UP*)((uintptr_t)&_SEGGER_RTT.aUp[n] + SEGGER_RTT_UNCACHED_OFF))           \
+#define SEGGER_RTT_HASDATA_UP(n)                                               \
+    (((SEGGER_RTT_BUFFER_UP*)((uintptr_t)&_SEGGER_RTT.aUp[n] +                 \
+                              SEGGER_RTT_UNCACHED_OFF))                        \
+         ->WrOff -                                                             \
+     ((SEGGER_RTT_BUFFER_UP*)((uintptr_t)&_SEGGER_RTT.aUp[n] +                 \
+                              SEGGER_RTT_UNCACHED_OFF))                        \
          ->RdOff) // Access uncached to make sure we see changes made by the J-Link side and all of our changes go into HW directly
 
 /*********************************************************************
@@ -436,7 +471,9 @@ int SEGGER_RTT_TerminalOut(unsigned char TerminalId, const char* s);
 **********************************************************************
 */
 int SEGGER_RTT_printf(unsigned BufferIndex, const char* sFormat, ...);
-int SEGGER_RTT_vprintf(unsigned BufferIndex, const char* sFormat, va_list* pParamList);
+int SEGGER_RTT_vprintf(unsigned    BufferIndex,
+                       const char* sFormat,
+                       va_list*    pParamList);
 
 #ifdef __cplusplus
 }
@@ -461,9 +498,12 @@ int SEGGER_RTT_vprintf(unsigned BufferIndex, const char* sFormat, va_list* pPara
 //
 // Operating modes. Define behavior if buffer is full (not enough space for entire message)
 //
-#define SEGGER_RTT_MODE_NO_BLOCK_SKIP (0)      // Skip. Do not block, output nothing. (Default)
-#define SEGGER_RTT_MODE_NO_BLOCK_TRIM (1)      // Trim: Do not block, output as much as fits.
-#define SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL (2) // Block: Wait until there is space in the buffer.
+#define SEGGER_RTT_MODE_NO_BLOCK_SKIP                                          \
+    (0) // Skip. Do not block, output nothing. (Default)
+#define SEGGER_RTT_MODE_NO_BLOCK_TRIM                                          \
+    (1) // Trim: Do not block, output as much as fits.
+#define SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL                                     \
+    (2) // Block: Wait until there is space in the buffer.
 #define SEGGER_RTT_MODE_MASK (3)
 
 //

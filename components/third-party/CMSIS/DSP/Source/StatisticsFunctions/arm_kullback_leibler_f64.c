@@ -45,8 +45,9 @@
  *
  */
 
-float64_t
-arm_kullback_leibler_f64(const float64_t* pSrcA, const float64_t* pSrcB, uint32_t blockSize) {
+float64_t arm_kullback_leibler_f64(const float64_t* pSrcA,
+                                   const float64_t* pSrcB,
+                                   uint32_t         blockSize) {
     const float64_t *pInA, *pInB;
     uint32_t         blkCnt;
     float64_t        accum, pA, pB;

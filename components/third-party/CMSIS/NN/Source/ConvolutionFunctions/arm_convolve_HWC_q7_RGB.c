@@ -120,7 +120,8 @@ arm_status arm_convolve_HWC_q7_RGB(const q7_t*    Im_in,
                     if (i_ker_y < 0 || i_ker_y >= dim_im_in || i_ker_x < 0 ||
                         i_ker_x >= dim_im_in) {
                         /* Equivalent to arm_fill_q15(0, pBuffer, ch_im_in) with assumption: ch_im_in = 3 */
-                        arm_memset_q7((q7_t*)pBuffer, (q7_t)0, 3 * sizeof(q15_t));
+                        arm_memset_q7(
+                            (q7_t*)pBuffer, (q7_t)0, 3 * sizeof(q15_t));
                         pBuffer += 3;
                     } else {
                         /*
@@ -128,8 +129,9 @@ arm_status arm_convolve_HWC_q7_RGB(const q7_t*    Im_in,
                          *  arm_q7_to_q15_no_shift( (q7_t*)Im_in+(i_ker_y*dim_im_in+i_ker_x)*3, pBuffer, 3);
                          */
 
-                        const q7_t* pPixel = Im_in + (i_ker_y * dim_im_in + i_ker_x) * 3;
-                        q31_t       buf    = arm_nn_read_q7x4(pPixel);
+                        const q7_t* pPixel =
+                            Im_in + (i_ker_y * dim_im_in + i_ker_x) * 3;
+                        q31_t buf = arm_nn_read_q7x4(pPixel);
 
                         union arm_nnword top;
                         union arm_nnword bottom;
@@ -174,14 +176,15 @@ arm_status arm_convolve_HWC_q7_RGB(const q7_t*    Im_in,
             }
 
             if (pBuffer == bufferA + 2 * 3 * dim_kernel * dim_kernel) {
-                pOut = arm_nn_mat_mult_kernel_q7_q15(wt,
-                                                     bufferA,
-                                                     ch_im_out,
-                                                     3 * dim_kernel * dim_kernel,
-                                                     bias_shift,
-                                                     out_shift,
-                                                     bias,
-                                                     pOut);
+                pOut =
+                    arm_nn_mat_mult_kernel_q7_q15(wt,
+                                                  bufferA,
+                                                  ch_im_out,
+                                                  3 * dim_kernel * dim_kernel,
+                                                  bias_shift,
+                                                  out_shift,
+                                                  bias,
+                                                  pOut);
 
                 /* counter reset */
                 pBuffer = bufferA;
@@ -248,9 +251,12 @@ arm_status arm_convolve_HWC_q7_RGB(const q7_t*    Im_in,
                         if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in &&
                             in_col < dim_im_in) {
                             for (l = 0; l < ch_im_in; l++) {
-                                conv_out += Im_in[(in_row * dim_im_in + in_col) * ch_im_in + l] *
-                                            wt[i * ch_im_in * dim_kernel * dim_kernel +
-                                               (m * dim_kernel + n) * ch_im_in + l];
+                                conv_out +=
+                                    Im_in[(in_row * dim_im_in + in_col) *
+                                              ch_im_in +
+                                          l] *
+                                    wt[i * ch_im_in * dim_kernel * dim_kernel +
+                                       (m * dim_kernel + n) * ch_im_in + l];
                             }
                         }
                     }

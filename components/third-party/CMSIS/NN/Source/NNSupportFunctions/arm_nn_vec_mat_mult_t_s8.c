@@ -65,7 +65,8 @@ arm_status arm_nn_vec_mat_mult_t_s8(const q7_t*   lhs,
     const uint32x4_t address_offset_array = {
         0, address_offset, address_offset * 2, address_offset * 3};
 
-    for (int i_row_loop_cnt = 0; i_row_loop_cnt < row_loop_cnt; i_row_loop_cnt++) {
+    for (int i_row_loop_cnt = 0; i_row_loop_cnt < row_loop_cnt;
+         i_row_loop_cnt++) {
         int32_t acc_0 = 0;
         int32_t acc_1 = 0;
         int32_t acc_2 = 0;
@@ -170,9 +171,10 @@ arm_status arm_nn_vec_mat_mult_t_s8(const q7_t*   lhs,
     }
 
 #elif defined(ARM_MATH_DSP)
-    const int32_t  row_loop_cnt     = rhs_rows / 2;
-    const int16_t  lhs_offset_s16   = (int16_t)lhs_offset;
-    const uint32_t lhs_offset_s16x2 = __PKHBT(lhs_offset_s16, lhs_offset_s16, 16);
+    const int32_t  row_loop_cnt   = rhs_rows / 2;
+    const int16_t  lhs_offset_s16 = (int16_t)lhs_offset;
+    const uint32_t lhs_offset_s16x2 =
+        __PKHBT(lhs_offset_s16, lhs_offset_s16, 16);
 
     for (int32_t i = 0; i < row_loop_cnt; i++) {
         int32_t acc_0 = 0;
@@ -191,7 +193,8 @@ arm_status arm_nn_vec_mat_mult_t_s8(const q7_t*   lhs,
 
         for (int j = col_loop_cnt; j != 0; j--) {
             int32_t vec_0 = arm_nn_read_q7x4_ia(&lhs_vec);
-            int32_t vec_1 = __SXTAB16_RORn(lhs_offset_s16x2, (uint32_t)vec_0, 8);
+            int32_t vec_1 =
+                __SXTAB16_RORn(lhs_offset_s16x2, (uint32_t)vec_0, 8);
 
             vec_0 = __SXTAB16(lhs_offset_s16x2, vec_0);
 
@@ -247,8 +250,9 @@ arm_status arm_nn_vec_mat_mult_t_s8(const q7_t*   lhs,
 
         for (int i = col_loop_cnt; i != 0; i--) {
             int32_t vec_0 = arm_nn_read_q7x4_ia(&lhs_vec);
-            int32_t vec_1 = __SXTAB16_RORn(lhs_offset_s16x2, (uint32_t)vec_0, 8);
-            vec_0         = __SXTAB16(lhs_offset_s16x2, vec_0);
+            int32_t vec_1 =
+                __SXTAB16_RORn(lhs_offset_s16x2, (uint32_t)vec_0, 8);
+            vec_0 = __SXTAB16(lhs_offset_s16x2, vec_0);
 
             int32_t ker_0 = arm_nn_read_q7x4_ia(&rhs_0);
             int32_t ker_1 = __SXTB16_RORn((uint32_t)ker_0, 8);
@@ -280,7 +284,8 @@ arm_status arm_nn_vec_mat_mult_t_s8(const q7_t*   lhs,
 
     const int32_t row_loop_cnt = rhs_rows / 3;
 
-    for (int i_row_loop_cnt = 0; i_row_loop_cnt < row_loop_cnt; i_row_loop_cnt++) {
+    for (int i_row_loop_cnt = 0; i_row_loop_cnt < row_loop_cnt;
+         i_row_loop_cnt++) {
         const q7_t* lhs_ptr   = lhs;
         const q7_t* rhs_ptr_0 = &rhs[0];
         const q7_t* rhs_ptr_1 = &rhs[rhs_cols];
@@ -294,7 +299,8 @@ arm_status arm_nn_vec_mat_mult_t_s8(const q7_t*   lhs,
             res01 = *bias++;
             res02 = *bias++;
         }
-        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols; ++rhs_cols_idx) {
+        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols;
+             ++rhs_cols_idx) {
             const q31_t rhs_value0 = (int8_t)*rhs_ptr_0;
             const q31_t rhs_value1 = (int8_t)*rhs_ptr_1;
             const q31_t rhs_value2 = (int8_t)*rhs_ptr_2;
@@ -346,7 +352,8 @@ arm_status arm_nn_vec_mat_mult_t_s8(const q7_t*   lhs,
             res00 = *bias++;
         }
 
-        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols; ++rhs_cols_idx) {
+        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols;
+             ++rhs_cols_idx) {
             q31_t rhs_value0 = (int8_t)rhs_ptr[0];
             q31_t lhs_value  = (int8_t)lhs_ptr[0] + lhs_offset;
 

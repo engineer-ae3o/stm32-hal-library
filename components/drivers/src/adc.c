@@ -62,7 +62,8 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
 
 
 // Inline helpers
-[[__gnu__::__always_inline__]] static inline uint8_t get_index(const ADC_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline uint8_t
+get_index(const ADC_TypeDef* handle) {
     if (handle == ADC1) {
         return 0U;
     }
@@ -79,7 +80,8 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
     return 0xFFU;
 }
 
-[[__gnu__::__always_inline__]] static inline void adcx_isr_helper(ADC_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline void
+adcx_isr_helper(ADC_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     // Assert since we can't return the error anywhere
     ASSERT(idx != 0xFFU);
@@ -134,8 +136,9 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
         // Save the user callback so it's global array position can be cleared safely
         const uint32_t primask = __get_PRIMASK();
         __disable_irq();
-        const adc_cont_err_cb_t local_cb = s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun;
-        void* const             user_data = s_adc_ctx[idx].continuous_mode_callbacks.user;
+        const adc_cont_err_cb_t local_cb =
+            s_adc_ctx[idx].continuous_mode_callbacks.on_data_overrun;
+        void* const user_data = s_adc_ctx[idx].continuous_mode_callbacks.user;
         __set_PRIMASK(primask);
 
         // Get the user paramters before clearing all state with adc_regular_group_cont_end_conv(...)
@@ -157,7 +160,8 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
     }
 }
 
-[[__gnu__::__always_inline__]] static inline void adcx_dma_isr_helper(ADC_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline void
+adcx_dma_isr_helper(ADC_TypeDef* handle) {
     const uint8_t idx = get_index(handle);
     ASSERT(idx != 0xFFU);
 
@@ -175,8 +179,9 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
 
     const uint32_t primask = __get_PRIMASK();
     __disable_irq();
-    const adc_cont_done_cb_t tc_local_cb = s_adc_ctx[idx].continuous_mode_callbacks.on_buffer_full;
-    const adc_cont_err_cb_t  te_local_cb =
+    const adc_cont_done_cb_t tc_local_cb =
+        s_adc_ctx[idx].continuous_mode_callbacks.on_buffer_full;
+    const adc_cont_err_cb_t te_local_cb =
         s_adc_ctx[idx].continuous_mode_callbacks.on_transfer_error;
     const adc_cont_err_cb_t dme_local_cb =
         s_adc_ctx[idx].continuous_mode_callbacks.on_direct_mode_error;
@@ -189,8 +194,9 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
 
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
-    ASSERT(dma_get_stream_flags(stream_info.controller, &flags, stream_info.stream_number) ==
-           HAL_OK);
+    ASSERT(dma_get_stream_flags(stream_info.controller,
+                                &flags,
+                                stream_info.stream_number) == HAL_OK);
 
     const uint32_t status         = *flags.irq_status_register;
     uint32_t       flags_to_clear = 0;
@@ -244,23 +250,24 @@ static adc_ctx_t s_adc_ctx[ARRAY_SIZE(s_adc_dma_map)] = {};
 clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
     if (regular) {
         handle->SR &= ~(ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR);
-        handle->CR1 &=
-            ~(ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM | ADC_CR1_OVRIE | ADC_CR1_SCAN);
-        handle->CR2 &= ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART |
-                         ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
-        handle->SQR1 &=
-            ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 | ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
-        handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 | ADC_SQR2_SQ10 |
-                          ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
-        handle->SQR3 &= ~(ADC_SQR3_SQ1 | ADC_SQR3_SQ2 | ADC_SQR3_SQ3 | ADC_SQR3_SQ4 | ADC_SQR3_SQ5 |
-                          ADC_SQR3_SQ6);
+        handle->CR1 &= ~(ADC_CR1_DISCEN | ADC_CR1_EOCIE | ADC_CR1_DISCNUM |
+                         ADC_CR1_OVRIE | ADC_CR1_SCAN);
+        handle->CR2 &=
+            ~(ADC_CR2_CONT | ADC_CR2_EXTEN | ADC_CR2_DMA | ADC_CR2_SWSTART |
+              ADC_CR2_EXTSEL | ADC_CR2_EOCS | ADC_CR2_DDS);
+        handle->SQR1 &= ~(ADC_SQR1_L | ADC_SQR1_SQ13 | ADC_SQR1_SQ14 |
+                          ADC_SQR1_SQ15 | ADC_SQR1_SQ16);
+        handle->SQR2 &= ~(ADC_SQR2_SQ7 | ADC_SQR2_SQ8 | ADC_SQR2_SQ9 |
+                          ADC_SQR2_SQ10 | ADC_SQR2_SQ11 | ADC_SQR2_SQ12);
+        handle->SQR3 &= ~(ADC_SQR3_SQ1 | ADC_SQR3_SQ2 | ADC_SQR3_SQ3 |
+                          ADC_SQR3_SQ4 | ADC_SQR3_SQ5 | ADC_SQR3_SQ6);
     }
     if (injected) {
         handle->SR &= ~(ADC_SR_JEOC | ADC_SR_JSTRT);
         handle->CR1 &= ~(ADC_CR1_JDISCEN | ADC_CR1_JEOCIE | ADC_CR1_JAUTO);
         handle->CR2 &= ~(ADC_CR2_JEXTEN | ADC_CR2_JSWSTART | ADC_CR2_JEXTSEL);
-        handle->JSQR &=
-            ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 | ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
+        handle->JSQR &= ~(ADC_JSQR_JL | ADC_JSQR_JSQ1 | ADC_JSQR_JSQ2 |
+                          ADC_JSQR_JSQ3 | ADC_JSQR_JSQ4);
         handle->JOFR1 &= ~ADC_JOFR1_JOFFSET1;
         handle->JOFR2 &= ~ADC_JOFR2_JOFFSET2;
         handle->JOFR3 &= ~ADC_JOFR3_JOFFSET3;
@@ -268,8 +275,8 @@ clear_state(ADC_TypeDef* handle, bool regular, bool injected) {
     }
 }
 
-[[__gnu__::__always_inline__]] static inline uint16_t oneshot_regular_group(ADC_TypeDef*  handle,
-                                                                            adc_channel_t channel) {
+[[__gnu__::__always_inline__]] static inline uint16_t
+oneshot_regular_group(ADC_TypeDef* handle, adc_channel_t channel) {
     // Clear all stale state before proceeding
     clear_state(handle, true, false);
 
@@ -369,34 +376,38 @@ hal_err_t adc_configure(ADC_TypeDef* handle, const adc_config_t* config) {
     }
 
     // Set the ADC resolution
-    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) | ((uint32_t)config->resolution << ADC_CR1_RES_Pos);
+    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) |
+                  ((uint32_t)config->resolution << ADC_CR1_RES_Pos);
 
     // Set the sampling cycles for all external channels
     // Clear all the bit positions first
-    handle->SMPR1 &=
-        ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | ADC_SMPR1_SMP14 |
-          ADC_SMPR1_SMP15 | ADC_SMPR1_SMP16 | ADC_SMPR1_SMP17 | ADC_SMPR1_SMP18);
+    handle->SMPR1 &= ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 |
+                       ADC_SMPR1_SMP13 | ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15 |
+                       ADC_SMPR1_SMP16 | ADC_SMPR1_SMP17 | ADC_SMPR1_SMP18);
     handle->SMPR2 &=
-        ~(ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 | ADC_SMPR2_SMP4 |
-          ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 | ADC_SMPR2_SMP7 | ADC_SMPR2_SMP8 | ADC_SMPR2_SMP9);
+        ~(ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 |
+          ADC_SMPR2_SMP4 | ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 | ADC_SMPR2_SMP7 |
+          ADC_SMPR2_SMP8 | ADC_SMPR2_SMP9);
 
     const uint32_t time = config->sampling_cycles;
 
     // Apply the sample cycles to all external channels, but set the time for the internal channels to 480 cycles
     // This is because sampling on the internal channels requires a strict minimum interval, and the only sampling
     // cycle time that meets this requirement at any reasonable ADCCLK is 480 cycles.
-    handle->SMPR1 |= ((time << ADC_SMPR1_SMP10_Pos) | (time << ADC_SMPR1_SMP11_Pos) |
-                      (time << ADC_SMPR1_SMP12_Pos) | (time << ADC_SMPR1_SMP13_Pos) |
-                      (time << ADC_SMPR1_SMP14_Pos) | (time << ADC_SMPR1_SMP15_Pos) |
-                      (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP16_Pos) |
-                      (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP17_Pos) |
-                      (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP18_Pos));
+    handle->SMPR1 |=
+        ((time << ADC_SMPR1_SMP10_Pos) | (time << ADC_SMPR1_SMP11_Pos) |
+         (time << ADC_SMPR1_SMP12_Pos) | (time << ADC_SMPR1_SMP13_Pos) |
+         (time << ADC_SMPR1_SMP14_Pos) | (time << ADC_SMPR1_SMP15_Pos) |
+         (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP16_Pos) |
+         (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP17_Pos) |
+         (ADC_SAMPLE_480_CYCLES << ADC_SMPR1_SMP18_Pos));
 
-    handle->SMPR2 |= ((time << ADC_SMPR2_SMP0_Pos) | (time << ADC_SMPR2_SMP1_Pos) |
-                      (time << ADC_SMPR2_SMP2_Pos) | (time << ADC_SMPR2_SMP3_Pos) |
-                      (time << ADC_SMPR2_SMP4_Pos) | (time << ADC_SMPR2_SMP5_Pos) |
-                      (time << ADC_SMPR2_SMP6_Pos) | (time << ADC_SMPR2_SMP7_Pos) |
-                      (time << ADC_SMPR2_SMP8_Pos) | (time << ADC_SMPR2_SMP9_Pos));
+    handle->SMPR2 |=
+        ((time << ADC_SMPR2_SMP0_Pos) | (time << ADC_SMPR2_SMP1_Pos) |
+         (time << ADC_SMPR2_SMP2_Pos) | (time << ADC_SMPR2_SMP3_Pos) |
+         (time << ADC_SMPR2_SMP4_Pos) | (time << ADC_SMPR2_SMP5_Pos) |
+         (time << ADC_SMPR2_SMP6_Pos) | (time << ADC_SMPR2_SMP7_Pos) |
+         (time << ADC_SMPR2_SMP8_Pos) | (time << ADC_SMPR2_SMP9_Pos));
 
     TRY(adc_power_on(handle, true));
 
@@ -413,12 +424,13 @@ hal_err_t adc_deconfigure(ADC_TypeDef* handle) {
     clear_state(handle, true, true);
     handle->CR1 &= ~ADC_CR1_RES;
     handle->CR2 &= ~ADC_CR2_ALIGN;
-    handle->SMPR1 &=
-        ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 | ADC_SMPR1_SMP13 | ADC_SMPR1_SMP14 |
-          ADC_SMPR1_SMP15 | ADC_SMPR1_SMP16 | ADC_SMPR1_SMP17 | ADC_SMPR1_SMP18);
+    handle->SMPR1 &= ~(ADC_SMPR1_SMP10 | ADC_SMPR1_SMP11 | ADC_SMPR1_SMP12 |
+                       ADC_SMPR1_SMP13 | ADC_SMPR1_SMP14 | ADC_SMPR1_SMP15 |
+                       ADC_SMPR1_SMP16 | ADC_SMPR1_SMP17 | ADC_SMPR1_SMP18);
     handle->SMPR2 &=
-        ~(ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 | ADC_SMPR2_SMP4 |
-          ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 | ADC_SMPR2_SMP7 | ADC_SMPR2_SMP8 | ADC_SMPR2_SMP9);
+        ~(ADC_SMPR2_SMP0 | ADC_SMPR2_SMP1 | ADC_SMPR2_SMP2 | ADC_SMPR2_SMP3 |
+          ADC_SMPR2_SMP4 | ADC_SMPR2_SMP5 | ADC_SMPR2_SMP6 | ADC_SMPR2_SMP7 |
+          ADC_SMPR2_SMP8 | ADC_SMPR2_SMP9);
 
     return HAL_OK;
 }
@@ -427,7 +439,8 @@ hal_err_t adc_deconfigure(ADC_TypeDef* handle) {
 // Control of all the ADC instances
 void adc_clk_configure(adc_prescaler_t clk_prescaler) {
     // Set the ADC clock prescaler
-    ADC->CCR = (ADC->CCR & ~ADC_CCR_ADCPRE) | ((uint32_t)clk_prescaler << ADC_CCR_ADCPRE_Pos);
+    ADC->CCR = (ADC->CCR & ~ADC_CCR_ADCPRE) |
+               ((uint32_t)clk_prescaler << ADC_CCR_ADCPRE_Pos);
 }
 
 gpio_pin_ctx_t adc_channel_get_gpio(adc_channel_t channel) {
@@ -460,8 +473,9 @@ void adc_power_on_temp_sensor(bool on) {
 
 
 // For use with the regular group and external channels in polling oneshot mode
-hal_err_t
-adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channel_t channel, uint16_t* raw_data) {
+hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef*  handle,
+                                        adc_channel_t channel,
+                                        uint16_t*     raw_data) {
     if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -478,12 +492,15 @@ adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channel_t channel, uint16
 
 
 // For use with the regular group and external channels in DMA continuous sampling mode
-hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef*                   handle,
-                                            const adc_continuous_config_t* config) {
+hal_err_t
+adc_regular_group_cont_start_conv(ADC_TypeDef*                   handle,
+                                  const adc_continuous_config_t* config) {
     if (handle == NULL || config == NULL || config->channels.sequence == NULL ||
         config->channels.num_of_channels == 0 ||
-        config->channels.num_of_channels > MAX_REGULAR_CHANNELS || config->buffer_0 == NULL ||
-        (config->circular_mode == DMA_MODE_DOUBLE_BUFFERS && config->buffer_1 == NULL) ||
+        config->channels.num_of_channels > MAX_REGULAR_CHANNELS ||
+        config->buffer_0 == NULL ||
+        (config->circular_mode == DMA_MODE_DOUBLE_BUFFERS &&
+         config->buffer_1 == NULL) ||
         config->buffer_size == 0 ||
         (config->trigger != ADC_RG_TRIGGER_SOFTWARE &&
          config->trigger_polarity == ADC_POLARITY_NONE)) {
@@ -516,7 +533,8 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef*                   handl
     // Set the number of channels/conversions in the L bit positions of the
     // SQR1 register. The L bit positions are zero indexed. That is, 2 channels
     // means an L value of 0b0001, 3 channels means an L value of 0b0010 etc.
-    handle->SQR1 |= ((config->channels.num_of_channels - 1) << ADC_SQR1_L_Pos) & ADC_SQR1_L;
+    handle->SQR1 |=
+        ((config->channels.num_of_channels - 1) << ADC_SQR1_L_Pos) & ADC_SQR1_L;
 
     // Sequence numbers 1-6 go in SQR3
     // Sequence numbers 7-12 go in SQR2
@@ -526,14 +544,17 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef*                   handl
 
     for (size_t i = 0; i < config->channels.num_of_channels; i++) {
         if (i >= 12) {
-            handle->SQR1 |= (((uint32_t)config->channels.sequence[i] & sequence_bit_mask)
-                             << ((i - 12) * sequence_bit_width));
+            handle->SQR1 |=
+                (((uint32_t)config->channels.sequence[i] & sequence_bit_mask)
+                 << ((i - 12) * sequence_bit_width));
         } else if (i >= 6) {
-            handle->SQR2 |= (((uint32_t)config->channels.sequence[i] & sequence_bit_mask)
-                             << ((i - 6) * sequence_bit_width));
+            handle->SQR2 |=
+                (((uint32_t)config->channels.sequence[i] & sequence_bit_mask)
+                 << ((i - 6) * sequence_bit_width));
         } else {
-            handle->SQR3 |= (((uint32_t)config->channels.sequence[i] & sequence_bit_mask)
-                             << (i * sequence_bit_width));
+            handle->SQR3 |=
+                (((uint32_t)config->channels.sequence[i] & sequence_bit_mask)
+                 << (i * sequence_bit_width));
         }
     }
 
@@ -577,7 +598,9 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef*                   handl
 
         .per_addr  = &handle->DR,
         .mem_buf_0 = config->buffer_0,
-        .mem_buf_1 = config->circular_mode == DMA_MODE_DOUBLE_BUFFERS ? config->buffer_1 : NULL,
+        .mem_buf_1 = config->circular_mode == DMA_MODE_DOUBLE_BUFFERS
+                         ? config->buffer_1
+                         : NULL,
     };
     TRY(dma_configure_stream(stream, &stream_config));
 
@@ -593,7 +616,8 @@ hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef*                   handl
         handle->CR2 |= ADC_CR2_SWSTART;
     } else {
         // Set the polarity of the trigger and the would be trigger source
-        handle->CR2 |= (uint32_t)(config->trigger_polarity << ADC_CR2_EXTEN_Pos);
+        handle->CR2 |=
+            (uint32_t)(config->trigger_polarity << ADC_CR2_EXTEN_Pos);
         handle->CR2 |= (uint32_t)(config->trigger << ADC_CR2_EXTSEL_Pos);
     }
 
@@ -633,8 +657,9 @@ hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle) {
 
 
 // For use with the injected group and external channels with interrupts
-hal_err_t adc_injected_group_start_conv(ADC_TypeDef*                       handle,
-                                        const adc_injected_group_config_t* config) {
+hal_err_t
+adc_injected_group_start_conv(ADC_TypeDef*                       handle,
+                              const adc_injected_group_config_t* config) {
     if (handle == NULL || config == NULL || config->channels.sequence == NULL ||
         config->channels.num_of_channels == 0 ||
         (config->channels.num_of_channels > MAX_INJECTED_CHANNELS) ||
@@ -666,42 +691,56 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef*                       handl
     // slot, that is, JSQ4. This is because all conversions in the injected group must end at JSQ4
     switch (config->channels.num_of_channels) {
         case 1:
-            handle->JSQR |= (uint32_t)(config->channels.sequence[0] << ADC_JSQR_JSQ4_Pos);
+            handle->JSQR |=
+                (uint32_t)(config->channels.sequence[0] << ADC_JSQR_JSQ4_Pos);
             handle->JOFR1 |=
-                (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
+                (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) &
+                ADC_JOFR1_JOFFSET1;
             break;
         case 2:
-            handle->JSQR |= (uint32_t)((config->channels.sequence[0] << ADC_JSQR_JSQ3_Pos) |
-                                       (config->channels.sequence[1] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |=
+                (uint32_t)((config->channels.sequence[0] << ADC_JSQR_JSQ3_Pos) |
+                           (config->channels.sequence[1] << ADC_JSQR_JSQ4_Pos));
             handle->JOFR1 |=
-                (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
+                (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) &
+                ADC_JOFR1_JOFFSET1;
             handle->JOFR2 |=
-                (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) & ADC_JOFR2_JOFFSET2;
+                (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) &
+                ADC_JOFR2_JOFFSET2;
             break;
         case 3:
-            handle->JSQR |= (uint32_t)((config->channels.sequence[0] << ADC_JSQR_JSQ2_Pos) |
-                                       (config->channels.sequence[1] << ADC_JSQR_JSQ3_Pos) |
-                                       (config->channels.sequence[2] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |=
+                (uint32_t)((config->channels.sequence[0] << ADC_JSQR_JSQ2_Pos) |
+                           (config->channels.sequence[1] << ADC_JSQR_JSQ3_Pos) |
+                           (config->channels.sequence[2] << ADC_JSQR_JSQ4_Pos));
             handle->JOFR1 |=
-                (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
+                (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) &
+                ADC_JOFR1_JOFFSET1;
             handle->JOFR2 |=
-                (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) & ADC_JOFR2_JOFFSET2;
+                (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) &
+                ADC_JOFR2_JOFFSET2;
             handle->JOFR3 |=
-                (uint32_t)(config->offsets[2] << ADC_JOFR3_JOFFSET3_Pos) & ADC_JOFR3_JOFFSET3;
+                (uint32_t)(config->offsets[2] << ADC_JOFR3_JOFFSET3_Pos) &
+                ADC_JOFR3_JOFFSET3;
             break;
         case 4:
-            handle->JSQR |= (uint32_t)((config->channels.sequence[0] << ADC_JSQR_JSQ1_Pos) |
-                                       (config->channels.sequence[1] << ADC_JSQR_JSQ2_Pos) |
-                                       (config->channels.sequence[2] << ADC_JSQR_JSQ3_Pos) |
-                                       (config->channels.sequence[3] << ADC_JSQR_JSQ4_Pos));
+            handle->JSQR |=
+                (uint32_t)((config->channels.sequence[0] << ADC_JSQR_JSQ1_Pos) |
+                           (config->channels.sequence[1] << ADC_JSQR_JSQ2_Pos) |
+                           (config->channels.sequence[2] << ADC_JSQR_JSQ3_Pos) |
+                           (config->channels.sequence[3] << ADC_JSQR_JSQ4_Pos));
             handle->JOFR1 |=
-                (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) & ADC_JOFR1_JOFFSET1;
+                (uint32_t)(config->offsets[0] << ADC_JOFR1_JOFFSET1_Pos) &
+                ADC_JOFR1_JOFFSET1;
             handle->JOFR2 |=
-                (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) & ADC_JOFR2_JOFFSET2;
+                (uint32_t)(config->offsets[1] << ADC_JOFR2_JOFFSET2_Pos) &
+                ADC_JOFR2_JOFFSET2;
             handle->JOFR3 |=
-                (uint32_t)(config->offsets[2] << ADC_JOFR3_JOFFSET3_Pos) & ADC_JOFR3_JOFFSET3;
+                (uint32_t)(config->offsets[2] << ADC_JOFR3_JOFFSET3_Pos) &
+                ADC_JOFR3_JOFFSET3;
             handle->JOFR4 |=
-                (uint32_t)(config->offsets[3] << ADC_JOFR4_JOFFSET4_Pos) & ADC_JOFR4_JOFFSET4;
+                (uint32_t)(config->offsets[3] << ADC_JOFR4_JOFFSET4_Pos) &
+                ADC_JOFR4_JOFFSET4;
             break;
         default:
             return HAL_ERR_INVALID_ARG;
@@ -725,15 +764,19 @@ hal_err_t adc_injected_group_start_conv(ADC_TypeDef*                       handl
         handle->CR2 |= ADC_CR2_JSWSTART;
     } else {
         // Set the polarity of the trigger and the would be trigger source
-        handle->CR2 |= (uint32_t)(config->trigger_polarity << ADC_CR2_JEXTEN_Pos);
+        handle->CR2 |=
+            (uint32_t)(config->trigger_polarity << ADC_CR2_JEXTEN_Pos);
         handle->CR2 |= (uint32_t)(config->trigger << ADC_CR2_JEXTSEL_Pos);
     }
 
     return HAL_OK;
 }
 
-hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data, size_t size) {
-    if (handle == NULL || raw_data == NULL || size == 0 || size > MAX_INJECTED_CHANNELS) {
+hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle,
+                                        uint16_t*    raw_data,
+                                        size_t       size) {
+    if (handle == NULL || raw_data == NULL || size == 0 ||
+        size > MAX_INJECTED_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -855,8 +898,10 @@ hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
 
     // All the calibration data were measured at a resolution of 12 bits
     // So we have to match that resolution to get the correct readings
-    const adc_resolution_t resolution_before = (handle->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos;
-    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) | (ADC_RES_12_BITS << ADC_CR1_RES_Pos);
+    const adc_resolution_t resolution_before =
+        (handle->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos;
+    handle->CR1 =
+        (handle->CR1 & ~ADC_CR1_RES) | (ADC_RES_12_BITS << ADC_CR1_RES_Pos);
 
     uint16_t raw_vref = 0;
     TRY(adc_get_v_ref_internal(handle, &raw_vref));
@@ -868,7 +913,8 @@ hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
     *vdda = (3.3F * (float)VREFINT_CALIBRATION_VALUE) / (float)raw_vref;
 
     // Reapply the old resolution so as not to interfere with any user settings
-    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) | (uint32_t)(resolution_before << ADC_CR1_RES_Pos);
+    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) |
+                  (uint32_t)(resolution_before << ADC_CR1_RES_Pos);
 
     return HAL_OK;
 }
@@ -880,8 +926,10 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
 
     // All the calibration data were measured at a resolution of 12 bits
     // So we have to match that resolution to get the correct readings
-    const adc_resolution_t resolution_before = (handle->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos;
-    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) | (ADC_RES_12_BITS << ADC_CR1_RES_Pos);
+    const adc_resolution_t resolution_before =
+        (handle->CR1 & ADC_CR1_RES) >> ADC_CR1_RES_Pos;
+    handle->CR1 =
+        (handle->CR1 & ~ADC_CR1_RES) | (ADC_RES_12_BITS << ADC_CR1_RES_Pos);
 
     // Get the raw V_ref_int
     uint16_t v_ref_int = 0;
@@ -901,12 +949,14 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
     const uint16_t temp_cal_110c = TEMP_SENSOR_CALIB_110C_VALUE;
 
     // Get the temperature using linear interpolation with the calibration data at 110C and 30C
-    *temp_celsius = (((110.0F - 30.0F) / (float)(temp_cal_110c - temp_cal_30c)) *
-                     (normalized - (float)temp_cal_30c)) +
-                    30.0F;
+    *temp_celsius =
+        (((110.0F - 30.0F) / (float)(temp_cal_110c - temp_cal_30c)) *
+         (normalized - (float)temp_cal_30c)) +
+        30.0F;
 
     // Reapply the old resolution so as not to interfere with any user settings
-    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) | (uint32_t)(resolution_before << ADC_CR1_RES_Pos);
+    handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) |
+                  (uint32_t)(resolution_before << ADC_CR1_RES_Pos);
 
     return HAL_OK;
 }
@@ -948,8 +998,10 @@ hal_err_t adc_get_value_right_aligned(ADC_TypeDef*     handle,
 
 
 // For use of control of the analog watchdog
-hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_t* config) {
-    if (handle == NULL || config == NULL || config->on_thresholds_violated == NULL ||
+hal_err_t adc_analog_wdg_start(ADC_TypeDef*                   handle,
+                               const adc_analog_wdg_config_t* config) {
+    if (handle == NULL || config == NULL ||
+        config->on_thresholds_violated == NULL ||
         config->min_adc_value >= config->max_adc_value) {
         // The use of interrupts is effectively mandatory as that's the
         // only way for the watchdog to inform the caller of a violation
@@ -963,13 +1015,16 @@ hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_
 
     // Clear the AWDSGL bit since the monitoring is not only on an single channel
     // and clear all state before modifying any of the bits in the register(s)
-    handle->CR1 &= ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
+    handle->CR1 &=
+        ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
 
     // Set the voltage sample thresholds
-    handle->HTR = (handle->HTR & ~ADC_HTR_HT) |
-                  ((uint32_t)(config->max_adc_value << ADC_HTR_HT_Pos) & ADC_HTR_HT);
-    handle->LTR = (handle->LTR & ~ADC_LTR_LT) |
-                  ((uint32_t)(config->min_adc_value << ADC_LTR_LT_Pos) & ADC_LTR_LT);
+    handle->HTR =
+        (handle->HTR & ~ADC_HTR_HT) |
+        ((uint32_t)(config->max_adc_value << ADC_HTR_HT_Pos) & ADC_HTR_HT);
+    handle->LTR =
+        (handle->LTR & ~ADC_LTR_LT) |
+        ((uint32_t)(config->min_adc_value << ADC_LTR_LT_Pos) & ADC_LTR_LT);
 
     if (config->monitor_regular_channels && config->monitor_injected_channels) {
         // Enable monitoring on all channels
@@ -1005,7 +1060,8 @@ hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle) {
     }
 
     // Disable the analog watchdog interrupt and disable monitoring on all channels
-    handle->CR1 &= ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
+    handle->CR1 &=
+        ~(ADC_CR1_AWDIE | ADC_CR1_JAWDEN | ADC_CR1_AWDEN | ADC_CR1_AWDSGL);
     handle->SR &= ~ADC_SR_AWD;
 
     // Clear the voltage thresholds

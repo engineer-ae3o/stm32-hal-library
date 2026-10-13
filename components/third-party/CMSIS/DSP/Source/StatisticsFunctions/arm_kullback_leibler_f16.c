@@ -71,8 +71,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math_f16.h"
 
-float16_t
-arm_kullback_leibler_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize) {
+float16_t arm_kullback_leibler_f16(const float16_t* pSrcA,
+                                   const float16_t* pSrcB,
+                                   uint32_t         blockSize) {
     uint32_t blkCnt;
     _Float16 accum, pA, pB;
 
@@ -115,8 +116,9 @@ arm_kullback_leibler_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_
 }
 
 #else
-float16_t
-arm_kullback_leibler_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize) {
+float16_t arm_kullback_leibler_f16(const float16_t* pSrcA,
+                                   const float16_t* pSrcB,
+                                   uint32_t         blockSize) {
     const float16_t *pInA, *pInB;
     uint32_t         blkCnt;
     _Float16         accum, pA, pB;

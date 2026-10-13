@@ -133,21 +133,24 @@
 
 #include "arm_helium_utils.h"
 
-static void arm_fir_interpolate2_f32_mve(const arm_fir_interpolate_instance_f32* S,
-                                         const float32_t*                        pSrc,
-                                         float32_t*                              pDst,
-                                         uint32_t                                blockSize) {
+static void
+arm_fir_interpolate2_f32_mve(const arm_fir_interpolate_instance_f32* S,
+                             const float32_t*                        pSrc,
+                             float32_t*                              pDst,
+                             uint32_t blockSize) {
     float32_t*       pState  = S->pState;  /* State pointer */
     const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    float32_t*       pStateCurnt;          /* Points to the current sample of the state */
-    const float32_t *ptr1, *ptr2; /* Temporary pointers for state and coefficient buffers */
-    uint32_t         tapCnt;
-    uint32_t         blkCnt;                        /* Loop counters */
-    uint16_t         phaseLen     = S->phaseLength; /* Length of each polyphase filter component */
-    uint32_t         strides[4]   = {0, 1 * 2, 2 * 2, 3 * 2};
-    uint32x4_t       vec_strides0 = vld1q_u32(strides);
-    uint32x4_t       vec_strides1 = vec_strides0 + 1;
-    f32x4_t          acc0, acc1;
+    float32_t* pStateCurnt; /* Points to the current sample of the state */
+    const float32_t *ptr1,
+        *ptr2; /* Temporary pointers for state and coefficient buffers */
+    uint32_t tapCnt;
+    uint32_t blkCnt; /* Loop counters */
+    uint16_t phaseLen =
+        S->phaseLength; /* Length of each polyphase filter component */
+    uint32_t   strides[4]   = {0, 1 * 2, 2 * 2, 3 * 2};
+    uint32x4_t vec_strides0 = vld1q_u32(strides);
+    uint32x4_t vec_strides1 = vec_strides0 + 1;
+    f32x4_t    acc0, acc1;
 
     /*
      * S->pState buffer contains previous frame (phaseLen - 1) samples
@@ -205,10 +208,12 @@ static void arm_fir_interpolate2_f32_mve(const arm_fir_interpolate_instance_f32*
 
             vecState = vldrwq_z_f32(ptr1, p0);
 
-            vecCoef = vldrwq_gather_shifted_offset_z_f32(ptr2, vec_strides1, p0);
-            acc1    = vfmaq_f32(acc1, vecState, vecCoef);
-            vecCoef = vldrwq_gather_shifted_offset_z_f32(ptr2, vec_strides0, p0);
-            acc0    = vfmaq_f32(acc0, vecState, vecCoef);
+            vecCoef =
+                vldrwq_gather_shifted_offset_z_f32(ptr2, vec_strides1, p0);
+            acc1 = vfmaq_f32(acc1, vecState, vecCoef);
+            vecCoef =
+                vldrwq_gather_shifted_offset_z_f32(ptr2, vec_strides0, p0);
+            acc0 = vfmaq_f32(acc0, vecState, vecCoef);
         }
         *pDst++ = vecAddAcrossF32Mve(acc1);
         *pDst++ = vecAddAcrossF32Mve(acc0);
@@ -251,19 +256,21 @@ static void arm_fir_interpolate2_f32_mve(const arm_fir_interpolate_instance_f32*
 void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
                              const float32_t*                        pSrc,
                              float32_t*                              pDst,
-                             uint32_t                                blockSize) {
+                             uint32_t blockSize) {
     float32_t*       pState  = S->pState;  /* State pointer */
     const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    float32_t*       pStateCurnt;          /* Points to the current sample of the state */
-    const float32_t *ptr1, *ptr2; /* Temporary pointers for state and coefficient buffers */
-    uint32_t         tapCnt;
-    uint32_t         i, blkCnt;                     /* Loop counters */
-    uint16_t         phaseLen     = S->phaseLength; /* Length of each polyphase filter component */
-    uint32_t         strides[4]   = {0, 1 * S->L, 2 * S->L, 3 * S->L};
-    uint32_t         stridesM[4]  = {4, 3, 2, 1};
-    uint32x4_t       vec_stridesM = vld1q_u32(stridesM);
-    uint32x4_t       vec_strides  = vld1q_u32(strides);
-    f32x4_t          acc;
+    float32_t* pStateCurnt; /* Points to the current sample of the state */
+    const float32_t *ptr1,
+        *ptr2; /* Temporary pointers for state and coefficient buffers */
+    uint32_t tapCnt;
+    uint32_t i, blkCnt; /* Loop counters */
+    uint16_t phaseLen =
+        S->phaseLength; /* Length of each polyphase filter component */
+    uint32_t   strides[4]   = {0, 1 * S->L, 2 * S->L, 3 * S->L};
+    uint32_t   stridesM[4]  = {4, 3, 2, 1};
+    uint32x4_t vec_stridesM = vld1q_u32(stridesM);
+    uint32x4_t vec_strides  = vld1q_u32(strides);
+    f32x4_t    acc;
 
 
     if (S->L == 2) {
@@ -317,19 +324,23 @@ void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
                     state3 = ptr1[3];
                     ptr1 += 4;
 
-                    vecCoef = vldrwq_gather_shifted_offset_f32(pCoef, vec_stridesM);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_f32(pCoef, vec_stridesM);
                     pCoef += S->L;
                     acc = vfmaq_n_f32(acc, vecCoef, state0);
 
-                    vecCoef = vldrwq_gather_shifted_offset_f32(pCoef, vec_stridesM);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_f32(pCoef, vec_stridesM);
                     pCoef += S->L;
                     acc = vfmaq_n_f32(acc, vecCoef, state1);
 
-                    vecCoef = vldrwq_gather_shifted_offset_f32(pCoef, vec_stridesM);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_f32(pCoef, vec_stridesM);
                     pCoef += S->L;
                     acc = vfmaq_n_f32(acc, vecCoef, state2);
 
-                    vecCoef = vldrwq_gather_shifted_offset_f32(pCoef, vec_stridesM);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_f32(pCoef, vec_stridesM);
                     pCoef += S->L;
                     acc = vfmaq_n_f32(acc, vecCoef, state3);
 
@@ -351,19 +362,23 @@ void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
                     state2 = ptr1[2];
                     state3 = ptr1[3];
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_f32(pCoef, vec_stridesM, p0);
+                    vecCoef = vldrwq_gather_shifted_offset_z_f32(
+                        pCoef, vec_stridesM, p0);
                     pCoef += S->L;
                     acc = vfmaq_n_f32(acc, vecCoef, state0);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_f32(pCoef, vec_stridesM, p0);
+                    vecCoef = vldrwq_gather_shifted_offset_z_f32(
+                        pCoef, vec_stridesM, p0);
                     pCoef += S->L;
                     acc = vfmaq_n_f32(acc, vecCoef, state1);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_f32(pCoef, vec_stridesM, p0);
+                    vecCoef = vldrwq_gather_shifted_offset_z_f32(
+                        pCoef, vec_stridesM, p0);
                     pCoef += S->L;
                     acc = vfmaq_n_f32(acc, vecCoef, state2);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_f32(pCoef, vec_stridesM, p0);
+                    vecCoef = vldrwq_gather_shifted_offset_z_f32(
+                        pCoef, vec_stridesM, p0);
                     pCoef += S->L;
                     acc = vfmaq_n_f32(acc, vecCoef, state3);
                 }
@@ -385,7 +400,8 @@ void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
                     vecState = vldrwq_f32(ptr1);
                     ptr1 += 4;
 
-                    vecCoef = vldrwq_gather_shifted_offset_f32(ptr2, vec_strides);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_f32(ptr2, vec_strides);
                     ptr2 += 4 * S->L;
                     acc = vfmaq_f32(acc, vecState, vecCoef);
                     /*
@@ -401,8 +417,9 @@ void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
 
                     vecState = vldrwq_z_f32(ptr1, p0);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_f32(ptr2, vec_strides, p0);
-                    acc     = vfmaq_f32(acc, vecState, vecCoef);
+                    vecCoef = vldrwq_gather_shifted_offset_z_f32(
+                        ptr2, vec_strides, p0);
+                    acc = vfmaq_f32(acc, vecState, vecCoef);
                 }
                 *pDst++ = vecAddAcrossF32Mve(acc);
                 /*
@@ -452,16 +469,17 @@ void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
 void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
                              const float32_t*                        pSrc,
                              float32_t*                              pDst,
-                             uint32_t                                blockSize) {
+                             uint32_t blockSize) {
     float32_t*       pState  = S->pState;  /* State pointer */
     const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    float32_t*       pStateCurnt;          /* Points to the current sample of the state */
-    float32_t*       ptr1;                 /* Temporary pointers for state buffer */
-    const float32_t* ptr2;                 /* Temporary pointers for coefficient buffer */
-    float32_t        sum0;                 /* Accumulators */
-    float32_t        c0;           /* Temporary variables to hold state and coefficient values */
-    uint32_t         i, blkCnt, j; /* Loop counters */
-    uint16_t  phaseLen = S->phaseLength, tapCnt; /* Length of each polyphase filter component */
+    float32_t* pStateCurnt; /* Points to the current sample of the state */
+    float32_t* ptr1;        /* Temporary pointers for state buffer */
+    const float32_t* ptr2;  /* Temporary pointers for coefficient buffer */
+    float32_t        sum0;  /* Accumulators */
+    float32_t c0; /* Temporary variables to hold state and coefficient values */
+    uint32_t  i, blkCnt, j; /* Loop counters */
+    uint16_t  phaseLen = S->phaseLength,
+              tapCnt; /* Length of each polyphase filter component */
     uint32_t  blkCntN4;
     float32_t c1, c2, c3;
 
@@ -790,19 +808,20 @@ void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
 void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
                              const float32_t*                        pSrc,
                              float32_t*                              pDst,
-                             uint32_t                                blockSize) {
+                             uint32_t blockSize) {
 #if (1)
     //#if !defined(ARM_MATH_CM0_FAMILY)
 
-    float32_t*       pState  = S->pState;       /* State pointer */
-    const float32_t* pCoeffs = S->pCoeffs;      /* Coefficient pointer */
-    float32_t*       pStateCur;                 /* Points to the current sample of the state */
-    float32_t*       ptr1;                      /* Temporary pointer for state buffer */
-    const float32_t* ptr2;                      /* Temporary pointer for coefficient buffer */
-    float32_t        sum0;                      /* Accumulators */
-    uint32_t         i, blkCnt, tapCnt;         /* Loop counters */
-    uint32_t         phaseLen = S->phaseLength; /* Length of each polyphase filter component */
-    uint32_t         j;
+    float32_t*       pState  = S->pState;  /* State pointer */
+    const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float32_t*       pStateCur; /* Points to the current sample of the state */
+    float32_t*       ptr1;      /* Temporary pointer for state buffer */
+    const float32_t* ptr2;      /* Temporary pointer for coefficient buffer */
+    float32_t        sum0;      /* Accumulators */
+    uint32_t         i, blkCnt, tapCnt; /* Loop counters */
+    uint32_t         phaseLen =
+        S->phaseLength; /* Length of each polyphase filter component */
+    uint32_t j;
 
 #if defined(ARM_MATH_LOOPUNROLL)
     float32_t acc0, acc1, acc2, acc3;
@@ -1110,14 +1129,15 @@ void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
 #else
     /* alternate version for CM0_FAMILY */
 
-    float32_t*       pState  = S->pState;       /* State pointer */
-    const float32_t* pCoeffs = S->pCoeffs;      /* Coefficient pointer */
-    float32_t*       pStateCur;                 /* Points to the current sample of the state */
-    float32_t*       ptr1;                      /* Temporary pointer for state buffer */
-    const float32_t* ptr2;                      /* Temporary pointer for coefficient buffer */
-    float32_t        sum0;                      /* Accumulators */
-    uint32_t         i, blkCnt, tapCnt;         /* Loop counters */
-    uint32_t         phaseLen = S->phaseLength; /* Length of each polyphase filter component */
+    float32_t*       pState  = S->pState;  /* State pointer */
+    const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float32_t*       pStateCur; /* Points to the current sample of the state */
+    float32_t*       ptr1;      /* Temporary pointer for state buffer */
+    const float32_t* ptr2;      /* Temporary pointer for coefficient buffer */
+    float32_t        sum0;      /* Accumulators */
+    uint32_t         i, blkCnt, tapCnt; /* Loop counters */
+    uint32_t         phaseLen =
+        S->phaseLength; /* Length of each polyphase filter component */
 
     /* S->pState buffer contains previous frame (phaseLen - 1) samples */
     /* pStateCur points to the location where the new input data should be written */

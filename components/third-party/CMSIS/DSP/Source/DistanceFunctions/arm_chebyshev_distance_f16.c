@@ -64,7 +64,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-float16_t arm_chebyshev_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+float16_t arm_chebyshev_distance_f16(const float16_t* pA,
+                                     const float16_t* pB,
+                                     uint32_t         blockSize) {
     uint32_t  blkCnt; /* loop counters */
     f16x8_t   vecA, vecB;
     f16x8_t   vecDiff  = vdupq_n_f16(0.0);
@@ -110,7 +112,9 @@ float16_t arm_chebyshev_distance_f16(const float16_t* pA, const float16_t* pB, u
 }
 
 #else
-float16_t arm_chebyshev_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+float16_t arm_chebyshev_distance_f16(const float16_t* pA,
+                                     const float16_t* pB,
+                                     uint32_t         blockSize) {
     _Float16 diff = 0.0f, maxVal, tmpA, tmpB;
 
     tmpA   = *pA++;

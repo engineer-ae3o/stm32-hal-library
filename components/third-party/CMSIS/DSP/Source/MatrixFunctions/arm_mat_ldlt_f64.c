@@ -31,27 +31,27 @@
 
 
 /// @private
-#define SWAP_ROWS_F64(A, i, j)                                                                     \
-    {                                                                                              \
-        int w;                                                                                     \
-        for (w = 0; w < n; w++) {                                                                  \
-            float64_t tmp;                                                                         \
-            tmp          = A[i * n + w];                                                           \
-            A[i * n + w] = A[j * n + w];                                                           \
-            A[j * n + w] = tmp;                                                                    \
-        }                                                                                          \
+#define SWAP_ROWS_F64(A, i, j)                                                 \
+    {                                                                          \
+        int w;                                                                 \
+        for (w = 0; w < n; w++) {                                              \
+            float64_t tmp;                                                     \
+            tmp          = A[i * n + w];                                       \
+            A[i * n + w] = A[j * n + w];                                       \
+            A[j * n + w] = tmp;                                                \
+        }                                                                      \
     }
 
 /// @private
-#define SWAP_COLS_F64(A, i, j)                                                                     \
-    {                                                                                              \
-        int w;                                                                                     \
-        for (w = 0; w < n; w++) {                                                                  \
-            float64_t tmp;                                                                         \
-            tmp          = A[w * n + i];                                                           \
-            A[w * n + i] = A[w * n + j];                                                           \
-            A[w * n + j] = tmp;                                                                    \
-        }                                                                                          \
+#define SWAP_COLS_F64(A, i, j)                                                 \
+    {                                                                          \
+        int w;                                                                 \
+        for (w = 0; w < n; w++) {                                              \
+            float64_t tmp;                                                     \
+            tmp          = A[w * n + i];                                       \
+            A[w * n + i] = A[w * n + j];                                       \
+            A[w * n + j] = tmp;                                                \
+        }                                                                      \
     }
 
 /**
@@ -145,7 +145,8 @@ arm_status arm_mat_ldlt_f64(const arm_matrix_instance_f64* pSrc,
             for (w = k + 1; w < n; w++) {
                 int x;
                 for (x = k + 1; x < n; x++) {
-                    pA[w * n + x] = pA[w * n + x] - pA[w * n + k] * pA[x * n + k] / a;
+                    pA[w * n + x] =
+                        pA[w * n + x] - pA[w * n + k] * pA[x * n + k] / a;
                 }
             }
 

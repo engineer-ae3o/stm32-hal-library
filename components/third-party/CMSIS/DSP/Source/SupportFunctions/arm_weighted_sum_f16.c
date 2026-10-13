@@ -65,7 +65,9 @@
 
 #include "arm_helium_utils.h"
 
-float16_t arm_weighted_sum_f16(const float16_t* in, const float16_t* weigths, uint32_t blockSize) {
+float16_t arm_weighted_sum_f16(const float16_t* in,
+                               const float16_t* weigths,
+                               uint32_t         blockSize) {
     _Float16         accum1, accum2;
     float16x8_t      accum1V, accum2V;
     float16x8_t      inV, wV;
@@ -109,7 +111,9 @@ float16_t arm_weighted_sum_f16(const float16_t* in, const float16_t* weigths, ui
 
 #else
 
-float16_t arm_weighted_sum_f16(const float16_t* in, const float16_t* weigths, uint32_t blockSize) {
+float16_t arm_weighted_sum_f16(const float16_t* in,
+                               const float16_t* weigths,
+                               uint32_t         blockSize) {
 
     _Float16         accum1, accum2;
     const float16_t *pIn, *pW;

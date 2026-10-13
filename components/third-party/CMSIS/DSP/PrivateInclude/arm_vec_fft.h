@@ -32,7 +32,8 @@
 extern "C" {
 #endif
 
-#if (defined(ARM_MATH_MVEF) || defined(ARM_MATH_MVEI) || defined(ARM_MATH_HELIUM)) &&              \
+#if (defined(ARM_MATH_MVEF) || defined(ARM_MATH_MVEI) ||                       \
+     defined(ARM_MATH_HELIUM)) &&                                              \
     !defined(ARM_MATH_AUTOVECTORIZE)
 
 #define MVE_CMPLX_ADD_A_ixB(A, B) vcaddq_rot90(A, B)
@@ -40,9 +41,9 @@ extern "C" {
 #define MVE_CMPLX_MULT_FLT_AxB(A, B) vcmlaq_rot90(vcmulq(A, B), A, B)
 #define MVE_CMPLX_MULT_FLT_Conj_AxB(A, B) vcmlaq_rot270(vcmulq(A, B), A, B)
 
-#define MVE_CMPLX_MULT_FX_AxB(A, B, TyA)                                                           \
+#define MVE_CMPLX_MULT_FX_AxB(A, B, TyA)                                       \
     vqdmladhxq(vqdmlsdhq((TyA)vuninitializedq_s32(), A, B), A, B)
-#define MVE_CMPLX_MULT_FX_AxConjB(A, B, TyA)                                                       \
+#define MVE_CMPLX_MULT_FX_AxConjB(A, B, TyA)                                   \
     vqdmladhq(vqdmlsdhxq((TyA)vuninitializedq_s32(), A, B), A, B)
 
 #define MVE_CMPLX_ADD_FX_A_ixB(A, B) vhcaddq_rot90(A, B)
@@ -57,8 +58,9 @@ extern "C" {
   @return        none
 */
 
-__STATIC_INLINE void
-arm_bitreversal_32_inpl_mve(uint32_t* pSrc, const uint16_t bitRevLen, const uint16_t* pBitRevTab)
+__STATIC_INLINE void arm_bitreversal_32_inpl_mve(uint32_t*       pSrc,
+                                                 const uint16_t  bitRevLen,
+                                                 const uint16_t* pBitRevTab)
 
 {
     uint64_t*  src = (uint64_t*)pSrc;
@@ -131,8 +133,9 @@ arm_bitreversal_32_inpl_mve(uint32_t* pSrc, const uint16_t bitRevLen, const uint
   @return        none
 */
 
-__STATIC_INLINE void
-arm_bitreversal_16_inpl_mve(uint16_t* pSrc, const uint16_t bitRevLen, const uint16_t* pBitRevTab)
+__STATIC_INLINE void arm_bitreversal_16_inpl_mve(uint16_t*       pSrc,
+                                                 const uint16_t  bitRevLen,
+                                                 const uint16_t* pBitRevTab)
 
 {
     uint32_t*  src = (uint32_t*)pSrc;
@@ -226,7 +229,8 @@ arm_bitreversal_16_inpl_mve(uint16_t* pSrc, const uint16_t bitRevLen, const uint
   @param[in]    fftLen      FFT length
   @return       none
 */
-__STATIC_INLINE void arm_bitreversal_32_outpl_mve(void* pDst, void* pSrc, uint32_t fftLen) {
+__STATIC_INLINE void
+arm_bitreversal_32_outpl_mve(void* pDst, void* pSrc, uint32_t fftLen) {
     uint32x4_t idxOffs0, idxOffs1, bitRevOffs0, bitRevOffs1;
     uint32_t   bitRevPos, blkCnt;
     uint32_t*  pDst32 = (uint32_t*)pDst;
@@ -274,7 +278,8 @@ __STATIC_INLINE void arm_bitreversal_32_outpl_mve(void* pDst, void* pSrc, uint32
   @return       none
 */
 
-__STATIC_INLINE void arm_bitreversal_16_outpl_mve(void* pDst, void* pSrc, uint32_t fftLen) {
+__STATIC_INLINE void
+arm_bitreversal_16_outpl_mve(void* pDst, void* pSrc, uint32_t fftLen) {
     uint32x4_t idxOffs0, idxOffs1, bitRevOffs0, bitRevOffs1;
     uint32_t   bitRevPos, blkCnt;
     uint16_t*  pDst16  = (uint16_t*)pDst;

@@ -53,7 +53,8 @@ static advanced_tim_cb_ctx_t s_tim1_cb_ctx = {};
 
 
 // Helpers
-[[__gnu__::__always_inline__]] static inline uint8_t get_index(TIM_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline uint8_t
+get_index(TIM_TypeDef* handle) {
     if (handle == TIM1) {
         return 0U;
     } else if (handle == TIM2) {
@@ -75,39 +76,44 @@ static advanced_tim_cb_ctx_t s_tim1_cb_ctx = {};
     }
 }
 
-[[__gnu__::__always_inline__]] static inline void timer_isr_helper(TIM_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline void
+timer_isr_helper(TIM_TypeDef* handle) {
     // Only available on the advanced timers
     if (is_timer_advanced(handle)) {
         // Update event interrupt
         if ((handle->DIER & TIM_DIER_UIE) && (handle->SR & TIM_SR_UIF)) {
             handle->SR = ~TIM_SR_UIF;
             if (s_tim1_cb_ctx.update.cb) {
-                s_tim1_cb_ctx.update.cb(
-                    s_tim1_cb_ctx.update.arg, TIMER_CHANNEL_NC, handle->CR1 & TIM_CR1_DIR);
+                s_tim1_cb_ctx.update.cb(s_tim1_cb_ctx.update.arg,
+                                        TIMER_CHANNEL_NC,
+                                        handle->CR1 & TIM_CR1_DIR);
             }
         }
         // Break event interrupt
         if ((handle->DIER & TIM_DIER_BIE) && (handle->SR & TIM_SR_BIF)) {
             handle->SR = ~TIM_SR_BIF;
             if (s_tim1_cb_ctx.break_input.cb) {
-                s_tim1_cb_ctx.break_input.cb(
-                    s_tim1_cb_ctx.break_input.arg, TIMER_CHANNEL_NC, TIMER_COUNTER_DIR_NONE);
+                s_tim1_cb_ctx.break_input.cb(s_tim1_cb_ctx.break_input.arg,
+                                             TIMER_CHANNEL_NC,
+                                             TIMER_COUNTER_DIR_NONE);
             }
         }
         // Commutation event interrupt
         if ((handle->DIER & TIM_DIER_COMIE) && (handle->SR & TIM_SR_COMIF)) {
             handle->SR = ~TIM_SR_COMIF;
             if (s_tim1_cb_ctx.commutation.cb) {
-                s_tim1_cb_ctx.commutation.cb(
-                    s_tim1_cb_ctx.commutation.arg, TIMER_CHANNEL_NC, TIMER_COUNTER_DIR_NONE);
+                s_tim1_cb_ctx.commutation.cb(s_tim1_cb_ctx.commutation.arg,
+                                             TIMER_CHANNEL_NC,
+                                             TIMER_COUNTER_DIR_NONE);
             }
         }
         // Trigger event interrupt
         if ((handle->DIER & TIM_DIER_TIE) && (handle->SR & TIM_SR_TIF)) {
             handle->SR = ~TIM_SR_TIF;
             if (s_tim1_cb_ctx.trigger.cb) {
-                s_tim1_cb_ctx.trigger.cb(
-                    s_tim1_cb_ctx.trigger.arg, TIMER_CHANNEL_NC, TIMER_COUNTER_DIR_NONE);
+                s_tim1_cb_ctx.trigger.cb(s_tim1_cb_ctx.trigger.arg,
+                                         TIMER_CHANNEL_NC,
+                                         TIMER_COUNTER_DIR_NONE);
             }
         }
         // Capture compare interrupt(s)
@@ -115,28 +121,36 @@ static advanced_tim_cb_ctx_t s_tim1_cb_ctx = {};
             handle->SR = ~TIM_SR_CC1IF;
             if (s_tim1_cb_ctx.capture_compare.cb) {
                 s_tim1_cb_ctx.capture_compare.cb(
-                    s_tim1_cb_ctx.capture_compare.arg, TIMER_CHANNEL_1, TIMER_COUNTER_DIR_NONE);
+                    s_tim1_cb_ctx.capture_compare.arg,
+                    TIMER_CHANNEL_1,
+                    TIMER_COUNTER_DIR_NONE);
             }
         }
         if ((handle->DIER & TIM_DIER_CC2IE) && (handle->SR & TIM_SR_CC2IF)) {
             handle->SR = ~TIM_SR_CC2IF;
             if (s_tim1_cb_ctx.capture_compare.cb) {
                 s_tim1_cb_ctx.capture_compare.cb(
-                    s_tim1_cb_ctx.capture_compare.arg, TIMER_CHANNEL_2, TIMER_COUNTER_DIR_NONE);
+                    s_tim1_cb_ctx.capture_compare.arg,
+                    TIMER_CHANNEL_2,
+                    TIMER_COUNTER_DIR_NONE);
             }
         }
         if ((handle->DIER & TIM_DIER_CC3IE) && (handle->SR & TIM_SR_CC3IF)) {
             handle->SR = ~TIM_SR_CC3IF;
             if (s_tim1_cb_ctx.capture_compare.cb) {
                 s_tim1_cb_ctx.capture_compare.cb(
-                    s_tim1_cb_ctx.capture_compare.arg, TIMER_CHANNEL_3, TIMER_COUNTER_DIR_NONE);
+                    s_tim1_cb_ctx.capture_compare.arg,
+                    TIMER_CHANNEL_3,
+                    TIMER_COUNTER_DIR_NONE);
             }
         }
         if ((handle->DIER & TIM_DIER_CC4IE) && (handle->SR & TIM_SR_CC4IF)) {
             handle->SR = ~TIM_SR_CC4IF;
             if (s_tim1_cb_ctx.capture_compare.cb) {
                 s_tim1_cb_ctx.capture_compare.cb(
-                    s_tim1_cb_ctx.capture_compare.arg, TIMER_CHANNEL_4, TIMER_COUNTER_DIR_NONE);
+                    s_tim1_cb_ctx.capture_compare.arg,
+                    TIMER_CHANNEL_4,
+                    TIMER_COUNTER_DIR_NONE);
             }
         }
         return;
@@ -150,37 +164,42 @@ static advanced_tim_cb_ctx_t s_tim1_cb_ctx = {};
     if ((handle->DIER & TIM_DIER_UIE) && (handle->SR & TIM_SR_UIF)) {
         handle->SR = ~TIM_SR_UIF;
         if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(
-                s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_NC, handle->CR1 & TIM_CR1_DIR);
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg,
+                                            TIMER_CHANNEL_NC,
+                                            handle->CR1 & TIM_CR1_DIR);
         }
     }
     // Capture compare interrupt(s)
     if ((handle->DIER & TIM_DIER_CC1IE) && (handle->SR & TIM_SR_CC1IF)) {
         handle->SR = ~TIM_SR_CC1IF;
         if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(
-                s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_1, TIMER_COUNTER_DIR_NONE);
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg,
+                                            TIMER_CHANNEL_1,
+                                            TIMER_COUNTER_DIR_NONE);
         }
     }
     if ((handle->DIER & TIM_DIER_CC2IE) && (handle->SR & TIM_SR_CC2IF)) {
         handle->SR = ~TIM_SR_CC2IF;
         if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(
-                s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_2, TIMER_COUNTER_DIR_NONE);
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg,
+                                            TIMER_CHANNEL_2,
+                                            TIMER_COUNTER_DIR_NONE);
         }
     }
     if ((handle->DIER & TIM_DIER_CC3IE) && (handle->SR & TIM_SR_CC3IF)) {
         handle->SR = ~TIM_SR_CC3IF;
         if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(
-                s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_3, TIMER_COUNTER_DIR_NONE);
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg,
+                                            TIMER_CHANNEL_3,
+                                            TIMER_COUNTER_DIR_NONE);
         }
     }
     if ((handle->DIER & TIM_DIER_CC4IE) && (handle->SR & TIM_SR_CC4IF)) {
         handle->SR = ~TIM_SR_CC4IF;
         if (s_timer_cb_ctx[idx].callback.cb) {
-            s_timer_cb_ctx[idx].callback.cb(
-                s_timer_cb_ctx[idx].callback.arg, TIMER_CHANNEL_4, TIMER_COUNTER_DIR_NONE);
+            s_timer_cb_ctx[idx].callback.cb(s_timer_cb_ctx[idx].callback.arg,
+                                            TIMER_CHANNEL_4,
+                                            TIMER_COUNTER_DIR_NONE);
         }
     }
 }
@@ -203,7 +222,8 @@ bool is_timer_on_apb1(TIM_TypeDef* handle) {
     bool result = true;
     if (handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) {
         // result = true; // Already true. Just no-op
-    } else if (handle == TIM1 || handle == TIM9 || handle == TIM10 || handle == TIM11) {
+    } else if (handle == TIM1 || handle == TIM9 || handle == TIM10 ||
+               handle == TIM11) {
         result = false;
     } else {
         ASSERT(false);
@@ -215,8 +235,8 @@ bool is_timer_32_bits(TIM_TypeDef* handle) {
     bool result = true;
     if (handle == TIM2 || handle == TIM5) {
         // result = true; // Already true. Just no-op
-    } else if (handle == TIM1 || handle == TIM3 || handle == TIM4 || handle == TIM9 ||
-               handle == TIM10 || handle == TIM11) {
+    } else if (handle == TIM1 || handle == TIM3 || handle == TIM4 ||
+               handle == TIM9 || handle == TIM10 || handle == TIM11) {
         result = false;
     } else {
         ASSERT(false);
@@ -225,7 +245,8 @@ bool is_timer_32_bits(TIM_TypeDef* handle) {
 }
 
 uint32_t timer_get_num_channels(TIM_TypeDef* handle) {
-    if (handle == TIM1 || handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) {
+    if (handle == TIM1 || handle == TIM2 || handle == TIM3 || handle == TIM4 ||
+        handle == TIM5) {
         return MAX_TIM1_CHANNELS;
     } else if (handle == TIM9) {
         return MAX_TIM9_CHANNELS;
@@ -241,9 +262,10 @@ uint32_t timer_get_frequency_hz(TIM_TypeDef* handle) {
     ASSERT(handle);
 
     const uint32_t system_core_clock = get_system_core_clock();
-    const uint32_t apb_clock_hz =
-        is_timer_on_apb1(handle) ? get_apb1_core_clock() : get_apb2_core_clock();
-    const uint32_t prescaler = system_core_clock / apb_clock_hz;
+    const uint32_t apb_clock_hz      = is_timer_on_apb1(handle)
+                                           ? get_apb1_core_clock()
+                                           : get_apb2_core_clock();
+    const uint32_t prescaler         = system_core_clock / apb_clock_hz;
 
     if (RCC->DCKCFGR & RCC_DCKCFGR_TIMPRE) {
         // High frequency timer mode
@@ -270,8 +292,9 @@ hal_err_t timer_start_counter(TIM_TypeDef* handle) {
     return HAL_OK;
 }
 
-hal_err_t
-timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, advanced_timer_irq_type_t type) {
+hal_err_t timer_register_callback(TIM_TypeDef*              handle,
+                                  timer_cb_t                callback,
+                                  advanced_timer_irq_type_t type) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU) {
         return HAL_ERR_INVALID_ARG;
@@ -323,7 +346,9 @@ timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, advanced_timer
         irq_type = s_timer_cb_ctx[idx].irq_type;
         if (type == TIMER_IRQ_CLEAR_ALL) {
             // Clear all state regardless of the callback passed in
-            memset(&s_timer_cb_ctx[idx].callback, 0, sizeof(s_timer_cb_ctx[idx].callback));
+            memset(&s_timer_cb_ctx[idx].callback,
+                   0,
+                   sizeof(s_timer_cb_ctx[idx].callback));
             goto disable_nvic_irq;
         } else {
             // Register the irq callback for the non advanced timers
@@ -338,7 +363,8 @@ timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, advanced_timer
         NVIC_EnableIRQ(irq_type);
     } else {
     disable_nvic_irq:
-        if (handle == TIM1 || handle == TIM9 || handle == TIM10 || handle == TIM11) {
+        if (handle == TIM1 || handle == TIM9 || handle == TIM10 ||
+            handle == TIM11) {
             // Since these timers share an NVIC line amongst themselves, we can't
             // knowingly disable the NVIC irq line since we could take out the other
             // timer. So its left up to the caller to disable it as they see fit.
@@ -375,12 +401,14 @@ hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef*  handle,
     const uint32_t target_cnt_ticks = (uint32_t)ceil_div_u64(
         (uint64_t)timer_get_frequency_hz(handle) * filter_ns, 1'000'000'000ULL);
     // Target number of ticks from the divided down timer clock
-    const uint32_t target_dts_ticks = ceil_div_u32(target_cnt_ticks, (1UL << clk_div));
+    const uint32_t target_dts_ticks =
+        ceil_div_u32(target_cnt_ticks, (1UL << clk_div));
 
     // We start at 1, otherwise, we risk using a filter code of 0 even when the requested filter time (ns) isn't 0
     for (uint32_t i = 1; i < ARRAY_SIZE(filter_multipliers); i++) {
         // Code values (indexes) 0-3 are mapped to a prescaler of 1, which uses the timer clock directly
-        if (filter_multipliers[i] >= ((i <= 3) ? target_cnt_ticks : target_dts_ticks)) {
+        if (filter_multipliers[i] >=
+            ((i <= 3) ? target_cnt_ticks : target_dts_ticks)) {
             *code = i;
             return HAL_OK;
         }

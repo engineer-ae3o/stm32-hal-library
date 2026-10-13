@@ -65,9 +65,9 @@ arm_status arm_mat_cmplx_trans_q31(const arm_matrix_instance_q31* pSrc,
 #else
 arm_status arm_mat_cmplx_trans_q31(const arm_matrix_instance_q31* pSrc,
                                    arm_matrix_instance_q31*       pDst) {
-    q31_t*     pIn  = pSrc->pData;       /* input data matrix pointer  */
-    q31_t*     pOut = pDst->pData;       /* output data matrix pointer  */
-    q31_t*     px;                       /* Temporary output data matrix pointer */
+    q31_t*     pIn  = pSrc->pData; /* input data matrix pointer  */
+    q31_t*     pOut = pDst->pData; /* output data matrix pointer  */
+    q31_t*     px;                 /* Temporary output data matrix pointer */
     uint16_t   nRows    = pSrc->numRows; /* number of nRows */
     uint16_t   nColumns = pSrc->numCols; /* number of nColumns  */
     uint16_t   col, i = 0U, row = nRows; /* loop counters */

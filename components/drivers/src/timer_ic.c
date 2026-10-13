@@ -13,9 +13,11 @@
 
 
 // Public API
-hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* config) {
+hal_err_t input_capture_init(TIM_TypeDef*                  handle,
+                             const input_capture_config_t* config) {
     if (handle == NULL || config == NULL || config->num_channels == 0 ||
-        config->num_channels > timer_get_num_channels(handle) || config->timer_prescaler == 0 ||
+        config->num_channels > timer_get_num_channels(handle) ||
+        config->timer_prescaler == 0 ||
         config->count_mode > TIMER_COUNTER_DIR_DOWN) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -45,12 +47,14 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
 
         // Calculate the digital filter code
         uint32_t filter_code = 0;
-        TRY(timer_filter_ns_to_ic_code(handle, config->clk_div, channel.filter_ns, &filter_code));
+        TRY(timer_filter_ns_to_ic_code(
+            handle, config->clk_div, channel.filter_ns, &filter_code));
 
         // Configure the channel in the CCMRx register
         switch (channel.channel) {
             case TIMER_CHANNEL_1: {
-                ccmr1 |= (0b01U << TIM_CCMR1_CC1S_Pos) | (filter_code << TIM_CCMR1_IC1F_Pos) |
+                ccmr1 |= (0b01U << TIM_CCMR1_CC1S_Pos) |
+                         (filter_code << TIM_CCMR1_IC1F_Pos) |
                          (uint32_t)(channel.prescaler << TIM_CCMR1_IC1PSC_Pos);
                 uint32_t polarity = 0;
                 if (channel.edge == IC_EDGE_RISING_FALLING) {
@@ -66,7 +70,8 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
                 if (timer_extra_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr1 |= (0b01U << TIM_CCMR1_CC2S_Pos) | (filter_code << TIM_CCMR1_IC2F_Pos) |
+                ccmr1 |= (0b01U << TIM_CCMR1_CC2S_Pos) |
+                         (filter_code << TIM_CCMR1_IC2F_Pos) |
                          (uint32_t)(channel.prescaler << TIM_CCMR1_IC2PSC_Pos);
                 uint32_t polarity = 0;
                 if (channel.edge == IC_EDGE_RISING_FALLING) {
@@ -82,7 +87,8 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr2 |= (0b01U << TIM_CCMR2_CC3S_Pos) | (filter_code << TIM_CCMR2_IC3F_Pos) |
+                ccmr2 |= (0b01U << TIM_CCMR2_CC3S_Pos) |
+                         (filter_code << TIM_CCMR2_IC3F_Pos) |
                          (uint32_t)(channel.prescaler << TIM_CCMR2_IC3PSC_Pos);
                 uint32_t polarity = 0;
                 if (channel.edge == IC_EDGE_RISING_FALLING) {
@@ -98,7 +104,8 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr2 |= (0b01U << TIM_CCMR2_CC4S_Pos) | (filter_code << TIM_CCMR2_IC4F_Pos) |
+                ccmr2 |= (0b01U << TIM_CCMR2_CC4S_Pos) |
+                         (filter_code << TIM_CCMR2_IC4F_Pos) |
                          (uint32_t)(channel.prescaler << TIM_CCMR2_IC4PSC_Pos);
                 uint32_t polarity = 0;
                 if (channel.edge == IC_EDGE_RISING_FALLING) {
@@ -130,7 +137,8 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
     }
 
     if (enable_cc_irq) {
-        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
+        TRY(timer_register_callback(
+            handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
     }
 
     // Final writeback
@@ -149,7 +157,8 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
 
     // Set the timer's counting mode, apply the clock divider, and enable auto-reload register buffering
     handle->CR1 |=
-        (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE);
+        (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) |
+         TIM_CR1_ARPE);
 
     // Generate an update event so the timer's internal registers start afresh, and clear the update status flag
     handle->EGR = TIM_EGR_UG;
@@ -170,15 +179,19 @@ hal_err_t input_capture_stop(TIM_TypeDef* handle) {
     return timer_stop_counter(handle);
 }
 
-hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz) {
+hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle,
+                                            uint32_t*    frequency_hz) {
     if (handle == NULL || frequency_hz == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
-    *frequency_hz = round_div_u32(timer_get_frequency_hz(handle), (handle->PSC + 1));
+    *frequency_hz =
+        round_div_u32(timer_get_frequency_hz(handle), (handle->PSC + 1));
     return HAL_OK;
 }
 
-hal_err_t input_capture_get_sample(TIM_TypeDef* handle, timer_channel_t channel, uint32_t* result) {
+hal_err_t input_capture_get_sample(TIM_TypeDef*    handle,
+                                   timer_channel_t channel,
+                                   uint32_t*       result) {
     if (handle == NULL || result == NULL) {
         return HAL_ERR_INVALID_ARG;
     }

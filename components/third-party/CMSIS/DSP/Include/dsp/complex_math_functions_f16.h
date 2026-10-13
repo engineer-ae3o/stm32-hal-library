@@ -46,7 +46,9 @@ extern "C" {
    * @param[out] pDst        points to the output vector
    * @param[in]  numSamples  number of complex samples in each vector
    */
-void arm_cmplx_conj_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSamples);
+void arm_cmplx_conj_f16(const float16_t* pSrc,
+                        float16_t*       pDst,
+                        uint32_t         numSamples);
 
 /**
    * @brief  Floating-point complex magnitude squared
@@ -54,7 +56,9 @@ void arm_cmplx_conj_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSamp
    * @param[out] pDst        points to the real output vector
    * @param[in]  numSamples  number of complex samples in the input vector
    */
-void arm_cmplx_mag_squared_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSamples);
+void arm_cmplx_mag_squared_f16(const float16_t* pSrc,
+                               float16_t*       pDst,
+                               uint32_t         numSamples);
 
 /**
    * @brief  Floating-point complex magnitude
@@ -62,7 +66,9 @@ void arm_cmplx_mag_squared_f16(const float16_t* pSrc, float16_t* pDst, uint32_t 
    * @param[out] pDst        points to the real output vector
    * @param[in]  numSamples  number of complex samples in the input vector
    */
-void arm_cmplx_mag_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSamples);
+void arm_cmplx_mag_f16(const float16_t* pSrc,
+                       float16_t*       pDst,
+                       uint32_t         numSamples);
 
 /**
    * @brief  Floating-point complex dot product

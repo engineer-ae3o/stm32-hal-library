@@ -41,8 +41,9 @@
   @{
  */
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_16) && defined(ARM_TABLE_BITREVIDX_FLT_16) &&               \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_16) &&                                  \
+     defined(ARM_TABLE_BITREVIDX_FLT_16) &&                                    \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_32))
 
 /**
@@ -74,8 +75,9 @@ static arm_status arm_rfft_32_fast_init_f16(arm_rfft_fast_instance_f16* S) {
 }
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_32) && defined(ARM_TABLE_BITREVIDX_FLT_32) &&               \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_32) &&                                  \
+     defined(ARM_TABLE_BITREVIDX_FLT_32) &&                                    \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_64))
 
 /**
@@ -107,8 +109,9 @@ static arm_status arm_rfft_64_fast_init_f16(arm_rfft_fast_instance_f16* S) {
 }
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_64) && defined(ARM_TABLE_BITREVIDX_FLT_64) &&               \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_64) &&                                  \
+     defined(ARM_TABLE_BITREVIDX_FLT_64) &&                                    \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_128))
 
 /**
@@ -140,8 +143,9 @@ static arm_status arm_rfft_128_fast_init_f16(arm_rfft_fast_instance_f16* S) {
 }
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_128) && defined(ARM_TABLE_BITREVIDX_FLT_128) &&             \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_128) &&                                 \
+     defined(ARM_TABLE_BITREVIDX_FLT_128) &&                                   \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_256))
 
 /**
@@ -173,8 +177,9 @@ static arm_status arm_rfft_256_fast_init_f16(arm_rfft_fast_instance_f16* S) {
 }
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_256) && defined(ARM_TABLE_BITREVIDX_FLT_256) &&             \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_256) &&                                 \
+     defined(ARM_TABLE_BITREVIDX_FLT_256) &&                                   \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_512))
 
 /**
@@ -206,8 +211,9 @@ static arm_status arm_rfft_512_fast_init_f16(arm_rfft_fast_instance_f16* S) {
 }
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_512) && defined(ARM_TABLE_BITREVIDX_FLT_512) &&             \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_512) &&                                 \
+     defined(ARM_TABLE_BITREVIDX_FLT_512) &&                                   \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_1024))
 /**
   @private
@@ -238,8 +244,9 @@ static arm_status arm_rfft_1024_fast_init_f16(arm_rfft_fast_instance_f16* S) {
 }
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_1024) && defined(ARM_TABLE_BITREVIDX_FLT_1024) &&           \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_1024) &&                                \
+     defined(ARM_TABLE_BITREVIDX_FLT_1024) &&                                  \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_2048))
 /**
   @private
@@ -269,8 +276,9 @@ static arm_status arm_rfft_2048_fast_init_f16(arm_rfft_fast_instance_f16* S) {
 }
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_2048) && defined(ARM_TABLE_BITREVIDX_FLT_2048) &&           \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_2048) &&                                \
+     defined(ARM_TABLE_BITREVIDX_FLT_2048) &&                                  \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_4096))
 /**
   @private
@@ -316,62 +324,71 @@ static arm_status arm_rfft_4096_fast_init_f16(arm_rfft_fast_instance_f16* S) {
                    This Function also initializes Twiddle factor table pointer and Bit reversal table pointer.
  */
 
-arm_status arm_rfft_fast_init_f16(arm_rfft_fast_instance_f16* S, uint16_t fftLen) {
+arm_status arm_rfft_fast_init_f16(arm_rfft_fast_instance_f16* S,
+                                  uint16_t                    fftLen) {
     typedef arm_status (*fft_init_ptr)(arm_rfft_fast_instance_f16*);
     fft_init_ptr fptr = 0x0;
 
     switch (fftLen) {
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_2048) && defined(ARM_TABLE_BITREVIDX_FLT_2048) &&           \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_2048) &&                                \
+     defined(ARM_TABLE_BITREVIDX_FLT_2048) &&                                  \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_4096))
         case 4096U:
             fptr = arm_rfft_4096_fast_init_f16;
             break;
 #endif
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_1024) && defined(ARM_TABLE_BITREVIDX_FLT_1024) &&           \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_1024) &&                                \
+     defined(ARM_TABLE_BITREVIDX_FLT_1024) &&                                  \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_2048))
         case 2048U:
             fptr = arm_rfft_2048_fast_init_f16;
             break;
 #endif
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_512) && defined(ARM_TABLE_BITREVIDX_FLT_512) &&             \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_512) &&                                 \
+     defined(ARM_TABLE_BITREVIDX_FLT_512) &&                                   \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_1024))
         case 1024U:
             fptr = arm_rfft_1024_fast_init_f16;
             break;
 #endif
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_256) && defined(ARM_TABLE_BITREVIDX_FLT_256) &&             \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_256) &&                                 \
+     defined(ARM_TABLE_BITREVIDX_FLT_256) &&                                   \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_512))
         case 512U:
             fptr = arm_rfft_512_fast_init_f16;
             break;
 #endif
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_128) && defined(ARM_TABLE_BITREVIDX_FLT_128) &&             \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_128) &&                                 \
+     defined(ARM_TABLE_BITREVIDX_FLT_128) &&                                   \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_256))
         case 256U:
             fptr = arm_rfft_256_fast_init_f16;
             break;
 #endif
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_64) && defined(ARM_TABLE_BITREVIDX_FLT_64) &&               \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_64) &&                                  \
+     defined(ARM_TABLE_BITREVIDX_FLT_64) &&                                    \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_128))
         case 128U:
             fptr = arm_rfft_128_fast_init_f16;
             break;
 #endif
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_32) && defined(ARM_TABLE_BITREVIDX_FLT_32) &&               \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_32) &&                                  \
+     defined(ARM_TABLE_BITREVIDX_FLT_32) &&                                    \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_64))
         case 64U:
             fptr = arm_rfft_64_fast_init_f16;
             break;
 #endif
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
-    (defined(ARM_TABLE_TWIDDLECOEF_F16_16) && defined(ARM_TABLE_BITREVIDX_FLT_16) &&               \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_16) &&                                  \
+     defined(ARM_TABLE_BITREVIDX_FLT_16) &&                                    \
      defined(ARM_TABLE_TWIDDLECOEF_RFFT_F16_32))
         case 32U:
             fptr = arm_rfft_32_fast_init_f16;

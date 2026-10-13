@@ -87,8 +87,8 @@ arm_status arm_fully_connected_mat_q7_vec_q15(const q15_t*   pV,
     uint16_t rowCnt = num_of_rows >> 1;
 
     while (rowCnt) {
-        q31_t    sum    = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
-        q31_t    sum2   = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+        q31_t    sum  = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+        q31_t    sum2 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         uint16_t colCnt = dim_vec >> 2;
 
         pA  = pV;
@@ -133,7 +133,7 @@ arm_status arm_fully_connected_mat_q7_vec_q15(const q15_t*   pV,
     rowCnt = num_of_rows & 0x1;
 
     while (rowCnt) {
-        q31_t    sum    = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+        q31_t    sum = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         uint16_t colCnt = dim_vec >> 2;
 
         pA = pV;

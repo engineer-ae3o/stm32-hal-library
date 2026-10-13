@@ -37,8 +37,9 @@ uint32_t timer_get_frequency_hz(TIM_TypeDef* handle);
 hal_err_t timer_stop_counter(TIM_TypeDef* handle);
 hal_err_t timer_start_counter(TIM_TypeDef* handle);
 
-hal_err_t
-timer_register_callback(TIM_TypeDef* handle, timer_cb_t callback, advanced_timer_irq_type_t type);
+hal_err_t timer_register_callback(TIM_TypeDef*              handle,
+                                  timer_cb_t                callback,
+                                  advanced_timer_irq_type_t type);
 hal_err_t timer_filter_ns_to_ic_code(TIM_TypeDef*  handle,
                                      tim_clk_div_t clk_div,
                                      uint32_t      filter_ns,

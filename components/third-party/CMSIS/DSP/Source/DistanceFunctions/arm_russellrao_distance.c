@@ -53,7 +53,9 @@ extern void arm_boolean_distance_TT(const uint32_t* pA,
  *
  */
 
-float32_t arm_russellrao_distance(const uint32_t* pA, const uint32_t* pB, uint32_t numberOfBools) {
+float32_t arm_russellrao_distance(const uint32_t* pA,
+                                  const uint32_t* pB,
+                                  uint32_t        numberOfBools) {
     uint32_t ctt = 0;
 
 

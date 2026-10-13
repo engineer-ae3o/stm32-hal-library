@@ -74,10 +74,12 @@ void arm_bitreversal_q15(q15_t*          pSrc,
 void arm_cfft_radix4_q15(const arm_cfft_radix4_instance_q15* S, q15_t* pSrc) {
     if (S->ifftFlag == 1U) {
         /*  Complex IFFT radix-4  */
-        arm_radix4_butterfly_inverse_q15(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
+        arm_radix4_butterfly_inverse_q15(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
     } else {
         /*  Complex FFT radix-4  */
-        arm_radix4_butterfly_q15(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
+        arm_radix4_butterfly_q15(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
     }
 
     if (S->bitReverseFlag == 1U) {
@@ -183,10 +185,12 @@ void arm_radix4_butterfly_q15(q15_t*       pSrc16,
         /* Reading i0, i0+fftLen/2 inputs */
         /* Read ya (real), xa(imag) input */
         T = read_q15x2(pSi0);
-        T = __SHADD16(T, 0); /* this is just a SIMD arithmetic shift right by 1 */
+        T = __SHADD16(T,
+                      0); /* this is just a SIMD arithmetic shift right by 1 */
         T = __SHADD16(
-            T, 0); /* it turns out doing this twice is 2 cycles, the alternative takes 3 cycles */
-                   /*
+            T,
+            0); /* it turns out doing this twice is 2 cycles, the alternative takes 3 cycles */
+        /*
     in = ((int16_t) (T & 0xFFFF)) >> 2;       // alternative code that takes 3 cycles
      T = ((T >> 2) & 0xFFFF0000) | (in & 0xFFFF);
 */

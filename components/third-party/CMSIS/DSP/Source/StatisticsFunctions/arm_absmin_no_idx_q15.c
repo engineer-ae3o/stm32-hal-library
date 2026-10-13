@@ -49,7 +49,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_absmin_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
+void arm_absmin_no_idx_q15(const q15_t* pSrc,
+                           uint32_t     blockSize,
+                           q15_t*       pResult) {
     uint16_t     blkCnt; /* loop counters */
     q15x8_t      vecSrc;
     q15_t const* pSrcVec;
@@ -96,9 +98,11 @@ void arm_absmin_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
 
 #else
 #if defined(ARM_MATH_DSP)
-void arm_absmin_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
-    q15_t    cur_absmin, out; /* Temporary variables to store the output value. */
-    uint32_t blkCnt;          /* Loop counter */
+void arm_absmin_no_idx_q15(const q15_t* pSrc,
+                           uint32_t     blockSize,
+                           q15_t*       pResult) {
+    q15_t cur_absmin, out; /* Temporary variables to store the output value. */
+    uint32_t blkCnt;       /* Loop counter */
 
 
     /* Load first input value that act as reference value for comparision */
@@ -109,29 +113,36 @@ void arm_absmin_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
     /* Loop unrolling: Compute 4 outputs at a time */
     blkCnt = (blockSize - 1U) >> 2U;
 
-    while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
+    while (
+        blkCnt >
+        0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0)
-                         ? cur_absmin
-                         : (q15_t)__QSUB16(0, cur_absmin); /* compare for the extrema value */
+        cur_absmin =
+            (cur_absmin > 0)
+                ? cur_absmin
+                : (q15_t)__QSUB16(
+                      0, cur_absmin); /* compare for the extrema value */
         if (cur_absmin < out) { /* Update the extrema value and it's index */
             out = cur_absmin;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q15_t)__QSUB16(0, cur_absmin);
+        cur_absmin =
+            (cur_absmin > 0) ? cur_absmin : (q15_t)__QSUB16(0, cur_absmin);
         if (cur_absmin < out) {
             out = cur_absmin;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q15_t)__QSUB16(0, cur_absmin);
+        cur_absmin =
+            (cur_absmin > 0) ? cur_absmin : (q15_t)__QSUB16(0, cur_absmin);
         if (cur_absmin < out) {
             out = cur_absmin;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q15_t)__QSUB16(0, cur_absmin);
+        cur_absmin =
+            (cur_absmin > 0) ? cur_absmin : (q15_t)__QSUB16(0, cur_absmin);
         if (cur_absmin < out) {
             out = cur_absmin;
         }
@@ -147,7 +158,8 @@ void arm_absmin_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
 
     while (blkCnt > 0U) {
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q15_t)__QSUB16(0, cur_absmin);
+        cur_absmin =
+            (cur_absmin > 0) ? cur_absmin : (q15_t)__QSUB16(0, cur_absmin);
         if (cur_absmin < out) {
             out = cur_absmin;
         }
@@ -160,7 +172,9 @@ void arm_absmin_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
     *pResult = out;
 }
 #else
-void arm_absmin_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
+void arm_absmin_no_idx_q15(const q15_t* pSrc,
+                           uint32_t     blockSize,
+                           q15_t*       pResult) {
     q15_t    minVal, out; /* Temporary variables to store the output value. */
     uint32_t blkCnt;      /* Loop counter */
 
@@ -174,7 +188,8 @@ void arm_absmin_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
 
     while (blkCnt > 0U) {
         /* Initialize minVal to the next consecutive values one by one */
-        minVal = (*pSrc > 0) ? *pSrc : ((*pSrc == (q15_t)0x8000) ? 0x7fff : -*pSrc);
+        minVal =
+            (*pSrc > 0) ? *pSrc : ((*pSrc == (q15_t)0x8000) ? 0x7fff : -*pSrc);
         pSrc++;
 
         /* compare for the minimum value */

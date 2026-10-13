@@ -102,7 +102,8 @@ static uint32_t arm_scalar_log_q31(uint32_t src) {
    */
 
     /* q26 */
-    tmp = (int32_t)y - (normalization << (LOG_Q31_ACCURACY - LOG_Q31_INTEGER_PART));
+    tmp = (int32_t)y -
+          (normalization << (LOG_Q31_ACCURACY - LOG_Q31_INTEGER_PART));
 
 
     /* q5.26 */

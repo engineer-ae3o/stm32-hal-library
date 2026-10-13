@@ -38,7 +38,8 @@
  */
 
 /* 6.14 bug */
-#if defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100) && (__ARMCC_VERSION < 6150001)
+#if defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6100100) &&                \
+    (__ARMCC_VERSION < 6150001)
 
 __attribute__((weak)) float __powisf2(float a, int b) {
     const int recip = b < 0;

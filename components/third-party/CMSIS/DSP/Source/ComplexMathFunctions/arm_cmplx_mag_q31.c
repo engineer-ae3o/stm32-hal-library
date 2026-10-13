@@ -68,7 +68,8 @@ void arm_cmplx_mag_q31(const q31_t* pSrc, q31_t* pDst, uint32_t numSamples) {
     while (blkCnt > 0U) {
         vecSrc = vld2q(pSrc);
 
-        sum = vqaddq(vmulhq(vecSrc.val[0], vecSrc.val[0]), vmulhq(vecSrc.val[1], vecSrc.val[1]));
+        sum = vqaddq(vmulhq(vecSrc.val[0], vecSrc.val[0]),
+                     vmulhq(vecSrc.val[1], vecSrc.val[1]));
 
         sum = vshrq(sum, 1);
 

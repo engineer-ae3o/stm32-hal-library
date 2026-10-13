@@ -49,17 +49,18 @@
  *
  */
 
-arm_status arm_depthwise_conv_3x3_s8(const cmsis_nn_context*                  ctx,
-                                     const cmsis_nn_dw_conv_params*           dw_conv_params,
-                                     const cmsis_nn_per_channel_quant_params* quant_params,
-                                     const cmsis_nn_dims*                     input_dims,
-                                     const q7_t*                              input,
-                                     const cmsis_nn_dims*                     filter_dims,
-                                     const q7_t*                              kernel,
-                                     const cmsis_nn_dims*                     bias_dims,
-                                     const int32_t*                           bias,
-                                     const cmsis_nn_dims*                     output_dims,
-                                     q7_t*                                    output) {
+arm_status
+arm_depthwise_conv_3x3_s8(const cmsis_nn_context*        ctx,
+                          const cmsis_nn_dw_conv_params* dw_conv_params,
+                          const cmsis_nn_per_channel_quant_params* quant_params,
+                          const cmsis_nn_dims*                     input_dims,
+                          const q7_t*                              input,
+                          const cmsis_nn_dims*                     filter_dims,
+                          const q7_t*                              kernel,
+                          const cmsis_nn_dims*                     bias_dims,
+                          const int32_t*                           bias,
+                          const cmsis_nn_dims*                     output_dims,
+                          q7_t*                                    output) {
     (void)ctx;
     (void)bias_dims;
 
@@ -91,7 +92,8 @@ arm_status arm_depthwise_conv_3x3_s8(const cmsis_nn_context*                  ct
 
     for (int32_t in_h = -pad_y, out_h = 0, out_idx = 0; out_h < output_y;
          in_h += stride_y, ++out_h) {
-        for (int32_t in_w = -pad_x, out_w = 0, ker_h_start = MAX(0, -in_h); out_w < output_x;
+        for (int32_t in_w = -pad_x, out_w = 0, ker_h_start = MAX(0, -in_h);
+             out_w < output_x;
              in_w += stride_x, ++out_w) {
             int32_t in_ch       = 0;
             int32_t ker_w_start = MAX(0, -in_w);
@@ -103,10 +105,14 @@ arm_status arm_depthwise_conv_3x3_s8(const cmsis_nn_context*                  ct
                 int32_t out_buff3 = bias[in_ch + 3];
 
                 const int8_t* input_ptr =
-                    input + (in_h + ker_h_start) * (input_ch * input_x) + in_w * input_ch + in_ch;
-                const int8_t* kernel_ptr = kernel + ker_h_start * (input_ch * 3) + in_ch;
+                    input + (in_h + ker_h_start) * (input_ch * input_x) +
+                    in_w * input_ch + in_ch;
+                const int8_t* kernel_ptr =
+                    kernel + ker_h_start * (input_ch * 3) + in_ch;
 
-                for (int32_t ker_h = ker_h_start; ker_h < MIN(3, input_y - in_h); ++ker_h) {
+                for (int32_t ker_h = ker_h_start;
+                     ker_h < MIN(3, input_y - in_h);
+                     ++ker_h) {
                     int32_t in_val  = 0;
                     int32_t ker_val = 0;
 
@@ -114,58 +120,69 @@ arm_status arm_depthwise_conv_3x3_s8(const cmsis_nn_context*                  ct
                         in_val  = arm_nn_read_q7x4(input_ptr);
                         ker_val = arm_nn_read_q7x4(kernel_ptr);
 
-                        out_buff0 += ((int8_t)in_val + input_offset) * (int8_t)ker_val;
-                        out_buff1 +=
-                            ((int8_t)(in_val >> 8) + input_offset) * (int8_t)(ker_val >> 8);
-                        out_buff2 +=
-                            ((int8_t)(in_val >> 16) + input_offset) * (int8_t)(ker_val >> 16);
-                        out_buff3 +=
-                            ((int8_t)(in_val >> 24) + input_offset) * (int8_t)(ker_val >> 24);
+                        out_buff0 +=
+                            ((int8_t)in_val + input_offset) * (int8_t)ker_val;
+                        out_buff1 += ((int8_t)(in_val >> 8) + input_offset) *
+                                     (int8_t)(ker_val >> 8);
+                        out_buff2 += ((int8_t)(in_val >> 16) + input_offset) *
+                                     (int8_t)(ker_val >> 16);
+                        out_buff3 += ((int8_t)(in_val >> 24) + input_offset) *
+                                     (int8_t)(ker_val >> 24);
                     }
 
                     in_val  = arm_nn_read_q7x4(input_ptr + input_ch);
                     ker_val = arm_nn_read_q7x4(kernel_ptr + input_ch);
 
-                    out_buff0 += ((int8_t)in_val + input_offset) * (int8_t)ker_val;
-                    out_buff1 += ((int8_t)(in_val >> 8) + input_offset) * (int8_t)(ker_val >> 8);
-                    out_buff2 += ((int8_t)(in_val >> 16) + input_offset) * (int8_t)(ker_val >> 16);
-                    out_buff3 += ((int8_t)(in_val >> 24) + input_offset) * (int8_t)(ker_val >> 24);
+                    out_buff0 +=
+                        ((int8_t)in_val + input_offset) * (int8_t)ker_val;
+                    out_buff1 += ((int8_t)(in_val >> 8) + input_offset) *
+                                 (int8_t)(ker_val >> 8);
+                    out_buff2 += ((int8_t)(in_val >> 16) + input_offset) *
+                                 (int8_t)(ker_val >> 16);
+                    out_buff3 += ((int8_t)(in_val >> 24) + input_offset) *
+                                 (int8_t)(ker_val >> 24);
 
                     if ((input_x - in_w) >= 3) {
-                        in_val  = arm_nn_read_q7x4(input_ptr + (input_ch << 1));
-                        ker_val = arm_nn_read_q7x4(kernel_ptr + (input_ch << 1));
+                        in_val = arm_nn_read_q7x4(input_ptr + (input_ch << 1));
+                        ker_val =
+                            arm_nn_read_q7x4(kernel_ptr + (input_ch << 1));
 
-                        out_buff0 += ((int8_t)in_val + input_offset) * (int8_t)ker_val;
-                        out_buff1 +=
-                            ((int8_t)(in_val >> 8) + input_offset) * (int8_t)(ker_val >> 8);
-                        out_buff2 +=
-                            ((int8_t)(in_val >> 16) + input_offset) * (int8_t)(ker_val >> 16);
-                        out_buff3 +=
-                            ((int8_t)(in_val >> 24) + input_offset) * (int8_t)(ker_val >> 24);
+                        out_buff0 +=
+                            ((int8_t)in_val + input_offset) * (int8_t)ker_val;
+                        out_buff1 += ((int8_t)(in_val >> 8) + input_offset) *
+                                     (int8_t)(ker_val >> 8);
+                        out_buff2 += ((int8_t)(in_val >> 16) + input_offset) *
+                                     (int8_t)(ker_val >> 16);
+                        out_buff3 += ((int8_t)(in_val >> 24) + input_offset) *
+                                     (int8_t)(ker_val >> 24);
                     }
 
                     input_ptr += (input_ch * input_x);
                     kernel_ptr += (input_ch * 3);
                 }
 
-                out_buff0 =
-                    arm_nn_requantize(out_buff0, output_mult[in_ch + 0], output_shift[in_ch + 0]);
-                out_buff1 =
-                    arm_nn_requantize(out_buff1, output_mult[in_ch + 1], output_shift[in_ch + 1]);
-                out_buff2 =
-                    arm_nn_requantize(out_buff2, output_mult[in_ch + 2], output_shift[in_ch + 2]);
-                out_buff3 =
-                    arm_nn_requantize(out_buff3, output_mult[in_ch + 3], output_shift[in_ch + 3]);
+                out_buff0 = arm_nn_requantize(
+                    out_buff0, output_mult[in_ch + 0], output_shift[in_ch + 0]);
+                out_buff1 = arm_nn_requantize(
+                    out_buff1, output_mult[in_ch + 1], output_shift[in_ch + 1]);
+                out_buff2 = arm_nn_requantize(
+                    out_buff2, output_mult[in_ch + 2], output_shift[in_ch + 2]);
+                out_buff3 = arm_nn_requantize(
+                    out_buff3, output_mult[in_ch + 3], output_shift[in_ch + 3]);
 
                 out_buff0 += output_offset;
                 out_buff1 += output_offset;
                 out_buff2 += output_offset;
                 out_buff3 += output_offset;
 
-                out_buff0 = MIN(MAX(out_buff0, output_activation_min), output_activation_max);
-                out_buff1 = MIN(MAX(out_buff1, output_activation_min), output_activation_max);
-                out_buff2 = MIN(MAX(out_buff2, output_activation_min), output_activation_max);
-                out_buff3 = MIN(MAX(out_buff3, output_activation_min), output_activation_max);
+                out_buff0 = MIN(MAX(out_buff0, output_activation_min),
+                                output_activation_max);
+                out_buff1 = MIN(MAX(out_buff1, output_activation_min),
+                                output_activation_max);
+                out_buff2 = MIN(MAX(out_buff2, output_activation_min),
+                                output_activation_max);
+                out_buff3 = MIN(MAX(out_buff3, output_activation_min),
+                                output_activation_max);
 
                 output[out_idx++] = (int8_t)out_buff0;
                 output[out_idx++] = (int8_t)out_buff1;
@@ -178,28 +195,37 @@ arm_status arm_depthwise_conv_3x3_s8(const cmsis_nn_context*                  ct
                 int32_t out_buff = bias[in_ch];
 
                 const int8_t* input_ptr =
-                    input + (in_h + ker_h_start) * (input_ch * input_x) + in_w * input_ch + in_ch;
-                const int8_t* kernel_ptr = kernel + ker_h_start * (input_ch * 3) + in_ch;
+                    input + (in_h + ker_h_start) * (input_ch * input_x) +
+                    in_w * input_ch + in_ch;
+                const int8_t* kernel_ptr =
+                    kernel + ker_h_start * (input_ch * 3) + in_ch;
 
-                for (int32_t ker_h = ker_h_start; ker_h < MIN(3, input_y - in_h); ++ker_h) {
+                for (int32_t ker_h = ker_h_start;
+                     ker_h < MIN(3, input_y - in_h);
+                     ++ker_h) {
                     if (ker_w_start == 0) {
-                        out_buff += (*(input_ptr) + input_offset) * *(kernel_ptr);
+                        out_buff +=
+                            (*(input_ptr) + input_offset) * *(kernel_ptr);
                     }
 
-                    out_buff += (*(input_ptr + input_ch) + input_offset) * *(kernel_ptr + input_ch);
+                    out_buff += (*(input_ptr + input_ch) + input_offset) *
+                                *(kernel_ptr + input_ch);
 
                     if ((input_x - in_w) >= 3) {
-                        out_buff += (*(input_ptr + (input_ch << 1)) + input_offset) *
-                                    *(kernel_ptr + (input_ch << 1));
+                        out_buff +=
+                            (*(input_ptr + (input_ch << 1)) + input_offset) *
+                            *(kernel_ptr + (input_ch << 1));
                     }
 
                     input_ptr += (input_ch * input_x);
                     kernel_ptr += (input_ch * 3);
                 }
 
-                out_buff = arm_nn_requantize(out_buff, output_mult[in_ch], output_shift[in_ch]);
+                out_buff = arm_nn_requantize(
+                    out_buff, output_mult[in_ch], output_shift[in_ch]);
                 out_buff += output_offset;
-                out_buff = MIN(MAX(out_buff, output_activation_min), output_activation_max);
+                out_buff          = MIN(MAX(out_buff, output_activation_min),
+                                        output_activation_max);
                 output[out_idx++] = (int8_t)out_buff;
             }
         }

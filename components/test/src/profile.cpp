@@ -26,7 +26,8 @@ namespace profile {
             for (uint32_t i = 0; auto& sample : log_time_samples) {
                 prof_start();
                 LOGI(TAG,
-                     "Typical log. Lets also do this: %.3f,%d,%d. Even more stuff. Add a format "
+                     "Typical log. Lets also do this: %.3f,%d,%d. Even more "
+                     "stuff. Add a format "
                      "string as well. %s long enough. Iteration: %lu",
                      3.0,
                      4,
@@ -43,8 +44,8 @@ namespace profile {
                 delay_us(1'000'000U / LOG_FREQ_HZ);
             }
 
-            const uint64_t total_cycles =
-                std::accumulate(log_time_samples.begin(), log_time_samples.end(), 0ULL);
+            const uint64_t total_cycles = std::accumulate(
+                log_time_samples.begin(), log_time_samples.end(), 0ULL);
             const uint32_t average_cycles =
                 static_cast<uint32_t>(total_cycles / log_time_samples.size());
 
@@ -71,7 +72,9 @@ namespace profile {
                  cycles_to_ms_frac(average_cycles));
 
             // Shortest log time
-            LOGI(TAG, "Shortest time for logging: %lu cycles", shortest_time_cycles);
+            LOGI(TAG,
+                 "Shortest time for logging: %lu cycles",
+                 shortest_time_cycles);
             LOGI(TAG,
                  "Shortest time for logging: %llu.%03lluus",
                  cycles_to_us(shortest_time_cycles),
@@ -82,7 +85,9 @@ namespace profile {
                  cycles_to_ms_frac(shortest_time_cycles));
 
             // Longest log time
-            LOGI(TAG, "Longest time for logging: %lu cycles", longest_time_cycles);
+            LOGI(TAG,
+                 "Longest time for logging: %lu cycles",
+                 longest_time_cycles);
             LOGI(TAG,
                  "Longest time for logging: %llu.%03lluus",
                  cycles_to_us(longest_time_cycles),
@@ -103,14 +108,17 @@ namespace profile {
             alignas(O1HEAP_ALIGNMENT) std::array<uint8_t, ARENA_SIZE> arena{};
 
             constexpr uint32_t SAMPLE_SIZE = 1'000;
-            constexpr uint32_t POOL_SIZE = 64; // Outstanding allocations kept live during the test
+            constexpr uint32_t POOL_SIZE =
+                64; // Outstanding allocations kept live during the test
 
             constexpr size_t MIN_ALLOC = 8;
             constexpr size_t MAX_ALLOC = 512;
 
             O1HeapInstance* heap = o1heapInit(arena.data(), ARENA_SIZE);
             if (heap == nullptr) {
-                LOGI(TAG, "Heap initialization failed, arena not aligned or too small");
+                LOGI(TAG,
+                     "Heap initialization failed, arena not aligned or too "
+                     "small");
                 ASSERT(false);
             }
 
@@ -172,12 +180,14 @@ namespace profile {
                 alloc_max = std::max(alloc_max, alloc_samples[i]);
             }
 
-            const uint64_t alloc_total =
-                std::accumulate(alloc_samples.begin(), alloc_samples.end(), 0ULL);
+            const uint64_t alloc_total = std::accumulate(
+                alloc_samples.begin(), alloc_samples.end(), 0ULL);
             const uint64_t free_total =
                 std::accumulate(free_samples.begin(), free_samples.end(), 0ULL);
-            const uint32_t alloc_avg = static_cast<uint32_t>(alloc_total / alloc_samples.size());
-            const uint32_t free_avg  = static_cast<uint32_t>(free_total / free_samples.size());
+            const uint32_t alloc_avg =
+                static_cast<uint32_t>(alloc_total / alloc_samples.size());
+            const uint32_t free_avg =
+                static_cast<uint32_t>(free_total / free_samples.size());
 
             // Allocations
             LOGI(TAG, "[Alloc] Total time taken: %llu cycles", alloc_total);

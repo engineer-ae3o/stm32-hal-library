@@ -68,7 +68,9 @@
   @param[in]     numSamples  number of samples in each vector
   @return        none
  */
-void arm_cmplx_mag_f64(const float64_t* pSrc, float64_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_f64(const float64_t* pSrc,
+                       float64_t*       pDst,
+                       uint32_t         numSamples) {
     uint32_t  blkCnt;     /* loop counter */
     float64_t real, imag; /* Temporary variables to hold input values */
 

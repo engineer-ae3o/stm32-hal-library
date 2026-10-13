@@ -167,8 +167,10 @@ void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S,
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc2), vtmp, 2);
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc3), vtmp, 3);
 
-        vSum = vfmaq_m_f16(
-            vSum, vld1q(pDualCoef), vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)), vctp16q(4));
+        vSum = vfmaq_m_f16(vSum,
+                           vld1q(pDualCoef),
+                           vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)),
+                           vctp16q(4));
         pDualCoef += 4;
         pSrcA += numCols * 4;
         /*
@@ -245,8 +247,10 @@ void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S,
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc1), vtmp, 1);
 
-        vSum = vfmaq_m_f16(
-            vSum, vld1q(pDualCoef), vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)), vctp16q(2));
+        vSum = vfmaq_m_f16(vSum,
+                           vld1q(pDualCoef),
+                           vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)),
+                           vctp16q(2));
         pDualCoef += 2;
 
         pSrcA += numCols * 2;
@@ -305,8 +309,10 @@ void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S,
         f16x8_t vtmp = vuninitializedq_f16();
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
 
-        vSum = vfmaq_m_f16(
-            vSum, vld1q(pDualCoef), vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)), vctp16q(1));
+        vSum = vfmaq_m_f16(vSum,
+                           vld1q(pDualCoef),
+                           vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)),
+                           vctp16q(1));
     }
 
 

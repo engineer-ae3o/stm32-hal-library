@@ -51,19 +51,21 @@
  *
  */
 
-arm_status arm_convolve_1x1_s8_fast(const cmsis_nn_context*                  ctx,
-                                    const cmsis_nn_conv_params*              conv_params,
-                                    const cmsis_nn_per_channel_quant_params* quant_params,
-                                    const cmsis_nn_dims*                     input_dims,
-                                    const q7_t*                              input_data,
-                                    const cmsis_nn_dims*                     filter_dims,
-                                    const q7_t*                              filter_data,
-                                    const cmsis_nn_dims*                     bias_dims,
-                                    const int32_t*                           bias_data,
-                                    const cmsis_nn_dims*                     output_dims,
-                                    q7_t*                                    output_data) {
-    if (input_dims->c % 4 != 0 || conv_params->padding.w != 0 || conv_params->padding.h != 0 ||
-        conv_params->stride.w != 1 || conv_params->stride.h != 1) {
+arm_status
+arm_convolve_1x1_s8_fast(const cmsis_nn_context*                  ctx,
+                         const cmsis_nn_conv_params*              conv_params,
+                         const cmsis_nn_per_channel_quant_params* quant_params,
+                         const cmsis_nn_dims*                     input_dims,
+                         const q7_t*                              input_data,
+                         const cmsis_nn_dims*                     filter_dims,
+                         const q7_t*                              filter_data,
+                         const cmsis_nn_dims*                     bias_dims,
+                         const int32_t*                           bias_data,
+                         const cmsis_nn_dims*                     output_dims,
+                         q7_t*                                    output_data) {
+    if (input_dims->c % 4 != 0 || conv_params->padding.w != 0 ||
+        conv_params->padding.h != 0 || conv_params->stride.w != 1 ||
+        conv_params->stride.h != 1) {
         return ARM_MATH_SIZE_MISMATCH;
     }
 
@@ -73,11 +75,11 @@ arm_status arm_convolve_1x1_s8_fast(const cmsis_nn_context*                  ctx
 
 #if defined(ARM_MATH_MVEI)
 
-    const int32_t col_len            = input_dims->w * input_dims->h * input_dims->n;
-    const int32_t output_ch          = output_dims->c;
-    const int32_t input_ch           = input_dims->c;
-    const int32_t input_offset       = conv_params->input_offset;
-    const int32_t out_offset         = conv_params->output_offset;
+    const int32_t col_len      = input_dims->w * input_dims->h * input_dims->n;
+    const int32_t output_ch    = output_dims->c;
+    const int32_t input_ch     = input_dims->c;
+    const int32_t input_offset = conv_params->input_offset;
+    const int32_t out_offset   = conv_params->output_offset;
     const int32_t out_activation_min = conv_params->activation.min;
     const int32_t out_activation_max = conv_params->activation.max;
     int32_t*      output_mult        = quant_params->multiplier;
@@ -111,7 +113,8 @@ arm_status arm_convolve_1x1_s8_fast(const cmsis_nn_context*                  ctx
             }
             sum_row = (sum_row * input_offset);
             acc += sum_row;
-            acc = arm_nn_requantize(acc, output_mult[i_out_ch], output_shift[i_out_ch]);
+            acc = arm_nn_requantize(
+                acc, output_mult[i_out_ch], output_shift[i_out_ch]);
             acc += out_offset;
 
             acc            = MAX(acc, out_activation_min);
@@ -147,7 +150,8 @@ arm_status arm_convolve_1x1_s8_fast(const cmsis_nn_context*                  ctx
     return ARM_MATH_SUCCESS;
 }
 
-int32_t arm_convolve_1x1_s8_fast_get_buffer_size(const cmsis_nn_dims* input_dims) {
+int32_t
+arm_convolve_1x1_s8_fast_get_buffer_size(const cmsis_nn_dims* input_dims) {
     (void)input_dims;
     return 0;
 }

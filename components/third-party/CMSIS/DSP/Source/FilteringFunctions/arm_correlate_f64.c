@@ -62,7 +62,7 @@ void arm_correlate_f64(const float64_t* pSrcA,
     uint32_t         blockSize1, blockSize2, blockSize3; /* Loop counters */
     uint32_t         j, k, count, blkCnt;                /* Loop counters */
     uint32_t         outBlockSize;                       /* Loop counter */
-    int32_t          inc = 1;                            /* Destination address modifier */
+    int32_t          inc = 1; /* Destination address modifier */
 
     /* The algorithm implementation is based on the lengths of the inputs. */
     /* srcB is always made to slide across srcA. */

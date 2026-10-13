@@ -12,7 +12,8 @@
 
 
 // Helper
-[[__gnu__::__always_inline__]] static inline uint32_t get_max_compare_level(TIM_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline uint32_t
+get_max_compare_level(TIM_TypeDef* handle) {
     if (handle->CR1 & TIM_CR1_CMS) {
         // Center aligned PWM
         return handle->ARR;
@@ -23,7 +24,9 @@
         // it like this because using uint64_t would be much slower for a case that will almost
         // never occur in any real usage. The maximum duty cycle is ARR + 1, hence the off
         // by one at the boundary of 32 bits. The off by one error is a non factor regardless.
-        if (gnu_unlikely(handle->ARR == (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX))) {
+        if (gnu_unlikely(
+                handle->ARR ==
+                (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX))) {
             return handle->ARR;
         } else {
             return handle->ARR + 1;
@@ -33,7 +36,8 @@
 
 
 // Public API
-hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t* config) {
+hal_err_t output_compare_init(TIM_TypeDef*                   handle,
+                              const output_compare_config_t* config) {
     if (handle == NULL || config == NULL || config->num_channels == 0 ||
         config->num_channels > timer_get_num_channels(handle)) {
         return HAL_ERR_INVALID_ARG;
@@ -46,7 +50,8 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
     // The lite timers (TIM9-TIM11) only support edge aligned upcounting
     // TIM1 has 4 main channels. TIM2-TIM5 all have 4 main channels,
     // TIM9 has 2 and the extra lite timers (TIM10-TIM11) have 1 each
-    if (timer_lite && (config->count_mode != OUTPUT_COMPARE_EDGE_LEFT_ALIGNED)) {
+    if (timer_lite &&
+        (config->count_mode != OUTPUT_COMPARE_EDGE_LEFT_ALIGNED)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -71,49 +76,69 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
         // Configure the channel in the CCMRx register
         switch (config->channels[i].channel) {
             case TIMER_CHANNEL_1:
-                ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) |
-                         (uint32_t)(config->buffer_compare_reload ? TIM_CCMR1_OC1PE : 0) |
-                         (uint32_t)(config->mode << TIM_CCMR1_OC1M_Pos);
-                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC1E | TIM_CCER_CC1P)
-                                                            : (TIM_CCER_CC1E);
+                ccmr1 |=
+                    (0b00U << TIM_CCMR1_CC1S_Pos) |
+                    (uint32_t)(config->buffer_compare_reload ? TIM_CCMR1_OC1PE
+                                                             : 0) |
+                    (uint32_t)(config->mode << TIM_CCMR1_OC1M_Pos);
+                ccer |= config->channels[i].output_polarity
+                            ? (TIM_CCER_CC1E | TIM_CCER_CC1P)
+                            : (TIM_CCER_CC1E);
                 dier |= enable_cc_irq ? TIM_DIER_CC1IE : 0;
-                cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS1 : 0;
+                cr2 |= (timer_advanced && config->channels[i].output_idle_state)
+                           ? TIM_CR2_OIS1
+                           : 0;
                 break;
             case TIMER_CHANNEL_2:
                 if (timer_extra_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) |
-                         (uint32_t)(config->buffer_compare_reload ? TIM_CCMR1_OC2PE : 0) |
-                         (uint32_t)(config->mode << TIM_CCMR1_OC2M_Pos);
-                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC2E | TIM_CCER_CC2P)
-                                                            : (TIM_CCER_CC2E);
+                ccmr1 |=
+                    (0b00U << TIM_CCMR1_CC2S_Pos) |
+                    (uint32_t)(config->buffer_compare_reload ? TIM_CCMR1_OC2PE
+                                                             : 0) |
+                    (uint32_t)(config->mode << TIM_CCMR1_OC2M_Pos);
+                ccer |= config->channels[i].output_polarity
+                            ? (TIM_CCER_CC2E | TIM_CCER_CC2P)
+                            : (TIM_CCER_CC2E);
                 dier |= enable_cc_irq ? TIM_DIER_CC2IE : 0;
-                cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS2 : 0;
+                cr2 |= (timer_advanced && config->channels[i].output_idle_state)
+                           ? TIM_CR2_OIS2
+                           : 0;
                 break;
             case TIMER_CHANNEL_3:
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) |
-                         (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC3PE : 0) |
-                         (uint32_t)(config->mode << TIM_CCMR2_OC3M_Pos);
-                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC3E | TIM_CCER_CC3P)
-                                                            : (TIM_CCER_CC3E);
+                ccmr2 |=
+                    (0b00U << TIM_CCMR2_CC3S_Pos) |
+                    (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC3PE
+                                                             : 0) |
+                    (uint32_t)(config->mode << TIM_CCMR2_OC3M_Pos);
+                ccer |= config->channels[i].output_polarity
+                            ? (TIM_CCER_CC3E | TIM_CCER_CC3P)
+                            : (TIM_CCER_CC3E);
                 dier |= enable_cc_irq ? TIM_DIER_CC3IE : 0;
-                cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS3 : 0;
+                cr2 |= (timer_advanced && config->channels[i].output_idle_state)
+                           ? TIM_CR2_OIS3
+                           : 0;
                 break;
             case TIMER_CHANNEL_4:
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) |
-                         (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC4PE : 0) |
-                         (uint32_t)(config->mode << TIM_CCMR2_OC4M_Pos);
-                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC4E | TIM_CCER_CC4P)
-                                                            : (TIM_CCER_CC4E);
+                ccmr2 |=
+                    (0b00U << TIM_CCMR2_CC4S_Pos) |
+                    (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC4PE
+                                                             : 0) |
+                    (uint32_t)(config->mode << TIM_CCMR2_OC4M_Pos);
+                ccer |= config->channels[i].output_polarity
+                            ? (TIM_CCER_CC4E | TIM_CCER_CC4P)
+                            : (TIM_CCER_CC4E);
                 dier |= enable_cc_irq ? TIM_DIER_CC4IE : 0;
-                cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS4 : 0;
+                cr2 |= (timer_advanced && config->channels[i].output_idle_state)
+                           ? TIM_CR2_OIS4
+                           : 0;
                 break;
             default:
                 return HAL_ERR_INVALID_ARG;
@@ -128,7 +153,8 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
     }
 
     if (enable_cc_irq) {
-        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
+        TRY(timer_register_callback(
+            handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
     }
 
     // Final writeback
@@ -144,7 +170,8 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
     if (timer_advanced) {
         handle->CR2 |= cr2;
         // Configure the run and idle off-state selection of the channels
-        handle->BDTR |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0);
+        handle->BDTR |= (config->ossi ? TIM_BDTR_OSSI : 0) |
+                        (config->ossr ? TIM_BDTR_OSSR : 0);
     }
 
     // Generate an update event so the timer's internal registers start afresh, and clear the update status flag
@@ -161,8 +188,9 @@ hal_err_t output_compare_deinit(TIM_TypeDef* handle) {
     return timer_deinit(handle);
 }
 
-hal_err_t
-output_compare_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_compare_level) {
+hal_err_t output_compare_start(TIM_TypeDef* handle,
+                               uint32_t     period_hz,
+                               uint32_t*    max_compare_level) {
     if (handle == NULL || period_hz == 0 || max_compare_level == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -173,10 +201,11 @@ output_compare_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_comp
     }
 
     // Get the denominator as it has different meanings depending on whether its center or edge aligned Output Compare
-    const uint32_t total_ticks_per_period = round_div_u32(timer_freq_hz, period_hz);
+    const uint32_t total_ticks_per_period =
+        round_div_u32(timer_freq_hz, period_hz);
 
     // Get the maximum width of the auto-reload register since it varies per timer
-    const uint32_t max_arr        = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+    const uint32_t max_arr = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
     const uint64_t max_arr_plus_1 = (uint64_t)max_arr + 1;
 
     // Compute suitable auto-reload and prescaler values
@@ -190,7 +219,8 @@ output_compare_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_comp
         // The denominator is equal to 2 * (PSC + 1) * ARR, so we divide by (2 * ARR), where ARR is max_arr
         psc_plus_1 = ceil_div_u64(total_ticks_per_period, 2ULL * max_arr);
         // Then divide by 2 * (PSC + 1), where (PSC + 1) is the just gotten psc_plus_1
-        arr_plus_1 = round_div_u64(total_ticks_per_period, 2ULL * psc_plus_1) + 1;
+        arr_plus_1 =
+            round_div_u64(total_ticks_per_period, 2ULL * psc_plus_1) + 1;
     } else {
         // Edge aligned Output Compare
         // The denominator is equal to (PSC + 1) * (ARR + 1), so we divide by (ARR + 1), where (ARR + 1) is max_arr_plus_1
@@ -224,8 +254,9 @@ output_compare_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_comp
     return HAL_OK;
 }
 
-hal_err_t
-output_compare_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uint32_t compare_level) {
+hal_err_t output_compare_set_compare(TIM_TypeDef*    handle,
+                                     timer_channel_t channel,
+                                     uint32_t        compare_level) {
     if (handle == NULL || channel >= timer_get_num_channels(handle) ||
         compare_level > get_max_compare_level(handle)) {
         return HAL_ERR_INVALID_ARG;
@@ -279,7 +310,8 @@ hal_err_t output_compare_unfreeze_timer(TIM_TypeDef* handle) {
     return HAL_OK;
 }
 
-hal_err_t output_compare_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
+hal_err_t output_compare_pause_channel(TIM_TypeDef*    handle,
+                                       timer_channel_t channel) {
     if (handle == NULL || channel >= timer_get_num_channels(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -287,7 +319,8 @@ hal_err_t output_compare_pause_channel(TIM_TypeDef* handle, timer_channel_t chan
     return HAL_OK;
 }
 
-hal_err_t output_compare_resume_channel(TIM_TypeDef* handle, timer_channel_t channel) {
+hal_err_t output_compare_resume_channel(TIM_TypeDef*    handle,
+                                        timer_channel_t channel) {
     if (handle == NULL || channel >= timer_get_num_channels(handle)) {
         return HAL_ERR_INVALID_ARG;
     }

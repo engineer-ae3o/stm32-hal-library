@@ -35,8 +35,9 @@ extern void arm_radix4_butterfly_f64(float64_t*       pSrc,
                                      const float64_t* pCoef,
                                      uint16_t         twidCoefModifier);
 
-extern void
-arm_bitreversal_64(uint64_t* pSrc, const uint16_t bitRevLen, const uint16_t* pBitRevTable);
+extern void arm_bitreversal_64(uint64_t*       pSrc,
+                               const uint16_t  bitRevLen,
+                               const uint16_t* pBitRevTable);
 
 /**
 * @} end of ComplexFFT group
@@ -184,7 +185,9 @@ void arm_radix4_butterfly_f64(float64_t*       pSrc,
 * @return none.
 */
 
-void arm_cfft_radix4by2_f64(float64_t* pSrc, uint32_t fftLen, const float64_t* pCoef) {
+void arm_cfft_radix4by2_f64(float64_t*       pSrc,
+                            uint32_t         fftLen,
+                            const float64_t* pCoef) {
     uint32_t  i, l;
     uint32_t  n2, ia;
     float64_t xt, yt, cosVal, sinVal;

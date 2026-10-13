@@ -61,9 +61,9 @@ void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx,
     q31x4_t               cmplxVec;
     q31x4_t               dstVec;
     uint32x4_t            strideVec;
-    uint32_t              blockSizeC = numSamples * CMPLX_DIM; /* loop counters */
-    uint32_t              blkCnt;
-    q31_t                 in;
+    uint32_t blockSizeC = numSamples * CMPLX_DIM; /* loop counters */
+    uint32_t blkCnt;
+    q31_t    in;
 
     /*
      * stride vector for pairs of real generation
@@ -91,8 +91,10 @@ void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx,
 
         in = *pSrcReal++;
         /* store saturated result in 1.31 format to destination buffer */
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
 
         /* Decrement loop counter */
         blkCnt--;
@@ -118,8 +120,10 @@ void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx,
         in = *pSrcReal++;
 #if defined(ARM_MATH_DSP)
         /* store saturated result in 1.31 format to destination buffer */
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
 #else
         /* store result in destination buffer. */
         *pCmplxDst++ = (q31_t)clip_q63_to_q31(((q63_t)*pSrcCmplx++ * in) >> 31);
@@ -128,8 +132,10 @@ void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx,
 
         in = *pSrcReal++;
 #if defined(ARM_MATH_DSP)
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
 #else
         *pCmplxDst++ = (q31_t)clip_q63_to_q31(((q63_t)*pSrcCmplx++ * in) >> 31);
         *pCmplxDst++ = (q31_t)clip_q63_to_q31(((q63_t)*pSrcCmplx++ * in) >> 31);
@@ -137,8 +143,10 @@ void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx,
 
         in = *pSrcReal++;
 #if defined(ARM_MATH_DSP)
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
 #else
         *pCmplxDst++ = (q31_t)clip_q63_to_q31(((q63_t)*pSrcCmplx++ * in) >> 31);
         *pCmplxDst++ = (q31_t)clip_q63_to_q31(((q63_t)*pSrcCmplx++ * in) >> 31);
@@ -146,8 +154,10 @@ void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx,
 
         in = *pSrcReal++;
 #if defined(ARM_MATH_DSP)
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
 #else
         *pCmplxDst++ = (q31_t)clip_q63_to_q31(((q63_t)*pSrcCmplx++ * in) >> 31);
         *pCmplxDst++ = (q31_t)clip_q63_to_q31(((q63_t)*pSrcCmplx++ * in) >> 31);
@@ -174,8 +184,10 @@ void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx,
         in = *pSrcReal++;
 #if defined(ARM_MATH_DSP)
         /* store saturated result in 1.31 format to destination buffer */
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
-        *pCmplxDst++ = (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
+        *pCmplxDst++ =
+            (__SSAT((q31_t)(((q63_t)*pSrcCmplx++ * in) >> 32), 31) << 1);
 #else
         /* store result in destination buffer. */
         *pCmplxDst++ = (q31_t)clip_q63_to_q31(((q63_t)*pSrcCmplx++ * in) >> 31);

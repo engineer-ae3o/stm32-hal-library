@@ -31,7 +31,9 @@
 #include "arm_nnfunctions.h"
 #include "arm_nnsupportfunctions.h"
 
-static void compare_and_replace_if_larger(int16_t* base, const int16_t* target, int32_t length) {
+static void compare_and_replace_if_larger(int16_t*       base,
+                                          const int16_t* target,
+                                          int32_t        length) {
     q15_t*           dst = base;
     const q15_t*     src = target;
     union arm_nnword ref_max;
@@ -61,8 +63,10 @@ static void compare_and_replace_if_larger(int16_t* base, const int16_t* target, 
     }
 }
 
-static void
-clamp_output(int16_t* source, int32_t length, const int16_t act_min, const int16_t act_max) {
+static void clamp_output(int16_t*      source,
+                         int32_t       length,
+                         const int16_t act_min,
+                         const int16_t act_max) {
     union arm_nnword in;
     int32_t          cnt = length >> 1;
 
@@ -125,8 +129,10 @@ arm_status arm_max_pool_s16(const cmsis_nn_context*     ctx,
     (void)ctx;
     int16_t* dst_base = dst;
 
-    for (int i_y = 0, base_idx_y = -pad_y; i_y < output_y; base_idx_y += stride_y, i_y++) {
-        for (int i_x = 0, base_idx_x = -pad_x; i_x < output_x; base_idx_x += stride_x, i_x++) {
+    for (int i_y = 0, base_idx_y = -pad_y; i_y < output_y;
+         base_idx_y += stride_y, i_y++) {
+        for (int i_x = 0, base_idx_x = -pad_x; i_x < output_x;
+             base_idx_x += stride_x, i_x++) {
             /* Condition for kernel start dimension: (base_idx_<x,y> + kernel_<x,y>_start) >= 0 */
             const int32_t ker_y_start = MAX(0, -base_idx_y);
             const int32_t ker_x_start = MAX(0, -base_idx_x);
@@ -140,7 +146,8 @@ arm_status arm_max_pool_s16(const cmsis_nn_context*     ctx,
             for (int k_y = ker_y_start; k_y < kernel_y_end; k_y++) {
                 for (int k_x = ker_x_start; k_x < kernel_x_end; k_x++) {
                     const int16_t* start =
-                        src + channel_in * (k_x + base_idx_x + (k_y + base_idx_y) * input_x);
+                        src + channel_in * (k_x + base_idx_x +
+                                            (k_y + base_idx_y) * input_x);
 
                     if (count == 0) {
                         memcpy(dst, start, channel_in * sizeof(int16_t));

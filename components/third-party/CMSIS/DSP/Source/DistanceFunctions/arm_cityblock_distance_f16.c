@@ -63,7 +63,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-float16_t arm_cityblock_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+float16_t arm_cityblock_distance_f16(const float16_t* pA,
+                                     const float16_t* pB,
+                                     uint32_t         blockSize) {
     uint32_t blkCnt;
     f16x8_t  a, b, accumV, tempV;
 
@@ -101,7 +103,9 @@ float16_t arm_cityblock_distance_f16(const float16_t* pA, const float16_t* pB, u
 }
 
 #else
-float16_t arm_cityblock_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+float16_t arm_cityblock_distance_f16(const float16_t* pA,
+                                     const float16_t* pB,
+                                     uint32_t         blockSize) {
     _Float16 accum, tmpA, tmpB;
 
     accum = 0.0f16;

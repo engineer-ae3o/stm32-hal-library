@@ -109,7 +109,8 @@ static uint16_t arm_scalar_log_q15(uint16_t src) {
 
     /* q11 */
     //tmp = y - ((int32_t)normalization << (LOG_Q15_ACCURACY + 1));
-    tmp = (int16_t)y - (normalization << (LOG_Q15_ACCURACY - LOG_Q15_INTEGER_PART));
+    tmp = (int16_t)y -
+          (normalization << (LOG_Q15_ACCURACY - LOG_Q15_INTEGER_PART));
 
     /* q4.11 */
     y = ((int32_t)tmp * LOG_Q15_INVLOG2EXP) >> 15;

@@ -115,10 +115,11 @@ arm_status arm_convolve_HWC_q7_basic(const q7_t*    Im_in,
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
                     } else {
                         /* Copying the pixel data to column */
-                        arm_q7_to_q15_no_shift((q7_t*)Im_in +
-                                                   (i_ker_y * dim_im_in + i_ker_x) * ch_im_in,
-                                               pBuffer,
-                                               ch_im_in);
+                        arm_q7_to_q15_no_shift(
+                            (q7_t*)Im_in +
+                                (i_ker_y * dim_im_in + i_ker_x) * ch_im_in,
+                            pBuffer,
+                            ch_im_in);
                     }
                     pBuffer += ch_im_in;
                 }
@@ -129,7 +130,8 @@ arm_status arm_convolve_HWC_q7_basic(const q7_t*    Im_in,
                 pOut = arm_nn_mat_mult_kernel_q7_q15(wt,
                                                      bufferA,
                                                      ch_im_out,
-                                                     ch_im_in * dim_kernel * dim_kernel,
+                                                     ch_im_in * dim_kernel *
+                                                         dim_kernel,
                                                      bias_shift,
                                                      out_shift,
                                                      bias,
@@ -199,9 +201,12 @@ arm_status arm_convolve_HWC_q7_basic(const q7_t*    Im_in,
                         if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in &&
                             in_col < dim_im_in) {
                             for (l = 0; l < ch_im_in; l++) {
-                                conv_out += Im_in[(in_row * dim_im_in + in_col) * ch_im_in + l] *
-                                            wt[i * ch_im_in * dim_kernel * dim_kernel +
-                                               (m * dim_kernel + n) * ch_im_in + l];
+                                conv_out +=
+                                    Im_in[(in_row * dim_im_in + in_col) *
+                                              ch_im_in +
+                                          l] *
+                                    wt[i * ch_im_in * dim_kernel * dim_kernel +
+                                       (m * dim_kernel + n) * ch_im_in + l];
                             }
                         }
                     }

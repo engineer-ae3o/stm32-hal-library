@@ -71,8 +71,10 @@ arm_status arm_mat_sub_f16(const arm_matrix_instance_f16* pSrcA,
 
 #ifdef ARM_MATH_MATRIX_CHECK
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) ||
-        (pSrcA->numRows != pDst->numRows) || (pSrcA->numCols != pDst->numCols)) {
+    if ((pSrcA->numRows != pSrcB->numRows) ||
+        (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -133,8 +135,10 @@ arm_status arm_mat_sub_f16(const arm_matrix_instance_f16* pSrcA,
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) ||
-        (pSrcA->numRows != pDst->numRows) || (pSrcA->numCols != pDst->numCols)) {
+    if ((pSrcA->numRows != pSrcB->numRows) ||
+        (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

@@ -62,8 +62,11 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_filtering.h"
 
-void arm_conv_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
+void arm_conv_q15(const q15_t* pSrcA,
+                  uint32_t     srcALen,
+                  const q15_t* pSrcB,
+                  uint32_t     srcBLen,
+                  q15_t*       pDst) {
     const q15_t* pIn1 = pSrcA; /* inputA pointer               */
     const q15_t* pIn2 = pSrcB; /* inputB pointer               */
     /*
@@ -143,7 +146,8 @@ void arm_conv_q15(
          * size is fixed for all accumulators
          * X pointer is incrementing for successive accumulators
          */
-        MVE_INTR_CONV_QUAD_INC_X_FIXED_SIZE_Q15(acc0, acc1, acc2, acc3, pX, pY, count);
+        MVE_INTR_CONV_QUAD_INC_X_FIXED_SIZE_Q15(
+            acc0, acc1, acc2, acc3, pX, pY, count);
         *pDst++ = (q15_t)acc0;
         *pDst++ = (q15_t)acc1;
         *pDst++ = (q15_t)acc2;
@@ -207,8 +211,11 @@ void arm_conv_q15(
     }
 }
 #else
-void arm_conv_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
+void arm_conv_q15(const q15_t* pSrcA,
+                  uint32_t     srcALen,
+                  const q15_t* pSrcB,
+                  uint32_t     srcBLen,
+                  q15_t*       pDst) {
 
 #if defined(ARM_MATH_DSP)
 
@@ -219,7 +226,8 @@ void arm_conv_q15(
     const q15_t* px;                          /* Intermediate inputA pointer */
     const q15_t* py;                          /* Intermediate inputB pointer */
     const q15_t *pSrc1, *pSrc2;               /* Intermediate pointers */
-    q31_t x0, x1, x2, x3, c0; /* Temporary input variables to hold state and coefficient values */
+    q31_t        x0, x1, x2, x3,
+        c0; /* Temporary input variables to hold state and coefficient values */
     uint32_t blockSize1, blockSize2, blockSize3; /* Loop counters */
     uint32_t j, k, count, blkCnt;                /* Loop counters */
 
@@ -336,9 +344,11 @@ void arm_conv_q15(
         while (k > 0U) {
             /* Perform the multiply-accumulate */
             /* x[0], x[1] are multiplied with y[srcBLen - 1], y[srcBLen - 2] respectively */
-            sum = __SMLALDX(read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
+            sum = __SMLALDX(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
             /* x[2], x[3] are multiplied with y[srcBLen - 3], y[srcBLen - 4] respectively */
-            sum = __SMLALDX(read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
+            sum = __SMLALDX(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
 
             /* Decrement loop counter */
             k--;
@@ -555,11 +565,23 @@ void arm_conv_q15(
 
             /* Store the result in the accumulator in the destination buffer. */
 #ifndef ARM_MATH_BIG_ENDIAN
-            write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc0 >> 15), 16), __SSAT((acc1 >> 15), 16), 16));
-            write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc2 >> 15), 16), __SSAT((acc3 >> 15), 16), 16));
+            write_q15x2_ia(&pOut,
+                           __PKHBT(__SSAT((acc0 >> 15), 16),
+                                   __SSAT((acc1 >> 15), 16),
+                                   16));
+            write_q15x2_ia(&pOut,
+                           __PKHBT(__SSAT((acc2 >> 15), 16),
+                                   __SSAT((acc3 >> 15), 16),
+                                   16));
 #else
-            write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc1 >> 15), 16), __SSAT((acc0 >> 15), 16), 16));
-            write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc3 >> 15), 16), __SSAT((acc2 >> 15), 16), 16));
+            write_q15x2_ia(&pOut,
+                           __PKHBT(__SSAT((acc1 >> 15), 16),
+                                   __SSAT((acc0 >> 15), 16),
+                                   16));
+            write_q15x2_ia(&pOut,
+                           __PKHBT(__SSAT((acc3 >> 15), 16),
+                                   __SSAT((acc2 >> 15), 16),
+                                   16));
 #endif /*      #ifndef  ARM_MATH_BIG_ENDIAN    */
 
             /* Increment the pointer pIn1 index, count by 4 */
@@ -706,10 +728,12 @@ void arm_conv_q15(
             /* Perform the multiply-accumulate */
             /* x[srcALen - srcBLen + 1], x[srcALen - srcBLen + 2] are multiplied
        * with y[srcBLen - 1], y[srcBLen - 2] respectively */
-            sum = __SMLALDX(read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
+            sum = __SMLALDX(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
             /* x[srcALen - srcBLen + 3], x[srcALen - srcBLen + 4] are multiplied
        * with y[srcBLen - 3], y[srcBLen - 4] respectively */
-            sum = __SMLALDX(read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
+            sum = __SMLALDX(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
 
             /* Decrement loop counter */
             k--;

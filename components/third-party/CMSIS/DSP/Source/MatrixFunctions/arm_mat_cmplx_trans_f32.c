@@ -71,9 +71,9 @@ arm_status arm_mat_cmplx_trans_f32(const arm_matrix_instance_f32* pSrc,
 #else
 arm_status arm_mat_cmplx_trans_f32(const arm_matrix_instance_f32* pSrc,
                                    arm_matrix_instance_f32*       pDst) {
-    float32_t* pIn  = pSrc->pData;       /* input data matrix pointer */
-    float32_t* pOut = pDst->pData;       /* output data matrix pointer */
-    float32_t* px;                       /* Temporary output data matrix pointer */
+    float32_t* pIn  = pSrc->pData; /* input data matrix pointer */
+    float32_t* pOut = pDst->pData; /* output data matrix pointer */
+    float32_t* px;                 /* Temporary output data matrix pointer */
     uint16_t   nRows    = pSrc->numRows; /* number of rows */
     uint16_t   nColumns = pSrc->numCols; /* number of columns */
     uint16_t   col, i = 0U, row = nRows; /* loop counters */

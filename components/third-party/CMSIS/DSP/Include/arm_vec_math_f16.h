@@ -121,7 +121,8 @@ __STATIC_INLINE f16x8_t vdiv_f16(f16x8_t num, f16x8_t den) {
   @return        destination    f16  vector
  */
 
-__STATIC_INLINE float16x8_t vtaylor_polyq_f16(float16x8_t x, const float16_t* coeffs) {
+__STATIC_INLINE float16x8_t vtaylor_polyq_f16(float16x8_t      x,
+                                              const float16_t* coeffs) {
     float16x8_t A   = vfmasq(vdupq_n_f16(coeffs[4]), x, coeffs[0]);
     float16x8_t B   = vfmasq(vdupq_n_f16(coeffs[6]), x, coeffs[2]);
     float16x8_t C   = vfmasq(vdupq_n_f16(coeffs[5]), x, coeffs[1]);
@@ -133,16 +134,16 @@ __STATIC_INLINE float16x8_t vtaylor_polyq_f16(float16x8_t x, const float16_t* co
     return res;
 }
 
-#define VMANT_EXP_F16(x)                                                                           \
-    any16x8_t r;                                                                                   \
-    int16x8_t n;                                                                                   \
-                                                                                                   \
-    r.f = x;                                                                                       \
-    n   = r.i >> 10;                                                                               \
-    n   = n - 15;                                                                                  \
-    r.i = r.i - (n << 10);                                                                         \
-                                                                                                   \
-    vecExpUnBiased = n;                                                                            \
+#define VMANT_EXP_F16(x)                                                       \
+    any16x8_t r;                                                               \
+    int16x8_t n;                                                               \
+                                                                               \
+    r.f = x;                                                                   \
+    n   = r.i >> 10;                                                           \
+    n   = n - 15;                                                              \
+    r.i = r.i - (n << 10);                                                     \
+                                                                               \
+    vecExpUnBiased = n;                                                        \
     vecTmpFlt1     = r.f;
 
 __STATIC_INLINE float16x8_t vlogq_f16(float16x8_t vecIn) {
@@ -200,14 +201,16 @@ __STATIC_INLINE float16x8_t vlogq_f16(float16x8_t vecIn) {
      */
     vecAcc0 = vfmaq(vecAcc0, vecExpUnBiasedFlt, __logf_rng_f16);
     // set log0 down to -inf
-    vecAcc0 = vdupq_m_n_f16(vecAcc0, -(_Float16)F16INFINITY, vcmpeqq_n_f16(vecIn, 0.0f));
+    vecAcc0 = vdupq_m_n_f16(
+        vecAcc0, -(_Float16)F16INFINITY, vcmpeqq_n_f16(vecIn, 0.0f));
     return vecAcc0;
 }
 
 __STATIC_INLINE float16x8_t vexpq_f16(float16x8_t x) {
     // Perform range reduction [-log(2),log(2)]
-    int16x8_t   m   = vcvtq_s16_f16(vmulq_n_f16(x, 1.4426950408f16));
-    float16x8_t val = vfmsq_f16(x, vcvtq_f16_s16(m), vdupq_n_f16(0.6931471805f16));
+    int16x8_t   m = vcvtq_s16_f16(vmulq_n_f16(x, 1.4426950408f16));
+    float16x8_t val =
+        vfmsq_f16(x, vcvtq_f16_s16(m), vdupq_n_f16(0.6931471805f16));
 
     // Polynomial Approximation
     float16x8_t poly = vtaylor_polyq_f16(val, exp_tab_f16);
@@ -265,7 +268,8 @@ __STATIC_INLINE f16x8_t vrecip_f16(f16x8_t vecIn) {
 }
 
 __STATIC_INLINE f16x8_t vtanhq_f16(f16x8_t val) {
-    f16x8_t x     = vminnmq_f16(vmaxnmq_f16(val, vdupq_n_f16(-10.f16)), vdupq_n_f16(10.0f16));
+    f16x8_t x     = vminnmq_f16(vmaxnmq_f16(val, vdupq_n_f16(-10.f16)),
+                                vdupq_n_f16(10.0f16));
     f16x8_t exp2x = vexpq_f16(vmulq_n_f16(x, 2.f16));
     f16x8_t num   = vsubq_n_f16(exp2x, 1.f16);
     f16x8_t den   = vaddq_n_f16(exp2x, 1.f16);

@@ -71,11 +71,11 @@ static uint8_t TraceError[2]  = {0U, 0U}; /* Trace Error flags (banked) */
 static uint8_t TraceError_n   = 0U;       /* Active Trace Error bank */
 
 // Trace Buffer
-static uint8_t           TraceBuf[SWO_BUFFER_SIZE]; /* Trace Buffer (must be 2^n) */
-static volatile uint32_t TraceIndexI = 0U;          /* Incoming Trace Index */
-static volatile uint32_t TraceIndexO = 0U;          /* Outgoing Trace Index */
-static volatile uint8_t  TraceUpdate;               /* Trace Update Flag */
-static uint32_t          TraceBlockSize;            /* Current Trace Block Size */
+static uint8_t TraceBuf[SWO_BUFFER_SIZE];  /* Trace Buffer (must be 2^n) */
+static volatile uint32_t TraceIndexI = 0U; /* Incoming Trace Index */
+static volatile uint32_t TraceIndexO = 0U; /* Outgoing Trace Index */
+static volatile uint8_t  TraceUpdate;      /* Trace Update Flag */
+static uint32_t          TraceBlockSize;   /* Current Trace Block Size */
 
 #if (TIMESTAMP_CLOCK != 0U)
 // Trace Timestamp
@@ -194,9 +194,10 @@ __WEAK uint32_t SWO_Baudrate_UART(uint32_t baudrate) {
         }
     }
 
-    status = pUSART->Control(ARM_USART_MODE_ASYNCHRONOUS | ARM_USART_DATA_BITS_8 |
-                                 ARM_USART_PARITY_NONE | ARM_USART_STOP_BITS_1,
-                             baudrate);
+    status =
+        pUSART->Control(ARM_USART_MODE_ASYNCHRONOUS | ARM_USART_DATA_BITS_8 |
+                            ARM_USART_PARITY_NONE | ARM_USART_STOP_BITS_1,
+                        baudrate);
 
     if (status == ARM_DRIVER_OK) {
         USART_Ready = 1U;
@@ -207,8 +208,8 @@ __WEAK uint32_t SWO_Baudrate_UART(uint32_t baudrate) {
 
     if (TraceStatus & DAP_SWO_CAPTURE_ACTIVE) {
         if ((TraceStatus & DAP_SWO_CAPTURE_PAUSED) == 0U) {
-            index          = TraceIndexI & (SWO_BUFFER_SIZE - 1U);
-            num            = TRACE_BLOCK_SIZE - (index & (TRACE_BLOCK_SIZE - 1U));
+            index = TraceIndexI & (SWO_BUFFER_SIZE - 1U);
+            num   = TRACE_BLOCK_SIZE - (index & (TRACE_BLOCK_SIZE - 1U));
             TraceBlockSize = num;
             pUSART->Receive(&TraceBuf[index], num);
         }
@@ -522,8 +523,9 @@ uint32_t SWO_Mode(const uint8_t* request, uint8_t* response) {
 uint32_t SWO_Baudrate(const uint8_t* request, uint8_t* response) {
     uint32_t baudrate;
 
-    baudrate = (uint32_t)(*(request + 0) << 0) | (uint32_t)(*(request + 1) << 8) |
-               (uint32_t)(*(request + 2) << 16) | (uint32_t)(*(request + 3) << 24);
+    baudrate =
+        (uint32_t)(*(request + 0) << 0) | (uint32_t)(*(request + 1) << 8) |
+        (uint32_t)(*(request + 2) << 16) | (uint32_t)(*(request + 3) << 24);
 
     switch (TraceMode) {
 #if (SWO_UART != 0)

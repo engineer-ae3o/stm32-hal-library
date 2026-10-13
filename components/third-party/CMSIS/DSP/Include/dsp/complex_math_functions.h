@@ -54,7 +54,9 @@ extern "C" {
    * @param[out] pDst        points to the output vector
    * @param[in]  numSamples  number of complex samples in each vector
    */
-void arm_cmplx_conj_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSamples);
+void arm_cmplx_conj_f32(const float32_t* pSrc,
+                        float32_t*       pDst,
+                        uint32_t         numSamples);
 
 /**
    * @brief  Q31 complex conjugate.
@@ -80,7 +82,9 @@ void arm_cmplx_conj_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSamples);
    * @param[out] pDst        points to the real output vector
    * @param[in]  numSamples  number of complex samples in the input vector
    */
-void arm_cmplx_mag_squared_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSamples);
+void arm_cmplx_mag_squared_f32(const float32_t* pSrc,
+                               float32_t*       pDst,
+                               uint32_t         numSamples);
 
 
 /**
@@ -89,7 +93,9 @@ void arm_cmplx_mag_squared_f32(const float32_t* pSrc, float32_t* pDst, uint32_t 
    * @param[out] pDst        points to the real output vector
    * @param[in]  numSamples  number of complex samples in the input vector
    */
-void arm_cmplx_mag_squared_f64(const float64_t* pSrc, float64_t* pDst, uint32_t numSamples);
+void arm_cmplx_mag_squared_f64(const float64_t* pSrc,
+                               float64_t*       pDst,
+                               uint32_t         numSamples);
 
 
 /**
@@ -98,7 +104,9 @@ void arm_cmplx_mag_squared_f64(const float64_t* pSrc, float64_t* pDst, uint32_t 
    * @param[out] pDst        points to the real output vector
    * @param[in]  numSamples  number of complex samples in the input vector
    */
-void arm_cmplx_mag_squared_q31(const q31_t* pSrc, q31_t* pDst, uint32_t numSamples);
+void arm_cmplx_mag_squared_q31(const q31_t* pSrc,
+                               q31_t*       pDst,
+                               uint32_t     numSamples);
 
 
 /**
@@ -107,7 +115,9 @@ void arm_cmplx_mag_squared_q31(const q31_t* pSrc, q31_t* pDst, uint32_t numSampl
    * @param[out] pDst        points to the real output vector
    * @param[in]  numSamples  number of complex samples in the input vector
    */
-void arm_cmplx_mag_squared_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSamples);
+void arm_cmplx_mag_squared_q15(const q15_t* pSrc,
+                               q15_t*       pDst,
+                               uint32_t     numSamples);
 
 
 /**
@@ -116,7 +126,9 @@ void arm_cmplx_mag_squared_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSampl
    * @param[out] pDst        points to the real output vector
    * @param[in]  numSamples  number of complex samples in the input vector
    */
-void arm_cmplx_mag_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSamples);
+void arm_cmplx_mag_f32(const float32_t* pSrc,
+                       float32_t*       pDst,
+                       uint32_t         numSamples);
 
 
 /**
@@ -125,7 +137,9 @@ void arm_cmplx_mag_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSampl
    * @param[out] pDst        points to the real output vector
    * @param[in]  numSamples  number of complex samples in the input vector
    */
-void arm_cmplx_mag_f64(const float64_t* pSrc, float64_t* pDst, uint32_t numSamples);
+void arm_cmplx_mag_f64(const float64_t* pSrc,
+                       float64_t*       pDst,
+                       uint32_t         numSamples);
 
 
 /**
@@ -151,7 +165,9 @@ void arm_cmplx_mag_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSamples);
    * @param[out] pDst        points to the real output vector
    * @param[in]  numSamples  number of complex samples in the input vector
    */
-void arm_cmplx_mag_fast_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSamples);
+void arm_cmplx_mag_fast_q15(const q15_t* pSrc,
+                            q15_t*       pDst,
+                            uint32_t     numSamples);
 
 
 /**

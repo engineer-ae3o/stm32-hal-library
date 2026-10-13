@@ -168,7 +168,8 @@ arm_status arm_nn_vec_mat_mult_t_s16(const q15_t*  lhs,
         if (bias) {
             result = *bias++;
         }
-        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols; ++rhs_cols_idx) {
+        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols;
+             ++rhs_cols_idx) {
             const q63_t rhs_value0 = (int8_t)*rhs_ptr_0;
             const q63_t lhs_value  = *lhs_ptr;
 

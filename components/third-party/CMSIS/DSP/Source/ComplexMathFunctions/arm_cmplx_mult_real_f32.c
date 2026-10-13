@@ -134,8 +134,9 @@ void arm_cmplx_mult_real_f32(const float32_t* pSrcCmplx,
     blkCnt = numSamples >> 2U;
 
     while (blkCnt > 0U) {
-        ab = vld2q_f32(pSrcCmplx); // load & separate real/imag pSrcA (de-interleave 2)
-        r  = vld1q_f32(pSrcReal);  // load & separate real/imag pSrcB
+        ab = vld2q_f32(
+            pSrcCmplx); // load & separate real/imag pSrcA (de-interleave 2)
+        r = vld1q_f32(pSrcReal); // load & separate real/imag pSrcB
 
         /* Increment pointers */
         pSrcCmplx += 8;

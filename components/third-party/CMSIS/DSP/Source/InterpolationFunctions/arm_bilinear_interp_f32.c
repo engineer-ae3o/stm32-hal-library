@@ -98,8 +98,9 @@
   * @param[in]     Y  interpolation coordinate.
   * @return out interpolated value.
   */
-float32_t
-arm_bilinear_interp_f32(const arm_bilinear_interp_instance_f32* S, float32_t X, float32_t Y) {
+float32_t arm_bilinear_interp_f32(const arm_bilinear_interp_instance_f32* S,
+                                  float32_t                               X,
+                                  float32_t                               Y) {
     float32_t  out;
     float32_t  f00, f01, f10, f11;
     float32_t* pData = S->pData;
@@ -112,7 +113,8 @@ arm_bilinear_interp_f32(const arm_bilinear_interp_instance_f32* S, float32_t X, 
 
     /* Care taken for table outside boundary */
     /* Returns zero output when values are outside table boundary */
-    if (xIndex < 0 || xIndex > (S->numCols - 2) || yIndex < 0 || yIndex > (S->numRows - 2)) {
+    if (xIndex < 0 || xIndex > (S->numCols - 2) || yIndex < 0 ||
+        yIndex > (S->numRows - 2)) {
         return (0);
     }
 

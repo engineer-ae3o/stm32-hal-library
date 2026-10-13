@@ -85,8 +85,9 @@ static float32_t arm_inverse_fft_length_f32(uint16_t fftLen) {
 }
 
 
-static void
-_arm_radix4_butterfly_f32_mve(const arm_cfft_instance_f32* S, float32_t* pSrc, uint32_t fftLen) {
+static void _arm_radix4_butterfly_f32_mve(const arm_cfft_instance_f32* S,
+                                          float32_t*                   pSrc,
+                                          uint32_t                     fftLen) {
     f32x4_t              vecTmp0, vecTmp1;
     f32x4_t              vecSum0, vecDiff0, vecSum1, vecDiff1;
     f32x4_t              vecA, vecB, vecC, vecD;
@@ -104,11 +105,14 @@ _arm_radix4_butterfly_f32_mve(const arm_cfft_instance_f32* S, float32_t* pSrc, u
     n2 >>= 2u;
     for (int k = fftLen / 4u; k > 1; k >>= 2) {
         float32_t const* p_rearranged_twiddle_tab_stride1 =
-            &S->rearranged_twiddle_stride1[S->rearranged_twiddle_tab_stride1_arr[stage]];
+            &S->rearranged_twiddle_stride1
+                 [S->rearranged_twiddle_tab_stride1_arr[stage]];
         float32_t const* p_rearranged_twiddle_tab_stride2 =
-            &S->rearranged_twiddle_stride2[S->rearranged_twiddle_tab_stride2_arr[stage]];
+            &S->rearranged_twiddle_stride2
+                 [S->rearranged_twiddle_tab_stride2_arr[stage]];
         float32_t const* p_rearranged_twiddle_tab_stride3 =
-            &S->rearranged_twiddle_stride3[S->rearranged_twiddle_tab_stride3_arr[stage]];
+            &S->rearranged_twiddle_stride3
+                 [S->rearranged_twiddle_tab_stride3_arr[stage]];
 
         float32_t* pBase = pSrc;
         for (int i = 0; i < iter; i++) {
@@ -240,8 +244,9 @@ _arm_radix4_butterfly_f32_mve(const arm_cfft_instance_f32* S, float32_t* pSrc, u
      */
 }
 
-static void
-arm_cfft_radix4by2_f32_mve(const arm_cfft_instance_f32* S, float32_t* pSrc, uint32_t fftLen) {
+static void arm_cfft_radix4by2_f32_mve(const arm_cfft_instance_f32* S,
+                                       float32_t*                   pSrc,
+                                       uint32_t                     fftLen) {
     float32_t const* pCoefVec;
     float32_t const* pCoef = S->pTwiddle;
     float32_t *      pIn0, *pIn1;
@@ -283,10 +288,11 @@ arm_cfft_radix4by2_f32_mve(const arm_cfft_instance_f32* S, float32_t* pSrc, uint
     pIn0 = pSrc;
 }
 
-static void _arm_radix4_butterfly_inverse_f32_mve(const arm_cfft_instance_f32* S,
-                                                  float32_t*                   pSrc,
-                                                  uint32_t                     fftLen,
-                                                  float32_t                    onebyfftLen) {
+static void
+_arm_radix4_butterfly_inverse_f32_mve(const arm_cfft_instance_f32* S,
+                                      float32_t*                   pSrc,
+                                      uint32_t                     fftLen,
+                                      float32_t onebyfftLen) {
     f32x4_t              vecTmp0, vecTmp1;
     f32x4_t              vecSum0, vecDiff0, vecSum1, vecDiff1;
     f32x4_t              vecA, vecB, vecC, vecD;
@@ -304,11 +310,14 @@ static void _arm_radix4_butterfly_inverse_f32_mve(const arm_cfft_instance_f32* S
     n2 >>= 2u;
     for (int k = fftLen / 4; k > 1; k >>= 2) {
         float32_t const* p_rearranged_twiddle_tab_stride1 =
-            &S->rearranged_twiddle_stride1[S->rearranged_twiddle_tab_stride1_arr[stage]];
+            &S->rearranged_twiddle_stride1
+                 [S->rearranged_twiddle_tab_stride1_arr[stage]];
         float32_t const* p_rearranged_twiddle_tab_stride2 =
-            &S->rearranged_twiddle_stride2[S->rearranged_twiddle_tab_stride2_arr[stage]];
+            &S->rearranged_twiddle_stride2
+                 [S->rearranged_twiddle_tab_stride2_arr[stage]];
         float32_t const* p_rearranged_twiddle_tab_stride3 =
-            &S->rearranged_twiddle_stride3[S->rearranged_twiddle_tab_stride3_arr[stage]];
+            &S->rearranged_twiddle_stride3
+                 [S->rearranged_twiddle_tab_stride3_arr[stage]];
 
         float32_t* pBase = pSrc;
         for (int i = 0; i < iter; i++) {
@@ -445,8 +454,8 @@ static void _arm_radix4_butterfly_inverse_f32_mve(const arm_cfft_instance_f32* S
 }
 
 static void arm_cfft_radix4by2_inverse_f32_mve(const arm_cfft_instance_f32* S,
-                                               float32_t*                   pSrc,
-                                               uint32_t                     fftLen) {
+                                               float32_t* pSrc,
+                                               uint32_t   fftLen) {
     float32_t const* pCoefVec;
     float32_t const* pCoef = S->pTwiddle;
     float32_t *      pIn0, *pIn1;
@@ -554,7 +563,8 @@ void arm_cfft_f32(const arm_cfft_instance_f32* S,
 
     if (bitReverseFlag) {
 
-        arm_bitreversal_32_inpl_mve((uint32_t*)pSrc, S->bitRevLength, S->pBitRevTable);
+        arm_bitreversal_32_inpl_mve(
+            (uint32_t*)pSrc, S->bitRevLength, S->pBitRevTable);
     }
 }
 
@@ -565,8 +575,9 @@ extern void arm_radix8_butterfly_f32(float32_t*       pSrc,
                                      const float32_t* pCoef,
                                      uint16_t         twidCoefModifier);
 
-extern void
-arm_bitreversal_32(uint32_t* pSrc, const uint16_t bitRevLen, const uint16_t* pBitRevTable);
+extern void arm_bitreversal_32(uint32_t*       pSrc,
+                               const uint16_t  bitRevLen,
+                               const uint16_t* pBitRevTable);
 
 /**
   @ingroup groupTransforms
@@ -840,8 +851,8 @@ void arm_cfft_radix8by2_f32(arm_cfft_instance_f32* S, float32_t* p1) {
 }
 
 void arm_cfft_radix8by4_f32(arm_cfft_instance_f32* S, float32_t* p1) {
-    uint32_t         L = S->fftLen >> 1;
-    float32_t *      pCol1, *pCol2, *pCol3, *pCol4, *pEnd1, *pEnd2, *pEnd3, *pEnd4;
+    uint32_t   L = S->fftLen >> 1;
+    float32_t *pCol1, *pCol2, *pCol3, *pCol4, *pEnd1, *pEnd2, *pEnd3, *pEnd4;
     const float32_t *tw2, *tw3, *tw4;
     float32_t*       p2 = p1 + L;
     float32_t*       p3 = p2 + L;

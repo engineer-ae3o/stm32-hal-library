@@ -57,8 +57,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-float32_t
-arm_kullback_leibler_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize) {
+float32_t arm_kullback_leibler_f32(const float32_t* pSrcA,
+                                   const float32_t* pSrcB,
+                                   uint32_t         blockSize) {
     uint32_t  blkCnt;
     float32_t accum, pA, pB;
 
@@ -105,8 +106,9 @@ arm_kullback_leibler_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_
 
 #include "NEMath.h"
 
-float32_t
-arm_kullback_leibler_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize) {
+float32_t arm_kullback_leibler_f32(const float32_t* pSrcA,
+                                   const float32_t* pSrcB,
+                                   uint32_t         blockSize) {
     const float32_t *pInA, *pInB;
     uint32_t         blkCnt;
     float32_t        accum, pA, pB;
@@ -154,8 +156,9 @@ arm_kullback_leibler_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_
 }
 
 #else
-float32_t
-arm_kullback_leibler_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize) {
+float32_t arm_kullback_leibler_f32(const float32_t* pSrcA,
+                                   const float32_t* pSrcB,
+                                   uint32_t         blockSize) {
     const float32_t *pInA, *pInB;
     uint32_t         blkCnt;
     float32_t        accum, pA, pB;

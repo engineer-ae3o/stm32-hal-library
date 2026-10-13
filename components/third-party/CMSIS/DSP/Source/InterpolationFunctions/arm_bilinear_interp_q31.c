@@ -45,7 +45,9 @@
   * @param[in]     Y  interpolation coordinate in 12.20 format.
   * @return out interpolated value.
   */
-q31_t arm_bilinear_interp_q31(arm_bilinear_interp_instance_q31* S, q31_t X, q31_t Y) {
+q31_t arm_bilinear_interp_q31(arm_bilinear_interp_instance_q31* S,
+                              q31_t                             X,
+                              q31_t                             Y) {
     q31_t    out;                 /* Temporary output */
     q31_t    acc = 0;             /* output */
     q31_t    xfract, yfract;      /* X, Y fractional parts */

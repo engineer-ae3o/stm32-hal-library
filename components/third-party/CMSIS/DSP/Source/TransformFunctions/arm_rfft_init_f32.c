@@ -74,7 +74,7 @@ arm_status arm_rfft_init_f32(arm_rfft_instance_f32*        S,
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_FFT_ALLOW_TABLES)
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
     defined(ARM_TABLE_REALCOEF_F32)
 
     /*  Initialise the default arm status */

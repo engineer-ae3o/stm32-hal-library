@@ -192,11 +192,14 @@ const float32_t firCoeffs32[NUM_TAPS_ARRAY_SIZE] = {
     -0.0018225230f, 0.0f,           0.0f,           0.0f};
 #else
 const float32_t firCoeffs32[NUM_TAPS_ARRAY_SIZE] = {
-    -0.0018225230f, -0.0015879294f, +0.0000000000f, +0.0036977508f, +0.0080754303f, +0.0085302217f,
-    -0.0000000000f, -0.0173976984f, -0.0341458607f, -0.0333591565f, +0.0000000000f, +0.0676308395f,
-    +0.1522061835f, +0.2229246956f, +0.2504960933f, +0.2229246956f, +0.1522061835f, +0.0676308395f,
-    +0.0000000000f, -0.0333591565f, -0.0341458607f, -0.0173976984f, -0.0000000000f, +0.0085302217f,
-    +0.0080754303f, +0.0036977508f, +0.0000000000f, -0.0015879294f, -0.0018225230f};
+    -0.0018225230f, -0.0015879294f, +0.0000000000f, +0.0036977508f,
+    +0.0080754303f, +0.0085302217f, -0.0000000000f, -0.0173976984f,
+    -0.0341458607f, -0.0333591565f, +0.0000000000f, +0.0676308395f,
+    +0.1522061835f, +0.2229246956f, +0.2504960933f, +0.2229246956f,
+    +0.1522061835f, +0.0676308395f, +0.0000000000f, -0.0333591565f,
+    -0.0341458607f, -0.0173976984f, -0.0000000000f, +0.0085302217f,
+    +0.0080754303f, +0.0036977508f, +0.0000000000f, -0.0015879294f,
+    -0.0018225230f};
 #endif
 
 /* ------------------------------------------------------------------
@@ -223,14 +226,18 @@ int32_t main(void) {
     outputF32 = &testOutput[0];
 
     /* Call FIR init function to initialize the instance structure. */
-    arm_fir_init_f32(&S, NUM_TAPS, (float32_t*)&firCoeffs32[0], &firStateF32[0], blockSize);
+    arm_fir_init_f32(
+        &S, NUM_TAPS, (float32_t*)&firCoeffs32[0], &firStateF32[0], blockSize);
 
     /* ----------------------------------------------------------------------
   ** Call the FIR process function for every blockSize samples
   ** ------------------------------------------------------------------- */
 
     for (i = 0; i < numBlocks; i++) {
-        arm_fir_f32(&S, inputF32 + (i * blockSize), outputF32 + (i * blockSize), blockSize);
+        arm_fir_f32(&S,
+                    inputF32 + (i * blockSize),
+                    outputF32 + (i * blockSize),
+                    blockSize);
     }
 
     /* ----------------------------------------------------------------------
@@ -240,7 +247,8 @@ int32_t main(void) {
 
     snr = arm_snr_f32(&refOutput[0], &testOutput[0], TEST_LENGTH_SAMPLES);
 
-    status = (snr < SNR_THRESHOLD_F32) ? ARM_MATH_TEST_FAILURE : ARM_MATH_SUCCESS;
+    status =
+        (snr < SNR_THRESHOLD_F32) ? ARM_MATH_TEST_FAILURE : ARM_MATH_SUCCESS;
 
     if (status != ARM_MATH_SUCCESS) {
 #if defined(SEMIHOSTING)

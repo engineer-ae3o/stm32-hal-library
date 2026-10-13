@@ -99,216 +99,217 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_filtering.h"
 
-#define MVE_INTR_CORR_DUAL_DEC_Y_INC_SIZE_F16(acc0, acc1, pX, pY, count)                           \
-    {                                                                                              \
-        float16_t const *pSrcX, *pSrcY;                                                            \
-        f16x8_t          acc0Vec, acc1Vec, xVec, yVec;                                             \
-        uint32_t         k;                                                                        \
-                                                                                                   \
-        acc0Vec = vdupq_n_f16(0.0f);                                                               \
-        acc1Vec = vdupq_n_f16(0.0f);                                                               \
-        pSrcX   = (float16_t const*)pX;                                                            \
-        pSrcY   = (float16_t const*)pY;                                                            \
-        k       = count >> 3;                                                                      \
-        while (k > 0U) {                                                                           \
-            xVec = vld1q(pSrcX);                                                                   \
-            pSrcX += 8;                                                                            \
-            yVec    = vldrhq_f16(&pSrcY[-1]);                                                      \
-            acc1Vec = vfmaq_f16(acc1Vec, xVec, yVec);                                              \
-            yVec    = vld1q(pSrcY);                                                                \
-            pSrcY += 8;                                                                            \
-            acc0Vec = vfmaq_f16(acc0Vec, xVec, yVec);                                              \
-            /*  Decrement the loop counter   */                                                    \
-            k--;                                                                                   \
-        }                                                                                          \
-        k = count % 0x8U;                                                                          \
-        /* use predication to finalize MAC sum */                                                  \
-        /* acc1 requires 1 additional sample  */                                                   \
-        /* so add 1 to unmask an extra lane  in final MAC computation  */                          \
-        mve_pred16_t p0 = vctp16q(k + 1);                                                          \
-        xVec            = vld1q(pSrcX);                                                            \
-        pSrcX += 8;                                                                                \
-        yVec    = vldrhq_f16(&pSrcY[-1]);                                                          \
-        acc1Vec = vfmaq_m_f16(acc1Vec, xVec, yVec, p0);                                            \
-        /* acc0 requires exact number of sample  */                                                \
-        /* disable extra lanes in final MAC computation  */                                        \
-        p0   = vctp16q(k);                                                                         \
-        yVec = vld1q(pSrcY);                                                                       \
-        pSrcY += 8;                                                                                \
-        acc0Vec = vfmaq_m_f16(acc0Vec, xVec, yVec, p0);                                            \
-                                                                                                   \
-        acc0 = vecAddAcrossF16Mve(acc0Vec);                                                        \
-        acc1 = vecAddAcrossF16Mve(acc1Vec);                                                        \
+#define MVE_INTR_CORR_DUAL_DEC_Y_INC_SIZE_F16(acc0, acc1, pX, pY, count)       \
+    {                                                                          \
+        float16_t const *pSrcX, *pSrcY;                                        \
+        f16x8_t          acc0Vec, acc1Vec, xVec, yVec;                         \
+        uint32_t         k;                                                    \
+                                                                               \
+        acc0Vec = vdupq_n_f16(0.0f);                                           \
+        acc1Vec = vdupq_n_f16(0.0f);                                           \
+        pSrcX   = (float16_t const*)pX;                                        \
+        pSrcY   = (float16_t const*)pY;                                        \
+        k       = count >> 3;                                                  \
+        while (k > 0U) {                                                       \
+            xVec = vld1q(pSrcX);                                               \
+            pSrcX += 8;                                                        \
+            yVec    = vldrhq_f16(&pSrcY[-1]);                                  \
+            acc1Vec = vfmaq_f16(acc1Vec, xVec, yVec);                          \
+            yVec    = vld1q(pSrcY);                                            \
+            pSrcY += 8;                                                        \
+            acc0Vec = vfmaq_f16(acc0Vec, xVec, yVec);                          \
+            /*  Decrement the loop counter   */                                \
+            k--;                                                               \
+        }                                                                      \
+        k = count % 0x8U;                                                      \
+        /* use predication to finalize MAC sum */                              \
+        /* acc1 requires 1 additional sample  */                               \
+        /* so add 1 to unmask an extra lane  in final MAC computation  */      \
+        mve_pred16_t p0 = vctp16q(k + 1);                                      \
+        xVec            = vld1q(pSrcX);                                        \
+        pSrcX += 8;                                                            \
+        yVec    = vldrhq_f16(&pSrcY[-1]);                                      \
+        acc1Vec = vfmaq_m_f16(acc1Vec, xVec, yVec, p0);                        \
+        /* acc0 requires exact number of sample  */                            \
+        /* disable extra lanes in final MAC computation  */                    \
+        p0   = vctp16q(k);                                                     \
+        yVec = vld1q(pSrcY);                                                   \
+        pSrcY += 8;                                                            \
+        acc0Vec = vfmaq_m_f16(acc0Vec, xVec, yVec, p0);                        \
+                                                                               \
+        acc0 = vecAddAcrossF16Mve(acc0Vec);                                    \
+        acc1 = vecAddAcrossF16Mve(acc1Vec);                                    \
     }
 
-#define MVE_INTR_CORR_SINGLE_F16(acc, pX, pY, count)                                               \
-    {                                                                                              \
-        float16_t const *pSrcX, *pSrcY;                                                            \
-        f16x8_t          accVec, xVec, yVec;                                                       \
-        uint16_t         k;                                                                        \
-                                                                                                   \
-        accVec = vdupq_n_f16(0.0f);                                                                \
-        pSrcX  = (float16_t const*)pX;                                                             \
-        pSrcY  = (float16_t const*)pY;                                                             \
-        k      = count >> 3;                                                                       \
-                                                                                                   \
-        while (k > 0U) {                                                                           \
-            yVec = vld1q(pSrcY);                                                                   \
-            pSrcY += 8;                                                                            \
-            xVec = vld1q(pSrcX);                                                                   \
-            pSrcX += 8;                                                                            \
-            accVec = vfmaq(accVec, xVec, yVec);                                                    \
-            /*  Decrement the loop counter   */                                                    \
-            k--;                                                                                   \
-        }                                                                                          \
-        /* Loop with tail predication expected here  */                                            \
-        k = count % 0x8U;                                                                          \
-        if (k > 0U) {                                                                              \
-            mve_pred16_t p0 = vctp16q(k);                                                          \
-            yVec            = vld1q(pSrcY);                                                        \
-            pSrcY += 8;                                                                            \
-            xVec = vld1q(pSrcX);                                                                   \
-            pSrcX += 8;                                                                            \
-            accVec = vfmaq_m(accVec, xVec, yVec, p0);                                              \
-        }                                                                                          \
-                                                                                                   \
-        acc = vecAddAcrossF16Mve(accVec);                                                          \
+#define MVE_INTR_CORR_SINGLE_F16(acc, pX, pY, count)                           \
+    {                                                                          \
+        float16_t const *pSrcX, *pSrcY;                                        \
+        f16x8_t          accVec, xVec, yVec;                                   \
+        uint16_t         k;                                                    \
+                                                                               \
+        accVec = vdupq_n_f16(0.0f);                                            \
+        pSrcX  = (float16_t const*)pX;                                         \
+        pSrcY  = (float16_t const*)pY;                                         \
+        k      = count >> 3;                                                   \
+                                                                               \
+        while (k > 0U) {                                                       \
+            yVec = vld1q(pSrcY);                                               \
+            pSrcY += 8;                                                        \
+            xVec = vld1q(pSrcX);                                               \
+            pSrcX += 8;                                                        \
+            accVec = vfmaq(accVec, xVec, yVec);                                \
+            /*  Decrement the loop counter   */                                \
+            k--;                                                               \
+        }                                                                      \
+        /* Loop with tail predication expected here  */                        \
+        k = count % 0x8U;                                                      \
+        if (k > 0U) {                                                          \
+            mve_pred16_t p0 = vctp16q(k);                                      \
+            yVec            = vld1q(pSrcY);                                    \
+            pSrcY += 8;                                                        \
+            xVec = vld1q(pSrcX);                                               \
+            pSrcX += 8;                                                        \
+            accVec = vfmaq_m(accVec, xVec, yVec, p0);                          \
+        }                                                                      \
+                                                                               \
+        acc = vecAddAcrossF16Mve(accVec);                                      \
     }
 
-#define MVE_INTR_CORR_QUAD_INC_X_FIXED_SIZE_F16(acc0, acc1, acc2, acc3, pX, pY, count)             \
-    {                                                                                              \
-        float16_t const *pSrcX, *pSrcY;                                                            \
-        f16x8_t          acc0Vec, acc1Vec, acc2Vec, acc3Vec, xVec, yVec;                           \
-        uint32_t         k;                                                                        \
-                                                                                                   \
-        acc0Vec = vdupq_n_f16(0.0f);                                                               \
-        acc1Vec = vdupq_n_f16(0.0f);                                                               \
-        acc2Vec = vdupq_n_f16(0.0f);                                                               \
-        acc3Vec = vdupq_n_f16(0.0f);                                                               \
-        pSrcX   = (float16_t const*)pX;                                                            \
-        pSrcY   = (float16_t const*)pY;                                                            \
-        k       = count >> 3;                                                                      \
-                                                                                                   \
-        while (k > 0U) {                                                                           \
-            yVec = vld1q(pSrcY);                                                                   \
-            pSrcY += 8;                                                                            \
-            xVec    = vldrhq_f16(&pSrcX[1]);                                                       \
-            acc1Vec = vfmaq_f16(acc1Vec, xVec, yVec);                                              \
-            xVec    = vldrhq_f16(&pSrcX[2]);                                                       \
-            acc2Vec = vfmaq_f16(acc2Vec, xVec, yVec);                                              \
-            xVec    = vldrhq_f16(&pSrcX[3]);                                                       \
-            acc3Vec = vfmaq_f16(acc3Vec, xVec, yVec);                                              \
-            xVec    = vld1q(pSrcX);                                                                \
-            pSrcX += 8;                                                                            \
-            acc0Vec = vfmaq_f16(acc0Vec, xVec, yVec);                                              \
-            /*  Decrement the loop counter   */                                                    \
-            k--;                                                                                   \
-        }                                                                                          \
-        /* loop + tail predication expected here  */                                               \
-        k = count % 0x8U;                                                                          \
-        if (k > 0U) {                                                                              \
-            mve_pred16_t p0 = vctp16q(k);                                                          \
-            yVec            = vld1q(pSrcY);                                                        \
-            pSrcY += 8;                                                                            \
-            xVec    = vldrhq_f16(&pSrcX[1]);                                                       \
-            acc1Vec = vfmaq_m_f16(acc1Vec, xVec, yVec, p0);                                        \
-            xVec    = vldrhq_f16(&pSrcX[2]);                                                       \
-            acc2Vec = vfmaq_m_f16(acc2Vec, xVec, yVec, p0);                                        \
-            xVec    = vldrhq_f16(&pSrcX[3]);                                                       \
-            acc3Vec = vfmaq_m_f16(acc3Vec, xVec, yVec, p0);                                        \
-            xVec    = vld1q(pSrcX);                                                                \
-            pSrcX += 8;                                                                            \
-            acc0Vec = vfmaq_m_f16(acc0Vec, xVec, yVec, p0);                                        \
-        }                                                                                          \
-                                                                                                   \
-        acc0 = vecAddAcrossF16Mve(acc0Vec);                                                        \
-        acc1 = vecAddAcrossF16Mve(acc1Vec);                                                        \
-        acc2 = vecAddAcrossF16Mve(acc2Vec);                                                        \
-        acc3 = vecAddAcrossF16Mve(acc3Vec);                                                        \
+#define MVE_INTR_CORR_QUAD_INC_X_FIXED_SIZE_F16(                               \
+    acc0, acc1, acc2, acc3, pX, pY, count)                                     \
+    {                                                                          \
+        float16_t const *pSrcX, *pSrcY;                                        \
+        f16x8_t          acc0Vec, acc1Vec, acc2Vec, acc3Vec, xVec, yVec;       \
+        uint32_t         k;                                                    \
+                                                                               \
+        acc0Vec = vdupq_n_f16(0.0f);                                           \
+        acc1Vec = vdupq_n_f16(0.0f);                                           \
+        acc2Vec = vdupq_n_f16(0.0f);                                           \
+        acc3Vec = vdupq_n_f16(0.0f);                                           \
+        pSrcX   = (float16_t const*)pX;                                        \
+        pSrcY   = (float16_t const*)pY;                                        \
+        k       = count >> 3;                                                  \
+                                                                               \
+        while (k > 0U) {                                                       \
+            yVec = vld1q(pSrcY);                                               \
+            pSrcY += 8;                                                        \
+            xVec    = vldrhq_f16(&pSrcX[1]);                                   \
+            acc1Vec = vfmaq_f16(acc1Vec, xVec, yVec);                          \
+            xVec    = vldrhq_f16(&pSrcX[2]);                                   \
+            acc2Vec = vfmaq_f16(acc2Vec, xVec, yVec);                          \
+            xVec    = vldrhq_f16(&pSrcX[3]);                                   \
+            acc3Vec = vfmaq_f16(acc3Vec, xVec, yVec);                          \
+            xVec    = vld1q(pSrcX);                                            \
+            pSrcX += 8;                                                        \
+            acc0Vec = vfmaq_f16(acc0Vec, xVec, yVec);                          \
+            /*  Decrement the loop counter   */                                \
+            k--;                                                               \
+        }                                                                      \
+        /* loop + tail predication expected here  */                           \
+        k = count % 0x8U;                                                      \
+        if (k > 0U) {                                                          \
+            mve_pred16_t p0 = vctp16q(k);                                      \
+            yVec            = vld1q(pSrcY);                                    \
+            pSrcY += 8;                                                        \
+            xVec    = vldrhq_f16(&pSrcX[1]);                                   \
+            acc1Vec = vfmaq_m_f16(acc1Vec, xVec, yVec, p0);                    \
+            xVec    = vldrhq_f16(&pSrcX[2]);                                   \
+            acc2Vec = vfmaq_m_f16(acc2Vec, xVec, yVec, p0);                    \
+            xVec    = vldrhq_f16(&pSrcX[3]);                                   \
+            acc3Vec = vfmaq_m_f16(acc3Vec, xVec, yVec, p0);                    \
+            xVec    = vld1q(pSrcX);                                            \
+            pSrcX += 8;                                                        \
+            acc0Vec = vfmaq_m_f16(acc0Vec, xVec, yVec, p0);                    \
+        }                                                                      \
+                                                                               \
+        acc0 = vecAddAcrossF16Mve(acc0Vec);                                    \
+        acc1 = vecAddAcrossF16Mve(acc1Vec);                                    \
+        acc2 = vecAddAcrossF16Mve(acc2Vec);                                    \
+        acc3 = vecAddAcrossF16Mve(acc3Vec);                                    \
     }
 
-#define MVE_INTR_CORR_DUAL_INC_X_FIXED_SIZE_F16(acc0, acc1, pX, pY, count)                         \
-    {                                                                                              \
-        float16_t const *pSrcX, *pSrcY;                                                            \
-        f16x8_t          acc0Vec, acc1Vec, xVec, yVec;                                             \
-        uint32_t         k;                                                                        \
-                                                                                                   \
-        acc0Vec = vdupq_n_f16(0.0f);                                                               \
-        acc1Vec = vdupq_n_f16(0.0f);                                                               \
-        pSrcX   = (float16_t const*)pX;                                                            \
-        pSrcY   = (float16_t const*)pY;                                                            \
-        k       = count >> 3;                                                                      \
-                                                                                                   \
-        while (k > 0U) {                                                                           \
-            yVec = vld1q(pSrcY);                                                                   \
-            pSrcY += 8;                                                                            \
-            xVec    = vldrhq_f16(&pSrcX[1]);                                                       \
-            acc1Vec = vfmaq_f16(acc1Vec, xVec, yVec);                                              \
-            xVec    = vld1q(pSrcX);                                                                \
-            pSrcX += 8;                                                                            \
-            acc0Vec = vfmaq_f16(acc0Vec, xVec, yVec);                                              \
-            /*  Decrement the loop counter   */                                                    \
-            k--;                                                                                   \
-        }                                                                                          \
-        /* loop + tail predication expected here  */                                               \
-        k = count % 0x8U;                                                                          \
-        if (k > 0U) {                                                                              \
-            mve_pred16_t p0 = vctp16q(k);                                                          \
-            yVec            = vld1q(pSrcY);                                                        \
-            pSrcY += 8;                                                                            \
-            ;                                                                                      \
-            xVec    = vldrhq_f16(&pSrcX[1]);                                                       \
-            acc1Vec = vfmaq_m_f16(acc1Vec, xVec, yVec, p0);                                        \
-            xVec    = vld1q(pSrcX);                                                                \
-            pSrcX += 8;                                                                            \
-            acc0Vec = vfmaq_m_f16(acc0Vec, xVec, yVec, p0);                                        \
-        }                                                                                          \
-                                                                                                   \
-        acc0 = vecAddAcrossF16Mve(acc0Vec);                                                        \
-        acc1 = vecAddAcrossF16Mve(acc1Vec);                                                        \
+#define MVE_INTR_CORR_DUAL_INC_X_FIXED_SIZE_F16(acc0, acc1, pX, pY, count)     \
+    {                                                                          \
+        float16_t const *pSrcX, *pSrcY;                                        \
+        f16x8_t          acc0Vec, acc1Vec, xVec, yVec;                         \
+        uint32_t         k;                                                    \
+                                                                               \
+        acc0Vec = vdupq_n_f16(0.0f);                                           \
+        acc1Vec = vdupq_n_f16(0.0f);                                           \
+        pSrcX   = (float16_t const*)pX;                                        \
+        pSrcY   = (float16_t const*)pY;                                        \
+        k       = count >> 3;                                                  \
+                                                                               \
+        while (k > 0U) {                                                       \
+            yVec = vld1q(pSrcY);                                               \
+            pSrcY += 8;                                                        \
+            xVec    = vldrhq_f16(&pSrcX[1]);                                   \
+            acc1Vec = vfmaq_f16(acc1Vec, xVec, yVec);                          \
+            xVec    = vld1q(pSrcX);                                            \
+            pSrcX += 8;                                                        \
+            acc0Vec = vfmaq_f16(acc0Vec, xVec, yVec);                          \
+            /*  Decrement the loop counter   */                                \
+            k--;                                                               \
+        }                                                                      \
+        /* loop + tail predication expected here  */                           \
+        k = count % 0x8U;                                                      \
+        if (k > 0U) {                                                          \
+            mve_pred16_t p0 = vctp16q(k);                                      \
+            yVec            = vld1q(pSrcY);                                    \
+            pSrcY += 8;                                                        \
+            ;                                                                  \
+            xVec    = vldrhq_f16(&pSrcX[1]);                                   \
+            acc1Vec = vfmaq_m_f16(acc1Vec, xVec, yVec, p0);                    \
+            xVec    = vld1q(pSrcX);                                            \
+            pSrcX += 8;                                                        \
+            acc0Vec = vfmaq_m_f16(acc0Vec, xVec, yVec, p0);                    \
+        }                                                                      \
+                                                                               \
+        acc0 = vecAddAcrossF16Mve(acc0Vec);                                    \
+        acc1 = vecAddAcrossF16Mve(acc1Vec);                                    \
     }
 
-#define MVE_INTR_CORR_DUAL_INC_X_DEC_SIZE_F16(acc0, acc1, pX, pY, count)                           \
-    {                                                                                              \
-        float16_t const *pSrcX, *pSrcY;                                                            \
-        f16x8_t          acc0Vec, acc1Vec, xVec, yVec;                                             \
-        uint32_t         k;                                                                        \
-                                                                                                   \
-        acc0Vec = vdupq_n_f16(0.0f);                                                               \
-        acc1Vec = vdupq_n_f16(0.0f);                                                               \
-        pSrcX   = (float16_t const*)pX;                                                            \
-        pSrcY   = (float16_t const*)pY;                                                            \
-        k       = (count - 1) >> 3;                                                                \
-                                                                                                   \
-        while (k > 0U) {                                                                           \
-            yVec = vld1q(pSrcY);                                                                   \
-            pSrcY += 8;                                                                            \
-            xVec    = vldrhq_f16(&pSrcX[1]);                                                       \
-            acc1Vec = vfmaq_f16(acc1Vec, xVec, yVec);                                              \
-            xVec    = vld1q(pSrcX);                                                                \
-            pSrcX += 8;                                                                            \
-            acc0Vec = vfmaq_f16(acc0Vec, xVec, yVec);                                              \
-            /*  Decrement the loop counter   */                                                    \
-            k--;                                                                                   \
-        }                                                                                          \
-        /* use predication to finalize MAC sum */                                                  \
-        /* acc1 requires exact number of sample (count-1)  */                                      \
-        /* disable extra lanes in final MAC computation  */                                        \
-        k               = (count - 1) % 0x8U;                                                      \
-        mve_pred16_t p0 = vctp16q(k);                                                              \
-        yVec            = vld1q(pSrcY);                                                            \
-        pSrcY += 8;                                                                                \
-        xVec    = vldrhq_f16(&pSrcX[1]);                                                           \
-        acc1Vec = vfmaq_m_f16(acc1Vec, xVec, yVec, p0);                                            \
-        /* acc0 requires 1 additional sample  (count) */                                           \
-        /* so add 1 to unmask an extra lane  in final MAC computation  */                          \
-        p0   = vctp16q(k + 1);                                                                     \
-        xVec = vld1q(pSrcX);                                                                       \
-        pSrcX += 8;                                                                                \
-        acc0Vec = vfmaq_m_f16(acc0Vec, xVec, yVec, p0);                                            \
-                                                                                                   \
-        acc0 = vecAddAcrossF16Mve(acc0Vec);                                                        \
-        acc1 = vecAddAcrossF16Mve(acc1Vec);                                                        \
+#define MVE_INTR_CORR_DUAL_INC_X_DEC_SIZE_F16(acc0, acc1, pX, pY, count)       \
+    {                                                                          \
+        float16_t const *pSrcX, *pSrcY;                                        \
+        f16x8_t          acc0Vec, acc1Vec, xVec, yVec;                         \
+        uint32_t         k;                                                    \
+                                                                               \
+        acc0Vec = vdupq_n_f16(0.0f);                                           \
+        acc1Vec = vdupq_n_f16(0.0f);                                           \
+        pSrcX   = (float16_t const*)pX;                                        \
+        pSrcY   = (float16_t const*)pY;                                        \
+        k       = (count - 1) >> 3;                                            \
+                                                                               \
+        while (k > 0U) {                                                       \
+            yVec = vld1q(pSrcY);                                               \
+            pSrcY += 8;                                                        \
+            xVec    = vldrhq_f16(&pSrcX[1]);                                   \
+            acc1Vec = vfmaq_f16(acc1Vec, xVec, yVec);                          \
+            xVec    = vld1q(pSrcX);                                            \
+            pSrcX += 8;                                                        \
+            acc0Vec = vfmaq_f16(acc0Vec, xVec, yVec);                          \
+            /*  Decrement the loop counter   */                                \
+            k--;                                                               \
+        }                                                                      \
+        /* use predication to finalize MAC sum */                              \
+        /* acc1 requires exact number of sample (count-1)  */                  \
+        /* disable extra lanes in final MAC computation  */                    \
+        k               = (count - 1) % 0x8U;                                  \
+        mve_pred16_t p0 = vctp16q(k);                                          \
+        yVec            = vld1q(pSrcY);                                        \
+        pSrcY += 8;                                                            \
+        xVec    = vldrhq_f16(&pSrcX[1]);                                       \
+        acc1Vec = vfmaq_m_f16(acc1Vec, xVec, yVec, p0);                        \
+        /* acc0 requires 1 additional sample  (count) */                       \
+        /* so add 1 to unmask an extra lane  in final MAC computation  */      \
+        p0   = vctp16q(k + 1);                                                 \
+        xVec = vld1q(pSrcX);                                                   \
+        pSrcX += 8;                                                            \
+        acc0Vec = vfmaq_m_f16(acc0Vec, xVec, yVec, p0);                        \
+                                                                               \
+        acc0 = vecAddAcrossF16Mve(acc0Vec);                                    \
+        acc1 = vecAddAcrossF16Mve(acc1Vec);                                    \
     }
 
 
@@ -317,8 +318,9 @@ void arm_correlate_f16(const float16_t* pSrcA,
                        const float16_t* pSrcB,
                        uint32_t         srcBLen,
                        float16_t*       pDst) {
-    float16_t* pIn1 = (float16_t*)pSrcA;                  /* inputA pointer               */
-    float16_t* pIn2 = (float16_t*)pSrcB + (srcBLen - 1U); /* inputB pointer               */
+    float16_t* pIn1 = (float16_t*)pSrcA; /* inputA pointer               */
+    float16_t* pIn2 =
+        (float16_t*)pSrcB + (srcBLen - 1U); /* inputB pointer               */
     float16_t* pX;
     float16_t* pY;
     float16_t* pA;
@@ -418,7 +420,8 @@ void arm_correlate_f16(const float16_t* pSrcA,
          * size is fixed for all accumulators
          * X pointer is incrementing for successive accumulators
          */
-        MVE_INTR_CORR_QUAD_INC_X_FIXED_SIZE_F16(acc0, acc1, acc2, acc3, pX, pY, srcBLen);
+        MVE_INTR_CORR_QUAD_INC_X_FIXED_SIZE_F16(
+            acc0, acc1, acc2, acc3, pX, pY, srcBLen);
 
         *pDst = acc0;
         pDst += incr;
@@ -517,11 +520,12 @@ void arm_correlate_f16(const float16_t* pSrcA,
     uint32_t         blockSize1, blockSize2, blockSize3; /* Loop counters */
     uint32_t         j, k, count, blkCnt;                /* Loop counters */
     uint32_t         outBlockSize;                       /* Loop counter */
-    int32_t          inc = 1;                            /* Destination address modifier */
+    int32_t          inc = 1; /* Destination address modifier */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     _Float16 acc0, acc1, acc2, acc3, c0; /* Accumulators */
-    _Float16 x0, x1, x2, x3; /* temporary variables for holding input and coefficient values */
+    _Float16 x0, x1, x2,
+        x3; /* temporary variables for holding input and coefficient values */
 #endif
 
     /* The algorithm implementation is based on the lengths of the inputs. */
@@ -1106,7 +1110,8 @@ void arm_correlate_f16(const float16_t* pSrcA,
             /* Check the array limitations */
             if ((((i - j) < srcBLen) && (j < srcALen))) {
                 /* z[i] += x[i-j] * y[j] */
-                sum += (_Float16)pIn1[j] * (_Float16)pIn2[-((int32_t)i - (int32_t)j)];
+                sum += (_Float16)pIn1[j] *
+                       (_Float16)pIn2[-((int32_t)i - (int32_t)j)];
             }
         }
 

@@ -25,9 +25,12 @@ uint32_t rng_get(pcg32_rng_t* rng) {
     return UINT32_MAX;
 }
 
-uint32_t rng_get_range(pcg32_rng_t* rng, uint32_t min_inclusive, uint32_t max_inclusive) {
+uint32_t rng_get_range(pcg32_rng_t* rng,
+                       uint32_t     min_inclusive,
+                       uint32_t     max_inclusive) {
     if (rng == NULL || max_inclusive <= min_inclusive) {
         return UINT32_MAX;
     }
-    return min_inclusive + ((rng_get(rng)) % (max_inclusive - min_inclusive + 1));
+    return min_inclusive +
+           ((rng_get(rng)) % (max_inclusive - min_inclusive + 1));
 }

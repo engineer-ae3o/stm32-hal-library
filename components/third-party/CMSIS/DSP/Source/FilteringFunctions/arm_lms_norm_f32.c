@@ -165,14 +165,17 @@ void arm_lms_norm_f32(arm_lms_norm_instance_f32* S,
                       uint32_t                   blockSize) {
     float32_t* pState  = S->pState;  /* State pointer */
     float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    float32_t* pStateCurnt;          /* Points to the current sample of the state */
-    float32_t *px, *pb;              /* Temporary pointers for state and coefficient buffers */
-    float32_t  mu      = S->mu;      /* Adaptive factor */
-    uint32_t   numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t   tapCnt, blkCnt;       /* Loop counters */
-    float32_t  energy;               /* Energy of the input */
-    float32_t  sum, e, d;            /* accumulator, error, reference data sample */
-    float32_t  w, x0, in; /* weight factor, temporary variable to hold input sample and state */
+    float32_t* pStateCurnt; /* Points to the current sample of the state */
+    float32_t *px,
+        *pb; /* Temporary pointers for state and coefficient buffers */
+    float32_t mu = S->mu; /* Adaptive factor */
+    uint32_t  numTaps =
+        S->numTaps;           /* Number of filter coefficients in the filter */
+    uint32_t  tapCnt, blkCnt; /* Loop counters */
+    float32_t energy;         /* Energy of the input */
+    float32_t sum, e, d;      /* accumulator, error, reference data sample */
+    float32_t w, x0,
+        in; /* weight factor, temporary variable to hold input sample and state */
 
     float32x4_t tempV, sumV, xV, bV;
     float32x2_t tempV2;
@@ -344,15 +347,17 @@ void arm_lms_norm_f32(arm_lms_norm_instance_f32* S,
                       uint32_t                   blockSize) {
     float32_t* pState  = S->pState;  /* State pointer */
     float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    float32_t* pStateCurnt;          /* Points to the current sample of the state */
-    float32_t *px, *pb;              /* Temporary pointers for state and coefficient buffers */
-    float32_t  mu = S->mu;           /* Adaptive factor */
-    float32_t  acc, e;               /* Accumulator, error */
-    float32_t  w;                    /* Weight factor */
-    uint32_t   numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t   tapCnt, blkCnt;       /* Loop counters */
-    float32_t  energy;               /* Energy of the input */
-    float32_t  x0, in;               /* Temporary variable to hold input sample and state */
+    float32_t* pStateCurnt; /* Points to the current sample of the state */
+    float32_t *px,
+        *pb; /* Temporary pointers for state and coefficient buffers */
+    float32_t mu = S->mu; /* Adaptive factor */
+    float32_t acc, e;     /* Accumulator, error */
+    float32_t w;          /* Weight factor */
+    uint32_t  numTaps =
+        S->numTaps;           /* Number of filter coefficients in the filter */
+    uint32_t  tapCnt, blkCnt; /* Loop counters */
+    float32_t energy;         /* Energy of the input */
+    float32_t x0, in; /* Temporary variable to hold input sample and state */
 
     /* Initializations of error,  difference, Coefficient update */
     e = 0.0f;

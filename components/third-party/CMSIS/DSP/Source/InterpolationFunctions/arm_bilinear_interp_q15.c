@@ -44,7 +44,9 @@
   * @param[in]     Y  interpolation coordinate in 12.20 format.
   * @return out interpolated value.
   */
-q15_t arm_bilinear_interp_q15(arm_bilinear_interp_instance_q15* S, q31_t X, q31_t Y) {
+q15_t arm_bilinear_interp_q15(arm_bilinear_interp_instance_q15* S,
+                              q31_t                             X,
+                              q31_t                             Y) {
     q63_t    acc = 0;             /* output */
     q31_t    out;                 /* Temporary output */
     q15_t    x1, x2, y1, y2;      /* Nearest output values */

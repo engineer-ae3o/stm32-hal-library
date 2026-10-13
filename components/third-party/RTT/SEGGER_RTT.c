@@ -51,41 +51,49 @@ Additional information:
 
 #if SEGGER_RTT_CPU_CACHE_LINE_SIZE
 #ifdef SEGGER_RTT_CB_ALIGN
-#error "Custom SEGGER_RTT_CB_ALIGN() is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
+#error                                                                         \
+    "Custom SEGGER_RTT_CB_ALIGN() is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
 #endif
 #ifdef SEGGER_RTT_BUFFER_ALIGN
-#error "Custom SEGGER_RTT_BUFFER_ALIGN() is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
+#error                                                                         \
+    "Custom SEGGER_RTT_BUFFER_ALIGN() is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
 #endif
 #ifdef SEGGER_RTT_PUT_CB_SECTION
-#error "Custom SEGGER_RTT_PUT_CB_SECTION() is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
+#error                                                                         \
+    "Custom SEGGER_RTT_PUT_CB_SECTION() is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
 #endif
 #ifdef SEGGER_RTT_PUT_BUFFER_SECTION
-#error                                                                                             \
+#error                                                                         \
     "Custom SEGGER_RTT_PUT_BUFFER_SECTION() is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
 #endif
 #ifdef SEGGER_RTT_BUFFER_ALIGNMENT
-#error "Custom SEGGER_RTT_BUFFER_ALIGNMENT is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
+#error                                                                         \
+    "Custom SEGGER_RTT_BUFFER_ALIGNMENT is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
 #endif
 #ifdef SEGGER_RTT_ALIGNMENT
-#error "Custom SEGGER_RTT_ALIGNMENT is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
+#error                                                                         \
+    "Custom SEGGER_RTT_ALIGNMENT is not supported for SEGGER_RTT_CPU_CACHE_LINE_SIZE != 0"
 #endif
 #endif
 
 #ifndef BUFFER_SIZE_UP
-#define BUFFER_SIZE_UP 1024 // Size of the buffer for terminal output of target, up to host
+#define BUFFER_SIZE_UP                                                         \
+    1024 // Size of the buffer for terminal output of target, up to host
 #endif
 
 #ifndef BUFFER_SIZE_DOWN
-#define BUFFER_SIZE_DOWN                                                                           \
+#define BUFFER_SIZE_DOWN                                                       \
     16 // Size of the buffer for terminal input to target from host (Usually keyboard input)
 #endif
 
 #ifndef SEGGER_RTT_MAX_NUM_UP_BUFFERS
-#define SEGGER_RTT_MAX_NUM_UP_BUFFERS 2 // Number of up-buffers (T->H) available on this target
+#define SEGGER_RTT_MAX_NUM_UP_BUFFERS                                          \
+    2 // Number of up-buffers (T->H) available on this target
 #endif
 
 #ifndef SEGGER_RTT_MAX_NUM_DOWN_BUFFERS
-#define SEGGER_RTT_MAX_NUM_DOWN_BUFFERS 2 // Number of down-buffers (H->T) available on this target
+#define SEGGER_RTT_MAX_NUM_DOWN_BUFFERS                                        \
+    2 // Number of down-buffers (H->T) available on this target
 #endif
 
 #ifndef SEGGER_RTT_ALIGNMENT
@@ -122,9 +130,11 @@ Additional information:
 
 #ifndef SEGGER_RTT_MEMCPY
 #ifdef MEMCPY
-#define SEGGER_RTT_MEMCPY(pDest, pSrc, NumBytes) MEMCPY((pDest), (pSrc), (NumBytes))
+#define SEGGER_RTT_MEMCPY(pDest, pSrc, NumBytes)                               \
+    MEMCPY((pDest), (pSrc), (NumBytes))
 #else
-#define SEGGER_RTT_MEMCPY(pDest, pSrc, NumBytes) memcpy((pDest), (pSrc), (NumBytes))
+#define SEGGER_RTT_MEMCPY(pDest, pSrc, NumBytes)                               \
+    memcpy((pDest), (pSrc), (NumBytes))
 #endif
 #endif
 
@@ -151,8 +161,8 @@ Additional information:
 #define SEGGER_RTT_ALIGN(Var, Alignment) Var __attribute__((aligned(Alignment)))
 #elif (defined __ICCARM__) || (defined __ICCRX__)
 #define PRAGMA(A) _Pragma(#A)
-#define SEGGER_RTT_ALIGN(Var, Alignment)                                                           \
-    RTT_PRAGMA(data_alignment = Alignment)                                                         \
+#define SEGGER_RTT_ALIGN(Var, Alignment)                                       \
+    RTT_PRAGMA(data_alignment = Alignment)                                     \
     Var
 #elif (defined __CC_ARM)
 #define SEGGER_RTT_ALIGN(Var, Alignment) Var __attribute__((aligned(Alignment)))
@@ -165,13 +175,15 @@ Additional information:
 
 #if defined(SEGGER_RTT_SECTION) || defined(SEGGER_RTT_BUFFER_SECTION)
 #if ((defined __GNUC__) || (defined __clang__))
-#define SEGGER_RTT_PUT_SECTION(Var, Section) __attribute__((section(Section))) Var
+#define SEGGER_RTT_PUT_SECTION(Var, Section)                                   \
+    __attribute__((section(Section))) Var
 #elif (defined __ICCARM__) || (defined __ICCRX__)
-#define SEGGER_RTT_PUT_SECTION(Var, Section)                                                       \
-    RTT_PRAGMA(location = Section)                                                                 \
+#define SEGGER_RTT_PUT_SECTION(Var, Section)                                   \
+    RTT_PRAGMA(location = Section)                                             \
     Var
 #elif (defined __CC_ARM)
-#define SEGGER_RTT_PUT_SECTION(Var, Section) __attribute__((section(Section))) Var
+#define SEGGER_RTT_PUT_SECTION(Var, Section)                                   \
+    __attribute__((section(Section))) Var
 #else
 #error "Section placement not supported for this compiler."
 #endif
@@ -186,19 +198,22 @@ Additional information:
 #endif
 
 #if SEGGER_RTT_BUFFER_ALIGNMENT
-#define SEGGER_RTT_BUFFER_ALIGN(Var) SEGGER_RTT_ALIGN(Var, SEGGER_RTT_BUFFER_ALIGNMENT)
+#define SEGGER_RTT_BUFFER_ALIGN(Var)                                           \
+    SEGGER_RTT_ALIGN(Var, SEGGER_RTT_BUFFER_ALIGNMENT)
 #else
 #define SEGGER_RTT_BUFFER_ALIGN(Var) Var
 #endif
 
 #if defined(SEGGER_RTT_SECTION)
-#define SEGGER_RTT_PUT_CB_SECTION(Var) SEGGER_RTT_PUT_SECTION(Var, SEGGER_RTT_SECTION)
+#define SEGGER_RTT_PUT_CB_SECTION(Var)                                         \
+    SEGGER_RTT_PUT_SECTION(Var, SEGGER_RTT_SECTION)
 #else
 #define SEGGER_RTT_PUT_CB_SECTION(Var) Var
 #endif
 
 #if defined(SEGGER_RTT_BUFFER_SECTION)
-#define SEGGER_RTT_PUT_BUFFER_SECTION(Var) SEGGER_RTT_PUT_SECTION(Var, SEGGER_RTT_BUFFER_SECTION)
+#define SEGGER_RTT_PUT_BUFFER_SECTION(Var)                                     \
+    SEGGER_RTT_PUT_SECTION(Var, SEGGER_RTT_BUFFER_SECTION)
 #else
 #define SEGGER_RTT_PUT_BUFFER_SECTION(Var) Var
 #endif
@@ -210,8 +225,22 @@ Additional information:
 **********************************************************************
 */
 
-static const unsigned char _aTerminalId[16] = {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+static const unsigned char _aTerminalId[16] = {'0',
+                                               '1',
+                                               '2',
+                                               '3',
+                                               '4',
+                                               '5',
+                                               '6',
+                                               '7',
+                                               '8',
+                                               '9',
+                                               'A',
+                                               'B',
+                                               'C',
+                                               'D',
+                                               'E',
+                                               'F'};
 
 /*********************************************************************
 *
@@ -225,25 +254,31 @@ static const unsigned char _aTerminalId[16] = {
 //
 #if SEGGER_RTT_CPU_CACHE_LINE_SIZE
 #if ((defined __GNUC__) || (defined __clang__))
-SEGGER_RTT_CB _SEGGER_RTT __attribute__((aligned(SEGGER_RTT_CPU_CACHE_LINE_SIZE)));
-static char   _acUpBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_UP)]
+SEGGER_RTT_CB _SEGGER_RTT
     __attribute__((aligned(SEGGER_RTT_CPU_CACHE_LINE_SIZE)));
-static char _acDownBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_DOWN)]
+static char _acUpBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_UP)]
+    __attribute__((aligned(SEGGER_RTT_CPU_CACHE_LINE_SIZE)));
+static char
+    _acDownBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_DOWN)]
     __attribute__((aligned(SEGGER_RTT_CPU_CACHE_LINE_SIZE)));
 #elif (defined __ICCARM__)
 #pragma data_alignment = SEGGER_RTT_CPU_CACHE_LINE_SIZE
 SEGGER_RTT_CB _SEGGER_RTT;
 #pragma data_alignment = SEGGER_RTT_CPU_CACHE_LINE_SIZE
-static char   _acUpBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_UP)];
+static char _acUpBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_UP)];
 #pragma data_alignment = SEGGER_RTT_CPU_CACHE_LINE_SIZE
-static char   _acDownBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_DOWN)];
+static char
+    _acDownBuffer[SEGGER_RTT__ROUND_UP_2_CACHE_LINE_SIZE(BUFFER_SIZE_DOWN)];
 #else
-#error "Don't know how to place _SEGGER_RTT, _acUpBuffer, _acDownBuffer cache-line aligned"
+#error                                                                         \
+    "Don't know how to place _SEGGER_RTT, _acUpBuffer, _acDownBuffer cache-line aligned"
 #endif
 #else
 SEGGER_RTT_PUT_CB_SECTION(SEGGER_RTT_CB_ALIGN(SEGGER_RTT_CB _SEGGER_RTT));
-SEGGER_RTT_PUT_BUFFER_SECTION(SEGGER_RTT_BUFFER_ALIGN(static char _acUpBuffer[BUFFER_SIZE_UP]));
-SEGGER_RTT_PUT_BUFFER_SECTION(SEGGER_RTT_BUFFER_ALIGN(static char _acDownBuffer[BUFFER_SIZE_DOWN]));
+SEGGER_RTT_PUT_BUFFER_SECTION(
+    SEGGER_RTT_BUFFER_ALIGN(static char _acUpBuffer[BUFFER_SIZE_UP]));
+SEGGER_RTT_PUT_BUFFER_SECTION(
+    SEGGER_RTT_BUFFER_ALIGN(static char _acDownBuffer[BUFFER_SIZE_DOWN]));
 #endif
 
 static unsigned char _ActiveTerminal;
@@ -266,13 +301,14 @@ static unsigned char _ActiveTerminal;
 *    (1) May only be called via INIT() to avoid overriding settings.
 *        The only exception is SEGGER_RTT_Init(), to make an intentional override possible.
 */
-#define INIT()                                                                                     \
-    do {                                                                                           \
-        volatile SEGGER_RTT_CB* pRTTCBInit;                                                        \
-        pRTTCBInit = (volatile SEGGER_RTT_CB*)((uintptr_t)&_SEGGER_RTT + SEGGER_RTT_UNCACHED_OFF); \
-        if (pRTTCBInit->acID[0] != 'S') {                                                          \
-            _DoInit();                                                                             \
-        }                                                                                          \
+#define INIT()                                                                 \
+    do {                                                                       \
+        volatile SEGGER_RTT_CB* pRTTCBInit;                                    \
+        pRTTCBInit = (volatile SEGGER_RTT_CB*)((uintptr_t)&_SEGGER_RTT +       \
+                                               SEGGER_RTT_UNCACHED_OFF);       \
+        if (pRTTCBInit->acID[0] != 'S') {                                      \
+            _DoInit();                                                         \
+        }                                                                      \
     } while (0)
 
 static void _DoInit(void) {
@@ -286,9 +322,11 @@ static void _DoInit(void) {
     //
     p = (volatile SEGGER_RTT_CB*)((uintptr_t)&_SEGGER_RTT +
                                   SEGGER_RTT_UNCACHED_OFF); // Access control block uncached so that nothing in the cache ever becomes dirty and all changes are visible in HW directly
-    memset((SEGGER_RTT_CB*)p,
-           0,
-           sizeof(_SEGGER_RTT)); // Make sure that the RTT CB is always zero initialized.
+    memset(
+        (SEGGER_RTT_CB*)p,
+        0,
+        sizeof(
+            _SEGGER_RTT)); // Make sure that the RTT CB is always zero initialized.
     p->MaxNumUpBuffers   = SEGGER_RTT_MAX_NUM_UP_BUFFERS;
     p->MaxNumDownBuffers = SEGGER_RTT_MAX_NUM_DOWN_BUFFERS;
     //
@@ -317,7 +355,8 @@ static void _DoInit(void) {
     RTT__DMB(); // Force order of memory accesses for cores that may perform out-of-order memory accesses
     for (i = 0; i < sizeof(_aInitStr) - 1; ++i) {
         p->acID[i] =
-            _aInitStr[sizeof(_aInitStr) - 2 - i]; // Skip terminating \0 at the end of the array
+            _aInitStr[sizeof(_aInitStr) - 2 -
+                      i]; // Skip terminating \0 at the end of the array
     }
     RTT__DMB(); // Force order of memory accesses for cores that may perform out-of-order memory accesses
 }
@@ -341,8 +380,9 @@ static void _DoInit(void) {
 *  Return value
 *    >= 0 - Number of bytes written into buffer.
 */
-static unsigned
-_WriteBlocking(SEGGER_RTT_BUFFER_UP* pRing, const char* pBuffer, unsigned NumBytes) {
+static unsigned _WriteBlocking(SEGGER_RTT_BUFFER_UP* pRing,
+                               const char*           pBuffer,
+                               unsigned              NumBytes) {
     unsigned       NumBytesToWrite;
     unsigned       NumBytesWritten;
     unsigned       RdOff;
@@ -354,16 +394,18 @@ _WriteBlocking(SEGGER_RTT_BUFFER_UP* pRing, const char* pBuffer, unsigned NumByt
     NumBytesWritten = 0u;
     WrOff           = pRing->WrOff;
     do {
-        RdOff = pRing->RdOff; // May be changed by host (debug probe) in the meantime
+        RdOff =
+            pRing
+                ->RdOff; // May be changed by host (debug probe) in the meantime
         if (RdOff > WrOff) {
             NumBytesToWrite = RdOff - WrOff - 1u;
         } else {
             NumBytesToWrite = pRing->SizeOfBuffer - (WrOff - RdOff + 1u);
         }
-        NumBytesToWrite =
-            MIN(NumBytesToWrite,
-                (pRing->SizeOfBuffer -
-                 WrOff)); // Number of bytes that can be written until buffer wrap-around
+        NumBytesToWrite = MIN(
+            NumBytesToWrite,
+            (pRing->SizeOfBuffer -
+             WrOff)); // Number of bytes that can be written until buffer wrap-around
         NumBytesToWrite = MIN(NumBytesToWrite, NumBytes);
         pDst            = (pRing->pBuffer + WrOff) + SEGGER_RTT_UNCACHED_OFF;
 #if SEGGER_RTT_MEMCPY_USE_BYTELOOP
@@ -407,7 +449,9 @@ _WriteBlocking(SEGGER_RTT_BUFFER_UP* pRing, const char* pBuffer, unsigned NumByt
 *  Notes
 *    (1) If there might not be enough space in the "Up"-buffer, call _WriteBlocking
 */
-static void _WriteNoCheck(SEGGER_RTT_BUFFER_UP* pRing, const char* pData, unsigned NumBytes) {
+static void _WriteNoCheck(SEGGER_RTT_BUFFER_UP* pRing,
+                          const char*           pData,
+                          unsigned              NumBytes) {
     unsigned       NumBytesAtOnce;
     unsigned       WrOff;
     unsigned       Rem;
@@ -475,7 +519,8 @@ static void _WriteNoCheck(SEGGER_RTT_BUFFER_UP* pRing, const char* pData, unsign
 *    pRing        Ring buffer to post to.
 *    TerminalId   Terminal ID to switch to.
 */
-static void _PostTerminalSwitch(SEGGER_RTT_BUFFER_UP* pRing, unsigned char TerminalId) {
+static void _PostTerminalSwitch(SEGGER_RTT_BUFFER_UP* pRing,
+                                unsigned char         TerminalId) {
     unsigned char ac[2];
 
     ac[0] = 0xFFu;
@@ -545,7 +590,9 @@ static unsigned _GetAvailWriteSpace(SEGGER_RTT_BUFFER_UP* pRing) {
 *  Additional information
 *    This function must not be called when J-Link might also do RTT.
 */
-unsigned SEGGER_RTT_ReadUpBufferNoLock(unsigned BufferIndex, void* pData, unsigned BufferSize) {
+unsigned SEGGER_RTT_ReadUpBufferNoLock(unsigned BufferIndex,
+                                       void*    pData,
+                                       unsigned BufferSize) {
     unsigned              NumBytesRem;
     unsigned              NumBytesRead;
     unsigned              RdOff;
@@ -639,7 +686,8 @@ unsigned SEGGER_RTT_ReadUpBufferNoLock(unsigned BufferIndex, void* pData, unsign
 *  Return value
 *    Number of bytes that have been read.
 */
-unsigned SEGGER_RTT_ReadNoLock(unsigned BufferIndex, void* pData, unsigned BufferSize) {
+unsigned
+SEGGER_RTT_ReadNoLock(unsigned BufferIndex, void* pData, unsigned BufferSize) {
     unsigned                NumBytesRem;
     unsigned                NumBytesRead;
     unsigned                RdOff;
@@ -738,14 +786,17 @@ unsigned SEGGER_RTT_ReadNoLock(unsigned BufferIndex, void* pData, unsigned Buffe
 *    If only one consumer reads from the up buffer,
 *    call sEGGER_RTT_ReadUpBufferNoLock() instead.
 */
-unsigned SEGGER_RTT_ReadUpBuffer(unsigned BufferIndex, void* pBuffer, unsigned BufferSize) {
+unsigned SEGGER_RTT_ReadUpBuffer(unsigned BufferIndex,
+                                 void*    pBuffer,
+                                 unsigned BufferSize) {
     unsigned NumBytesRead;
 
     SEGGER_RTT_LOCK();
     //
     // Call the non-locking read function
     //
-    NumBytesRead = SEGGER_RTT_ReadUpBufferNoLock(BufferIndex, pBuffer, BufferSize);
+    NumBytesRead =
+        SEGGER_RTT_ReadUpBufferNoLock(BufferIndex, pBuffer, BufferSize);
     //
     // Finish up.
     //
@@ -770,7 +821,8 @@ unsigned SEGGER_RTT_ReadUpBuffer(unsigned BufferIndex, void* pBuffer, unsigned B
 *  Return value
 *    Number of bytes that have been read.
 */
-unsigned SEGGER_RTT_Read(unsigned BufferIndex, void* pBuffer, unsigned BufferSize) {
+unsigned
+SEGGER_RTT_Read(unsigned BufferIndex, void* pBuffer, unsigned BufferSize) {
     unsigned NumBytesRead;
 
     SEGGER_RTT_LOCK();
@@ -914,7 +966,9 @@ void SEGGER_RTT_WriteWithOverwriteNoLock(unsigned    BufferIndex,
 *        Either by calling SEGGER_RTT_Init() or calling another RTT API function first.
 */
 #if (RTT_USE_ASM == 0)
-unsigned SEGGER_RTT_WriteSkipNoLock(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes) {
+unsigned SEGGER_RTT_WriteSkipNoLock(unsigned    BufferIndex,
+                                    const void* pBuffer,
+                                    unsigned    NumBytes) {
     const char*           pData;
     SEGGER_RTT_BUFFER_UP* pRing;
     unsigned              Avail;
@@ -940,16 +994,18 @@ unsigned SEGGER_RTT_WriteSkipNoLock(unsigned BufferIndex, const void* pBuffer, u
     WrOff = pRing->WrOff;
     pDst  = (pRing->pBuffer + WrOff) + SEGGER_RTT_UNCACHED_OFF;
     if (RdOff <= WrOff) { // Case 1), 2) or 3)
-        Avail = pRing->SizeOfBuffer - WrOff -
-                1u; // Space until wrap-around (assume 1 byte not usable for case that RdOff == 0)
+        Avail =
+            pRing->SizeOfBuffer - WrOff -
+            1u; // Space until wrap-around (assume 1 byte not usable for case that RdOff == 0)
         if (Avail >= NumBytes) { // Case 1)?
             memcpy((void*)pDst, pData, NumBytes);
             RTT__DMB(); // Force data write to be complete before writing the <WrOff>, in case CPU is allowed to change the order of memory accesses
             pRing->WrOff = WrOff + NumBytes;
             return 1;
         }
-        Avail += RdOff;                        // Space incl. wrap-around
-        if (Avail >= NumBytes) {               // Case 2? => If not, we have case 3) (does not fit)
+        Avail += RdOff; // Space incl. wrap-around
+        if (Avail >=
+            NumBytes) { // Case 2? => If not, we have case 3) (does not fit)
             Rem = pRing->SizeOfBuffer - WrOff; // Space until end of buffer
             memcpy((void*)pDst, pData, Rem);   // Copy 1st chunk
             NumBytes -= Rem;
@@ -969,7 +1025,8 @@ unsigned SEGGER_RTT_WriteSkipNoLock(unsigned BufferIndex, const void* pBuffer, u
         }
     } else { // Potential case 4)
         Avail = RdOff - WrOff - 1u;
-        if (Avail >= NumBytes) { // Case 4)? => If not, we have case 5) (does not fit)
+        if (Avail >=
+            NumBytes) { // Case 4)? => If not, we have case 5) (does not fit)
             memcpy((void*)pDst, pData, NumBytes);
             RTT__DMB(); // Force data write to be complete before writing the <WrOff>, in case CPU is allowed to change the order of memory accesses
             pRing->WrOff = WrOff + NumBytes;
@@ -1008,8 +1065,9 @@ unsigned SEGGER_RTT_WriteSkipNoLock(unsigned BufferIndex, const void* pBuffer, u
 *  Additional information
 *    This function must not be called when J-Link might also do RTT.
 */
-unsigned
-SEGGER_RTT_WriteDownBufferNoLock(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes) {
+unsigned SEGGER_RTT_WriteDownBufferNoLock(unsigned    BufferIndex,
+                                          const void* pBuffer,
+                                          unsigned    NumBytes) {
     unsigned              Status;
     unsigned              Avail;
     const char*           pData;
@@ -1086,7 +1144,9 @@ SEGGER_RTT_WriteDownBufferNoLock(unsigned BufferIndex, const void* pBuffer, unsi
 *        and may only be called after RTT has been initialized.
 *        Either by calling SEGGER_RTT_Init() or calling another RTT API function first.
 */
-unsigned SEGGER_RTT_WriteNoLock(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes) {
+unsigned SEGGER_RTT_WriteNoLock(unsigned    BufferIndex,
+                                const void* pBuffer,
+                                unsigned    NumBytes) {
     unsigned              Status;
     unsigned              Avail;
     const char*           pData;
@@ -1164,7 +1224,9 @@ unsigned SEGGER_RTT_WriteNoLock(unsigned BufferIndex, const void* pBuffer, unsig
 *    If only one consumer writes to the down buffer,
 *    call SEGGER_RTT_WriteDownBufferNoLock() instead.
 */
-unsigned SEGGER_RTT_WriteDownBuffer(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes) {
+unsigned SEGGER_RTT_WriteDownBuffer(unsigned    BufferIndex,
+                                    const void* pBuffer,
+                                    unsigned    NumBytes) {
     unsigned Status;
 
     INIT();
@@ -1194,7 +1256,8 @@ unsigned SEGGER_RTT_WriteDownBuffer(unsigned BufferIndex, const void* pBuffer, u
 *  Notes
 *    (1) Data is stored according to buffer flags.
 */
-unsigned SEGGER_RTT_Write(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes) {
+unsigned
+SEGGER_RTT_Write(unsigned BufferIndex, const void* pBuffer, unsigned NumBytes) {
     unsigned Status;
 
     INIT();
@@ -1682,8 +1745,11 @@ int SEGGER_RTT_AllocUpBuffer(const char* sName,
 *    May only be called once per buffer.
 *    Buffer name and flags can be reconfigured using the appropriate functions.
 */
-int SEGGER_RTT_ConfigUpBuffer(
-    unsigned BufferIndex, const char* sName, void* pBuffer, unsigned BufferSize, unsigned Flags) {
+int SEGGER_RTT_ConfigUpBuffer(unsigned    BufferIndex,
+                              const char* sName,
+                              void*       pBuffer,
+                              unsigned    BufferSize,
+                              unsigned    Flags) {
     int                            r;
     volatile SEGGER_RTT_CB*        pRTTCB;
     volatile SEGGER_RTT_BUFFER_UP* pUp;
@@ -1737,8 +1803,11 @@ int SEGGER_RTT_ConfigUpBuffer(
 *    May only be called once per buffer.
 *    Buffer name and flags can be reconfigured using the appropriate functions.
 */
-int SEGGER_RTT_ConfigDownBuffer(
-    unsigned BufferIndex, const char* sName, void* pBuffer, unsigned BufferSize, unsigned Flags) {
+int SEGGER_RTT_ConfigDownBuffer(unsigned    BufferIndex,
+                                const char* sName,
+                                void*       pBuffer,
+                                unsigned    BufferSize,
+                                unsigned    Flags) {
     int                              r;
     volatile SEGGER_RTT_CB*          pRTTCB;
     volatile SEGGER_RTT_BUFFER_DOWN* pDown;
@@ -1828,7 +1897,8 @@ int SEGGER_RTT_SetNameDownBuffer(unsigned BufferIndex, const char* sName) {
     INIT();
 
     // Access RTTCB uncached to make sure we see changes made by the J-Link side and all of our changes go into HW directly
-    pRTTCB = (volatile SEGGER_RTT_CB*)((uintptr_t)&_SEGGER_RTT + SEGGER_RTT_UNCACHED_OFF);
+    pRTTCB = (volatile SEGGER_RTT_CB*)((uintptr_t)&_SEGGER_RTT +
+                                       SEGGER_RTT_UNCACHED_OFF);
 
     if (BufferIndex < SEGGER_RTT_MAX_NUM_DOWN_BUFFERS) {
         SEGGER_RTT_LOCK();
@@ -1957,19 +2027,22 @@ int SEGGER_RTT_SetTerminal(unsigned char TerminalId) {
     INIT();
     r     = 0;
     ac[0] = 0xFFu;
-    if (TerminalId < sizeof(_aTerminalId)) { // We only support a certain number of channels
+    if (TerminalId <
+        sizeof(_aTerminalId)) { // We only support a certain number of channels
         ac[1] = _aTerminalId[TerminalId];
         pRing =
             (SEGGER_RTT_BUFFER_UP*)((uintptr_t)&_SEGGER_RTT.aUp[0] +
                                     SEGGER_RTT_UNCACHED_OFF); // Access uncached to make sure we see changes made by the J-Link side and all of our changes go into HW directly
         SEGGER_RTT_LOCK(); // Lock to make sure that no other task is writing into buffer, while we are and number of free bytes in buffer does not change downwards after checking and before writing
-        if ((pRing->Flags & SEGGER_RTT_MODE_MASK) == SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL) {
+        if ((pRing->Flags & SEGGER_RTT_MODE_MASK) ==
+            SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL) {
             _ActiveTerminal = TerminalId;
             _WriteBlocking(pRing, (const char*)ac, 2u);
         } else { // Skipping mode or trim mode? => We cannot trim this command so handling is the same for both modes
             Avail = _GetAvailWriteSpace(pRing);
             if (Avail >= 2) {
-                _ActiveTerminal = TerminalId; // Only change active terminal in case of success
+                _ActiveTerminal =
+                    TerminalId; // Only change active terminal in case of success
                 _WriteNoCheck(pRing, (const char*)ac, 2u);
             } else {
                 r = -1;
@@ -2009,7 +2082,9 @@ int SEGGER_RTT_TerminalOut(unsigned char TerminalId, const char* s) {
     //
     // Validate terminal ID.
     //
-    if (TerminalId < (char)sizeof(_aTerminalId)) { // We only support a certain number of channels
+    if (TerminalId <
+        (char)sizeof(
+            _aTerminalId)) { // We only support a certain number of channels
         //
         // Get "to-host" ring buffer.
         //
@@ -2051,7 +2126,9 @@ int SEGGER_RTT_TerminalOut(unsigned char TerminalId, const char* s) {
                 } else {
                     _PostTerminalSwitch(pRing, TerminalId);
                     Status = (int)_WriteBlocking(
-                        pRing, s, (FragLen < (Avail - 4u)) ? FragLen : (Avail - 4u));
+                        pRing,
+                        s,
+                        (FragLen < (Avail - 4u)) ? FragLen : (Avail - 4u));
                     _PostTerminalSwitch(pRing, _ActiveTerminal);
                 }
                 break;

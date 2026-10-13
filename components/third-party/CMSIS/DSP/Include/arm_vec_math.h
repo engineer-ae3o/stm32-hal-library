@@ -34,7 +34,8 @@
 extern "C" {
 #endif
 
-#if (defined(ARM_MATH_MVEF) || defined(ARM_MATH_HELIUM)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_MVEF) || defined(ARM_MATH_HELIUM)) &&                    \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 
 #define INV_NEWTON_INIT_F32 0x7EF127EA
 
@@ -258,7 +259,8 @@ __STATIC_INLINE f32x4_t vrecip_f32(f32x4_t vecIn) {
 }
 
 __STATIC_INLINE f32x4_t vtanhq_f32(f32x4_t val) {
-    f32x4_t x     = vminnmq_f32(vmaxnmq_f32(val, vdupq_n_f32(-10.f)), vdupq_n_f32(10.0f));
+    f32x4_t x =
+        vminnmq_f32(vmaxnmq_f32(val, vdupq_n_f32(-10.f)), vdupq_n_f32(10.0f));
     f32x4_t exp2x = vexpq_f32(vmulq_n_f32(x, 2.f));
     f32x4_t num   = vsubq_n_f32(exp2x, 1.f);
     f32x4_t den   = vaddq_n_f32(exp2x, 1.f);
@@ -272,10 +274,11 @@ __STATIC_INLINE f32x4_t vpowq_f32(f32x4_t val, f32x4_t n) {
 
 #endif /* (defined(ARM_MATH_MVEF) || defined(ARM_MATH_HELIUM)) && !defined(ARM_MATH_AUTOVECTORIZE)*/
 
-#if (defined(ARM_MATH_MVEI) || defined(ARM_MATH_HELIUM)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_MVEI) || defined(ARM_MATH_HELIUM)) &&                    \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #endif /* (defined(ARM_MATH_MVEI) || defined(ARM_MATH_HELIUM)) */
 
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_NEON_EXPERIMENTAL)) &&                             \
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_NEON_EXPERIMENTAL)) &&         \
     !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "NEMath.h"

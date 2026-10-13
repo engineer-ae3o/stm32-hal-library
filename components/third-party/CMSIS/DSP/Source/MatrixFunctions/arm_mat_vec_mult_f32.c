@@ -282,12 +282,12 @@ void arm_mat_vec_mult_f32(const arm_matrix_instance_f32* pSrcMat,
     uint32_t         numRows = pSrcMat->numRows;
     uint32_t         numCols = pSrcMat->numCols;
     const float32_t* pSrcA   = pSrcMat->pData;
-    const float32_t* pInA1;          /* input data matrix pointer A of Q31 type */
-    const float32_t* pInA2;          /* input data matrix pointer A of Q31 type */
-    const float32_t* pInA3;          /* input data matrix pointer A of Q31 type */
-    const float32_t* pInA4;          /* input data matrix pointer A of Q31 type */
-    const float32_t* pInVec;         /* input data matrix pointer B of Q31 type */
-    float32_t*       px;             /* Temporary output data matrix pointer */
+    const float32_t* pInA1;  /* input data matrix pointer A of Q31 type */
+    const float32_t* pInA2;  /* input data matrix pointer A of Q31 type */
+    const float32_t* pInA3;  /* input data matrix pointer A of Q31 type */
+    const float32_t* pInA4;  /* input data matrix pointer A of Q31 type */
+    const float32_t* pInVec; /* input data matrix pointer B of Q31 type */
+    float32_t*       px;     /* Temporary output data matrix pointer */
     uint16_t         i, row, colCnt; /* loop counters */
     float32_t        matData, matData2, vecData, vecData2;
 

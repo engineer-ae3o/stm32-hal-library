@@ -39,8 +39,10 @@
  *
  */
 
-static void
-buffer_scale_back_q15_to_q7(q15_t* buffer, q7_t* target, uint16_t length, uint16_t scale) {
+static void buffer_scale_back_q15_to_q7(q15_t*   buffer,
+                                        q7_t*    target,
+                                        uint16_t length,
+                                        uint16_t scale) {
     int i;
 
     for (i = 0; i < length; i++) {
@@ -48,9 +50,10 @@ buffer_scale_back_q15_to_q7(q15_t* buffer, q7_t* target, uint16_t length, uint16
     }
 }
 
-static void compare_and_replace_if_larger_q7(q7_t*          base,   // base data
-                                             const q7_t*    target, // compare target
-                                             const uint16_t length  // data length
+static void
+compare_and_replace_if_larger_q7(q7_t*          base,   // base data
+                                 const q7_t*    target, // compare target
+                                 const uint16_t length  // data length
 ) {
     q7_t*            pIn  = base;
     const q7_t*      pCom = target;
@@ -92,7 +95,8 @@ static void compare_and_replace_if_larger_q7(q7_t*          base,   // base data
     }
 }
 
-static void accumulate_q7_to_q15(q15_t* base, q7_t* target, const uint16_t length) {
+static void
+accumulate_q7_to_q15(q15_t* base, q7_t* target, const uint16_t length) {
     q15_t*   pCnt = base;
     q7_t*    pV   = target;
     q31_t    v1, v2, vo1, vo2;
@@ -189,14 +193,16 @@ void arm_maxpool_q7_HWC(q7_t*          Im_in,
             if (i_x * stride - padding < 0) {
                 win_start = target;
             } else {
-                win_start = Im_in + (i_y * dim_im_in + i_x * stride - padding) * ch_im_in;
+                win_start = Im_in + (i_y * dim_im_in + i_x * stride - padding) *
+                                        ch_im_in;
             }
 
             if (i_x * stride - padding + dim_kernel >= dim_im_in) {
                 win_stop = Im_in + (i_y * dim_im_in + dim_im_in) * ch_im_in;
             } else {
-                win_stop =
-                    Im_in + (i_y * dim_im_in + i_x * stride - padding + dim_kernel) * ch_im_in;
+                win_stop = Im_in + (i_y * dim_im_in + i_x * stride - padding +
+                                    dim_kernel) *
+                                       ch_im_in;
             }
 
             /* first step is to copy over initial data */
@@ -228,7 +234,8 @@ void arm_maxpool_q7_HWC(q7_t*          Im_in,
         if (i_y * stride - padding + dim_kernel >= dim_im_in) {
             row_end = Im_in + dim_im_in * dim_im_in * ch_im_in;
         } else {
-            row_end = Im_in + (i_y * stride - padding + dim_kernel) * dim_im_in * ch_im_in;
+            row_end = Im_in + (i_y * stride - padding + dim_kernel) *
+                                  dim_im_in * ch_im_in;
         }
 
         /* copy over the first row */
@@ -239,7 +246,8 @@ void arm_maxpool_q7_HWC(q7_t*          Im_in,
         row_start += ch_im_in * dim_im_in;
 
         for (; row_start < row_end; row_start += dim_im_in * ch_im_in) {
-            compare_and_replace_if_larger_q7(target, row_start, dim_im_out * ch_im_in);
+            compare_and_replace_if_larger_q7(
+                target, row_start, dim_im_out * ch_im_in);
         }
     }
 
@@ -252,13 +260,19 @@ void arm_maxpool_q7_HWC(q7_t*          Im_in,
         for (i_y = 0; i_y < dim_im_out; i_y++) {
             for (i_x = 0; i_x < dim_im_out; i_x++) {
                 int max = -129;
-                for (k_y = i_y * stride - padding; k_y < i_y * stride - padding + dim_kernel;
+                for (k_y = i_y * stride - padding;
+                     k_y < i_y * stride - padding + dim_kernel;
                      k_y++) {
-                    for (k_x = i_x * stride - padding; k_x < i_x * stride - padding + dim_kernel;
+                    for (k_x = i_x * stride - padding;
+                         k_x < i_x * stride - padding + dim_kernel;
                          k_x++) {
-                        if (k_y >= 0 && k_x >= 0 && k_y < dim_im_in && k_x < dim_im_in) {
-                            if (Im_in[i_ch_in + ch_im_in * (k_x + k_y * dim_im_in)] > max) {
-                                max = Im_in[i_ch_in + ch_im_in * (k_x + k_y * dim_im_in)];
+                        if (k_y >= 0 && k_x >= 0 && k_y < dim_im_in &&
+                            k_x < dim_im_in) {
+                            if (Im_in[i_ch_in +
+                                      ch_im_in * (k_x + k_y * dim_im_in)] >
+                                max) {
+                                max = Im_in[i_ch_in +
+                                            ch_im_in * (k_x + k_y * dim_im_in)];
                             }
                         }
                     }
@@ -325,14 +339,16 @@ void arm_avepool_q7_HWC(q7_t*          Im_in,
             if (i_x * stride - padding < 0) {
                 win_start = target;
             } else {
-                win_start = Im_in + (i_y * dim_im_in + i_x * stride - padding) * ch_im_in;
+                win_start = Im_in + (i_y * dim_im_in + i_x * stride - padding) *
+                                        ch_im_in;
             }
 
             if (i_x * stride - padding + dim_kernel >= dim_im_in) {
                 win_stop = Im_in + (i_y * dim_im_in + dim_im_in) * ch_im_in;
             } else {
-                win_stop =
-                    Im_in + (i_y * dim_im_in + i_x * stride - padding + dim_kernel) * ch_im_in;
+                win_stop = Im_in + (i_y * dim_im_in + i_x * stride - padding +
+                                    dim_kernel) *
+                                       ch_im_in;
             }
 
             /* first step is to copy over initial data */
@@ -365,7 +381,8 @@ void arm_avepool_q7_HWC(q7_t*          Im_in,
         if (i_y * stride - padding + dim_kernel >= dim_im_in) {
             row_end = Im_in + dim_im_in * dim_im_in * ch_im_in;
         } else {
-            row_end = Im_in + (i_y * stride - padding + dim_kernel) * dim_im_in * ch_im_in;
+            row_end = Im_in + (i_y * stride - padding + dim_kernel) *
+                                  dim_im_in * ch_im_in;
         }
 
         /* copy over the first row */
@@ -379,7 +396,8 @@ void arm_avepool_q7_HWC(q7_t*          Im_in,
             accumulate_q7_to_q15(buffer, row_start, dim_im_out * ch_im_in);
             count++;
         }
-        buffer_scale_back_q15_to_q7(buffer, target, dim_im_out * ch_im_in, count);
+        buffer_scale_back_q15_to_q7(
+            buffer, target, dim_im_out * ch_im_in, count);
     }
 
 #else
@@ -394,17 +412,22 @@ void arm_avepool_q7_HWC(q7_t*          Im_in,
             for (i_x = 0; i_x < dim_im_out; i_x++) {
                 int sum   = 0;
                 int count = 0;
-                for (k_y = i_y * stride - padding; k_y < i_y * stride - padding + dim_kernel;
+                for (k_y = i_y * stride - padding;
+                     k_y < i_y * stride - padding + dim_kernel;
                      k_y++) {
-                    for (k_x = i_x * stride - padding; k_x < i_x * stride - padding + dim_kernel;
+                    for (k_x = i_x * stride - padding;
+                         k_x < i_x * stride - padding + dim_kernel;
                          k_x++) {
-                        if (k_y >= 0 && k_x >= 0 && k_y < dim_im_in && k_x < dim_im_in) {
-                            sum += Im_in[i_ch_in + ch_im_in * (k_x + k_y * dim_im_in)];
+                        if (k_y >= 0 && k_x >= 0 && k_y < dim_im_in &&
+                            k_x < dim_im_in) {
+                            sum += Im_in[i_ch_in +
+                                         ch_im_in * (k_x + k_y * dim_im_in)];
                             count++;
                         }
                     }
                 }
-                Im_out[i_ch_in + ch_im_in * (i_x + i_y * dim_im_out)] = sum / count;
+                Im_out[i_ch_in + ch_im_in * (i_x + i_y * dim_im_out)] =
+                    sum / count;
             }
         }
     }

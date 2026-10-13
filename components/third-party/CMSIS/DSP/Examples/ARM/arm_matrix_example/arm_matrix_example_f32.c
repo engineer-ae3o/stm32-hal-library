@@ -156,9 +156,10 @@ float32_t snr;
 
 int32_t main(void) {
 
-    arm_matrix_instance_f32 A;     /* Matrix A Instance */
-    arm_matrix_instance_f32 AT;    /* Matrix AT(A transpose) instance */
-    arm_matrix_instance_f32 ATMA;  /* Matrix ATMA( AT multiply with A) instance */
+    arm_matrix_instance_f32 A;  /* Matrix A Instance */
+    arm_matrix_instance_f32 AT; /* Matrix AT(A transpose) instance */
+    arm_matrix_instance_f32
+        ATMA; /* Matrix ATMA( AT multiply with A) instance */
     arm_matrix_instance_f32 ATMAI; /* Matrix ATMAI(Inverse of ATMA) instance */
     arm_matrix_instance_f32 B;     /* Matrix B instance */
     arm_matrix_instance_f32 X;     /* Matrix X(Unknown Matrix) instance */

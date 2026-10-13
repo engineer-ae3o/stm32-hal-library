@@ -70,19 +70,21 @@ void arm_lms_norm_q15(arm_lms_norm_instance_q15* S,
                       uint32_t                   blockSize) {
     q15_t*   pState  = S->pState;  /* State pointer */
     q15_t*   pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q15_t*   pStateCurnt;          /* Points to the current sample of the state */
-    q15_t *  px, *pb;              /* Temporary pointers for state and coefficient buffers */
-    q15_t    mu      = S->mu;      /* Adaptive factor */
-    uint32_t numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t tapCnt, blkCnt;       /* Loop counters */
-    q63_t    acc;                  /* Accumulator */
-    q31_t    energy;               /* Energy of the input */
-    q15_t    e = 0, d = 0;         /* Error, reference data sample */
-    q15_t    w = 0, in;            /* Weight factor and state */
-    q15_t    x0;                   /* Temporary variable to hold input sample */
+    q15_t*   pStateCurnt; /* Points to the current sample of the state */
+    q15_t *  px, *pb; /* Temporary pointers for state and coefficient buffers */
+    q15_t    mu = S->mu; /* Adaptive factor */
+    uint32_t numTaps =
+        S->numTaps;          /* Number of filter coefficients in the filter */
+    uint32_t tapCnt, blkCnt; /* Loop counters */
+    q63_t    acc;            /* Accumulator */
+    q31_t    energy;         /* Energy of the input */
+    q15_t    e = 0, d = 0;   /* Error, reference data sample */
+    q15_t    w = 0, in;      /* Weight factor and state */
+    q15_t    x0;             /* Temporary variable to hold input sample */
     q15_t    errorXmu,
         oneByEnergy; /* Temporary variables to store error and mu product and reciprocal of energy */
-    q15_t   postShift;    /* Post shift to be applied to weight after reciprocal calculation */
+    q15_t
+        postShift; /* Post shift to be applied to weight after reciprocal calculation */
     q31_t   coef;         /* Temporary variable for coefficient */
     q31_t   acc_l, acc_h; /* Temporary input */
     int32_t lShift = (15 - (int32_t)S->postShift); /*  Post shift  */
@@ -172,7 +174,8 @@ void arm_lms_norm_q15(arm_lms_norm_instance_q15* S,
         *pErr++ = e;
 
         /* Calculation of 1/energy */
-        postShift = arm_recip_q15((q15_t)energy + DELTA_Q15, &oneByEnergy, S->recipTable);
+        postShift = arm_recip_q15(
+            (q15_t)energy + DELTA_Q15, &oneByEnergy, S->recipTable);
 
         /* Calculation of e * mu value */
         errorXmu = (q15_t)(((q31_t)e * mu) >> 15);

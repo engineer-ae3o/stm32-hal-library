@@ -176,8 +176,8 @@ void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S,
     float32_t        lastX, lastY;         /*  X,Y history for tail handling */
     float32_t        X0, X1, X2, X3;       /*  temporary input           */
     f32x4_t          coeffs;
-    f32x4_t          accVec;                       /* accumultor vector */
-    uint32_t         sample, stage = S->numStages; /*  loop counters             */
+    f32x4_t          accVec;               /* accumultor vector */
+    uint32_t sample, stage = S->numStages; /*  loop counters             */
 
     do {
         /*
@@ -446,7 +446,8 @@ void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S,
 
             /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
             acc = (vgetq_lane_f32(b, 1) * vgetq_lane_f32(Xn, 2)) +
-                  (vgetq_lane_f32(b, 2) * vgetq_lane_f32(Xn, 3)) + (vgetq_lane_f32(b, 3) * Xns) +
+                  (vgetq_lane_f32(b, 2) * vgetq_lane_f32(Xn, 3)) +
+                  (vgetq_lane_f32(b, 3) * Xns) +
                   (vget_lane_f32(a, 0) * vget_lane_f32(Yn, 0)) +
                   (vget_lane_f32(a, 1) * vget_lane_f32(Yn, 1));
 

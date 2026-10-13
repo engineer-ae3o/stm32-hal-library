@@ -28,7 +28,8 @@
 
 #include "dsp/statistics_functions.h"
 
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) &&                      \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include <limits.h>
 #endif
 
@@ -54,7 +55,9 @@
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "arm_helium_utils.h"
-void arm_absmin_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_absmin_no_idx_f32(const float32_t* pSrc,
+                           uint32_t         blockSize,
+                           float32_t*       pResult) {
     int32_t          blkCnt; /* loop counters */
     f32x4_t          vecSrc;
     float32_t const* pSrcVec;
@@ -101,9 +104,12 @@ void arm_absmin_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t*
 
 #else
 #if defined(ARM_MATH_LOOPUNROLL)
-void arm_absmin_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
-    float32_t cur_absmin, out; /* Temporary variables to store the output value. */
-    uint32_t  blkCnt;          /* Loop counter */
+void arm_absmin_no_idx_f32(const float32_t* pSrc,
+                           uint32_t         blockSize,
+                           float32_t*       pResult) {
+    float32_t cur_absmin,
+        out;         /* Temporary variables to store the output value. */
+    uint32_t blkCnt; /* Loop counter */
 
 
     /* Load first input value that act as reference value for comparision */
@@ -114,10 +120,13 @@ void arm_absmin_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t*
     /* Loop unrolling: Compute 4 outputs at a time */
     blkCnt = (blockSize - 1U) >> 2U;
 
-    while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
+    while (
+        blkCnt >
+        0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin =
-            (cur_absmin > 0.0f) ? cur_absmin : -cur_absmin; /* compare for the extrema value */
+        cur_absmin = (cur_absmin > 0.0f)
+                         ? cur_absmin
+                         : -cur_absmin; /* compare for the extrema value */
         if (cur_absmin < out) { /* Update the extrema value and it's index */
             out = cur_absmin;
         }
@@ -164,7 +173,9 @@ void arm_absmin_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t*
     *pResult = out;
 }
 #else
-void arm_absmin_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_absmin_no_idx_f32(const float32_t* pSrc,
+                           uint32_t         blockSize,
+                           float32_t*       pResult) {
     float32_t minVal, out; /* Temporary variables to store the output value. */
     uint32_t  blkCnt;      /* Loop counter */
 

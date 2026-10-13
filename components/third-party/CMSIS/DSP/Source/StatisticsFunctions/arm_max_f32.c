@@ -27,7 +27,8 @@
  */
 
 #include "dsp/statistics_functions.h"
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) &&                      \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include <limits.h>
 #endif
 
@@ -58,7 +59,10 @@
  */
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_max_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex) {
+void arm_max_f32(const float32_t* pSrc,
+                 uint32_t         blockSize,
+                 float32_t*       pResult,
+                 uint32_t*        pIndex) {
     uint32_t     blkCnt;
     f32x4_t      vecSrc;
     f32x4_t      curExtremValVec = vdupq_n_f32(F32_MIN);
@@ -135,8 +139,11 @@ void arm_max_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, 
 
 #else
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_max_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex) {
-    float32_t maxVal1, out;     /* Temporary variables to store the output value. */
+void arm_max_f32(const float32_t* pSrc,
+                 uint32_t         blockSize,
+                 float32_t*       pResult,
+                 uint32_t*        pIndex) {
+    float32_t maxVal1, out; /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* loop counter */
 
     float32x4_t outV, srcV;
@@ -237,8 +244,11 @@ void arm_max_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, 
     *pIndex  = outIndex;
 }
 #else
-void arm_max_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex) {
-    float32_t maxVal, out;      /* Temporary variables to store the output value. */
+void arm_max_f32(const float32_t* pSrc,
+                 uint32_t         blockSize,
+                 float32_t*       pResult,
+                 uint32_t*        pIndex) {
+    float32_t maxVal, out; /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)

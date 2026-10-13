@@ -30,8 +30,12 @@
 #include "arm_sorting.h"
 
 
-static void topDownMerge(
-    float32_t* pA, uint32_t begin, uint32_t middle, uint32_t end, float32_t* pB, uint8_t dir) {
+static void topDownMerge(float32_t* pA,
+                         uint32_t   begin,
+                         uint32_t   middle,
+                         uint32_t   end,
+                         float32_t* pB,
+                         uint8_t    dir) {
     /* Left  array is pA[begin:middle-1]
      * Right Array is pA[middle:end-1] 
      * They are merged in pB
@@ -54,14 +58,16 @@ static void topDownMerge(
     }
 }
 
-static void
-arm_merge_sort_core_f32(float32_t* pB, uint32_t begin, uint32_t end, float32_t* pA, uint8_t dir) {
+static void arm_merge_sort_core_f32(
+    float32_t* pB, uint32_t begin, uint32_t end, float32_t* pA, uint8_t dir) {
     if ((int32_t)end - (int32_t)begin >= 2) // If run size != 1 divide
     {
         int32_t middle = (end + begin) / 2; // Take the middle point
 
-        arm_merge_sort_core_f32(pA, begin, middle, pB, dir); // Sort the left part
-        arm_merge_sort_core_f32(pA, middle, end, pB, dir);   // Sort the right part
+        arm_merge_sort_core_f32(
+            pA, begin, middle, pB, dir); // Sort the left part
+        arm_merge_sort_core_f32(
+            pA, middle, end, pB, dir); // Sort the right part
 
         topDownMerge(pB, begin, middle, end, pA, dir);
     }

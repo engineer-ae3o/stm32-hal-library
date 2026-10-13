@@ -73,7 +73,9 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mag_squared_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_squared_f16(const float16_t* pSrc,
+                               float16_t*       pDst,
+                               uint32_t         numSamples) {
     int32_t   blockSize = numSamples; /* loop counters */
     f16x8x2_t vecSrc;
     f16x8_t   sum;
@@ -82,8 +84,8 @@ void arm_cmplx_mag_squared_f16(const float16_t* pSrc, float16_t* pDst, uint32_t 
     while (blockSize > 0) {
         mve_pred16_t p = vctp16q(blockSize);
         vecSrc         = vld2q(pSrc);
-        sum            = vmulq_m(vuninitializedq_f16(), vecSrc.val[0], vecSrc.val[0], p);
-        sum            = vfmaq_m(sum, vecSrc.val[1], vecSrc.val[1], p);
+        sum = vmulq_m(vuninitializedq_f16(), vecSrc.val[0], vecSrc.val[0], p);
+        sum = vfmaq_m(sum, vecSrc.val[1], vecSrc.val[1], p);
         vstrhq_p_f16(pDst, sum, p);
 
         pSrc += 16;
@@ -97,7 +99,9 @@ void arm_cmplx_mag_squared_f16(const float16_t* pSrc, float16_t* pDst, uint32_t 
 }
 
 #else
-void arm_cmplx_mag_squared_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_squared_f16(const float16_t* pSrc,
+                               float16_t*       pDst,
+                               uint32_t         numSamples) {
     uint32_t blkCnt;     /* Loop counter */
     _Float16 real, imag; /* Temporary input variables */
 

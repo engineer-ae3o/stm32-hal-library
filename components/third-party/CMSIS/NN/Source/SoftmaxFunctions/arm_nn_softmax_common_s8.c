@@ -73,13 +73,15 @@ void arm_nn_softmax_common_s8(const int8_t* input,
         for (col = 0; col < row_size; ++col) {
             diff = input[col] - max;
             if (diff >= diff_min) {
-                sum += DIV_POW2(EXP_ON_NEG(MUL_SAT(diff * mask, mult)), ACCUM_BITS);
+                sum += DIV_POW2(EXP_ON_NEG(MUL_SAT(diff * mask, mult)),
+                                ACCUM_BITS);
             }
         }
 
-        const int32_t headroom      = __CLZ(sum);
-        const int32_t shifted_scale = ONE_OVER1((sum > 0 ? sum << headroom : 0) - (1 << 31));
-        int32_t       bits_over_unit;
+        const int32_t headroom = __CLZ(sum);
+        const int32_t shifted_scale =
+            ONE_OVER1((sum > 0 ? sum << headroom : 0) - (1 << 31));
+        int32_t bits_over_unit;
 
         if (int16_output) {
             int16_t* output_s16 = (int16_t*)output + row_idx * row_size;
@@ -91,10 +93,13 @@ void arm_nn_softmax_common_s8(const int8_t* input,
 
                 if (diff >= diff_min) {
                     const int32_t res =
-                        DIV_POW2(MUL_SAT(shifted_scale, EXP_ON_NEG(MUL_SAT(diff * mask, mult))),
-                                 bits_over_unit) +
+                        DIV_POW2(
+                            MUL_SAT(shifted_scale,
+                                    EXP_ON_NEG(MUL_SAT(diff * mask, mult))),
+                            bits_over_unit) +
                         NN_Q15_MIN;
-                    output_s16[col] = (int16_t)CLAMP(res, (int32_t)NN_Q15_MAX, (int32_t)NN_Q15_MIN);
+                    output_s16[col] = (int16_t)CLAMP(
+                        res, (int32_t)NN_Q15_MAX, (int32_t)NN_Q15_MIN);
                 } else {
                     output_s16[col] = NN_Q15_MIN;
                 }
@@ -108,10 +113,13 @@ void arm_nn_softmax_common_s8(const int8_t* input,
                 diff = input[col] - max;
                 if (diff >= diff_min) {
                     const int32_t res =
-                        DIV_POW2(MUL_SAT(shifted_scale, EXP_ON_NEG(MUL_SAT(diff * mask, mult))),
-                                 bits_over_unit) +
+                        DIV_POW2(
+                            MUL_SAT(shifted_scale,
+                                    EXP_ON_NEG(MUL_SAT(diff * mask, mult))),
+                            bits_over_unit) +
                         NN_Q7_MIN;
-                    output_s8[col] = (int8_t)CLAMP(res, (int32_t)NN_Q7_MAX, (int32_t)NN_Q7_MIN);
+                    output_s8[col] = (int8_t)CLAMP(
+                        res, (int32_t)NN_Q7_MAX, (int32_t)NN_Q7_MIN);
                 } else {
                     output_s8[col] = NN_Q7_MIN;
                 }

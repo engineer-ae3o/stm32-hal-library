@@ -71,15 +71,15 @@
 
 
 void arm_svm_polynomial_init_f16(arm_svm_polynomial_instance_f16* S,
-                                 uint32_t                         nbOfSupportVectors,
-                                 uint32_t                         vectorDimension,
-                                 float16_t                        intercept,
-                                 const float16_t*                 dualCoefficients,
-                                 const float16_t*                 supportVectors,
-                                 const int32_t*                   classes,
-                                 int32_t                          degree,
-                                 float16_t                        coef0,
-                                 float16_t                        gamma) {
+                                 uint32_t         nbOfSupportVectors,
+                                 uint32_t         vectorDimension,
+                                 float16_t        intercept,
+                                 const float16_t* dualCoefficients,
+                                 const float16_t* supportVectors,
+                                 const int32_t*   classes,
+                                 int32_t          degree,
+                                 float16_t        coef0,
+                                 float16_t        gamma) {
     S->nbOfSupportVectors = nbOfSupportVectors;
     S->vectorDimension    = vectorDimension;
     S->intercept          = intercept;

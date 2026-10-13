@@ -111,9 +111,11 @@ q15_t* arm_nn_mat_mult_kernel_s16(const q7_t*          input_a,
         if (bias) {
             q31_t reduced_multiplier = REDUCE_MULTIPLIER(*out_mult);
             q63_t acc_64             = ch_0_out_0 + *bias;
-            ch_0_out_0 = arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
-            acc_64     = ch_0_out_1 + *bias++;
-            ch_0_out_1 = arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
+            ch_0_out_0 =
+                arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
+            acc_64 = ch_0_out_1 + *bias++;
+            ch_0_out_1 =
+                arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
             out_mult++;
         } else {
             ch_0_out_0 = arm_nn_requantize(ch_0_out_0, *out_mult, *out_shift);
@@ -132,9 +134,11 @@ q15_t* arm_nn_mat_mult_kernel_s16(const q7_t*          input_a,
         if (bias) {
             q31_t reduced_multiplier = REDUCE_MULTIPLIER(*out_mult);
             q63_t acc_64             = ch_1_out_0 + *bias;
-            ch_1_out_0 = arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
-            acc_64     = ch_1_out_1 + *bias++;
-            ch_1_out_1 = arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
+            ch_1_out_0 =
+                arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
+            acc_64 = ch_1_out_1 + *bias++;
+            ch_1_out_1 =
+                arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
             out_mult++;
         } else {
             ch_1_out_0 = arm_nn_requantize(ch_1_out_0, *out_mult, *out_shift);
@@ -195,9 +199,11 @@ q15_t* arm_nn_mat_mult_kernel_s16(const q7_t*          input_a,
         if (bias) {
             q31_t reduced_multiplier = REDUCE_MULTIPLIER(*out_mult);
             q63_t acc_64             = ch_0_out_0 + *bias;
-            ch_0_out_0 = arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
-            acc_64     = ch_0_out_1 + *bias++;
-            ch_0_out_1 = arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
+            ch_0_out_0 =
+                arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
+            acc_64 = ch_0_out_1 + *bias++;
+            ch_0_out_1 =
+                arm_nn_requantize_s64(acc_64, reduced_multiplier, *out_shift);
         } else {
             ch_0_out_0 = arm_nn_requantize(ch_0_out_0, *out_mult, *out_shift);
             ch_0_out_1 = arm_nn_requantize(ch_0_out_1, *out_mult, *out_shift);

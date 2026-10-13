@@ -66,10 +66,13 @@ void arm_fir_decimate_q31(const arm_fir_decimate_instance_q31* S,
                           uint32_t                             blockSize) {
     q31_t*       pState  = S->pState;  /* State pointer */
     const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q31_t*       pStateCurnt;          /* Points to the current sample of the state */
-    const q31_t *px, *pb;              /* Temporary pointers for state and coefficient buffers */
-    uint32_t     numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t     i, tapCnt, blkCnt, outBlockSize = blockSize / S->M; /* Loop counters */
+    q31_t*       pStateCurnt; /* Points to the current sample of the state */
+    const q31_t *px,
+        *pb; /* Temporary pointers for state and coefficient buffers */
+    uint32_t numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t i, tapCnt, blkCnt,
+        outBlockSize = blockSize / S->M; /* Loop counters */
     uint32_t     blkCntN4;
     const q31_t *px0, *px1, *px2, *px3;
     q63_t        acc0v, acc1v, acc2v, acc3v;
@@ -295,13 +298,15 @@ void arm_fir_decimate_q31(const arm_fir_decimate_instance_q31* S,
                           uint32_t                             blockSize) {
     q31_t*       pState  = S->pState;  /* State pointer */
     const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q31_t*       pStateCur;            /* Points to the current sample of the state */
-    q31_t*       px0;                  /* Temporary pointer for state buffer */
-    const q31_t* pb;                   /* Temporary pointer for coefficient buffer */
-    q31_t        x0, c0; /* Temporary variables to hold state and coefficient values */
-    q63_t        acc0;   /* Accumulator */
-    uint32_t     numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t     i, tapCnt, blkCnt, outBlockSize = blockSize / S->M; /* Loop counters */
+    q31_t*       pStateCur; /* Points to the current sample of the state */
+    q31_t*       px0;       /* Temporary pointer for state buffer */
+    const q31_t* pb;        /* Temporary pointer for coefficient buffer */
+    q31_t x0, c0; /* Temporary variables to hold state and coefficient values */
+    q63_t acc0;   /* Accumulator */
+    uint32_t numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t i, tapCnt, blkCnt,
+        outBlockSize = blockSize / S->M; /* Loop counters */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q31_t *px1, *px2, *px3;

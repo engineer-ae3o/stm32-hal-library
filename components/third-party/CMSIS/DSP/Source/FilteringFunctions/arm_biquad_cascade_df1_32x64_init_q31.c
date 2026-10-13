@@ -67,10 +67,10 @@
  */
 
 void arm_biquad_cas_df1_32x64_init_q31(arm_biquad_cas_df1_32x64_ins_q31* S,
-                                       uint8_t                           numStages,
-                                       const q31_t*                      pCoeffs,
-                                       q63_t*                            pState,
-                                       uint8_t                           postShift) {
+                                       uint8_t      numStages,
+                                       const q31_t* pCoeffs,
+                                       q63_t*       pState,
+                                       uint8_t      postShift) {
     /* Assign filter stages */
     S->numStages = numStages;
 

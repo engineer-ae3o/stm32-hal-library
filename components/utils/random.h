@@ -17,7 +17,8 @@ typedef struct {
 
 void     rng_seed(pcg32_rng_t* rng, uint64_t seed, uint64_t seq);
 uint32_t rng_get(pcg32_rng_t* rng);
-uint32_t rng_get_range(pcg32_rng_t* rng, uint32_t min_inclusive, uint32_t max_inclusive);
+uint32_t
+rng_get_range(pcg32_rng_t* rng, uint32_t min_inclusive, uint32_t max_inclusive);
 
 
 #ifdef __cplusplus

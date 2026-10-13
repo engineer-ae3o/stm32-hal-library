@@ -52,7 +52,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_power_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_power_f16(const float16_t* pSrc,
+                   uint32_t         blockSize,
+                   float16_t*       pResult) {
     int32_t blkCnt; /* loop counters */
     f16x8_t vecSrc;
     f16x8_t sumVec = vdupq_n_f16(0.0f);
@@ -76,7 +78,9 @@ void arm_power_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult
 }
 #else
 
-void arm_power_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_power_f16(const float16_t* pSrc,
+                   uint32_t         blockSize,
+                   float16_t*       pResult) {
     uint32_t blkCnt;       /* Loop counter */
     _Float16 sum = 0.0f16; /* Temporary result storage */
     _Float16 in;           /* Temporary variable to store input value */

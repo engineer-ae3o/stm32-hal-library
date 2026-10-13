@@ -62,8 +62,11 @@
                    Refer to \ref arm_correlate_q31() for a slower implementation of this function which uses 64-bit accumulation to provide higher precision.
  */
 
-void arm_correlate_fast_q31(
-    const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
+void arm_correlate_fast_q31(const q31_t* pSrcA,
+                            uint32_t     srcALen,
+                            const q31_t* pSrcB,
+                            uint32_t     srcBLen,
+                            q31_t*       pDst) {
     const q31_t* pIn1;                        /* InputA pointer */
     const q31_t* pIn2;                        /* InputB pointer */
     q31_t*       pOut = pDst;                 /* Output pointer */
@@ -71,7 +74,8 @@ void arm_correlate_fast_q31(
     const q31_t* py;                          /* Intermediate inputB pointer */
     const q31_t* pSrc1;                       /* Intermediate pointers */
     q31_t        sum, acc0, acc1, acc2, acc3; /* Accumulators */
-    q31_t    x0, x1, x2, x3, c0; /* Temporary variables for holding input and coefficient values */
+    q31_t        x0, x1, x2, x3,
+        c0; /* Temporary variables for holding input and coefficient values */
     uint32_t blockSize1, blockSize2, blockSize3; /* Loop counters */
     uint32_t j, k, count, blkCnt;                /* Loop counters */
     uint32_t outBlockSize;
@@ -170,16 +174,20 @@ void arm_correlate_fast_q31(
      ** a second loop below computes MACs for the remaining 1 to 3 samples. */
         while (k > 0U) {
             /* x[0] * y[srcBLen - 4] */
-            sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+            sum =
+                (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
 
             /* x[1] * y[srcBLen - 3] */
-            sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+            sum =
+                (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
 
             /* x[2] * y[srcBLen - 2] */
-            sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+            sum =
+                (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
 
             /* x[3] * y[srcBLen - 1] */
-            sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+            sum =
+                (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
 
             /* Decrement loop counter */
             k--;
@@ -192,7 +200,8 @@ void arm_correlate_fast_q31(
         while (k > 0U) {
             /* Perform the multiply-accumulate */
             /* x[0] * y[srcBLen - 1] */
-            sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+            sum =
+                (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
 
             /* Decrement loop counter */
             k--;
@@ -397,10 +406,14 @@ void arm_correlate_fast_q31(
        ** a second loop below computes MACs for the remaining 1 to 3 samples. */
             while (k > 0U) {
                 /* Perform the multiply-accumulates */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >>
+                              32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >>
+                              32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >>
+                              32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >>
+                              32);
 
                 /* Decrement loop counter */
                 k--;
@@ -412,7 +425,8 @@ void arm_correlate_fast_q31(
 
             while (k > 0U) {
                 /* Perform the multiply-accumulate */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >>
+                              32);
 
                 /* Decrement loop counter */
                 k--;
@@ -447,7 +461,8 @@ void arm_correlate_fast_q31(
 
             while (k > 0U) {
                 /* Perform the multiply-accumulate */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >>
+                              32);
 
                 /* Decrement loop counter */
                 k--;
@@ -509,16 +524,20 @@ void arm_correlate_fast_q31(
         while (k > 0U) {
             /* Perform the multiply-accumulate */
             /* sum += x[srcALen - srcBLen + 4] * y[3] */
-            sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+            sum =
+                (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
 
             /* sum += x[srcALen - srcBLen + 3] * y[2] */
-            sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+            sum =
+                (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
 
             /* sum += x[srcALen - srcBLen + 2] * y[1] */
-            sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+            sum =
+                (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
 
             /* sum += x[srcALen - srcBLen + 1] * y[0] */
-            sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+            sum =
+                (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
 
             /* Decrement loop counter */
             k--;
@@ -530,7 +549,8 @@ void arm_correlate_fast_q31(
 
         while (k > 0U) {
             /* Perform the multiply-accumulate */
-            sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
+            sum =
+                (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py++))) >> 32);
 
             /* Decrement loop counter */
             k--;

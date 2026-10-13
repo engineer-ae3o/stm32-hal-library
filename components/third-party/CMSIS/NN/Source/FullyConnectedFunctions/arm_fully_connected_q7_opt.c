@@ -339,7 +339,7 @@ arm_status arm_fully_connected_q7_opt(const q7_t*    pV,
     rowCnt = num_of_rows & 0x3;
 
     while (rowCnt) {
-        q31_t    sum    = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+        q31_t    sum = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         uint16_t colCnt = dim_vec >> 2;
 
         pA = vec_buffer;

@@ -49,7 +49,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_max_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult, uint32_t* pIndex) {
+void arm_max_q31(const q31_t* pSrc,
+                 uint32_t     blockSize,
+                 q31_t*       pResult,
+                 uint32_t*    pIndex) {
     int32_t      blkCnt; /* loop counters */
     q31x4_t      extremValVec = vdupq_n_s32(Q31_MIN);
     q31_t        maxValue     = Q31_MIN;
@@ -93,8 +96,11 @@ void arm_max_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult, uint32_t
 }
 
 #else
-void arm_max_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult, uint32_t* pIndex) {
-    q31_t    maxVal, out;      /* Temporary variables to store the output value. */
+void arm_max_q31(const q31_t* pSrc,
+                 uint32_t     blockSize,
+                 q31_t*       pResult,
+                 uint32_t*    pIndex) {
+    q31_t    maxVal, out; /* Temporary variables to store the output value. */
     uint32_t blkCnt, outIndex; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL)

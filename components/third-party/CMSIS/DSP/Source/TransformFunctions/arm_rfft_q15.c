@@ -88,8 +88,12 @@ void arm_rfft_q15(const arm_rfft_instance_q15* S, q15_t* pSrc, q15_t* pDst) {
     /* Calculation of RIFFT of input */
     if (S->ifftFlagR == 1U) {
         /*  Real IFFT core process */
-        arm_split_rifft_q15(
-            pSrc, L2, S->pTwiddleAReal, S->pTwiddleBReal, pDst, S->twidCoefRModifier);
+        arm_split_rifft_q15(pSrc,
+                            L2,
+                            S->pTwiddleAReal,
+                            S->pTwiddleBReal,
+                            pDst,
+                            S->twidCoefRModifier);
 
         /* Complex IFFT process */
         arm_cfft_q15(S_CFFT, pDst, S->ifftFlagR, S->bitReverseFlagR);
@@ -102,8 +106,12 @@ void arm_rfft_q15(const arm_rfft_instance_q15* S, q15_t* pSrc, q15_t* pDst) {
         arm_cfft_q15(S_CFFT, pSrc, S->ifftFlagR, S->bitReverseFlagR);
 
         /*  Real FFT core process */
-        arm_split_rfft_q15(
-            pSrc, L2, S->pTwiddleAReal, S->pTwiddleBReal, pDst, S->twidCoefRModifier);
+        arm_split_rfft_q15(pSrc,
+                           L2,
+                           S->pTwiddleAReal,
+                           S->pTwiddleBReal,
+                           pDst,
+                           S->twidCoefRModifier);
     }
 }
 
@@ -131,10 +139,12 @@ void arm_rfft_q15(const arm_rfft_instance_q15* S, q15_t* pSrc, q15_t* pDst) {
 #include "arm_vec_fft.h"
 
 #if defined(__CMSIS_GCC_H)
-#define MVE_CMPLX_MULT_FX_AxB_S16(A, B)                                                            \
-    vqdmladhxq_s16(vqdmlsdhq_s16((__typeof(A))vuninitializedq_s16(), A, B), A, B)
-#define MVE_CMPLX_MULT_FX_AxConjB_S16(A, B)                                                        \
-    vqdmladhq_s16(vqdmlsdhxq_s16((__typeof(A))vuninitializedq_s16(), A, B), A, B)
+#define MVE_CMPLX_MULT_FX_AxB_S16(A, B)                                        \
+    vqdmladhxq_s16(                                                            \
+        vqdmlsdhq_s16((__typeof(A))vuninitializedq_s16(), A, B), A, B)
+#define MVE_CMPLX_MULT_FX_AxConjB_S16(A, B)                                    \
+    vqdmladhq_s16(                                                             \
+        vqdmlsdhxq_s16((__typeof(A))vuninitializedq_s16(), A, B), A, B)
 
 #endif
 
@@ -150,9 +160,11 @@ void arm_split_rfft_q15(q15_t*       pSrc,
     q15_t*         pIn1     = &pSrc[2];
     uint16x8_t     offsetIn = {6, 7, 4, 5, 2, 3, 0, 1};
     uint16x8_t     offsetCoef;
-    const uint16_t offsetCoefArr[16] = {0, 0, 2, 2, 4, 4, 6, 6, 0, 1, 0, 1, 0, 1, 0, 1};
+    const uint16_t offsetCoefArr[16] = {
+        0, 0, 2, 2, 4, 4, 6, 6, 0, 1, 0, 1, 0, 1, 0, 1};
 
-    offsetCoef = vmulq_n_u16(vld1q_u16(offsetCoefArr), modifier) + vld1q_u16(offsetCoefArr + 8);
+    offsetCoef = vmulq_n_u16(vld1q_u16(offsetCoefArr), modifier) +
+                 vld1q_u16(offsetCoefArr + 8);
     offsetIn   = vaddq_n_u16(offsetIn, (2 * fftLen - 8));
 
     /* Init coefficient pointers */
@@ -177,8 +189,9 @@ void arm_split_rfft_q15(q15_t*       pSrc,
         q15x8_t out = vhaddq_s16(MVE_CMPLX_MULT_FX_AxB_S16(in1, coefA),
                                  MVE_CMPLX_MULT_FX_AxConjB_S16(coefB, in2));
 #else
-        q15x8_t out = vhaddq_s16(MVE_CMPLX_MULT_FX_AxB(in1, coefA, q15x8_t),
-                                 MVE_CMPLX_MULT_FX_AxConjB(coefB, in2, q15x8_t));
+        q15x8_t out =
+            vhaddq_s16(MVE_CMPLX_MULT_FX_AxB(in1, coefA, q15x8_t),
+                       MVE_CMPLX_MULT_FX_AxConjB(coefB, in2, q15x8_t));
 #endif
         vst1q_s16(pOut1, out);
         pOut1 += 8;
@@ -246,7 +259,8 @@ void arm_split_rfft_q15(q15_t*       pSrc,
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
         /* pSrc[2 * n - 2 * i] * pBTable[2 * i] + pSrc[2 * n - 2 * i + 1] * pBTable[2 * i + 1]) */
-        outR = __SMLAD(read_q15x2(pSrc2), read_q15x2((q15_t*)pCoefB), outR) >> 16U;
+        outR =
+            __SMLAD(read_q15x2(pSrc2), read_q15x2((q15_t*)pCoefB), outR) >> 16U;
 
         /* pIn[2 * n - 2 * i] * pBTable[2 * i + 1] - pIn[2 * n - 2 * i + 1] * pBTable[2 * i] */
 #ifndef ARM_MATH_BIG_ENDIAN
@@ -256,7 +270,8 @@ void arm_split_rfft_q15(q15_t*       pSrc,
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
         /* (pIn[2 * i + 1] * pATable[2 * i] + pIn[2 * i] * pATable[2 * i + 1] */
-        outI = __SMLADX(read_q15x2_ia(&pSrc1), read_q15x2((q15_t*)pCoefA), outI);
+        outI =
+            __SMLADX(read_q15x2_ia(&pSrc1), read_q15x2((q15_t*)pCoefA), outI);
 
         /* write output */
         *pD1++ = (q15_t)outR;
@@ -366,10 +381,12 @@ void arm_split_rifft_q15(q15_t*       pSrc,
     q15_t*         pIn1;
     uint16x8_t     offset = {6, 7, 4, 5, 2, 3, 0, 1};
     uint16x8_t     offsetCoef;
-    int16x8_t      conj              = {1, -1, 1, -1, 1, -1, 1, -1}; /* conjugate */
-    const uint16_t offsetCoefArr[16] = {0, 0, 2, 2, 4, 4, 6, 6, 0, 1, 0, 1, 0, 1, 0, 1};
+    int16x8_t      conj = {1, -1, 1, -1, 1, -1, 1, -1}; /* conjugate */
+    const uint16_t offsetCoefArr[16] = {
+        0, 0, 2, 2, 4, 4, 6, 6, 0, 1, 0, 1, 0, 1, 0, 1};
 
-    offsetCoef = vmulq_n_u16(vld1q_u16(offsetCoefArr), modifier) + vld1q_u16(offsetCoefArr + 8);
+    offsetCoef = vmulq_n_u16(vld1q_u16(offsetCoefArr), modifier) +
+                 vld1q_u16(offsetCoefArr + 8);
 
     offset = vaddq_n_u16(offset, (2 * fftLen - 6));
 
@@ -393,8 +410,9 @@ void arm_split_rifft_q15(q15_t*       pSrc,
         q15x8_t coefB = vldrhq_gather_shifted_offset_s16(pCoefBb, offsetCoef);
 
         /* can we avoid the conjugate here ? */
-        q15x8_t out = vhaddq_s16(MVE_CMPLX_MULT_FX_AxConjB(in1, coefA, q15x8_t),
-                                 vmulq(conj, MVE_CMPLX_MULT_FX_AxB(in2, coefB, q15x8_t)));
+        q15x8_t out =
+            vhaddq_s16(MVE_CMPLX_MULT_FX_AxConjB(in1, coefA, q15x8_t),
+                       vmulq(conj, MVE_CMPLX_MULT_FX_AxB(in2, coefB, q15x8_t)));
 
         vst1q_s16(pDst, out);
         pDst += 8;
@@ -450,16 +468,19 @@ void arm_split_rifft_q15(q15_t*       pSrc,
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
         /* pIn[2 * i] * pATable[2 * i] + pIn[2 * i + 1] * pATable[2 * i + 1] + pIn[2 * n - 2 * i] * pBTable[2 * i] */
-        outR = __SMLAD(read_q15x2(pSrc1), read_q15x2((q15_t*)pCoefA), outR) >> 16U;
+        outR =
+            __SMLAD(read_q15x2(pSrc1), read_q15x2((q15_t*)pCoefA), outR) >> 16U;
 
         /* -pIn[2 * n - 2 * i] * pBTable[2 * i + 1] + pIn[2 * n - 2 * i + 1] * pBTable[2 * i] */
         outI = __SMUADX(read_q15x2_da(&pSrc2), read_q15x2((q15_t*)pCoefB));
 
         /* pIn[2 * i + 1] * pATable[2 * i] - pIn[2 * i] * pATable[2 * i + 1] */
 #ifndef ARM_MATH_BIG_ENDIAN
-        outI = __SMLSDX(read_q15x2((q15_t*)pCoefA), read_q15x2_ia(&pSrc1), -outI);
+        outI =
+            __SMLSDX(read_q15x2((q15_t*)pCoefA), read_q15x2_ia(&pSrc1), -outI);
 #else
-        outI = __SMLSDX(read_q15x2_ia(&pSrc1), read_q15x2((q15_t*)pCoefA), -outI);
+        outI =
+            __SMLSDX(read_q15x2_ia(&pSrc1), read_q15x2((q15_t*)pCoefA), -outI);
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
         /* write output */

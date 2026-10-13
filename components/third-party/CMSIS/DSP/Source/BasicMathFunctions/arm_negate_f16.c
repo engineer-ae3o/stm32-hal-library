@@ -63,7 +63,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_negate_f16(const float16_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+void arm_negate_f16(const float16_t* pSrc,
+                    float16_t*       pDst,
+                    uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
     f16x8_t  vec1;
     f16x8_t  res;
@@ -99,7 +101,9 @@ void arm_negate_f16(const float16_t* pSrc, float16_t* pDst, uint32_t blockSize) 
 
 #else
 #if defined(ARM_FLOAT16_SUPPORTED)
-void arm_negate_f16(const float16_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+void arm_negate_f16(const float16_t* pSrc,
+                    float16_t*       pDst,
+                    uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
 

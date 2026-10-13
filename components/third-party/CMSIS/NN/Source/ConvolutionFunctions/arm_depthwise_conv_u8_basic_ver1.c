@@ -66,9 +66,11 @@ static void depthwise_conv_u8_mult_4(const uint8_t* input,
                                      const int32_t  output_activation_max) {
     for (int32_t in_h = -pad_y, out_h = 0, out_idx = 0; out_h < output_y;
          in_h += stride_y, ++out_h) {
-        for (int32_t in_w = -pad_x, out_w = 0, ker_h_start = MAX(0, -in_h); out_w < output_x;
+        for (int32_t in_w = -pad_x, out_w = 0, ker_h_start = MAX(0, -in_h);
+             out_w < output_x;
              in_w += stride_x, ++out_w) {
-            for (int32_t in_ch = 0, out_ch = 0, ker_w_start = MAX(0, -in_w); out_ch < output_ch;
+            for (int32_t in_ch = 0, out_ch = 0, ker_w_start = MAX(0, -in_w);
+                 out_ch < output_ch;
                  ++in_ch, out_ch += ch_mult) {
                 for (int mult_tile = 0; mult_tile < ch_mult; mult_tile += 4) {
                     int32_t out_buff[4];
@@ -78,24 +80,31 @@ static void depthwise_conv_u8_mult_4(const uint8_t* input,
                     out_buff[2] = 0;
                     out_buff[3] = 0;
 
-                    for (int32_t ker_h = ker_h_start; ker_h < MIN(kernel_y, input_y - in_h);
+                    for (int32_t ker_h = ker_h_start;
+                         ker_h < MIN(kernel_y, input_y - in_h);
                          ++ker_h) {
-                        int32_t ker_idx =
-                            ker_h * (output_ch * kernel_x) + ker_w_start * output_ch + out_ch;
-                        int32_t in_idx =
-                            (in_h + ker_h) * (input_ch * input_x) + in_w * input_ch + in_ch;
+                        int32_t ker_idx = ker_h * (output_ch * kernel_x) +
+                                          ker_w_start * output_ch + out_ch;
+                        int32_t in_idx = (in_h + ker_h) * (input_ch * input_x) +
+                                         in_w * input_ch + in_ch;
 
-                        for (int32_t ker_w = ker_w_start; ker_w < MIN(kernel_x, input_x - in_w);
+                        for (int32_t ker_w = ker_w_start;
+                             ker_w < MIN(kernel_x, input_x - in_w);
                              ++ker_w, ker_idx += output_ch) {
-                            int32_t in_val = input[in_idx + ker_w * input_ch] + input_offset;
+                            int32_t in_val =
+                                input[in_idx + ker_w * input_ch] + input_offset;
                             out_buff[0] +=
-                                in_val * (kernel[ker_idx + 0 + mult_tile] + filter_offset);
+                                in_val * (kernel[ker_idx + 0 + mult_tile] +
+                                          filter_offset);
                             out_buff[1] +=
-                                in_val * (kernel[ker_idx + 1 + mult_tile] + filter_offset);
+                                in_val * (kernel[ker_idx + 1 + mult_tile] +
+                                          filter_offset);
                             out_buff[2] +=
-                                in_val * (kernel[ker_idx + 2 + mult_tile] + filter_offset);
+                                in_val * (kernel[ker_idx + 2 + mult_tile] +
+                                          filter_offset);
                             out_buff[3] +=
-                                in_val * (kernel[ker_idx + 3 + mult_tile] + filter_offset);
+                                in_val * (kernel[ker_idx + 3 + mult_tile] +
+                                          filter_offset);
                         }
                     }
 
@@ -105,24 +114,28 @@ static void depthwise_conv_u8_mult_4(const uint8_t* input,
                         out_buff[2] += bias[out_ch + 2 + mult_tile];
                         out_buff[3] += bias[out_ch + 3 + mult_tile];
                     }
-                    out_buff[0] = arm_nn_requantize(out_buff[0], output_mult, output_shift);
-                    out_buff[1] = arm_nn_requantize(out_buff[1], output_mult, output_shift);
-                    out_buff[2] = arm_nn_requantize(out_buff[2], output_mult, output_shift);
-                    out_buff[3] = arm_nn_requantize(out_buff[3], output_mult, output_shift);
+                    out_buff[0] = arm_nn_requantize(
+                        out_buff[0], output_mult, output_shift);
+                    out_buff[1] = arm_nn_requantize(
+                        out_buff[1], output_mult, output_shift);
+                    out_buff[2] = arm_nn_requantize(
+                        out_buff[2], output_mult, output_shift);
+                    out_buff[3] = arm_nn_requantize(
+                        out_buff[3], output_mult, output_shift);
 
                     out_buff[0] += output_offset;
                     out_buff[1] += output_offset;
                     out_buff[2] += output_offset;
                     out_buff[3] += output_offset;
 
-                    out_buff[0] =
-                        MIN(MAX(out_buff[0], output_activation_min), output_activation_max);
-                    out_buff[1] =
-                        MIN(MAX(out_buff[1], output_activation_min), output_activation_max);
-                    out_buff[2] =
-                        MIN(MAX(out_buff[2], output_activation_min), output_activation_max);
-                    out_buff[3] =
-                        MIN(MAX(out_buff[3], output_activation_min), output_activation_max);
+                    out_buff[0] = MIN(MAX(out_buff[0], output_activation_min),
+                                      output_activation_max);
+                    out_buff[1] = MIN(MAX(out_buff[1], output_activation_min),
+                                      output_activation_max);
+                    out_buff[2] = MIN(MAX(out_buff[2], output_activation_min),
+                                      output_activation_max);
+                    out_buff[3] = MIN(MAX(out_buff[3], output_activation_min),
+                                      output_activation_max);
 
                     output[out_idx++] = (uint8_t)out_buff[0];
                     output[out_idx++] = (uint8_t)out_buff[1];
@@ -176,16 +189,21 @@ static void depthwise_conv_u8_generic(const uint8_t* input,
                     const int ker_x_end = MIN(kernel_x, input_x - base_idx_x);
                     acc_0               = 0;
 
-                    for (int i_ker_y = ker_y_start; i_ker_y < ker_y_end; i_ker_y++) {
+                    for (int i_ker_y = ker_y_start; i_ker_y < ker_y_end;
+                         i_ker_y++) {
                         const int32_t idx_y = base_idx_y + i_ker_y;
-                        for (int i_ker_x = ker_x_start; i_ker_x < ker_x_end; i_ker_x++) {
+                        for (int i_ker_x = ker_x_start; i_ker_x < ker_x_end;
+                             i_ker_x++) {
                             const int32_t idx_x = base_idx_x + i_ker_x;
-                            int32_t       idx_0 = (idx_y * input_x + idx_x) * input_ch + i_input_ch;
-                            int32_t       ker_idx_0 =
-                                (i_ker_y * kernel_x + i_ker_x) * (input_ch * ch_mult) + idx_out_ch;
+                            int32_t       idx_0 =
+                                (idx_y * input_x + idx_x) * input_ch +
+                                i_input_ch;
+                            int32_t ker_idx_0 = (i_ker_y * kernel_x + i_ker_x) *
+                                                    (input_ch * ch_mult) +
+                                                idx_out_ch;
 
-                            acc_0 +=
-                                (input[idx_0] + input_offset) * (kernel[ker_idx_0] + filter_offset);
+                            acc_0 += (input[idx_0] + input_offset) *
+                                     (kernel[ker_idx_0] + filter_offset);
                         }
                     }
                     if (bias != NULL) {
@@ -263,10 +281,10 @@ arm_status arm_depthwise_conv_u8_basic_ver1(const uint8_t* input,
                                             uint8_t*       output,
                                             const uint16_t output_x,
                                             const uint16_t output_y,
-                                            const int32_t  output_activation_min,
-                                            const int32_t  output_activation_max,
-                                            const int32_t  output_shift,
-                                            const int32_t  output_mult) {
+                                            const int32_t output_activation_min,
+                                            const int32_t output_activation_max,
+                                            const int32_t output_shift,
+                                            const int32_t output_mult) {
     (void)dilation_x;
     (void)dilation_y;
 

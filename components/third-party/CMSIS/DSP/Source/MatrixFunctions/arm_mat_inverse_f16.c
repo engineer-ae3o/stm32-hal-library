@@ -52,7 +52,8 @@
  */
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_instance_f16* pDst) {
+arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc,
+                               arm_matrix_instance_f16*       pDst) {
     float16_t* pIn  = pSrc->pData; /* input data matrix pointer */
     float16_t* pOut = pDst->pData; /* output data matrix pointer */
     float16_t *pInT1, *pInT2;      /* Temporary input data matrix pointer */
@@ -64,9 +65,9 @@ arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_i
     uint32_t   numCols = pSrc->numCols; /* Number of Cols in the matrix  */
     float16_t *pTmpA, *pTmpB;
 
-    _Float16   in = 0.0f16;                         /* Temporary input values  */
+    _Float16   in = 0.0f16; /* Temporary input values  */
     uint32_t   i, rowCnt, flag = 0U, j, loopCnt, l; /* loop counters */
-    arm_status status;                              /* status of matrix inverse */
+    arm_status status; /* status of matrix inverse */
     uint32_t   blkCnt;
 
 #ifdef ARM_MATH_MATRIX_CHECK
@@ -521,19 +522,20 @@ arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_i
 
 #else
 
-arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_instance_f16* pDst) {
+arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc,
+                               arm_matrix_instance_f16*       pDst) {
     float16_t* pIn  = pSrc->pData; /* input data matrix pointer */
     float16_t* pOut = pDst->pData; /* output data matrix pointer */
     float16_t *pInT1, *pInT2;      /* Temporary input data matrix pointer */
     float16_t *pOutT1, *pOutT2;    /* Temporary output data matrix pointer */
     float16_t *pPivotRowIn, *pPRT_in, *pPivotRowDst,
-        *pPRT_pDst;                   /* Temporary input and output data matrix pointer */
+        *pPRT_pDst; /* Temporary input and output data matrix pointer */
     uint32_t numRows = pSrc->numRows; /* Number of rows in the matrix  */
     uint32_t numCols = pSrc->numCols; /* Number of Cols in the matrix  */
 
-    _Float16   Xchg, in = 0.0f16, in1;                 /* Temporary input values  */
+    _Float16   Xchg, in = 0.0f16, in1; /* Temporary input values  */
     uint32_t   i, rowCnt, flag = 0U, j, loopCnt, k, l; /* loop counters */
-    arm_status status;                                 /* status of matrix inverse */
+    arm_status status; /* status of matrix inverse */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
@@ -766,7 +768,8 @@ arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_i
                         /* Replace the element by the sum of that row
                and a multiple of the reference row  */
                         in1      = *pInT1;
-                        *pInT1++ = (_Float16)in1 - ((_Float16)in * (_Float16)*pPRT_in++);
+                        *pInT1++ = (_Float16)in1 -
+                                   ((_Float16)in * (_Float16)*pPRT_in++);
 
                         /* Decrement the loop counter */
                         j--;
@@ -780,7 +783,8 @@ arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_i
                         /* Replace the element by the sum of that row
                and a multiple of the reference row  */
                         in1      = *pInT2;
-                        *pInT2++ = (_Float16)in1 - ((_Float16)in * (_Float16)*pPRT_pDst++);
+                        *pInT2++ = (_Float16)in1 -
+                                   ((_Float16)in * (_Float16)*pPRT_pDst++);
 
                         /* Decrement loop counter */
                         j--;

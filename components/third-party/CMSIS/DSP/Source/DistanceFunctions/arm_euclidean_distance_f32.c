@@ -50,7 +50,9 @@
 
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
-float32_t arm_euclidean_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_euclidean_distance_f32(const float32_t* pA,
+                                     const float32_t* pB,
+                                     uint32_t         blockSize) {
     uint32_t  blkCnt;
     float32_t tmp;
     f32x4_t   a, b, accumV, tempV;
@@ -93,7 +95,9 @@ float32_t arm_euclidean_distance_f32(const float32_t* pA, const float32_t* pB, u
 
 #include "NEMath.h"
 
-float32_t arm_euclidean_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_euclidean_distance_f32(const float32_t* pA,
+                                     const float32_t* pB,
+                                     uint32_t         blockSize) {
     float32_t   accum = 0.0f, tmp;
     uint32_t    blkCnt;
     float32x4_t a, b, accumV;
@@ -125,7 +129,9 @@ float32_t arm_euclidean_distance_f32(const float32_t* pA, const float32_t* pB, u
 }
 
 #else
-float32_t arm_euclidean_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_euclidean_distance_f32(const float32_t* pA,
+                                     const float32_t* pB,
+                                     uint32_t         blockSize) {
     float32_t accum = 0.0f, tmp;
 
     while (blockSize > 0) {

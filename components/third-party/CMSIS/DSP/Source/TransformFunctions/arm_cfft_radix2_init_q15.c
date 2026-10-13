@@ -69,13 +69,13 @@
 arm_status arm_cfft_radix2_init_q15(arm_cfft_radix2_instance_q15* S,
                                     uint16_t                      fftLen,
                                     uint8_t                       ifftFlag,
-                                    uint8_t                       bitReverseFlag) {
+                                    uint8_t bitReverseFlag) {
     /*  Initialise the default arm status */
     arm_status status = ARM_MATH_ARGUMENT_ERROR;
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_FFT_ALLOW_TABLES)
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
     defined(ARM_TABLE_TWIDDLECOEF_Q15_4096)
 
     /*  Initialise the default arm status */
@@ -91,7 +91,8 @@ arm_status arm_cfft_radix2_init_q15(arm_cfft_radix2_instance_q15* S,
     /*  Initialise the Flag for calculation Bit reversal or not */
     S->bitReverseFlag = bitReverseFlag;
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_BITREV_1024)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
+    defined(ARM_TABLE_BITREV_1024)
 
     /*  Initializations of structure parameters depending on the FFT length */
     switch (S->fftLen) {

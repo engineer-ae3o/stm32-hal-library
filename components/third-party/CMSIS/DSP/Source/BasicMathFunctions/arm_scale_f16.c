@@ -77,7 +77,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_scale_f16(const float16_t* pSrc, float16_t scale, float16_t* pDst, uint32_t blockSize) {
+void arm_scale_f16(const float16_t* pSrc,
+                   float16_t        scale,
+                   float16_t*       pDst,
+                   uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
     f16x8_t vec1;
@@ -114,7 +117,10 @@ void arm_scale_f16(const float16_t* pSrc, float16_t scale, float16_t* pDst, uint
 
 #else
 #if defined(ARM_FLOAT16_SUPPORTED)
-void arm_scale_f16(const float16_t* pSrc, float16_t scale, float16_t* pDst, uint32_t blockSize) {
+void arm_scale_f16(const float16_t* pSrc,
+                   float16_t        scale,
+                   float16_t*       pDst,
+                   uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL)

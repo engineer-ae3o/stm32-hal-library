@@ -69,13 +69,15 @@
 #define __PACKED_STRUCT __packed struct
 #endif
 #ifndef __UNALIGNED_UINT16_WRITE
-#define __UNALIGNED_UINT16_WRITE(addr, val) ((*((__packed uint16_t*)(addr))) = (val))
+#define __UNALIGNED_UINT16_WRITE(addr, val)                                    \
+    ((*((__packed uint16_t*)(addr))) = (val))
 #endif
 #ifndef __UNALIGNED_UINT16_READ
 #define __UNALIGNED_UINT16_READ(addr) (*((const __packed uint16_t*)(addr)))
 #endif
 #ifndef __UNALIGNED_UINT32_WRITE
-#define __UNALIGNED_UINT32_WRITE(addr, val) ((*((__packed uint32_t*)(addr))) = (val))
+#define __UNALIGNED_UINT32_WRITE(addr, val)                                    \
+    ((*((__packed uint32_t*)(addr))) = (val))
 #endif
 #ifndef __UNALIGNED_UINT32_READ
 #define __UNALIGNED_UINT32_READ(addr) (*((const __packed uint32_t*)(addr)))
@@ -141,7 +143,8 @@
   \return               Reversed value
  */
 #ifndef __NO_EMBEDDED_ASM
-__attribute__((section(".rev16_text"))) __STATIC_INLINE __ASM uint32_t __REV16(uint32_t value) {
+__attribute__((section(".rev16_text"))) __STATIC_INLINE __ASM uint32_t
+__REV16(uint32_t value) {
     rev16 r0, r0 bx lr
 }
 #endif
@@ -153,8 +156,8 @@ __attribute__((section(".rev16_text"))) __STATIC_INLINE __ASM uint32_t __REV16(u
   \return               Reversed value
  */
 #ifndef __NO_EMBEDDED_ASM
-__attribute__((section(".revsh_text"))) __STATIC_INLINE __ASM int16_t __REVSH(int16_t value){
-    revsh r0, r0 bx lr}
+__attribute__((section(".revsh_text")))
+__STATIC_INLINE __ASM int16_t __REVSH(int16_t value){revsh r0, r0 bx lr}
 #endif
 
 /**
@@ -195,8 +198,9 @@ __attribute__((section(".revsh_text"))) __STATIC_INLINE __ASM int16_t __REVSH(in
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __LDREXB(ptr) ((uint8_t)__ldrex(ptr))
 #else
-#define __LDREXB(ptr)                                                                              \
-    _Pragma("push") _Pragma("diag_suppress 3731")((uint8_t)__ldrex(ptr)) _Pragma("pop")
+#define __LDREXB(ptr)                                                          \
+    _Pragma("push") _Pragma("diag_suppress 3731")((uint8_t)__ldrex(ptr))       \
+        _Pragma("pop")
 #endif
 
 /**
@@ -208,8 +212,9 @@ __attribute__((section(".revsh_text"))) __STATIC_INLINE __ASM int16_t __REVSH(in
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __LDREXH(ptr) ((uint16_t)__ldrex(ptr))
 #else
-#define __LDREXH(ptr)                                                                              \
-    _Pragma("push") _Pragma("diag_suppress 3731")((uint16_t)__ldrex(ptr)) _Pragma("pop")
+#define __LDREXH(ptr)                                                          \
+    _Pragma("push") _Pragma("diag_suppress 3731")((uint16_t)__ldrex(ptr))      \
+        _Pragma("pop")
 #endif
 
 /**
@@ -221,8 +226,9 @@ __attribute__((section(".revsh_text"))) __STATIC_INLINE __ASM int16_t __REVSH(in
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __LDREXW(ptr) ((uint32_t)__ldrex(ptr))
 #else
-#define __LDREXW(ptr)                                                                              \
-    _Pragma("push") _Pragma("diag_suppress 3731")((uint32_t)__ldrex(ptr)) _Pragma("pop")
+#define __LDREXW(ptr)                                                          \
+    _Pragma("push") _Pragma("diag_suppress 3731")((uint32_t)__ldrex(ptr))      \
+        _Pragma("pop")
 #endif
 
 /**
@@ -236,8 +242,9 @@ __attribute__((section(".revsh_text"))) __STATIC_INLINE __ASM int16_t __REVSH(in
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __STREXB(value, ptr) __strex(value, ptr)
 #else
-#define __STREXB(value, ptr)                                                                       \
-    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr) _Pragma("pop")
+#define __STREXB(value, ptr)                                                   \
+    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr)          \
+        _Pragma("pop")
 #endif
 
 /**
@@ -251,8 +258,9 @@ __attribute__((section(".revsh_text"))) __STATIC_INLINE __ASM int16_t __REVSH(in
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __STREXH(value, ptr) __strex(value, ptr)
 #else
-#define __STREXH(value, ptr)                                                                       \
-    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr) _Pragma("pop")
+#define __STREXH(value, ptr)                                                   \
+    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr)          \
+        _Pragma("pop")
 #endif
 
 /**
@@ -266,8 +274,9 @@ __attribute__((section(".revsh_text"))) __STATIC_INLINE __ASM int16_t __REVSH(in
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __STREXW(value, ptr) __strex(value, ptr)
 #else
-#define __STREXW(value, ptr)                                                                       \
-    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr) _Pragma("pop")
+#define __STREXW(value, ptr)                                                   \
+    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr)          \
+        _Pragma("pop")
 #endif
 
 /**
@@ -330,7 +339,7 @@ __attribute__((section(".revsh_text"))) __STATIC_INLINE __ASM int16_t __REVSH(in
   \return               Floating Point Status/Control register value
  */
 __STATIC_INLINE uint32_t __get_FPSCR(void) {
-#if ((defined(__FPU_PRESENT) && (__FPU_PRESENT == 1U)) &&                                          \
+#if ((defined(__FPU_PRESENT) && (__FPU_PRESENT == 1U)) &&                      \
      (defined(__FPU_USED) && (__FPU_USED == 1U)))
     register uint32_t __regfpscr __ASM("fpscr");
     return (__regfpscr);
@@ -344,7 +353,7 @@ __STATIC_INLINE uint32_t __get_FPSCR(void) {
   \param [in]    fpscr  Floating Point Status/Control value to set
  */
 __STATIC_INLINE void __set_FPSCR(uint32_t fpscr) {
-#if ((defined(__FPU_PRESENT) && (__FPU_PRESENT == 1U)) &&                                          \
+#if ((defined(__FPU_PRESENT) && (__FPU_PRESENT == 1U)) &&                      \
      (defined(__FPU_USED) && (__FPU_USED == 1U)))
     register uint32_t __regfpscr __ASM("fpscr");
     __regfpscr = (fpscr);
@@ -380,7 +389,8 @@ __STATIC_INLINE uint32_t __get_mode(void) {
 /** \brief  Set Mode
     \param [in]    mode  Mode value to set
  */
-__STATIC_INLINE __ASM void __set_mode(uint32_t mode){MOV r1, lr MSR CPSR_C, r0 BX r1}
+__STATIC_INLINE __ASM void __set_mode(uint32_t mode){
+    MOV r1, lr MSR CPSR_C, r0 BX r1}
 
 /** \brief  Get Stack Pointer
     \return Stack Pointer
@@ -443,29 +453,31 @@ __STATIC_INLINE void __set_FPEXC(uint32_t fpexc) {
  * Include common core functions to access Coprocessor 15 registers
  */
 
-#define __get_CP(cp, op1, Rt, CRn, CRm, op2)                                                       \
-    do {                                                                                           \
-        register volatile uint32_t tmp __ASM("cp" #cp ":" #op1 ":c" #CRn ":c" #CRm ":" #op2);      \
-        (Rt) = tmp;                                                                                \
+#define __get_CP(cp, op1, Rt, CRn, CRm, op2)                                   \
+    do {                                                                       \
+        register volatile uint32_t tmp __ASM("cp" #cp ":" #op1 ":c" #CRn       \
+                                             ":c" #CRm ":" #op2);              \
+        (Rt) = tmp;                                                            \
     } while (0)
-#define __set_CP(cp, op1, Rt, CRn, CRm, op2)                                                       \
-    do {                                                                                           \
-        register volatile uint32_t tmp __ASM("cp" #cp ":" #op1 ":c" #CRn ":c" #CRm ":" #op2);      \
-        tmp = (Rt);                                                                                \
+#define __set_CP(cp, op1, Rt, CRn, CRm, op2)                                   \
+    do {                                                                       \
+        register volatile uint32_t tmp __ASM("cp" #cp ":" #op1 ":c" #CRn       \
+                                             ":c" #CRm ":" #op2);              \
+        tmp = (Rt);                                                            \
     } while (0)
-#define __get_CP64(cp, op1, Rt, CRm)                                                               \
-    do {                                                                                           \
-        uint32_t ltmp, htmp;                                                                       \
-        __ASM volatile("MRRC p" #cp ", " #op1 ", ltmp, htmp, c" #CRm);                             \
-        (Rt) = ((((uint64_t)htmp) << 32U) | ((uint64_t)ltmp));                                     \
+#define __get_CP64(cp, op1, Rt, CRm)                                           \
+    do {                                                                       \
+        uint32_t ltmp, htmp;                                                   \
+        __ASM volatile("MRRC p" #cp ", " #op1 ", ltmp, htmp, c" #CRm);         \
+        (Rt) = ((((uint64_t)htmp) << 32U) | ((uint64_t)ltmp));                 \
     } while (0)
 
-#define __set_CP64(cp, op1, Rt, CRm)                                                               \
-    do {                                                                                           \
-        const uint64_t tmp  = (Rt);                                                                \
-        const uint32_t ltmp = (uint32_t)(tmp);                                                     \
-        const uint32_t htmp = (uint32_t)(tmp >> 32U);                                              \
-        __ASM volatile("MCRR p" #cp ", " #op1 ", ltmp, htmp, c" #CRm);                             \
+#define __set_CP64(cp, op1, Rt, CRm)                                           \
+    do {                                                                       \
+        const uint64_t tmp  = (Rt);                                            \
+        const uint32_t ltmp = (uint32_t)(tmp);                                 \
+        const uint32_t htmp = (uint32_t)(tmp >> 32U);                          \
+        __ASM volatile("MCRR p" #cp ", " #op1 ", ltmp, htmp, c" #CRm);         \
     } while (0)
 
 #include "cmsis_cp15.h"
@@ -495,17 +507,19 @@ __STATIC_INLINE __ASM void __FPU_Enable(void) {
 # 0
 
         //Initialise D16 registers to 0
-        VMOV D0, R2, R2 VMOV D1, R2, R2 VMOV D2, R2, R2 VMOV D3, R2, R2 VMOV D4, R2, R2 VMOV D5, R2,
-        R2 VMOV D6, R2, R2 VMOV D7, R2, R2 VMOV D8, R2, R2 VMOV D9, R2, R2 VMOV D10, R2,
-        R2 VMOV D11, R2, R2 VMOV D12, R2, R2 VMOV D13, R2, R2 VMOV D14, R2, R2 VMOV D15, R2,
+        VMOV D0, R2, R2 VMOV D1, R2, R2 VMOV D2, R2, R2 VMOV D3, R2, R2 VMOV D4,
+        R2, R2 VMOV D5, R2, R2 VMOV D6, R2, R2 VMOV D7, R2, R2 VMOV D8, R2,
+        R2 VMOV D9, R2, R2 VMOV D10, R2, R2 VMOV D11, R2, R2 VMOV D12, R2,
+        R2 VMOV D13, R2, R2 VMOV D14, R2, R2 VMOV D15, R2,
         R2
 
                 IF{TARGET_FEATURE_EXTENSION_REGISTER_COUNT} == 32
             //Initialise D32 registers to 0
             VMOV D16,
-        R2, R2 VMOV D17, R2, R2 VMOV D18, R2, R2 VMOV D19, R2, R2 VMOV D20, R2, R2 VMOV D21, R2,
-        R2 VMOV D22, R2, R2 VMOV D23, R2, R2 VMOV D24, R2, R2 VMOV D25, R2, R2 VMOV D26, R2,
-        R2 VMOV D27, R2, R2 VMOV D28, R2, R2 VMOV D29, R2, R2 VMOV D30, R2, R2 VMOV D31, R2,
+        R2, R2 VMOV D17, R2, R2 VMOV D18, R2, R2 VMOV D19, R2, R2 VMOV D20, R2,
+        R2 VMOV D21, R2, R2 VMOV D22, R2, R2 VMOV D23, R2, R2 VMOV D24, R2,
+        R2 VMOV D25, R2, R2 VMOV D26, R2, R2 VMOV D27, R2, R2 VMOV D28, R2,
+        R2 VMOV D29, R2, R2 VMOV D30, R2, R2 VMOV D31, R2,
         R2 ENDIF
 
             //Initialise FPSCR to a known state

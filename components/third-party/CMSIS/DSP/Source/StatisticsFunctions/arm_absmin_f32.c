@@ -28,7 +28,8 @@
 
 #include "dsp/statistics_functions.h"
 
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) &&                      \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include <limits.h>
 #endif
 
@@ -145,23 +146,28 @@ void arm_absmin_f32(const float32_t* pSrc,
                     uint32_t         blockSize,
                     float32_t*       pResult,
                     uint32_t*        pIndex) {
-    float32_t cur_absmin, out;  /* Temporary variables to store the output value. */
-    uint32_t  blkCnt, outIndex; /* Loop counter */
-    uint32_t  index;            /* index of maximum value */
+    float32_t cur_absmin,
+        out; /* Temporary variables to store the output value. */
+    uint32_t blkCnt, outIndex; /* Loop counter */
+    uint32_t index;            /* index of maximum value */
 
     /* Initialize index value to zero. */
-    outIndex = 0U; /* Load first input value that act as reference value for comparision */
-    out      = *pSrc++;
-    out      = (out > 0.0f) ? out : -out; /* Initialize index of extrema value. */
-    index    = 0U;
+    outIndex =
+        0U; /* Load first input value that act as reference value for comparision */
+    out   = *pSrc++;
+    out   = (out > 0.0f) ? out : -out; /* Initialize index of extrema value. */
+    index = 0U;
 
     /* Loop unrolling: Compute 4 outputs at a time */
     blkCnt = (blockSize - 1U) >> 2U;
 
-    while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
+    while (
+        blkCnt >
+        0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin =
-            (cur_absmin > 0.0f) ? cur_absmin : -cur_absmin; /* compare for the extrema value */
+        cur_absmin = (cur_absmin > 0.0f)
+                         ? cur_absmin
+                         : -cur_absmin; /* compare for the extrema value */
         if (cur_absmin < out) { /* Update the extrema value and it's index */
             out      = cur_absmin;
             outIndex = index + 1U;
@@ -219,7 +225,7 @@ void arm_absmin_f32(const float32_t* pSrc,
                     uint32_t         blockSize,
                     float32_t*       pResult,
                     uint32_t*        pIndex) {
-    float32_t minVal, out;      /* Temporary variables to store the output value. */
+    float32_t minVal, out; /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* Loop counter */
 
     /* Initialise index value to zero. */

@@ -72,7 +72,9 @@ extern void arm_boolean_distance_TT_TF_FT(const uint32_t* pA,
  *
  */
 
-float32_t arm_dice_distance(const uint32_t* pA, const uint32_t* pB, uint32_t numberOfBools) {
+float32_t arm_dice_distance(const uint32_t* pA,
+                            const uint32_t* pB,
+                            uint32_t        numberOfBools) {
     uint32_t ctt = 0, ctf = 0, cft = 0;
 
     arm_boolean_distance_TT_TF_FT(pA, pB, numberOfBools, &ctt, &ctf, &cft);

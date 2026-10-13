@@ -262,7 +262,8 @@ __WEAK IRQn_ID_t IRQ_GetActiveIRQ(void) {
 
         __DSB();
 
-        if ((irqn == 0U) && ((GIC_GetIRQStatus((IRQn_Type)irqn) & 1U) != 0U) && (IRQ_ID0 == 0U)) {
+        if ((irqn == 0U) && ((GIC_GetIRQStatus((IRQn_Type)irqn) & 1U) != 0U) &&
+            (IRQ_ID0 == 0U)) {
             /* If the ID is 0, is active and has not been seen before */
             IRQ_ID0 = 1U;
         }

@@ -90,7 +90,8 @@ namespace test::loopback {
         pin.port->OTYPER &= ~(1UL << n);
         pin.port->OSPEEDR |= (0b11UL << (n * 2U));
         pin.port->PUPDR &= ~(0b11UL << (n * 2U));
-        pin.port->MODER = (pin.port->MODER & ~(0b11UL << (n * 2U))) | (0b01UL << (n * 2U));
+        pin.port->MODER =
+            (pin.port->MODER & ~(0b11UL << (n * 2U))) | (0b01UL << (n * 2U));
     }
 
     // Park the pin as an input with a pulldown, so a wire hanging off a previous test's output idles low
@@ -98,14 +99,18 @@ namespace test::loopback {
         TRY(gpiox_clk_enable(pin.port, true));
         const uint32_t n = pin_number(pin);
         pin.port->MODER &= ~(0b11UL << (n * 2U));
-        pin.port->PUPDR = (pin.port->PUPDR & ~(0b11UL << (n * 2U))) | (0b10UL << (n * 2U));
+        pin.port->PUPDR =
+            (pin.port->PUPDR & ~(0b11UL << (n * 2U))) | (0b10UL << (n * 2U));
         return HAL_OK;
     }
 
 
     // Bit banged stimulus
     // 'count' full pulses: high for high_us, then low for low_us
-    inline void pulses(const board_pin_t& pin, uint32_t count, uint32_t high_us, uint32_t low_us) {
+    inline void pulses(const board_pin_t& pin,
+                       uint32_t           count,
+                       uint32_t           high_us,
+                       uint32_t           low_us) {
         for (uint32_t i = 0; i < count; i++) {
             drive(pin, true);
             delay_us(high_us);
@@ -142,7 +147,8 @@ namespace test::loopback {
         uint32_t       edges = 0;
         bool           last  = sample(pin);
         const uint32_t t0    = DWT->CYCCNT;
-        const uint32_t span  = duration_us * (get_system_core_clock() / 1'000'000U);
+        const uint32_t span =
+            duration_us * (get_system_core_clock() / 1'000'000U);
         while ((DWT->CYCCNT - t0) < span) {
             const bool now = sample(pin);
             if (now != last) {
@@ -156,8 +162,9 @@ namespace test::loopback {
 
     // Signal source (TIM5)
     // A square wave of the given frequency on 'pin': the output toggles on a compare match once per timer period
-    inline hal_err_t
-    generator_toggle_start(timer_channel_t channel, const board_pin_t& pin, uint32_t pin_hz) {
+    inline hal_err_t generator_toggle_start(timer_channel_t    channel,
+                                            const board_pin_t& pin,
+                                            uint32_t           pin_hz) {
         output_compare_config_t cfg{};
         cfg.buffer_compare_reload = false;
         cfg.mode                  = OUTPUT_COMPARE_TOGGLE_ON_MATCH;
@@ -178,8 +185,11 @@ namespace test::loopback {
 
     // Frequency actually coming out of the generator, derived from its registers
     inline uint32_t generator_pin_hz() {
-        const uint64_t divisor = (uint64_t)(GEN->PSC + 1U) * ((uint64_t)GEN->ARR + 1U) * 2U;
-        return (uint32_t)(((uint64_t)timer_get_frequency_hz(GEN) + (divisor / 2U)) / divisor);
+        const uint64_t divisor =
+            (uint64_t)(GEN->PSC + 1U) * ((uint64_t)GEN->ARR + 1U) * 2U;
+        return (
+            uint32_t)(((uint64_t)timer_get_frequency_hz(GEN) + (divisor / 2U)) /
+                      divisor);
     }
 
     // A PWM wave on GEN_A. 'compare' and 'max_duty' are the duty cycle numbers the PWM driver ended up using
@@ -253,7 +263,8 @@ namespace test::loopback {
     // deliberately no RAII guard here. Measure with the non asserting _hal helpers while switched, restore the
     // clock, and only then assert on the recorded results.
     struct clock_preset_t {
-        system_clock_t hse; // The preset when the board runs from the HSE family
+        system_clock_t
+            hse; // The preset when the board runs from the HSE family
         system_clock_t hsi; // And from the HSI family
         uint32_t       hse_mhz;
         uint32_t       hsi_mhz;
@@ -263,9 +274,18 @@ namespace test::loopback {
     // timer doubling brings it back up (100/84MHz), while 48MHz and the direct oscillator presets (APB1 undivided)
     // get no doubling. So the sweep exercises both branches of timer_get_frequency_hz(...)
     inline constexpr std::array<clock_preset_t, 4> CLOCK_SWEEP = {{
-        {.hse = HSE_PLL_48MHz, .hsi = HSI_PLL_48MHz, .hse_mhz = 48, .hsi_mhz = 48},
-        {.hse = HSE_PLL_84MHz, .hsi = HSI_PLL_84MHz, .hse_mhz = 84, .hsi_mhz = 84},
-        {.hse = HSE_PLL_100MHz, .hsi = HSI_PLL_100MHz, .hse_mhz = 100, .hsi_mhz = 100},
+        {.hse     = HSE_PLL_48MHz,
+         .hsi     = HSI_PLL_48MHz,
+         .hse_mhz = 48,
+         .hsi_mhz = 48},
+        {.hse     = HSE_PLL_84MHz,
+         .hsi     = HSI_PLL_84MHz,
+         .hse_mhz = 84,
+         .hsi_mhz = 84},
+        {.hse     = HSE_PLL_100MHz,
+         .hsi     = HSI_PLL_100MHz,
+         .hse_mhz = 100,
+         .hsi_mhz = 100},
         {.hse     = HSE_PLL_DIRECT,
          .hsi     = HSI_PLL_DIRECT,
          .hse_mhz = HSE_VALUE_MHz,
@@ -273,11 +293,13 @@ namespace test::loopback {
     }};
 
     // Pick the preset from the same oscillator family the board is currently running on
-    inline system_clock_t pick_preset(const clock_preset_t& preset, system_clock_t original) {
+    inline system_clock_t pick_preset(const clock_preset_t& preset,
+                                      system_clock_t        original) {
         return (original <= HSE_PLL_DIRECT) ? preset.hse : preset.hsi;
     }
 
-    inline uint32_t preset_mhz(const clock_preset_t& preset, system_clock_t original) {
+    inline uint32_t preset_mhz(const clock_preset_t& preset,
+                               system_clock_t        original) {
         return (original <= HSE_PLL_DIRECT) ? preset.hse_mhz : preset.hsi_mhz;
     }
 

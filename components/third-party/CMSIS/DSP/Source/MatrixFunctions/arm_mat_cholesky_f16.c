@@ -200,7 +200,8 @@ arm_status arm_mat_cholesky_f16(const arm_matrix_instance_f16* pSrc,
 
                 for (k = 0; k < i; k++) {
                     pG[j * n + i] =
-                        (_Float16)pG[j * n + i] - (_Float16)pG[i * n + k] * (_Float16)pG[j * n + k];
+                        (_Float16)pG[j * n + i] -
+                        (_Float16)pG[i * n + k] * (_Float16)pG[j * n + k];
                 }
             }
 

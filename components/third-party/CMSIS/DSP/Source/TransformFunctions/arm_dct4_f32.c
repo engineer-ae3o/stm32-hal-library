@@ -124,12 +124,16 @@
   @return        none
  */
 
-void arm_dct4_f32(const arm_dct4_instance_f32* S, float32_t* pState, float32_t* pInlineBuffer) {
-    const float32_t* weights = S->pTwiddle;   /* Pointer to the Weights table */
-    const float32_t* cosFact = S->pCosFactor; /* Pointer to the cos factors table */
-    float32_t *      pS1, *pS2, *pbuff; /* Temporary pointers for input buffer and pState buffer */
-    float32_t        in;                /* Temporary variable */
-    uint32_t         i;                 /* Loop counter */
+void arm_dct4_f32(const arm_dct4_instance_f32* S,
+                  float32_t*                   pState,
+                  float32_t*                   pInlineBuffer) {
+    const float32_t* weights = S->pTwiddle; /* Pointer to the Weights table */
+    const float32_t* cosFact =
+        S->pCosFactor; /* Pointer to the cos factors table */
+    float32_t *pS1, *pS2,
+        *pbuff;   /* Temporary pointers for input buffer and pState buffer */
+    float32_t in; /* Temporary variable */
+    uint32_t  i;  /* Loop counter */
 
 
     /* DCT4 computation involves DCT2 (which is calculated using RFFT)

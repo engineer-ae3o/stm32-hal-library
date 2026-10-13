@@ -152,11 +152,11 @@
 
 #define FIR_F32_MAX_COEF_BLK 8
 
-#define FIR_F32_CORE(pSamples, c, NB_TAPS)                                                         \
-    vecAcc0 = vdupq_n_f32(0.0f);                                                                   \
-    for (int i = 0; i < NB_TAPS; i++) {                                                            \
-        vecIn0  = vld1q(&pSamples[i]);                                                             \
-        vecAcc0 = vfmaq(vecAcc0, vecIn0, c[i]);                                                    \
+#define FIR_F32_CORE(pSamples, c, NB_TAPS)                                     \
+    vecAcc0 = vdupq_n_f32(0.0f);                                               \
+    for (int i = 0; i < NB_TAPS; i++) {                                        \
+        vecIn0  = vld1q(&pSamples[i]);                                         \
+        vecAcc0 = vfmaq(vecAcc0, vecIn0, c[i]);                                \
     }
 
 
@@ -168,12 +168,13 @@ __STATIC_INLINE void arm_fir_f32_1_4_mve(const arm_fir_instance_f32* S,
     float32_t*       pRefStatePtr = S->pState + blockSize;
     float32_t*       pState       = pRefStatePtr; /* State pointer */
     const float32_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */
-    float32_t*       pStateCur;                   /* Points to the current sample of the state */
-    const float32_t* pSamples;                    /* Temporary pointer to the sample buffer */
-    float32_t*       pOutput;                     /* Temporary pointer to the output buffer */
-    const float32_t* pTempSrc;                    /* Temporary pointer to the source data */
-    float32_t*       pTempDest;                   /* Temporary pointer to the destination buffer */
-    uint32_t         numTaps = S->numTaps;        /* Number of filter coefficients in the filter */
+    float32_t*       pStateCur; /* Points to the current sample of the state */
+    const float32_t* pSamples;  /* Temporary pointer to the sample buffer */
+    float32_t*       pOutput;   /* Temporary pointer to the output buffer */
+    const float32_t* pTempSrc;  /* Temporary pointer to the source data */
+    float32_t* pTempDest; /* Temporary pointer to the destination buffer */
+    uint32_t   numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
     int32_t          blkCnt;
     float32x4_t      vecIn0;
     float32x4_t      vecAcc0;
@@ -251,13 +252,14 @@ __STATIC_INLINE void arm_fir_f32_5_8_mve(const arm_fir_instance_f32* S,
     float32_t*       pRefStatePtr = S->pState + blockSize;
     float32_t*       pState       = pRefStatePtr; /* State pointer */
     const float32_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */
-    const float32_t* pSamples;                    /* Temporary pointer to the sample buffer */
-    const float32_t* pTempSrc;                    /* Temporary pointer to the source data */
-    float32_t*       pTempDest;                   /* Temporary pointer to the destination buffer */
-    uint32_t         numTaps = S->numTaps;        /* Number of filter coefficients in the filter */
-    int32_t          blkCnt;
-    float32_t        c0, c1, c2, c3;
-    float32_t        c4, c5, c6, c7;
+    const float32_t* pSamples; /* Temporary pointer to the sample buffer */
+    const float32_t* pTempSrc; /* Temporary pointer to the source data */
+    float32_t* pTempDest;      /* Temporary pointer to the destination buffer */
+    uint32_t   numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    int32_t   blkCnt;
+    float32_t c0, c1, c2, c3;
+    float32_t c4, c5, c6, c7;
 
 
     pTempSrc  = pSrc;
@@ -360,14 +362,15 @@ void arm_fir_f32(const arm_fir_instance_f32* S,
     float32_t*       pRefStatePtr = S->pState + blockSize;
     float32_t*       pState       = pRefStatePtr; /* State pointer */
     const float32_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */
-    const float32_t* pSamples;                    /* Temporary pointer to the sample buffer */
-    float32_t*       pOutput;                     /* Temporary pointer to the output buffer */
-    const float32_t* pTempSrc;                    /* Temporary pointer to the source data */
-    float32_t*       pTempDest;                   /* Temporary pointer to the destination buffer */
-    uint32_t         numTaps = S->numTaps;        /* Number of filter coefficients in the filter */
-    uint32_t         blkCnt;
-    float32_t        c0, c1, c2, c3;
-    float32_t        c4, c5, c6, c7;
+    const float32_t* pSamples; /* Temporary pointer to the sample buffer */
+    float32_t*       pOutput;  /* Temporary pointer to the output buffer */
+    const float32_t* pTempSrc; /* Temporary pointer to the source data */
+    float32_t* pTempDest;      /* Temporary pointer to the destination buffer */
+    uint32_t   numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t  blkCnt;
+    float32_t c0, c1, c2, c3;
+    float32_t c4, c5, c6, c7;
 
     /*
      * [1 to 8 taps] specialized routines
@@ -678,11 +681,12 @@ void arm_fir_f32(const arm_fir_instance_f32* S,
                  uint32_t                    blockSize) {
     float32_t*       pState  = S->pState;  /* State pointer */
     const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    float32_t*       pStateCurnt;          /* Points to the current sample of the state */
-    float32_t*       px;                   /* Temporary pointers for state buffer */
-    const float32_t* pb;                   /* Temporary pointers for coefficient buffer */
-    uint32_t         numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t         i, tapCnt, blkCnt;    /* Loop counters */
+    float32_t* pStateCurnt; /* Points to the current sample of the state */
+    float32_t* px;          /* Temporary pointers for state buffer */
+    const float32_t* pb;    /* Temporary pointers for coefficient buffer */
+    uint32_t         numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t i, tapCnt, blkCnt; /* Loop counters */
 
     float32x4_t accv0, accv1, samples0, samples1, x0, x1, x2, xa, xb, b;
     float32_t   acc;
@@ -881,17 +885,19 @@ void arm_fir_f32(const arm_fir_instance_f32* S,
                  uint32_t                    blockSize) {
     float32_t*       pState  = S->pState;  /* State pointer */
     const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    float32_t*       pStateCurnt;          /* Points to the current sample of the state */
-    float32_t*       px;                   /* Temporary pointer for state buffer */
-    const float32_t* pb;                   /* Temporary pointer for coefficient buffer */
-    float32_t        acc0;                 /* Accumulator */
-    uint32_t         numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t         i, tapCnt, blkCnt;    /* Loop counters */
+    float32_t* pStateCurnt; /* Points to the current sample of the state */
+    float32_t* px;          /* Temporary pointer for state buffer */
+    const float32_t* pb;    /* Temporary pointer for coefficient buffer */
+    float32_t        acc0;  /* Accumulator */
+    uint32_t         numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t i, tapCnt, blkCnt; /* Loop counters */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     float32_t acc1, acc2, acc3, acc4, acc5, acc6, acc7; /* Accumulators */
-    float32_t x0, x1, x2, x3, x4, x5, x6, x7; /* Temporary variables to hold state values */
-    float32_t c0;                             /* Temporary variable to hold coefficient value */
+    float32_t x0, x1, x2, x3, x4, x5, x6,
+        x7;       /* Temporary variables to hold state values */
+    float32_t c0; /* Temporary variable to hold coefficient value */
 #endif
 
     /* S->pState points to state array which contains previous frame (numTaps - 1) samples */

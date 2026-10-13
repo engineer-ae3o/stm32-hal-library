@@ -47,23 +47,24 @@
  *
  */
 
-arm_status arm_svdf_state_s16_s8(const cmsis_nn_context*                 input_ctx,
-                                 const cmsis_nn_context*                 output_ctx,
-                                 const cmsis_nn_svdf_params*             svdf_params,
-                                 const cmsis_nn_per_tensor_quant_params* input_quant_params,
-                                 const cmsis_nn_per_tensor_quant_params* output_quant_params,
-                                 const cmsis_nn_dims*                    input_dims,
-                                 const q7_t*                             input_data,
-                                 const cmsis_nn_dims*                    state_dims,
-                                 q15_t*                                  state_data,
-                                 const cmsis_nn_dims*                    weights_feature_dims,
-                                 const q7_t*                             weights_feature_data,
-                                 const cmsis_nn_dims*                    weights_time_dims,
-                                 const q15_t*                            weights_time_data,
-                                 const cmsis_nn_dims*                    bias_dims,
-                                 const q31_t*                            bias_data,
-                                 const cmsis_nn_dims*                    output_dims,
-                                 q7_t*                                   output_data) {
+arm_status arm_svdf_state_s16_s8(
+    const cmsis_nn_context*                 input_ctx,
+    const cmsis_nn_context*                 output_ctx,
+    const cmsis_nn_svdf_params*             svdf_params,
+    const cmsis_nn_per_tensor_quant_params* input_quant_params,
+    const cmsis_nn_per_tensor_quant_params* output_quant_params,
+    const cmsis_nn_dims*                    input_dims,
+    const q7_t*                             input_data,
+    const cmsis_nn_dims*                    state_dims,
+    q15_t*                                  state_data,
+    const cmsis_nn_dims*                    weights_feature_dims,
+    const q7_t*                             weights_feature_data,
+    const cmsis_nn_dims*                    weights_time_dims,
+    const q15_t*                            weights_time_data,
+    const cmsis_nn_dims*                    bias_dims,
+    const q31_t*                            bias_data,
+    const cmsis_nn_dims*                    output_dims,
+    q7_t*                                   output_data) {
     (void)bias_dims;
     (void)state_dims;
     (void)output_dims;
@@ -97,17 +98,18 @@ arm_status arm_svdf_state_s16_s8(const cmsis_nn_context*                 input_c
     q31_t* buffer_b = (q31_t*)output_ctx->buf;
 
     // Left shift state
-    memmove(
-        (q15_t*)state_data,
-        (q15_t*)state_data + 1,
-        (size_t)((input_batches * feature_batches * time_batches - 1) * (int32_t)sizeof(int16_t)));
+    memmove((q15_t*)state_data,
+            (q15_t*)state_data + 1,
+            (size_t)((input_batches * feature_batches * time_batches - 1) *
+                     (int32_t)sizeof(int16_t)));
 
     // Matrix multiplication input * feature weight
     for (int i_batch = 0; i_batch < input_batches; i_batch++) {
-        q15_t* res_ptr =
-            state_data + (time_batches * i_batch * feature_batches) + (time_batches - 1);
-        const q7_t* weight = weights_feature_data;
-        const q7_t* input  = input_data + i_batch * input_height;
+        q15_t*      res_ptr = state_data +
+                              (time_batches * i_batch * feature_batches) +
+                              (time_batches - 1);
+        const q7_t* weight  = weights_feature_data;
+        const q7_t* input   = input_data + i_batch * input_height;
 
         arm_status res = arm_nn_vec_mat_mult_t_svdf_s8(input,
                                                        weight,
@@ -134,7 +136,8 @@ arm_status arm_svdf_state_s16_s8(const cmsis_nn_context*                 input_c
         for (int i_batch = 0; i_batch < input_batches; i_batch++) {
             const q15_t* v1 = weights_time_data;
 
-            for (int i_feature_batch = 0; i_feature_batch < feature_batches; i_feature_batch++) {
+            for (int i_feature_batch = 0; i_feature_batch < feature_batches;
+                 i_feature_batch++) {
                 *ptr_a      = 0;
                 int32_t sum = 0;
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
@@ -215,10 +218,10 @@ arm_status arm_svdf_state_s16_s8(const cmsis_nn_context*                 input_c
     int32_t       num_elements = input_batches * unit_count;
     const int32_t loop_count   = (num_elements + 3) / 4;
     for (int i_op = 0; i_op < loop_count; i_op++) {
-        mve_pred16_t p          = vctp32q((uint32_t)num_elements);
-        int32x4_t    op         = vldrwq_z_s32(buffer_b, p);
-        op                      = arm_requantize_mve(op, multiplier_out, shift_2);
-        op                      = vaddq_n_s32(op, zp_out);
+        mve_pred16_t p  = vctp32q((uint32_t)num_elements);
+        int32x4_t    op = vldrwq_z_s32(buffer_b, p);
+        op              = arm_requantize_mve(op, multiplier_out, shift_2);
+        op              = vaddq_n_s32(op, zp_out);
         const int32x4_t min_vec = vdupq_n_s32((int8_t)out_activation_min);
         const int32x4_t max_vec = vdupq_n_s32((int8_t)out_activation_max);
         op                      = vmaxq_s32(op, min_vec);
@@ -230,10 +233,10 @@ arm_status arm_svdf_state_s16_s8(const cmsis_nn_context*                 input_c
     }
 #else
     for (int i = 0; i < input_batches * unit_count; i++) {
-        output_data[i] =
-            (q7_t)CLAMP(arm_nn_requantize(buffer_b[i], multiplier_out, shift_2) + zp_out,
-                        out_activation_max,
-                        out_activation_min);
+        output_data[i] = (q7_t)CLAMP(
+            arm_nn_requantize(buffer_b[i], multiplier_out, shift_2) + zp_out,
+            out_activation_max,
+            out_activation_min);
     }
 #endif
 

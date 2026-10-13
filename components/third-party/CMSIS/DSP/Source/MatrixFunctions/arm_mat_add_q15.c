@@ -72,8 +72,10 @@ arm_status arm_mat_add_q15(const arm_matrix_instance_q15* pSrcA,
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) ||
-        (pSrcA->numRows != pDst->numRows) || (pSrcA->numCols != pDst->numCols)) {
+    if ((pSrcA->numRows != pSrcB->numRows) ||
+        (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -139,8 +141,10 @@ arm_status arm_mat_add_q15(const arm_matrix_instance_q15* pSrcA,
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) ||
-        (pSrcA->numRows != pDst->numRows) || (pSrcA->numCols != pDst->numCols)) {
+    if ((pSrcA->numRows != pSrcB->numRows) ||
+        (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -161,9 +165,11 @@ arm_status arm_mat_add_q15(const arm_matrix_instance_q15* pSrcA,
 
             /* Add, saturate and store result in destination buffer. */
 #if defined(ARM_MATH_DSP)
-            write_q15x2_ia(&pOut, __QADD16(read_q15x2_ia(&pInA), read_q15x2_ia(&pInB)));
+            write_q15x2_ia(
+                &pOut, __QADD16(read_q15x2_ia(&pInA), read_q15x2_ia(&pInB)));
 
-            write_q15x2_ia(&pOut, __QADD16(read_q15x2_ia(&pInA), read_q15x2_ia(&pInB)));
+            write_q15x2_ia(
+                &pOut, __QADD16(read_q15x2_ia(&pInA), read_q15x2_ia(&pInB)));
 #else
             *pOut++ = (q15_t)__SSAT(((q31_t)*pInA++ + *pInB++), 16);
 

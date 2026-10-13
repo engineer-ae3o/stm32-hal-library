@@ -133,7 +133,8 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
                     } else {
                         arm_q7_to_q15_reordered_no_shift(
-                            (q7_t*)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in,
+                            (q7_t*)Im_in +
+                                (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in,
                             pBuffer,
                             ch_im_in);
                     }
@@ -141,16 +142,17 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                 }
             }
 
-            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
-                pOut =
-                    arm_nn_mat_mult_kernel_q7_q15_reordered(wt,
-                                                            bufferA,
-                                                            ch_im_out,
-                                                            ch_im_in * dim_kernel_x * dim_kernel_y,
-                                                            bias_shift,
-                                                            out_shift,
-                                                            bias,
-                                                            pOut);
+            if (pBuffer ==
+                bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
+                pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
+                    wt,
+                    bufferA,
+                    ch_im_out,
+                    ch_im_in * dim_kernel_x * dim_kernel_y,
+                    bias_shift,
+                    out_shift,
+                    bias,
+                    pOut);
                 /* counter reset */
                 pBuffer = bufferA;
             }
@@ -174,7 +176,8 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
                     } else {
                         arm_q7_to_q15_reordered_no_shift(
-                            (q7_t*)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in,
+                            (q7_t*)Im_in +
+                                (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in,
                             pBuffer,
                             ch_im_in);
                     }
@@ -182,16 +185,17 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                 }
             }
 
-            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
-                pOut =
-                    arm_nn_mat_mult_kernel_q7_q15_reordered(wt,
-                                                            bufferA,
-                                                            ch_im_out,
-                                                            ch_im_in * dim_kernel_x * dim_kernel_y,
-                                                            bias_shift,
-                                                            out_shift,
-                                                            bias,
-                                                            pOut);
+            if (pBuffer ==
+                bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
+                pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
+                    wt,
+                    bufferA,
+                    ch_im_out,
+                    ch_im_in * dim_kernel_x * dim_kernel_y,
+                    bias_shift,
+                    out_shift,
+                    bias,
+                    pOut);
                 /* counter reset */
                 pBuffer = bufferA;
             }
@@ -204,23 +208,25 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                  i_ker_y < i_out_y * stride_y - padding_y + dim_kernel_y;
                  i_ker_y++) {
                 arm_q7_to_q15_reordered_no_shift(
-                    (q7_t*)Im_in +
-                        (i_ker_y * dim_im_in_x + i_out_x * stride_x - padding_x) * ch_im_in,
+                    (q7_t*)Im_in + (i_ker_y * dim_im_in_x + i_out_x * stride_x -
+                                    padding_x) *
+                                       ch_im_in,
                     pBuffer,
                     ch_im_in * dim_kernel_x);
                 pBuffer += ch_im_in * dim_kernel_x;
             }
 
-            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
-                pOut =
-                    arm_nn_mat_mult_kernel_q7_q15_reordered(wt,
-                                                            bufferA,
-                                                            ch_im_out,
-                                                            ch_im_in * dim_kernel_x * dim_kernel_y,
-                                                            bias_shift,
-                                                            out_shift,
-                                                            bias,
-                                                            pOut);
+            if (pBuffer ==
+                bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
+                pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
+                    wt,
+                    bufferA,
+                    ch_im_out,
+                    ch_im_in * dim_kernel_x * dim_kernel_y,
+                    bias_shift,
+                    out_shift,
+                    bias,
+                    pOut);
                 /* counter reset */
                 pBuffer = bufferA;
             }
@@ -240,7 +246,8 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
                     } else {
                         arm_q7_to_q15_reordered_no_shift(
-                            (q7_t*)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in,
+                            (q7_t*)Im_in +
+                                (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in,
                             pBuffer,
                             ch_im_in);
                     }
@@ -248,16 +255,17 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                 }
             }
 
-            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
-                pOut =
-                    arm_nn_mat_mult_kernel_q7_q15_reordered(wt,
-                                                            bufferA,
-                                                            ch_im_out,
-                                                            ch_im_in * dim_kernel_x * dim_kernel_y,
-                                                            bias_shift,
-                                                            out_shift,
-                                                            bias,
-                                                            pOut);
+            if (pBuffer ==
+                bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
+                pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
+                    wt,
+                    bufferA,
+                    ch_im_out,
+                    ch_im_in * dim_kernel_x * dim_kernel_y,
+                    bias_shift,
+                    out_shift,
+                    bias,
+                    pOut);
                 /* counter reset */
                 pBuffer = bufferA;
             }
@@ -279,7 +287,8 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
                     } else {
                         arm_q7_to_q15_reordered_no_shift(
-                            (q7_t*)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in,
+                            (q7_t*)Im_in +
+                                (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in,
                             pBuffer,
                             ch_im_in);
                     }
@@ -287,16 +296,17 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                 }
             }
 
-            if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
-                pOut =
-                    arm_nn_mat_mult_kernel_q7_q15_reordered(wt,
-                                                            bufferA,
-                                                            ch_im_out,
-                                                            ch_im_in * dim_kernel_x * dim_kernel_y,
-                                                            bias_shift,
-                                                            out_shift,
-                                                            bias,
-                                                            pOut);
+            if (pBuffer ==
+                bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
+                pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
+                    wt,
+                    bufferA,
+                    ch_im_out,
+                    ch_im_in * dim_kernel_x * dim_kernel_y,
+                    bias_shift,
+                    out_shift,
+                    bias,
+                    pOut);
                 /* counter reset */
                 pBuffer = bufferA;
             }
@@ -308,8 +318,8 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
         const q7_t* pA = wt;
         int         i;
         for (i = 0; i < ch_im_out; i++) {
-            q31_t        sum = ((q31_t)(bias[i]) << bias_shift) + NN_ROUND(out_shift);
-            const q15_t* pB  = bufferA;
+            q31_t sum = ((q31_t)(bias[i]) << bias_shift) + NN_ROUND(out_shift);
+            const q15_t* pB = bufferA;
             /* basically each time it process 4 entries */
             uint16_t colCnt = ch_im_in * dim_kernel_x * dim_kernel_y >> 2;
 
@@ -354,18 +364,23 @@ arm_status arm_convolve_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
     for (i = 0; i < ch_im_out; i++) {
         for (j = 0; j < dim_im_out_y; j++) {
             for (k = 0; k < dim_im_out_x; k++) {
-                conv_out = ((q31_t)(bias[i]) << bias_shift) + NN_ROUND(out_shift);
+                conv_out =
+                    ((q31_t)(bias[i]) << bias_shift) + NN_ROUND(out_shift);
                 for (m = 0; m < dim_kernel_y; m++) {
                     for (n = 0; n < dim_kernel_x; n++) {
                         /* if-for implementation */
                         in_row = stride_y * j + m - padding_y;
                         in_col = stride_x * k + n - padding_x;
-                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in_y &&
-                            in_col < dim_im_in_x) {
+                        if (in_row >= 0 && in_col >= 0 &&
+                            in_row < dim_im_in_y && in_col < dim_im_in_x) {
                             for (l = 0; l < ch_im_in; l++) {
-                                conv_out += Im_in[(in_row * dim_im_in_x + in_col) * ch_im_in + l] *
-                                            wt[i * ch_im_in * dim_kernel_y * dim_kernel_x +
-                                               (m * dim_kernel_x + n) * ch_im_in + l];
+                                conv_out +=
+                                    Im_in[(in_row * dim_im_in_x + in_col) *
+                                              ch_im_in +
+                                          l] *
+                                    wt[i * ch_im_in * dim_kernel_y *
+                                           dim_kernel_x +
+                                       (m * dim_kernel_x + n) * ch_im_in + l];
                             }
                         }
                     }

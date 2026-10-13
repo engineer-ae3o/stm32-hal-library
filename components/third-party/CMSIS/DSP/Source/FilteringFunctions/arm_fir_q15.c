@@ -58,41 +58,44 @@
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-#define MVE_ASRL_SAT16(acc, shift) ((sqrshrl_sat48(acc, -(32 - shift)) >> 32) & 0xffffffff)
+#define MVE_ASRL_SAT16(acc, shift)                                             \
+    ((sqrshrl_sat48(acc, -(32 - shift)) >> 32) & 0xffffffff)
 
 
-#define FIR_Q15_CORE(pOutput, nbAcc, nbVecTaps, pSample, vecCoeffs)                                \
-    for (int j = 0; j < nbAcc; j++) {                                                              \
-        const q15_t* pSmp = &pSample[j];                                                           \
-        q63_t        acc[4];                                                                       \
-                                                                                                   \
-        acc[j] = 0;                                                                                \
-        for (int i = 0; i < nbVecTaps; i++) {                                                      \
-            vecIn0 = vld1q(pSmp + 8 * i);                                                          \
-            acc[j] = vmlaldavaq(acc[j], vecIn0, vecCoeffs[i]);                                     \
-        }                                                                                          \
-        *pOutput++ = (q15_t)MVE_ASRL_SAT16(acc[j], 15);                                            \
+#define FIR_Q15_CORE(pOutput, nbAcc, nbVecTaps, pSample, vecCoeffs)            \
+    for (int j = 0; j < nbAcc; j++) {                                          \
+        const q15_t* pSmp = &pSample[j];                                       \
+        q63_t        acc[4];                                                   \
+                                                                               \
+        acc[j] = 0;                                                            \
+        for (int i = 0; i < nbVecTaps; i++) {                                  \
+            vecIn0 = vld1q(pSmp + 8 * i);                                      \
+            acc[j] = vmlaldavaq(acc[j], vecIn0, vecCoeffs[i]);                 \
+        }                                                                      \
+        *pOutput++ = (q15_t)MVE_ASRL_SAT16(acc[j], 15);                        \
     }
 
 #define FIR_Q15_MAIN_CORE()                                                                        \
     {                                                                                              \
         q15_t*       pState  = S->pState;  /* State pointer */                                     \
         const q15_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */                               \
-        q15_t*       pStateCur;            /* Points to the current sample of the state */         \
-        const q15_t* pSamples;             /* Temporary pointer to the sample buffer */            \
-        q15_t*       pOutput;              /* Temporary pointer to the output buffer */            \
-        const q15_t* pTempSrc;             /* Temporary pointer to the source data */              \
-        q15_t*       pTempDest;            /* Temporary pointer to the destination buffer */       \
-        uint32_t     numTaps = S->numTaps; /* Number of filter coefficients in the filter */       \
-        int32_t      blkCnt;                                                                       \
-        q15x8_t      vecIn0;                                                                       \
+        q15_t*       pStateCur; /* Points to the current sample of the state */                    \
+        const q15_t* pSamples;  /* Temporary pointer to the sample buffer */                       \
+        q15_t*       pOutput;   /* Temporary pointer to the output buffer */                       \
+        const q15_t* pTempSrc;  /* Temporary pointer to the source data */                         \
+        q15_t*   pTempDest; /* Temporary pointer to the destination buffer */                      \
+        uint32_t numTaps =                                                                         \
+            S->numTaps; /* Number of filter coefficients in the filter */                          \
+        int32_t blkCnt;                                                                            \
+        q15x8_t vecIn0;                                                                            \
                                                                                                    \
         /*                                                                                       \
      * load coefs                                                                            \
      */ \
         q15x8_t vecCoeffs[NBVECTAPS];                                                              \
                                                                                                    \
-        for (int i = 0; i < NBVECTAPS; i++) vecCoeffs[i] = vldrhq_s16(pCoeffs + 8 * i);            \
+        for (int i = 0; i < NBVECTAPS; i++)                                                        \
+            vecCoeffs[i] = vldrhq_s16(pCoeffs + 8 * i);                                            \
                                                                                                    \
         /*                                                                                       \
      * pState points to state array which contains previous frame (numTaps - 1) samples      \
@@ -198,16 +201,17 @@ void arm_fir_q15(const arm_fir_instance_q15* S,
                  uint32_t                    blockSize) {
     q15_t*       pState  = S->pState;  /* State pointer */
     const q15_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q15_t*       pStateCur;            /* Points to the current sample of the state */
-    const q15_t* pSamples;             /* Temporary pointer to the sample buffer */
-    q15_t*       pOutput;              /* Temporary pointer to the output buffer */
-    const q15_t* pTempSrc;             /* Temporary pointer to the source data */
-    q15_t*       pTempDest;            /* Temporary pointer to the destination buffer */
-    uint32_t     numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t     blkCnt;
-    q15x8_t      vecIn0;
-    uint32_t     tapsBlkCnt = (numTaps + 7) / 8;
-    q63_t        acc0, acc1, acc2, acc3;
+    q15_t*       pStateCur; /* Points to the current sample of the state */
+    const q15_t* pSamples;  /* Temporary pointer to the sample buffer */
+    q15_t*       pOutput;   /* Temporary pointer to the output buffer */
+    const q15_t* pTempSrc;  /* Temporary pointer to the source data */
+    q15_t*       pTempDest; /* Temporary pointer to the destination buffer */
+    uint32_t     numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t blkCnt;
+    q15x8_t  vecIn0;
+    uint32_t tapsBlkCnt = (numTaps + 7) / 8;
+    q63_t    acc0, acc1, acc2, acc3;
 
 
     int32_t nbTaps = (numTaps + 7) >> 3;
@@ -442,16 +446,18 @@ void arm_fir_q15(const arm_fir_instance_q15* S,
                  uint32_t                    blockSize) {
     q15_t*       pState  = S->pState;  /* State pointer */
     const q15_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q15_t*       pStateCurnt;          /* Points to the current sample of the state */
-    q15_t*       px;                   /* Temporary pointer for state buffer */
-    const q15_t* pb;                   /* Temporary pointer for coefficient buffer */
-    q63_t        acc0;                 /* Accumulators */
-    uint32_t     numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t     tapCnt, blkCnt;       /* Loop counters */
+    q15_t*       pStateCurnt; /* Points to the current sample of the state */
+    q15_t*       px;          /* Temporary pointer for state buffer */
+    const q15_t* pb;          /* Temporary pointer for coefficient buffer */
+    q63_t        acc0;        /* Accumulators */
+    uint32_t     numTaps =
+        S->numTaps;          /* Number of filter coefficients in the filter */
+    uint32_t tapCnt, blkCnt; /* Loop counters */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q63_t acc1, acc2, acc3; /* Accumulators */
-    q31_t x0, x1, x2, c0;   /* Temporary variables to hold state and coefficient values */
+    q31_t x0, x1, x2,
+        c0; /* Temporary variables to hold state and coefficient values */
 #endif
 
     /* S->pState points to state array which contains previous frame (numTaps - 1) samples */
@@ -598,11 +604,19 @@ void arm_fir_q15(const arm_fir_instance_q15* S,
         /* The results in the 4 accumulators are in 2.30 format. Convert to 1.15 with saturation.
        Then store the 4 outputs in the destination buffer. */
 #ifndef ARM_MATH_BIG_ENDIAN
-        write_q15x2_ia(&pDst, __PKHBT(__SSAT((acc0 >> 15), 16), __SSAT((acc1 >> 15), 16), 16));
-        write_q15x2_ia(&pDst, __PKHBT(__SSAT((acc2 >> 15), 16), __SSAT((acc3 >> 15), 16), 16));
+        write_q15x2_ia(
+            &pDst,
+            __PKHBT(__SSAT((acc0 >> 15), 16), __SSAT((acc1 >> 15), 16), 16));
+        write_q15x2_ia(
+            &pDst,
+            __PKHBT(__SSAT((acc2 >> 15), 16), __SSAT((acc3 >> 15), 16), 16));
 #else
-        write_q15x2_ia(&pDst, __PKHBT(__SSAT((acc1 >> 15), 16), __SSAT((acc0 >> 15), 16), 16));
-        write_q15x2_ia(&pDst, __PKHBT(__SSAT((acc3 >> 15), 16), __SSAT((acc2 >> 15), 16), 16));
+        write_q15x2_ia(
+            &pDst,
+            __PKHBT(__SSAT((acc1 >> 15), 16), __SSAT((acc0 >> 15), 16), 16));
+        write_q15x2_ia(
+            &pDst,
+            __PKHBT(__SSAT((acc3 >> 15), 16), __SSAT((acc2 >> 15), 16), 16));
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
         /* Advance the state pointer by 4 to process the next group of 4 samples */

@@ -62,17 +62,18 @@
 void arm_biquad_cascade_df1_fast_q31(const arm_biquad_casd_df1_inst_q31* S,
                                      const q31_t*                        pSrc,
                                      q31_t*                              pDst,
-                                     uint32_t                            blockSize) {
-    const q31_t* pIn     = pSrc;                    /* Source pointer */
-    q31_t*       pOut    = pDst;                    /* Destination pointer */
-    q31_t*       pState  = S->pState;               /* pState pointer */
-    const q31_t* pCoeffs = S->pCoeffs;              /* Coefficient pointer */
-    q31_t        acc     = 0;                       /* Accumulator */
-    q31_t        b0, b1, b2, a1, a2;                /* Filter coefficients */
-    q31_t        Xn1, Xn2, Yn1, Yn2;                /* Filter pState variables */
-    q31_t        Xn;                                /* Temporary input */
-    int32_t      shift = (int32_t)S->postShift + 1; /* Shift to be applied to the output */
-    uint32_t     sample, stage = S->numStages;      /* Loop counters */
+                                     uint32_t blockSize) {
+    const q31_t* pIn     = pSrc;       /* Source pointer */
+    q31_t*       pOut    = pDst;       /* Destination pointer */
+    q31_t*       pState  = S->pState;  /* pState pointer */
+    const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    q31_t        acc     = 0;          /* Accumulator */
+    q31_t        b0, b1, b2, a1, a2;   /* Filter coefficients */
+    q31_t        Xn1, Xn2, Yn1, Yn2;   /* Filter pState variables */
+    q31_t        Xn;                   /* Temporary input */
+    int32_t      shift =
+        (int32_t)S->postShift + 1; /* Shift to be applied to the output */
+    uint32_t sample, stage = S->numStages; /* Loop counters */
 
     do {
         /* Reading the coefficients */

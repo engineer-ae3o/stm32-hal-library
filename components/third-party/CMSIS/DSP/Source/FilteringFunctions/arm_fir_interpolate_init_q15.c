@@ -64,10 +64,10 @@
 
 arm_status arm_fir_interpolate_init_q15(arm_fir_interpolate_instance_q15* S,
                                         uint8_t                           L,
-                                        uint16_t                          numTaps,
-                                        const q15_t*                      pCoeffs,
-                                        q15_t*                            pState,
-                                        uint32_t                          blockSize) {
+                                        uint16_t     numTaps,
+                                        const q15_t* pCoeffs,
+                                        q15_t*       pState,
+                                        uint32_t     blockSize) {
     arm_status status;
 
     /* The filter length must be a multiple of the interpolation factor */
@@ -85,7 +85,9 @@ arm_status arm_fir_interpolate_init_q15(arm_fir_interpolate_instance_q15* S,
         S->phaseLength = numTaps / L;
 
         /* Clear state buffer and size of buffer is always phaseLength + blockSize - 1 */
-        memset(pState, 0, (blockSize + ((uint32_t)S->phaseLength - 1U)) * sizeof(q15_t));
+        memset(pState,
+               0,
+               (blockSize + ((uint32_t)S->phaseLength - 1U)) * sizeof(q15_t));
 
         /* Assign state pointer */
         S->pState = pState;

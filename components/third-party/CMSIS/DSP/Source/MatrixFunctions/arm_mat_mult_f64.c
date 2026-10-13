@@ -67,23 +67,26 @@
 arm_status arm_mat_mult_f64(const arm_matrix_instance_f64* pSrcA,
                             const arm_matrix_instance_f64* pSrcB,
                             arm_matrix_instance_f64*       pDst) {
-    float64_t* pIn1 = pSrcA->pData;                 /* Input data matrix pointer A */
-    float64_t* pIn2 = pSrcB->pData;                 /* Input data matrix pointer B */
-    float64_t* pInA = pSrcA->pData;                 /* Input data matrix pointer A */
-    float64_t* pInB = pSrcB->pData;                 /* Input data matrix pointer B */
-    float64_t* pOut = pDst->pData;                  /* Output data matrix pointer */
-    float64_t* px;                                  /* Temporary output data matrix pointer */
-    float64_t  sum;                                 /* Accumulator */
-    uint16_t   numRowsA = pSrcA->numRows;           /* Number of rows of input matrix A */
-    uint16_t   numColsB = pSrcB->numCols;           /* Number of columns of input matrix B */
-    uint16_t   numColsA = pSrcA->numCols;           /* Number of columns of input matrix A */
+    float64_t* pIn1 = pSrcA->pData; /* Input data matrix pointer A */
+    float64_t* pIn2 = pSrcB->pData; /* Input data matrix pointer B */
+    float64_t* pInA = pSrcA->pData; /* Input data matrix pointer A */
+    float64_t* pInB = pSrcB->pData; /* Input data matrix pointer B */
+    float64_t* pOut = pDst->pData;  /* Output data matrix pointer */
+    float64_t* px;                  /* Temporary output data matrix pointer */
+    float64_t  sum;                 /* Accumulator */
+    uint16_t   numRowsA = pSrcA->numRows; /* Number of rows of input matrix A */
+    uint16_t   numColsB =
+        pSrcB->numCols; /* Number of columns of input matrix B */
+    uint16_t numColsA =
+        pSrcA->numCols; /* Number of columns of input matrix A */
     uint64_t   col, i = 0U, row = numRowsA, colCnt; /* Loop counters */
-    arm_status status;                              /* Status of matrix multiplication */
+    arm_status status; /* Status of matrix multiplication */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
         (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;

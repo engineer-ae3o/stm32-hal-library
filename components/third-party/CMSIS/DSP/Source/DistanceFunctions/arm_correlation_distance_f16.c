@@ -63,7 +63,8 @@
  *
  */
 
-float16_t arm_correlation_distance_f16(float16_t* pA, float16_t* pB, uint32_t blockSize) {
+float16_t
+arm_correlation_distance_f16(float16_t* pA, float16_t* pB, uint32_t blockSize) {
     float16_t ma, mb, pwra, pwrb, dot, tmp;
 
     arm_mean_f16(pA, blockSize, &ma);

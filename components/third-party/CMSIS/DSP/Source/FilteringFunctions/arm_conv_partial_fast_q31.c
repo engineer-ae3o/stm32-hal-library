@@ -70,7 +70,7 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
     q31_t        sum;           /* Accumulators */
     uint32_t     j, k, count, check, blkCnt;
     int32_t      blockSize1, blockSize2, blockSize3; /* Loop counters */
-    arm_status   status;                             /* Status of Partial convolution */
+    arm_status   status; /* Status of Partial convolution */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q31_t acc0, acc1, acc2, acc3; /* Accumulators */
@@ -107,14 +107,19 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
         /* Conditions to check which loopCounter holds
      * the first and last indices of the output samples to be calculated. */
         check      = firstIndex + numPoints;
-        blockSize3 = ((int32_t)check > (int32_t)srcALen) ? (int32_t)check - (int32_t)srcALen : 0;
+        blockSize3 = ((int32_t)check > (int32_t)srcALen)
+                         ? (int32_t)check - (int32_t)srcALen
+                         : 0;
         blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1)
                          ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen
                          : blockSize3;
         blockSize1 = ((int32_t)srcBLen - 1) - (int32_t)firstIndex;
         blockSize1 =
-            (blockSize1 > 0) ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints) : 0;
-        blockSize2 = (int32_t)check - ((blockSize3 + blockSize1) + (int32_t)firstIndex);
+            (blockSize1 > 0)
+                ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints)
+                : 0;
+        blockSize2 =
+            (int32_t)check - ((blockSize3 + blockSize1) + (int32_t)firstIndex);
         blockSize2 = (blockSize2 > 0) ? blockSize2 : 0;
 
         /* conv(x,y) at n = x[n] * y[0] + x[n-1] * y[1] + x[n-2] * y[2] + ...+ x[n-N+1] * y[N -1] */
@@ -169,16 +174,20 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
             while (k > 0U) {
                 /* x[0] * y[srcBLen - 1] */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >>
+                              32);
 
                 /* x[1] * y[srcBLen - 2] */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >>
+                              32);
 
                 /* x[2] * y[srcBLen - 3] */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >>
+                              32);
 
                 /* x[3] * y[srcBLen - 4] */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >>
+                              32);
 
                 /* Decrement loop counter */
                 k--;
@@ -196,7 +205,8 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
             while (k > 0U) {
                 /* Perform the multiply-accumulate */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >>
+                              32);
 
                 /* Decrement loop counter */
                 k--;
@@ -279,13 +289,17 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
                     /* Perform the multiply-accumulate */
                     /* acc0 +=  x[0] * y[srcBLen - 1] */
-                    acc0 = (q31_t)((((q63_t)acc0 << 32) + ((q63_t)x0 * c0)) >> 32);
+                    acc0 =
+                        (q31_t)((((q63_t)acc0 << 32) + ((q63_t)x0 * c0)) >> 32);
                     /* acc1 +=  x[1] * y[srcBLen - 1] */
-                    acc1 = (q31_t)((((q63_t)acc1 << 32) + ((q63_t)x1 * c0)) >> 32);
+                    acc1 =
+                        (q31_t)((((q63_t)acc1 << 32) + ((q63_t)x1 * c0)) >> 32);
                     /* acc2 +=  x[2] * y[srcBLen - 1] */
-                    acc2 = (q31_t)((((q63_t)acc2 << 32) + ((q63_t)x2 * c0)) >> 32);
+                    acc2 =
+                        (q31_t)((((q63_t)acc2 << 32) + ((q63_t)x2 * c0)) >> 32);
                     /* acc3 +=  x[3] * y[srcBLen - 1] */
-                    acc3 = (q31_t)((((q63_t)acc3 << 32) + ((q63_t)x3 * c0)) >> 32);
+                    acc3 =
+                        (q31_t)((((q63_t)acc3 << 32) + ((q63_t)x3 * c0)) >> 32);
 
                     /* Read y[srcBLen - 2] sample */
                     c0 = *py--;
@@ -294,13 +308,17 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
                     /* Perform the multiply-accumulate */
                     /* acc0 +=  x[1] * y[srcBLen - 2] */
-                    acc0 = (q31_t)((((q63_t)acc0 << 32) + ((q63_t)x1 * c0)) >> 32);
+                    acc0 =
+                        (q31_t)((((q63_t)acc0 << 32) + ((q63_t)x1 * c0)) >> 32);
                     /* acc1 +=  x[2] * y[srcBLen - 2] */
-                    acc1 = (q31_t)((((q63_t)acc1 << 32) + ((q63_t)x2 * c0)) >> 32);
+                    acc1 =
+                        (q31_t)((((q63_t)acc1 << 32) + ((q63_t)x2 * c0)) >> 32);
                     /* acc2 +=  x[3] * y[srcBLen - 2] */
-                    acc2 = (q31_t)((((q63_t)acc2 << 32) + ((q63_t)x3 * c0)) >> 32);
+                    acc2 =
+                        (q31_t)((((q63_t)acc2 << 32) + ((q63_t)x3 * c0)) >> 32);
                     /* acc3 +=  x[4] * y[srcBLen - 2] */
-                    acc3 = (q31_t)((((q63_t)acc3 << 32) + ((q63_t)x0 * c0)) >> 32);
+                    acc3 =
+                        (q31_t)((((q63_t)acc3 << 32) + ((q63_t)x0 * c0)) >> 32);
 
                     /* Read y[srcBLen - 3] sample */
                     c0 = *py--;
@@ -309,13 +327,17 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
                     /* Perform the multiply-accumulates */
                     /* acc0 +=  x[2] * y[srcBLen - 3] */
-                    acc0 = (q31_t)((((q63_t)acc0 << 32) + ((q63_t)x2 * c0)) >> 32);
+                    acc0 =
+                        (q31_t)((((q63_t)acc0 << 32) + ((q63_t)x2 * c0)) >> 32);
                     /* acc1 +=  x[3] * y[srcBLen - 2] */
-                    acc1 = (q31_t)((((q63_t)acc1 << 32) + ((q63_t)x3 * c0)) >> 32);
+                    acc1 =
+                        (q31_t)((((q63_t)acc1 << 32) + ((q63_t)x3 * c0)) >> 32);
                     /* acc2 +=  x[4] * y[srcBLen - 2] */
-                    acc2 = (q31_t)((((q63_t)acc2 << 32) + ((q63_t)x0 * c0)) >> 32);
+                    acc2 =
+                        (q31_t)((((q63_t)acc2 << 32) + ((q63_t)x0 * c0)) >> 32);
                     /* acc3 +=  x[5] * y[srcBLen - 2] */
-                    acc3 = (q31_t)((((q63_t)acc3 << 32) + ((q63_t)x1 * c0)) >> 32);
+                    acc3 =
+                        (q31_t)((((q63_t)acc3 << 32) + ((q63_t)x1 * c0)) >> 32);
 
                     /* Read y[srcBLen - 4] sample */
                     c0 = *py--;
@@ -324,13 +346,17 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
                     /* Perform the multiply-accumulates */
                     /* acc0 +=  x[3] * y[srcBLen - 4] */
-                    acc0 = (q31_t)((((q63_t)acc0 << 32) + ((q63_t)x3 * c0)) >> 32);
+                    acc0 =
+                        (q31_t)((((q63_t)acc0 << 32) + ((q63_t)x3 * c0)) >> 32);
                     /* acc1 +=  x[4] * y[srcBLen - 4] */
-                    acc1 = (q31_t)((((q63_t)acc1 << 32) + ((q63_t)x0 * c0)) >> 32);
+                    acc1 =
+                        (q31_t)((((q63_t)acc1 << 32) + ((q63_t)x0 * c0)) >> 32);
                     /* acc2 +=  x[5] * y[srcBLen - 4] */
-                    acc2 = (q31_t)((((q63_t)acc2 << 32) + ((q63_t)x1 * c0)) >> 32);
+                    acc2 =
+                        (q31_t)((((q63_t)acc2 << 32) + ((q63_t)x1 * c0)) >> 32);
                     /* acc3 +=  x[6] * y[srcBLen - 4] */
-                    acc3 = (q31_t)((((q63_t)acc3 << 32) + ((q63_t)x2 * c0)) >> 32);
+                    acc3 =
+                        (q31_t)((((q63_t)acc3 << 32) + ((q63_t)x2 * c0)) >> 32);
 
                 } while (--k);
 
@@ -346,13 +372,17 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
                     /* Perform the multiply-accumulates */
                     /* acc0 +=  x[4] * y[srcBLen - 5] */
-                    acc0 = (q31_t)((((q63_t)acc0 << 32) + ((q63_t)x0 * c0)) >> 32);
+                    acc0 =
+                        (q31_t)((((q63_t)acc0 << 32) + ((q63_t)x0 * c0)) >> 32);
                     /* acc1 +=  x[5] * y[srcBLen - 5] */
-                    acc1 = (q31_t)((((q63_t)acc1 << 32) + ((q63_t)x1 * c0)) >> 32);
+                    acc1 =
+                        (q31_t)((((q63_t)acc1 << 32) + ((q63_t)x1 * c0)) >> 32);
                     /* acc2 +=  x[6] * y[srcBLen - 5] */
-                    acc2 = (q31_t)((((q63_t)acc2 << 32) + ((q63_t)x2 * c0)) >> 32);
+                    acc2 =
+                        (q31_t)((((q63_t)acc2 << 32) + ((q63_t)x2 * c0)) >> 32);
                     /* acc3 +=  x[7] * y[srcBLen - 5] */
-                    acc3 = (q31_t)((((q63_t)acc3 << 32) + ((q63_t)x3 * c0)) >> 32);
+                    acc3 =
+                        (q31_t)((((q63_t)acc3 << 32) + ((q63_t)x3 * c0)) >> 32);
 
                     /* Reuse the present samples for the next MAC */
                     x0 = x1;
@@ -401,10 +431,18 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
                 while (k > 0U) {
                     /* Perform the multiply-accumulates */
-                    sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
-                    sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
-                    sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
-                    sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                    sum = (q31_t)((((q63_t)sum << 32) +
+                                   ((q63_t)*px++ * (*py--))) >>
+                                  32);
+                    sum = (q31_t)((((q63_t)sum << 32) +
+                                   ((q63_t)*px++ * (*py--))) >>
+                                  32);
+                    sum = (q31_t)((((q63_t)sum << 32) +
+                                   ((q63_t)*px++ * (*py--))) >>
+                                  32);
+                    sum = (q31_t)((((q63_t)sum << 32) +
+                                   ((q63_t)*px++ * (*py--))) >>
+                                  32);
 
                     /* Decrement loop counter */
                     k--;
@@ -422,7 +460,9 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
                 while (k > 0U) {
                     /* Perform the multiply-accumulate */
-                    sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                    sum = (q31_t)((((q63_t)sum << 32) +
+                                   ((q63_t)*px++ * (*py--))) >>
+                                  32);
 
                     /* Decrement loop counter */
                     k--;
@@ -455,7 +495,9 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
                 while (k > 0U) {
                     /* Perform the multiply-accumulate */
-                    sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                    sum = (q31_t)((((q63_t)sum << 32) +
+                                   ((q63_t)*px++ * (*py--))) >>
+                                  32);
 
                     /* Decrement loop counter */
                     k--;
@@ -519,16 +561,20 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
 
             while (k > 0U) {
                 /* sum += x[srcALen - srcBLen + 1] * y[srcBLen - 1] */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >>
+                              32);
 
                 /* sum += x[srcALen - srcBLen + 2] * y[srcBLen - 2] */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >>
+                              32);
 
                 /* sum += x[srcALen - srcBLen + 3] * y[srcBLen - 3] */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >>
+                              32);
 
                 /* sum += x[srcALen - srcBLen + 4] * y[srcBLen - 4] */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >>
+                              32);
 
                 /* Decrement loop counter */
                 k--;
@@ -547,7 +593,8 @@ arm_status arm_conv_partial_fast_q31(const q31_t* pSrcA,
             while (k > 0U) {
                 /* Perform the multiply-accumulates */
                 /* sum +=  x[srcALen-1] * y[srcBLen-1] */
-                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >> 32);
+                sum = (q31_t)((((q63_t)sum << 32) + ((q63_t)*px++ * (*py--))) >>
+                              32);
 
                 /* Decrement loop counter */
                 k--;

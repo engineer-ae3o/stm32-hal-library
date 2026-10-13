@@ -9,13 +9,19 @@
 
 
 // Forward declarations
-[[__gnu__::__always_inline__]] static inline hal_err_t send_start(I2C_TypeDef* handle);
-[[__gnu__::__always_inline__]] static inline void      send_stop(I2C_TypeDef* handle);
-[[__gnu__::__always_inline__]] static inline hal_err_t check_error_flags(I2C_TypeDef* handle,
-                                                                         bool send_stop_on_error);
+[[__gnu__::__always_inline__]] static inline hal_err_t
+send_start(I2C_TypeDef* handle);
+[[__gnu__::__always_inline__]] static inline void
+send_stop(I2C_TypeDef* handle);
+[[__gnu__::__always_inline__]] static inline hal_err_t
+check_error_flags(I2C_TypeDef* handle, bool send_stop_on_error);
 
-static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
-static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
+static hal_err_t tx_trans(I2C_TypeDef*   handle,
+                          uint8_t        address,
+                          const uint8_t* data,
+                          size_t         size);
+static hal_err_t
+rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
 
 
 // General API
@@ -47,7 +53,8 @@ hal_err_t i2cx_clk_enable(I2C_TypeDef* handle, bool enable) {
     return HAL_OK;
 }
 
-hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config) {
+hal_err_t i2c_master_init(I2C_TypeDef*               handle,
+                          const i2c_master_config_t* config) {
     if (handle == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -69,22 +76,27 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     }
 
     // Disable the I2C peripheral before writing to any of its registers and issue a software and hardware bus reset
-    TRY(i2c_master_hardware_reset(
-        config->scl_pin.port, config->scl_pin.pin, config->sda_pin.port, config->sda_pin.pin));
+    TRY(i2c_master_hardware_reset(config->scl_pin.port,
+                                  config->scl_pin.pin,
+                                  config->sda_pin.port,
+                                  config->sda_pin.pin));
     TRY(i2c_master_software_reset(handle));
     handle->CR1 &= ~I2C_CR1_PE;
 
     handle->CR2 &= ~I2C_CR2_FREQ;
-    handle->CR2 |= (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos) & I2C_CR2_FREQ;
+    handle->CR2 |=
+        (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos) & I2C_CR2_FREQ;
 
     // Clock configuration
     uint32_t ccr = handle->CCR & ~(I2C_CCR_CCR | I2C_CCR_FS | I2C_CCR_DUTY);
 
     // Enable Full mode and duty cycle mode of 16:9 if using 400kHz. Leave at standard mode if 100kHz
-    ccr |= (config->frequency == I2C_FREQ_400kHz) ? (I2C_CCR_FS | I2C_CCR_DUTY) : 0;
-    const uint32_t clock_val = (config->frequency == I2C_FREQ_400kHz)
-                                   ? (apb1_clk_freq_mhz * 1'000'000U) / (25 * I2C_FREQ_400kHz)
-                                   : (apb1_clk_freq_mhz * 1'000'000U) / (2 * I2C_FREQ_100kHz);
+    ccr |= (config->frequency == I2C_FREQ_400kHz) ? (I2C_CCR_FS | I2C_CCR_DUTY)
+                                                  : 0;
+    const uint32_t clock_val =
+        (config->frequency == I2C_FREQ_400kHz)
+            ? (apb1_clk_freq_mhz * 1'000'000U) / (25 * I2C_FREQ_400kHz)
+            : (apb1_clk_freq_mhz * 1'000'000U) / (2 * I2C_FREQ_100kHz);
     ccr |= (clock_val << I2C_CCR_CCR_Pos) & I2C_CCR_CCR;
     handle->CCR = ccr;
 
@@ -93,21 +105,29 @@ hal_err_t i2c_master_init(I2C_TypeDef* handle, const i2c_master_config_t* config
     handle->FLTR |= (uint32_t)(config->digital_filter << I2C_FLTR_DNF_Pos);
 
     // Rise time
-    const uint32_t trise_ns = (config->frequency == I2C_FREQ_400kHz) ? I2C_TRISE_TIME_400kHz_ns
-                                                                     : I2C_TRISE_TIME_100kHz_ns;
+    const uint32_t trise_ns = (config->frequency == I2C_FREQ_400kHz)
+                                  ? I2C_TRISE_TIME_400kHz_ns
+                                  : I2C_TRISE_TIME_100kHz_ns;
     handle->TRISE &= ~I2C_TRISE_TRISE;
-    handle->TRISE |=
-        (((trise_ns * apb1_clk_freq_mhz) / 1000U) + config->digital_filter + 1) & I2C_TRISE_TRISE;
+    handle->TRISE |= (((trise_ns * apb1_clk_freq_mhz) / 1000U) +
+                      config->digital_filter + 1) &
+                     I2C_TRISE_TRISE;
 
     // Configure pins for I2C
     // The pins already have their ports enabled and have been set as open drain already. No need to repeat here
-    gpio_set_alternate_function(config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af);
-    gpio_set_speed_mode(config->sda_pin.port, config->sda_pin.pin, GPIO_MEDIUM_SPEED);
-    gpio_enable_pullup(config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
+    gpio_set_alternate_function(
+        config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af);
+    gpio_set_speed_mode(
+        config->sda_pin.port, config->sda_pin.pin, GPIO_MEDIUM_SPEED);
+    gpio_enable_pullup(
+        config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
 
-    gpio_set_alternate_function(config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af);
-    gpio_set_speed_mode(config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
-    gpio_enable_pullup(config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
+    gpio_set_alternate_function(
+        config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af);
+    gpio_set_speed_mode(
+        config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
+    gpio_enable_pullup(
+        config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
     // Enable the I2C peripheral after all setup
     handle->CR1 |= I2C_CR1_PE;
@@ -124,11 +144,12 @@ hal_err_t i2c_master_deinit(I2C_TypeDef* handle) {
     handle->CR1 &= ~I2C_CR1_PE;
 
     handle->CCR &= ~(I2C_CCR_FS | I2C_CCR_DUTY | I2C_CCR_CCR);
-    handle->CR1 &= ~(I2C_CR1_SMBUS | I2C_CR1_SMBTYPE | I2C_CR1_ENARP | I2C_CR1_ENPEC |
-                     I2C_CR1_ENGC | I2C_CR1_NOSTRETCH | I2C_CR1_START | I2C_CR1_STOP | I2C_CR1_ACK |
-                     I2C_CR1_POS | I2C_CR1_PEC | I2C_CR1_ALERT | I2C_CR1_SWRST);
-    handle->CR2 &= ~(I2C_CR2_FREQ | I2C_CR2_ITERREN | I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN |
-                     I2C_CR2_DMAEN | I2C_CR2_LAST);
+    handle->CR1 &= ~(I2C_CR1_SMBUS | I2C_CR1_SMBTYPE | I2C_CR1_ENARP |
+                     I2C_CR1_ENPEC | I2C_CR1_ENGC | I2C_CR1_NOSTRETCH |
+                     I2C_CR1_START | I2C_CR1_STOP | I2C_CR1_ACK | I2C_CR1_POS |
+                     I2C_CR1_PEC | I2C_CR1_ALERT | I2C_CR1_SWRST);
+    handle->CR2 &= ~(I2C_CR2_FREQ | I2C_CR2_ITERREN | I2C_CR2_ITEVTEN |
+                     I2C_CR2_ITBUFEN | I2C_CR2_DMAEN | I2C_CR2_LAST);
     handle->FLTR &= ~(I2C_FLTR_DNF | I2C_FLTR_ANOFF);
     handle->TRISE &= ~I2C_TRISE_TRISE;
 
@@ -206,9 +227,12 @@ hal_err_t i2c_master_hardware_reset(GPIO_TypeDef* scl_port,
 
 
 // Polling API
-hal_err_t
-i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size) {
-    if (handle == NULL || address == 0 || address > 0x7F || data == NULL || size == 0) {
+hal_err_t i2c_master_transmit(I2C_TypeDef*   handle,
+                              uint8_t        address,
+                              const uint8_t* data,
+                              size_t         size) {
+    if (handle == NULL || address == 0 || address > 0x7F || data == NULL ||
+        size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -225,8 +249,12 @@ i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, s
     return HAL_OK;
 }
 
-hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
-    if (handle == NULL || address == 0 || address > 0x7F || data == NULL || size == 0) {
+hal_err_t i2c_master_receive(I2C_TypeDef* handle,
+                             uint8_t      address,
+                             uint8_t*     data,
+                             size_t       size) {
+    if (handle == NULL || address == 0 || address > 0x7F || data == NULL ||
+        size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -248,8 +276,8 @@ hal_err_t i2c_master_transceive(I2C_TypeDef*   handle,
                                 size_t         tx_size,
                                 uint8_t*       rx_data,
                                 size_t         rx_size) {
-    if (handle == NULL || address == 0 || address > 0x7F || tx_data == NULL || tx_size == 0 ||
-        rx_data == NULL || rx_size == 0) {
+    if (handle == NULL || address == 0 || address > 0x7F || tx_data == NULL ||
+        tx_size == 0 || rx_data == NULL || rx_size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -260,7 +288,8 @@ hal_err_t i2c_master_transceive(I2C_TypeDef*   handle,
 
     // Start the transaction
     TRY(send_start(handle));
-    TRY_WITH_FUNC(tx_trans(handle, address, tx_data, tx_size), send_stop(handle));
+    TRY_WITH_FUNC(tx_trans(handle, address, tx_data, tx_size),
+                  send_stop(handle));
     TRY_WITH_FUNC(send_start(handle), send_stop(handle));
     TRY(rx_trans(handle, address, rx_data, rx_size));
 
@@ -294,7 +323,8 @@ static void send_stop(I2C_TypeDef* handle) {
     __DSB();
 }
 
-static hal_err_t check_error_flags(I2C_TypeDef* handle, bool send_stop_on_error) {
+static hal_err_t check_error_flags(I2C_TypeDef* handle,
+                                   bool         send_stop_on_error) {
     hal_err_t error = HAL_OK;
 
     const uint32_t status = handle->SR1;
@@ -320,7 +350,10 @@ static hal_err_t check_error_flags(I2C_TypeDef* handle, bool send_stop_on_error)
     return error;
 }
 
-static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size) {
+static hal_err_t tx_trans(I2C_TypeDef*   handle,
+                          uint8_t        address,
+                          const uint8_t* data,
+                          size_t         size) {
     // Send address and write bit
     // cppcheck-suppress badBitmaskCheck
     handle->DR = ((uint32_t)(address << 1UL) | 0UL);
@@ -365,7 +398,8 @@ static hal_err_t tx_trans(I2C_TypeDef* handle, uint8_t address, const uint8_t* d
     return HAL_OK;
 }
 
-static hal_err_t rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
+static hal_err_t
+rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
     // Send address and read bit and set the ACK bit before starting
     handle->DR = ((uint32_t)(address << 1UL) | 1UL);
 

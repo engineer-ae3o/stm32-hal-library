@@ -264,7 +264,9 @@ void arm_mat_vec_mult_q7(const arm_matrix_instance_q7* pSrcMat,
 }
 
 #else
-void arm_mat_vec_mult_q7(const arm_matrix_instance_q7* pSrcMat, const q7_t* pVec, q7_t* pDst) {
+void arm_mat_vec_mult_q7(const arm_matrix_instance_q7* pSrcMat,
+                         const q7_t*                   pVec,
+                         q7_t*                         pDst) {
     uint32_t    numRows = pSrcMat->numRows;
     uint32_t    numCols = pSrcMat->numCols;
     const q7_t* pSrcA   = pSrcMat->pData;

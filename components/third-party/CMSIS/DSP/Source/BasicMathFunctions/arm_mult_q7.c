@@ -53,7 +53,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_mult_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t blockSize) {
+void arm_mult_q7(const q7_t* pSrcA,
+                 const q7_t* pSrcB,
+                 q7_t*       pDst,
+                 uint32_t    blockSize) {
     uint32_t blkCnt; /* loop counters */
     q7x16_t  vecA, vecB;
 
@@ -91,7 +94,10 @@ void arm_mult_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t bloc
 }
 
 #else
-void arm_mult_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t blockSize) {
+void arm_mult_q7(const q7_t* pSrcA,
+                 const q7_t* pSrcB,
+                 q7_t*       pDst,
+                 uint32_t    blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL)

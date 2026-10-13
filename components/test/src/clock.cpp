@@ -34,119 +34,120 @@ namespace test::clock {
         // do cross sources (to exercise the PLLSRC staleness class of bug), but a few
         // consecutive same source steps are mixed in so same source frequency changes,
         // PLL->DIRECT, and DIRECT->PLL transitions all get covered too, not just handoffs.
-        constexpr auto SYSTEM_CLOCK_CASES = std::array<system_clock_case_t, 15>{{
-            {
-                .clock  = HSI_PLL_DIRECT,
-                .sysclk = HSI_VALUE_Hz,
-                .apb1   = HSI_VALUE_Hz,
-                .apb2   = HSI_VALUE_Hz,
-                .on_hse = false,
-            },
-            {
-                .clock  = HSE_PLL_100MHz,
-                .sysclk = 100'000'000UL,
-                .apb1   = 50'000'000UL,
-                .apb2   = 100'000'000UL,
-                .on_hse = true,
-            },
-            {
-                // same source freq step
-                .clock  = HSE_PLL_84MHz,
-                .sysclk = 84'000'000UL,
-                .apb1   = 42'000'000UL,
-                .apb2   = 84'000'000UL,
-                .on_hse = true,
-            },
-            {
-                // same source PLL->direct
-                .clock  = HSE_PLL_DIRECT,
-                .sysclk = HSE_VALUE_Hz,
-                .apb1   = HSE_VALUE_Hz,
-                .apb2   = HSE_VALUE_Hz,
-                .on_hse = true,
-            },
-            {
-                // same source direct->PLL
-                .clock  = HSE_PLL_96MHz,
-                .sysclk = 96'000'000UL,
-                .apb1   = 48'000'000UL,
-                .apb2   = 96'000'000UL,
-                .on_hse = true,
-            },
-            {
-                .clock  = HSI_PLL_100MHz,
-                .sysclk = 100'000'000UL,
-                .apb1   = 50'000'000UL,
-                .apb2   = 100'000'000UL,
-                .on_hse = false,
-            },
-            {
-                // same source freq step
-                .clock  = HSI_PLL_48MHz,
-                .sysclk = 48'000'000UL,
-                .apb1   = 48'000'000UL,
-                .apb2   = 48'000'000UL,
-                .on_hse = false,
-            },
-            {
-                // same source PLL->direct
-                .clock  = HSI_PLL_DIRECT,
-                .sysclk = HSI_VALUE_Hz,
-                .apb1   = HSI_VALUE_Hz,
-                .apb2   = HSI_VALUE_Hz,
-                .on_hse = false,
-            },
-            {
-                // same source direct->PLL
-                .clock  = HSI_PLL_96MHz,
-                .sysclk = 96'000'000UL,
-                .apb1   = 48'000'000UL,
-                .apb2   = 96'000'000UL,
-                .on_hse = false,
-            },
-            {
-                .clock  = HSE_PLL_64MHz,
-                .sysclk = 64'000'000UL,
-                .apb1   = 32'000'000UL,
-                .apb2   = 64'000'000UL,
-                .on_hse = true,
-            },
-            {
-                .clock  = HSI_PLL_84MHz,
-                .sysclk = 84'000'000UL,
-                .apb1   = 42'000'000UL,
-                .apb2   = 84'000'000UL,
-                .on_hse = false,
-            },
-            {
-                .clock  = HSE_PLL_48MHz,
-                .sysclk = 48'000'000UL,
-                .apb1   = 48'000'000UL,
-                .apb2   = 48'000'000UL,
-                .on_hse = true,
-            },
-            {
-                .clock  = HSI_PLL_64MHz,
-                .sysclk = 64'000'000UL,
-                .apb1   = 32'000'000UL,
-                .apb2   = 64'000'000UL,
-                .on_hse = false,
-            },
-            {
-                .clock  = HSE_PLL_MATCH_HSI,
-                .sysclk = HSI_VALUE_Hz,
-                .apb1   = HSI_VALUE_Hz,
-                .apb2   = HSI_VALUE_Hz,
-                .on_hse = true,
-            },
-            {
-                .clock  = HSI_PLL_MATCH_HSE,
-                .sysclk = HSE_VALUE_Hz,
-                .apb1   = HSE_VALUE_Hz,
-                .apb2   = HSE_VALUE_Hz,
-                .on_hse = false,
-            },
-        }};
+        constexpr auto SYSTEM_CLOCK_CASES =
+            std::array<system_clock_case_t, 15>{{
+                {
+                    .clock  = HSI_PLL_DIRECT,
+                    .sysclk = HSI_VALUE_Hz,
+                    .apb1   = HSI_VALUE_Hz,
+                    .apb2   = HSI_VALUE_Hz,
+                    .on_hse = false,
+                },
+                {
+                    .clock  = HSE_PLL_100MHz,
+                    .sysclk = 100'000'000UL,
+                    .apb1   = 50'000'000UL,
+                    .apb2   = 100'000'000UL,
+                    .on_hse = true,
+                },
+                {
+                    // same source freq step
+                    .clock  = HSE_PLL_84MHz,
+                    .sysclk = 84'000'000UL,
+                    .apb1   = 42'000'000UL,
+                    .apb2   = 84'000'000UL,
+                    .on_hse = true,
+                },
+                {
+                    // same source PLL->direct
+                    .clock  = HSE_PLL_DIRECT,
+                    .sysclk = HSE_VALUE_Hz,
+                    .apb1   = HSE_VALUE_Hz,
+                    .apb2   = HSE_VALUE_Hz,
+                    .on_hse = true,
+                },
+                {
+                    // same source direct->PLL
+                    .clock  = HSE_PLL_96MHz,
+                    .sysclk = 96'000'000UL,
+                    .apb1   = 48'000'000UL,
+                    .apb2   = 96'000'000UL,
+                    .on_hse = true,
+                },
+                {
+                    .clock  = HSI_PLL_100MHz,
+                    .sysclk = 100'000'000UL,
+                    .apb1   = 50'000'000UL,
+                    .apb2   = 100'000'000UL,
+                    .on_hse = false,
+                },
+                {
+                    // same source freq step
+                    .clock  = HSI_PLL_48MHz,
+                    .sysclk = 48'000'000UL,
+                    .apb1   = 48'000'000UL,
+                    .apb2   = 48'000'000UL,
+                    .on_hse = false,
+                },
+                {
+                    // same source PLL->direct
+                    .clock  = HSI_PLL_DIRECT,
+                    .sysclk = HSI_VALUE_Hz,
+                    .apb1   = HSI_VALUE_Hz,
+                    .apb2   = HSI_VALUE_Hz,
+                    .on_hse = false,
+                },
+                {
+                    // same source direct->PLL
+                    .clock  = HSI_PLL_96MHz,
+                    .sysclk = 96'000'000UL,
+                    .apb1   = 48'000'000UL,
+                    .apb2   = 96'000'000UL,
+                    .on_hse = false,
+                },
+                {
+                    .clock  = HSE_PLL_64MHz,
+                    .sysclk = 64'000'000UL,
+                    .apb1   = 32'000'000UL,
+                    .apb2   = 64'000'000UL,
+                    .on_hse = true,
+                },
+                {
+                    .clock  = HSI_PLL_84MHz,
+                    .sysclk = 84'000'000UL,
+                    .apb1   = 42'000'000UL,
+                    .apb2   = 84'000'000UL,
+                    .on_hse = false,
+                },
+                {
+                    .clock  = HSE_PLL_48MHz,
+                    .sysclk = 48'000'000UL,
+                    .apb1   = 48'000'000UL,
+                    .apb2   = 48'000'000UL,
+                    .on_hse = true,
+                },
+                {
+                    .clock  = HSI_PLL_64MHz,
+                    .sysclk = 64'000'000UL,
+                    .apb1   = 32'000'000UL,
+                    .apb2   = 64'000'000UL,
+                    .on_hse = false,
+                },
+                {
+                    .clock  = HSE_PLL_MATCH_HSI,
+                    .sysclk = HSI_VALUE_Hz,
+                    .apb1   = HSI_VALUE_Hz,
+                    .apb2   = HSI_VALUE_Hz,
+                    .on_hse = true,
+                },
+                {
+                    .clock  = HSI_PLL_MATCH_HSE,
+                    .sysclk = HSE_VALUE_Hz,
+                    .apb1   = HSE_VALUE_Hz,
+                    .apb2   = HSE_VALUE_Hz,
+                    .on_hse = false,
+                },
+            }};
 
         // plln/pllr in each preset are chosen so the audio PLL's VCO is normalized to 1MHz
         // regardless of whether HSE or HSI feeds it. so the resulting frequency should be
@@ -181,10 +182,15 @@ namespace test::clock {
         inline pll_view_t read_main_pll() {
             const uint32_t cfgr = RCC->PLLCFGR;
             const uint32_t src =
-                (cfgr & RCC_PLLCFGR_PLLSRC) == RCC_PLLCFGR_PLLSRC_HSE ? HSE_VALUE_Hz : HSI_VALUE_Hz;
-            const uint32_t pllm = (cfgr & RCC_PLLCFGR_PLLM) >> RCC_PLLCFGR_PLLM_Pos;
-            const uint32_t plln = (cfgr & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos;
-            const uint32_t pllq = (cfgr & RCC_PLLCFGR_PLLQ) >> RCC_PLLCFGR_PLLQ_Pos;
+                (cfgr & RCC_PLLCFGR_PLLSRC) == RCC_PLLCFGR_PLLSRC_HSE
+                    ? HSE_VALUE_Hz
+                    : HSI_VALUE_Hz;
+            const uint32_t pllm =
+                (cfgr & RCC_PLLCFGR_PLLM) >> RCC_PLLCFGR_PLLM_Pos;
+            const uint32_t plln =
+                (cfgr & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos;
+            const uint32_t pllq =
+                (cfgr & RCC_PLLCFGR_PLLQ) >> RCC_PLLCFGR_PLLQ_Pos;
             return {.input_hz = src / pllm,
                     .vco_hz   = (src / pllm) * plln,
                     .pllq_hz  = ((src / pllm) * plln) / pllq};
@@ -219,23 +225,46 @@ namespace test::clock {
 
         void direct_to_pll_round_trips_succeed() {
             system_core_clock_config(HSE_PLL_DIRECT);
-            assert_system_clock({HSE_PLL_DIRECT, HSE_VALUE_Hz, HSE_VALUE_Hz, HSE_VALUE_Hz, true});
+            assert_system_clock({HSE_PLL_DIRECT,
+                                 HSE_VALUE_Hz,
+                                 HSE_VALUE_Hz,
+                                 HSE_VALUE_Hz,
+                                 true});
 
             system_core_clock_config(HSE_PLL_100MHz);
-            assert_system_clock({HSE_PLL_100MHz, 100'000'000UL, 50'000'000UL, 100'000'000UL, true});
+            assert_system_clock({HSE_PLL_100MHz,
+                                 100'000'000UL,
+                                 50'000'000UL,
+                                 100'000'000UL,
+                                 true});
 
             system_core_clock_config(HSE_PLL_DIRECT);
-            assert_system_clock({HSE_PLL_DIRECT, HSE_VALUE_Hz, HSE_VALUE_Hz, HSE_VALUE_Hz, true});
+            assert_system_clock({HSE_PLL_DIRECT,
+                                 HSE_VALUE_Hz,
+                                 HSE_VALUE_Hz,
+                                 HSE_VALUE_Hz,
+                                 true});
 
             system_core_clock_config(HSI_PLL_DIRECT);
-            assert_system_clock({HSI_PLL_DIRECT, HSI_VALUE_Hz, HSI_VALUE_Hz, HSI_VALUE_Hz, false});
+            assert_system_clock({HSI_PLL_DIRECT,
+                                 HSI_VALUE_Hz,
+                                 HSI_VALUE_Hz,
+                                 HSI_VALUE_Hz,
+                                 false});
 
             system_core_clock_config(HSI_PLL_100MHz);
-            assert_system_clock(
-                {HSI_PLL_100MHz, 100'000'000UL, 50'000'000UL, 100'000'000UL, false});
+            assert_system_clock({HSI_PLL_100MHz,
+                                 100'000'000UL,
+                                 50'000'000UL,
+                                 100'000'000UL,
+                                 false});
 
             system_core_clock_config(HSI_PLL_DIRECT);
-            assert_system_clock({HSI_PLL_DIRECT, HSI_VALUE_Hz, HSI_VALUE_Hz, HSI_VALUE_Hz, false});
+            assert_system_clock({HSI_PLL_DIRECT,
+                                 HSI_VALUE_Hz,
+                                 HSI_VALUE_Hz,
+                                 HSI_VALUE_Hz,
+                                 false});
         }
 
         void pll_presets_respect_vco_limits() {
@@ -245,8 +274,10 @@ namespace test::clock {
                     continue; // Direct sources do not use the main PLL
                 }
                 const pll_view_t pll = read_main_pll();
-                TEST_ASSERT_TRUE(pll.input_hz >= 1'000'000UL && pll.input_hz <= 2'000'000UL);
-                TEST_ASSERT_TRUE(pll.vco_hz >= 100'000'000UL && pll.vco_hz <= 432'000'000UL);
+                TEST_ASSERT_TRUE(pll.input_hz >= 1'000'000UL &&
+                                 pll.input_hz <= 2'000'000UL);
+                TEST_ASSERT_TRUE(pll.vco_hz >= 100'000'000UL &&
+                                 pll.vco_hz <= 432'000'000UL);
             }
         }
 
@@ -285,12 +316,18 @@ namespace test::clock {
 
         void match_presets_report_their_actual_source_not_their_frequency() {
             system_core_clock_config(HSE_PLL_MATCH_HSI);
-            assert_system_clock(
-                {HSE_PLL_MATCH_HSI, HSI_VALUE_Hz, HSI_VALUE_Hz, HSI_VALUE_Hz, true});
+            assert_system_clock({HSE_PLL_MATCH_HSI,
+                                 HSI_VALUE_Hz,
+                                 HSI_VALUE_Hz,
+                                 HSI_VALUE_Hz,
+                                 true});
 
             system_core_clock_config(HSI_PLL_MATCH_HSE);
-            assert_system_clock(
-                {HSI_PLL_MATCH_HSE, HSE_VALUE_Hz, HSE_VALUE_Hz, HSE_VALUE_Hz, false});
+            assert_system_clock({HSI_PLL_MATCH_HSE,
+                                 HSE_VALUE_Hz,
+                                 HSE_VALUE_Hz,
+                                 HSE_VALUE_Hz,
+                                 false});
         }
 
         void each_audio_clock_preset_configures_correctly() {
@@ -373,12 +410,15 @@ namespace test::clock {
     } // namespace
 
     void all() {
-        LOGI(TAG, "Starting the tests on the system and audio PLL clock driver");
+        LOGI(TAG,
+             "Starting the tests on the system and audio PLL clock driver");
         UNITY_BEGIN();
 
         // Preserve whatever clock config was active on entry.
-        volatile const system_clock_t original_clock = get_system_core_clock_type();
-        volatile const audio_clock_t  original_audio = get_audio_pll_clock_type();
+        volatile const system_clock_t original_clock =
+            get_system_core_clock_type();
+        volatile const audio_clock_t original_audio =
+            get_audio_pll_clock_type();
 
         RUN_TEST(each_system_clock_preset_configures_correctly);
         RUN_TEST(direct_to_pll_round_trips_succeed);
@@ -397,7 +437,8 @@ namespace test::clock {
         audio_pll_clock_config(original_audio);
 
         UNITY_END();
-        LOGI(TAG, "Done with all tests on the system and audio PLL clock driver");
+        LOGI(TAG,
+             "Done with all tests on the system and audio PLL clock driver");
     }
 
 } // namespace test::clock

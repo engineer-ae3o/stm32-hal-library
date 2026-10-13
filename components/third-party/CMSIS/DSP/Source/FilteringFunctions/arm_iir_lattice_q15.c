@@ -58,14 +58,15 @@ void arm_iir_lattice_q15(const arm_iir_lattice_instance_q15* S,
                          const q15_t*                        pSrc,
                          q15_t*                              pDst,
                          uint32_t                            blockSize) {
-    q15_t*   pState = S->pState;                 /* State pointer */
-    q15_t*   pStateCur;                          /* State current pointer */
-    q31_t    fcurr, fnext = 0, gcurr = 0, gnext; /* Temporary variables for lattice stages */
-    q63_t    acc;                                /* Accumlator */
-    q15_t *  px1, *px2, *pk, *pv;                /* Temporary pointers for state and coef */
-    uint32_t numStages = S->numStages;           /* Number of stages */
-    uint32_t blkCnt, tapCnt;                     /* Temporary variables for counts */
-    q15_t    out;                                /* Temporary variable for output */
+    q15_t*   pState = S->pState; /* State pointer */
+    q15_t*   pStateCur;          /* State current pointer */
+    q31_t    fcurr, fnext = 0, gcurr = 0,
+                    gnext;        /* Temporary variables for lattice stages */
+    q63_t    acc;                 /* Accumlator */
+    q15_t *  px1, *px2, *pk, *pv; /* Temporary pointers for state and coef */
+    uint32_t numStages = S->numStages; /* Number of stages */
+    uint32_t blkCnt, tapCnt;           /* Temporary variables for counts */
+    q15_t    out;                      /* Temporary variable for output */
 
 #if defined(ARM_MATH_DSP) && defined(ARM_MATH_LOOPUNROLL)
     q15_t gnext1, gnext2; /* Temporary variables for lattice stages */

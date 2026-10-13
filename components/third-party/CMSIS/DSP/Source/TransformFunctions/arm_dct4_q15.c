@@ -48,12 +48,15 @@
                    \image html dct4FormatsQ15Table.gif
  */
 
-void arm_dct4_q15(const arm_dct4_instance_q15* S, q15_t* pState, q15_t* pInlineBuffer) {
+void arm_dct4_q15(const arm_dct4_instance_q15* S,
+                  q15_t*                       pState,
+                  q15_t*                       pInlineBuffer) {
     const q15_t* weights = S->pTwiddle;   /* Pointer to the Weights table */
     const q15_t* cosFact = S->pCosFactor; /* Pointer to the cos factors table */
-    q15_t *      pS1, *pS2, *pbuff; /* Temporary pointers for input buffer and pState buffer */
-    q15_t        in;                /* Temporary variable */
-    uint32_t     i;                 /* Loop counter */
+    q15_t *      pS1, *pS2,
+        *pbuff;  /* Temporary pointers for input buffer and pState buffer */
+    q15_t    in; /* Temporary variable */
+    uint32_t i;  /* Loop counter */
 
 
     /* DCT4 computation involves DCT2 (which is calculated using RFFT)

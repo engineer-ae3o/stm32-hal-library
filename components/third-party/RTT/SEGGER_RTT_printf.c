@@ -100,13 +100,27 @@ static void _PrintUnsigned(SEGGER_RTT_PRINTF_DESC* pBufferDesc,
                            unsigned                NumDigits,
                            unsigned                FieldWidth,
                            unsigned                FormatFlags) {
-    static const char _aV2C[16] = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-    unsigned Div;
-    unsigned Digit;
-    unsigned Number;
-    unsigned Width;
-    char     c;
+    static const char _aV2C[16] = {'0',
+                                   '1',
+                                   '2',
+                                   '3',
+                                   '4',
+                                   '5',
+                                   '6',
+                                   '7',
+                                   '8',
+                                   '9',
+                                   'A',
+                                   'B',
+                                   'C',
+                                   'D',
+                                   'E',
+                                   'F'};
+    unsigned          Div;
+    unsigned          Digit;
+    unsigned          Number;
+    unsigned          Width;
+    char              c;
 
     Number = v;
     Digit  = 1u;
@@ -126,7 +140,8 @@ static void _PrintUnsigned(SEGGER_RTT_PRINTF_DESC* pBufferDesc,
     //
     if ((FormatFlags & FORMAT_FLAG_LEFT_JUSTIFY) == 0u) {
         if (FieldWidth != 0u) {
-            if (((FormatFlags & FORMAT_FLAG_PAD_ZERO) == FORMAT_FLAG_PAD_ZERO) &&
+            if (((FormatFlags & FORMAT_FLAG_PAD_ZERO) ==
+                 FORMAT_FLAG_PAD_ZERO) &&
                 (NumDigits == 0u)) {
                 c = '0';
             } else {
@@ -175,7 +190,8 @@ static void _PrintUnsigned(SEGGER_RTT_PRINTF_DESC* pBufferDesc,
         //
         // Print trailing spaces if necessary
         //
-        if ((FormatFlags & FORMAT_FLAG_LEFT_JUSTIFY) == FORMAT_FLAG_LEFT_JUSTIFY) {
+        if ((FormatFlags & FORMAT_FLAG_LEFT_JUSTIFY) ==
+            FORMAT_FLAG_LEFT_JUSTIFY) {
             if (FieldWidth != 0u) {
                 while ((FieldWidth != 0u) && (Width < FieldWidth)) {
                     FieldWidth--;
@@ -216,7 +232,8 @@ static void _PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc,
         Width = NumDigits;
     }
     if ((FieldWidth > 0u) &&
-        ((v < 0) || ((FormatFlags & FORMAT_FLAG_PRINT_SIGN) == FORMAT_FLAG_PRINT_SIGN))) {
+        ((v < 0) ||
+         ((FormatFlags & FORMAT_FLAG_PRINT_SIGN) == FORMAT_FLAG_PRINT_SIGN))) {
         FieldWidth--;
     }
 
@@ -242,7 +259,8 @@ static void _PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc,
         if (v < 0) {
             v = -v;
             _StoreChar(pBufferDesc, '-');
-        } else if ((FormatFlags & FORMAT_FLAG_PRINT_SIGN) == FORMAT_FLAG_PRINT_SIGN) {
+        } else if ((FormatFlags & FORMAT_FLAG_PRINT_SIGN) ==
+                   FORMAT_FLAG_PRINT_SIGN) {
             _StoreChar(pBufferDesc, '+');
         } else {
         }
@@ -250,8 +268,10 @@ static void _PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc,
             //
             // Print leading zeros if necessary
             //
-            if (((FormatFlags & FORMAT_FLAG_PAD_ZERO) == FORMAT_FLAG_PAD_ZERO) &&
-                ((FormatFlags & FORMAT_FLAG_LEFT_JUSTIFY) == 0u) && (NumDigits == 0u)) {
+            if (((FormatFlags & FORMAT_FLAG_PAD_ZERO) ==
+                 FORMAT_FLAG_PAD_ZERO) &&
+                ((FormatFlags & FORMAT_FLAG_LEFT_JUSTIFY) == 0u) &&
+                (NumDigits == 0u)) {
                 if (FieldWidth != 0u) {
                     while ((FieldWidth != 0u) && (Width < FieldWidth)) {
                         FieldWidth--;
@@ -266,7 +286,12 @@ static void _PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc,
                 //
                 // Print number without sign
                 //
-                _PrintUnsigned(pBufferDesc, (unsigned)v, Base, NumDigits, FieldWidth, FormatFlags);
+                _PrintUnsigned(pBufferDesc,
+                               (unsigned)v,
+                               Base,
+                               NumDigits,
+                               FieldWidth,
+                               FormatFlags);
             }
         }
     }
@@ -295,7 +320,9 @@ static void _PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc,
 *    >= 0:  Number of bytes which have been stored in the "Up"-buffer.
 *     < 0:  Error
 */
-int SEGGER_RTT_vprintf(unsigned BufferIndex, const char* sFormat, va_list* pParamList) {
+int SEGGER_RTT_vprintf(unsigned    BufferIndex,
+                       const char* sFormat,
+                       va_list*    pParamList) {
     char                   c;
     SEGGER_RTT_PRINTF_DESC BufferDesc;
     int                    v;
@@ -409,18 +436,31 @@ int SEGGER_RTT_vprintf(unsigned BufferIndex, const char* sFormat, va_list* pPara
                 }
                 case 'd':
                     v = va_arg(*pParamList, int);
-                    _PrintInt(&BufferDesc, v, 10u, Precision, FieldWidth, FormatFlags);
+                    _PrintInt(&BufferDesc,
+                              v,
+                              10u,
+                              Precision,
+                              FieldWidth,
+                              FormatFlags);
                     break;
                 case 'u':
                     v = va_arg(*pParamList, int);
-                    _PrintUnsigned(
-                        &BufferDesc, (unsigned)v, 10u, Precision, FieldWidth, FormatFlags);
+                    _PrintUnsigned(&BufferDesc,
+                                   (unsigned)v,
+                                   10u,
+                                   Precision,
+                                   FieldWidth,
+                                   FormatFlags);
                     break;
                 case 'x':
                 case 'X':
                     v = va_arg(*pParamList, int);
-                    _PrintUnsigned(
-                        &BufferDesc, (unsigned)v, 16u, Precision, FieldWidth, FormatFlags);
+                    _PrintUnsigned(&BufferDesc,
+                                   (unsigned)v,
+                                   16u,
+                                   Precision,
+                                   FieldWidth,
+                                   FormatFlags);
                     break;
                 case 's': {
                     const char* s = va_arg(*pParamList, const char*);

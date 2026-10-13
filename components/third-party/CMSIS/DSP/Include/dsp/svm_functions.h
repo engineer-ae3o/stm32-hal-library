@@ -181,15 +181,15 @@ void arm_svm_linear_predict_f32(const arm_svm_linear_instance_f32* S,
 
 
 void arm_svm_polynomial_init_f32(arm_svm_polynomial_instance_f32* S,
-                                 uint32_t                         nbOfSupportVectors,
-                                 uint32_t                         vectorDimension,
-                                 float32_t                        intercept,
-                                 const float32_t*                 dualCoefficients,
-                                 const float32_t*                 supportVectors,
-                                 const int32_t*                   classes,
-                                 int32_t                          degree,
-                                 float32_t                        coef0,
-                                 float32_t                        gamma);
+                                 uint32_t         nbOfSupportVectors,
+                                 uint32_t         vectorDimension,
+                                 float32_t        intercept,
+                                 const float32_t* dualCoefficients,
+                                 const float32_t* supportVectors,
+                                 const int32_t*   classes,
+                                 int32_t          degree,
+                                 float32_t        coef0,
+                                 float32_t        gamma);
 
 /**
  * @brief SVM polynomial prediction
@@ -201,7 +201,7 @@ void arm_svm_polynomial_init_f32(arm_svm_polynomial_instance_f32* S,
  */
 void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S,
                                     const float32_t*                       in,
-                                    int32_t*                               pResult);
+                                    int32_t* pResult);
 
 
 /**

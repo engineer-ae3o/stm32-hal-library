@@ -89,8 +89,12 @@ void arm_rfft_q31(const arm_rfft_instance_q31* S, q31_t* pSrc, q31_t* pDst) {
     /* Calculation of RIFFT of input */
     if (S->ifftFlagR == 1U) {
         /*  Real IFFT core process */
-        arm_split_rifft_q31(
-            pSrc, L2, S->pTwiddleAReal, S->pTwiddleBReal, pDst, S->twidCoefRModifier);
+        arm_split_rifft_q31(pSrc,
+                            L2,
+                            S->pTwiddleAReal,
+                            S->pTwiddleBReal,
+                            pDst,
+                            S->twidCoefRModifier);
 
         /* Complex IFFT process */
         arm_cfft_q31(S_CFFT, pDst, S->ifftFlagR, S->bitReverseFlagR);
@@ -103,8 +107,12 @@ void arm_rfft_q31(const arm_rfft_instance_q31* S, q31_t* pSrc, q31_t* pDst) {
         arm_cfft_q31(S_CFFT, pSrc, S->ifftFlagR, S->bitReverseFlagR);
 
         /*  Real FFT core process */
-        arm_split_rfft_q31(
-            pSrc, L2, S->pTwiddleAReal, S->pTwiddleBReal, pDst, S->twidCoefRModifier);
+        arm_split_rfft_q31(pSrc,
+                           L2,
+                           S->pTwiddleAReal,
+                           S->pTwiddleBReal,
+                           pDst,
+                           S->twidCoefRModifier);
     }
 }
 
@@ -130,10 +138,12 @@ void arm_rfft_q31(const arm_rfft_instance_q31* S, q31_t* pSrc, q31_t* pDst) {
 
 #if defined(__CMSIS_GCC_H)
 
-#define MVE_CMPLX_MULT_FX_AxB_S32(A, B)                                                            \
-    vqdmladhxq_s32(vqdmlsdhq_s32((__typeof(A))vuninitializedq_s32(), A, B), A, B)
-#define MVE_CMPLX_MULT_FX_AxConjB_S32(A, B)                                                        \
-    vqdmladhq_s32(vqdmlsdhxq_s32((__typeof(A))vuninitializedq_s32(), A, B), A, B)
+#define MVE_CMPLX_MULT_FX_AxB_S32(A, B)                                        \
+    vqdmladhxq_s32(                                                            \
+        vqdmlsdhq_s32((__typeof(A))vuninitializedq_s32(), A, B), A, B)
+#define MVE_CMPLX_MULT_FX_AxConjB_S32(A, B)                                    \
+    vqdmladhq_s32(                                                             \
+        vqdmlsdhxq_s32((__typeof(A))vuninitializedq_s32(), A, B), A, B)
 
 #endif
 
@@ -174,8 +184,9 @@ void arm_split_rfft_q31(q31_t*       pSrc,
         q31x4_t out = vhaddq_s32(MVE_CMPLX_MULT_FX_AxB_S32(in1, coefA),
                                  MVE_CMPLX_MULT_FX_AxConjB_S32(coefB, in2));
 #else
-        q31x4_t out = vhaddq_s32(MVE_CMPLX_MULT_FX_AxB(in1, coefA, q31x4_t),
-                                 MVE_CMPLX_MULT_FX_AxConjB(coefB, in2, q31x4_t));
+        q31x4_t out =
+            vhaddq_s32(MVE_CMPLX_MULT_FX_AxB(in1, coefA, q31x4_t),
+                       MVE_CMPLX_MULT_FX_AxConjB(coefB, in2, q31x4_t));
 #endif
         vst1q(pOut1, out);
         pOut1 += 4;
@@ -200,12 +211,13 @@ void arm_split_rfft_q31(q31_t*       pSrc,
                         const q31_t* pBTable,
                         q31_t*       pDst,
                         uint32_t     modifier) {
-    uint32_t     i;                      /* Loop Counter */
-    q31_t        outR, outI;             /* Temporary variables for output */
-    const q31_t *pCoefA, *pCoefB;        /* Temporary pointers for twiddle factors */
-    q31_t        CoefA1, CoefA2, CoefB1; /* Temporary variables for twiddle coefficients */
-    q31_t *      pOut1 = &pDst[2], *pOut2 = &pDst[4 * fftLen - 1];
-    q31_t *      pIn1 = &pSrc[2], *pIn2 = &pSrc[2 * fftLen - 1];
+    uint32_t     i;               /* Loop Counter */
+    q31_t        outR, outI;      /* Temporary variables for output */
+    const q31_t *pCoefA, *pCoefB; /* Temporary pointers for twiddle factors */
+    q31_t        CoefA1, CoefA2,
+        CoefB1; /* Temporary variables for twiddle coefficients */
+    q31_t *pOut1 = &pDst[2], *pOut2 = &pDst[4 * fftLen - 1];
+    q31_t *pIn1 = &pSrc[2], *pIn2 = &pSrc[2 * fftLen - 1];
 
     /* Init coefficient pointers */
     pCoefA = &pATable[modifier * 2];
@@ -326,11 +338,13 @@ void arm_split_rifft_q31(q31_t*       pSrc,
 
         /* can we avoid the conjugate here ? */
 #if defined(__CMSIS_GCC_H)
-        q31x4_t out = vhaddq_s32(MVE_CMPLX_MULT_FX_AxConjB_S32(in1, coefA),
-                                 vmulq_s32(conj, MVE_CMPLX_MULT_FX_AxB_S32(in2, coefB)));
+        q31x4_t out =
+            vhaddq_s32(MVE_CMPLX_MULT_FX_AxConjB_S32(in1, coefA),
+                       vmulq_s32(conj, MVE_CMPLX_MULT_FX_AxB_S32(in2, coefB)));
 #else
-        q31x4_t out = vhaddq_s32(MVE_CMPLX_MULT_FX_AxConjB(in1, coefA, q31x4_t),
-                                 vmulq_s32(conj, MVE_CMPLX_MULT_FX_AxB(in2, coefB, q31x4_t)));
+        q31x4_t out = vhaddq_s32(
+            MVE_CMPLX_MULT_FX_AxConjB(in1, coefA, q31x4_t),
+            vmulq_s32(conj, MVE_CMPLX_MULT_FX_AxB(in2, coefB, q31x4_t)));
 #endif
         vst1q_s32(pDst, out);
         pDst += 4;
@@ -349,10 +363,11 @@ void arm_split_rifft_q31(q31_t*       pSrc,
                          const q31_t* pBTable,
                          q31_t*       pDst,
                          uint32_t     modifier) {
-    q31_t        outR, outI;             /* Temporary variables for output */
-    const q31_t *pCoefA, *pCoefB;        /* Temporary pointers for twiddle factors */
-    q31_t        CoefA1, CoefA2, CoefB1; /* Temporary variables for twiddle coefficients */
-    q31_t *      pIn1 = &pSrc[0], *pIn2 = &pSrc[2 * fftLen + 1];
+    q31_t        outR, outI;      /* Temporary variables for output */
+    const q31_t *pCoefA, *pCoefB; /* Temporary pointers for twiddle factors */
+    q31_t        CoefA1, CoefA2,
+        CoefB1; /* Temporary variables for twiddle coefficients */
+    q31_t *pIn1 = &pSrc[0], *pIn2 = &pSrc[2 * fftLen + 1];
 
     pCoefA = &pATable[0];
     pCoefB = &pBTable[0];

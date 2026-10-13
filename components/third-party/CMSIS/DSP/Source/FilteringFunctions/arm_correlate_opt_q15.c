@@ -76,8 +76,9 @@ void arm_correlate_opt_q15(const q15_t* pSrcA,
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q63_t acc1, acc2, acc3; /* Accumulators */
-    q31_t x1, x2, x3;       /* Temporary variables for holding input1 and input2 values */
-    q31_t y1, y2;           /* State variables */
+    q31_t x1, x2,
+        x3;       /* Temporary variables for holding input1 and input2 values */
+    q31_t y1, y2; /* State variables */
 #endif
 
     /* The algorithm implementation is based on the lengths of the inputs. */

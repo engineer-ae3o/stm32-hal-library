@@ -63,7 +63,8 @@ extern void arm_bitreversal_f16(float16_t*      pSrc,
   @return        none
  */
 
-void arm_cfft_radix2_f16(const arm_cfft_radix2_instance_f16* S, float16_t* pSrc) {
+void arm_cfft_radix2_f16(const arm_cfft_radix2_instance_f16* S,
+                         float16_t*                          pSrc) {
 
     if (S->ifftFlag == 1U) {
         /* Complex IFFT radix-2 */
@@ -71,7 +72,8 @@ void arm_cfft_radix2_f16(const arm_cfft_radix2_instance_f16* S, float16_t* pSrc)
             pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier, S->onebyfftLen);
     } else {
         /* Complex FFT radix-2 */
-        arm_radix2_butterfly_f16(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
+        arm_radix2_butterfly_f16(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
     }
 
     if (S->bitReverseFlag == 1U) {

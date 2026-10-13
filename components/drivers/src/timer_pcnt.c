@@ -29,7 +29,8 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
 
     // Calculate the digital filter code
     uint32_t filter_code = 0;
-    TRY(timer_filter_ns_to_ic_code(handle, config->clk_div, config->filter_ns, &filter_code));
+    TRY(timer_filter_ns_to_ic_code(
+        handle, config->clk_div, config->filter_ns, &filter_code));
 
     // Clear all residual state
     TRY(pcnt_deinit(handle));
@@ -37,29 +38,37 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
     switch (config->mode) {
         case PCNT_MODE_1: {
             // Map the channel as input and apply the input capture digital filter code
-            handle->CCMR1 |= (0b01U << config->settings.mode_1.channel) |
-                             (filter_code << (config->settings.mode_1.channel + 4));
+            handle->CCMR1 |=
+                (0b01U << config->settings.mode_1.channel) |
+                (filter_code << (config->settings.mode_1.channel + 4));
 
             // Set the polarity
             if (config->edge == PCNT_FALLING_EDGE) {
                 // In slave external clock mode, the timer counts only on rising edges by default
                 // To get counting on the falling edge, we have to invert the channel's polarity
-                handle->CCER |= (config->settings.mode_1.channel == PCNT_CHANNEL_1) ? TIM_CCER_CC1P
-                                                                                    : TIM_CCER_CC2P;
+                handle->CCER |=
+                    (config->settings.mode_1.channel == PCNT_CHANNEL_1)
+                        ? TIM_CCER_CC1P
+                        : TIM_CCER_CC2P;
             }
 
             // Select the trigger source and enable the slave external clock mode
             const uint32_t trigger_selection =
-                (config->settings.mode_1.channel == PCNT_CHANNEL_1) ? 0b101U : 0b110U;
-            handle->SMCR |= (trigger_selection << TIM_SMCR_TS_Pos) | (0b111U << TIM_SMCR_SMS_Pos);
+                (config->settings.mode_1.channel == PCNT_CHANNEL_1) ? 0b101U
+                                                                    : 0b110U;
+            handle->SMCR |= (trigger_selection << TIM_SMCR_TS_Pos) |
+                            (0b111U << TIM_SMCR_SMS_Pos);
 
             break;
         }
         case PCNT_MODE_2: {
             // Apply the digital filter, external signal prescaler, set the polarity and enable the use of the external clock
-            handle->SMCR |= (filter_code << TIM_SMCR_ETF_Pos) |
-                            (uint32_t)(config->settings.mode_2.prescaler << TIM_SMCR_ETPS_Pos) |
-                            ((config->edge == PCNT_FALLING_EDGE) ? TIM_SMCR_ETP : 0) | TIM_SMCR_ECE;
+            handle->SMCR |=
+                (filter_code << TIM_SMCR_ETF_Pos) |
+                (uint32_t)(config->settings.mode_2.prescaler
+                           << TIM_SMCR_ETPS_Pos) |
+                ((config->edge == PCNT_FALLING_EDGE) ? TIM_SMCR_ETP : 0) |
+                TIM_SMCR_ECE;
 
             break;
         }
@@ -74,7 +83,8 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
     handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
 
     if (config->callback.cb) {
-        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_UPDATE_EVENT));
+        TRY(timer_register_callback(
+            handle, config->callback, TIMER_IRQ_UPDATE_EVENT));
         // Enable the update event callback and URS so only update events trigger an interrupt
         handle->DIER |= TIM_DIER_UIE;
         handle->CR1 |= TIM_CR1_URS;
@@ -117,7 +127,8 @@ hal_err_t qdec_init(TIM_TypeDef* handle, const qdec_config_t* config) {
 
     // Calculate the digital filter code
     uint32_t ic_filter_code = 0;
-    TRY(timer_filter_ns_to_ic_code(handle, config->clk_div, config->filter_ns, &ic_filter_code));
+    TRY(timer_filter_ns_to_ic_code(
+        handle, config->clk_div, config->filter_ns, &ic_filter_code));
 
     // Clear all residual state
     TRY(pcnt_deinit(handle));
@@ -126,8 +137,10 @@ hal_err_t qdec_init(TIM_TypeDef* handle, const qdec_config_t* config) {
     handle->CR1 |= (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos);
 
     // Set timer channels 1 and 2 to input mode and set the digital filters
-    handle->CCMR1 |= ((0b01U << TIM_CCMR1_CC1S_Pos) | (ic_filter_code << TIM_CCMR1_IC1F_Pos)) |
-                     ((0b01U << TIM_CCMR1_CC2S_Pos) | (ic_filter_code << TIM_CCMR1_IC2F_Pos));
+    handle->CCMR1 |= ((0b01U << TIM_CCMR1_CC1S_Pos) |
+                      (ic_filter_code << TIM_CCMR1_IC1F_Pos)) |
+                     ((0b01U << TIM_CCMR1_CC2S_Pos) |
+                      (ic_filter_code << TIM_CCMR1_IC2F_Pos));
 
     // Set the rotational polarity (we invert only channel's output)
     handle->CCER |= config->invert_direction ? TIM_CCER_CC1P : 0;
@@ -139,7 +152,8 @@ hal_err_t qdec_init(TIM_TypeDef* handle, const qdec_config_t* config) {
     handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
 
     if (config->callback.cb) {
-        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_UPDATE_EVENT));
+        TRY(timer_register_callback(
+            handle, config->callback, TIMER_IRQ_UPDATE_EVENT));
         // Enable the update event callback and URS so only update events trigger an interrupt
         handle->DIER |= TIM_DIER_UIE;
         handle->CR1 |= TIM_CR1_URS;
@@ -188,7 +202,8 @@ hal_err_t pcnt_stop(TIM_TypeDef* handle) {
 }
 
 hal_err_t pcnt_set_count(TIM_TypeDef* handle, uint32_t count) {
-    if (handle == NULL || count > (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX)) {
+    if (handle == NULL ||
+        count > (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX)) {
         return HAL_ERR_INVALID_ARG;
     }
     handle->CNT = count;

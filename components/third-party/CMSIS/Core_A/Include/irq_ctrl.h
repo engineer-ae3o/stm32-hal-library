@@ -48,59 +48,76 @@ typedef int32_t IRQn_ID_t;
 /* Interrupt mode bit-masks */
 #define IRQ_MODE_TRIG_Pos (0U)
 #define IRQ_MODE_TRIG_Msk (0x07UL /*<< IRQ_MODE_TRIG_Pos*/)
-#define IRQ_MODE_TRIG_LEVEL                                                                        \
+#define IRQ_MODE_TRIG_LEVEL                                                    \
     (0x00UL /*<< IRQ_MODE_TRIG_Pos*/) ///< Trigger: level triggered interrupt
-#define IRQ_MODE_TRIG_LEVEL_LOW                                                                    \
+#define IRQ_MODE_TRIG_LEVEL_LOW                                                \
     (0x01UL /*<< IRQ_MODE_TRIG_Pos*/) ///< Trigger: low level triggered interrupt
-#define IRQ_MODE_TRIG_LEVEL_HIGH                                                                   \
+#define IRQ_MODE_TRIG_LEVEL_HIGH                                               \
     (0x02UL /*<< IRQ_MODE_TRIG_Pos*/) ///< Trigger: high level triggered interrupt
-#define IRQ_MODE_TRIG_EDGE (0x04UL /*<< IRQ_MODE_TRIG_Pos*/) ///< Trigger: edge triggered interrupt
-#define IRQ_MODE_TRIG_EDGE_RISING                                                                  \
+#define IRQ_MODE_TRIG_EDGE                                                     \
+    (0x04UL /*<< IRQ_MODE_TRIG_Pos*/) ///< Trigger: edge triggered interrupt
+#define IRQ_MODE_TRIG_EDGE_RISING                                              \
     (0x05UL /*<< IRQ_MODE_TRIG_Pos*/) ///< Trigger: rising edge triggered interrupt
-#define IRQ_MODE_TRIG_EDGE_FALLING                                                                 \
+#define IRQ_MODE_TRIG_EDGE_FALLING                                             \
     (0x06UL /*<< IRQ_MODE_TRIG_Pos*/) ///< Trigger: falling edge triggered interrupt
-#define IRQ_MODE_TRIG_EDGE_BOTH                                                                    \
+#define IRQ_MODE_TRIG_EDGE_BOTH                                                \
     (0x07UL /*<< IRQ_MODE_TRIG_Pos*/) ///< Trigger: rising and falling edge triggered interrupt
 
 #define IRQ_MODE_TYPE_Pos (3U)
 #define IRQ_MODE_TYPE_Msk (0x01UL << IRQ_MODE_TYPE_Pos)
-#define IRQ_MODE_TYPE_IRQ                                                                          \
-    (0x00UL << IRQ_MODE_TYPE_Pos) ///< Type: interrupt source triggers CPU IRQ line
-#define IRQ_MODE_TYPE_FIQ                                                                          \
-    (0x01UL << IRQ_MODE_TYPE_Pos) ///< Type: interrupt source triggers CPU FIQ line
+#define IRQ_MODE_TYPE_IRQ                                                      \
+    (0x00UL                                                                    \
+     << IRQ_MODE_TYPE_Pos) ///< Type: interrupt source triggers CPU IRQ line
+#define IRQ_MODE_TYPE_FIQ                                                      \
+    (0x01UL                                                                    \
+     << IRQ_MODE_TYPE_Pos) ///< Type: interrupt source triggers CPU FIQ line
 
 #define IRQ_MODE_DOMAIN_Pos (4U)
 #define IRQ_MODE_DOMAIN_Msk (0x01UL << IRQ_MODE_DOMAIN_Pos)
-#define IRQ_MODE_DOMAIN_NONSECURE                                                                  \
-    (0x00UL << IRQ_MODE_DOMAIN_Pos) ///< Domain: interrupt is targeting non-secure domain
-#define IRQ_MODE_DOMAIN_SECURE                                                                     \
-    (0x01UL << IRQ_MODE_DOMAIN_Pos) ///< Domain: interrupt is targeting secure domain
+#define IRQ_MODE_DOMAIN_NONSECURE                                              \
+    (0x00UL                                                                    \
+     << IRQ_MODE_DOMAIN_Pos) ///< Domain: interrupt is targeting non-secure domain
+#define IRQ_MODE_DOMAIN_SECURE                                                 \
+    (0x01UL                                                                    \
+     << IRQ_MODE_DOMAIN_Pos) ///< Domain: interrupt is targeting secure domain
 
 #define IRQ_MODE_CPU_Pos (5U)
 #define IRQ_MODE_CPU_Msk (0xFFUL << IRQ_MODE_CPU_Pos)
-#define IRQ_MODE_CPU_ALL (0x00UL << IRQ_MODE_CPU_Pos) ///< CPU: interrupt targets all CPUs
-#define IRQ_MODE_CPU_0 (0x01UL << IRQ_MODE_CPU_Pos)   ///< CPU: interrupt targets CPU 0
-#define IRQ_MODE_CPU_1 (0x02UL << IRQ_MODE_CPU_Pos)   ///< CPU: interrupt targets CPU 1
-#define IRQ_MODE_CPU_2 (0x04UL << IRQ_MODE_CPU_Pos)   ///< CPU: interrupt targets CPU 2
-#define IRQ_MODE_CPU_3 (0x08UL << IRQ_MODE_CPU_Pos)   ///< CPU: interrupt targets CPU 3
-#define IRQ_MODE_CPU_4 (0x10UL << IRQ_MODE_CPU_Pos)   ///< CPU: interrupt targets CPU 4
-#define IRQ_MODE_CPU_5 (0x20UL << IRQ_MODE_CPU_Pos)   ///< CPU: interrupt targets CPU 5
-#define IRQ_MODE_CPU_6 (0x40UL << IRQ_MODE_CPU_Pos)   ///< CPU: interrupt targets CPU 6
-#define IRQ_MODE_CPU_7 (0x80UL << IRQ_MODE_CPU_Pos)   ///< CPU: interrupt targets CPU 7
+#define IRQ_MODE_CPU_ALL                                                       \
+    (0x00UL << IRQ_MODE_CPU_Pos) ///< CPU: interrupt targets all CPUs
+#define IRQ_MODE_CPU_0                                                         \
+    (0x01UL << IRQ_MODE_CPU_Pos) ///< CPU: interrupt targets CPU 0
+#define IRQ_MODE_CPU_1                                                         \
+    (0x02UL << IRQ_MODE_CPU_Pos) ///< CPU: interrupt targets CPU 1
+#define IRQ_MODE_CPU_2                                                         \
+    (0x04UL << IRQ_MODE_CPU_Pos) ///< CPU: interrupt targets CPU 2
+#define IRQ_MODE_CPU_3                                                         \
+    (0x08UL << IRQ_MODE_CPU_Pos) ///< CPU: interrupt targets CPU 3
+#define IRQ_MODE_CPU_4                                                         \
+    (0x10UL << IRQ_MODE_CPU_Pos) ///< CPU: interrupt targets CPU 4
+#define IRQ_MODE_CPU_5                                                         \
+    (0x20UL << IRQ_MODE_CPU_Pos) ///< CPU: interrupt targets CPU 5
+#define IRQ_MODE_CPU_6                                                         \
+    (0x40UL << IRQ_MODE_CPU_Pos) ///< CPU: interrupt targets CPU 6
+#define IRQ_MODE_CPU_7                                                         \
+    (0x80UL << IRQ_MODE_CPU_Pos) ///< CPU: interrupt targets CPU 7
 
 // Encoding in some early GIC implementations
 #define IRQ_MODE_MODEL_Pos (13U)
 #define IRQ_MODE_MODEL_Msk (0x1UL << IRQ_MODE_MODEL_Pos)
-#define IRQ_MODE_MODEL_NN                                                                          \
-    (0x0UL << IRQ_MODE_MODEL_Pos) ///< Corresponding interrupt is handled using the N-N model
-#define IRQ_MODE_MODEL_1N                                                                          \
-    (0x1UL << IRQ_MODE_MODEL_Pos) ///< Corresponding interrupt is handled using the 1-N model
+#define IRQ_MODE_MODEL_NN                                                      \
+    (0x0UL                                                                     \
+     << IRQ_MODE_MODEL_Pos) ///< Corresponding interrupt is handled using the N-N model
+#define IRQ_MODE_MODEL_1N                                                      \
+    (0x1UL                                                                     \
+     << IRQ_MODE_MODEL_Pos) ///< Corresponding interrupt is handled using the 1-N model
 
 #define IRQ_MODE_ERROR (0x80000000UL) ///< Bit indicating mode value error
 
 /* Interrupt priority bit-masks */
-#define IRQ_PRIORITY_Msk (0x0000FFFFUL)   ///< Interrupt priority value bit-mask
-#define IRQ_PRIORITY_ERROR (0x80000000UL) ///< Bit indicating priority value error
+#define IRQ_PRIORITY_Msk (0x0000FFFFUL) ///< Interrupt priority value bit-mask
+#define IRQ_PRIORITY_ERROR                                                     \
+    (0x80000000UL) ///< Bit indicating priority value error
 
 /// Initialize interrupt controller.
 /// \return 0 on success, -1 on error.

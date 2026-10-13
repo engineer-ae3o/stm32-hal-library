@@ -71,8 +71,10 @@ arm_status arm_avgpool_s16(const cmsis_nn_context*     ctx,
     /* Reference C code adapted from CMSIS-NN arm_avgpool_s8.c.
      */
 
-    for (int i_y = 0, base_idx_y = -pad_y; i_y < output_y; base_idx_y += stride_y, i_y++) {
-        for (int i_x = 0, base_idx_x = -pad_x; i_x < output_x; base_idx_x += stride_x, i_x++) {
+    for (int i_y = 0, base_idx_y = -pad_y; i_y < output_y;
+         base_idx_y += stride_y, i_y++) {
+        for (int i_x = 0, base_idx_x = -pad_x; i_x < output_x;
+             base_idx_x += stride_x, i_x++) {
             /* Condition for kernel start dimension: (base_idx_<x,y> + kernel_<x,y>_start) >= 0 */
             const int32_t ker_y_start = MAX(0, -base_idx_y);
             const int32_t ker_x_start = MAX(0, -base_idx_x);
@@ -88,7 +90,8 @@ arm_status arm_avgpool_s16(const cmsis_nn_context*     ctx,
                 for (int k_y = ker_y_start; k_y < kernel_y_end; k_y++) {
                     for (int k_x = ker_x_start; k_x < kernel_x_end; k_x++) {
                         sum += src[i_ch_in +
-                                   ch_src * (k_x + base_idx_x + (k_y + base_idx_y) * input_x)];
+                                   ch_src * (k_x + base_idx_x +
+                                             (k_y + base_idx_y) * input_x)];
                         count++;
                     }
                 }
@@ -98,7 +101,8 @@ arm_status arm_avgpool_s16(const cmsis_nn_context*     ctx,
                     return ARM_MATH_ARGUMENT_ERROR;
                 }
 
-                sum = sum > 0 ? (sum + count / 2) / count : (sum - count / 2) / count;
+                sum = sum > 0 ? (sum + count / 2) / count
+                              : (sum - count / 2) / count;
                 sum = MAX(sum, act_min);
                 sum = MIN(sum, act_max);
 

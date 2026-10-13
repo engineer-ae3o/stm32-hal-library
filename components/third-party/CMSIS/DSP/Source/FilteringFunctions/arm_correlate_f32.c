@@ -104,8 +104,9 @@ void arm_correlate_f32(const float32_t* pSrcA,
                        const float32_t* pSrcB,
                        uint32_t         srcBLen,
                        float32_t*       pDst) {
-    const float32_t* pIn1 = pSrcA;                  /* inputA pointer               */
-    const float32_t* pIn2 = pSrcB + (srcBLen - 1U); /* inputB pointer               */
+    const float32_t* pIn1 = pSrcA; /* inputA pointer               */
+    const float32_t* pIn2 =
+        pSrcB + (srcBLen - 1U); /* inputB pointer               */
     const float32_t *pX, *pY;
     const float32_t *pA, *pB;
     int32_t          i = 0U, j = 0; /* loop counters */
@@ -204,7 +205,8 @@ void arm_correlate_f32(const float32_t* pSrcA,
          * size is fixed for all accumulators
          * X pointer is incrementing for successive accumulators
          */
-        MVE_INTR_CORR_QUAD_INC_X_FIXED_SIZE_F32(acc0, acc1, acc2, acc3, pX, pY, srcBLen);
+        MVE_INTR_CORR_QUAD_INC_X_FIXED_SIZE_F32(
+            acc0, acc1, acc2, acc3, pX, pY, srcBLen);
 
         *pDst = acc0;
         pDst += incr;
@@ -303,12 +305,13 @@ void arm_correlate_f32(const float32_t* pSrcA,
     uint32_t         blockSize1, blockSize2, blockSize3; /* Loop counters */
     uint32_t         j, k, count, blkCnt;                /* Loop counters */
     uint32_t         outBlockSize;                       /* Loop counter */
-    int32_t          inc = 1;                            /* Destination address modifier */
+    int32_t          inc = 1; /* Destination address modifier */
 
 #if defined(ARM_MATH_LOOPUNROLL) || defined(ARM_MATH_NEON)
     float32_t acc0, acc1, acc2, acc3, c0; /* Accumulators */
 #if !defined(ARM_MATH_NEON)
-    float32_t x0, x1, x2, x3; /* temporary variables for holding input and coefficient values */
+    float32_t x0, x1, x2,
+        x3; /* temporary variables for holding input and coefficient values */
 #endif
 #endif
 

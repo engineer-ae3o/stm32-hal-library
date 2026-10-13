@@ -60,9 +60,9 @@ void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx,
     q15x8_t               cmplxVec;
     q15x8_t               dstVec;
     uint16x8_t            strideVec;
-    uint32_t              blockSizeC = numSamples * CMPLX_DIM; /* loop counters */
-    uint32_t              blkCnt;
-    q15_t                 in;
+    uint32_t blockSizeC = numSamples * CMPLX_DIM; /* loop counters */
+    uint32_t blkCnt;
+    q15_t    in;
 
     /*
   * stride vector for pairs of real generation
@@ -112,7 +112,8 @@ void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx,
     q31_t inA1, inA2;             /* Temporary variables to hold input data */
     q31_t inB1;                   /* Temporary variables to hold input data */
     q15_t out1, out2, out3, out4; /* Temporary variables to hold output data */
-    q31_t mul1, mul2, mul3, mul4; /* Temporary variables to hold intermediate data */
+    q31_t mul1, mul2, mul3,
+        mul4; /* Temporary variables to hold intermediate data */
 #endif
 
     /* Loop unrolling: Compute 4 outputs at a time */

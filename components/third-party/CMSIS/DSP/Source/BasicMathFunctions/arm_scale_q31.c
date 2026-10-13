@@ -55,8 +55,11 @@
 
 #include "arm_helium_utils.h"
 
-void arm_scale_q31(
-    const q31_t* pSrc, q31_t scaleFract, int8_t shift, q31_t* pDst, uint32_t blockSize) {
+void arm_scale_q31(const q31_t* pSrc,
+                   q31_t        scaleFract,
+                   int8_t       shift,
+                   q31_t*       pDst,
+                   uint32_t     blockSize) {
     uint32_t blkCnt; /* loop counters */
     q31x4_t  vecSrc;
     q31x4_t  vecDst;
@@ -96,8 +99,11 @@ void arm_scale_q31(
 }
 
 #else
-void arm_scale_q31(
-    const q31_t* pSrc, q31_t scaleFract, int8_t shift, q31_t* pDst, uint32_t blockSize) {
+void arm_scale_q31(const q31_t* pSrc,
+                   q31_t        scaleFract,
+                   int8_t       shift,
+                   q31_t*       pDst,
+                   uint32_t     blockSize) {
     uint32_t blkCnt;             /* Loop counter */
     q31_t    in, out;            /* Temporary variables */
     int8_t   kShift = shift + 1; /* Shift to apply after scaling */
@@ -113,10 +119,11 @@ void arm_scale_q31(
             /* C = A * scale */
 
             /* Scale input and store result in destination buffer. */
-            in  = *pSrc++;                        /* read input from source */
-            in  = ((q63_t)in * scaleFract) >> 32; /* multiply input with scaler value */
-            out = in << kShift;                   /* apply shifting */
-            if (in != (out >> kShift)) {          /* saturate the result */
+            in  = *pSrc++; /* read input from source */
+            in  = ((q63_t)in * scaleFract) >>
+                  32;                    /* multiply input with scaler value */
+            out = in << kShift;          /* apply shifting */
+            if (in != (out >> kShift)) { /* saturate the result */
                 out = 0x7FFFFFFF ^ (in >> 31);
             }
             *pDst++ = out; /* Store result destination */
@@ -153,10 +160,11 @@ void arm_scale_q31(
             /* C = A * scale */
 
             /* Scale input and store result in destination buffer. */
-            in      = *pSrc++;                        /* read four inputs from source */
-            in      = ((q63_t)in * scaleFract) >> 32; /* multiply input with scaler value */
-            out     = in >> -kShift;                  /* apply shifting */
-            *pDst++ = out;                            /* Store result destination */
+            in      = *pSrc++; /* read four inputs from source */
+            in      = ((q63_t)in * scaleFract) >>
+                      32;            /* multiply input with scaler value */
+            out     = in >> -kShift; /* apply shifting */
+            *pDst++ = out;           /* Store result destination */
 
             in      = *pSrc++;
             in      = ((q63_t)in * scaleFract) >> 32;

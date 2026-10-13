@@ -57,13 +57,14 @@ void arm_iir_lattice_q31(const arm_iir_lattice_instance_q31* S,
                          const q31_t*                        pSrc,
                          q31_t*                              pDst,
                          uint32_t                            blockSize) {
-    q31_t*   pState = S->pState;                 /* State pointer */
-    q31_t*   pStateCur;                          /* State current pointer */
-    q31_t    fcurr, fnext = 0, gcurr = 0, gnext; /* Temporary variables for lattice stages */
-    q63_t    acc;                                /* Accumlator */
-    q31_t *  px1, *px2, *pk, *pv;                /* Temporary pointers for state and coef */
-    uint32_t numStages = S->numStages;           /* Number of stages */
-    uint32_t blkCnt, tapCnt;                     /* Temporary variables for counts */
+    q31_t*   pState = S->pState; /* State pointer */
+    q31_t*   pStateCur;          /* State current pointer */
+    q31_t    fcurr, fnext = 0, gcurr = 0,
+                    gnext;        /* Temporary variables for lattice stages */
+    q63_t    acc;                 /* Accumlator */
+    q31_t *  px1, *px2, *pk, *pv; /* Temporary pointers for state and coef */
+    uint32_t numStages = S->numStages; /* Number of stages */
+    uint32_t blkCnt, tapCnt;           /* Temporary variables for counts */
 
 
     /* initialise loop count */
@@ -287,10 +288,12 @@ void arm_iir_lattice_q31(const arm_iir_lattice_instance_q31* S,
             gcurr = *px1++;
             /* Process sample */
             /* fN-1(n) = fN(n) - kN * gN-1(n-1) */
-            fnext = clip_q63_to_q31(((q63_t)fcurr - ((q31_t)(((q63_t)gcurr * (*pk)) >> 31))));
+            fnext = clip_q63_to_q31(
+                ((q63_t)fcurr - ((q31_t)(((q63_t)gcurr * (*pk)) >> 31))));
 
             /* gN(n) = kN * fN-1(n) + gN-1(n-1) */
-            gnext = clip_q63_to_q31(((q63_t)gcurr + ((q31_t)(((q63_t)fnext * (*pk++)) >> 31))));
+            gnext = clip_q63_to_q31(
+                ((q63_t)gcurr + ((q31_t)(((q63_t)fnext * (*pk++)) >> 31))));
 
             /* Output samples */
             /* y(n) += gN(n) * vN */

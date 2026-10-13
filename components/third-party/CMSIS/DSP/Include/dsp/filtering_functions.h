@@ -55,7 +55,8 @@ typedef struct {
     uint16_t numTaps; /**< number of filter coefficients in the filter. */
     q7_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
-    const q7_t* pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
+    const q7_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
 } arm_fir_instance_q7;
 
 /**
@@ -65,7 +66,8 @@ typedef struct {
     uint16_t numTaps; /**< number of filter coefficients in the filter. */
     q15_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
-    const q15_t* pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
+    const q15_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
 } arm_fir_instance_q15;
 
 /**
@@ -75,7 +77,8 @@ typedef struct {
     uint16_t numTaps; /**< number of filter coefficients in the filter. */
     q31_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
-    const q31_t* pCoeffs; /**< points to the coefficient array. The array is of length numTaps. */
+    const q31_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps. */
 } arm_fir_instance_q31;
 
 /**
@@ -107,7 +110,10 @@ typedef struct {
    * @param[out] pDst       points to the block of output data.
    * @param[in]  blockSize  number of samples to process.
    */
-void arm_fir_q7(const arm_fir_instance_q7* S, const q7_t* pSrc, q7_t* pDst, uint32_t blockSize);
+void arm_fir_q7(const arm_fir_instance_q7* S,
+                const q7_t*                pSrc,
+                q7_t*                      pDst,
+                uint32_t                   blockSize);
 
 /**
    * @brief  Initialization function for the Q7 FIR filter.
@@ -133,7 +139,10 @@ void arm_fir_init_q7(arm_fir_instance_q7* S,
    * @param[out] pDst       points to the block of output data.
    * @param[in]  blockSize  number of samples to process.
    */
-void arm_fir_q15(const arm_fir_instance_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize);
+void arm_fir_q15(const arm_fir_instance_q15* S,
+                 const q15_t*                pSrc,
+                 q15_t*                      pDst,
+                 uint32_t                    blockSize);
 
 /**
    * @brief Processing function for the fast Q15 FIR filter (fast version).
@@ -175,7 +184,10 @@ arm_status arm_fir_init_q15(arm_fir_instance_q15* S,
    * @param[out] pDst       points to the block of output data.
    * @param[in]  blockSize  number of samples to process.
    */
-void arm_fir_q31(const arm_fir_instance_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize);
+void arm_fir_q31(const arm_fir_instance_q31* S,
+                 const q31_t*                pSrc,
+                 q31_t*                      pDst,
+                 uint32_t                    blockSize);
 
 /**
    * @brief Processing function for the fast Q31 FIR filter (fast version).
@@ -268,7 +280,8 @@ typedef struct {
         pState; /**< Points to the array of state coefficients.  The array is of length 4*numStages. */
     const q15_t*
         pCoeffs; /**< Points to the array of coefficients.  The array is of length 5*numStages. */
-    int8_t postShift; /**< Additional shift, in bits, applied to each output sample. */
+    int8_t
+        postShift; /**< Additional shift, in bits, applied to each output sample. */
 } arm_biquad_casd_df1_inst_q15;
 
 /**
@@ -281,7 +294,8 @@ typedef struct {
         pState; /**< Points to the array of state coefficients.  The array is of length 4*numStages. */
     const q31_t*
         pCoeffs; /**< Points to the array of coefficients.  The array is of length 5*numStages. */
-    uint8_t postShift; /**< Additional shift, in bits, applied to each output sample. */
+    uint8_t
+        postShift; /**< Additional shift, in bits, applied to each output sample. */
 } arm_biquad_casd_df1_inst_q31;
 
 /**
@@ -343,7 +357,7 @@ void arm_biquad_cascade_df1_init_q15(arm_biquad_casd_df1_inst_q15* S,
 void arm_biquad_cascade_df1_fast_q15(const arm_biquad_casd_df1_inst_q15* S,
                                      const q15_t*                        pSrc,
                                      q15_t*                              pDst,
-                                     uint32_t                            blockSize);
+                                     uint32_t blockSize);
 
 /**
    * @brief Processing function for the Q31 Biquad cascade filter
@@ -367,7 +381,7 @@ void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S,
 void arm_biquad_cascade_df1_fast_q31(const arm_biquad_casd_df1_inst_q31* S,
                                      const q31_t*                        pSrc,
                                      q31_t*                              pDst,
-                                     uint32_t                            blockSize);
+                                     uint32_t blockSize);
 
 /**
    * @brief  Initialization function for the Q31 Biquad cascade filter.
@@ -405,10 +419,10 @@ void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S,
    */
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 void arm_biquad_cascade_df1_mve_init_f32(arm_biquad_casd_df1_inst_f32* S,
-                                         uint8_t                       numStages,
-                                         const float32_t*              pCoeffs,
-                                         arm_biquad_mod_coef_f32*      pCoeffsMod,
-                                         float32_t*                    pState);
+                                         uint8_t                  numStages,
+                                         const float32_t*         pCoeffs,
+                                         arm_biquad_mod_coef_f32* pCoeffsMod,
+                                         float32_t*               pState);
 #endif
 
 void arm_biquad_cascade_df1_init_f32(arm_biquad_casd_df1_inst_f32* S,
@@ -459,8 +473,11 @@ void arm_conv_opt_q15(const q15_t* pSrcA,
  * @param[in]  srcBLen  length of the second input sequence.
  * @param[out] pDst     points to the location where the output result is written.  Length srcALen+srcBLen-1.
  */
-void arm_conv_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst);
+void arm_conv_q15(const q15_t* pSrcA,
+                  uint32_t     srcALen,
+                  const q15_t* pSrcB,
+                  uint32_t     srcBLen,
+                  q15_t*       pDst);
 
 
 /**
@@ -471,8 +488,11 @@ void arm_conv_q15(
    * @param[in]  srcBLen  length of the second input sequence.
    * @param[out] pDst     points to the block of output data  Length srcALen+srcBLen-1.
    */
-void arm_conv_fast_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst);
+void arm_conv_fast_q15(const q15_t* pSrcA,
+                       uint32_t     srcALen,
+                       const q15_t* pSrcB,
+                       uint32_t     srcBLen,
+                       q15_t*       pDst);
 
 
 /**
@@ -502,8 +522,11 @@ void arm_conv_fast_opt_q15(const q15_t* pSrcA,
    * @param[in]  srcBLen  length of the second input sequence.
    * @param[out] pDst     points to the block of output data  Length srcALen+srcBLen-1.
    */
-void arm_conv_q31(
-    const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst);
+void arm_conv_q31(const q31_t* pSrcA,
+                  uint32_t     srcALen,
+                  const q31_t* pSrcB,
+                  uint32_t     srcBLen,
+                  q31_t*       pDst);
 
 
 /**
@@ -514,8 +537,11 @@ void arm_conv_q31(
    * @param[in]  srcBLen  length of the second input sequence.
    * @param[out] pDst     points to the block of output data  Length srcALen+srcBLen-1.
    */
-void arm_conv_fast_q31(
-    const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst);
+void arm_conv_fast_q31(const q31_t* pSrcA,
+                       uint32_t     srcALen,
+                       const q31_t* pSrcB,
+                       uint32_t     srcBLen,
+                       q31_t*       pDst);
 
 
 /**
@@ -545,8 +571,11 @@ void arm_conv_opt_q7(const q7_t* pSrcA,
    * @param[in]  srcBLen  length of the second input sequence.
    * @param[out] pDst     points to the block of output data  Length srcALen+srcBLen-1.
    */
-void arm_conv_q7(
-    const q7_t* pSrcA, uint32_t srcALen, const q7_t* pSrcB, uint32_t srcBLen, q7_t* pDst);
+void arm_conv_q7(const q7_t* pSrcA,
+                 uint32_t    srcALen,
+                 const q7_t* pSrcB,
+                 uint32_t    srcBLen,
+                 q7_t*       pDst);
 
 
 /**
@@ -745,9 +774,10 @@ arm_status arm_conv_partial_q7(const q7_t* pSrcA,
    * @brief Instance structure for the Q15 FIR decimator.
    */
 typedef struct {
-    uint8_t      M;       /**< decimation factor. */
-    uint16_t     numTaps; /**< number of coefficients in the filter. */
-    const q15_t* pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
+    uint8_t  M;       /**< decimation factor. */
+    uint16_t numTaps; /**< number of coefficients in the filter. */
+    const q15_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
     q15_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
 } arm_fir_decimate_instance_q15;
@@ -756,9 +786,10 @@ typedef struct {
    * @brief Instance structure for the Q31 FIR decimator.
    */
 typedef struct {
-    uint8_t      M;       /**< decimation factor. */
-    uint16_t     numTaps; /**< number of coefficients in the filter. */
-    const q31_t* pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
+    uint8_t  M;       /**< decimation factor. */
+    uint16_t numTaps; /**< number of coefficients in the filter. */
+    const q31_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
     q31_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
 } arm_fir_decimate_instance_q31;
@@ -961,10 +992,10 @@ void arm_fir_interpolate_q15(const arm_fir_interpolate_instance_q15* S,
    */
 arm_status arm_fir_interpolate_init_q15(arm_fir_interpolate_instance_q15* S,
                                         uint8_t                           L,
-                                        uint16_t                          numTaps,
-                                        const q15_t*                      pCoeffs,
-                                        q15_t*                            pState,
-                                        uint32_t                          blockSize);
+                                        uint16_t     numTaps,
+                                        const q15_t* pCoeffs,
+                                        q15_t*       pState,
+                                        uint32_t     blockSize);
 
 
 /**
@@ -993,10 +1024,10 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
    */
 arm_status arm_fir_interpolate_init_q31(arm_fir_interpolate_instance_q31* S,
                                         uint8_t                           L,
-                                        uint16_t                          numTaps,
-                                        const q31_t*                      pCoeffs,
-                                        q31_t*                            pState,
-                                        uint32_t                          blockSize);
+                                        uint16_t     numTaps,
+                                        const q31_t* pCoeffs,
+                                        q31_t*       pState,
+                                        uint32_t     blockSize);
 
 
 /**
@@ -1025,10 +1056,10 @@ void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
    */
 arm_status arm_fir_interpolate_init_f32(arm_fir_interpolate_instance_f32* S,
                                         uint8_t                           L,
-                                        uint16_t                          numTaps,
-                                        const float32_t*                  pCoeffs,
-                                        float32_t*                        pState,
-                                        uint32_t                          blockSize);
+                                        uint16_t         numTaps,
+                                        const float32_t* pCoeffs,
+                                        float32_t*       pState,
+                                        uint32_t         blockSize);
 
 
 /**
@@ -1041,7 +1072,8 @@ typedef struct {
         pState; /**< points to the array of state coefficients.  The array is of length 4*numStages. */
     const q31_t*
         pCoeffs; /**< points to the array of coefficients.  The array is of length 5*numStages. */
-    uint8_t postShift; /**< additional shift, in bits, applied to each output sample. */
+    uint8_t
+        postShift; /**< additional shift, in bits, applied to each output sample. */
 } arm_biquad_cas_df1_32x64_ins_q31;
 
 
@@ -1054,7 +1086,7 @@ typedef struct {
 void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S,
                                   const q31_t*                            pSrc,
                                   q31_t*                                  pDst,
-                                  uint32_t                                blockSize);
+                                  uint32_t blockSize);
 
 
 /**
@@ -1065,10 +1097,10 @@ void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S,
    * @param[in]     postShift  shift to be applied to the output. Varies according to the coefficients format
    */
 void arm_biquad_cas_df1_32x64_init_q31(arm_biquad_cas_df1_32x64_ins_q31* S,
-                                       uint8_t                           numStages,
-                                       const q31_t*                      pCoeffs,
-                                       q63_t*                            pState,
-                                       uint8_t                           postShift);
+                                       uint8_t      numStages,
+                                       const q31_t* pCoeffs,
+                                       q63_t*       pState,
+                                       uint8_t      postShift);
 
 
 /**
@@ -1116,9 +1148,9 @@ typedef struct {
    * @param[in]  blockSize  number of samples to process.
    */
 void arm_biquad_cascade_df2T_f32(const arm_biquad_cascade_df2T_instance_f32* S,
-                                 const float32_t*                            pSrc,
-                                 float32_t*                                  pDst,
-                                 uint32_t                                    blockSize);
+                                 const float32_t* pSrc,
+                                 float32_t*       pDst,
+                                 uint32_t         blockSize);
 
 
 /**
@@ -1128,10 +1160,11 @@ void arm_biquad_cascade_df2T_f32(const arm_biquad_cascade_df2T_instance_f32* S,
    * @param[out] pDst       points to the block of output data
    * @param[in]  blockSize  number of samples to process.
    */
-void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_instance_f32* S,
-                                        const float32_t*                                   pSrc,
-                                        float32_t*                                         pDst,
-                                        uint32_t blockSize);
+void arm_biquad_cascade_stereo_df2T_f32(
+    const arm_biquad_cascade_stereo_df2T_instance_f32* S,
+    const float32_t*                                   pSrc,
+    float32_t*                                         pDst,
+    uint32_t                                           blockSize);
 
 
 /**
@@ -1142,9 +1175,9 @@ void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_ins
    * @param[in]  blockSize  number of samples to process.
    */
 void arm_biquad_cascade_df2T_f64(const arm_biquad_cascade_df2T_instance_f64* S,
-                                 const float64_t*                            pSrc,
-                                 float64_t*                                  pDst,
-                                 uint32_t                                    blockSize);
+                                 const float64_t* pSrc,
+                                 float64_t*       pDst,
+                                 uint32_t         blockSize);
 
 
 #if defined(ARM_MATH_NEON)
@@ -1157,7 +1190,7 @@ void arm_biquad_cascade_df2T_f64(const arm_biquad_cascade_df2T_instance_f64* S,
 */
 void arm_biquad_cascade_df2T_compute_coefs_f32(uint8_t          numStages,
                                                const float32_t* pCoeffs,
-                                               float32_t*       pComputedCoeffs);
+                                               float32_t* pComputedCoeffs);
 #endif
 /**
    * @brief  Initialization function for the floating-point transposed direct form II Biquad cascade filter.
@@ -1167,9 +1200,9 @@ void arm_biquad_cascade_df2T_compute_coefs_f32(uint8_t          numStages,
    * @param[in]     pState     points to the state buffer.
    */
 void arm_biquad_cascade_df2T_init_f32(arm_biquad_cascade_df2T_instance_f32* S,
-                                      uint8_t                               numStages,
-                                      const float32_t*                      pCoeffs,
-                                      float32_t*                            pState);
+                                      uint8_t          numStages,
+                                      const float32_t* pCoeffs,
+                                      float32_t*       pState);
 
 
 /**
@@ -1179,10 +1212,11 @@ void arm_biquad_cascade_df2T_init_f32(arm_biquad_cascade_df2T_instance_f32* S,
    * @param[in]     pCoeffs    points to the filter coefficients.
    * @param[in]     pState     points to the state buffer.
    */
-void arm_biquad_cascade_stereo_df2T_init_f32(arm_biquad_cascade_stereo_df2T_instance_f32* S,
-                                             uint8_t                                      numStages,
-                                             const float32_t*                             pCoeffs,
-                                             float32_t*                                   pState);
+void arm_biquad_cascade_stereo_df2T_init_f32(
+    arm_biquad_cascade_stereo_df2T_instance_f32* S,
+    uint8_t                                      numStages,
+    const float32_t*                             pCoeffs,
+    float32_t*                                   pState);
 
 
 /**
@@ -1193,9 +1227,9 @@ void arm_biquad_cascade_stereo_df2T_init_f32(arm_biquad_cascade_stereo_df2T_inst
    * @param[in]     pState     points to the state buffer.
    */
 void arm_biquad_cascade_df2T_init_f64(arm_biquad_cascade_df2T_instance_f64* S,
-                                      uint8_t                               numStages,
-                                      const float64_t*                      pCoeffs,
-                                      float64_t*                            pState);
+                                      uint8_t          numStages,
+                                      const float64_t* pCoeffs,
+                                      float64_t*       pState);
 
 
 /**
@@ -1203,8 +1237,10 @@ void arm_biquad_cascade_df2T_init_f64(arm_biquad_cascade_df2T_instance_f64* S,
    */
 typedef struct {
     uint16_t numStages; /**< number of filter stages. */
-    q15_t*   pState; /**< points to the state variable array. The array is of length numStages. */
-    const q15_t* pCoeffs; /**< points to the coefficient array. The array is of length numStages. */
+    q15_t*
+        pState; /**< points to the state variable array. The array is of length numStages. */
+    const q15_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numStages. */
 } arm_fir_lattice_instance_q15;
 
 /**
@@ -1212,16 +1248,19 @@ typedef struct {
    */
 typedef struct {
     uint16_t numStages; /**< number of filter stages. */
-    q31_t*   pState; /**< points to the state variable array. The array is of length numStages. */
-    const q31_t* pCoeffs; /**< points to the coefficient array. The array is of length numStages. */
+    q31_t*
+        pState; /**< points to the state variable array. The array is of length numStages. */
+    const q31_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numStages. */
 } arm_fir_lattice_instance_q31;
 
 /**
    * @brief Instance structure for the floating-point FIR lattice filter.
    */
 typedef struct {
-    uint16_t   numStages; /**< number of filter stages. */
-    float32_t* pState; /**< points to the state variable array. The array is of length numStages. */
+    uint16_t numStages; /**< number of filter stages. */
+    float32_t*
+        pState; /**< points to the state variable array. The array is of length numStages. */
     const float32_t*
         pCoeffs; /**< points to the coefficient array. The array is of length numStages. */
 } arm_fir_lattice_instance_f32;
@@ -1442,8 +1481,9 @@ typedef struct {
     uint16_t numTaps; /**< number of coefficients in the filter. */
     float32_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
-    float32_t* pCoeffs; /**< points to the coefficient array. The array is of length numTaps. */
-    float32_t  mu;      /**< step size that controls filter coefficient updates. */
+    float32_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps. */
+    float32_t mu; /**< step size that controls filter coefficient updates. */
 } arm_lms_instance_f32;
 
 
@@ -1488,8 +1528,9 @@ typedef struct {
     uint16_t numTaps; /**< number of coefficients in the filter. */
     q15_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
-    q15_t*   pCoeffs;   /**< points to the coefficient array. The array is of length numTaps. */
-    q15_t    mu;        /**< step size that controls filter coefficient updates. */
+    q15_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps. */
+    q15_t    mu; /**< step size that controls filter coefficient updates. */
     uint32_t postShift; /**< bit shift applied to coefficients. */
 } arm_lms_instance_q15;
 
@@ -1537,8 +1578,9 @@ typedef struct {
     uint16_t numTaps; /**< number of coefficients in the filter. */
     q31_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
-    q31_t*   pCoeffs;   /**< points to the coefficient array. The array is of length numTaps. */
-    q31_t    mu;        /**< step size that controls filter coefficient updates. */
+    q31_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps. */
+    q31_t    mu; /**< step size that controls filter coefficient updates. */
     uint32_t postShift; /**< bit shift applied to coefficients. */
 } arm_lms_instance_q31;
 
@@ -1586,10 +1628,11 @@ typedef struct {
     uint16_t numTaps; /**< number of coefficients in the filter. */
     float32_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
-    float32_t* pCoeffs; /**< points to the coefficient array. The array is of length numTaps. */
-    float32_t  mu;      /**< step size that control filter coefficient updates. */
-    float32_t  energy;  /**< saves previous frame energy. */
-    float32_t  x0;      /**< saves previous input sample. */
+    float32_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps. */
+    float32_t mu;     /**< step size that control filter coefficient updates. */
+    float32_t energy; /**< saves previous frame energy. */
+    float32_t x0;     /**< saves previous input sample. */
 } arm_lms_norm_instance_f32;
 
 
@@ -1634,12 +1677,14 @@ typedef struct {
     uint16_t numTaps; /**< number of coefficients in the filter. */
     q31_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
-    q31_t*       pCoeffs;   /**< points to the coefficient array. The array is of length numTaps. */
-    q31_t        mu;        /**< step size that controls filter coefficient updates. */
-    uint8_t      postShift; /**< bit shift applied to coefficients. */
-    const q31_t* recipTable; /**< points to the reciprocal initial value table. */
-    q31_t        energy;     /**< saves previous frame energy. */
-    q31_t        x0;         /**< saves previous input sample. */
+    q31_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps. */
+    q31_t   mu; /**< step size that controls filter coefficient updates. */
+    uint8_t postShift; /**< bit shift applied to coefficients. */
+    const q31_t*
+          recipTable; /**< points to the reciprocal initial value table. */
+    q31_t energy;     /**< saves previous frame energy. */
+    q31_t x0;         /**< saves previous input sample. */
 } arm_lms_norm_instance_q31;
 
 
@@ -1686,12 +1731,14 @@ typedef struct {
     uint16_t numTaps; /**< Number of coefficients in the filter. */
     q15_t*
         pState; /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
-    q15_t*       pCoeffs;   /**< points to the coefficient array. The array is of length numTaps. */
-    q15_t        mu;        /**< step size that controls filter coefficient updates. */
-    uint8_t      postShift; /**< bit shift applied to coefficients. */
-    const q15_t* recipTable; /**< Points to the reciprocal initial value table. */
-    q15_t        energy;     /**< saves previous frame energy. */
-    q15_t        x0;         /**< saves previous input sample. */
+    q15_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps. */
+    q15_t   mu; /**< step size that controls filter coefficient updates. */
+    uint8_t postShift; /**< bit shift applied to coefficients. */
+    const q15_t*
+          recipTable; /**< Points to the reciprocal initial value table. */
+    q15_t energy;     /**< saves previous frame energy. */
+    q15_t x0;         /**< saves previous input sample. */
 } arm_lms_norm_instance_q15;
 
 
@@ -1786,8 +1833,11 @@ void arm_correlate_opt_q15(const q15_t* pSrcA,
   @param[in]  srcBLen  length of the second input sequence
   @param[out] pDst     points to the block of output data  Length 2 * max(srcALen, srcBLen) - 1.
  */
-void arm_correlate_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst);
+void arm_correlate_q15(const q15_t* pSrcA,
+                       uint32_t     srcALen,
+                       const q15_t* pSrcB,
+                       uint32_t     srcBLen,
+                       q15_t*       pDst);
 
 
 /**
@@ -1799,8 +1849,11 @@ void arm_correlate_q15(
   @param[out]    pDst       points to the location where the output result is written.  Length 2 * max(srcALen, srcBLen) - 1.
   @return        none
  */
-void arm_correlate_fast_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst);
+void arm_correlate_fast_q15(const q15_t* pSrcA,
+                            uint32_t     srcALen,
+                            const q15_t* pSrcB,
+                            uint32_t     srcBLen,
+                            q15_t*       pDst);
 
 
 /**
@@ -1828,8 +1881,11 @@ void arm_correlate_fast_opt_q15(const q15_t* pSrcA,
    * @param[in]  srcBLen  length of the second input sequence.
    * @param[out] pDst     points to the block of output data  Length 2 * max(srcALen, srcBLen) - 1.
    */
-void arm_correlate_q31(
-    const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst);
+void arm_correlate_q31(const q31_t* pSrcA,
+                       uint32_t     srcALen,
+                       const q31_t* pSrcB,
+                       uint32_t     srcBLen,
+                       q31_t*       pDst);
 
 
 /**
@@ -1840,8 +1896,11 @@ void arm_correlate_q31(
   @param[in]  srcBLen  length of the second input sequence
   @param[out] pDst     points to the block of output data  Length 2 * max(srcALen, srcBLen) - 1.
  */
-void arm_correlate_fast_q31(
-    const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst);
+void arm_correlate_fast_q31(const q31_t* pSrcA,
+                            uint32_t     srcALen,
+                            const q31_t* pSrcB,
+                            uint32_t     srcBLen,
+                            q31_t*       pDst);
 
 
 /**
@@ -1871,8 +1930,11 @@ void arm_correlate_opt_q7(const q7_t* pSrcA,
    * @param[in]  srcBLen  length of the second input sequence.
    * @param[out] pDst     points to the block of output data  Length 2 * max(srcALen, srcBLen) - 1.
    */
-void arm_correlate_q7(
-    const q7_t* pSrcA, uint32_t srcALen, const q7_t* pSrcB, uint32_t srcBLen, q7_t* pDst);
+void arm_correlate_q7(const q7_t* pSrcA,
+                      uint32_t    srcALen,
+                      const q7_t* pSrcB,
+                      uint32_t    srcBLen,
+                      q7_t*       pDst);
 
 
 /**
@@ -1885,7 +1947,7 @@ typedef struct {
     float32_t*
         pState; /**< points to the state buffer array. The array is of length maxDelay+blockSize-1. */
     const float32_t*
-             pCoeffs;  /**< points to the coefficient array. The array is of length numTaps.*/
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
     uint16_t maxDelay; /**< maximum offset specified by the pTapDelay array. */
     int32_t*
         pTapDelay; /**< points to the array of delay values.  The array is of length numTaps. */
@@ -1900,8 +1962,9 @@ typedef struct {
         stateIndex; /**< state buffer index.  Points to the oldest sample in the state buffer. */
     q31_t*
         pState; /**< points to the state buffer array. The array is of length maxDelay+blockSize-1. */
-    const q31_t* pCoeffs;  /**< points to the coefficient array. The array is of length numTaps.*/
-    uint16_t     maxDelay; /**< maximum offset specified by the pTapDelay array. */
+    const q31_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
+    uint16_t maxDelay; /**< maximum offset specified by the pTapDelay array. */
     int32_t*
         pTapDelay; /**< points to the array of delay values.  The array is of length numTaps. */
 } arm_fir_sparse_instance_q31;
@@ -1915,8 +1978,9 @@ typedef struct {
         stateIndex; /**< state buffer index.  Points to the oldest sample in the state buffer. */
     q15_t*
         pState; /**< points to the state buffer array. The array is of length maxDelay+blockSize-1. */
-    const q15_t* pCoeffs;  /**< points to the coefficient array. The array is of length numTaps.*/
-    uint16_t     maxDelay; /**< maximum offset specified by the pTapDelay array. */
+    const q15_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
+    uint16_t maxDelay; /**< maximum offset specified by the pTapDelay array. */
     int32_t*
         pTapDelay; /**< points to the array of delay values.  The array is of length numTaps. */
 } arm_fir_sparse_instance_q15;
@@ -1930,8 +1994,9 @@ typedef struct {
         stateIndex; /**< state buffer index.  Points to the oldest sample in the state buffer. */
     q7_t*
         pState; /**< points to the state buffer array. The array is of length maxDelay+blockSize-1. */
-    const q7_t* pCoeffs;  /**< points to the coefficient array. The array is of length numTaps.*/
-    uint16_t    maxDelay; /**< maximum offset specified by the pTapDelay array. */
+    const q7_t*
+        pCoeffs; /**< points to the coefficient array. The array is of length numTaps.*/
+    uint16_t maxDelay; /**< maximum offset specified by the pTapDelay array. */
     int32_t*
         pTapDelay; /**< points to the array of delay values.  The array is of length numTaps. */
 } arm_fir_sparse_instance_q7;
@@ -2366,7 +2431,10 @@ __STATIC_FORCEINLINE void arm_circularRead_q7(q7_t*    circBuffer,
   @param[in]     nbCoefs  number of autoregressive coefficients
   @return        none
  */
-void arm_levinson_durbin_f32(const float32_t* phi, float32_t* a, float32_t* err, int nbCoefs);
+void arm_levinson_durbin_f32(const float32_t* phi,
+                             float32_t*       a,
+                             float32_t*       err,
+                             int              nbCoefs);
 
 
 /**
@@ -2377,7 +2445,10 @@ void arm_levinson_durbin_f32(const float32_t* phi, float32_t* a, float32_t* err,
   @param[in]     nbCoefs  number of autoregressive coefficients
   @return        none
  */
-void arm_levinson_durbin_q31(const q31_t* phi, q31_t* a, q31_t* err, int nbCoefs);
+void arm_levinson_durbin_q31(const q31_t* phi,
+                             q31_t*       a,
+                             q31_t*       err,
+                             int          nbCoefs);
 
 #ifdef __cplusplus
 }

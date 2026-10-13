@@ -239,8 +239,9 @@ q7_t arm_linear_interp_q7(const q7_t* pYData, q31_t x, uint32_t nValues);
   * @param[in]     Y  interpolation coordinate.
   * @return out interpolated value.
   */
-float32_t
-arm_bilinear_interp_f32(const arm_bilinear_interp_instance_f32* S, float32_t X, float32_t Y);
+float32_t arm_bilinear_interp_f32(const arm_bilinear_interp_instance_f32* S,
+                                  float32_t                               X,
+                                  float32_t                               Y);
 
 /**
   * @brief  Q31 bilinear interpolation.
@@ -249,7 +250,9 @@ arm_bilinear_interp_f32(const arm_bilinear_interp_instance_f32* S, float32_t X, 
   * @param[in]     Y  interpolation coordinate in 12.20 format.
   * @return out interpolated value.
   */
-q31_t arm_bilinear_interp_q31(arm_bilinear_interp_instance_q31* S, q31_t X, q31_t Y);
+q31_t arm_bilinear_interp_q31(arm_bilinear_interp_instance_q31* S,
+                              q31_t                             X,
+                              q31_t                             Y);
 
 
 /**
@@ -259,7 +262,9 @@ q31_t arm_bilinear_interp_q31(arm_bilinear_interp_instance_q31* S, q31_t X, q31_
   * @param[in]     Y  interpolation coordinate in 12.20 format.
   * @return out interpolated value.
   */
-q15_t arm_bilinear_interp_q15(arm_bilinear_interp_instance_q15* S, q31_t X, q31_t Y);
+q15_t arm_bilinear_interp_q15(arm_bilinear_interp_instance_q15* S,
+                              q31_t                             X,
+                              q31_t                             Y);
 
 /**
   * @brief  Q7 bilinear interpolation.
@@ -268,7 +273,9 @@ q15_t arm_bilinear_interp_q15(arm_bilinear_interp_instance_q15* S, q31_t X, q31_
   * @param[in]     Y  interpolation coordinate in 12.20 format.
   * @return out interpolated value.
   */
-q7_t arm_bilinear_interp_q7(arm_bilinear_interp_instance_q7* S, q31_t X, q31_t Y);
+q7_t arm_bilinear_interp_q7(arm_bilinear_interp_instance_q7* S,
+                            q31_t                            X,
+                            q31_t                            Y);
 /**
    * @} end of BilinearInterpolate group
    */

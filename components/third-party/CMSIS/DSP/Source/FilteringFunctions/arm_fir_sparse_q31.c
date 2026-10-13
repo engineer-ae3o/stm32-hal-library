@@ -63,22 +63,29 @@ void arm_fir_sparse_q31(arm_fir_sparse_instance_q31* S,
     const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     q31_t*       px;                   /* Scratch buffer pointer */
     q31_t*       py = pState;          /* Temporary pointers for state buffer */
-    q31_t*       pb = pScratchIn;      /* Temporary pointers for scratch buffer */
-    q31_t*       pOut;                 /* Destination pointer */
+    q31_t*       pb = pScratchIn; /* Temporary pointers for scratch buffer */
+    q31_t*       pOut;            /* Destination pointer */
     int32_t*     pTapDelay =
         S->pTapDelay; /* Pointer to the array containing offset of the non-zero tap values. */
     uint32_t delaySize = S->maxDelay + blockSize; /* state length */
-    uint16_t numTaps   = S->numTaps;              /* Number of filter coefficients in the filter  */
-    int32_t  readIndex;                           /* Read index of the state buffer */
-    uint32_t tapCnt, blkCnt;                      /* loop counters */
-    q31_t    coeff = *pCoeffs++;                  /* Read the first coefficient value */
+    uint16_t numTaps =
+        S->numTaps;          /* Number of filter coefficients in the filter  */
+    int32_t  readIndex;      /* Read index of the state buffer */
+    uint32_t tapCnt, blkCnt; /* loop counters */
+    q31_t    coeff = *pCoeffs++; /* Read the first coefficient value */
     q31_t    in;
     q63_t    out; /* Temporary output variable */
 
 
     /* BlockSize of Input samples are copied into the state buffer */
     /* StateIndex points to the starting position to write in the state buffer */
-    arm_circularWrite_f32((int32_t*)py, delaySize, &S->stateIndex, 1, (int32_t*)pSrc, 1, blockSize);
+    arm_circularWrite_f32((int32_t*)py,
+                          delaySize,
+                          &S->stateIndex,
+                          1,
+                          (int32_t*)pSrc,
+                          1,
+                          blockSize);
 
     /* Read Index, from where the state buffer should be read, is calculated. */
     readIndex = (int32_t)(S->stateIndex - blockSize) - *pTapDelay++;

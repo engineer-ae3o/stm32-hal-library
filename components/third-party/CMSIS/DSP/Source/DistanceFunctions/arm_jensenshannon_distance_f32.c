@@ -50,8 +50,9 @@ __STATIC_INLINE float32_t rel_entr(float32_t x, float32_t y) {
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-float32_t
-arm_jensenshannon_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_jensenshannon_distance_f32(const float32_t* pA,
+                                         const float32_t* pB,
+                                         uint32_t         blockSize) {
     uint32_t  blkCnt;
     float32_t tmp;
     f32x4_t   a, b, t, tmpV, accumV;
@@ -134,8 +135,9 @@ arm_jensenshannon_distance_f32(const float32_t* pA, const float32_t* pB, uint32_
  */
 
 
-float32_t
-arm_jensenshannon_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_jensenshannon_distance_f32(const float32_t* pA,
+                                         const float32_t* pB,
+                                         uint32_t         blockSize) {
     float32_t   accum, result, tmp, a, b;
     uint32_t    blkCnt;
     float32x4_t aV, bV, t, tmpV, accumV;
@@ -213,8 +215,9 @@ arm_jensenshannon_distance_f32(const float32_t* pA, const float32_t* pB, uint32_
  */
 
 
-float32_t
-arm_jensenshannon_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_jensenshannon_distance_f32(const float32_t* pA,
+                                         const float32_t* pB,
+                                         uint32_t         blockSize) {
     float32_t left, right, sum, result, tmp;
     uint32_t  i;
 

@@ -102,7 +102,9 @@ void arm_quaternion_normalize_f32(const float32_t* inputQuaternions,
   @param[out]    r        Product of two quaternions
   @return        none
  */
-void arm_quaternion_product_single_f32(const float32_t* qa, const float32_t* qb, float32_t* r);
+void arm_quaternion_product_single_f32(const float32_t* qa,
+                                       const float32_t* qb,
+                                       float32_t*       r);
 
 /**
   @brief         Floating-point elementwise product two quaternions.

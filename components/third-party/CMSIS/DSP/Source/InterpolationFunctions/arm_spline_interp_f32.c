@@ -216,7 +216,8 @@ void arm_spline_f32(arm_spline_instance_f32* S,
         while (*pXq <= x[i + 1] && blkCnt > 0) {
             x_sc = *pXq++;
 
-            *pDst = y[i] + b[i] * (x_sc - x[i]) + c[i] * (x_sc - x[i]) * (x_sc - x[i]) +
+            *pDst = y[i] + b[i] * (x_sc - x[i]) +
+                    c[i] * (x_sc - x[i]) * (x_sc - x[i]) +
                     d[i] * (x_sc - x[i]) * (x_sc - x[i]) * (x_sc - x[i]);
 
             pDst++;
@@ -267,7 +268,8 @@ void arm_spline_f32(arm_spline_instance_f32* S,
 
         *pDst = y[i - 1] + b[i - 1] * (x_sc - x[i - 1]) +
                 c[i - 1] * (x_sc - x[i - 1]) * (x_sc - x[i - 1]) +
-                d[i - 1] * (x_sc - x[i - 1]) * (x_sc - x[i - 1]) * (x_sc - x[i - 1]);
+                d[i - 1] * (x_sc - x[i - 1]) * (x_sc - x[i - 1]) *
+                    (x_sc - x[i - 1]);
 
         pDst++;
         blkCnt2--;

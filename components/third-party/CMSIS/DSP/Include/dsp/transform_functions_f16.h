@@ -92,8 +92,10 @@ typedef struct {
         rearranged_twiddle_tab_stride2_arr; /**< Per stage reordered twiddle pointer (offset 2) */
     const uint32_t*
         rearranged_twiddle_tab_stride3_arr; /**< Per stage reordered twiddle pointer (offset 3) */
-    const float16_t* rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
-    const float16_t* rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
+    const float16_t*
+        rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
+    const float16_t*
+        rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
     const float16_t* rearranged_twiddle_stride3;
 #endif
 } arm_cfft_instance_f16;
@@ -115,7 +117,8 @@ typedef struct {
     const float16_t*      pTwiddleRFFT; /**< Twiddle factors real stage  */
 } arm_rfft_fast_instance_f16;
 
-arm_status arm_rfft_fast_init_f16(arm_rfft_fast_instance_f16* S, uint16_t fftLen);
+arm_status arm_rfft_fast_init_f16(arm_rfft_fast_instance_f16* S,
+                                  uint16_t                    fftLen);
 
 
 void arm_rfft_fast_f16(const arm_rfft_fast_instance_f16* S,
@@ -127,33 +130,35 @@ void arm_rfft_fast_f16(const arm_rfft_fast_instance_f16* S,
 arm_status arm_cfft_radix4_init_f16(arm_cfft_radix4_instance_f16* S,
                                     uint16_t                      fftLen,
                                     uint8_t                       ifftFlag,
-                                    uint8_t                       bitReverseFlag);
+                                    uint8_t bitReverseFlag);
 
 /* Deprecated */
-void arm_cfft_radix4_f16(const arm_cfft_radix4_instance_f16* S, float16_t* pSrc);
+void arm_cfft_radix4_f16(const arm_cfft_radix4_instance_f16* S,
+                         float16_t*                          pSrc);
 
 
 /* Deprecated */
 arm_status arm_cfft_radix2_init_f16(arm_cfft_radix2_instance_f16* S,
                                     uint16_t                      fftLen,
                                     uint8_t                       ifftFlag,
-                                    uint8_t                       bitReverseFlag);
+                                    uint8_t bitReverseFlag);
 
 /* Deprecated */
-void arm_cfft_radix2_f16(const arm_cfft_radix2_instance_f16* S, float16_t* pSrc);
+void arm_cfft_radix2_f16(const arm_cfft_radix2_instance_f16* S,
+                         float16_t*                          pSrc);
 
 /**
    * @brief Instance structure for the Floating-point MFCC function.
    */
 typedef struct {
-    const float16_t* dctCoefs;      /**< Internal DCT coefficients */
-    const float16_t* filterCoefs;   /**< Internal Mel filter coefficients */
-    const float16_t* windowCoefs;   /**< Windowing coefficients */
-    const uint32_t*  filterPos;     /**< Internal Mel filter positions in spectrum */
-    const uint32_t*  filterLengths; /**< Internal Mel filter  lengths */
-    uint32_t         fftLen;        /**< FFT length */
-    uint32_t         nbMelFilters;  /**< Number of Mel filters */
-    uint32_t         nbDctOutputs;  /**< Number of DCT outputs */
+    const float16_t* dctCoefs;    /**< Internal DCT coefficients */
+    const float16_t* filterCoefs; /**< Internal Mel filter coefficients */
+    const float16_t* windowCoefs; /**< Windowing coefficients */
+    const uint32_t* filterPos; /**< Internal Mel filter positions in spectrum */
+    const uint32_t* filterLengths; /**< Internal Mel filter  lengths */
+    uint32_t        fftLen;        /**< FFT length */
+    uint32_t        nbMelFilters;  /**< Number of Mel filters */
+    uint32_t        nbDctOutputs;  /**< Number of DCT outputs */
 #if defined(ARM_MFCC_CFFT_BASED)
     /* Implementation of the MFCC is using a CFFT */
     arm_cfft_instance_f16 cfft; /**< Internal CFFT instance */

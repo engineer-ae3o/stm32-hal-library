@@ -31,7 +31,8 @@
 #if defined(ARM_FLOAT16_SUPPORTED)
 
 
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) &&                      \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include <limits.h>
 #endif
 
@@ -56,7 +57,10 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_min_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, uint32_t* pIndex) {
+void arm_min_f16(const float16_t* pSrc,
+                 uint32_t         blockSize,
+                 float16_t*       pResult,
+                 uint32_t*        pIndex) {
     int32_t          blkCnt; /* loop counters */
     f16x8_t          vecSrc;
     float16_t const* pSrcVec;
@@ -128,8 +132,11 @@ void arm_min_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, 
 
 #else
 
-void arm_min_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, uint32_t* pIndex) {
-    float16_t minVal, out;      /* Temporary variables to store the output value. */
+void arm_min_f16(const float16_t* pSrc,
+                 uint32_t         blockSize,
+                 float16_t*       pResult,
+                 uint32_t*        pIndex) {
+    float16_t minVal, out; /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)

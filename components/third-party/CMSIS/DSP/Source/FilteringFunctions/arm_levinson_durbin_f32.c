@@ -51,18 +51,23 @@
   @return        none
  */
 
-#if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) && defined(__CMSIS_GCC_H)
-#pragma GCC warning                                                                                \
+#if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) &&       \
+    defined(__CMSIS_GCC_H)
+#pragma GCC warning                                                            \
     "Scalar version of arm_levinson_durbin_f32 built. Helium version has build issues with gcc."
 #endif
 
-#if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) && !defined(__CMSIS_GCC_H)
+#if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE) &&              \
+    !defined(__CMSIS_GCC_H)
 
 #include "arm_helium_utils.h"
 
 #define LANE23_MASK 0xFF00
 
-void arm_levinson_durbin_f32(const float32_t* phi, float32_t* a, float32_t* err, int nbCoefs) {
+void arm_levinson_durbin_f32(const float32_t* phi,
+                             float32_t*       a,
+                             float32_t*       err,
+                             int              nbCoefs) {
     float32_t             e;
     static const uint32_t revOffsetArray[4] = {3, 2, 1, 0};
 
@@ -201,7 +206,10 @@ void arm_levinson_durbin_f32(const float32_t* phi, float32_t* a, float32_t* err,
 }
 
 #else
-void arm_levinson_durbin_f32(const float32_t* phi, float32_t* a, float32_t* err, int nbCoefs) {
+void arm_levinson_durbin_f32(const float32_t* phi,
+                             float32_t*       a,
+                             float32_t*       err,
+                             int              nbCoefs) {
     float32_t e;
     int       p;
 

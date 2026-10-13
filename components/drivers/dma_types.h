@@ -92,7 +92,8 @@ typedef struct {
 typedef struct {
     bool
         deconfigure; // Set to deinitialize the given stream. All other fields are ignored if this is true
-    bool enable_stream; // Enable the DMA stream immediately after configuring it
+    bool
+        enable_stream; // Enable the DMA stream immediately after configuring it
 
     bool
         per_addr_increment; // Increment the peripheral address (or source address in M2M transfers)
@@ -117,8 +118,10 @@ typedef struct {
     uint32_t channel;
     uint32_t nvic_irq_priority;
 
-    const volatile void* per_addr;  // Peripheral address (or source address in M2M transfers)
-    const volatile void* mem_buf_0; // Memory address 0 (or destination address in M2M transfers)
+    const volatile void*
+        per_addr; // Peripheral address (or source address in M2M transfers)
+    const volatile void*
+        mem_buf_0; // Memory address 0 (or destination address in M2M transfers)
     const volatile void* mem_buf_1; // Memory address 1
 } dma_stream_config_t;
 

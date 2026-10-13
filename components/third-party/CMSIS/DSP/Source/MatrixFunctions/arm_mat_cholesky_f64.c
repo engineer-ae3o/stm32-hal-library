@@ -84,7 +84,8 @@ arm_status arm_mat_cholesky_f64(const arm_matrix_instance_f64* pSrc,
                 pG[j * n + i] = pA[j * n + i];
 
                 for (k = 0; k < i; k++) {
-                    pG[j * n + i] = pG[j * n + i] - pG[i * n + k] * pG[j * n + k];
+                    pG[j * n + i] =
+                        pG[j * n + i] - pG[i * n + k] * pG[j * n + k];
                 }
             }
 

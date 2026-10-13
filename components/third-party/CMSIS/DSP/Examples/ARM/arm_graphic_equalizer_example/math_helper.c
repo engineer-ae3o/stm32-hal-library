@@ -111,7 +111,9 @@ float arm_snr_f32(float* pRef, float* pTest, uint32_t buffSize) {
  * to avoid overflow
  */
 
-void arm_provide_guard_bits_q15(q15_t* input_buf, uint32_t blockSize, uint32_t guard_bits) {
+void arm_provide_guard_bits_q15(q15_t*   input_buf,
+                                uint32_t blockSize,
+                                uint32_t guard_bits) {
     uint32_t i;
 
     for (i = 0; i < blockSize; i++) {
@@ -203,7 +205,9 @@ uint32_t arm_compare_fixed_q31(q31_t* pIn, q31_t* pOut, uint32_t numSamples) {
  * to avoid overflow
  */
 
-void arm_provide_guard_bits_q31(q31_t* input_buf, uint32_t blockSize, uint32_t guard_bits) {
+void arm_provide_guard_bits_q31(q31_t*   input_buf,
+                                uint32_t blockSize,
+                                uint32_t guard_bits) {
     uint32_t i;
 
     for (i = 0; i < blockSize; i++) {
@@ -221,7 +225,9 @@ void arm_provide_guard_bits_q31(q31_t* input_buf, uint32_t blockSize, uint32_t g
  * to avoid overflow
  */
 
-void arm_provide_guard_bits_q7(q7_t* input_buf, uint32_t blockSize, uint32_t guard_bits) {
+void arm_provide_guard_bits_q7(q7_t*    input_buf,
+                               uint32_t blockSize,
+                               uint32_t guard_bits) {
     uint32_t i;
 
     for (i = 0; i < blockSize; i++) {
@@ -261,7 +267,9 @@ uint32_t arm_calc_guard_bits(uint32_t num_adds) {
  * @return none
  */
 
-void arm_apply_guard_bits(float32_t* pIn, uint32_t numSamples, uint32_t guard_bits) {
+void arm_apply_guard_bits(float32_t* pIn,
+                          uint32_t   numSamples,
+                          uint32_t   guard_bits) {
     uint32_t i;
 
     for (i = 0; i < numSamples; i++) {

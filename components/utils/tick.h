@@ -25,40 +25,42 @@ uint64_t ms_since_boot(void);
 
 
 // Polling delay macros
-#define delay_ms(ms)                                                                               \
-    do {                                                                                           \
-        uint64_t start = ms_since_boot();                                                          \
-        while ((ms_since_boot() - start) < (ms));                                                  \
+#define delay_ms(ms)                                                           \
+    do {                                                                       \
+        uint64_t start = ms_since_boot();                                      \
+        while ((ms_since_boot() - start) < (ms));                              \
     } while (0)
 
-#define delay_us(us)                                                                               \
-    do {                                                                                           \
-        uint32_t cycles_ = (us) * (get_system_core_clock() / 1'000'000U);                          \
-        uint32_t start_  = DWT->CYCCNT;                                                            \
-        while ((DWT->CYCCNT - start_) < cycles_);                                                  \
+#define delay_us(us)                                                           \
+    do {                                                                       \
+        uint32_t cycles_ = (us) * (get_system_core_clock() / 1'000'000U);      \
+        uint32_t start_  = DWT->CYCCNT;                                        \
+        while ((DWT->CYCCNT - start_) < cycles_);                              \
     } while (0)
 
 
 // Profiling helpers
 [[maybe_unused]] static uint32_t s_prof_start = 0;
 
-#define prof_start()                                                                               \
-    do {                                                                                           \
-        s_prof_start = DWT->CYCCNT;                                                                \
+#define prof_start()                                                           \
+    do {                                                                       \
+        s_prof_start = DWT->CYCCNT;                                            \
     } while (0)
 
 #define prof_end() (DWT->CYCCNT - s_prof_start)
 
 // Convert cycles to time.
 #define cycles_to_us(cycles) ((cycles) * 1'000'000ULL / get_system_core_clock())
-#define cycles_to_us_frac(cycles)                                                                  \
+#define cycles_to_us_frac(cycles)                                              \
     (((cycles) * 1'000'000'000ULL / get_system_core_clock()) % 1'000ULL)
 
 #define cycles_to_ms(cycles) ((cycles) * 1'000ULL / get_system_core_clock())
-#define cycles_to_ms_frac(cycles) (((cycles) * 1'000'000ULL / get_system_core_clock()) % 1'000ULL)
+#define cycles_to_ms_frac(cycles)                                              \
+    (((cycles) * 1'000'000ULL / get_system_core_clock()) % 1'000ULL)
 
 #define cycles_to_ss(cycles) ((cycles) / get_system_core_clock())
-#define cycles_to_ss_frac(cycles) (((cycles) * 1'000ULL / get_system_core_clock()) % 1'000ULL)
+#define cycles_to_ss_frac(cycles)                                              \
+    (((cycles) * 1'000ULL / get_system_core_clock()) % 1'000ULL)
 
 
 #ifdef __cplusplus

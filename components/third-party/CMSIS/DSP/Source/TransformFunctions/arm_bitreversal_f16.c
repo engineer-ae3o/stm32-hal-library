@@ -71,8 +71,9 @@ void arm_bitreversal_f16(float16_t*      pSrc,
             pSrc[2U * (j + fftLenBy2p1)] = in;
 
             /*  pSrc[i+fftLenBy2p1+1U] <-> pSrc[j+fftLenBy2p1+1U] */
-            in                                  = pSrc[(2U * (i + fftLenBy2p1)) + 1U];
-            pSrc[(2U * (i + fftLenBy2p1)) + 1U] = pSrc[(2U * (j + fftLenBy2p1)) + 1U];
+            in = pSrc[(2U * (i + fftLenBy2p1)) + 1U];
+            pSrc[(2U * (i + fftLenBy2p1)) + 1U] =
+                pSrc[(2U * (j + fftLenBy2p1)) + 1U];
             pSrc[(2U * (j + fftLenBy2p1)) + 1U] = in;
         }
 

@@ -93,7 +93,9 @@ void arm_vexp_f16(const float16_t* pSrc, float16_t* pDst, uint32_t blockSize);
   @param[in]     blockSize  number of samples in each vector
   @return        none
  */
-void arm_vinverse_f16(const float16_t* pSrc, float16_t* pDst, uint32_t blockSize);
+void arm_vinverse_f16(const float16_t* pSrc,
+                      float16_t*       pDst,
+                      uint32_t         blockSize);
 
 /**
      @brief  Arc tangent in radian of y/x using sign of x and y to determine right quadrant.

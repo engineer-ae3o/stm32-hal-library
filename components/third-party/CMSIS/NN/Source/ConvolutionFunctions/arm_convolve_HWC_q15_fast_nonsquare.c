@@ -133,7 +133,8 @@ arm_status arm_convolve_HWC_q15_fast_nonsquare(const q15_t*   Im_in,
                         /* arm_copy_q15((q15_t *) Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in, pBuffer,
                          * ch_im_in); */
                         memcpy(pBuffer,
-                               (q15_t*)Im_in + (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in,
+                               (q15_t*)Im_in +
+                                   (i_ker_y * dim_im_in_x + i_ker_x) * ch_im_in,
                                sizeof(q15_t) * ch_im_in);
                     }
                     pBuffer += ch_im_in;
@@ -151,19 +152,26 @@ arm_status arm_convolve_HWC_q15_fast_nonsquare(const q15_t*   Im_in,
                 /* this loop over rows in A */
                 for (i = 0; i < ch_im_out; i += 2) {
                     /* setup pointers for B */
-                    const q15_t* pB  = im_buffer;
-                    const q15_t* pB2 = pB + ch_im_in * dim_kernel_y * dim_kernel_x;
+                    const q15_t* pB = im_buffer;
+                    const q15_t* pB2 =
+                        pB + ch_im_in * dim_kernel_y * dim_kernel_x;
 
                     /* aling the second pointer for A */
-                    const q15_t* pA2 = pA + ch_im_in * dim_kernel_y * dim_kernel_x;
+                    const q15_t* pA2 =
+                        pA + ch_im_in * dim_kernel_y * dim_kernel_x;
 
                     /* init the sum with bias */
-                    q31_t sum  = ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
-                    q31_t sum2 = ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
-                    q31_t sum3 = ((q31_t)bias[i + 1] << bias_shift) + NN_ROUND(out_shift);
-                    q31_t sum4 = ((q31_t)bias[i + 1] << bias_shift) + NN_ROUND(out_shift);
+                    q31_t sum =
+                        ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
+                    q31_t sum2 =
+                        ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
+                    q31_t sum3 = ((q31_t)bias[i + 1] << bias_shift) +
+                                 NN_ROUND(out_shift);
+                    q31_t sum4 = ((q31_t)bias[i + 1] << bias_shift) +
+                                 NN_ROUND(out_shift);
 
-                    uint16_t colCnt = ch_im_in * dim_kernel_y * dim_kernel_x >> 1;
+                    uint16_t colCnt =
+                        ch_im_in * dim_kernel_y * dim_kernel_x >> 1;
                     /* accumulate over the vector */
                     while (colCnt) {
                         q31_t inA1 = arm_nn_read_q15x2_ia(&pA);
@@ -227,12 +235,16 @@ arm_status arm_convolve_HWC_q15_fast_nonsquare(const q15_t*   Im_in,
                     for (n = 0; n < dim_kernel_x; n++) {
                         in_row = stride_y * j + m - padding_y;
                         in_col = stride_x * k + n - padding_x;
-                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in_y &&
-                            in_col < dim_im_in_x) {
+                        if (in_row >= 0 && in_col >= 0 &&
+                            in_row < dim_im_in_y && in_col < dim_im_in_x) {
                             for (l = 0; l < ch_im_in; l++) {
-                                conv_out += Im_in[(in_row * dim_im_in_x + in_col) * ch_im_in + l] *
-                                            wt[i * ch_im_in * dim_kernel_x * dim_kernel_y +
-                                               (m * dim_kernel_x + n) * ch_im_in + l];
+                                conv_out +=
+                                    Im_in[(in_row * dim_im_in_x + in_col) *
+                                              ch_im_in +
+                                          l] *
+                                    wt[i * ch_im_in * dim_kernel_x *
+                                           dim_kernel_y +
+                                       (m * dim_kernel_x + n) * ch_im_in + l];
                             }
                         }
                     }

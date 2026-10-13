@@ -70,7 +70,8 @@
  */
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* pSrc,
+                               arm_matrix_instance_f32*       pDst) {
     float32_t* pIn  = pSrc->pData; /* input data matrix pointer */
     float32_t* pOut = pDst->pData; /* output data matrix pointer */
     float32_t *pInT1, *pInT2;      /* Temporary input data matrix pointer */
@@ -82,9 +83,9 @@ arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_i
     uint32_t   numCols = pSrc->numCols; /* Number of Cols in the matrix  */
     float32_t *pTmpA, *pTmpB;
 
-    float32_t  in = 0.0f;                           /* Temporary input values  */
+    float32_t  in = 0.0f; /* Temporary input values  */
     uint32_t   i, rowCnt, flag = 0U, j, loopCnt, l; /* loop counters */
-    arm_status status;                              /* status of matrix inverse */
+    arm_status status; /* status of matrix inverse */
     uint32_t   blkCnt;
 
 #ifdef ARM_MATH_MATRIX_CHECK
@@ -539,20 +540,21 @@ arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_i
 
 #else
 #if defined(ARM_MATH_NEON)
-arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* pSrc,
+                               arm_matrix_instance_f32*       pDst) {
     float32_t* pIn  = pSrc->pData; /* input data matrix pointer */
     float32_t* pOut = pDst->pData; /* output data matrix pointer */
     float32_t *pInT1, *pInT2;      /* Temporary input data matrix pointer */
     float32_t *pOutT1, *pOutT2;    /* Temporary output data matrix pointer */
     float32_t *pPivotRowIn, *pPRT_in, *pPivotRowDst,
-        *pPRT_pDst;                   /* Temporary input and output data matrix pointer */
+        *pPRT_pDst; /* Temporary input and output data matrix pointer */
     uint32_t numRows = pSrc->numRows; /* Number of rows in the matrix  */
     uint32_t numCols = pSrc->numCols; /* Number of Cols in the matrix  */
 
 
-    float32_t   Xchg, in = 0.0f, in1;                   /* Temporary input values  */
+    float32_t   Xchg, in = 0.0f, in1; /* Temporary input values  */
     uint32_t    i, rowCnt, flag = 0U, j, loopCnt, k, l; /* loop counters */
-    arm_status  status;                                 /* status of matrix inverse */
+    arm_status  status; /* status of matrix inverse */
     float32x4_t vec1;
     float32x4_t vec2;
     float32x4_t tmpV;
@@ -914,21 +916,22 @@ arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_i
     return (status);
 }
 #else
-arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* pSrc,
+                               arm_matrix_instance_f32*       pDst) {
     float32_t* pIn  = pSrc->pData; /* input data matrix pointer */
     float32_t* pOut = pDst->pData; /* output data matrix pointer */
     float32_t *pInT1, *pInT2;      /* Temporary input data matrix pointer */
     float32_t *pOutT1, *pOutT2;    /* Temporary output data matrix pointer */
     float32_t *pPivotRowIn, *pPRT_in, *pPivotRowDst,
-        *pPRT_pDst;                   /* Temporary input and output data matrix pointer */
+        *pPRT_pDst; /* Temporary input and output data matrix pointer */
     uint32_t numRows = pSrc->numRows; /* Number of rows in the matrix  */
     uint32_t numCols = pSrc->numCols; /* Number of Cols in the matrix  */
 
 #if defined(ARM_MATH_DSP)
 
-    float32_t  Xchg, in = 0.0f, in1;                   /* Temporary input values  */
+    float32_t  Xchg, in = 0.0f, in1; /* Temporary input values  */
     uint32_t   i, rowCnt, flag = 0U, j, loopCnt, k, l; /* loop counters */
-    arm_status status;                                 /* status of matrix inverse */
+    arm_status status; /* status of matrix inverse */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
@@ -1208,9 +1211,9 @@ arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_i
 
 #else
 
-    float32_t  Xchg, in = 0.0f;                     /* Temporary input values  */
+    float32_t  Xchg, in = 0.0f; /* Temporary input values  */
     uint32_t   i, rowCnt, flag = 0U, j, loopCnt, l; /* loop counters */
-    arm_status status;                              /* status of matrix inverse */
+    arm_status status; /* status of matrix inverse */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 

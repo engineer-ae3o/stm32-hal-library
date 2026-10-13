@@ -28,15 +28,18 @@
 
 #include "dsp/transform_functions.h"
 
-void stage_rfft_f64(const arm_rfft_fast_instance_f64* S, float64_t* p, float64_t* pOut) {
-    uint32_t         k;                        /* Loop Counter */
-    float64_t        twR, twI;                 /* RFFT Twiddle coefficients */
-    const float64_t* pCoeff = S->pTwiddleRFFT; /* Points to RFFT Twiddle factors */
-    float64_t*       pA     = p;               /* increasing pointer */
-    float64_t*       pB     = p;               /* decreasing pointer */
-    float64_t        xAR, xAI, xBR, xBI;       /* temporary variables */
-    float64_t        t1a, t1b;                 /* temporary variables */
-    float64_t        p0, p1, p2, p3;           /* temporary variables */
+void stage_rfft_f64(const arm_rfft_fast_instance_f64* S,
+                    float64_t*                        p,
+                    float64_t*                        pOut) {
+    uint32_t         k;        /* Loop Counter */
+    float64_t        twR, twI; /* RFFT Twiddle coefficients */
+    const float64_t* pCoeff =
+        S->pTwiddleRFFT;           /* Points to RFFT Twiddle factors */
+    float64_t* pA = p;             /* increasing pointer */
+    float64_t* pB = p;             /* decreasing pointer */
+    float64_t  xAR, xAI, xBR, xBI; /* temporary variables */
+    float64_t  t1a, t1b;           /* temporary variables */
+    float64_t  p0, p1, p2, p3;     /* temporary variables */
 
 
     k = (S->Sint).fftLen - 1;
@@ -110,14 +113,17 @@ void stage_rfft_f64(const arm_rfft_fast_instance_f64* S, float64_t* p, float64_t
 }
 
 /* Prepares data for inverse cfft */
-void merge_rfft_f64(const arm_rfft_fast_instance_f64* S, float64_t* p, float64_t* pOut) {
-    uint32_t         k;                        /* Loop Counter */
-    float64_t        twR, twI;                 /* RFFT Twiddle coefficients */
-    const float64_t* pCoeff = S->pTwiddleRFFT; /* Points to RFFT Twiddle factors */
-    float64_t*       pA     = p;               /* increasing pointer */
-    float64_t*       pB     = p;               /* decreasing pointer */
-    float64_t        xAR, xAI, xBR, xBI;       /* temporary variables */
-    float64_t        t1a, t1b, r, s, t, u;     /* temporary variables */
+void merge_rfft_f64(const arm_rfft_fast_instance_f64* S,
+                    float64_t*                        p,
+                    float64_t*                        pOut) {
+    uint32_t         k;        /* Loop Counter */
+    float64_t        twR, twI; /* RFFT Twiddle coefficients */
+    const float64_t* pCoeff =
+        S->pTwiddleRFFT;             /* Points to RFFT Twiddle factors */
+    float64_t* pA = p;               /* increasing pointer */
+    float64_t* pB = p;               /* decreasing pointer */
+    float64_t  xAR, xAI, xBR, xBI;   /* temporary variables */
+    float64_t  t1a, t1b, r, s, t, u; /* temporary variables */
 
     k = (S->Sint).fftLen - 1;
 

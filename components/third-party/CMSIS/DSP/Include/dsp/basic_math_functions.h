@@ -49,7 +49,10 @@ extern "C" {
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_mult_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t blockSize);
+void arm_mult_q7(const q7_t* pSrcA,
+                 const q7_t* pSrcB,
+                 q7_t*       pDst,
+                 uint32_t    blockSize);
 
 
 /**
@@ -59,7 +62,10 @@ void arm_mult_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t bloc
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_mult_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t blockSize);
+void arm_mult_q15(const q15_t* pSrcA,
+                  const q15_t* pSrcB,
+                  q15_t*       pDst,
+                  uint32_t     blockSize);
 
 
 /**
@@ -69,7 +75,10 @@ void arm_mult_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t 
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_mult_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t blockSize);
+void arm_mult_q31(const q31_t* pSrcA,
+                  const q31_t* pSrcB,
+                  q31_t*       pDst,
+                  uint32_t     blockSize);
 
 
 /**
@@ -131,7 +140,10 @@ void arm_add_f64(const float64_t* pSrcA,
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_add_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t blockSize);
+void arm_add_q7(const q7_t* pSrcA,
+                const q7_t* pSrcB,
+                q7_t*       pDst,
+                uint32_t    blockSize);
 
 
 /**
@@ -141,7 +153,10 @@ void arm_add_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t block
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_add_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t blockSize);
+void arm_add_q15(const q15_t* pSrcA,
+                 const q15_t* pSrcB,
+                 q15_t*       pDst,
+                 uint32_t     blockSize);
 
 
 /**
@@ -151,7 +166,10 @@ void arm_add_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t b
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_add_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t blockSize);
+void arm_add_q31(const q31_t* pSrcA,
+                 const q31_t* pSrcB,
+                 q31_t*       pDst,
+                 uint32_t     blockSize);
 
 
 /**
@@ -187,7 +205,10 @@ void arm_sub_f64(const float64_t* pSrcA,
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_sub_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t blockSize);
+void arm_sub_q7(const q7_t* pSrcA,
+                const q7_t* pSrcB,
+                q7_t*       pDst,
+                uint32_t    blockSize);
 
 
 /**
@@ -197,7 +218,10 @@ void arm_sub_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t block
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_sub_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t blockSize);
+void arm_sub_q15(const q15_t* pSrcA,
+                 const q15_t* pSrcB,
+                 q15_t*       pDst,
+                 uint32_t     blockSize);
 
 
 /**
@@ -207,7 +231,10 @@ void arm_sub_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t b
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_sub_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t blockSize);
+void arm_sub_q31(const q31_t* pSrcA,
+                 const q31_t* pSrcB,
+                 q31_t*       pDst,
+                 uint32_t     blockSize);
 
 
 /**
@@ -217,7 +244,10 @@ void arm_sub_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t b
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_scale_f32(const float32_t* pSrc, float32_t scale, float32_t* pDst, uint32_t blockSize);
+void arm_scale_f32(const float32_t* pSrc,
+                   float32_t        scale,
+                   float32_t*       pDst,
+                   uint32_t         blockSize);
 
 
 /**
@@ -227,7 +257,10 @@ void arm_scale_f32(const float32_t* pSrc, float32_t scale, float32_t* pDst, uint
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_scale_f64(const float64_t* pSrc, float64_t scale, float64_t* pDst, uint32_t blockSize);
+void arm_scale_f64(const float64_t* pSrc,
+                   float64_t        scale,
+                   float64_t*       pDst,
+                   uint32_t         blockSize);
 
 
 /**
@@ -238,7 +271,11 @@ void arm_scale_f64(const float64_t* pSrc, float64_t scale, float64_t* pDst, uint
    * @param[out] pDst        points to the output vector
    * @param[in]  blockSize   number of samples in the vector
    */
-void arm_scale_q7(const q7_t* pSrc, q7_t scaleFract, int8_t shift, q7_t* pDst, uint32_t blockSize);
+void arm_scale_q7(const q7_t* pSrc,
+                  q7_t        scaleFract,
+                  int8_t      shift,
+                  q7_t*       pDst,
+                  uint32_t    blockSize);
 
 
 /**
@@ -249,8 +286,11 @@ void arm_scale_q7(const q7_t* pSrc, q7_t scaleFract, int8_t shift, q7_t* pDst, u
    * @param[out] pDst        points to the output vector
    * @param[in]  blockSize   number of samples in the vector
    */
-void arm_scale_q15(
-    const q15_t* pSrc, q15_t scaleFract, int8_t shift, q15_t* pDst, uint32_t blockSize);
+void arm_scale_q15(const q15_t* pSrc,
+                   q15_t        scaleFract,
+                   int8_t       shift,
+                   q15_t*       pDst,
+                   uint32_t     blockSize);
 
 
 /**
@@ -261,8 +301,11 @@ void arm_scale_q15(
    * @param[out] pDst        points to the output vector
    * @param[in]  blockSize   number of samples in the vector
    */
-void arm_scale_q31(
-    const q31_t* pSrc, q31_t scaleFract, int8_t shift, q31_t* pDst, uint32_t blockSize);
+void arm_scale_q31(const q31_t* pSrc,
+                   q31_t        scaleFract,
+                   int8_t       shift,
+                   q31_t*       pDst,
+                   uint32_t     blockSize);
 
 
 /**
@@ -343,7 +386,10 @@ void arm_dot_prod_f64(const float64_t* pSrcA,
    * @param[in]  blockSize  number of samples in each vector
    * @param[out] result     output result returned here
    */
-void arm_dot_prod_q7(const q7_t* pSrcA, const q7_t* pSrcB, uint32_t blockSize, q31_t* result);
+void arm_dot_prod_q7(const q7_t* pSrcA,
+                     const q7_t* pSrcB,
+                     uint32_t    blockSize,
+                     q31_t*      result);
 
 
 /**
@@ -353,7 +399,10 @@ void arm_dot_prod_q7(const q7_t* pSrcA, const q7_t* pSrcB, uint32_t blockSize, q
    * @param[in]  blockSize  number of samples in each vector
    * @param[out] result     output result returned here
    */
-void arm_dot_prod_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t blockSize, q63_t* result);
+void arm_dot_prod_q15(const q15_t* pSrcA,
+                      const q15_t* pSrcB,
+                      uint32_t     blockSize,
+                      q63_t*       result);
 
 
 /**
@@ -363,7 +412,10 @@ void arm_dot_prod_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t blockSize
    * @param[in]  blockSize  number of samples in each vector
    * @param[out] result     output result returned here
    */
-void arm_dot_prod_q31(const q31_t* pSrcA, const q31_t* pSrcB, uint32_t blockSize, q63_t* result);
+void arm_dot_prod_q31(const q31_t* pSrcA,
+                      const q31_t* pSrcB,
+                      uint32_t     blockSize,
+                      q63_t*       result);
 
 
 /**
@@ -373,7 +425,10 @@ void arm_dot_prod_q31(const q31_t* pSrcA, const q31_t* pSrcB, uint32_t blockSize
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_shift_q7(const q7_t* pSrc, int8_t shiftBits, q7_t* pDst, uint32_t blockSize);
+void arm_shift_q7(const q7_t* pSrc,
+                  int8_t      shiftBits,
+                  q7_t*       pDst,
+                  uint32_t    blockSize);
 
 
 /**
@@ -383,7 +438,10 @@ void arm_shift_q7(const q7_t* pSrc, int8_t shiftBits, q7_t* pDst, uint32_t block
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_shift_q15(const q15_t* pSrc, int8_t shiftBits, q15_t* pDst, uint32_t blockSize);
+void arm_shift_q15(const q15_t* pSrc,
+                   int8_t       shiftBits,
+                   q15_t*       pDst,
+                   uint32_t     blockSize);
 
 
 /**
@@ -393,7 +451,10 @@ void arm_shift_q15(const q15_t* pSrc, int8_t shiftBits, q15_t* pDst, uint32_t bl
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_shift_q31(const q31_t* pSrc, int8_t shiftBits, q31_t* pDst, uint32_t blockSize);
+void arm_shift_q31(const q31_t* pSrc,
+                   int8_t       shiftBits,
+                   q31_t*       pDst,
+                   uint32_t     blockSize);
 
 
 /**
@@ -403,7 +464,10 @@ void arm_shift_q31(const q31_t* pSrc, int8_t shiftBits, q31_t* pDst, uint32_t bl
  * @param[out] pDst       points to the output vector
  * @param[in]  blockSize  number of samples in the vector
  */
-void arm_offset_f64(const float64_t* pSrc, float64_t offset, float64_t* pDst, uint32_t blockSize);
+void arm_offset_f64(const float64_t* pSrc,
+                    float64_t        offset,
+                    float64_t*       pDst,
+                    uint32_t         blockSize);
 
 
 /**
@@ -413,7 +477,10 @@ void arm_offset_f64(const float64_t* pSrc, float64_t offset, float64_t* pDst, ui
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_offset_f32(const float32_t* pSrc, float32_t offset, float32_t* pDst, uint32_t blockSize);
+void arm_offset_f32(const float32_t* pSrc,
+                    float32_t        offset,
+                    float32_t*       pDst,
+                    uint32_t         blockSize);
 
 
 /**
@@ -423,7 +490,10 @@ void arm_offset_f32(const float32_t* pSrc, float32_t offset, float32_t* pDst, ui
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_offset_q7(const q7_t* pSrc, q7_t offset, q7_t* pDst, uint32_t blockSize);
+void arm_offset_q7(const q7_t* pSrc,
+                   q7_t        offset,
+                   q7_t*       pDst,
+                   uint32_t    blockSize);
 
 
 /**
@@ -433,7 +503,10 @@ void arm_offset_q7(const q7_t* pSrc, q7_t offset, q7_t* pDst, uint32_t blockSize
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_offset_q15(const q15_t* pSrc, q15_t offset, q15_t* pDst, uint32_t blockSize);
+void arm_offset_q15(const q15_t* pSrc,
+                    q15_t        offset,
+                    q15_t*       pDst,
+                    uint32_t     blockSize);
 
 
 /**
@@ -443,7 +516,10 @@ void arm_offset_q15(const q15_t* pSrc, q15_t offset, q15_t* pDst, uint32_t block
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_offset_q31(const q31_t* pSrc, q31_t offset, q31_t* pDst, uint32_t blockSize);
+void arm_offset_q31(const q31_t* pSrc,
+                    q31_t        offset,
+                    q31_t*       pDst,
+                    uint32_t     blockSize);
 
 
 /**
@@ -498,7 +574,10 @@ void arm_negate_q31(const q31_t* pSrc, q31_t* pDst, uint32_t blockSize);
    * @param[in]     blockSize  number of samples in each vector
    * @return        none
    */
-void arm_and_u16(const uint16_t* pSrcA, const uint16_t* pSrcB, uint16_t* pDst, uint32_t blockSize);
+void arm_and_u16(const uint16_t* pSrcA,
+                 const uint16_t* pSrcB,
+                 uint16_t*       pDst,
+                 uint32_t        blockSize);
 
 /**
    * @brief         Compute the logical bitwise AND of two fixed-point vectors.
@@ -508,7 +587,10 @@ void arm_and_u16(const uint16_t* pSrcA, const uint16_t* pSrcB, uint16_t* pDst, u
    * @param[in]     blockSize  number of samples in each vector
    * @return        none
    */
-void arm_and_u32(const uint32_t* pSrcA, const uint32_t* pSrcB, uint32_t* pDst, uint32_t blockSize);
+void arm_and_u32(const uint32_t* pSrcA,
+                 const uint32_t* pSrcB,
+                 uint32_t*       pDst,
+                 uint32_t        blockSize);
 
 /**
    * @brief         Compute the logical bitwise AND of two fixed-point vectors.
@@ -518,7 +600,10 @@ void arm_and_u32(const uint32_t* pSrcA, const uint32_t* pSrcB, uint32_t* pDst, u
    * @param[in]     blockSize  number of samples in each vector
    * @return        none
    */
-void arm_and_u8(const uint8_t* pSrcA, const uint8_t* pSrcB, uint8_t* pDst, uint32_t blockSize);
+void arm_and_u8(const uint8_t* pSrcA,
+                const uint8_t* pSrcB,
+                uint8_t*       pDst,
+                uint32_t       blockSize);
 
 /**
    * @brief         Compute the logical bitwise OR of two fixed-point vectors.
@@ -528,7 +613,10 @@ void arm_and_u8(const uint8_t* pSrcA, const uint8_t* pSrcB, uint8_t* pDst, uint3
    * @param[in]     blockSize  number of samples in each vector
    * @return        none
    */
-void arm_or_u16(const uint16_t* pSrcA, const uint16_t* pSrcB, uint16_t* pDst, uint32_t blockSize);
+void arm_or_u16(const uint16_t* pSrcA,
+                const uint16_t* pSrcB,
+                uint16_t*       pDst,
+                uint32_t        blockSize);
 
 /**
    * @brief         Compute the logical bitwise OR of two fixed-point vectors.
@@ -538,7 +626,10 @@ void arm_or_u16(const uint16_t* pSrcA, const uint16_t* pSrcB, uint16_t* pDst, ui
    * @param[in]     blockSize  number of samples in each vector
    * @return        none
    */
-void arm_or_u32(const uint32_t* pSrcA, const uint32_t* pSrcB, uint32_t* pDst, uint32_t blockSize);
+void arm_or_u32(const uint32_t* pSrcA,
+                const uint32_t* pSrcB,
+                uint32_t*       pDst,
+                uint32_t        blockSize);
 
 /**
    * @brief         Compute the logical bitwise OR of two fixed-point vectors.
@@ -548,7 +639,10 @@ void arm_or_u32(const uint32_t* pSrcA, const uint32_t* pSrcB, uint32_t* pDst, ui
    * @param[in]     blockSize  number of samples in each vector
    * @return        none
    */
-void arm_or_u8(const uint8_t* pSrcA, const uint8_t* pSrcB, uint8_t* pDst, uint32_t blockSize);
+void arm_or_u8(const uint8_t* pSrcA,
+               const uint8_t* pSrcB,
+               uint8_t*       pDst,
+               uint32_t       blockSize);
 
 /**
    * @brief         Compute the logical bitwise NOT of a fixed-point vector.
@@ -585,7 +679,10 @@ void arm_not_u8(const uint8_t* pSrc, uint8_t* pDst, uint32_t blockSize);
    * @param[in]     blockSize  number of samples in each vector
    * @return        none
    */
-void arm_xor_u16(const uint16_t* pSrcA, const uint16_t* pSrcB, uint16_t* pDst, uint32_t blockSize);
+void arm_xor_u16(const uint16_t* pSrcA,
+                 const uint16_t* pSrcB,
+                 uint16_t*       pDst,
+                 uint32_t        blockSize);
 
 /**
    * @brief         Compute the logical bitwise XOR of two fixed-point vectors.
@@ -595,7 +692,10 @@ void arm_xor_u16(const uint16_t* pSrcA, const uint16_t* pSrcB, uint16_t* pDst, u
    * @param[in]     blockSize  number of samples in each vector
    * @return        none
    */
-void arm_xor_u32(const uint32_t* pSrcA, const uint32_t* pSrcB, uint32_t* pDst, uint32_t blockSize);
+void arm_xor_u32(const uint32_t* pSrcA,
+                 const uint32_t* pSrcB,
+                 uint32_t*       pDst,
+                 uint32_t        blockSize);
 
 /**
    * @brief         Compute the logical bitwise XOR of two fixed-point vectors.
@@ -605,7 +705,10 @@ void arm_xor_u32(const uint32_t* pSrcA, const uint32_t* pSrcB, uint32_t* pDst, u
    * @param[in]     blockSize  number of samples in each vector
    * @return        none
    */
-void arm_xor_u8(const uint8_t* pSrcA, const uint8_t* pSrcB, uint8_t* pDst, uint32_t blockSize);
+void arm_xor_u8(const uint8_t* pSrcA,
+                const uint8_t* pSrcB,
+                uint8_t*       pDst,
+                uint32_t       blockSize);
 
 /**
   @brief         Elementwise floating-point clipping
@@ -617,8 +720,11 @@ void arm_xor_u8(const uint8_t* pSrcA, const uint8_t* pSrcB, uint8_t* pDst, uint3
   @return        none
  */
 
-void arm_clip_f32(
-    const float32_t* pSrc, float32_t* pDst, float32_t low, float32_t high, uint32_t numSamples);
+void arm_clip_f32(const float32_t* pSrc,
+                  float32_t*       pDst,
+                  float32_t        low,
+                  float32_t        high,
+                  uint32_t         numSamples);
 
 /**
   @brief         Elementwise fixed-point clipping
@@ -630,7 +736,8 @@ void arm_clip_f32(
   @return        none
  */
 
-void arm_clip_q31(const q31_t* pSrc, q31_t* pDst, q31_t low, q31_t high, uint32_t numSamples);
+void arm_clip_q31(
+    const q31_t* pSrc, q31_t* pDst, q31_t low, q31_t high, uint32_t numSamples);
 
 /**
   @brief         Elementwise fixed-point clipping
@@ -642,7 +749,8 @@ void arm_clip_q31(const q31_t* pSrc, q31_t* pDst, q31_t low, q31_t high, uint32_
   @return        none
  */
 
-void arm_clip_q15(const q15_t* pSrc, q15_t* pDst, q15_t low, q15_t high, uint32_t numSamples);
+void arm_clip_q15(
+    const q15_t* pSrc, q15_t* pDst, q15_t low, q15_t high, uint32_t numSamples);
 
 /**
   @brief         Elementwise fixed-point clipping
@@ -654,7 +762,8 @@ void arm_clip_q15(const q15_t* pSrc, q15_t* pDst, q15_t low, q15_t high, uint32_
   @return        none
  */
 
-void arm_clip_q7(const q7_t* pSrc, q7_t* pDst, q7_t low, q7_t high, uint32_t numSamples);
+void arm_clip_q7(
+    const q7_t* pSrc, q7_t* pDst, q7_t low, q7_t high, uint32_t numSamples);
 
 
 #ifdef __cplusplus

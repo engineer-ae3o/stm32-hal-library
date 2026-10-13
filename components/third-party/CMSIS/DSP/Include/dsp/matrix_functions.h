@@ -233,7 +233,8 @@ arm_status arm_mat_cmplx_mult_q31(const arm_matrix_instance_q31* pSrcA,
    * @return    The function returns either  <code>ARM_MATH_SIZE_MISMATCH</code>
    * or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst);
+arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc,
+                             arm_matrix_instance_f32*       pDst);
 
 /**
    * @brief Floating-point matrix transpose.
@@ -242,7 +243,8 @@ arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_ins
    * @return    The function returns either  <code>ARM_MATH_SIZE_MISMATCH</code>
    * or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_trans_f64(const arm_matrix_instance_f64* pSrc, arm_matrix_instance_f64* pDst);
+arm_status arm_mat_trans_f64(const arm_matrix_instance_f64* pSrc,
+                             arm_matrix_instance_f64*       pDst);
 
 /**
    * @brief Floating-point complex matrix transpose.
@@ -262,7 +264,8 @@ arm_status arm_mat_cmplx_trans_f32(const arm_matrix_instance_f32* pSrc,
    * @return    The function returns either  <code>ARM_MATH_SIZE_MISMATCH</code>
    * or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_trans_q15(const arm_matrix_instance_q15* pSrc, arm_matrix_instance_q15* pDst);
+arm_status arm_mat_trans_q15(const arm_matrix_instance_q15* pSrc,
+                             arm_matrix_instance_q15*       pDst);
 
 /**
    * @brief Q15 complex matrix transpose.
@@ -281,7 +284,8 @@ arm_status arm_mat_cmplx_trans_q15(const arm_matrix_instance_q15* pSrc,
    * @return    The function returns either  <code>ARM_MATH_SIZE_MISMATCH</code>
    * or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_trans_q7(const arm_matrix_instance_q7* pSrc, arm_matrix_instance_q7* pDst);
+arm_status arm_mat_trans_q7(const arm_matrix_instance_q7* pSrc,
+                            arm_matrix_instance_q7*       pDst);
 
 /**
    * @brief Q31 matrix transpose.
@@ -290,7 +294,8 @@ arm_status arm_mat_trans_q7(const arm_matrix_instance_q7* pSrc, arm_matrix_insta
    * @return    The function returns either  <code>ARM_MATH_SIZE_MISMATCH</code>
    * or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_trans_q31(const arm_matrix_instance_q31* pSrc, arm_matrix_instance_q31* pDst);
+arm_status arm_mat_trans_q31(const arm_matrix_instance_q31* pSrc,
+                             arm_matrix_instance_q31*       pDst);
 
 /**
    * @brief Q31 complex matrix transpose.
@@ -356,7 +361,9 @@ arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA,
    * @param[in]  pVec     points to vector
    * @param[out] pDst     points to output vector
    */
-void arm_mat_vec_mult_q7(const arm_matrix_instance_q7* pSrcMat, const q7_t* pVec, q7_t* pDst);
+void arm_mat_vec_mult_q7(const arm_matrix_instance_q7* pSrcMat,
+                         const q7_t*                   pVec,
+                         q7_t*                         pDst);
 
 /**
    * @brief Q15 matrix multiplication
@@ -378,7 +385,9 @@ arm_status arm_mat_mult_q15(const arm_matrix_instance_q15* pSrcA,
    * @param[in]  pVec     points to vector
    * @param[out] pDst     points to output vector
    */
-void arm_mat_vec_mult_q15(const arm_matrix_instance_q15* pSrcMat, const q15_t* pVec, q15_t* pDst);
+void arm_mat_vec_mult_q15(const arm_matrix_instance_q15* pSrcMat,
+                          const q15_t*                   pVec,
+                          q15_t*                         pDst);
 
 /**
    * @brief Q15 matrix multiplication (fast variant) for Cortex-M3 and Cortex-M4
@@ -426,7 +435,9 @@ arm_status arm_mat_mult_opt_q31(const arm_matrix_instance_q31* pSrcA,
    * @param[in]  pVec     points to vector
    * @param[out] pDst     points to output vector
    */
-void arm_mat_vec_mult_q31(const arm_matrix_instance_q31* pSrcMat, const q31_t* pVec, q31_t* pDst);
+void arm_mat_vec_mult_q31(const arm_matrix_instance_q31* pSrcMat,
+                          const q31_t*                   pVec,
+                          q31_t*                         pDst);
 
 /**
    * @brief Q31 matrix multiplication (fast variant) for Cortex-M3 and Cortex-M4
@@ -535,7 +546,10 @@ arm_status arm_mat_scale_q31(const arm_matrix_instance_q31* pSrc,
    * @param[in]     nColumns  number of columns in the matrix.
    * @param[in]     pData     points to the matrix data array.
    */
-void arm_mat_init_q31(arm_matrix_instance_q31* S, uint16_t nRows, uint16_t nColumns, q31_t* pData);
+void arm_mat_init_q31(arm_matrix_instance_q31* S,
+                      uint16_t                 nRows,
+                      uint16_t                 nColumns,
+                      q31_t*                   pData);
 
 /**
    * @brief  Q15 matrix initialization.
@@ -544,7 +558,10 @@ void arm_mat_init_q31(arm_matrix_instance_q31* S, uint16_t nRows, uint16_t nColu
    * @param[in]     nColumns  number of columns in the matrix.
    * @param[in]     pData     points to the matrix data array.
    */
-void arm_mat_init_q15(arm_matrix_instance_q15* S, uint16_t nRows, uint16_t nColumns, q15_t* pData);
+void arm_mat_init_q15(arm_matrix_instance_q15* S,
+                      uint16_t                 nRows,
+                      uint16_t                 nColumns,
+                      q15_t*                   pData);
 
 /**
    * @brief  Floating-point matrix initialization.
@@ -566,7 +583,8 @@ void arm_mat_init_f32(arm_matrix_instance_f32* S,
    * @return The function returns ARM_MATH_SIZE_MISMATCH, if the dimensions do not match.
    * If the input matrix is singular (does not have an inverse), then the algorithm terminates and returns error status ARM_MATH_SINGULAR.
    */
-arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* src, arm_matrix_instance_f32* dst);
+arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* src,
+                               arm_matrix_instance_f32*       dst);
 
 
 /**
@@ -576,7 +594,8 @@ arm_status arm_mat_inverse_f32(const arm_matrix_instance_f32* src, arm_matrix_in
    * @return The function returns ARM_MATH_SIZE_MISMATCH, if the dimensions do not match.
    * If the input matrix is singular (does not have an inverse), then the algorithm terminates and returns error status ARM_MATH_SINGULAR.
    */
-arm_status arm_mat_inverse_f64(const arm_matrix_instance_f64* src, arm_matrix_instance_f64* dst);
+arm_status arm_mat_inverse_f64(const arm_matrix_instance_f64* src,
+                               arm_matrix_instance_f64*       dst);
 
 /**
    * @brief Floating-point Cholesky decomposition of Symmetric Positive Definite Matrix.
@@ -587,7 +606,8 @@ arm_status arm_mat_inverse_f64(const arm_matrix_instance_f64* src, arm_matrix_in
    * If the matrix is ill conditioned or only semi-definite, then it is better using the LDL^t decomposition.
    * The decomposition is returning a lower triangular matrix.
    */
-arm_status arm_mat_cholesky_f64(const arm_matrix_instance_f64* src, arm_matrix_instance_f64* dst);
+arm_status arm_mat_cholesky_f64(const arm_matrix_instance_f64* src,
+                                arm_matrix_instance_f64*       dst);
 
 /**
    * @brief Floating-point Cholesky decomposition of Symmetric Positive Definite Matrix.
@@ -598,7 +618,8 @@ arm_status arm_mat_cholesky_f64(const arm_matrix_instance_f64* src, arm_matrix_i
    * If the matrix is ill conditioned or only semi-definite, then it is better using the LDL^t decomposition.
    * The decomposition is returning a lower triangular matrix.
    */
-arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* src, arm_matrix_instance_f32* dst);
+arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* src,
+                                arm_matrix_instance_f32*       dst);
 
 /**
    * @brief Solve UT . X = A where UT is an upper triangular matrix
@@ -609,7 +630,7 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* src, arm_matrix_i
   */
 arm_status arm_mat_solve_upper_triangular_f32(const arm_matrix_instance_f32* ut,
                                               const arm_matrix_instance_f32* a,
-                                              arm_matrix_instance_f32*       dst);
+                                              arm_matrix_instance_f32* dst);
 
 /**
    * @brief Solve LT . X = A where LT is a lower triangular matrix
@@ -620,7 +641,7 @@ arm_status arm_mat_solve_upper_triangular_f32(const arm_matrix_instance_f32* ut,
    */
 arm_status arm_mat_solve_lower_triangular_f32(const arm_matrix_instance_f32* lt,
                                               const arm_matrix_instance_f32* a,
-                                              arm_matrix_instance_f32*       dst);
+                                              arm_matrix_instance_f32* dst);
 
 
 /**
@@ -632,7 +653,7 @@ arm_status arm_mat_solve_lower_triangular_f32(const arm_matrix_instance_f32* lt,
   */
 arm_status arm_mat_solve_upper_triangular_f64(const arm_matrix_instance_f64* ut,
                                               const arm_matrix_instance_f64* a,
-                                              arm_matrix_instance_f64*       dst);
+                                              arm_matrix_instance_f64* dst);
 
 /**
    * @brief Solve LT . X = A where LT is a lower triangular matrix
@@ -643,7 +664,7 @@ arm_status arm_mat_solve_upper_triangular_f64(const arm_matrix_instance_f64* ut,
    */
 arm_status arm_mat_solve_lower_triangular_f64(const arm_matrix_instance_f64* lt,
                                               const arm_matrix_instance_f64* a,
-                                              arm_matrix_instance_f64*       dst);
+                                              arm_matrix_instance_f64* dst);
 
 
 /**

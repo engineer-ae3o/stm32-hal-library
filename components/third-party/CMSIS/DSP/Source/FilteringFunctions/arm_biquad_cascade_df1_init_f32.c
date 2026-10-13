@@ -123,16 +123,21 @@ static void generateCoefsFastBiquadF32(float32_t                b0,
 }
 
 void arm_biquad_cascade_df1_mve_init_f32(arm_biquad_casd_df1_inst_f32* S,
-                                         uint8_t                       numStages,
-                                         const float32_t*              pCoeffs,
-                                         arm_biquad_mod_coef_f32*      pCoeffsMod,
-                                         float32_t*                    pState) {
-    arm_biquad_cascade_df1_init_f32(S, numStages, (float32_t*)pCoeffsMod, pState);
+                                         uint8_t                  numStages,
+                                         const float32_t*         pCoeffs,
+                                         arm_biquad_mod_coef_f32* pCoeffsMod,
+                                         float32_t*               pState) {
+    arm_biquad_cascade_df1_init_f32(
+        S, numStages, (float32_t*)pCoeffsMod, pState);
 
     /* Generate SIMD friendly modified coefs */
     for (int i = 0; i < numStages; i++) {
-        generateCoefsFastBiquadF32(
-            pCoeffs[0], pCoeffs[1], pCoeffs[2], pCoeffs[3], pCoeffs[4], pCoeffsMod);
+        generateCoefsFastBiquadF32(pCoeffs[0],
+                                   pCoeffs[1],
+                                   pCoeffs[2],
+                                   pCoeffs[3],
+                                   pCoeffs[4],
+                                   pCoeffsMod);
         pCoeffs += 5;
         pCoeffsMod++;
     }

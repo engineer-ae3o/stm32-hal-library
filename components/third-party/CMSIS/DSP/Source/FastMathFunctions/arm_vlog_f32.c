@@ -47,8 +47,8 @@
   @{
  */
 
-#if (defined(ARM_MATH_MVEF) || defined(ARM_MATH_HELIUM) || defined(ARM_MATH_NEON) ||               \
-     defined(ARM_MATH_NEON_EXPERIMENTAL)) &&                                                       \
+#if (defined(ARM_MATH_MVEF) || defined(ARM_MATH_HELIUM) ||                     \
+     defined(ARM_MATH_NEON) || defined(ARM_MATH_NEON_EXPERIMENTAL)) &&         \
     !defined(ARM_MATH_AUTOVECTORIZE)
 #include "arm_vec_math.h"
 #endif
@@ -56,7 +56,8 @@
 void arm_vlog_f32(const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
     uint32_t blkCnt;
 
-#if (defined(ARM_MATH_MVEF) || defined(ARM_MATH_HELIUM)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_MVEF) || defined(ARM_MATH_HELIUM)) &&                    \
+    !defined(ARM_MATH_AUTOVECTORIZE)
     f32x4_t src;
     f32x4_t dst;
 
@@ -75,7 +76,7 @@ void arm_vlog_f32(const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
 
     blkCnt = blockSize & 3;
 #else
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_NEON_EXPERIMENTAL)) &&                             \
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_NEON_EXPERIMENTAL)) &&         \
     !defined(ARM_MATH_AUTOVECTORIZE)
     f32x4_t src;
     f32x4_t dst;

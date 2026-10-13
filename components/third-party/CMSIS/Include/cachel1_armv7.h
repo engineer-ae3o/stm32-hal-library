@@ -39,16 +39,18 @@
  */
 
 /* Cache Size ID Register Macros */
-#define CCSIDR_WAYS(x) (((x) & SCB_CCSIDR_ASSOCIATIVITY_Msk) >> SCB_CCSIDR_ASSOCIATIVITY_Pos)
-#define CCSIDR_SETS(x) (((x) & SCB_CCSIDR_NUMSETS_Msk) >> SCB_CCSIDR_NUMSETS_Pos)
+#define CCSIDR_WAYS(x)                                                         \
+    (((x) & SCB_CCSIDR_ASSOCIATIVITY_Msk) >> SCB_CCSIDR_ASSOCIATIVITY_Pos)
+#define CCSIDR_SETS(x)                                                         \
+    (((x) & SCB_CCSIDR_NUMSETS_Msk) >> SCB_CCSIDR_NUMSETS_Pos)
 
 #ifndef __SCB_DCACHE_LINE_SIZE
-#define __SCB_DCACHE_LINE_SIZE                                                                     \
+#define __SCB_DCACHE_LINE_SIZE                                                 \
     32U /*!< Cortex-M7 cache line size is fixed to 32 bytes (8 words). See also register SCB_CCSIDR */
 #endif
 
 #ifndef __SCB_ICACHE_LINE_SIZE
-#define __SCB_ICACHE_LINE_SIZE                                                                     \
+#define __SCB_ICACHE_LINE_SIZE                                                 \
     32U /*!< Cortex-M7 cache line size is fixed to 32 bytes (8 words). See also register SCB_CCSIDR */
 #endif
 
@@ -113,11 +115,14 @@ __STATIC_FORCEINLINE void SCB_InvalidateICache(void) {
   \param[in]   addr    address
   \param[in]   isize   size of memory block (in number of bytes)
 */
-__STATIC_FORCEINLINE void SCB_InvalidateICache_by_Addr(volatile void* addr, int32_t isize) {
+__STATIC_FORCEINLINE void SCB_InvalidateICache_by_Addr(volatile void* addr,
+                                                       int32_t        isize) {
 #if defined(__ICACHE_PRESENT) && (__ICACHE_PRESENT == 1U)
     if (isize > 0) {
-        int32_t  op_size = isize + (((uint32_t)addr) & (__SCB_ICACHE_LINE_SIZE - 1U));
-        uint32_t op_addr = (uint32_t)addr /* & ~(__SCB_ICACHE_LINE_SIZE - 1U) */;
+        int32_t op_size =
+            isize + (((uint32_t)addr) & (__SCB_ICACHE_LINE_SIZE - 1U));
+        uint32_t op_addr =
+            (uint32_t)addr /* & ~(__SCB_ICACHE_LINE_SIZE - 1U) */;
 
         __DSB();
 
@@ -323,11 +328,14 @@ __STATIC_FORCEINLINE void SCB_CleanInvalidateDCache(void) {
   \param[in]   addr    address
   \param[in]   dsize   size of memory block (in number of bytes)
 */
-__STATIC_FORCEINLINE void SCB_InvalidateDCache_by_Addr(volatile void* addr, int32_t dsize) {
+__STATIC_FORCEINLINE void SCB_InvalidateDCache_by_Addr(volatile void* addr,
+                                                       int32_t        dsize) {
 #if defined(__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
     if (dsize > 0) {
-        int32_t  op_size = dsize + (((uint32_t)addr) & (__SCB_DCACHE_LINE_SIZE - 1U));
-        uint32_t op_addr = (uint32_t)addr /* & ~(__SCB_DCACHE_LINE_SIZE - 1U) */;
+        int32_t op_size =
+            dsize + (((uint32_t)addr) & (__SCB_DCACHE_LINE_SIZE - 1U));
+        uint32_t op_addr =
+            (uint32_t)addr /* & ~(__SCB_DCACHE_LINE_SIZE - 1U) */;
 
         __DSB();
 
@@ -353,11 +361,14 @@ __STATIC_FORCEINLINE void SCB_InvalidateDCache_by_Addr(volatile void* addr, int3
   \param[in]   addr    address
   \param[in]   dsize   size of memory block (in number of bytes)
 */
-__STATIC_FORCEINLINE void SCB_CleanDCache_by_Addr(volatile void* addr, int32_t dsize) {
+__STATIC_FORCEINLINE void SCB_CleanDCache_by_Addr(volatile void* addr,
+                                                  int32_t        dsize) {
 #if defined(__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
     if (dsize > 0) {
-        int32_t  op_size = dsize + (((uint32_t)addr) & (__SCB_DCACHE_LINE_SIZE - 1U));
-        uint32_t op_addr = (uint32_t)addr /* & ~(__SCB_DCACHE_LINE_SIZE - 1U) */;
+        int32_t op_size =
+            dsize + (((uint32_t)addr) & (__SCB_DCACHE_LINE_SIZE - 1U));
+        uint32_t op_addr =
+            (uint32_t)addr /* & ~(__SCB_DCACHE_LINE_SIZE - 1U) */;
 
         __DSB();
 
@@ -383,11 +394,14 @@ __STATIC_FORCEINLINE void SCB_CleanDCache_by_Addr(volatile void* addr, int32_t d
   \param[in]   addr    address (aligned to 32-byte boundary)
   \param[in]   dsize   size of memory block (in number of bytes)
 */
-__STATIC_FORCEINLINE void SCB_CleanInvalidateDCache_by_Addr(volatile void* addr, int32_t dsize) {
+__STATIC_FORCEINLINE void SCB_CleanInvalidateDCache_by_Addr(volatile void* addr,
+                                                            int32_t dsize) {
 #if defined(__DCACHE_PRESENT) && (__DCACHE_PRESENT == 1U)
     if (dsize > 0) {
-        int32_t  op_size = dsize + (((uint32_t)addr) & (__SCB_DCACHE_LINE_SIZE - 1U));
-        uint32_t op_addr = (uint32_t)addr /* & ~(__SCB_DCACHE_LINE_SIZE - 1U) */;
+        int32_t op_size =
+            dsize + (((uint32_t)addr) & (__SCB_DCACHE_LINE_SIZE - 1U));
+        uint32_t op_addr =
+            (uint32_t)addr /* & ~(__SCB_DCACHE_LINE_SIZE - 1U) */;
 
         __DSB();
 

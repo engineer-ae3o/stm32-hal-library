@@ -63,7 +63,9 @@
  *                  cosine_distance(u,v) is 1 - u . v / (Norm(u) Norm(v))
  */
 
-float16_t arm_cosine_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+float16_t arm_cosine_distance_f16(const float16_t* pA,
+                                  const float16_t* pB,
+                                  uint32_t         blockSize) {
     float16_t pwra, pwrb, dot, tmp;
 
     arm_power_f16(pA, blockSize, &pwra);

@@ -82,7 +82,7 @@ arm_status arm_dct4_init_q31(arm_dct4_instance_q31*        S,
     S->pCfft = S_CFFT;
 
     switch (N) {
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
     defined(ARM_TABLE_DCT4_Q31_8192)
             /* Initialize the table modifier values */
         case 8192U:
@@ -91,7 +91,7 @@ arm_status arm_dct4_init_q31(arm_dct4_instance_q31*        S,
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
     defined(ARM_TABLE_DCT4_Q31_2048)
         case 2048U:
             S->pTwiddle   = WeightsQ31_2048;
@@ -99,7 +99,7 @@ arm_status arm_dct4_init_q31(arm_dct4_instance_q31*        S,
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
     defined(ARM_TABLE_DCT4_Q31_512)
         case 512U:
             S->pTwiddle   = WeightsQ31_512;
@@ -107,7 +107,7 @@ arm_status arm_dct4_init_q31(arm_dct4_instance_q31*        S,
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||          \
     defined(ARM_TABLE_DCT4_Q31_128)
         case 128U:
             S->pTwiddle   = WeightsQ31_128;

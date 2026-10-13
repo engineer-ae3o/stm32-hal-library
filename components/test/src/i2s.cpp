@@ -89,67 +89,100 @@ namespace test::i2s {
             std::array<uint16_t, 4> rx_buf{};
             uint8_t                 buffer_idx = 0;
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              i2sx_clk_enable(reinterpret_cast<I2S_TypeDef*>(1), true));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2sx_clk_enable(reinterpret_cast<I2S_TypeDef*>(1), true));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_init(nullptr, &DEFAULT_TX_CONFIG));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_init(TEST_INSTANCE, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2s_master_init(nullptr, &DEFAULT_TX_CONFIG));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2s_master_init(TEST_INSTANCE, nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_deinit(nullptr));
 
             auto* const bogus_handle = reinterpret_cast<I2S_TypeDef*>(1);
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              i2s_master_dma_init(bogus_handle, DMA_PRIORITY_LOW));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_dma_deinit(bogus_handle));
-
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              i2s_master_transmit_oneshot(
-                                  bogus_handle, data.data(), data.size(), nullptr, nullptr));
             TEST_ASSERT_EQUAL(
                 HAL_ERR_INVALID_ARG,
-                i2s_master_transmit_oneshot(TEST_INSTANCE, nullptr, data.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(
-                HAL_ERR_INVALID_ARG,
-                i2s_master_transmit_oneshot(TEST_INSTANCE, data.data(), 0, nullptr, nullptr));
-
+                i2s_master_dma_init(bogus_handle, DMA_PRIORITY_LOW));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              i2s_master_receive_oneshot(
-                                  bogus_handle, rx_buf.data(), rx_buf.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              i2s_master_receive_oneshot(
-                                  TEST_INSTANCE, nullptr, rx_buf.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(
-                HAL_ERR_INVALID_ARG,
-                i2s_master_receive_oneshot(TEST_INSTANCE, rx_buf.data(), 0, nullptr, nullptr));
+                              i2s_master_dma_deinit(bogus_handle));
 
             TEST_ASSERT_EQUAL(
                 HAL_ERR_INVALID_ARG,
-                i2s_master_dbm_init(
-                    bogus_handle, data.data(), rx_buf.data(), data.size(), dbm_callback, nullptr));
+                i2s_master_transmit_oneshot(
+                    bogus_handle, data.data(), data.size(), nullptr, nullptr));
             TEST_ASSERT_EQUAL(
                 HAL_ERR_INVALID_ARG,
-                i2s_master_dbm_init(
-                    TEST_INSTANCE, nullptr, rx_buf.data(), rx_buf.size(), dbm_callback, nullptr));
+                i2s_master_transmit_oneshot(
+                    TEST_INSTANCE, nullptr, data.size(), nullptr, nullptr));
             TEST_ASSERT_EQUAL(
                 HAL_ERR_INVALID_ARG,
-                i2s_master_dbm_init(
-                    TEST_INSTANCE, rx_buf.data(), nullptr, rx_buf.size(), dbm_callback, nullptr));
-            TEST_ASSERT_EQUAL(
-                HAL_ERR_INVALID_ARG,
-                i2s_master_dbm_init(
-                    TEST_INSTANCE, rx_buf.data(), rx_buf.data(), 0, dbm_callback, nullptr));
-            TEST_ASSERT_EQUAL(
-                HAL_ERR_INVALID_ARG,
-                i2s_master_dbm_init(
-                    TEST_INSTANCE, rx_buf.data(), rx_buf.data(), rx_buf.size(), nullptr, nullptr));
-
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_dbm_deinit(bogus_handle));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_dbm_start(bogus_handle));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_dbm_stop(bogus_handle));
+                i2s_master_transmit_oneshot(
+                    TEST_INSTANCE, data.data(), 0, nullptr, nullptr));
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              i2s_master_dbm_get_filled_buffer(bogus_handle, &buffer_idx));
+                              i2s_master_receive_oneshot(bogus_handle,
+                                                         rx_buf.data(),
+                                                         rx_buf.size(),
+                                                         nullptr,
+                                                         nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2s_master_receive_oneshot(
+                    TEST_INSTANCE, nullptr, rx_buf.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2s_master_receive_oneshot(
+                    TEST_INSTANCE, rx_buf.data(), 0, nullptr, nullptr));
+
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              i2s_master_dbm_get_filled_buffer(TEST_INSTANCE, nullptr));
+                              i2s_master_dbm_init(bogus_handle,
+                                                  data.data(),
+                                                  rx_buf.data(),
+                                                  data.size(),
+                                                  dbm_callback,
+                                                  nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2s_master_dbm_init(TEST_INSTANCE,
+                                                  nullptr,
+                                                  rx_buf.data(),
+                                                  rx_buf.size(),
+                                                  dbm_callback,
+                                                  nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2s_master_dbm_init(TEST_INSTANCE,
+                                                  rx_buf.data(),
+                                                  nullptr,
+                                                  rx_buf.size(),
+                                                  dbm_callback,
+                                                  nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2s_master_dbm_init(TEST_INSTANCE,
+                                                  rx_buf.data(),
+                                                  rx_buf.data(),
+                                                  0,
+                                                  dbm_callback,
+                                                  nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2s_master_dbm_init(TEST_INSTANCE,
+                                                  rx_buf.data(),
+                                                  rx_buf.data(),
+                                                  rx_buf.size(),
+                                                  nullptr,
+                                                  nullptr));
+
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2s_master_dbm_deinit(bogus_handle));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2s_master_dbm_start(bogus_handle));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2s_master_dbm_stop(bogus_handle));
+
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2s_master_dbm_get_filled_buffer(bogus_handle, &buffer_idx));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2s_master_dbm_get_filled_buffer(TEST_INSTANCE, nullptr));
         }
 
         void init_rejects_invalid_audio_clock_without_touching_registers() {
@@ -159,7 +192,8 @@ namespace test::i2s {
             const uint32_t i2scfgr_before = TEST_INSTANCE->I2SCFGR;
             const uint32_t i2spr_before   = TEST_INSTANCE->I2SPR;
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2s_master_init(TEST_INSTANCE, &config));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2s_master_init(TEST_INSTANCE, &config));
 
             TEST_ASSERT_EQUAL_UINT32(i2scfgr_before, TEST_INSTANCE->I2SCFGR);
             TEST_ASSERT_EQUAL_UINT32(i2spr_before, TEST_INSTANCE->I2SPR);
@@ -171,10 +205,11 @@ namespace test::i2s {
             i2s_master_config_t config = DEFAULT_TX_CONFIG;
             config.audio_clock         = AUDIO_PLL_172MHz;
             config.use_mck             = true;
-            config.frequency =
-                static_cast<i2s_freq_t>(200000); // Not a real or supported audio rate
+            config.frequency           = static_cast<i2s_freq_t>(
+                200000); // Not a real or supported audio rate
 
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, i2s_master_init(TEST_INSTANCE, &config));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              i2s_master_init(TEST_INSTANCE, &config));
         }
 
         void init_rejects_prescaler_above_the_supported_range() {
@@ -183,31 +218,39 @@ namespace test::i2s {
             i2s_master_config_t config = DEFAULT_TX_CONFIG;
             config.audio_clock         = AUDIO_PLL_76_8MHz;
             config.use_mck             = false;
-            config.frequency = static_cast<i2s_freq_t>(500); // Not a real or supported audio rate
+            config.frequency           = static_cast<i2s_freq_t>(
+                500); // Not a real or supported audio rate
 
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, i2s_master_init(TEST_INSTANCE, &config));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              i2s_master_init(TEST_INSTANCE, &config));
         }
 
         void deinit_clears_control_registers() {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_TX_CONFIG));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_TX_CONFIG));
 
             TEST_ASSERT_TRUE(TEST_INSTANCE->I2SCFGR &
-                             (SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN |
-                              SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN));
-            TEST_ASSERT_TRUE(TEST_INSTANCE->I2SPR &
-                             (SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE));
+                             (SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL |
+                              SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD |
+                              SPI_I2SCFGR_DATLEN));
+            TEST_ASSERT_TRUE(
+                TEST_INSTANCE->I2SPR &
+                (SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE));
 
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));
 
             TEST_ASSERT_FALSE(TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SE);
-            TEST_ASSERT_EQUAL_UINT32(0,
-                                     TEST_INSTANCE->I2SCFGR &
-                                         (SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL |
-                                          SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD |
-                                          SPI_I2SCFGR_DATLEN));
             TEST_ASSERT_EQUAL_UINT32(
-                0, TEST_INSTANCE->I2SPR & (SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE));
+                0,
+                TEST_INSTANCE->I2SCFGR &
+                    (SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL |
+                     SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD |
+                     SPI_I2SCFGR_DATLEN));
+            TEST_ASSERT_EQUAL_UINT32(
+                0,
+                TEST_INSTANCE->I2SPR &
+                    (SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE));
 
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, false));
         }
@@ -222,12 +265,14 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
 
             TEST_ASSERT_TRUE(TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SMOD);
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(I2S_MASTER_TRANSMIT),
-                                     (TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SCFG) >>
-                                         SPI_I2SCFGR_I2SCFG_Pos);
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(I2S_MODE_LEFT_JUSTIFIED),
-                                     (TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SSTD) >>
-                                         SPI_I2SCFGR_I2SSTD_Pos);
+            TEST_ASSERT_EQUAL_UINT32(
+                std::to_underlying(I2S_MASTER_TRANSMIT),
+                (TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SCFG) >>
+                    SPI_I2SCFGR_I2SCFG_Pos);
+            TEST_ASSERT_EQUAL_UINT32(
+                std::to_underlying(I2S_MODE_LEFT_JUSTIFIED),
+                (TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SSTD) >>
+                    SPI_I2SCFGR_I2SSTD_Pos);
             TEST_ASSERT_TRUE(TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_CKPOL);
 
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));
@@ -236,9 +281,10 @@ namespace test::i2s {
             config.direction = I2S_MASTER_RECEIVE;
             config.ckpol     = false;
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(I2S_MASTER_RECEIVE),
-                                     (TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SCFG) >>
-                                         SPI_I2SCFGR_I2SCFG_Pos);
+            TEST_ASSERT_EQUAL_UINT32(
+                std::to_underlying(I2S_MASTER_RECEIVE),
+                (TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_I2SCFG) >>
+                    SPI_I2SCFGR_I2SCFG_Pos);
             TEST_ASSERT_FALSE(TEST_INSTANCE->I2SCFGR & SPI_I2SCFGR_CKPOL);
 
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));
@@ -257,10 +303,12 @@ namespace test::i2s {
                 i2s_master_config_t config = DEFAULT_TX_CONFIG;
                 config.frame               = frame;
 
-                TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
-                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(frame),
-                                         TEST_INSTANCE->I2SCFGR &
-                                             (SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_CHLEN));
+                TEST_ASSERT_EQUAL(HAL_OK,
+                                  i2s_master_init(TEST_INSTANCE, &config));
+                TEST_ASSERT_EQUAL_UINT32(
+                    std::to_underlying(frame),
+                    TEST_INSTANCE->I2SCFGR &
+                        (SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_CHLEN));
                 TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));
             }
 
@@ -268,7 +316,8 @@ namespace test::i2s {
         }
 
         void mclk_pin_only_programmed_when_use_mck_is_set() {
-            const uint32_t mclk_mode_before = get_gpio_moder(MCLK_PORT, MCLK_PIN);
+            const uint32_t mclk_mode_before =
+                get_gpio_moder(MCLK_PORT, MCLK_PIN);
 
             i2s_master_config_t config = DEFAULT_TX_CONFIG;
             config.use_mck             = false;
@@ -277,7 +326,8 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
 
             // use_mck == false: init must never touch the MCLK pin at all
-            TEST_ASSERT_EQUAL_UINT32(mclk_mode_before, get_gpio_moder(MCLK_PORT, MCLK_PIN));
+            TEST_ASSERT_EQUAL_UINT32(mclk_mode_before,
+                                     get_gpio_moder(MCLK_PORT, MCLK_PIN));
             TEST_ASSERT_FALSE(TEST_INSTANCE->I2SPR & SPI_I2SPR_MCKOE);
 
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));
@@ -286,7 +336,8 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
 
             // use_mck == true: MCLK pin goes to alternate function (0b10), and MCKOE gets set
-            TEST_ASSERT_EQUAL_UINT32(0b10U, get_gpio_moder(MCLK_PORT, MCLK_PIN));
+            TEST_ASSERT_EQUAL_UINT32(0b10U,
+                                     get_gpio_moder(MCLK_PORT, MCLK_PIN));
             TEST_ASSERT_TRUE(TEST_INSTANCE->I2SPR & SPI_I2SPR_MCKOE);
 
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));
@@ -328,20 +379,26 @@ namespace test::i2s {
         void dma_init_rejects_unsupported_instances() {
             // I2S1 and I2S5 (== SPI1/SPI5) have no DMA streams mapped
             i2sx_clk_enable(I2S1, true);
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, i2s_master_dma_init(I2S1, DMA_PRIORITY_LOW));
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, i2s_master_dma_deinit(I2S1));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              i2s_master_dma_init(I2S1, DMA_PRIORITY_LOW));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              i2s_master_dma_deinit(I2S1));
             i2sx_clk_enable(I2S1, false);
 
             i2sx_clk_enable(I2S5, true);
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, i2s_master_dma_init(I2S5, DMA_PRIORITY_LOW));
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, i2s_master_dma_deinit(I2S5));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              i2s_master_dma_init(I2S5, DMA_PRIORITY_LOW));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              i2s_master_dma_deinit(I2S5));
             i2sx_clk_enable(I2S5, false);
         }
 
         void transmit_oneshot_completes_and_invokes_callback() {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_TX_CONFIG));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_TX_CONFIG));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
             audio_pll_clock_config(DEFAULT_TX_CONFIG.audio_clock);
 
             constexpr auto TX_DATA = std::array{0, 1, 2, 3, 4, 5, 6, 7};
@@ -349,11 +406,14 @@ namespace test::i2s {
             s_tx_done = false;
             s_tx_err  = HAL_FAIL;
 
-            TEST_ASSERT_EQUAL(
-                HAL_OK,
-                i2s_master_transmit_oneshot(
-                    TEST_INSTANCE, TX_DATA.data(), TX_DATA.size(), tx_done_callback, nullptr));
-            TEST_ASSERT_TRUE_MESSAGE(wait_for(s_tx_done), "I2S DMA oneshot TX never completed");
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              i2s_master_transmit_oneshot(TEST_INSTANCE,
+                                                          TX_DATA.data(),
+                                                          TX_DATA.size(),
+                                                          tx_done_callback,
+                                                          nullptr));
+            TEST_ASSERT_TRUE_MESSAGE(wait_for(s_tx_done),
+                                     "I2S DMA oneshot TX never completed");
             TEST_ASSERT_EQUAL(HAL_OK, s_tx_err);
 
             audio_pll_clock_config(AUDIO_PLL_DISABLE);
@@ -364,8 +424,10 @@ namespace test::i2s {
 
         void receive_oneshot_completes_and_invokes_callback() {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_RX_CONFIG));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_RX_CONFIG));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
             audio_pll_clock_config(DEFAULT_RX_CONFIG.audio_clock);
 
             std::array<uint16_t, 8> rx_buf{};
@@ -373,11 +435,14 @@ namespace test::i2s {
             s_rx_done = false;
             s_rx_err  = HAL_FAIL;
 
-            TEST_ASSERT_EQUAL(
-                HAL_OK,
-                i2s_master_receive_oneshot(
-                    TEST_INSTANCE, rx_buf.data(), rx_buf.size(), rx_done_callback, nullptr));
-            TEST_ASSERT_TRUE_MESSAGE(wait_for(s_rx_done), "I2S DMA oneshot RX never completed");
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              i2s_master_receive_oneshot(TEST_INSTANCE,
+                                                         rx_buf.data(),
+                                                         rx_buf.size(),
+                                                         rx_done_callback,
+                                                         nullptr));
+            TEST_ASSERT_TRUE_MESSAGE(wait_for(s_rx_done),
+                                     "I2S DMA oneshot RX never completed");
             TEST_ASSERT_EQUAL(HAL_OK, s_rx_err);
             // Content is meaningless with nothing driving the SD line. Only completion matters
 
@@ -399,24 +464,31 @@ namespace test::i2s {
 
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
             audio_pll_clock_config(config.audio_clock);
 
             constexpr std::array<uint16_t, 1024> tx_data{};
 
             s_tx_done = false;
-            TEST_ASSERT_EQUAL(
-                HAL_OK,
-                i2s_master_transmit_oneshot(
-                    TEST_INSTANCE, tx_data.data(), tx_data.size(), tx_done_callback, nullptr));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              i2s_master_transmit_oneshot(TEST_INSTANCE,
+                                                          tx_data.data(),
+                                                          tx_data.size(),
+                                                          tx_done_callback,
+                                                          nullptr));
 
             // Reentering immediately, before the first transfer has had any real time to finish
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE,
-                              i2s_master_transmit_oneshot(
-                                  TEST_INSTANCE, tx_data.data(), tx_data.size(), nullptr, nullptr));
+                              i2s_master_transmit_oneshot(TEST_INSTANCE,
+                                                          tx_data.data(),
+                                                          tx_data.size(),
+                                                          nullptr,
+                                                          nullptr));
 
-            TEST_ASSERT_TRUE_MESSAGE(wait_for(s_tx_done),
-                                     "First I2S DMA oneshot TX never completed");
+            TEST_ASSERT_TRUE_MESSAGE(
+                wait_for(s_tx_done),
+                "First I2S DMA oneshot TX never completed");
 
             audio_pll_clock_config(AUDIO_PLL_DISABLE);
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_deinit(TEST_INSTANCE));
@@ -430,28 +502,36 @@ namespace test::i2s {
 
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &config));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
             audio_pll_clock_config(config.audio_clock);
 
             std::array<uint32_t, 100> tx_data{};
 
             // get the DMA stream for I2S2 so we can insect the stream's registers
             dma_stream_map_t dma_map;
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_get_dma_stream_map(&dma_map, 1)); // idx 1 == I2S2
-
-            s_tx_done = false;
             TEST_ASSERT_EQUAL(
                 HAL_OK,
-                i2s_master_transmit_oneshot(
-                    TEST_INSTANCE, tx_data.data(), tx_data.size(), tx_done_callback, nullptr));
+                spi_master_get_dma_stream_map(&dma_map, 1)); // idx 1 == I2S2
+
+            s_tx_done = false;
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              i2s_master_transmit_oneshot(TEST_INSTANCE,
+                                                          tx_data.data(),
+                                                          tx_data.size(),
+                                                          tx_done_callback,
+                                                          nullptr));
 
             // NDTR is read immediately after starting: for a >16-bit frame the driver must have programmed
             // double the sample count into the DMA stream, since each sample takes two half word DMA beats
             TEST_ASSERT_TRUE(dma_map.tx.stream->NDTR <= (tx_data.size() * 2));
-            TEST_ASSERT_TRUE(dma_map.tx.stream->NDTR >
-                             tx_data.size()); // Strictly more than 1x confirms doubling happened
+            TEST_ASSERT_TRUE(
+                dma_map.tx.stream->NDTR >
+                tx_data
+                    .size()); // Strictly more than 1x confirms doubling happened
 
-            TEST_ASSERT_TRUE_MESSAGE(wait_for(s_tx_done), "I2S DMA oneshot TX never completed");
+            TEST_ASSERT_TRUE_MESSAGE(wait_for(s_tx_done),
+                                     "I2S DMA oneshot TX never completed");
 
             audio_pll_clock_config(AUDIO_PLL_DISABLE);
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_deinit(TEST_INSTANCE));
@@ -459,7 +539,8 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, false));
         }
 
-        void oneshot_rejects_size_that_would_overflow_the_dma_transfer_length() {
+        void
+        oneshot_rejects_size_that_would_overflow_the_dma_transfer_length() {
             // At a 32-bit frame, actual_size = size * 2. Pick a size just over half of UINT16_MAX
             // so the doubled value overflows the field the driver packs it into.
             i2s_master_config_t config = DEFAULT_TX_CONFIG;
@@ -472,8 +553,11 @@ namespace test::i2s {
             std::array<uint32_t, 1024> tx_data{};
             constexpr uint16_t         oversized = 40'000;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_SIZE,
-                              i2s_master_transmit_oneshot(
-                                  TEST_INSTANCE, tx_data.data(), oversized, nullptr, nullptr));
+                              i2s_master_transmit_oneshot(TEST_INSTANCE,
+                                                          tx_data.data(),
+                                                          oversized,
+                                                          nullptr,
+                                                          nullptr));
 
             audio_pll_clock_config(AUDIO_PLL_DISABLE);
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_deinit(TEST_INSTANCE));
@@ -482,8 +566,10 @@ namespace test::i2s {
 
         void dbm_start_and_stop_toggle_the_dma_stream_enable_bit() {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_RX_CONFIG));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_RX_CONFIG));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_LOW));
             audio_pll_clock_config(DEFAULT_RX_CONFIG.audio_clock);
 
             std::array<uint16_t, 4> buf_0{};
@@ -499,7 +585,8 @@ namespace test::i2s {
                                                   nullptr));
 
             dma_stream_map_t dma_map;
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_get_dma_stream_map(&dma_map, 1));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              spi_master_get_dma_stream_map(&dma_map, 1));
             TEST_ASSERT_FALSE(dma_map.rx.stream->CR & DMA_SxCR_EN);
 
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_start(TEST_INSTANCE));
@@ -520,8 +607,10 @@ namespace test::i2s {
             // wait budget below. Content is irrelevant. Only the CT/buffer index bookkeeping is under test.
 
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, true));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_RX_CONFIG));
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_init(TEST_INSTANCE, &DEFAULT_RX_CONFIG));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, i2s_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
             audio_pll_clock_config(DEFAULT_RX_CONFIG.audio_clock);
 
             std::array<uint16_t, 1024> buf_0{};
@@ -537,15 +626,21 @@ namespace test::i2s {
                                                   nullptr));
             TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_start(TEST_INSTANCE));
 
-            TEST_ASSERT_TRUE_MESSAGE(wait_for_count(s_dbm_completions, 1),
-                                     "First I2S DBM half transfer never completed");
+            TEST_ASSERT_TRUE_MESSAGE(
+                wait_for_count(s_dbm_completions, 1),
+                "First I2S DBM half transfer never completed");
             uint8_t first_idx = 0xFFU;
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_get_filled_buffer(TEST_INSTANCE, &first_idx));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                i2s_master_dbm_get_filled_buffer(TEST_INSTANCE, &first_idx));
 
-            TEST_ASSERT_TRUE_MESSAGE(wait_for_count(s_dbm_completions, 2),
-                                     "Second I2S DBM half transfer never completed");
+            TEST_ASSERT_TRUE_MESSAGE(
+                wait_for_count(s_dbm_completions, 2),
+                "Second I2S DBM half transfer never completed");
             uint8_t second_idx = 0xFFU;
-            TEST_ASSERT_EQUAL(HAL_OK, i2s_master_dbm_get_filled_buffer(TEST_INSTANCE, &second_idx));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                i2s_master_dbm_get_filled_buffer(TEST_INSTANCE, &second_idx));
 
             TEST_ASSERT_TRUE(first_idx == 0 || first_idx == 1);
             TEST_ASSERT_NOT_EQUAL(first_idx, second_idx);
@@ -582,7 +677,8 @@ namespace test::i2s {
         RUN_TEST(receive_oneshot_completes_and_invokes_callback);
         RUN_TEST(oneshot_rejects_a_call_while_a_transfer_is_still_in_flight);
         RUN_TEST(oneshot_doubles_transfer_length_for_24_and_32_bit_frames);
-        RUN_TEST(oneshot_rejects_size_that_would_overflow_the_dma_transfer_length);
+        RUN_TEST(
+            oneshot_rejects_size_that_would_overflow_the_dma_transfer_length);
         RUN_TEST(dbm_start_and_stop_toggle_the_dma_stream_enable_bit);
         RUN_TEST(dbm_filled_buffer_index_alternates_across_completions);
 

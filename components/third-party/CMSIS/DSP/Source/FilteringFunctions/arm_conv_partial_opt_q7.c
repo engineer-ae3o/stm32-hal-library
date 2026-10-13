@@ -62,9 +62,9 @@ arm_status arm_conv_partial_opt_q7(const q7_t* pSrcA,
                                    uint32_t    numPoints,
                                    q15_t*      pScratch1,
                                    q15_t*      pScratch2) {
-    q15_t *     pScr2, *pScr1;          /* Intermediate pointers for scratch pointers */
-    q15_t       x4;                     /* Temporary input variable */
-    const q7_t *pIn1, *pIn2;            /* InputA and inputB pointer */
+    q15_t *     pScr2, *pScr1; /* Intermediate pointers for scratch pointers */
+    q15_t       x4;            /* Temporary input variable */
+    const q7_t *pIn1, *pIn2;   /* InputA and inputB pointer */
     uint32_t    j, k, blkCnt, tapCnt;   /* Loop counter */
     const q7_t* px;                     /* Temporary input1 pointer */
     q15_t*      py;                     /* Temporary input2 pointer */

@@ -45,9 +45,9 @@ typedef enum : uint8_t {
 
 
 typedef struct {
-    pcnt_mode_t   mode;    // How the timer, channel and the gpio gets configured
-    pcnt_edge_t   edge;    // What edge to count as a valid pulse
-    timer_pull_t  pull;    // Use a pullup or down resistor; or none
+    pcnt_mode_t   mode; // How the timer, channel and the gpio gets configured
+    pcnt_edge_t   edge; // What edge to count as a valid pulse
+    timer_pull_t  pull; // Use a pullup or down resistor; or none
     tim_clk_div_t clk_div; // The timer clock divider
 
     // Mode specific settings
@@ -96,7 +96,8 @@ typedef struct {
     board_pin_t channel_a; // Maps to TIMER_CHANNEL_1
     board_pin_t channel_b; // Maps to TIMER_CHANNEL_2
 
-    timer_cb_t callback; // Called on an update event (overflow or underflow of the timer's counter)
+    timer_cb_t
+        callback; // Called on an update event (overflow or underflow of the timer's counter)
 } qdec_config_t;
 
 

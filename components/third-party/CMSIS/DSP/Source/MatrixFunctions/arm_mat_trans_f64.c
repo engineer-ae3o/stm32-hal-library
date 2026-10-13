@@ -55,12 +55,13 @@
                    - \ref ARM_MATH_SIZE_MISMATCH : Matrix size check failed
  */
 
-arm_status arm_mat_trans_f64(const arm_matrix_instance_f64* pSrc, arm_matrix_instance_f64* pDst) {
-    float64_t* pIn  = pSrc->pData;       /* input data matrix pointer */
-    float64_t* pOut = pDst->pData;       /* output data matrix pointer */
-    float64_t* px;                       /* Temporary output data matrix pointer */
-    uint16_t   nRows = pSrc->numRows;    /* number of rows */
-    uint16_t   nCols = pSrc->numCols;    /* number of columns */
+arm_status arm_mat_trans_f64(const arm_matrix_instance_f64* pSrc,
+                             arm_matrix_instance_f64*       pDst) {
+    float64_t* pIn  = pSrc->pData;    /* input data matrix pointer */
+    float64_t* pOut = pDst->pData;    /* output data matrix pointer */
+    float64_t* px;                    /* Temporary output data matrix pointer */
+    uint16_t   nRows = pSrc->numRows; /* number of rows */
+    uint16_t   nCols = pSrc->numCols; /* number of columns */
     uint64_t   col, row = nRows, i = 0U; /* Loop counters */
     arm_status status;                   /* status of matrix transpose */
 

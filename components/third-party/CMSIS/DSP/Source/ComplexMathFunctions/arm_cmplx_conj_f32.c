@@ -70,12 +70,14 @@
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_conj_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSamples) {
+void arm_cmplx_conj_f32(const float32_t* pSrc,
+                        float32_t*       pDst,
+                        uint32_t         numSamples) {
     static const float32_t cmplx_conj_sign[4] = {1.0f, -1.0f, 1.0f, -1.0f};
-    uint32_t               blockSize          = numSamples * CMPLX_DIM; /* loop counters */
-    uint32_t               blkCnt;
-    f32x4_t                vecSrc;
-    f32x4_t                vecSign;
+    uint32_t blockSize = numSamples * CMPLX_DIM; /* loop counters */
+    uint32_t blkCnt;
+    f32x4_t  vecSrc;
+    f32x4_t  vecSign;
 
     /*
      * load sign vector
@@ -113,7 +115,9 @@ void arm_cmplx_conj_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSamp
 }
 
 #else
-void arm_cmplx_conj_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSamples) {
+void arm_cmplx_conj_f32(const float32_t* pSrc,
+                        float32_t*       pDst,
+                        uint32_t         numSamples) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)

@@ -9,11 +9,19 @@ void panic(const char* function, const char* file, int line) {
 }
 
 void restart(const char* function, const char* file, int line) {
-    LOGI("Restart", "System reboot requested from %s (%s:%d)", function, file, line);
+    LOGI("Restart",
+         "System reboot requested from %s (%s:%d)",
+         function,
+         file,
+         line);
     NVIC_SystemReset();
 }
 
-void assert_check(bool cond, const char* msg, const char* function, const char* file, int line) {
+void assert_check(bool        cond,
+                  const char* msg,
+                  const char* function,
+                  const char* file,
+                  int         line) {
     if (gnu_unlikely(!cond)) {
         LOGE("Assert", "Assert (%s) failed", msg);
         panic(function, file, line);

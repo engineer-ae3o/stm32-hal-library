@@ -121,7 +121,8 @@ void arm_mfcc_f32(const arm_mfcc_instance_f32* S,
 
     /* Apply MEL filters */
     for (i = 0; i < S->nbMelFilters; i++) {
-        arm_dot_prod_f32(pSrc + S->filterPos[i], coefs, S->filterLengths[i], &result);
+        arm_dot_prod_f32(
+            pSrc + S->filterPos[i], coefs, S->filterLengths[i], &result);
 
         coefs += S->filterLengths[i];
 

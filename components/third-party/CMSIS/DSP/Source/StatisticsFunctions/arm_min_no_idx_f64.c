@@ -45,7 +45,9 @@
   @param[out]    pResult    minimum value returned here
   @return        none
  */
-void arm_min_no_idx_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult) {
+void arm_min_no_idx_f64(const float64_t* pSrc,
+                        uint32_t         blockSize,
+                        float64_t*       pResult) {
     float64_t minValue = F64_MAX;
     float64_t newVal;
 

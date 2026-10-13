@@ -58,8 +58,8 @@ arm_status arm_mat_scale_q31(const arm_matrix_instance_q31* pSrc,
                              arm_matrix_instance_q31*       pDst) {
     q31_t*       pIn  = pSrc->pData; /* input data matrix pointer */
     q31_t*       pOut = pDst->pData; /* output data matrix pointer */
-    uint32_t     numSamples;         /* total number of elements in the matrix */
-    uint32_t     blkCnt;             /* loop counters */
+    uint32_t     numSamples; /* total number of elements in the matrix */
+    uint32_t     blkCnt;     /* loop counters */
     q31x4_t      vecIn, vecOut;
     q31_t const* pInVec;
     int32_t      totShift = shift + 1; /* shift to apply after scaling */
@@ -157,10 +157,11 @@ arm_status arm_mat_scale_q31(const arm_matrix_instance_q31* pSrc,
             /* C(m,n) = A(m,n) * k */
 
             /* Scale, saturate and store result in destination buffer. */
-            in  = *pIn++;                         /* read four inputs from source */
-            in  = ((q63_t)in * scaleFract) >> 32; /* multiply input with scaler value */
-            out = in << kShift;                   /* apply shifting */
-            if (in != (out >> kShift)) {          /* saturate the results. */
+            in  = *pIn++; /* read four inputs from source */
+            in  = ((q63_t)in * scaleFract) >>
+                  32;                    /* multiply input with scaler value */
+            out = in << kShift;          /* apply shifting */
+            if (in != (out >> kShift)) { /* saturate the results. */
                 out = 0x7FFFFFFF ^ (in >> 31);
             }
             *pOut++ = out; /* Store result destination */

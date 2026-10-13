@@ -85,8 +85,9 @@ float16_t arm_linear_interp_f16(arm_linear_interp_instance_f16* S, float16_t x);
   * @param[in]     Y  interpolation coordinate.
   * @return out interpolated value.
   */
-float16_t
-arm_bilinear_interp_f16(const arm_bilinear_interp_instance_f16* S, float16_t X, float16_t Y);
+float16_t arm_bilinear_interp_f16(const arm_bilinear_interp_instance_f16* S,
+                                  float16_t                               X,
+                                  float16_t                               Y);
 
 
 /**

@@ -76,7 +76,8 @@ arm_status arm_elementwise_mul_s8(const int8_t* input_1_vect,
 
         int32x4_t res_0 = vmulq_s32(input_1, input_2);
 
-        res_0 = arm_requantize_mve_32x4(res_0, vdupq_n_s32(out_mult), vdupq_n_s32(out_shift));
+        res_0 = arm_requantize_mve_32x4(
+            res_0, vdupq_n_s32(out_mult), vdupq_n_s32(out_shift));
 
         res_0 += vdupq_n_s32(out_offset);
 

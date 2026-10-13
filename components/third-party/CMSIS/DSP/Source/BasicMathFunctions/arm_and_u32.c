@@ -46,7 +46,10 @@
   @return        none
  */
 
-void arm_and_u32(const uint32_t* pSrcA, const uint32_t* pSrcB, uint32_t* pDst, uint32_t blockSize) {
+void arm_and_u32(const uint32_t* pSrcA,
+                 const uint32_t* pSrcB,
+                 uint32_t*       pDst,
+                 uint32_t        blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)

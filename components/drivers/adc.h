@@ -31,19 +31,23 @@ gpio_pin_ctx_t adc_channel_get_gpio(adc_channel_t channel);
 
 // For use with the external channels
 // The regular group with oneshot polling mode
-hal_err_t
-adc_regular_group_get_oneshot(ADC_TypeDef* handle, adc_channel_t channel, uint16_t* raw_data);
+hal_err_t adc_regular_group_get_oneshot(ADC_TypeDef*  handle,
+                                        adc_channel_t channel,
+                                        uint16_t*     raw_data);
 
 // The regular group with continuous DMA mode
-hal_err_t adc_regular_group_cont_start_conv(ADC_TypeDef*                   handle,
-                                            const adc_continuous_config_t* config);
+hal_err_t
+adc_regular_group_cont_start_conv(ADC_TypeDef*                   handle,
+                                  const adc_continuous_config_t* config);
 hal_err_t adc_regular_group_cont_end_conv(ADC_TypeDef* handle);
 
 // The injected group with interrupts
-hal_err_t adc_injected_group_start_conv(ADC_TypeDef*                       handle,
-                                        const adc_injected_group_config_t* config);
 hal_err_t
-adc_injected_group_get_result(ADC_TypeDef* handle, uint16_t* raw_data_buffer, size_t buffer_size);
+adc_injected_group_start_conv(ADC_TypeDef*                       handle,
+                              const adc_injected_group_config_t* config);
+hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle,
+                                        uint16_t*    raw_data_buffer,
+                                        size_t       buffer_size);
 
 
 // For operation of the internal channels.
@@ -65,7 +69,8 @@ hal_err_t adc_get_value_right_aligned(ADC_TypeDef*     handle,
 
 
 // For control of the analog watchdog control
-hal_err_t adc_analog_wdg_start(ADC_TypeDef* handle, const adc_analog_wdg_config_t* config);
+hal_err_t adc_analog_wdg_start(ADC_TypeDef*                   handle,
+                               const adc_analog_wdg_config_t* config);
 hal_err_t adc_analog_wdg_stop(ADC_TypeDef* handle);
 
 

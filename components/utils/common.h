@@ -47,51 +47,56 @@ extern "C" {
 
 // Ceiling division: smallest integer >= a/b.
 // Assumes a + b - 1 does not overflow the type.
-[[__gnu__::__always_inline__]] static inline uint32_t ceil_div_u32(uint32_t a, uint32_t b) {
+[[__gnu__::__always_inline__]] static inline uint32_t ceil_div_u32(uint32_t a,
+                                                                   uint32_t b) {
     return (a + (b - 1)) / b;
 }
 
-[[__gnu__::__always_inline__]] static inline uint64_t ceil_div_u64(uint64_t a, uint64_t b) {
+[[__gnu__::__always_inline__]] static inline uint64_t ceil_div_u64(uint64_t a,
+                                                                   uint64_t b) {
     return (a + (b - 1)) / b;
 }
 
 // Round half up division: nearest integer to a/b.
 // Assumes a + b/2 does not overflow the type.
-[[__gnu__::__always_inline__]] static inline uint32_t round_div_u32(uint32_t a, uint32_t b) {
+[[__gnu__::__always_inline__]] static inline uint32_t
+round_div_u32(uint32_t a, uint32_t b) {
     return (a + (b / 2)) / b;
 }
 
-[[__gnu__::__always_inline__]] static inline uint64_t round_div_u64(uint64_t a, uint64_t b) {
+[[__gnu__::__always_inline__]] static inline uint64_t
+round_div_u64(uint64_t a, uint64_t b) {
     return (a + (b / 2)) / b;
 }
 
 // Reset a peripheral
-#define reset_peripheral(register, bit_mask)                                                       \
-    do {                                                                                           \
-        (register) |= (bit_mask);                                                                  \
-        delay_us(1);                                                                               \
-        (register) &= ~(bit_mask);                                                                 \
-        delay_us(1);                                                                               \
+#define reset_peripheral(register, bit_mask)                                   \
+    do {                                                                       \
+        (register) |= (bit_mask);                                              \
+        delay_us(1);                                                           \
+        (register) &= ~(bit_mask);                                             \
+        delay_us(1);                                                           \
     } while (0)
 
 
-#define REBOOT()                                                                                   \
-    do {                                                                                           \
-        restart(__PRETTY_FUNCTION__, __FILE__, __LINE__);                                          \
+#define REBOOT()                                                               \
+    do {                                                                       \
+        restart(__PRETTY_FUNCTION__, __FILE__, __LINE__);                      \
     } while (0)
 
-#define PANIC()                                                                                    \
-    do {                                                                                           \
-        panic(__PRETTY_FUNCTION__, __FILE__, __LINE__);                                            \
+#define PANIC()                                                                \
+    do {                                                                       \
+        panic(__PRETTY_FUNCTION__, __FILE__, __LINE__);                        \
     } while (0)
 
-#define ASSERT(cond)                                                                               \
-    do {                                                                                           \
-        assert_check((cond), #cond, __PRETTY_FUNCTION__, __FILE__, __LINE__);                      \
+#define ASSERT(cond)                                                           \
+    do {                                                                       \
+        assert_check((cond), #cond, __PRETTY_FUNCTION__, __FILE__, __LINE__);  \
     } while (0)
 
 
-[[__gnu__::__noreturn__, __gnu__::__always_inline__]] static inline void halt(void) {
+[[__gnu__::__noreturn__,
+  __gnu__::__always_inline__]] static inline void halt(void) {
     __disable_irq();
 #if defined(DEBUG)
     __BKPT(0);
@@ -101,10 +106,15 @@ extern "C" {
     }
 }
 
-[[__gnu__::__noreturn__]] void panic(const char* function, const char* file, int line);
+[[__gnu__::__noreturn__]] void
+panic(const char* function, const char* file, int line);
 
 void restart(const char* function, const char* file, int line);
-void assert_check(bool cond, const char* msg, const char* function, const char* file, int line);
+void assert_check(bool        cond,
+                  const char* msg,
+                  const char* function,
+                  const char* file,
+                  int         line);
 
 
 // RTT buffer for logging. Controls the output buffer parameter
@@ -115,69 +125,69 @@ void assert_check(bool cond, const char* msg, const char* function, const char* 
 
 
 // Macros to help with error propagation
-#define TRY(func)                                                                                  \
-    do {                                                                                           \
-        hal_err_t ret_ = (func);                                                                   \
-        if (ret_ != HAL_OK) {                                                                      \
-            LOGE("ERROR",                                                                          \
-                 "%s (%s:%d) failed: %s",                                                          \
-                 #func,                                                                            \
-                 __FILE__,                                                                         \
-                 __LINE__,                                                                         \
-                 hal_err_to_string(ret_));                                                         \
-            return ret_;                                                                           \
-        }                                                                                          \
+#define TRY(func)                                                              \
+    do {                                                                       \
+        hal_err_t ret_ = (func);                                               \
+        if (ret_ != HAL_OK) {                                                  \
+            LOGE("ERROR",                                                      \
+                 "%s (%s:%d) failed: %s",                                      \
+                 #func,                                                        \
+                 __FILE__,                                                     \
+                 __LINE__,                                                     \
+                 hal_err_to_string(ret_));                                     \
+            return ret_;                                                       \
+        }                                                                      \
     } while (0)
 
-#define TRY_WITH_FUNC(func, err_cb)                                                                \
-    do {                                                                                           \
-        hal_err_t ret_ = (func);                                                                   \
-        if (ret_ != HAL_OK) {                                                                      \
-            LOGE("ERROR",                                                                          \
-                 "%s (%s:%d) failed: %s",                                                          \
-                 #func,                                                                            \
-                 __FILE__,                                                                         \
-                 __LINE__,                                                                         \
-                 hal_err_to_string(ret_));                                                         \
-            (err_cb);                                                                              \
-            return ret_;                                                                           \
-        }                                                                                          \
+#define TRY_WITH_FUNC(func, err_cb)                                            \
+    do {                                                                       \
+        hal_err_t ret_ = (func);                                               \
+        if (ret_ != HAL_OK) {                                                  \
+            LOGE("ERROR",                                                      \
+                 "%s (%s:%d) failed: %s",                                      \
+                 #func,                                                        \
+                 __FILE__,                                                     \
+                 __LINE__,                                                     \
+                 hal_err_to_string(ret_));                                     \
+            (err_cb);                                                          \
+            return ret_;                                                       \
+        }                                                                      \
     } while (0)
 
-#define TRY_WITH_FUNC_NO_RET(func, err_cb)                                                         \
-    do {                                                                                           \
-        hal_err_t ret_ = (func);                                                                   \
-        if (ret_ != HAL_OK) {                                                                      \
-            LOGE("ERROR",                                                                          \
-                 "%s (%s:%d) failed: %s",                                                          \
-                 #func,                                                                            \
-                 __FILE__,                                                                         \
-                 __LINE__,                                                                         \
-                 hal_err_to_string(ret_));                                                         \
-            (err_cb);                                                                              \
-        }                                                                                          \
+#define TRY_WITH_FUNC_NO_RET(func, err_cb)                                     \
+    do {                                                                       \
+        hal_err_t ret_ = (func);                                               \
+        if (ret_ != HAL_OK) {                                                  \
+            LOGE("ERROR",                                                      \
+                 "%s (%s:%d) failed: %s",                                      \
+                 #func,                                                        \
+                 __FILE__,                                                     \
+                 __LINE__,                                                     \
+                 hal_err_to_string(ret_));                                     \
+            (err_cb);                                                          \
+        }                                                                      \
     } while (0)
 
-#define TRY_THEN_LOG(func, msg)                                                                    \
-    do {                                                                                           \
-        hal_err_t ret_ = (func);                                                                   \
-        if (ret_ != HAL_OK) {                                                                      \
-            LOGE("ERROR", "%s: %s", msg, hal_err_to_string(ret_));                                 \
-        }                                                                                          \
+#define TRY_THEN_LOG(func, msg)                                                \
+    do {                                                                       \
+        hal_err_t ret_ = (func);                                               \
+        if (ret_ != HAL_OK) {                                                  \
+            LOGE("ERROR", "%s: %s", msg, hal_err_to_string(ret_));             \
+        }                                                                      \
     } while (0)
 
-#define TRY_THEN_FAIL(func)                                                                        \
-    do {                                                                                           \
-        hal_err_t ret_ = (func);                                                                   \
-        if (ret_ != HAL_OK) {                                                                      \
-            LOGE("ERROR",                                                                          \
-                 "%s (%s:%d) failed: %s",                                                          \
-                 #func,                                                                            \
-                 __FILE__,                                                                         \
-                 __LINE__,                                                                         \
-                 hal_err_to_string(ret_));                                                         \
-            ASSERT(false);                                                                         \
-        }                                                                                          \
+#define TRY_THEN_FAIL(func)                                                    \
+    do {                                                                       \
+        hal_err_t ret_ = (func);                                               \
+        if (ret_ != HAL_OK) {                                                  \
+            LOGE("ERROR",                                                      \
+                 "%s (%s:%d) failed: %s",                                      \
+                 #func,                                                        \
+                 __FILE__,                                                     \
+                 __LINE__,                                                     \
+                 hal_err_to_string(ret_));                                     \
+            ASSERT(false);                                                     \
+        }                                                                      \
     } while (0)
 
 

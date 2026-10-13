@@ -62,10 +62,14 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_filtering.h"
 
-void arm_correlate_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
-    const q15_t* pIn1 = pSrcA;                  /* inputA pointer               */
-    const q15_t* pIn2 = pSrcB + (srcBLen - 1U); /* inputB pointer               */
+void arm_correlate_q15(const q15_t* pSrcA,
+                       uint32_t     srcALen,
+                       const q15_t* pSrcB,
+                       uint32_t     srcBLen,
+                       q15_t*       pDst) {
+    const q15_t* pIn1 = pSrcA; /* inputA pointer               */
+    const q15_t* pIn2 =
+        pSrcB + (srcBLen - 1U); /* inputB pointer               */
     /*
      * Loop to perform MAC operations according to correlation equation
      */
@@ -168,7 +172,8 @@ void arm_correlate_q15(
          * size is fixed for all accumulators
          * X pointer is incrementing for successive accumulators
          */
-        MVE_INTR_CORR_QUAD_INC_X_FIXED_SIZE_Q15(acc0, acc1, acc2, acc3, pX, pY, srcBLen);
+        MVE_INTR_CORR_QUAD_INC_X_FIXED_SIZE_Q15(
+            acc0, acc1, acc2, acc3, pX, pY, srcBLen);
 
         *pDst = (q15_t)acc0;
         pDst += incr;
@@ -249,8 +254,11 @@ void arm_correlate_q15(
 }
 
 #else
-void arm_correlate_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
+void arm_correlate_q15(const q15_t* pSrcA,
+                       uint32_t     srcALen,
+                       const q15_t* pSrcB,
+                       uint32_t     srcBLen,
+                       q15_t*       pDst) {
 
 #if defined(ARM_MATH_DSP)
 
@@ -371,9 +379,11 @@ void arm_correlate_q15(
         while (k > 0U) {
             /* Perform the multiply-accumulate */
             /* x[0] * y[srcBLen - 4] , x[1] * y[srcBLen - 3] */
-            sum = __SMLALD(read_q15x2_ia((q15_t**)&px), read_q15x2_ia((q15_t**)&py), sum);
+            sum = __SMLALD(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_ia((q15_t**)&py), sum);
             /* x[3] * y[srcBLen - 1] , x[2] * y[srcBLen - 2] */
-            sum = __SMLALD(read_q15x2_ia((q15_t**)&px), read_q15x2_ia((q15_t**)&py), sum);
+            sum = __SMLALD(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_ia((q15_t**)&py), sum);
 
             /* Decrement loop counter */
             k--;
@@ -734,9 +744,11 @@ void arm_correlate_q15(
         while (k > 0U) {
             /* Perform the multiply-accumulate */
             /* sum += x[srcALen - srcBLen + 4] * y[3] , sum += x[srcALen - srcBLen + 3] * y[2] */
-            sum = __SMLALD(read_q15x2_ia((q15_t**)&px), read_q15x2_ia((q15_t**)&py), sum);
+            sum = __SMLALD(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_ia((q15_t**)&py), sum);
             /* sum += x[srcALen - srcBLen + 2] * y[1] , sum += x[srcALen - srcBLen + 1] * y[0] */
-            sum = __SMLALD(read_q15x2_ia((q15_t**)&px), read_q15x2_ia((q15_t**)&py), sum);
+            sum = __SMLALD(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_ia((q15_t**)&py), sum);
 
             /* Decrement loop counter */
             k--;

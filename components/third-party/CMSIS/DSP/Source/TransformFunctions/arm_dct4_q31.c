@@ -51,12 +51,15 @@
                    \image html dct4FormatsQ31Table.gif
  */
 
-void arm_dct4_q31(const arm_dct4_instance_q31* S, q31_t* pState, q31_t* pInlineBuffer) {
+void arm_dct4_q31(const arm_dct4_instance_q31* S,
+                  q31_t*                       pState,
+                  q31_t*                       pInlineBuffer) {
     const q31_t* weights = S->pTwiddle;   /* Pointer to the Weights table */
     const q31_t* cosFact = S->pCosFactor; /* Pointer to the cos factors table */
-    q31_t *      pS1, *pS2, *pbuff; /* Temporary pointers for input buffer and pState buffer */
-    q31_t        in;                /* Temporary variable */
-    uint32_t     i;                 /* Loop counter */
+    q31_t *      pS1, *pS2,
+        *pbuff;  /* Temporary pointers for input buffer and pState buffer */
+    q31_t    in; /* Temporary variable */
+    uint32_t i;  /* Loop counter */
 
 
     /* DCT4 computation involves DCT2 (which is calculated using RFFT)

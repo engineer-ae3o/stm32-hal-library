@@ -84,7 +84,10 @@ void arm_fir_init_q31(arm_fir_instance_q31* S,
 
 /* Clear state buffer. The size is always (blockSize + numTaps - 1) */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-    memset(pState, 0, (numTaps + (blockSize - 1U) + 2 * ROUND_UP(blockSize, 4)) * sizeof(q31_t));
+    memset(pState,
+           0,
+           (numTaps + (blockSize - 1U) + 2 * ROUND_UP(blockSize, 4)) *
+               sizeof(q31_t));
 #else
     memset(pState, 0, (numTaps + (blockSize - 1U)) * sizeof(q31_t));
 #endif

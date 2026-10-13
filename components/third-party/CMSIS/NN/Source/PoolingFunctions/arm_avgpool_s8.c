@@ -47,10 +47,11 @@ static void scale_q31_to_q7_and_clamp(const q31_t*  buffer,
     }
 
     for (int i = 0; i < length; i++) {
-        int32_t sum = buffer[i] > 0 ? (buffer[i] + half_count) : (buffer[i] - half_count);
-        sum         = sum / count;
-        sum         = MAX(sum, act_min);
-        sum         = MIN(sum, act_max);
+        int32_t sum =
+            buffer[i] > 0 ? (buffer[i] + half_count) : (buffer[i] - half_count);
+        sum = sum / count;
+        sum = MAX(sum, act_min);
+        sum = MIN(sum, act_max);
 
         target[i] = (q7_t)sum;
     }
@@ -160,41 +161,41 @@ arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
                     return ARM_MATH_ARGUMENT_ERROR;
                 }
 
-                sumV1[0] =
-                    sumV1[0] > 0 ? (sumV1[0] + count / 2) / count : (sumV1[0] - count / 2) / count;
-                sumV1[1] =
-                    sumV1[1] > 0 ? (sumV1[1] + count / 2) / count : (sumV1[1] - count / 2) / count;
-                sumV1[2] =
-                    sumV1[2] > 0 ? (sumV1[2] + count / 2) / count : (sumV1[2] - count / 2) / count;
-                sumV1[3] =
-                    sumV1[3] > 0 ? (sumV1[3] + count / 2) / count : (sumV1[3] - count / 2) / count;
+                sumV1[0] = sumV1[0] > 0 ? (sumV1[0] + count / 2) / count
+                                        : (sumV1[0] - count / 2) / count;
+                sumV1[1] = sumV1[1] > 0 ? (sumV1[1] + count / 2) / count
+                                        : (sumV1[1] - count / 2) / count;
+                sumV1[2] = sumV1[2] > 0 ? (sumV1[2] + count / 2) / count
+                                        : (sumV1[2] - count / 2) / count;
+                sumV1[3] = sumV1[3] > 0 ? (sumV1[3] + count / 2) / count
+                                        : (sumV1[3] - count / 2) / count;
 
-                sumV2[0] =
-                    sumV2[0] > 0 ? (sumV2[0] + count / 2) / count : (sumV2[0] - count / 2) / count;
-                sumV2[1] =
-                    sumV2[1] > 0 ? (sumV2[1] + count / 2) / count : (sumV2[1] - count / 2) / count;
-                sumV2[2] =
-                    sumV2[2] > 0 ? (sumV2[2] + count / 2) / count : (sumV2[2] - count / 2) / count;
-                sumV2[3] =
-                    sumV2[3] > 0 ? (sumV2[3] + count / 2) / count : (sumV2[3] - count / 2) / count;
+                sumV2[0] = sumV2[0] > 0 ? (sumV2[0] + count / 2) / count
+                                        : (sumV2[0] - count / 2) / count;
+                sumV2[1] = sumV2[1] > 0 ? (sumV2[1] + count / 2) / count
+                                        : (sumV2[1] - count / 2) / count;
+                sumV2[2] = sumV2[2] > 0 ? (sumV2[2] + count / 2) / count
+                                        : (sumV2[2] - count / 2) / count;
+                sumV2[3] = sumV2[3] > 0 ? (sumV2[3] + count / 2) / count
+                                        : (sumV2[3] - count / 2) / count;
 
-                sumV3[0] =
-                    sumV3[0] > 0 ? (sumV3[0] + count / 2) / count : (sumV3[0] - count / 2) / count;
-                sumV3[1] =
-                    sumV3[1] > 0 ? (sumV3[1] + count / 2) / count : (sumV3[1] - count / 2) / count;
-                sumV3[2] =
-                    sumV3[2] > 0 ? (sumV3[2] + count / 2) / count : (sumV3[2] - count / 2) / count;
-                sumV3[3] =
-                    sumV3[3] > 0 ? (sumV3[3] + count / 2) / count : (sumV3[3] - count / 2) / count;
+                sumV3[0] = sumV3[0] > 0 ? (sumV3[0] + count / 2) / count
+                                        : (sumV3[0] - count / 2) / count;
+                sumV3[1] = sumV3[1] > 0 ? (sumV3[1] + count / 2) / count
+                                        : (sumV3[1] - count / 2) / count;
+                sumV3[2] = sumV3[2] > 0 ? (sumV3[2] + count / 2) / count
+                                        : (sumV3[2] - count / 2) / count;
+                sumV3[3] = sumV3[3] > 0 ? (sumV3[3] + count / 2) / count
+                                        : (sumV3[3] - count / 2) / count;
 
-                sumV4[0] =
-                    sumV4[0] > 0 ? (sumV4[0] + count / 2) / count : (sumV4[0] - count / 2) / count;
-                sumV4[1] =
-                    sumV4[1] > 0 ? (sumV4[1] + count / 2) / count : (sumV4[1] - count / 2) / count;
-                sumV4[2] =
-                    sumV4[2] > 0 ? (sumV4[2] + count / 2) / count : (sumV4[2] - count / 2) / count;
-                sumV4[3] =
-                    sumV4[3] > 0 ? (sumV4[3] + count / 2) / count : (sumV4[3] - count / 2) / count;
+                sumV4[0] = sumV4[0] > 0 ? (sumV4[0] + count / 2) / count
+                                        : (sumV4[0] - count / 2) / count;
+                sumV4[1] = sumV4[1] > 0 ? (sumV4[1] + count / 2) / count
+                                        : (sumV4[1] - count / 2) / count;
+                sumV4[2] = sumV4[2] > 0 ? (sumV4[2] + count / 2) / count
+                                        : (sumV4[2] - count / 2) / count;
+                sumV4[3] = sumV4[3] > 0 ? (sumV4[3] + count / 2) / count
+                                        : (sumV4[3] - count / 2) / count;
 
                 sumV1 = vmaxq_s32(sumV1, vdupq_n_s32(act_min));
                 sumV1 = vminq_s32(sumV1, vdupq_n_s32(act_max));
@@ -241,7 +242,8 @@ arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
                     return ARM_MATH_ARGUMENT_ERROR;
                 }
 
-                sum = sum > 0 ? (sum + count / 2) / count : (sum - count / 2) / count;
+                sum = sum > 0 ? (sum + count / 2) / count
+                              : (sum - count / 2) / count;
                 sum = MAX(sum, act_min);
                 sum = MIN(sum, act_max);
 
@@ -277,7 +279,8 @@ arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
     const int32_t act_max  = pool_params->activation.max;
     const int32_t ch_src   = input_dims->c;
 
-    if (ctx->buf == NULL && arm_avgpool_s8_get_buffer_size(output_dims->w, input_dims->c)) {
+    if (ctx->buf == NULL &&
+        arm_avgpool_s8_get_buffer_size(output_dims->w, input_dims->c)) {
         return ARM_MATH_ARGUMENT_ERROR;
     }
     q31_t* buffer = (q31_t*)ctx->buf;
@@ -286,8 +289,10 @@ arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
 
     /* Run the following code for CPU's with DSP extension
      */
-    for (int i_y = 0, idx_y = -pad_y; i_y < output_y; idx_y += stride_y, i_y++) {
-        for (int i_x = 0, idx_x = -pad_x; i_x < output_x; idx_x += stride_x, i_x++) {
+    for (int i_y = 0, idx_y = -pad_y; i_y < output_y;
+         idx_y += stride_y, i_y++) {
+        for (int i_x = 0, idx_x = -pad_x; i_x < output_x;
+             idx_x += stride_x, i_x++) {
             /* Condition for kernel start dimension:
                       (base_idx_<x,y> + kernel_<x,y>_start) >= 0 */
             const int32_t kernel_y_start = MAX(0, -idx_y);
@@ -302,7 +307,8 @@ arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
 
             for (int k_y = kernel_y_start; k_y < kernel_y_end; k_y++) {
                 for (int k_x = kernel_x_start; k_x < kernel_x_end; k_x++) {
-                    const q7_t* start = src + ch_src * (k_x + idx_x + (k_y + idx_y) * input_x);
+                    const q7_t* start =
+                        src + ch_src * (k_x + idx_x + (k_y + idx_y) * input_x);
 
                     if (count == 0) {
                         for (int i = 0; i < ch_src; i++) {
@@ -322,7 +328,8 @@ arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
                 return ARM_MATH_ARGUMENT_ERROR;
             }
 
-            scale_q31_to_q7_and_clamp(buffer, dst, ch_src, count, act_min, act_max);
+            scale_q31_to_q7_and_clamp(
+                buffer, dst, ch_src, count, act_min, act_max);
             dst += ch_src;
         }
     }
@@ -339,11 +346,16 @@ arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
             for (i_ch_in = 0; i_ch_in < ch_src; i_ch_in++) {
                 int sum   = 0;
                 int count = 0;
-                for (k_y = i_y * stride_y - pad_y; k_y < i_y * stride_y - pad_y + kernel_y; k_y++) {
-                    for (k_x = i_x * stride_x - pad_x; k_x < i_x * stride_x - pad_x + kernel_x;
+                for (k_y = i_y * stride_y - pad_y;
+                     k_y < i_y * stride_y - pad_y + kernel_y;
+                     k_y++) {
+                    for (k_x = i_x * stride_x - pad_x;
+                         k_x < i_x * stride_x - pad_x + kernel_x;
                          k_x++) {
-                        if (k_y >= 0 && k_x >= 0 && k_y < input_y && k_x < input_x) {
-                            sum += src[i_ch_in + ch_src * (k_x + k_y * input_x)];
+                        if (k_y >= 0 && k_x >= 0 && k_y < input_y &&
+                            k_x < input_x) {
+                            sum +=
+                                src[i_ch_in + ch_src * (k_x + k_y * input_x)];
                             count++;
                         }
                     }
@@ -354,7 +366,8 @@ arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
                     return ARM_MATH_ARGUMENT_ERROR;
                 }
 
-                sum = sum > 0 ? (sum + count / 2) / count : (sum - count / 2) / count;
+                sum = sum > 0 ? (sum + count / 2) / count
+                              : (sum - count / 2) / count;
                 sum = MAX(sum, act_min);
                 sum = MIN(sum, act_max);
 

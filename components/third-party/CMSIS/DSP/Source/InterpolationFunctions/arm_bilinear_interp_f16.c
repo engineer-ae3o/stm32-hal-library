@@ -101,8 +101,9 @@
   * @param[in]     Y  interpolation coordinate.
   * @return out interpolated value.
   */
-float16_t
-arm_bilinear_interp_f16(const arm_bilinear_interp_instance_f16* S, float16_t X, float16_t Y) {
+float16_t arm_bilinear_interp_f16(const arm_bilinear_interp_instance_f16* S,
+                                  float16_t                               X,
+                                  float16_t                               Y) {
     float16_t  out;
     float16_t  f00, f01, f10, f11;
     float16_t* pData = S->pData;
@@ -115,7 +116,8 @@ arm_bilinear_interp_f16(const arm_bilinear_interp_instance_f16* S, float16_t X, 
 
     /* Care taken for table outside boundary */
     /* Returns zero output when values are outside table boundary */
-    if (xIndex < 0 || xIndex > (S->numCols - 2) || yIndex < 0 || yIndex > (S->numRows - 2)) {
+    if (xIndex < 0 || xIndex > (S->numCols - 2) || yIndex < 0 ||
+        yIndex > (S->numRows - 2)) {
         return (0);
     }
 
@@ -148,7 +150,8 @@ arm_bilinear_interp_f16(const arm_bilinear_interp_instance_f16* S, float16_t X, 
     ydiff = (_Float16)Y - (_Float16)yIndex;
 
     /* Calculation of bi-linear interpolated output */
-    out = (_Float16)b1 + (_Float16)b2 * (_Float16)xdiff + (_Float16)b3 * (_Float16)ydiff +
+    out = (_Float16)b1 + (_Float16)b2 * (_Float16)xdiff +
+          (_Float16)b3 * (_Float16)ydiff +
           (_Float16)b4 * (_Float16)xdiff * (_Float16)ydiff;
 
     /* return to application */

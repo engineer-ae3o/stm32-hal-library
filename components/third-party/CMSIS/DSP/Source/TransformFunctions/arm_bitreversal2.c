@@ -38,7 +38,9 @@
   @return        none
 */
 
-void arm_bitreversal_64(uint64_t* pSrc, const uint16_t bitRevLen, const uint16_t* pBitRevTab) {
+void arm_bitreversal_64(uint64_t*       pSrc,
+                        const uint16_t  bitRevLen,
+                        const uint16_t* pBitRevTab) {
     uint64_t a, b, i, tmp;
 
     for (i = 0; i < bitRevLen;) {
@@ -67,7 +69,9 @@ void arm_bitreversal_64(uint64_t* pSrc, const uint16_t bitRevLen, const uint16_t
   @return        none
 */
 
-void arm_bitreversal_32(uint32_t* pSrc, const uint16_t bitRevLen, const uint16_t* pBitRevTab) {
+void arm_bitreversal_32(uint32_t*       pSrc,
+                        const uint16_t  bitRevLen,
+                        const uint16_t* pBitRevTab) {
     uint32_t a, b, i, tmp;
 
     for (i = 0; i < bitRevLen;) {
@@ -97,7 +101,9 @@ void arm_bitreversal_32(uint32_t* pSrc, const uint16_t bitRevLen, const uint16_t
   @return        none
 */
 
-void arm_bitreversal_16(uint16_t* pSrc, const uint16_t bitRevLen, const uint16_t* pBitRevTab) {
+void arm_bitreversal_16(uint16_t*       pSrc,
+                        const uint16_t  bitRevLen,
+                        const uint16_t* pBitRevTab) {
     uint16_t a, b, i, tmp;
 
     for (i = 0; i < bitRevLen;) {

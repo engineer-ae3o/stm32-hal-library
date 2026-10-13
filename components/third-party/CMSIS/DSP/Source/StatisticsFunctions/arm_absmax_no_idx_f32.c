@@ -27,7 +27,8 @@
  */
 
 #include "dsp/statistics_functions.h"
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) &&                      \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include <limits.h>
 #endif
 
@@ -52,7 +53,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_absmax_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_absmax_no_idx_f32(const float32_t* pSrc,
+                           uint32_t         blockSize,
+                           float32_t*       pResult) {
     int32_t          blkCnt; /* loop counters */
     f32x4_t          vecSrc;
     float32_t const* pSrcVec;
@@ -100,9 +103,12 @@ void arm_absmax_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t*
 
 #else
 #if defined(ARM_MATH_LOOPUNROLL)
-void arm_absmax_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
-    float32_t cur_absmax, out; /* Temporary variables to store the output value. */
-    uint32_t  blkCnt;          /* Loop counter */
+void arm_absmax_no_idx_f32(const float32_t* pSrc,
+                           uint32_t         blockSize,
+                           float32_t*       pResult) {
+    float32_t cur_absmax,
+        out;         /* Temporary variables to store the output value. */
+    uint32_t blkCnt; /* Loop counter */
 
     /* Load first input value that act as reference value for comparision */
     out = *pSrc++;
@@ -111,10 +117,13 @@ void arm_absmax_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t*
     /* Loop unrolling: Compute 4 outputs at a time */
     blkCnt = (blockSize - 1U) >> 2U;
 
-    while (blkCnt > 0U) { /* Initialize cur_absmax to next consecutive values one by one */
+    while (
+        blkCnt >
+        0U) { /* Initialize cur_absmax to next consecutive values one by one */
         cur_absmax = *pSrc++;
-        cur_absmax =
-            (cur_absmax > 0.0f) ? cur_absmax : -cur_absmax; /* compare for the extrema value */
+        cur_absmax = (cur_absmax > 0.0f)
+                         ? cur_absmax
+                         : -cur_absmax; /* compare for the extrema value */
         if (cur_absmax > out) { /* Update the extrema value and it's index */
             out = cur_absmax;
         }
@@ -161,7 +170,9 @@ void arm_absmax_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t*
     *pResult = out;
 }
 #else
-void arm_absmax_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_absmax_no_idx_f32(const float32_t* pSrc,
+                           uint32_t         blockSize,
+                           float32_t*       pResult) {
     float32_t maxVal, out; /* Temporary variables to store the output value. */
     uint32_t  blkCnt;      /* Loop counter */
 

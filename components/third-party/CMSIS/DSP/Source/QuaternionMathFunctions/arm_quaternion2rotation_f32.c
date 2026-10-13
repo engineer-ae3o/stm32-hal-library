@@ -147,12 +147,18 @@ void arm_quaternion2rotation_f32(const float32_t* pInputQuaternions,
         float32_t q11 = SQ(pInputQuaternions[1 + nb * 4]);
         float32_t q22 = SQ(pInputQuaternions[2 + nb * 4]);
         float32_t q33 = SQ(pInputQuaternions[3 + nb * 4]);
-        float32_t q01 = pInputQuaternions[0 + nb * 4] * pInputQuaternions[1 + nb * 4];
-        float32_t q02 = pInputQuaternions[0 + nb * 4] * pInputQuaternions[2 + nb * 4];
-        float32_t q03 = pInputQuaternions[0 + nb * 4] * pInputQuaternions[3 + nb * 4];
-        float32_t q12 = pInputQuaternions[1 + nb * 4] * pInputQuaternions[2 + nb * 4];
-        float32_t q13 = pInputQuaternions[1 + nb * 4] * pInputQuaternions[3 + nb * 4];
-        float32_t q23 = pInputQuaternions[2 + nb * 4] * pInputQuaternions[3 + nb * 4];
+        float32_t q01 =
+            pInputQuaternions[0 + nb * 4] * pInputQuaternions[1 + nb * 4];
+        float32_t q02 =
+            pInputQuaternions[0 + nb * 4] * pInputQuaternions[2 + nb * 4];
+        float32_t q03 =
+            pInputQuaternions[0 + nb * 4] * pInputQuaternions[3 + nb * 4];
+        float32_t q12 =
+            pInputQuaternions[1 + nb * 4] * pInputQuaternions[2 + nb * 4];
+        float32_t q13 =
+            pInputQuaternions[1 + nb * 4] * pInputQuaternions[3 + nb * 4];
+        float32_t q23 =
+            pInputQuaternions[2 + nb * 4] * pInputQuaternions[3 + nb * 4];
 
         float32_t xx = q00 + q11 - q22 - q33;
         float32_t yy = q00 - q11 + q22 - q33;

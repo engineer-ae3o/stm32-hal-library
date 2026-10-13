@@ -105,7 +105,8 @@ float16_t arm_minkowski_distance_f16(const float16_t* pA,
         sumV = vaddq_m(sumV, sumV, tmpV, p0);
     }
 
-    return (powf((float32_t)vecAddAcrossF16Mve(sumV), (1.0f / (float32_t)order)));
+    return (
+        powf((float32_t)vecAddAcrossF16Mve(sumV), (1.0f / (float32_t)order)));
 }
 
 
@@ -121,7 +122,8 @@ float16_t arm_minkowski_distance_f16(const float16_t* pA,
 
     sum = 0.0f16;
     for (i = 0; i < blockSize; i++) {
-        sum += (_Float16)powf(fabsf((float32_t)((_Float16)pA[i] - (_Float16)pB[i])), order);
+        sum += (_Float16)powf(
+            fabsf((float32_t)((_Float16)pA[i] - (_Float16)pB[i])), order);
     }
 
 

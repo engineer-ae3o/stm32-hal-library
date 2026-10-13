@@ -64,18 +64,20 @@ void arm_fir_sparse_q15(arm_fir_sparse_instance_q15* S,
                         uint32_t                     blockSize) {
     q15_t*       pState  = S->pState;  /* State pointer */
     const q15_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q15_t*       px;                   /* Temporary pointers for scratch buffer */
-    q15_t*       py   = pState;        /* Temporary pointers for state buffer */
-    q15_t*       pb   = pScratchIn;    /* Temporary pointers for scratch buffer */
-    q15_t*       pOut = pDst;          /* Working pointer for output */
+    q15_t*       px;                /* Temporary pointers for scratch buffer */
+    q15_t*       py   = pState;     /* Temporary pointers for state buffer */
+    q15_t*       pb   = pScratchIn; /* Temporary pointers for scratch buffer */
+    q15_t*       pOut = pDst;       /* Working pointer for output */
     int32_t*     pTapDelay =
         S->pTapDelay; /* Pointer to the array containing offset of the non-zero tap values. */
     uint32_t delaySize = S->maxDelay + blockSize; /* state length */
-    uint16_t numTaps   = S->numTaps;              /* Number of filter coefficients in the filter  */
-    int32_t  readIndex;                           /* Read index of the state buffer */
-    uint32_t tapCnt, blkCnt;                      /* loop counters */
-    q31_t*   pScr2 = pScratchOut; /* Working pointer for scratch buffer of output values */
-    q15_t    coeff = *pCoeffs++;  /* Read the first coefficient value */
+    uint16_t numTaps =
+        S->numTaps;          /* Number of filter coefficients in the filter  */
+    int32_t  readIndex;      /* Read index of the state buffer */
+    uint32_t tapCnt, blkCnt; /* loop counters */
+    q31_t*   pScr2 =
+        pScratchOut; /* Working pointer for scratch buffer of output values */
+    q15_t coeff = *pCoeffs++; /* Read the first coefficient value */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q31_t in1, in2; /* Temporary variables */
@@ -83,7 +85,8 @@ void arm_fir_sparse_q15(arm_fir_sparse_instance_q15* S,
 
     /* BlockSize of Input samples are copied into the state buffer */
     /* StateIndex points to the starting position to write in the state buffer */
-    arm_circularWrite_q15(py, (int32_t)delaySize, &S->stateIndex, 1, pSrc, 1, blockSize);
+    arm_circularWrite_q15(
+        py, (int32_t)delaySize, &S->stateIndex, 1, pSrc, 1, blockSize);
 
     /* Loop over the number of taps. */
     tapCnt = numTaps;
@@ -100,8 +103,15 @@ void arm_fir_sparse_q15(arm_fir_sparse_instance_q15* S,
     py = pState;
 
     /* blockSize samples are read from the state buffer */
-    arm_circularRead_q15(
-        py, (int32_t)delaySize, &readIndex, 1, pb, pb, (int32_t)blockSize, 1, blockSize);
+    arm_circularRead_q15(py,
+                         (int32_t)delaySize,
+                         &readIndex,
+                         1,
+                         pb,
+                         pb,
+                         (int32_t)blockSize,
+                         1,
+                         blockSize);
 
     /* Working pointer for the scratch buffer of state values */
     px = pb;
@@ -164,8 +174,15 @@ void arm_fir_sparse_q15(arm_fir_sparse_instance_q15* S,
         py = pState;
 
         /* blockSize samples are read from the state buffer */
-        arm_circularRead_q15(
-            py, (int32_t)delaySize, &readIndex, 1, pb, pb, (int32_t)blockSize, 1, blockSize);
+        arm_circularRead_q15(py,
+                             (int32_t)delaySize,
+                             &readIndex,
+                             1,
+                             pb,
+                             pb,
+                             (int32_t)blockSize,
+                             1,
+                             blockSize);
 
         /* Working pointer for the scratch buffer of state values */
         px = pb;
@@ -230,8 +247,15 @@ void arm_fir_sparse_q15(arm_fir_sparse_instance_q15* S,
     py = pState;
 
     /* blockSize samples are read from the state buffer */
-    arm_circularRead_q15(
-        py, (int32_t)delaySize, &readIndex, 1, pb, pb, (int32_t)blockSize, 1, blockSize);
+    arm_circularRead_q15(py,
+                         (int32_t)delaySize,
+                         &readIndex,
+                         1,
+                         pb,
+                         pb,
+                         (int32_t)blockSize,
+                         1,
+                         blockSize);
 
     /* Working pointer for the scratch buffer of state values */
     px = pb;
@@ -287,10 +311,14 @@ void arm_fir_sparse_q15(arm_fir_sparse_instance_q15* S,
 
 #ifndef ARM_MATH_BIG_ENDIAN
         write_q15x2_ia(&pOut,
-                       __PKHBT((q15_t)__SSAT(in1 >> 15, 16), (q15_t)__SSAT(in2 >> 15, 16), 16));
+                       __PKHBT((q15_t)__SSAT(in1 >> 15, 16),
+                               (q15_t)__SSAT(in2 >> 15, 16),
+                               16));
 #else
         write_q15x2_ia(&pOut,
-                       __PKHBT((q15_t)__SSAT(in2 >> 15, 16), (q15_t)__SSAT(in1 >> 15, 16), 16));
+                       __PKHBT((q15_t)__SSAT(in2 >> 15, 16),
+                               (q15_t)__SSAT(in1 >> 15, 16),
+                               16));
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
         in1 = *pScr2++;
@@ -298,10 +326,14 @@ void arm_fir_sparse_q15(arm_fir_sparse_instance_q15* S,
 
 #ifndef ARM_MATH_BIG_ENDIAN
         write_q15x2_ia(&pOut,
-                       __PKHBT((q15_t)__SSAT(in1 >> 15, 16), (q15_t)__SSAT(in2 >> 15, 16), 16));
+                       __PKHBT((q15_t)__SSAT(in1 >> 15, 16),
+                               (q15_t)__SSAT(in2 >> 15, 16),
+                               16));
 #else
         write_q15x2_ia(&pOut,
-                       __PKHBT((q15_t)__SSAT(in2 >> 15, 16), (q15_t)__SSAT(in1 >> 15, 16), 16));
+                       __PKHBT((q15_t)__SSAT(in2 >> 15, 16),
+                               (q15_t)__SSAT(in1 >> 15, 16),
+                               16));
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
         /* Decrement loop counter */

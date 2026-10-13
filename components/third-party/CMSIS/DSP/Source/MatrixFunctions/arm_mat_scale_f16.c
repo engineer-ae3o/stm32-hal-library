@@ -64,11 +64,11 @@ arm_status arm_mat_scale_f16(const arm_matrix_instance_f16* pSrc,
     } else
 #endif /*    #ifdef ARM_MATH_MATRIX_CHECK    */
     {
-        float16_t*       pIn  = pSrc->pData; /* input data matrix pointer */
-        float16_t*       pOut = pDst->pData; /* output data matrix pointer */
-        uint32_t         numSamples;         /* total number of elements in the matrix */
-        uint32_t         blkCnt;             /* loop counters */
-        f16x8_t          vecIn, vecOut, vecScale;
+        float16_t* pIn  = pSrc->pData; /* input data matrix pointer */
+        float16_t* pOut = pDst->pData; /* output data matrix pointer */
+        uint32_t   numSamples; /* total number of elements in the matrix */
+        uint32_t   blkCnt;     /* loop counters */
+        f16x8_t    vecIn, vecOut, vecScale;
         float16_t const* pInVec;
 
         pInVec = (float16_t const*)pIn;

@@ -74,7 +74,9 @@
  *
  */
 
-void arm_q7_to_q15_reordered_no_shift(const q7_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+void arm_q7_to_q15_reordered_no_shift(const q7_t* pSrc,
+                                      q15_t*      pDst,
+                                      uint32_t    blockSize) {
     const q7_t* pIn = pSrc; /* Src pointer */
     uint32_t    blkCnt;     /* loop counter */
 

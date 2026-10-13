@@ -30,7 +30,7 @@
 #endif
 
 /* CMSIS compiler control architecture macros */
-#if ((defined(__TARGET_ARCH_6_M) && (__TARGET_ARCH_6_M == 1)) ||                                   \
+#if ((defined(__TARGET_ARCH_6_M) && (__TARGET_ARCH_6_M == 1)) ||               \
      (defined(__TARGET_ARCH_6S_M) && (__TARGET_ARCH_6S_M == 1)))
 #define __ARM_ARCH_6M__ 1
 #endif
@@ -87,13 +87,15 @@
 #define __UNALIGNED_UINT32(x) (*((__packed uint32_t*)(x)))
 #endif
 #ifndef __UNALIGNED_UINT16_WRITE
-#define __UNALIGNED_UINT16_WRITE(addr, val) ((*((__packed uint16_t*)(addr))) = (val))
+#define __UNALIGNED_UINT16_WRITE(addr, val)                                    \
+    ((*((__packed uint16_t*)(addr))) = (val))
 #endif
 #ifndef __UNALIGNED_UINT16_READ
 #define __UNALIGNED_UINT16_READ(addr) (*((const __packed uint16_t*)(addr)))
 #endif
 #ifndef __UNALIGNED_UINT32_WRITE
-#define __UNALIGNED_UINT32_WRITE(addr, val) ((*((__packed uint32_t*)(addr))) = (val))
+#define __UNALIGNED_UINT32_WRITE(addr, val)                                    \
+    ((*((__packed uint32_t*)(addr))) = (val))
 #endif
 #ifndef __UNALIGNED_UINT32_READ
 #define __UNALIGNED_UINT32_READ(addr) (*((const __packed uint32_t*)(addr)))
@@ -198,7 +200,8 @@
   \return               Reversed value
  */
 #ifndef __NO_EMBEDDED_ASM
-__attribute__((section(".rev16_text"))) __STATIC_INLINE __ASM uint32_t __REV16(uint32_t value) {
+__attribute__((section(".rev16_text"))) __STATIC_INLINE __ASM uint32_t
+__REV16(uint32_t value) {
     rev16 r0, r0 bx lr
 }
 #endif
@@ -210,8 +213,8 @@ __attribute__((section(".rev16_text"))) __STATIC_INLINE __ASM uint32_t __REV16(u
   \return               Reversed value
  */
 #ifndef __NO_EMBEDDED_ASM
-__attribute__((section(".revsh_text"))) __STATIC_INLINE __ASM int16_t __REVSH(int16_t value){
-    revsh r0, r0 bx lr}
+__attribute__((section(".revsh_text")))
+__STATIC_INLINE __ASM int16_t __REVSH(int16_t value){revsh r0, r0 bx lr}
 #endif
 
 /**
@@ -238,7 +241,7 @@ __attribute__((section(".revsh_text"))) __STATIC_INLINE __ASM int16_t __REVSH(in
   \param [in]    value  Value to reverse
   \return               Reversed value
  */
-#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) ||                                       \
+#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) ||                   \
      (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)))
 #define __RBIT __rbit
 #else
@@ -265,7 +268,7 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __RBIT(uint32_t value) {
  */
 #define __CLZ __clz
 
-#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) ||                                       \
+#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) ||                   \
      (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)))
 
 /**
@@ -277,8 +280,9 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __RBIT(uint32_t value) {
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __LDREXB(ptr) ((uint8_t)__ldrex(ptr))
 #else
-#define __LDREXB(ptr)                                                                              \
-    _Pragma("push") _Pragma("diag_suppress 3731")((uint8_t)__ldrex(ptr)) _Pragma("pop")
+#define __LDREXB(ptr)                                                          \
+    _Pragma("push") _Pragma("diag_suppress 3731")((uint8_t)__ldrex(ptr))       \
+        _Pragma("pop")
 #endif
 
 /**
@@ -290,8 +294,9 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __RBIT(uint32_t value) {
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __LDREXH(ptr) ((uint16_t)__ldrex(ptr))
 #else
-#define __LDREXH(ptr)                                                                              \
-    _Pragma("push") _Pragma("diag_suppress 3731")((uint16_t)__ldrex(ptr)) _Pragma("pop")
+#define __LDREXH(ptr)                                                          \
+    _Pragma("push") _Pragma("diag_suppress 3731")((uint16_t)__ldrex(ptr))      \
+        _Pragma("pop")
 #endif
 
 /**
@@ -303,8 +308,9 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __RBIT(uint32_t value) {
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __LDREXW(ptr) ((uint32_t)__ldrex(ptr))
 #else
-#define __LDREXW(ptr)                                                                              \
-    _Pragma("push") _Pragma("diag_suppress 3731")((uint32_t)__ldrex(ptr)) _Pragma("pop")
+#define __LDREXW(ptr)                                                          \
+    _Pragma("push") _Pragma("diag_suppress 3731")((uint32_t)__ldrex(ptr))      \
+        _Pragma("pop")
 #endif
 
 /**
@@ -318,8 +324,9 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __RBIT(uint32_t value) {
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __STREXB(value, ptr) __strex(value, ptr)
 #else
-#define __STREXB(value, ptr)                                                                       \
-    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr) _Pragma("pop")
+#define __STREXB(value, ptr)                                                   \
+    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr)          \
+        _Pragma("pop")
 #endif
 
 /**
@@ -333,8 +340,9 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __RBIT(uint32_t value) {
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __STREXH(value, ptr) __strex(value, ptr)
 #else
-#define __STREXH(value, ptr)                                                                       \
-    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr) _Pragma("pop")
+#define __STREXH(value, ptr)                                                   \
+    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr)          \
+        _Pragma("pop")
 #endif
 
 /**
@@ -348,8 +356,9 @@ __attribute__((always_inline)) __STATIC_INLINE uint32_t __RBIT(uint32_t value) {
 #if defined(__ARMCC_VERSION) && (__ARMCC_VERSION < 5060020)
 #define __STREXW(value, ptr) __strex(value, ptr)
 #else
-#define __STREXW(value, ptr)                                                                       \
-    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr) _Pragma("pop")
+#define __STREXW(value, ptr)                                                   \
+    _Pragma("push") _Pragma("diag_suppress 3731") __strex(value, ptr)          \
+        _Pragma("pop")
 #endif
 
 /**
@@ -446,7 +455,8 @@ __attribute__((section(".rrx_text"))) __STATIC_INLINE __ASM uint32_t
   \param [in]    sat  Bit position to saturate to (1..32)
   \return             Saturated value
  */
-__attribute__((always_inline)) __STATIC_INLINE int32_t __SSAT(int32_t val, uint32_t sat) {
+__attribute__((always_inline)) __STATIC_INLINE int32_t __SSAT(int32_t  val,
+                                                              uint32_t sat) {
     if ((sat >= 1U) && (sat <= 32U)) {
         const int32_t max = (int32_t)((1U << (sat - 1U)) - 1U);
         const int32_t min = -1 - max;
@@ -466,7 +476,8 @@ __attribute__((always_inline)) __STATIC_INLINE int32_t __SSAT(int32_t val, uint3
   \param [in]    sat  Bit position to saturate to (0..31)
   \return             Saturated value
  */
-__attribute__((always_inline)) __STATIC_INLINE uint32_t __USAT(int32_t val, uint32_t sat) {
+__attribute__((always_inline)) __STATIC_INLINE uint32_t __USAT(int32_t  val,
+                                                               uint32_t sat) {
     if (sat <= 31U) {
         const uint32_t max = ((1U << sat) - 1U);
         if (val > (int32_t)max) {
@@ -614,7 +625,7 @@ __STATIC_INLINE void __set_PRIMASK(uint32_t priMask) {
     __regPriMask = (priMask);
 }
 
-#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) ||                                       \
+#if ((defined(__ARM_ARCH_7M__) && (__ARM_ARCH_7M__ == 1)) ||                   \
      (defined(__ARM_ARCH_7EM__) && (__ARM_ARCH_7EM__ == 1)))
 
 /**
@@ -691,7 +702,7 @@ __STATIC_INLINE void __set_FAULTMASK(uint32_t faultMask) {
   \return               Floating Point Status/Control register value
  */
 __STATIC_INLINE uint32_t __get_FPSCR(void) {
-#if ((defined(__FPU_PRESENT) && (__FPU_PRESENT == 1U)) &&                                          \
+#if ((defined(__FPU_PRESENT) && (__FPU_PRESENT == 1U)) &&                      \
      (defined(__FPU_USED) && (__FPU_USED == 1U)))
     register uint32_t __regfpscr __ASM("fpscr");
     return (__regfpscr);
@@ -706,7 +717,7 @@ __STATIC_INLINE uint32_t __get_FPSCR(void) {
   \param [in]    fpscr  Floating Point Status/Control value to set
  */
 __STATIC_INLINE void __set_FPSCR(uint32_t fpscr) {
-#if ((defined(__FPU_PRESENT) && (__FPU_PRESENT == 1U)) &&                                          \
+#if ((defined(__FPU_PRESENT) && (__FPU_PRESENT == 1U)) &&                      \
      (defined(__FPU_USED) && (__FPU_USED == 1U)))
     register uint32_t __regfpscr __ASM("fpscr");
     __regfpscr = (fpscr);
@@ -785,13 +796,15 @@ __STATIC_INLINE void __set_FPSCR(uint32_t fpscr) {
 #define __QADD __qadd
 #define __QSUB __qsub
 
-#define __PKHBT(ARG1, ARG2, ARG3)                                                                  \
-    (((((uint32_t)(ARG1))) & 0x0000FFFFUL) | ((((uint32_t)(ARG2)) << (ARG3)) & 0xFFFF0000UL))
+#define __PKHBT(ARG1, ARG2, ARG3)                                              \
+    (((((uint32_t)(ARG1))) & 0x0000FFFFUL) |                                   \
+     ((((uint32_t)(ARG2)) << (ARG3)) & 0xFFFF0000UL))
 
-#define __PKHTB(ARG1, ARG2, ARG3)                                                                  \
-    (((((uint32_t)(ARG1))) & 0xFFFF0000UL) | ((((uint32_t)(ARG2)) >> (ARG3)) & 0x0000FFFFUL))
+#define __PKHTB(ARG1, ARG2, ARG3)                                              \
+    (((((uint32_t)(ARG1))) & 0xFFFF0000UL) |                                   \
+     ((((uint32_t)(ARG2)) >> (ARG3)) & 0x0000FFFFUL))
 
-#define __SMMLA(ARG1, ARG2, ARG3)                                                                  \
+#define __SMMLA(ARG1, ARG2, ARG3)                                              \
     ((int32_t)((((int64_t)(ARG1) * (ARG2)) + ((int64_t)(ARG3) << 32U)) >> 32U))
 
 #define __SXTB16_RORn(ARG1, ARG2) __SXTB16(__ROR(ARG1, ARG2))

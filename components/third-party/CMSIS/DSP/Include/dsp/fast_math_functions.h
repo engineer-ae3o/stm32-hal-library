@@ -225,7 +225,8 @@ void arm_vexp_f64(const float64_t* pSrc, float64_t* pDst, uint32_t blockSize);
                    - \ref ARM_MATH_SUCCESS        : input value is positive
                    - \ref ARM_MATH_ARGUMENT_ERROR : input value is negative; *pOut is set to 0
  */
-__STATIC_FORCEINLINE arm_status arm_sqrt_f32(const float32_t in, float32_t* pOut) {
+__STATIC_FORCEINLINE arm_status arm_sqrt_f32(const float32_t in,
+                                             float32_t*      pOut) {
     if (in >= 0.0f) {
 #if defined(__CC_ARM)
 #if defined __TARGET_FPU_VFP
@@ -291,7 +292,10 @@ arm_status arm_sqrt_q15(q15_t in, q15_t* pOut);
   to the saturated negative or positive value.
  */
 
-arm_status arm_divide_q15(q15_t numerator, q15_t denominator, q15_t* quotient, int16_t* shift);
+arm_status arm_divide_q15(q15_t    numerator,
+                          q15_t    denominator,
+                          q15_t*   quotient,
+                          int16_t* shift);
 
 /**
   @brief         Fixed point division
@@ -305,7 +309,10 @@ arm_status arm_divide_q15(q15_t numerator, q15_t denominator, q15_t* quotient, i
   to the saturated negative or positive value.
  */
 
-arm_status arm_divide_q31(q31_t numerator, q31_t denominator, q31_t* quotient, int16_t* shift);
+arm_status arm_divide_q31(q31_t    numerator,
+                          q31_t    denominator,
+                          q31_t*   quotient,
+                          int16_t* shift);
 
 
 /**

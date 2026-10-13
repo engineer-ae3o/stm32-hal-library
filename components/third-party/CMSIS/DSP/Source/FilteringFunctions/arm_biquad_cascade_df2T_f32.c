@@ -45,21 +45,21 @@
   @param[in]     blockSize number of samples to process
   @return        none
  */
-#if (defined(ARM_MATH_MVEF) && defined(ARM_MATH_HELIUM_EXPERIMENTAL)) &&                           \
+#if (defined(ARM_MATH_MVEF) && defined(ARM_MATH_HELIUM_EXPERIMENTAL)) &&       \
     !defined(ARM_MATH_AUTOVECTORIZE)
 #include "arm_helium_utils.h"
 
 void arm_biquad_cascade_df2T_f32(const arm_biquad_cascade_df2T_instance_f32* S,
-                                 const float32_t*                            pSrc,
-                                 float32_t*                                  pDst,
-                                 uint32_t                                    blockSize) {
+                                 const float32_t* pSrc,
+                                 float32_t*       pDst,
+                                 uint32_t         blockSize) {
     const float32_t* pIn = pSrc; /*  source pointer            */
     float32_t        Xn0, Xn1;
     float32_t        acc0, acc1;
-    float32_t*       pOut   = pDst;                /*  destination pointer       */
-    float32_t*       pState = S->pState;           /*  State pointer             */
-    uint32_t         sample, stage = S->numStages; /*  loop counters             */
-    float32_t const* pCurCoeffs =                  /*  coefficient pointer       */
+    float32_t*       pOut   = pDst;        /*  destination pointer       */
+    float32_t*       pState = S->pState;   /*  State pointer             */
+    uint32_t sample, stage = S->numStages; /*  loop counters             */
+    float32_t const* pCurCoeffs =          /*  coefficient pointer       */
         (float32_t const*)S->pCoeffs;
     f32x4_t b0Coeffs, a0Coeffs; /*  Coefficients vector       */
     f32x4_t b1Coeffs, a1Coeffs; /*  Modified coef. vector     */
@@ -178,18 +178,18 @@ void arm_biquad_cascade_df2T_f32(const arm_biquad_cascade_df2T_instance_f32* S,
 #if defined(ARM_MATH_NEON)
 
 void arm_biquad_cascade_df2T_f32(const arm_biquad_cascade_df2T_instance_f32* S,
-                                 const float32_t*                            pSrc,
-                                 float32_t*                                  pDst,
-                                 uint32_t                                    blockSize) {
-    const float32_t* pIn     = pSrc;                         /*  source pointer            */
-    float32_t*       pOut    = pDst;                         /*  destination pointer       */
-    float32_t*       pState  = S->pState;                    /*  State pointer             */
-    const float32_t* pCoeffs = S->pCoeffs;                   /*  coefficient pointer       */
-    float32_t        acc1;                                   /*  accumulator               */
-    float32_t        b0, b1, b2, a1, a2;                     /*  Filter coefficients       */
-    float32_t        Xn1;                                    /*  temporary input           */
-    float32_t        d1, d2;                                 /*  state variables           */
-    uint32_t         sample, stageCnt, stage = S->numStages; /*   loop counters   */
+                                 const float32_t* pSrc,
+                                 float32_t*       pDst,
+                                 uint32_t         blockSize) {
+    const float32_t* pIn     = pSrc;       /*  source pointer            */
+    float32_t*       pOut    = pDst;       /*  destination pointer       */
+    float32_t*       pState  = S->pState;  /*  State pointer             */
+    const float32_t* pCoeffs = S->pCoeffs; /*  coefficient pointer       */
+    float32_t        acc1;                 /*  accumulator               */
+    float32_t        b0, b1, b2, a1, a2;   /*  Filter coefficients       */
+    float32_t        Xn1;                  /*  temporary input           */
+    float32_t        d1, d2;               /*  state variables           */
+    uint32_t sample, stageCnt, stage = S->numStages; /*   loop counters   */
 
 
     float32x4_t   XnV, YnV;
@@ -334,9 +334,9 @@ void arm_biquad_cascade_df2T_f32(const arm_biquad_cascade_df2T_instance_f32* S,
 #else
 
 void arm_biquad_cascade_df2T_f32(const arm_biquad_cascade_df2T_instance_f32* S,
-                                 const float32_t*                            pSrc,
-                                 float32_t*                                  pDst,
-                                 uint32_t                                    blockSize) {
+                                 const float32_t* pSrc,
+                                 float32_t*       pDst,
+                                 uint32_t         blockSize) {
     const float32_t* pIn     = pSrc;               /* Source pointer */
     float32_t*       pOut    = pDst;               /* Destination pointer */
     float32_t*       pState  = S->pState;          /* State pointer */

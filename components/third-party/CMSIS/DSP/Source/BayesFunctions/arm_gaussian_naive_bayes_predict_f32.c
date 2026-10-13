@@ -55,10 +55,11 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-uint32_t arm_gaussian_naive_bayes_predict_f32(const arm_gaussian_naive_bayes_instance_f32* S,
-                                              const float32_t*                             in,
-                                              float32_t* pOutputProbabilities,
-                                              float32_t* pBufferB) {
+uint32_t arm_gaussian_naive_bayes_predict_f32(
+    const arm_gaussian_naive_bayes_instance_f32* S,
+    const float32_t*                             in,
+    float32_t*                                   pOutputProbabilities,
+    float32_t*                                   pBufferB) {
     uint32_t         nbClass;
     const float32_t* pTheta = S->theta;
     const float32_t* pSigma = S->sigma;
@@ -72,7 +73,8 @@ uint32_t arm_gaussian_naive_bayes_predict_f32(const arm_gaussian_naive_bayes_ins
     float32_t*       logclassPriors = pBufferB;
     float32_t*       pLogPrior      = logclassPriors;
 
-    arm_vlog_f32((float32_t*)S->classPriors, logclassPriors, S->numberOfClasses);
+    arm_vlog_f32(
+        (float32_t*)S->classPriors, logclassPriors, S->numberOfClasses);
 
     pTheta = S->theta;
     pSigma = S->sigma;
@@ -110,7 +112,8 @@ uint32_t arm_gaussian_naive_bayes_predict_f32(const arm_gaussian_naive_bayes_ins
             f32x4_t      vinvSigma, vtmp;
 
             vsigma = vaddq_n_f32(vld1q(pSigma), S->epsilon);
-            vacc1  = vaddq_m_f32(vacc1, vacc1, vlogq_f32(vmulq_n_f32(vsigma, 2.0f * PI)), p0);
+            vacc1  = vaddq_m_f32(
+                vacc1, vacc1, vlogq_f32(vmulq_n_f32(vsigma, 2.0f * PI)), p0);
 
             vinvSigma = vrecip_medprec_f32(vsigma);
 
@@ -143,10 +146,11 @@ uint32_t arm_gaussian_naive_bayes_predict_f32(const arm_gaussian_naive_bayes_ins
 #include "NEMath.h"
 
 
-uint32_t arm_gaussian_naive_bayes_predict_f32(const arm_gaussian_naive_bayes_instance_f32* S,
-                                              const float32_t*                             in,
-                                              float32_t* pOutputProbabilities,
-                                              float32_t* pBufferB) {
+uint32_t arm_gaussian_naive_bayes_predict_f32(
+    const arm_gaussian_naive_bayes_instance_f32* S,
+    const float32_t*                             in,
+    float32_t*                                   pOutputProbabilities,
+    float32_t*                                   pBufferB) {
 
     const float32_t* pPrior = S->classPriors;
 
@@ -321,10 +325,11 @@ uint32_t arm_gaussian_naive_bayes_predict_f32(const arm_gaussian_naive_bayes_ins
 
 #else
 
-uint32_t arm_gaussian_naive_bayes_predict_f32(const arm_gaussian_naive_bayes_instance_f32* S,
-                                              const float32_t*                             in,
-                                              float32_t* pOutputProbabilities,
-                                              float32_t* pBufferB) {
+uint32_t arm_gaussian_naive_bayes_predict_f32(
+    const arm_gaussian_naive_bayes_instance_f32* S,
+    const float32_t*                             in,
+    float32_t*                                   pOutputProbabilities,
+    float32_t*                                   pBufferB) {
     uint32_t         nbClass;
     uint32_t         nbDim;
     const float32_t* pPrior = S->classPriors;

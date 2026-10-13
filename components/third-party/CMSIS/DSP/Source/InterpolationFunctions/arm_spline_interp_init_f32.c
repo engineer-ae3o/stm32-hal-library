@@ -79,8 +79,9 @@ void arm_spline_init_f32(arm_spline_instance_f32* S,
     float32_t* c = coeffs + (n - 1);
     float32_t* d = coeffs + (2 * (n - 1));
 
-    float32_t* u = tempBuffer;           /* (n-1)-long scratch buffer for u elements */
-    float32_t* z = tempBuffer + (n - 1); /* n-long scratch buffer for z elements */
+    float32_t* u = tempBuffer; /* (n-1)-long scratch buffer for u elements */
+    float32_t* z =
+        tempBuffer + (n - 1); /* n-long scratch buffer for z elements */
 
     float32_t hi, hm1; /* h(i) and h(i-1) */
     float32_t Bi;      /* B(i), i-th element of matrix B=LZ */

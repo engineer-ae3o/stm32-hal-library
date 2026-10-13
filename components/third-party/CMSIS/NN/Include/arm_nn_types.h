@@ -47,7 +47,8 @@ typedef struct {
 
 /** CMSIS-NN object to contain the dimensions of the tensors */
 typedef struct {
-    int32_t n; /**< Generic dimension to contain either the batch size or output channels.
+    int32_t
+        n; /**< Generic dimension to contain either the batch size or output channels.
                      Please refer to the function documentation for more information */
     int32_t h; /**< Height */
     int32_t w; /**< Width */
@@ -84,12 +85,12 @@ typedef struct {
 
 /** CMSIS-NN object for Depthwise convolution layer parameters */
 typedef struct {
-    int32_t             input_offset;  /**< Zero value for the input tensor */
-    int32_t             output_offset; /**< Zero value for the output tensor */
-    int32_t             ch_mult;       /**< Channel Multiplier. ch_mult * in_ch = out_ch */
-    cmsis_nn_tile       stride;
-    cmsis_nn_tile       padding;
-    cmsis_nn_tile       dilation;
+    int32_t       input_offset;  /**< Zero value for the input tensor */
+    int32_t       output_offset; /**< Zero value for the output tensor */
+    int32_t       ch_mult; /**< Channel Multiplier. ch_mult * in_ch = out_ch */
+    cmsis_nn_tile stride;
+    cmsis_nn_tile padding;
+    cmsis_nn_tile dilation;
     cmsis_nn_activation activation;
 } cmsis_nn_dw_conv_params;
 /** CMSIS-NN object for pooling layer parameters */
@@ -101,9 +102,9 @@ typedef struct {
 
 /** CMSIS-NN object for Fully Connected layer parameters */
 typedef struct {
-    int32_t             input_offset;  /**< Zero value for the input tensor */
-    int32_t             filter_offset; /**< Zero value for the filter tensor. Not used */
-    int32_t             output_offset; /**< Zero value for the output tensor */
+    int32_t input_offset;  /**< Zero value for the input tensor */
+    int32_t filter_offset; /**< Zero value for the filter tensor. Not used */
+    int32_t output_offset; /**< Zero value for the output tensor */
     cmsis_nn_activation activation;
 } cmsis_nn_fc_params;
 

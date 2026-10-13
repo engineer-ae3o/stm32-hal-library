@@ -115,10 +115,10 @@ void arm_biquad_cascade_df1_f16(const arm_biquad_casd_df1_inst_f16* S,
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 void arm_biquad_cascade_df1_mve_init_f16(arm_biquad_casd_df1_inst_f16* S,
-                                         uint8_t                       numStages,
-                                         const float16_t*              pCoeffs,
-                                         arm_biquad_mod_coef_f16*      pCoeffsMod,
-                                         float16_t*                    pState);
+                                         uint8_t                  numStages,
+                                         const float16_t*         pCoeffs,
+                                         arm_biquad_mod_coef_f16* pCoeffsMod,
+                                         float16_t*               pState);
 #endif
 
 void arm_biquad_cascade_df1_init_f16(arm_biquad_casd_df1_inst_f16* S,
@@ -158,9 +158,9 @@ typedef struct {
    * @param[in]  blockSize  number of samples to process.
    */
 void arm_biquad_cascade_df2T_f16(const arm_biquad_cascade_df2T_instance_f16* S,
-                                 const float16_t*                            pSrc,
-                                 float16_t*                                  pDst,
-                                 uint32_t                                    blockSize);
+                                 const float16_t* pSrc,
+                                 float16_t*       pDst,
+                                 uint32_t         blockSize);
 
 /**
    * @brief Processing function for the floating-point transposed direct form II Biquad cascade filter. 2 channels
@@ -169,10 +169,11 @@ void arm_biquad_cascade_df2T_f16(const arm_biquad_cascade_df2T_instance_f16* S,
    * @param[out] pDst       points to the block of output data
    * @param[in]  blockSize  number of samples to process.
    */
-void arm_biquad_cascade_stereo_df2T_f16(const arm_biquad_cascade_stereo_df2T_instance_f16* S,
-                                        const float16_t*                                   pSrc,
-                                        float16_t*                                         pDst,
-                                        uint32_t blockSize);
+void arm_biquad_cascade_stereo_df2T_f16(
+    const arm_biquad_cascade_stereo_df2T_instance_f16* S,
+    const float16_t*                                   pSrc,
+    float16_t*                                         pDst,
+    uint32_t                                           blockSize);
 
 /**
    * @brief  Initialization function for the floating-point transposed direct form II Biquad cascade filter.
@@ -182,9 +183,9 @@ void arm_biquad_cascade_stereo_df2T_f16(const arm_biquad_cascade_stereo_df2T_ins
    * @param[in]     pState     points to the state buffer.
    */
 void arm_biquad_cascade_df2T_init_f16(arm_biquad_cascade_df2T_instance_f16* S,
-                                      uint8_t                               numStages,
-                                      const float16_t*                      pCoeffs,
-                                      float16_t*                            pState);
+                                      uint8_t          numStages,
+                                      const float16_t* pCoeffs,
+                                      float16_t*       pState);
 
 /**
    * @brief  Initialization function for the floating-point transposed direct form II Biquad cascade filter.
@@ -193,10 +194,11 @@ void arm_biquad_cascade_df2T_init_f16(arm_biquad_cascade_df2T_instance_f16* S,
    * @param[in]     pCoeffs    points to the filter coefficients.
    * @param[in]     pState     points to the state buffer.
    */
-void arm_biquad_cascade_stereo_df2T_init_f16(arm_biquad_cascade_stereo_df2T_instance_f16* S,
-                                             uint8_t                                      numStages,
-                                             const float16_t*                             pCoeffs,
-                                             float16_t*                                   pState);
+void arm_biquad_cascade_stereo_df2T_init_f16(
+    arm_biquad_cascade_stereo_df2T_instance_f16* S,
+    uint8_t                                      numStages,
+    const float16_t*                             pCoeffs,
+    float16_t*                                   pState);
 
 /**
    * @brief Correlation of floating-point sequences.
@@ -221,7 +223,10 @@ void arm_correlate_f16(const float16_t* pSrcA,
   @param[in]     nbCoefs  number of autoregressive coefficients
   @return        none
  */
-void arm_levinson_durbin_f16(const float16_t* phi, float16_t* a, float16_t* err, int nbCoefs);
+void arm_levinson_durbin_f16(const float16_t* phi,
+                             float16_t*       a,
+                             float16_t*       err,
+                             int              nbCoefs);
 
 #endif /*defined(ARM_FLOAT16_SUPPORTED)*/
 #ifdef __cplusplus

@@ -78,12 +78,12 @@ void arm_cmplx_mult_real_f16(const float16_t* pSrcCmplx,
                              float16_t*       pCmplxDst,
                              uint32_t         numSamples) {
     static const uint16_t stride_cmplx_x_real_16[8] = {0, 0, 1, 1, 2, 2, 3, 3};
-    uint32_t              blockSizeC                = numSamples * CMPLX_DIM; /* loop counters */
-    uint32_t              blkCnt;
-    f16x8_t               rVec;
-    f16x8_t               cmplxVec;
-    f16x8_t               dstVec;
-    uint16x8_t            strideVec;
+    uint32_t   blockSizeC = numSamples * CMPLX_DIM; /* loop counters */
+    uint32_t   blkCnt;
+    f16x8_t    rVec;
+    f16x8_t    cmplxVec;
+    f16x8_t    dstVec;
+    uint16x8_t strideVec;
 
 
     /* stride vector for pairs of real generation */

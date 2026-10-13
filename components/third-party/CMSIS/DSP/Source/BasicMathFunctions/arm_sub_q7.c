@@ -53,7 +53,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_sub_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t blockSize) {
+void arm_sub_q7(const q7_t* pSrcA,
+                const q7_t* pSrcB,
+                q7_t*       pDst,
+                uint32_t    blockSize) {
     uint32_t blkCnt; /* loop counters */
     q7x16_t  vecA;
     q7x16_t  vecB;
@@ -91,7 +94,10 @@ void arm_sub_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t block
     }
 }
 #else
-void arm_sub_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t blockSize) {
+void arm_sub_q7(const q7_t* pSrcA,
+                const q7_t* pSrcB,
+                q7_t*       pDst,
+                uint32_t    blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL)
@@ -104,7 +110,8 @@ void arm_sub_q7(const q7_t* pSrcA, const q7_t* pSrcB, q7_t* pDst, uint32_t block
 
 #if defined(ARM_MATH_DSP)
         /* Subtract and store result in destination buffer (4 samples at a time). */
-        write_q7x4_ia(&pDst, __QSUB8(read_q7x4_ia(&pSrcA), read_q7x4_ia(&pSrcB)));
+        write_q7x4_ia(&pDst,
+                      __QSUB8(read_q7x4_ia(&pSrcA), read_q7x4_ia(&pSrcB)));
 #else
         *pDst++ = (q7_t)__SSAT((q15_t)*pSrcA++ - *pSrcB++, 8);
         *pDst++ = (q7_t)__SSAT((q15_t)*pSrcA++ - *pSrcB++, 8);

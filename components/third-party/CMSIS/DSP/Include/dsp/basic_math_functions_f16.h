@@ -72,7 +72,10 @@ void arm_sub_f16(const float16_t* pSrcA,
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_scale_f16(const float16_t* pSrc, float16_t scale, float16_t* pDst, uint32_t blockSize);
+void arm_scale_f16(const float16_t* pSrc,
+                   float16_t        scale,
+                   float16_t*       pDst,
+                   uint32_t         blockSize);
 
 /**
    * @brief Floating-point vector absolute value.
@@ -90,7 +93,10 @@ void arm_abs_f16(const float16_t* pSrc, float16_t* pDst, uint32_t blockSize);
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in the vector
    */
-void arm_offset_f16(const float16_t* pSrc, float16_t offset, float16_t* pDst, uint32_t blockSize);
+void arm_offset_f16(const float16_t* pSrc,
+                    float16_t        offset,
+                    float16_t*       pDst,
+                    uint32_t         blockSize);
 
 /**
    * @brief Dot product of floating-point vectors.
@@ -134,8 +140,11 @@ void arm_negate_f16(const float16_t* pSrc, float16_t* pDst, uint32_t blockSize);
   @return        none
  */
 
-void arm_clip_f16(
-    const float16_t* pSrc, float16_t* pDst, float16_t low, float16_t high, uint32_t numSamples);
+void arm_clip_f16(const float16_t* pSrc,
+                  float16_t*       pDst,
+                  float16_t        low,
+                  float16_t        high,
+                  uint32_t         numSamples);
 
 #endif /* defined(ARM_FLOAT16_SUPPORTED)*/
 

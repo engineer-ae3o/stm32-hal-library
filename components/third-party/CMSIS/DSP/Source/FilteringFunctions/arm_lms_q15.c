@@ -67,16 +67,17 @@ void arm_lms_q15(const arm_lms_instance_q15* S,
                  uint32_t                    blockSize) {
     q15_t*   pState  = S->pState;  /* State pointer */
     q15_t*   pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q15_t*   pStateCurnt;          /* Points to the current sample of the state */
-    q15_t *  px, *pb;              /* Temporary pointers for state and coefficient buffers */
-    q15_t    mu      = S->mu;      /* Adaptive factor */
-    uint32_t numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t tapCnt, blkCnt;       /* Loop counters */
-    q63_t    acc;                  /* Accumulator */
-    q15_t    e = 0;                /* Error of data sample */
-    q15_t    alpha;                /* Intermediate constant for taps update */
-    q31_t    coef;                 /* Temporary variable for coefficient */
-    q31_t    acc_l, acc_h;         /* Temporary input */
+    q15_t*   pStateCurnt; /* Points to the current sample of the state */
+    q15_t *  px, *pb; /* Temporary pointers for state and coefficient buffers */
+    q15_t    mu = S->mu; /* Adaptive factor */
+    uint32_t numTaps =
+        S->numTaps;          /* Number of filter coefficients in the filter */
+    uint32_t tapCnt, blkCnt; /* Loop counters */
+    q63_t    acc;            /* Accumulator */
+    q15_t    e = 0;          /* Error of data sample */
+    q15_t    alpha;          /* Intermediate constant for taps update */
+    q31_t    coef;           /* Temporary variable for coefficient */
+    q31_t    acc_l, acc_h;   /* Temporary input */
     int32_t  lShift = (15 - (int32_t)S->postShift); /*  Post shift  */
     int32_t  uShift = (32 - lShift);
 

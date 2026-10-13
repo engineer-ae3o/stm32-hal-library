@@ -60,14 +60,16 @@
 void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
                              const q31_t*                            pSrc,
                              q31_t*                                  pDst,
-                             uint32_t                                blockSize) {
+                             uint32_t blockSize) {
     q31_t*       pState  = S->pState;  /* State pointer */
     const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q31_t*       pStateCurnt;          /* Points to the current sample of the state */
-    const q31_t *ptr1, *ptr2;          /* Temporary pointers for state and coefficient buffers */
+    q31_t*       pStateCurnt; /* Points to the current sample of the state */
+    const q31_t *ptr1,
+        *ptr2; /* Temporary pointers for state and coefficient buffers */
 
-    uint32_t   i, blkCnt;                     /* Loop counters */
-    uint16_t   phaseLen     = S->phaseLength; /* Length of each polyphase filter component */
+    uint32_t i, blkCnt; /* Loop counters */
+    uint16_t phaseLen =
+        S->phaseLength; /* Length of each polyphase filter component */
     uint32_t   strides[4]   = {0, 1 * S->L, 2 * S->L, 3 * S->L};
     uint32x4_t vec_strides0 = vld1q_u32(strides);
     uint32x4_t vec_strides1 = vec_strides0 + 1;
@@ -116,17 +118,21 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
                 while (tapCnt > 0U) {
                     vecState = vldrwq_s32(ptr1);
 
-                    vecCoef = vldrwq_gather_shifted_offset_s32(ptr2, vec_strides3);
-                    acc0    = vrmlaldavhaq(acc0, vecState, vecCoef);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_s32(ptr2, vec_strides3);
+                    acc0 = vrmlaldavhaq(acc0, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_s32(ptr2, vec_strides2);
-                    acc1    = vrmlaldavhaq(acc1, vecState, vecCoef);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_s32(ptr2, vec_strides2);
+                    acc1 = vrmlaldavhaq(acc1, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_s32(ptr2, vec_strides1);
-                    acc2    = vrmlaldavhaq(acc2, vecState, vecCoef);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_s32(ptr2, vec_strides1);
+                    acc2 = vrmlaldavhaq(acc2, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_s32(ptr2, vec_strides0);
-                    acc3    = vrmlaldavhaq(acc3, vecState, vecCoef);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_s32(ptr2, vec_strides0);
+                    acc3 = vrmlaldavhaq(acc3, vecState, vecCoef);
 
                     ptr1 += 4;
                     ptr2 = ptr2 + S->L * 4;
@@ -138,17 +144,21 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
 
                     vecState = vldrwq_z_s32(ptr1, p0);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_s32(ptr2, vec_strides3, p0);
-                    acc0    = vrmlaldavhaq(acc0, vecState, vecCoef);
+                    vecCoef = vldrwq_gather_shifted_offset_z_s32(
+                        ptr2, vec_strides3, p0);
+                    acc0 = vrmlaldavhaq(acc0, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_s32(ptr2, vec_strides2, p0);
-                    acc1    = vrmlaldavhaq(acc1, vecState, vecCoef);
+                    vecCoef = vldrwq_gather_shifted_offset_z_s32(
+                        ptr2, vec_strides2, p0);
+                    acc1 = vrmlaldavhaq(acc1, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_s32(ptr2, vec_strides1, p0);
-                    acc2    = vrmlaldavhaq(acc2, vecState, vecCoef);
+                    vecCoef = vldrwq_gather_shifted_offset_z_s32(
+                        ptr2, vec_strides1, p0);
+                    acc2 = vrmlaldavhaq(acc2, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_s32(ptr2, vec_strides0, p0);
-                    acc3    = vrmlaldavhaq(acc3, vecState, vecCoef);
+                    vecCoef = vldrwq_gather_shifted_offset_z_s32(
+                        ptr2, vec_strides0, p0);
+                    acc3 = vrmlaldavhaq(acc3, vecState, vecCoef);
                 }
 
                 acc0 = asrl(acc0, 31 - 8);
@@ -175,14 +185,17 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
                 while (tapCnt > 0U) {
                     vecState = vldrwq_s32(ptr1);
 
-                    vecCoef = vldrwq_gather_shifted_offset_s32(ptr2, vec_strides2);
-                    acc0    = vrmlaldavhaq(acc0, vecState, vecCoef);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_s32(ptr2, vec_strides2);
+                    acc0 = vrmlaldavhaq(acc0, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_s32(ptr2, vec_strides1);
-                    acc1    = vrmlaldavhaq(acc1, vecState, vecCoef);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_s32(ptr2, vec_strides1);
+                    acc1 = vrmlaldavhaq(acc1, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_s32(ptr2, vec_strides0);
-                    acc2    = vrmlaldavhaq(acc2, vecState, vecCoef);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_s32(ptr2, vec_strides0);
+                    acc2 = vrmlaldavhaq(acc2, vecState, vecCoef);
 
                     ptr1 += 4;
                     ptr2 = ptr2 + S->L * 4;
@@ -194,14 +207,17 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
 
                     vecState = vldrwq_z_s32(ptr1, p0);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_s32(ptr2, vec_strides2, p0);
-                    acc0    = vrmlaldavhaq(acc0, vecState, vecCoef);
+                    vecCoef = vldrwq_gather_shifted_offset_z_s32(
+                        ptr2, vec_strides2, p0);
+                    acc0 = vrmlaldavhaq(acc0, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_s32(ptr2, vec_strides1, p0);
-                    acc1    = vrmlaldavhaq(acc1, vecState, vecCoef);
+                    vecCoef = vldrwq_gather_shifted_offset_z_s32(
+                        ptr2, vec_strides1, p0);
+                    acc1 = vrmlaldavhaq(acc1, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_s32(ptr2, vec_strides0, p0);
-                    acc2    = vrmlaldavhaq(acc2, vecState, vecCoef);
+                    vecCoef = vldrwq_gather_shifted_offset_z_s32(
+                        ptr2, vec_strides0, p0);
+                    acc2 = vrmlaldavhaq(acc2, vecState, vecCoef);
                 }
 
                 acc0 = asrl(acc0, 31 - 8);
@@ -225,11 +241,13 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
                 while (tapCnt > 0U) {
                     vecState = vldrwq_s32(ptr1);
 
-                    vecCoef = vldrwq_gather_shifted_offset_s32(ptr2, vec_strides1);
-                    acc0    = vrmlaldavhaq(acc0, vecState, vecCoef);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_s32(ptr2, vec_strides1);
+                    acc0 = vrmlaldavhaq(acc0, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_s32(ptr2, vec_strides0);
-                    acc1    = vrmlaldavhaq(acc1, vecState, vecCoef);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_s32(ptr2, vec_strides0);
+                    acc1 = vrmlaldavhaq(acc1, vecState, vecCoef);
 
                     ptr1 += 4;
                     ptr2 = ptr2 + S->L * 4;
@@ -241,11 +259,13 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
 
                     vecState = vldrwq_z_s32(ptr1, p0);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_s32(ptr2, vec_strides1, p0);
-                    acc0    = vrmlaldavhaq(acc0, vecState, vecCoef);
+                    vecCoef = vldrwq_gather_shifted_offset_z_s32(
+                        ptr2, vec_strides1, p0);
+                    acc0 = vrmlaldavhaq(acc0, vecState, vecCoef);
 
-                    vecCoef = vldrwq_gather_shifted_offset_z_s32(ptr2, vec_strides0, p0);
-                    acc1    = vrmlaldavhaq(acc1, vecState, vecCoef);
+                    vecCoef = vldrwq_gather_shifted_offset_z_s32(
+                        ptr2, vec_strides0, p0);
+                    acc1 = vrmlaldavhaq(acc1, vecState, vecCoef);
                 }
 
                 acc0 = asrl(acc0, 31 - 8);
@@ -265,7 +285,8 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
                 uint32_t tapCnt = phaseLen >> 2;
                 while (tapCnt > 0U) {
                     vecState = vldrwq_s32(ptr1);
-                    vecCoef  = vldrwq_gather_shifted_offset_s32(ptr2, vec_strides0);
+                    vecCoef =
+                        vldrwq_gather_shifted_offset_s32(ptr2, vec_strides0);
 
                     acc0 = vrmlaldavhaq(acc0, vecState, vecCoef);
 
@@ -278,8 +299,9 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
                     mve_pred16_t p0 = vctp32q(tapCnt);
 
                     vecState = vldrwq_z_s32(ptr1, p0);
-                    vecCoef  = vldrwq_gather_shifted_offset_z_s32(ptr2, vec_strides0, p0);
-                    acc0     = vrmlaldavhaq(acc0, vecState, vecCoef);
+                    vecCoef  = vldrwq_gather_shifted_offset_z_s32(
+                        ptr2, vec_strides0, p0);
+                    acc0 = vrmlaldavhaq(acc0, vecState, vecCoef);
                 }
 
                 acc0    = asrl(acc0, 31 - 8);
@@ -328,19 +350,20 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
 void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
                              const q31_t*                            pSrc,
                              q31_t*                                  pDst,
-                             uint32_t                                blockSize) {
+                             uint32_t blockSize) {
 #if (1)
     //#if !defined(ARM_MATH_CM0_FAMILY)
 
-    q31_t*       pState  = S->pState;       /* State pointer */
-    const q31_t* pCoeffs = S->pCoeffs;      /* Coefficient pointer */
-    q31_t*       pStateCur;                 /* Points to the current sample of the state */
-    q31_t*       ptr1;                      /* Temporary pointer for state buffer */
-    const q31_t* ptr2;                      /* Temporary pointer for coefficient buffer */
-    q63_t        sum0;                      /* Accumulators */
-    uint32_t     i, blkCnt, tapCnt;         /* Loop counters */
-    uint32_t     phaseLen = S->phaseLength; /* Length of each polyphase filter component */
-    uint32_t     j;
+    q31_t*       pState  = S->pState;  /* State pointer */
+    const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    q31_t*       pStateCur; /* Points to the current sample of the state */
+    q31_t*       ptr1;      /* Temporary pointer for state buffer */
+    const q31_t* ptr2;      /* Temporary pointer for coefficient buffer */
+    q63_t        sum0;      /* Accumulators */
+    uint32_t     i, blkCnt, tapCnt; /* Loop counters */
+    uint32_t     phaseLen =
+        S->phaseLength; /* Length of each polyphase filter component */
+    uint32_t j;
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q63_t acc0, acc1, acc2, acc3;
@@ -647,14 +670,15 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
 #else
     /* alternate version for CM0_FAMILY */
 
-    q31_t*       pState  = S->pState;       /* State pointer */
-    const q31_t* pCoeffs = S->pCoeffs;      /* Coefficient pointer */
-    q31_t*       pStateCur;                 /* Points to the current sample of the state */
-    q31_t*       ptr1;                      /* Temporary pointer for state buffer */
-    const q31_t* ptr2;                      /* Temporary pointer for coefficient buffer */
-    q63_t        sum0;                      /* Accumulators */
-    uint32_t     i, blkCnt, tapCnt;         /* Loop counters */
-    uint32_t     phaseLen = S->phaseLength; /* Length of each polyphase filter component */
+    q31_t*       pState  = S->pState;  /* State pointer */
+    const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    q31_t*       pStateCur; /* Points to the current sample of the state */
+    q31_t*       ptr1;      /* Temporary pointer for state buffer */
+    const q31_t* ptr2;      /* Temporary pointer for coefficient buffer */
+    q63_t        sum0;      /* Accumulators */
+    uint32_t     i, blkCnt, tapCnt; /* Loop counters */
+    uint32_t     phaseLen =
+        S->phaseLength; /* Length of each polyphase filter component */
 
     /* S->pState buffer contains previous frame (phaseLen - 1) samples */
     /* pStateCur points to the location where the new input data should be written */

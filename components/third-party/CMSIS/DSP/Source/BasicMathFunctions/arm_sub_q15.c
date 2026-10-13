@@ -54,7 +54,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_sub_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t blockSize) {
+void arm_sub_q15(const q15_t* pSrcA,
+                 const q15_t* pSrcB,
+                 q15_t*       pDst,
+                 uint32_t     blockSize) {
     uint32_t blkCnt; /* loop counters */
     q15x8_t  vecA;
     q15x8_t  vecB;
@@ -94,7 +97,10 @@ void arm_sub_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t b
 
 
 #else
-void arm_sub_q15(const q15_t* pSrcA, const q15_t* pSrcB, q15_t* pDst, uint32_t blockSize) {
+void arm_sub_q15(const q15_t* pSrcA,
+                 const q15_t* pSrcB,
+                 q15_t*       pDst,
+                 uint32_t     blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL)

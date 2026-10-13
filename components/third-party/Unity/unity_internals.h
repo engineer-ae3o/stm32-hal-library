@@ -56,7 +56,8 @@
 #if __cplusplus >= 201103L
 #define UNITY_NORETURN [[noreturn]]
 #endif
-#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && __STDC_VERSION__ < 202311L
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L &&              \
+    __STDC_VERSION__ < 202311L
 /* _Noreturn keyword is used from C11 but deprecated in C23. */
 #if defined(_WIN32) && defined(_MSC_VER)
 /* We are using MSVC compiler on Windows platform. */
@@ -71,7 +72,8 @@
 /* Based on: */
 /* https://docs.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170 */
 /* NTDDI_WIN10_FE is equal to Windows 10 SDK 2104 */
-#if defined(_MSC_VER) && ((!defined(NTDDI_WIN10_FE)) || WDK_NTDDI_VERSION < NTDDI_WIN10_FE)
+#if defined(_MSC_VER) &&                                                       \
+    ((!defined(NTDDI_WIN10_FE)) || WDK_NTDDI_VERSION < NTDDI_WIN10_FE)
 /* Based on tests and: */
 /* https://docs.microsoft.com/en-us/cpp/c-language/noreturn?view=msvc-170 */
 /* https://en.cppreference.com/w/c/language/_Noreturn */
@@ -371,7 +373,7 @@ extern void UNITY_OUTPUT_FLUSH_HEADER_DECLARATION;
 #endif
 
 #ifdef UNITY_INCLUDE_EXEC_TIME
-#if !defined(UNITY_EXEC_TIME_START) && !defined(UNITY_EXEC_TIME_STOP) &&                           \
+#if !defined(UNITY_EXEC_TIME_START) && !defined(UNITY_EXEC_TIME_STOP) &&       \
     !defined(UNITY_PRINT_EXEC_TIME) && !defined(UNITY_TIME_TYPE)
 /* If none any of these macros are defined then try to provide a default implementation */
 
@@ -380,12 +382,13 @@ extern void UNITY_OUTPUT_FLUSH_HEADER_DECLARATION;
 #define UNITY_TIME_TYPE UNITY_UINT
 #define UNITY_EXEC_TIME_START() Unity.CurrentTestStartTime = UNITY_CLOCK_MS()
 #define UNITY_EXEC_TIME_STOP() Unity.CurrentTestStopTime = UNITY_CLOCK_MS()
-#define UNITY_PRINT_EXEC_TIME()                                                                    \
-    {                                                                                              \
-        UNITY_UINT execTimeMs = (Unity.CurrentTestStopTime - Unity.CurrentTestStartTime);          \
-        UnityPrint(" (");                                                                          \
-        UnityPrintNumberUnsigned(execTimeMs);                                                      \
-        UnityPrint(" ms)");                                                                        \
+#define UNITY_PRINT_EXEC_TIME()                                                \
+    {                                                                          \
+        UNITY_UINT execTimeMs =                                                \
+            (Unity.CurrentTestStopTime - Unity.CurrentTestStartTime);          \
+        UnityPrint(" (");                                                      \
+        UnityPrintNumberUnsigned(execTimeMs);                                  \
+        UnityPrint(" ms)");                                                    \
     }
 #elif defined(_WIN32)
 #include <time.h>
@@ -393,12 +396,13 @@ extern void UNITY_OUTPUT_FLUSH_HEADER_DECLARATION;
 #define UNITY_GET_TIME(t) t = (clock_t)((clock() * 1000) / CLOCKS_PER_SEC)
 #define UNITY_EXEC_TIME_START() UNITY_GET_TIME(Unity.CurrentTestStartTime)
 #define UNITY_EXEC_TIME_STOP() UNITY_GET_TIME(Unity.CurrentTestStopTime)
-#define UNITY_PRINT_EXEC_TIME()                                                                    \
-    {                                                                                              \
-        UNITY_UINT execTimeMs = (Unity.CurrentTestStopTime - Unity.CurrentTestStartTime);          \
-        UnityPrint(" (");                                                                          \
-        UnityPrintNumberUnsigned(execTimeMs);                                                      \
-        UnityPrint(" ms)");                                                                        \
+#define UNITY_PRINT_EXEC_TIME()                                                \
+    {                                                                          \
+        UNITY_UINT execTimeMs =                                                \
+            (Unity.CurrentTestStopTime - Unity.CurrentTestStartTime);          \
+        UnityPrint(" (");                                                      \
+        UnityPrintNumberUnsigned(execTimeMs);                                  \
+        UnityPrint(" ms)");                                                    \
     }
 #elif defined(__unix__) || defined(__APPLE__)
 #include <time.h>
@@ -406,29 +410,31 @@ extern void UNITY_OUTPUT_FLUSH_HEADER_DECLARATION;
 #define UNITY_GET_TIME(t) clock_gettime(CLOCK_MONOTONIC, &t)
 #define UNITY_EXEC_TIME_START() UNITY_GET_TIME(Unity.CurrentTestStartTime)
 #define UNITY_EXEC_TIME_STOP() UNITY_GET_TIME(Unity.CurrentTestStopTime)
-#define UNITY_PRINT_EXEC_TIME()                                                                    \
-    {                                                                                              \
-        UNITY_UINT execTimeMs =                                                                    \
-            ((Unity.CurrentTestStopTime.tv_sec - Unity.CurrentTestStartTime.tv_sec) * 1000L);      \
-        execTimeMs +=                                                                              \
-            ((Unity.CurrentTestStopTime.tv_nsec - Unity.CurrentTestStartTime.tv_nsec) / 1000000L); \
-        UnityPrint(" (");                                                                          \
-        UnityPrintNumberUnsigned(execTimeMs);                                                      \
-        UnityPrint(" ms)");                                                                        \
+#define UNITY_PRINT_EXEC_TIME()                                                \
+    {                                                                          \
+        UNITY_UINT execTimeMs = ((Unity.CurrentTestStopTime.tv_sec -           \
+                                  Unity.CurrentTestStartTime.tv_sec) *         \
+                                 1000L);                                       \
+        execTimeMs += ((Unity.CurrentTestStopTime.tv_nsec -                    \
+                        Unity.CurrentTestStartTime.tv_nsec) /                  \
+                       1000000L);                                              \
+        UnityPrint(" (");                                                      \
+        UnityPrintNumberUnsigned(execTimeMs);                                  \
+        UnityPrint(" ms)");                                                    \
     }
 #endif
 #endif
 #endif
 
 #ifndef UNITY_EXEC_TIME_START
-#define UNITY_EXEC_TIME_START()                                                                    \
-    do { /* nothing*/                                                                              \
+#define UNITY_EXEC_TIME_START()                                                \
+    do { /* nothing*/                                                          \
     } while (0)
 #endif
 
 #ifndef UNITY_EXEC_TIME_STOP
-#define UNITY_EXEC_TIME_STOP()                                                                     \
-    do { /* nothing*/                                                                              \
+#define UNITY_EXEC_TIME_STOP()                                                 \
+    do { /* nothing*/                                                          \
     } while (0)
 #endif
 
@@ -437,8 +443,8 @@ extern void UNITY_OUTPUT_FLUSH_HEADER_DECLARATION;
 #endif
 
 #ifndef UNITY_PRINT_EXEC_TIME
-#define UNITY_PRINT_EXEC_TIME()                                                                    \
-    do { /* nothing*/                                                                              \
+#define UNITY_PRINT_EXEC_TIME()                                                \
+    do { /* nothing*/                                                          \
     } while (0)
 #endif
 
@@ -478,7 +484,7 @@ typedef enum {
     UNITY_DISPLAY_STYLE_INT64 = 8 + UNITY_DISPLAY_RANGE_INT,
 #endif
 
-    UNITY_DISPLAY_STYLE_UINT   = (UNITY_INT_WIDTH / 8) + UNITY_DISPLAY_RANGE_UINT,
+    UNITY_DISPLAY_STYLE_UINT = (UNITY_INT_WIDTH / 8) + UNITY_DISPLAY_RANGE_UINT,
     UNITY_DISPLAY_STYLE_UINT8  = 1 + UNITY_DISPLAY_RANGE_UINT,
     UNITY_DISPLAY_STYLE_UINT16 = 2 + UNITY_DISPLAY_RANGE_UINT,
     UNITY_DISPLAY_STYLE_UINT32 = 4 + UNITY_DISPLAY_RANGE_UINT,
@@ -493,7 +499,8 @@ typedef enum {
     UNITY_DISPLAY_STYLE_HEX64 = 8 + UNITY_DISPLAY_RANGE_HEX,
 #endif
 
-    UNITY_DISPLAY_STYLE_CHAR = 1 + UNITY_DISPLAY_RANGE_CHAR + UNITY_DISPLAY_RANGE_INT,
+    UNITY_DISPLAY_STYLE_CHAR =
+        1 + UNITY_DISPLAY_RANGE_CHAR + UNITY_DISPLAY_RANGE_INT,
 
     UNITY_DISPLAY_STYLE_UNKNOWN
 } UNITY_DISPLAY_STYLE_T;
@@ -521,7 +528,11 @@ typedef enum UNITY_FLOAT_TRAIT {
 } UNITY_FLOAT_TRAIT_T;
 #endif
 
-typedef enum { UNITY_ARRAY_TO_VAL = 0, UNITY_ARRAY_TO_ARRAY, UNITY_ARRAY_UNKNOWN } UNITY_FLAGS_T;
+typedef enum {
+    UNITY_ARRAY_TO_VAL = 0,
+    UNITY_ARRAY_TO_ARRAY,
+    UNITY_ARRAY_UNKNOWN
+} UNITY_FLAGS_T;
 
 #ifndef UNITY_EXCLUDE_DETAILS
 #ifdef UNITY_DETAIL_STACK_SIZE
@@ -581,7 +592,9 @@ void UnitySetTestFile(const char* filename);
 void UnityConcludeTest(void);
 
 #ifndef RUN_TEST
-void UnityDefaultTestRun(UnityTestFunction Func, const char* FuncName, const int FuncLineNum);
+void UnityDefaultTestRun(UnityTestFunction Func,
+                         const char*       FuncName,
+                         const int         FuncLineNum);
 #else
 #define UNITY_SKIP_DEFAULT_RUNNER
 #endif
@@ -625,45 +638,52 @@ void UnityPopDetail(UNITY_DETAIL_LABEL_TYPE label,
                     UNITY_DETAIL_VALUE_TYPE value,
                     const UNITY_LINE_TYPE   line);
 
-#define UNITY_CLR_DETAILS()                                                                        \
-    do {                                                                                           \
-        if (Unity.CurrentDetailStackSize &&                                                        \
-            Unity.CurrentDetailStackLabels[Unity.CurrentDetailStackSize - 1] == UNITY_DETAIL_D2) { \
-            Unity.CurrentDetailStackLabels[--Unity.CurrentDetailStackSize] = UNITY_DETAIL_NONE;    \
-        }                                                                                          \
-        if (Unity.CurrentDetailStackSize &&                                                        \
-            Unity.CurrentDetailStackLabels[Unity.CurrentDetailStackSize - 1] == UNITY_DETAIL_D1) { \
-            Unity.CurrentDetailStackLabels[--Unity.CurrentDetailStackSize] = UNITY_DETAIL_NONE;    \
-        }                                                                                          \
+#define UNITY_CLR_DETAILS()                                                    \
+    do {                                                                       \
+        if (Unity.CurrentDetailStackSize &&                                    \
+            Unity.CurrentDetailStackLabels[Unity.CurrentDetailStackSize -      \
+                                           1] == UNITY_DETAIL_D2) {            \
+            Unity.CurrentDetailStackLabels[--Unity.CurrentDetailStackSize] =   \
+                UNITY_DETAIL_NONE;                                             \
+        }                                                                      \
+        if (Unity.CurrentDetailStackSize &&                                    \
+            Unity.CurrentDetailStackLabels[Unity.CurrentDetailStackSize -      \
+                                           1] == UNITY_DETAIL_D1) {            \
+            Unity.CurrentDetailStackLabels[--Unity.CurrentDetailStackSize] =   \
+                UNITY_DETAIL_NONE;                                             \
+        }                                                                      \
     } while (0)
-#define UNITY_SET_DETAIL(d1)                                                                       \
-    do {                                                                                           \
-        UNITY_CLR_DETAILS();                                                                       \
-        UnityPushDetail(UNITY_DETAIL_D1, (UNITY_DETAIL_VALUE_TYPE)(d1), __LINE__);                 \
+#define UNITY_SET_DETAIL(d1)                                                   \
+    do {                                                                       \
+        UNITY_CLR_DETAILS();                                                   \
+        UnityPushDetail(                                                       \
+            UNITY_DETAIL_D1, (UNITY_DETAIL_VALUE_TYPE)(d1), __LINE__);         \
     } while (0)
-#define UNITY_SET_DETAILS(d1, d2)                                                                  \
-    do {                                                                                           \
-        UNITY_CLR_DETAILS();                                                                       \
-        UnityPushDetail(UNITY_DETAIL_D1, (UNITY_DETAIL_VALUE_TYPE)(d1), __LINE__);                 \
-        UnityPushDetail(UNITY_DETAIL_D2, (UNITY_DETAIL_VALUE_TYPE)(d2), __LINE__);                 \
+#define UNITY_SET_DETAILS(d1, d2)                                              \
+    do {                                                                       \
+        UNITY_CLR_DETAILS();                                                   \
+        UnityPushDetail(                                                       \
+            UNITY_DETAIL_D1, (UNITY_DETAIL_VALUE_TYPE)(d1), __LINE__);         \
+        UnityPushDetail(                                                       \
+            UNITY_DETAIL_D2, (UNITY_DETAIL_VALUE_TYPE)(d2), __LINE__);         \
     } while (0)
 
 #else
 /* just two hardcoded slots */
-#define UNITY_CLR_DETAILS()                                                                        \
-    do {                                                                                           \
-        Unity.CurrentDetail1 = 0;                                                                  \
-        Unity.CurrentDetail2 = 0;                                                                  \
+#define UNITY_CLR_DETAILS()                                                    \
+    do {                                                                       \
+        Unity.CurrentDetail1 = 0;                                              \
+        Unity.CurrentDetail2 = 0;                                              \
     } while (0)
-#define UNITY_SET_DETAIL(d1)                                                                       \
-    do {                                                                                           \
-        Unity.CurrentDetail1 = (d1);                                                               \
-        Unity.CurrentDetail2 = 0;                                                                  \
+#define UNITY_SET_DETAIL(d1)                                                   \
+    do {                                                                       \
+        Unity.CurrentDetail1 = (d1);                                           \
+        Unity.CurrentDetail2 = 0;                                              \
     } while (0)
-#define UNITY_SET_DETAILS(d1, d2)                                                                  \
-    do {                                                                                           \
-        Unity.CurrentDetail1 = (d1);                                                               \
-        Unity.CurrentDetail2 = (d2);                                                               \
+#define UNITY_SET_DETAILS(d1, d2)                                              \
+    do {                                                                       \
+        Unity.CurrentDetail1 = (d1);                                           \
+        Unity.CurrentDetail2 = (d2);                                           \
     } while (0)
 #endif
 #endif
@@ -684,8 +704,10 @@ void UnityPrintF(const UNITY_LINE_TYPE line, const char* format, ...);
 
 void UnityPrintLen(const char* string, const UNITY_UINT32 length);
 void UnityPrintMask(const UNITY_UINT mask, const UNITY_UINT number);
-void UnityPrintIntNumberByStyle(const UNITY_INT number, const UNITY_DISPLAY_STYLE_T style);
-void UnityPrintUintNumberByStyle(const UNITY_UINT number, const UNITY_DISPLAY_STYLE_T style);
+void UnityPrintIntNumberByStyle(const UNITY_INT             number,
+                                const UNITY_DISPLAY_STYLE_T style);
+void UnityPrintUintNumberByStyle(const UNITY_UINT            number,
+                                 const UNITY_DISPLAY_STYLE_T style);
 void UnityPrintNumber(const UNITY_INT number_to_print);
 void UnityPrintNumberUnsigned(const UNITY_UINT number);
 void UnityPrintNumberHex(const UNITY_UINT number, const char nibbles_to_print);
@@ -714,19 +736,21 @@ void UnityAssertEqualUintNumber(const UNITY_UINT            expected,
                                 const UNITY_LINE_TYPE       lineNumber,
                                 const UNITY_DISPLAY_STYLE_T style);
 
-void UnityAssertIntGreaterOrLessOrEqualNumber(const UNITY_INT             threshold,
-                                              const UNITY_INT             actual,
-                                              const UNITY_COMPARISON_T    compare,
-                                              const char*                 msg,
-                                              const UNITY_LINE_TYPE       lineNumber,
-                                              const UNITY_DISPLAY_STYLE_T style);
+void UnityAssertIntGreaterOrLessOrEqualNumber(
+    const UNITY_INT             threshold,
+    const UNITY_INT             actual,
+    const UNITY_COMPARISON_T    compare,
+    const char*                 msg,
+    const UNITY_LINE_TYPE       lineNumber,
+    const UNITY_DISPLAY_STYLE_T style);
 
-void UnityAssertUintGreaterOrLessOrEqualNumber(const UNITY_UINT            threshold,
-                                               const UNITY_UINT            actual,
-                                               const UNITY_COMPARISON_T    compare,
-                                               const char*                 msg,
-                                               const UNITY_LINE_TYPE       lineNumber,
-                                               const UNITY_DISPLAY_STYLE_T style);
+void UnityAssertUintGreaterOrLessOrEqualNumber(
+    const UNITY_UINT            threshold,
+    const UNITY_UINT            actual,
+    const UNITY_COMPARISON_T    compare,
+    const char*                 msg,
+    const UNITY_LINE_TYPE       lineNumber,
+    const UNITY_DISPLAY_STYLE_T style);
 
 void UnityAssertEqualIntArray(UNITY_INTERNAL_PTR          expected,
                               UNITY_INTERNAL_PTR          actual,
@@ -793,7 +817,8 @@ void UnityAssertNumbersArrayWithin(const UNITY_UINT            delta,
 
 #ifndef UNITY_EXCLUDE_SETJMP_H
 UNITY_NORETURN void UnityFail(const char* message, const UNITY_LINE_TYPE line);
-UNITY_NORETURN void UnityIgnore(const char* message, const UNITY_LINE_TYPE line);
+UNITY_NORETURN void UnityIgnore(const char*           message,
+                                const UNITY_LINE_TYPE line);
 #else
 void UnityFail(const char* message, const UNITY_LINE_TYPE line);
 void UnityIgnore(const char* message, const UNITY_LINE_TYPE line);
@@ -820,13 +845,14 @@ void UnityAssertGreaterOrLessFloat(const UNITY_FLOAT        threshold,
                                    const char*              msg,
                                    const UNITY_LINE_TYPE    linenumber);
 
-void UnityAssertWithinFloatArray(const UNITY_FLOAT                      delta,
-                                 UNITY_PTR_ATTRIBUTE const UNITY_FLOAT* expected,
-                                 UNITY_PTR_ATTRIBUTE const UNITY_FLOAT* actual,
-                                 const UNITY_UINT32                     num_elements,
-                                 const char*                            msg,
-                                 const UNITY_LINE_TYPE                  lineNumber,
-                                 const UNITY_FLAGS_T                    flags);
+void UnityAssertWithinFloatArray(
+    const UNITY_FLOAT                      delta,
+    UNITY_PTR_ATTRIBUTE const UNITY_FLOAT* expected,
+    UNITY_PTR_ATTRIBUTE const UNITY_FLOAT* actual,
+    const UNITY_UINT32                     num_elements,
+    const char*                            msg,
+    const UNITY_LINE_TYPE                  lineNumber,
+    const UNITY_FLAGS_T                    flags);
 
 void UnityAssertFloatSpecial(const UNITY_FLOAT         actual,
                              const char*               msg,
@@ -853,13 +879,14 @@ void UnityAssertGreaterOrLessDouble(const UNITY_DOUBLE       threshold,
                                     const char*              msg,
                                     const UNITY_LINE_TYPE    linenumber);
 
-void UnityAssertWithinDoubleArray(const UNITY_DOUBLE                      delta,
-                                  UNITY_PTR_ATTRIBUTE const UNITY_DOUBLE* expected,
-                                  UNITY_PTR_ATTRIBUTE const UNITY_DOUBLE* actual,
-                                  const UNITY_UINT32                      num_elements,
-                                  const char*                             msg,
-                                  const UNITY_LINE_TYPE                   lineNumber,
-                                  const UNITY_FLAGS_T                     flags);
+void UnityAssertWithinDoubleArray(
+    const UNITY_DOUBLE                      delta,
+    UNITY_PTR_ATTRIBUTE const UNITY_DOUBLE* expected,
+    UNITY_PTR_ATTRIBUTE const UNITY_DOUBLE* actual,
+    const UNITY_UINT32                      num_elements,
+    const char*                             msg,
+    const UNITY_LINE_TYPE                   lineNumber,
+    const UNITY_FLAGS_T                     flags);
 
 void UnityAssertDoubleSpecial(const UNITY_DOUBLE        actual,
                               const char*               msg,
@@ -961,9 +988,9 @@ extern const char UnityStrErrDetailStack[];
 
 #define TEST_LINE_NUM (Unity.CurrentTestLineNumber)
 #define TEST_IS_IGNORED (Unity.CurrentTestIgnored)
-#define UNITY_NEW_TEST(a)                                                                          \
-    Unity.CurrentTestName       = (a);                                                             \
-    Unity.CurrentTestLineNumber = (UNITY_LINE_TYPE)(__LINE__);                                     \
+#define UNITY_NEW_TEST(a)                                                      \
+    Unity.CurrentTestName       = (a);                                         \
+    Unity.CurrentTestLineNumber = (UNITY_LINE_TYPE)(__LINE__);                 \
     Unity.NumberOfTests++;
 
 #ifndef UNITY_BEGIN
@@ -997,1557 +1024,1797 @@ int UnityTestMatches(void);
  * Basic Fail and Ignore
  *-------------------------------------------------------*/
 
-#define UNITY_TEST_FAIL(line, message) UnityFail((message), (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_IGNORE(line, message) UnityIgnore((message), (UNITY_LINE_TYPE)(line))
+#define UNITY_TEST_FAIL(line, message)                                         \
+    UnityFail((message), (UNITY_LINE_TYPE)(line))
+#define UNITY_TEST_IGNORE(line, message)                                       \
+    UnityIgnore((message), (UNITY_LINE_TYPE)(line))
 
 /*-------------------------------------------------------
  * Test Asserts
  *-------------------------------------------------------*/
 
-#define UNITY_TEST_ASSERT(condition, line, message)                                                \
-    do {                                                                                           \
-        if (condition) { /* nothing*/                                                              \
-        } else {                                                                                   \
-            UNITY_TEST_FAIL((line), (message));                                                    \
-        }                                                                                          \
+#define UNITY_TEST_ASSERT(condition, line, message)                            \
+    do {                                                                       \
+        if (condition) { /* nothing*/                                          \
+        } else {                                                               \
+            UNITY_TEST_FAIL((line), (message));                                \
+        }                                                                      \
     } while (0)
-#define UNITY_TEST_ASSERT_NULL(pointer, line, message)                                             \
+#define UNITY_TEST_ASSERT_NULL(pointer, line, message)                         \
     UNITY_TEST_ASSERT(((pointer) == NULL), (line), (message))
-#define UNITY_TEST_ASSERT_NOT_NULL(pointer, line, message)                                         \
+#define UNITY_TEST_ASSERT_NOT_NULL(pointer, line, message)                     \
     UNITY_TEST_ASSERT(((pointer) != NULL), (line), (message))
-#define UNITY_TEST_ASSERT_EMPTY(pointer, line, message)                                            \
+#define UNITY_TEST_ASSERT_EMPTY(pointer, line, message)                        \
     UNITY_TEST_ASSERT(((pointer[0]) == 0), (line), (message))
-#define UNITY_TEST_ASSERT_NOT_EMPTY(pointer, line, message)                                        \
+#define UNITY_TEST_ASSERT_NOT_EMPTY(pointer, line, message)                    \
     UNITY_TEST_ASSERT(((pointer[0]) != 0), (line), (message))
 
-#define UNITY_TEST_ASSERT_EQUAL_INT(expected, actual, line, message)                               \
-    UnityAssertEqualIntNumber((UNITY_INT)(expected),                                               \
-                              (UNITY_INT)(actual),                                                 \
-                              (message),                                                           \
-                              (UNITY_LINE_TYPE)(line),                                             \
+#define UNITY_TEST_ASSERT_EQUAL_INT(expected, actual, line, message)           \
+    UnityAssertEqualIntNumber((UNITY_INT)(expected),                           \
+                              (UNITY_INT)(actual),                             \
+                              (message),                                       \
+                              (UNITY_LINE_TYPE)(line),                         \
                               UNITY_DISPLAY_STYLE_INT)
-#define UNITY_TEST_ASSERT_EQUAL_INT8(expected, actual, line, message)                              \
-    UnityAssertEqualIntNumber((UNITY_INT)(UNITY_INT8)(expected),                                   \
-                              (UNITY_INT)(UNITY_INT8)(actual),                                     \
-                              (message),                                                           \
-                              (UNITY_LINE_TYPE)(line),                                             \
+#define UNITY_TEST_ASSERT_EQUAL_INT8(expected, actual, line, message)          \
+    UnityAssertEqualIntNumber((UNITY_INT)(UNITY_INT8)(expected),               \
+                              (UNITY_INT)(UNITY_INT8)(actual),                 \
+                              (message),                                       \
+                              (UNITY_LINE_TYPE)(line),                         \
                               UNITY_DISPLAY_STYLE_INT8)
-#define UNITY_TEST_ASSERT_EQUAL_INT16(expected, actual, line, message)                             \
-    UnityAssertEqualIntNumber((UNITY_INT)(UNITY_INT16)(expected),                                  \
-                              (UNITY_INT)(UNITY_INT16)(actual),                                    \
-                              (message),                                                           \
-                              (UNITY_LINE_TYPE)(line),                                             \
+#define UNITY_TEST_ASSERT_EQUAL_INT16(expected, actual, line, message)         \
+    UnityAssertEqualIntNumber((UNITY_INT)(UNITY_INT16)(expected),              \
+                              (UNITY_INT)(UNITY_INT16)(actual),                \
+                              (message),                                       \
+                              (UNITY_LINE_TYPE)(line),                         \
                               UNITY_DISPLAY_STYLE_INT16)
-#define UNITY_TEST_ASSERT_EQUAL_INT32(expected, actual, line, message)                             \
-    UnityAssertEqualIntNumber((UNITY_INT)(UNITY_INT32)(expected),                                  \
-                              (UNITY_INT)(UNITY_INT32)(actual),                                    \
-                              (message),                                                           \
-                              (UNITY_LINE_TYPE)(line),                                             \
+#define UNITY_TEST_ASSERT_EQUAL_INT32(expected, actual, line, message)         \
+    UnityAssertEqualIntNumber((UNITY_INT)(UNITY_INT32)(expected),              \
+                              (UNITY_INT)(UNITY_INT32)(actual),                \
+                              (message),                                       \
+                              (UNITY_LINE_TYPE)(line),                         \
                               UNITY_DISPLAY_STYLE_INT32)
-#define UNITY_TEST_ASSERT_EQUAL_UINT(expected, actual, line, message)                              \
-    UnityAssertEqualUintNumber((UNITY_UINT)(expected),                                             \
-                               (UNITY_UINT)(actual),                                               \
-                               (message),                                                          \
-                               (UNITY_LINE_TYPE)(line),                                            \
+#define UNITY_TEST_ASSERT_EQUAL_UINT(expected, actual, line, message)          \
+    UnityAssertEqualUintNumber((UNITY_UINT)(expected),                         \
+                               (UNITY_UINT)(actual),                           \
+                               (message),                                      \
+                               (UNITY_LINE_TYPE)(line),                        \
                                UNITY_DISPLAY_STYLE_UINT)
-#define UNITY_TEST_ASSERT_EQUAL_UINT8(expected, actual, line, message)                             \
-    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT8)(expected),                                \
-                               (UNITY_UINT)(UNITY_UINT8)(actual),                                  \
-                               (message),                                                          \
-                               (UNITY_LINE_TYPE)(line),                                            \
+#define UNITY_TEST_ASSERT_EQUAL_UINT8(expected, actual, line, message)         \
+    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT8)(expected),            \
+                               (UNITY_UINT)(UNITY_UINT8)(actual),              \
+                               (message),                                      \
+                               (UNITY_LINE_TYPE)(line),                        \
                                UNITY_DISPLAY_STYLE_UINT8)
-#define UNITY_TEST_ASSERT_EQUAL_UINT16(expected, actual, line, message)                            \
-    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT16)(expected),                               \
-                               (UNITY_UINT)(UNITY_UINT16)(actual),                                 \
-                               (message),                                                          \
-                               (UNITY_LINE_TYPE)(line),                                            \
+#define UNITY_TEST_ASSERT_EQUAL_UINT16(expected, actual, line, message)        \
+    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT16)(expected),           \
+                               (UNITY_UINT)(UNITY_UINT16)(actual),             \
+                               (message),                                      \
+                               (UNITY_LINE_TYPE)(line),                        \
                                UNITY_DISPLAY_STYLE_UINT16)
-#define UNITY_TEST_ASSERT_EQUAL_UINT32(expected, actual, line, message)                            \
-    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT32)(expected),                               \
-                               (UNITY_UINT)(UNITY_UINT32)(actual),                                 \
-                               (message),                                                          \
-                               (UNITY_LINE_TYPE)(line),                                            \
+#define UNITY_TEST_ASSERT_EQUAL_UINT32(expected, actual, line, message)        \
+    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT32)(expected),           \
+                               (UNITY_UINT)(UNITY_UINT32)(actual),             \
+                               (message),                                      \
+                               (UNITY_LINE_TYPE)(line),                        \
                                UNITY_DISPLAY_STYLE_UINT32)
-#define UNITY_TEST_ASSERT_EQUAL_HEX8(expected, actual, line, message)                              \
-    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT8)(expected),                                \
-                               (UNITY_UINT)(UNITY_UINT8)(actual),                                  \
-                               (message),                                                          \
-                               (UNITY_LINE_TYPE)(line),                                            \
+#define UNITY_TEST_ASSERT_EQUAL_HEX8(expected, actual, line, message)          \
+    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT8)(expected),            \
+                               (UNITY_UINT)(UNITY_UINT8)(actual),              \
+                               (message),                                      \
+                               (UNITY_LINE_TYPE)(line),                        \
                                UNITY_DISPLAY_STYLE_HEX8)
-#define UNITY_TEST_ASSERT_EQUAL_HEX16(expected, actual, line, message)                             \
-    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT16)(expected),                               \
-                               (UNITY_UINT)(UNITY_UINT16)(actual),                                 \
-                               (message),                                                          \
-                               (UNITY_LINE_TYPE)(line),                                            \
+#define UNITY_TEST_ASSERT_EQUAL_HEX16(expected, actual, line, message)         \
+    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT16)(expected),           \
+                               (UNITY_UINT)(UNITY_UINT16)(actual),             \
+                               (message),                                      \
+                               (UNITY_LINE_TYPE)(line),                        \
                                UNITY_DISPLAY_STYLE_HEX16)
-#define UNITY_TEST_ASSERT_EQUAL_HEX32(expected, actual, line, message)                             \
-    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT32)(expected),                               \
-                               (UNITY_UINT)(UNITY_UINT32)(actual),                                 \
-                               (message),                                                          \
-                               (UNITY_LINE_TYPE)(line),                                            \
+#define UNITY_TEST_ASSERT_EQUAL_HEX32(expected, actual, line, message)         \
+    UnityAssertEqualUintNumber((UNITY_UINT)(UNITY_UINT32)(expected),           \
+                               (UNITY_UINT)(UNITY_UINT32)(actual),             \
+                               (message),                                      \
+                               (UNITY_LINE_TYPE)(line),                        \
                                UNITY_DISPLAY_STYLE_HEX32)
-#define UNITY_TEST_ASSERT_EQUAL_CHAR(expected, actual, line, message)                              \
-    UnityAssertEqualIntNumber((UNITY_INT)(UNITY_INT8)(expected),                                   \
-                              (UNITY_INT)(UNITY_INT8)(actual),                                     \
-                              (message),                                                           \
-                              (UNITY_LINE_TYPE)(line),                                             \
+#define UNITY_TEST_ASSERT_EQUAL_CHAR(expected, actual, line, message)          \
+    UnityAssertEqualIntNumber((UNITY_INT)(UNITY_INT8)(expected),               \
+                              (UNITY_INT)(UNITY_INT8)(actual),                 \
+                              (message),                                       \
+                              (UNITY_LINE_TYPE)(line),                         \
                               UNITY_DISPLAY_STYLE_CHAR)
-#define UNITY_TEST_ASSERT_BITS(mask, expected, actual, line, message)                              \
-    UnityAssertBits((UNITY_INT)(mask),                                                             \
-                    (UNITY_INT)(expected),                                                         \
-                    (UNITY_INT)(actual),                                                           \
-                    (message),                                                                     \
+#define UNITY_TEST_ASSERT_BITS(mask, expected, actual, line, message)          \
+    UnityAssertBits((UNITY_INT)(mask),                                         \
+                    (UNITY_INT)(expected),                                     \
+                    (UNITY_INT)(actual),                                       \
+                    (message),                                                 \
                     (UNITY_LINE_TYPE)(line))
 
-#define UNITY_TEST_ASSERT_NOT_EQUAL_INT(threshold, actual, line, message)                          \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),                               \
-                                             (UNITY_INT)(actual),                                  \
-                                             UNITY_NOT_EQUAL,                                      \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
+#define UNITY_TEST_ASSERT_NOT_EQUAL_INT(threshold, actual, line, message)      \
+    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),           \
+                                             (UNITY_INT)(actual),              \
+                                             UNITY_NOT_EQUAL,                  \
+                                             (message),                        \
+                                             (UNITY_LINE_TYPE)(line),          \
                                              UNITY_DISPLAY_STYLE_INT)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_INT8(threshold, actual, line, message)                         \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT8)(threshold),                   \
-                                             (UNITY_INT)(UNITY_INT8)(actual),                      \
-                                             UNITY_NOT_EQUAL,                                      \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT8)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_INT16(threshold, actual, line, message)                        \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT16)(threshold),                  \
-                                             (UNITY_INT)(UNITY_INT16)(actual),                     \
-                                             UNITY_NOT_EQUAL,                                      \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT16)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_INT32(threshold, actual, line, message)                        \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT32)(threshold),                  \
-                                             (UNITY_INT)(UNITY_INT32)(actual),                     \
-                                             UNITY_NOT_EQUAL,                                      \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT32)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_UINT(threshold, actual, line, message)                         \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_NOT_EQUAL,                                     \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_NOT_EQUAL_INT8(threshold, actual, line, message)     \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT8)(threshold),                                    \
+        (UNITY_INT)(UNITY_INT8)(actual),                                       \
+        UNITY_NOT_EQUAL,                                                       \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT8)
+#define UNITY_TEST_ASSERT_NOT_EQUAL_INT16(threshold, actual, line, message)    \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT16)(threshold),                                   \
+        (UNITY_INT)(UNITY_INT16)(actual),                                      \
+        UNITY_NOT_EQUAL,                                                       \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT16)
+#define UNITY_TEST_ASSERT_NOT_EQUAL_INT32(threshold, actual, line, message)    \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT32)(threshold),                                   \
+        (UNITY_INT)(UNITY_INT32)(actual),                                      \
+        UNITY_NOT_EQUAL,                                                       \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT32)
+#define UNITY_TEST_ASSERT_NOT_EQUAL_UINT(threshold, actual, line, message)     \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_NOT_EQUAL,                 \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_UINT)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_UINT8(threshold, actual, line, message)                        \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT8)(threshold),                \
-                                              (UNITY_UINT)(UNITY_UINT8)(actual),                   \
-                                              UNITY_NOT_EQUAL,                                     \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT8)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_UINT16(threshold, actual, line, message)                       \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT16)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT16)(actual),                  \
-                                              UNITY_NOT_EQUAL,                                     \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT16)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_UINT32(threshold, actual, line, message)                       \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT32)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT32)(actual),                  \
-                                              UNITY_NOT_EQUAL,                                     \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT32)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_HEX8(threshold, actual, line, message)                         \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT8)(threshold),                \
-                                              (UNITY_UINT)(UNITY_UINT8)(actual),                   \
-                                              UNITY_NOT_EQUAL,                                     \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX8)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_HEX16(threshold, actual, line, message)                        \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT16)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT16)(actual),                  \
-                                              UNITY_NOT_EQUAL,                                     \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX16)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_HEX32(threshold, actual, line, message)                        \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT32)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT32)(actual),                  \
-                                              UNITY_NOT_EQUAL,                                     \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX32)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_CHAR(threshold, actual, line, message)                         \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT8)(threshold),                   \
-                                             (UNITY_INT)(UNITY_INT8)(actual),                      \
-                                             UNITY_NOT_EQUAL,                                      \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_CHAR)
+#define UNITY_TEST_ASSERT_NOT_EQUAL_UINT8(threshold, actual, line, message)    \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT8)(threshold),                                  \
+        (UNITY_UINT)(UNITY_UINT8)(actual),                                     \
+        UNITY_NOT_EQUAL,                                                       \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT8)
+#define UNITY_TEST_ASSERT_NOT_EQUAL_UINT16(threshold, actual, line, message)   \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT16)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT16)(actual),                                    \
+        UNITY_NOT_EQUAL,                                                       \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT16)
+#define UNITY_TEST_ASSERT_NOT_EQUAL_UINT32(threshold, actual, line, message)   \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT32)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT32)(actual),                                    \
+        UNITY_NOT_EQUAL,                                                       \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT32)
+#define UNITY_TEST_ASSERT_NOT_EQUAL_HEX8(threshold, actual, line, message)     \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT8)(threshold),                                  \
+        (UNITY_UINT)(UNITY_UINT8)(actual),                                     \
+        UNITY_NOT_EQUAL,                                                       \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX8)
+#define UNITY_TEST_ASSERT_NOT_EQUAL_HEX16(threshold, actual, line, message)    \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT16)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT16)(actual),                                    \
+        UNITY_NOT_EQUAL,                                                       \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX16)
+#define UNITY_TEST_ASSERT_NOT_EQUAL_HEX32(threshold, actual, line, message)    \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT32)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT32)(actual),                                    \
+        UNITY_NOT_EQUAL,                                                       \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX32)
+#define UNITY_TEST_ASSERT_NOT_EQUAL_CHAR(threshold, actual, line, message)     \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT8)(threshold),                                    \
+        (UNITY_INT)(UNITY_INT8)(actual),                                       \
+        UNITY_NOT_EQUAL,                                                       \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_CHAR)
 
-#define UNITY_TEST_ASSERT_GREATER_THAN_INT(threshold, actual, line, message)                       \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),                               \
-                                             (UNITY_INT)(actual),                                  \
-                                             UNITY_GREATER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
+#define UNITY_TEST_ASSERT_GREATER_THAN_INT(threshold, actual, line, message)   \
+    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),           \
+                                             (UNITY_INT)(actual),              \
+                                             UNITY_GREATER_THAN,               \
+                                             (message),                        \
+                                             (UNITY_LINE_TYPE)(line),          \
                                              UNITY_DISPLAY_STYLE_INT)
-#define UNITY_TEST_ASSERT_GREATER_THAN_INT8(threshold, actual, line, message)                      \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT8)(threshold),                   \
-                                             (UNITY_INT)(UNITY_INT8)(actual),                      \
-                                             UNITY_GREATER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT8)
-#define UNITY_TEST_ASSERT_GREATER_THAN_INT16(threshold, actual, line, message)                     \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT16)(threshold),                  \
-                                             (UNITY_INT)(UNITY_INT16)(actual),                     \
-                                             UNITY_GREATER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT16)
-#define UNITY_TEST_ASSERT_GREATER_THAN_INT32(threshold, actual, line, message)                     \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT32)(threshold),                  \
-                                             (UNITY_INT)(UNITY_INT32)(actual),                     \
-                                             UNITY_GREATER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT32)
-#define UNITY_TEST_ASSERT_GREATER_THAN_UINT(threshold, actual, line, message)                      \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_GREATER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_GREATER_THAN_INT8(threshold, actual, line, message)  \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT8)(threshold),                                    \
+        (UNITY_INT)(UNITY_INT8)(actual),                                       \
+        UNITY_GREATER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT8)
+#define UNITY_TEST_ASSERT_GREATER_THAN_INT16(threshold, actual, line, message) \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT16)(threshold),                                   \
+        (UNITY_INT)(UNITY_INT16)(actual),                                      \
+        UNITY_GREATER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT16)
+#define UNITY_TEST_ASSERT_GREATER_THAN_INT32(threshold, actual, line, message) \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT32)(threshold),                                   \
+        (UNITY_INT)(UNITY_INT32)(actual),                                      \
+        UNITY_GREATER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT32)
+#define UNITY_TEST_ASSERT_GREATER_THAN_UINT(threshold, actual, line, message)  \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_GREATER_THAN,              \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_UINT)
-#define UNITY_TEST_ASSERT_GREATER_THAN_UINT8(threshold, actual, line, message)                     \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT8)(threshold),                \
-                                              (UNITY_UINT)(UNITY_UINT8)(actual),                   \
-                                              UNITY_GREATER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT8)
-#define UNITY_TEST_ASSERT_GREATER_THAN_UINT16(threshold, actual, line, message)                    \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT16)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT16)(actual),                  \
-                                              UNITY_GREATER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT16)
-#define UNITY_TEST_ASSERT_GREATER_THAN_UINT32(threshold, actual, line, message)                    \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT32)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT32)(actual),                  \
-                                              UNITY_GREATER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT32)
-#define UNITY_TEST_ASSERT_GREATER_THAN_HEX8(threshold, actual, line, message)                      \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT8)(threshold),                \
-                                              (UNITY_UINT)(UNITY_UINT8)(actual),                   \
-                                              UNITY_GREATER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX8)
-#define UNITY_TEST_ASSERT_GREATER_THAN_HEX16(threshold, actual, line, message)                     \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT16)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT16)(actual),                  \
-                                              UNITY_GREATER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX16)
-#define UNITY_TEST_ASSERT_GREATER_THAN_HEX32(threshold, actual, line, message)                     \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT32)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT32)(actual),                  \
-                                              UNITY_GREATER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX32)
-#define UNITY_TEST_ASSERT_GREATER_THAN_CHAR(threshold, actual, line, message)                      \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT8)(threshold),                   \
-                                             (UNITY_INT)(UNITY_INT8)(actual),                      \
-                                             UNITY_GREATER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_CHAR)
+#define UNITY_TEST_ASSERT_GREATER_THAN_UINT8(threshold, actual, line, message) \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT8)(threshold),                                  \
+        (UNITY_UINT)(UNITY_UINT8)(actual),                                     \
+        UNITY_GREATER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT8)
+#define UNITY_TEST_ASSERT_GREATER_THAN_UINT16(                                 \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT16)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT16)(actual),                                    \
+        UNITY_GREATER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT16)
+#define UNITY_TEST_ASSERT_GREATER_THAN_UINT32(                                 \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT32)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT32)(actual),                                    \
+        UNITY_GREATER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT32)
+#define UNITY_TEST_ASSERT_GREATER_THAN_HEX8(threshold, actual, line, message)  \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT8)(threshold),                                  \
+        (UNITY_UINT)(UNITY_UINT8)(actual),                                     \
+        UNITY_GREATER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX8)
+#define UNITY_TEST_ASSERT_GREATER_THAN_HEX16(threshold, actual, line, message) \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT16)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT16)(actual),                                    \
+        UNITY_GREATER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX16)
+#define UNITY_TEST_ASSERT_GREATER_THAN_HEX32(threshold, actual, line, message) \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT32)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT32)(actual),                                    \
+        UNITY_GREATER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX32)
+#define UNITY_TEST_ASSERT_GREATER_THAN_CHAR(threshold, actual, line, message)  \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT8)(threshold),                                    \
+        (UNITY_INT)(UNITY_INT8)(actual),                                       \
+        UNITY_GREATER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_CHAR)
 
-#define UNITY_TEST_ASSERT_SMALLER_THAN_INT(threshold, actual, line, message)                       \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),                               \
-                                             (UNITY_INT)(actual),                                  \
-                                             UNITY_SMALLER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
+#define UNITY_TEST_ASSERT_SMALLER_THAN_INT(threshold, actual, line, message)   \
+    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),           \
+                                             (UNITY_INT)(actual),              \
+                                             UNITY_SMALLER_THAN,               \
+                                             (message),                        \
+                                             (UNITY_LINE_TYPE)(line),          \
                                              UNITY_DISPLAY_STYLE_INT)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_INT8(threshold, actual, line, message)                      \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT8)(threshold),                   \
-                                             (UNITY_INT)(UNITY_INT8)(actual),                      \
-                                             UNITY_SMALLER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT8)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_INT16(threshold, actual, line, message)                     \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT16)(threshold),                  \
-                                             (UNITY_INT)(UNITY_INT16)(actual),                     \
-                                             UNITY_SMALLER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT16)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_INT32(threshold, actual, line, message)                     \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT32)(threshold),                  \
-                                             (UNITY_INT)(UNITY_INT32)(actual),                     \
-                                             UNITY_SMALLER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT32)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT(threshold, actual, line, message)                      \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_SMALLER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_SMALLER_THAN_INT8(threshold, actual, line, message)  \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT8)(threshold),                                    \
+        (UNITY_INT)(UNITY_INT8)(actual),                                       \
+        UNITY_SMALLER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT8)
+#define UNITY_TEST_ASSERT_SMALLER_THAN_INT16(threshold, actual, line, message) \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT16)(threshold),                                   \
+        (UNITY_INT)(UNITY_INT16)(actual),                                      \
+        UNITY_SMALLER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT16)
+#define UNITY_TEST_ASSERT_SMALLER_THAN_INT32(threshold, actual, line, message) \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT32)(threshold),                                   \
+        (UNITY_INT)(UNITY_INT32)(actual),                                      \
+        UNITY_SMALLER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT32)
+#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT(threshold, actual, line, message)  \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_SMALLER_THAN,              \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_UINT)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT8(threshold, actual, line, message)                     \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT8)(threshold),                \
-                                              (UNITY_UINT)(UNITY_UINT8)(actual),                   \
-                                              UNITY_SMALLER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT8)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT16(threshold, actual, line, message)                    \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT16)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT16)(actual),                  \
-                                              UNITY_SMALLER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT16)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT32(threshold, actual, line, message)                    \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT32)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT32)(actual),                  \
-                                              UNITY_SMALLER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT32)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_HEX8(threshold, actual, line, message)                      \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT8)(threshold),                \
-                                              (UNITY_UINT)(UNITY_UINT8)(actual),                   \
-                                              UNITY_SMALLER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX8)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_HEX16(threshold, actual, line, message)                     \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT16)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT16)(actual),                  \
-                                              UNITY_SMALLER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX16)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_HEX32(threshold, actual, line, message)                     \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT32)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT32)(actual),                  \
-                                              UNITY_SMALLER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX32)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_CHAR(threshold, actual, line, message)                      \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT8)(threshold),                   \
-                                             (UNITY_INT)(UNITY_INT8)(actual),                      \
-                                             UNITY_SMALLER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_CHAR)
+#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT8(threshold, actual, line, message) \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT8)(threshold),                                  \
+        (UNITY_UINT)(UNITY_UINT8)(actual),                                     \
+        UNITY_SMALLER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT8)
+#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT16(                                 \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT16)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT16)(actual),                                    \
+        UNITY_SMALLER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT16)
+#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT32(                                 \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT32)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT32)(actual),                                    \
+        UNITY_SMALLER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT32)
+#define UNITY_TEST_ASSERT_SMALLER_THAN_HEX8(threshold, actual, line, message)  \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT8)(threshold),                                  \
+        (UNITY_UINT)(UNITY_UINT8)(actual),                                     \
+        UNITY_SMALLER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX8)
+#define UNITY_TEST_ASSERT_SMALLER_THAN_HEX16(threshold, actual, line, message) \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT16)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT16)(actual),                                    \
+        UNITY_SMALLER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX16)
+#define UNITY_TEST_ASSERT_SMALLER_THAN_HEX32(threshold, actual, line, message) \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT32)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT32)(actual),                                    \
+        UNITY_SMALLER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX32)
+#define UNITY_TEST_ASSERT_SMALLER_THAN_CHAR(threshold, actual, line, message)  \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT8)(threshold),                                    \
+        (UNITY_INT)(UNITY_INT8)(actual),                                       \
+        UNITY_SMALLER_THAN,                                                    \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_CHAR)
 
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT(threshold, actual, line, message)                   \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),                               \
-                                             (UNITY_INT)(actual),                                  \
-                                             UNITY_GREATER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT(                                \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),           \
+                                             (UNITY_INT)(actual),              \
+                                             UNITY_GREATER_OR_EQUAL,           \
+                                             (message),                        \
+                                             (UNITY_LINE_TYPE)(line),          \
                                              UNITY_DISPLAY_STYLE_INT)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT8(threshold, actual, line, message)                  \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT8)(threshold),                   \
-                                             (UNITY_INT)(UNITY_INT8)(actual),                      \
-                                             UNITY_GREATER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT8)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT16(threshold, actual, line, message)                 \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT16)(threshold),                  \
-                                             (UNITY_INT)(UNITY_INT16)(actual),                     \
-                                             UNITY_GREATER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT16)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT32(threshold, actual, line, message)                 \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT32)(threshold),                  \
-                                             (UNITY_INT)(UNITY_INT32)(actual),                     \
-                                             UNITY_GREATER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT32)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT(threshold, actual, line, message)                  \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_GREATER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT8(                               \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT8)(threshold),                                    \
+        (UNITY_INT)(UNITY_INT8)(actual),                                       \
+        UNITY_GREATER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT8)
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT16(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT16)(threshold),                                   \
+        (UNITY_INT)(UNITY_INT16)(actual),                                      \
+        UNITY_GREATER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT16)
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT32(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT32)(threshold),                                   \
+        (UNITY_INT)(UNITY_INT32)(actual),                                      \
+        UNITY_GREATER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT32)
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT(                               \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_GREATER_OR_EQUAL,          \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_UINT)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT8(threshold, actual, line, message)                 \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT8)(threshold),                \
-                                              (UNITY_UINT)(UNITY_UINT8)(actual),                   \
-                                              UNITY_GREATER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT8)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT16(threshold, actual, line, message)                \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT16)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT16)(actual),                  \
-                                              UNITY_GREATER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT16)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT32(threshold, actual, line, message)                \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT32)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT32)(actual),                  \
-                                              UNITY_GREATER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT32)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_HEX8(threshold, actual, line, message)                  \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT8)(threshold),                \
-                                              (UNITY_UINT)(UNITY_UINT8)(actual),                   \
-                                              UNITY_GREATER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX8)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_HEX16(threshold, actual, line, message)                 \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT16)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT16)(actual),                  \
-                                              UNITY_GREATER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX16)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_HEX32(threshold, actual, line, message)                 \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT32)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT32)(actual),                  \
-                                              UNITY_GREATER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX32)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_CHAR(threshold, actual, line, message)                  \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT8)(threshold),                   \
-                                             (UNITY_INT)(UNITY_INT8)(actual),                      \
-                                             UNITY_GREATER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_CHAR)
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT8(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT8)(threshold),                                  \
+        (UNITY_UINT)(UNITY_UINT8)(actual),                                     \
+        UNITY_GREATER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT8)
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT16(                             \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT16)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT16)(actual),                                    \
+        UNITY_GREATER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT16)
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT32(                             \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT32)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT32)(actual),                                    \
+        UNITY_GREATER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT32)
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_HEX8(                               \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT8)(threshold),                                  \
+        (UNITY_UINT)(UNITY_UINT8)(actual),                                     \
+        UNITY_GREATER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX8)
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_HEX16(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT16)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT16)(actual),                                    \
+        UNITY_GREATER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX16)
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_HEX32(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT32)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT32)(actual),                                    \
+        UNITY_GREATER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX32)
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_CHAR(                               \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT8)(threshold),                                    \
+        (UNITY_INT)(UNITY_INT8)(actual),                                       \
+        UNITY_GREATER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_CHAR)
 
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT(threshold, actual, line, message)                   \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),                               \
-                                             (UNITY_INT)(actual),                                  \
-                                             UNITY_SMALLER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT(                                \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),           \
+                                             (UNITY_INT)(actual),              \
+                                             UNITY_SMALLER_OR_EQUAL,           \
+                                             (message),                        \
+                                             (UNITY_LINE_TYPE)(line),          \
                                              UNITY_DISPLAY_STYLE_INT)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT8(threshold, actual, line, message)                  \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT8)(threshold),                   \
-                                             (UNITY_INT)(UNITY_INT8)(actual),                      \
-                                             UNITY_SMALLER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT8)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT16(threshold, actual, line, message)                 \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT16)(threshold),                  \
-                                             (UNITY_INT)(UNITY_INT16)(actual),                     \
-                                             UNITY_SMALLER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT16)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT32(threshold, actual, line, message)                 \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT32)(threshold),                  \
-                                             (UNITY_INT)(UNITY_INT32)(actual),                     \
-                                             UNITY_SMALLER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_INT32)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT(threshold, actual, line, message)                  \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_SMALLER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT8(                               \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT8)(threshold),                                    \
+        (UNITY_INT)(UNITY_INT8)(actual),                                       \
+        UNITY_SMALLER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT8)
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT16(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT16)(threshold),                                   \
+        (UNITY_INT)(UNITY_INT16)(actual),                                      \
+        UNITY_SMALLER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT16)
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT32(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT32)(threshold),                                   \
+        (UNITY_INT)(UNITY_INT32)(actual),                                      \
+        UNITY_SMALLER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT32)
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT(                               \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_SMALLER_OR_EQUAL,          \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_UINT)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT8(threshold, actual, line, message)                 \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT8)(threshold),                \
-                                              (UNITY_UINT)(UNITY_UINT8)(actual),                   \
-                                              UNITY_SMALLER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT8)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT16(threshold, actual, line, message)                \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT16)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT16)(actual),                  \
-                                              UNITY_SMALLER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT16)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT32(threshold, actual, line, message)                \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT32)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT32)(actual),                  \
-                                              UNITY_SMALLER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_UINT32)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_HEX8(threshold, actual, line, message)                  \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT8)(threshold),                \
-                                              (UNITY_UINT)(UNITY_UINT8)(actual),                   \
-                                              UNITY_SMALLER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX8)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_HEX16(threshold, actual, line, message)                 \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT16)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT16)(actual),                  \
-                                              UNITY_SMALLER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX16)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_HEX32(threshold, actual, line, message)                 \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(UNITY_UINT32)(threshold),               \
-                                              (UNITY_UINT)(UNITY_UINT32)(actual),                  \
-                                              UNITY_SMALLER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
-                                              UNITY_DISPLAY_STYLE_HEX32)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_CHAR(threshold, actual, line, message)                  \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(UNITY_INT8)(threshold),                   \
-                                             (UNITY_INT)(UNITY_INT8)(actual),                      \
-                                             UNITY_SMALLER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
-                                             UNITY_DISPLAY_STYLE_CHAR)
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT8(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT8)(threshold),                                  \
+        (UNITY_UINT)(UNITY_UINT8)(actual),                                     \
+        UNITY_SMALLER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT8)
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT16(                             \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT16)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT16)(actual),                                    \
+        UNITY_SMALLER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT16)
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT32(                             \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT32)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT32)(actual),                                    \
+        UNITY_SMALLER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT32)
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_HEX8(                               \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT8)(threshold),                                  \
+        (UNITY_UINT)(UNITY_UINT8)(actual),                                     \
+        UNITY_SMALLER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX8)
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_HEX16(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT16)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT16)(actual),                                    \
+        UNITY_SMALLER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX16)
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_HEX32(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber(                                 \
+        (UNITY_UINT)(UNITY_UINT32)(threshold),                                 \
+        (UNITY_UINT)(UNITY_UINT32)(actual),                                    \
+        UNITY_SMALLER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX32)
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_CHAR(                               \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber(                                  \
+        (UNITY_INT)(UNITY_INT8)(threshold),                                    \
+        (UNITY_INT)(UNITY_INT8)(actual),                                       \
+        UNITY_SMALLER_OR_EQUAL,                                                \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_CHAR)
 
-#define UNITY_TEST_ASSERT_INT_WITHIN(delta, expected, actual, line, message)                       \
-    UnityAssertIntNumbersWithin((delta),                                                           \
-                                (UNITY_INT)(expected),                                             \
-                                (UNITY_INT)(actual),                                               \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
+#define UNITY_TEST_ASSERT_INT_WITHIN(delta, expected, actual, line, message)   \
+    UnityAssertIntNumbersWithin((delta),                                       \
+                                (UNITY_INT)(expected),                         \
+                                (UNITY_INT)(actual),                           \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
                                 UNITY_DISPLAY_STYLE_INT)
-#define UNITY_TEST_ASSERT_INT8_WITHIN(delta, expected, actual, line, message)                      \
-    UnityAssertIntNumbersWithin((UNITY_UINT8)(delta),                                              \
-                                (UNITY_INT)(UNITY_INT8)(expected),                                 \
-                                (UNITY_INT)(UNITY_INT8)(actual),                                   \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
+#define UNITY_TEST_ASSERT_INT8_WITHIN(delta, expected, actual, line, message)  \
+    UnityAssertIntNumbersWithin((UNITY_UINT8)(delta),                          \
+                                (UNITY_INT)(UNITY_INT8)(expected),             \
+                                (UNITY_INT)(UNITY_INT8)(actual),               \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
                                 UNITY_DISPLAY_STYLE_INT8)
-#define UNITY_TEST_ASSERT_INT16_WITHIN(delta, expected, actual, line, message)                     \
-    UnityAssertIntNumbersWithin((UNITY_UINT16)(delta),                                             \
-                                (UNITY_INT)(UNITY_INT16)(expected),                                \
-                                (UNITY_INT)(UNITY_INT16)(actual),                                  \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
+#define UNITY_TEST_ASSERT_INT16_WITHIN(delta, expected, actual, line, message) \
+    UnityAssertIntNumbersWithin((UNITY_UINT16)(delta),                         \
+                                (UNITY_INT)(UNITY_INT16)(expected),            \
+                                (UNITY_INT)(UNITY_INT16)(actual),              \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
                                 UNITY_DISPLAY_STYLE_INT16)
-#define UNITY_TEST_ASSERT_INT32_WITHIN(delta, expected, actual, line, message)                     \
-    UnityAssertIntNumbersWithin((UNITY_UINT32)(delta),                                             \
-                                (UNITY_INT)(UNITY_INT32)(expected),                                \
-                                (UNITY_INT)(UNITY_INT32)(actual),                                  \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
+#define UNITY_TEST_ASSERT_INT32_WITHIN(delta, expected, actual, line, message) \
+    UnityAssertIntNumbersWithin((UNITY_UINT32)(delta),                         \
+                                (UNITY_INT)(UNITY_INT32)(expected),            \
+                                (UNITY_INT)(UNITY_INT32)(actual),              \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
                                 UNITY_DISPLAY_STYLE_INT32)
-#define UNITY_TEST_ASSERT_UINT_WITHIN(delta, expected, actual, line, message)                      \
-    UnityAssertUintNumbersWithin((delta),                                                          \
-                                 (UNITY_UINT)(expected),                                           \
-                                 (UNITY_UINT)(actual),                                             \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
+#define UNITY_TEST_ASSERT_UINT_WITHIN(delta, expected, actual, line, message)  \
+    UnityAssertUintNumbersWithin((delta),                                      \
+                                 (UNITY_UINT)(expected),                       \
+                                 (UNITY_UINT)(actual),                         \
+                                 (message),                                    \
+                                 (UNITY_LINE_TYPE)(line),                      \
                                  UNITY_DISPLAY_STYLE_UINT)
-#define UNITY_TEST_ASSERT_UINT8_WITHIN(delta, expected, actual, line, message)                     \
-    UnityAssertUintNumbersWithin((UNITY_UINT8)(delta),                                             \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT8)(expected),                  \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT8)(actual),                    \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
-                                 UNITY_DISPLAY_STYLE_UINT8)
-#define UNITY_TEST_ASSERT_UINT16_WITHIN(delta, expected, actual, line, message)                    \
-    UnityAssertUintNumbersWithin((UNITY_UINT16)(delta),                                            \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT16)(expected),                 \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT16)(actual),                   \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
-                                 UNITY_DISPLAY_STYLE_UINT16)
-#define UNITY_TEST_ASSERT_UINT32_WITHIN(delta, expected, actual, line, message)                    \
-    UnityAssertUintNumbersWithin((UNITY_UINT32)(delta),                                            \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT32)(expected),                 \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT32)(actual),                   \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
-                                 UNITY_DISPLAY_STYLE_UINT32)
-#define UNITY_TEST_ASSERT_HEX8_WITHIN(delta, expected, actual, line, message)                      \
-    UnityAssertUintNumbersWithin((UNITY_UINT8)(delta),                                             \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT8)(expected),                  \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT8)(actual),                    \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
-                                 UNITY_DISPLAY_STYLE_HEX8)
-#define UNITY_TEST_ASSERT_HEX16_WITHIN(delta, expected, actual, line, message)                     \
-    UnityAssertUintNumbersWithin((UNITY_UINT16)(delta),                                            \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT16)(expected),                 \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT16)(actual),                   \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
-                                 UNITY_DISPLAY_STYLE_HEX16)
-#define UNITY_TEST_ASSERT_HEX32_WITHIN(delta, expected, actual, line, message)                     \
-    UnityAssertUintNumbersWithin((UNITY_UINT32)(delta),                                            \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT32)(expected),                 \
-                                 (UNITY_UINT)(UNITY_UINT)(UNITY_UINT32)(actual),                   \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
-                                 UNITY_DISPLAY_STYLE_HEX32)
-#define UNITY_TEST_ASSERT_CHAR_WITHIN(delta, expected, actual, line, message)                      \
-    UnityAssertIntNumbersWithin((UNITY_UINT8)(delta),                                              \
-                                (UNITY_INT)(UNITY_INT8)(expected),                                 \
-                                (UNITY_INT)(UNITY_INT8)(actual),                                   \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
+#define UNITY_TEST_ASSERT_UINT8_WITHIN(delta, expected, actual, line, message) \
+    UnityAssertUintNumbersWithin(                                              \
+        (UNITY_UINT8)(delta),                                                  \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT8)(expected),                       \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT8)(actual),                         \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT8)
+#define UNITY_TEST_ASSERT_UINT16_WITHIN(                                       \
+    delta, expected, actual, line, message)                                    \
+    UnityAssertUintNumbersWithin(                                              \
+        (UNITY_UINT16)(delta),                                                 \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT16)(expected),                      \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT16)(actual),                        \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT16)
+#define UNITY_TEST_ASSERT_UINT32_WITHIN(                                       \
+    delta, expected, actual, line, message)                                    \
+    UnityAssertUintNumbersWithin(                                              \
+        (UNITY_UINT32)(delta),                                                 \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT32)(expected),                      \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT32)(actual),                        \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT32)
+#define UNITY_TEST_ASSERT_HEX8_WITHIN(delta, expected, actual, line, message)  \
+    UnityAssertUintNumbersWithin(                                              \
+        (UNITY_UINT8)(delta),                                                  \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT8)(expected),                       \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT8)(actual),                         \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX8)
+#define UNITY_TEST_ASSERT_HEX16_WITHIN(delta, expected, actual, line, message) \
+    UnityAssertUintNumbersWithin(                                              \
+        (UNITY_UINT16)(delta),                                                 \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT16)(expected),                      \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT16)(actual),                        \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX16)
+#define UNITY_TEST_ASSERT_HEX32_WITHIN(delta, expected, actual, line, message) \
+    UnityAssertUintNumbersWithin(                                              \
+        (UNITY_UINT32)(delta),                                                 \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT32)(expected),                      \
+        (UNITY_UINT)(UNITY_UINT)(UNITY_UINT32)(actual),                        \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX32)
+#define UNITY_TEST_ASSERT_CHAR_WITHIN(delta, expected, actual, line, message)  \
+    UnityAssertIntNumbersWithin((UNITY_UINT8)(delta),                          \
+                                (UNITY_INT)(UNITY_INT8)(expected),             \
+                                (UNITY_INT)(UNITY_INT8)(actual),               \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
                                 UNITY_DISPLAY_STYLE_CHAR)
 
-#define UNITY_TEST_ASSERT_INT_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message)   \
-    UnityAssertNumbersArrayWithin((delta),                                                         \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_INT,                                         \
+#define UNITY_TEST_ASSERT_INT_ARRAY_WITHIN(                                    \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((delta),                                     \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_INT,                     \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_INT8_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message)  \
-    UnityAssertNumbersArrayWithin((UNITY_UINT8)(delta),                                            \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_INT8,                                        \
+#define UNITY_TEST_ASSERT_INT8_ARRAY_WITHIN(                                   \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT8)(delta),                        \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_INT8,                    \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_INT16_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
-    UnityAssertNumbersArrayWithin((UNITY_UINT16)(delta),                                           \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_INT16,                                       \
+#define UNITY_TEST_ASSERT_INT16_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT16)(delta),                       \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_INT16,                   \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_INT32_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
-    UnityAssertNumbersArrayWithin((UNITY_UINT32)(delta),                                           \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_INT32,                                       \
+#define UNITY_TEST_ASSERT_INT32_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT32)(delta),                       \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_INT32,                   \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_UINT_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message)  \
-    UnityAssertNumbersArrayWithin((delta),                                                         \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_UINT,                                        \
+#define UNITY_TEST_ASSERT_UINT_ARRAY_WITHIN(                                   \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((delta),                                     \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_UINT,                    \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_UINT8_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
-    UnityAssertNumbersArrayWithin((UNITY_UINT8)(delta),                                            \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_UINT8,                                       \
+#define UNITY_TEST_ASSERT_UINT8_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT8)(delta),                        \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_UINT8,                   \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_UINT16_ARRAY_WITHIN(                                                     \
-    delta, expected, actual, num_elements, line, message)                                          \
-    UnityAssertNumbersArrayWithin((UNITY_UINT16)(delta),                                           \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_UINT16,                                      \
+#define UNITY_TEST_ASSERT_UINT16_ARRAY_WITHIN(                                 \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT16)(delta),                       \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_UINT16,                  \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_UINT32_ARRAY_WITHIN(                                                     \
-    delta, expected, actual, num_elements, line, message)                                          \
-    UnityAssertNumbersArrayWithin((UNITY_UINT32)(delta),                                           \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_UINT32,                                      \
+#define UNITY_TEST_ASSERT_UINT32_ARRAY_WITHIN(                                 \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT32)(delta),                       \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_UINT32,                  \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_HEX8_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message)  \
-    UnityAssertNumbersArrayWithin((UNITY_UINT8)(delta),                                            \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_HEX8,                                        \
+#define UNITY_TEST_ASSERT_HEX8_ARRAY_WITHIN(                                   \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT8)(delta),                        \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_HEX8,                    \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_HEX16_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
-    UnityAssertNumbersArrayWithin((UNITY_UINT16)(delta),                                           \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_HEX16,                                       \
+#define UNITY_TEST_ASSERT_HEX16_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT16)(delta),                       \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_HEX16,                   \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_HEX32_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
-    UnityAssertNumbersArrayWithin((UNITY_UINT32)(delta),                                           \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_HEX32,                                       \
+#define UNITY_TEST_ASSERT_HEX32_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT32)(delta),                       \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_HEX32,                   \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_CHAR_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message)  \
-    UnityAssertNumbersArrayWithin((UNITY_UINT8)(delta),                                            \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  ((UNITY_UINT32)(num_elements)),                                  \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_CHAR,                                        \
+#define UNITY_TEST_ASSERT_CHAR_ARRAY_WITHIN(                                   \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT8)(delta),                        \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  ((UNITY_UINT32)(num_elements)),              \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_CHAR,                    \
                                   UNITY_ARRAY_TO_ARRAY)
 
-#define UNITY_TEST_ASSERT_EQUAL_PTR(expected, actual, line, message)                               \
-    UnityAssertEqualIntNumber((UNITY_PTR_TO_INT)(expected),                                        \
-                              (UNITY_PTR_TO_INT)(actual),                                          \
-                              (message),                                                           \
-                              (UNITY_LINE_TYPE)(line),                                             \
+#define UNITY_TEST_ASSERT_EQUAL_PTR(expected, actual, line, message)           \
+    UnityAssertEqualIntNumber((UNITY_PTR_TO_INT)(expected),                    \
+                              (UNITY_PTR_TO_INT)(actual),                      \
+                              (message),                                       \
+                              (UNITY_LINE_TYPE)(line),                         \
                               UNITY_DISPLAY_STYLE_POINTER)
-#define UNITY_TEST_ASSERT_EQUAL_STRING(expected, actual, line, message)                            \
-    UnityAssertEqualString(                                                                        \
-        (const char*)(expected), (const char*)(actual), (message), (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_EQUAL_STRING_LEN(expected, actual, len, line, message)                   \
-    UnityAssertEqualStringLen((const char*)(expected),                                             \
-                              (const char*)(actual),                                               \
-                              (UNITY_UINT32)(len),                                                 \
-                              (message),                                                           \
+#define UNITY_TEST_ASSERT_EQUAL_STRING(expected, actual, line, message)        \
+    UnityAssertEqualString((const char*)(expected),                            \
+                           (const char*)(actual),                              \
+                           (message),                                          \
+                           (UNITY_LINE_TYPE)(line))
+#define UNITY_TEST_ASSERT_EQUAL_STRING_LEN(                                    \
+    expected, actual, len, line, message)                                      \
+    UnityAssertEqualStringLen((const char*)(expected),                         \
+                              (const char*)(actual),                           \
+                              (UNITY_UINT32)(len),                             \
+                              (message),                                       \
                               (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_EQUAL_MEMORY(expected, actual, len, line, message)                       \
-    UnityAssertEqualMemory((UNITY_INTERNAL_PTR)(expected),                                         \
-                           (UNITY_INTERNAL_PTR)(actual),                                           \
-                           (UNITY_UINT32)(len),                                                    \
-                           1,                                                                      \
-                           (message),                                                              \
-                           (UNITY_LINE_TYPE)(line),                                                \
+#define UNITY_TEST_ASSERT_EQUAL_MEMORY(expected, actual, len, line, message)   \
+    UnityAssertEqualMemory((UNITY_INTERNAL_PTR)(expected),                     \
+                           (UNITY_INTERNAL_PTR)(actual),                       \
+                           (UNITY_UINT32)(len),                                \
+                           1,                                                  \
+                           (message),                                          \
+                           (UNITY_LINE_TYPE)(line),                            \
                            UNITY_ARRAY_TO_ARRAY)
 
-#define UNITY_TEST_ASSERT_EQUAL_INT_ARRAY(expected, actual, num_elements, line, message)           \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_INT,                                              \
+#define UNITY_TEST_ASSERT_EQUAL_INT_ARRAY(                                     \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_INT,                          \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_INT8_ARRAY(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_INT8,                                             \
+#define UNITY_TEST_ASSERT_EQUAL_INT8_ARRAY(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_INT8,                         \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_INT16_ARRAY(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_INT16,                                            \
+#define UNITY_TEST_ASSERT_EQUAL_INT16_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_INT16,                        \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_INT32_ARRAY(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_INT32,                                            \
+#define UNITY_TEST_ASSERT_EQUAL_INT32_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_INT32,                        \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_UINT_ARRAY(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_UINT,                                             \
+#define UNITY_TEST_ASSERT_EQUAL_UINT_ARRAY(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_UINT,                         \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_UINT8_ARRAY(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_UINT8,                                            \
+#define UNITY_TEST_ASSERT_EQUAL_UINT8_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_UINT8,                        \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_UINT16_ARRAY(expected, actual, num_elements, line, message)        \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_UINT16,                                           \
+#define UNITY_TEST_ASSERT_EQUAL_UINT16_ARRAY(                                  \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_UINT16,                       \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_UINT32_ARRAY(expected, actual, num_elements, line, message)        \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_UINT32,                                           \
+#define UNITY_TEST_ASSERT_EQUAL_UINT32_ARRAY(                                  \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_UINT32,                       \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_HEX8,                                             \
+#define UNITY_TEST_ASSERT_EQUAL_HEX8_ARRAY(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_HEX8,                         \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_HEX16_ARRAY(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_HEX16,                                            \
+#define UNITY_TEST_ASSERT_EQUAL_HEX16_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_HEX16,                        \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_HEX32_ARRAY(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_HEX32,                                            \
+#define UNITY_TEST_ASSERT_EQUAL_HEX32_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_HEX32,                        \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_PTR_ARRAY(expected, actual, num_elements, line, message)           \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_POINTER,                                          \
+#define UNITY_TEST_ASSERT_EQUAL_PTR_ARRAY(                                     \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_POINTER,                      \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_STRING_ARRAY(expected, actual, num_elements, line, message)        \
-    UnityAssertEqualStringArray((UNITY_INTERNAL_PTR)(expected),                                    \
-                                (const char**)(actual),                                            \
-                                (UNITY_UINT32)(num_elements),                                      \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
+#define UNITY_TEST_ASSERT_EQUAL_STRING_ARRAY(                                  \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualStringArray((UNITY_INTERNAL_PTR)(expected),                \
+                                (const char**)(actual),                        \
+                                (UNITY_UINT32)(num_elements),                  \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
                                 UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_MEMORY_ARRAY(expected, actual, len, num_elements, line, message)   \
-    UnityAssertEqualMemory((UNITY_INTERNAL_PTR)(expected),                                         \
-                           (UNITY_INTERNAL_PTR)(actual),                                           \
-                           (UNITY_UINT32)(len),                                                    \
-                           (UNITY_UINT32)(num_elements),                                           \
-                           (message),                                                              \
-                           (UNITY_LINE_TYPE)(line),                                                \
+#define UNITY_TEST_ASSERT_EQUAL_MEMORY_ARRAY(                                  \
+    expected, actual, len, num_elements, line, message)                        \
+    UnityAssertEqualMemory((UNITY_INTERNAL_PTR)(expected),                     \
+                           (UNITY_INTERNAL_PTR)(actual),                       \
+                           (UNITY_UINT32)(len),                                \
+                           (UNITY_UINT32)(num_elements),                       \
+                           (message),                                          \
+                           (UNITY_LINE_TYPE)(line),                            \
                            UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_CHAR_ARRAY(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_CHAR,                                             \
+#define UNITY_TEST_ASSERT_EQUAL_CHAR_ARRAY(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_CHAR,                         \
                              UNITY_ARRAY_TO_ARRAY)
 
-#define UNITY_TEST_ASSERT_EACH_EQUAL_INT(expected, actual, num_elements, line, message)            \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(expected), (UNITY_INT_WIDTH / 8)),          \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_INT,                                              \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_INT8(expected, actual, num_elements, line, message)           \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_INT8)(expected), 1),                  \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_INT8,                                             \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_INT16(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_INT16)(expected), 2),                 \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_INT16,                                            \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_INT32(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_INT32)(expected), 4),                 \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_INT32,                                            \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_UINT(expected, actual, num_elements, line, message)           \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(expected), (UNITY_INT_WIDTH / 8)),          \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_UINT,                                             \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_UINT8(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_UINT8)(expected), 1),                 \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_UINT8,                                            \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_UINT16(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_UINT16)(expected), 2),                \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_UINT16,                                           \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_UINT32(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_UINT32)(expected), 4),                \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_UINT32,                                           \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_HEX8(expected, actual, num_elements, line, message)           \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_INT8)(expected), 1),                  \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_HEX8,                                             \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_HEX16(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_INT16)(expected), 2),                 \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_HEX16,                                            \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_HEX32(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_INT32)(expected), 4),                 \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_HEX32,                                            \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_PTR(expected, actual, num_elements, line, message)            \
-    UnityAssertEqualIntArray(                                                                      \
-        UnityNumToPtr((UNITY_PTR_TO_INT)(expected), (UNITY_POINTER_WIDTH / 8)),                    \
-        (UNITY_INTERNAL_PTR)(actual),                                                              \
-        (UNITY_UINT32)(num_elements),                                                              \
-        (message),                                                                                 \
-        (UNITY_LINE_TYPE)(line),                                                                   \
-        UNITY_DISPLAY_STYLE_POINTER,                                                               \
+#define UNITY_TEST_ASSERT_EACH_EQUAL_INT(                                      \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(expected), (UNITY_INT_WIDTH / 8)),           \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT,                                               \
         UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_STRING(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualStringArray((UNITY_INTERNAL_PTR)(expected),                                    \
-                                (const char**)(actual),                                            \
-                                (UNITY_UINT32)(num_elements),                                      \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
-                                UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_MEMORY(expected, actual, len, num_elements, line, message)    \
-    UnityAssertEqualMemory((UNITY_INTERNAL_PTR)(expected),                                         \
-                           (UNITY_INTERNAL_PTR)(actual),                                           \
-                           (UNITY_UINT32)(len),                                                    \
-                           (UNITY_UINT32)(num_elements),                                           \
-                           (message),                                                              \
-                           (UNITY_LINE_TYPE)(line),                                                \
-                           UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_CHAR(expected, actual, num_elements, line, message)           \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_INT8)(expected), 1),                  \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_CHAR,                                             \
+#define UNITY_TEST_ASSERT_EACH_EQUAL_INT8(                                     \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_INT8)(expected), 1),                   \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT8,                                              \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_INT16(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_INT16)(expected), 2),                  \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT16,                                             \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_INT32(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_INT32)(expected), 4),                  \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT32,                                             \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_UINT(                                     \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(expected), (UNITY_INT_WIDTH / 8)),           \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT,                                              \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_UINT8(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_UINT8)(expected), 1),                  \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT8,                                             \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_UINT16(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_UINT16)(expected), 2),                 \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT16,                                            \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_UINT32(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_UINT32)(expected), 4),                 \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT32,                                            \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_HEX8(                                     \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_INT8)(expected), 1),                   \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX8,                                              \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_HEX16(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_INT16)(expected), 2),                  \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX16,                                             \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_HEX32(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_INT32)(expected), 4),                  \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX32,                                             \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_PTR(                                      \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_PTR_TO_INT)(expected),       \
+                                           (UNITY_POINTER_WIDTH / 8)),         \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_POINTER,                      \
                              UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_STRING(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualStringArray((UNITY_INTERNAL_PTR)(expected),                \
+                                (const char**)(actual),                        \
+                                (UNITY_UINT32)(num_elements),                  \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
+                                UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_MEMORY(                                   \
+    expected, actual, len, num_elements, line, message)                        \
+    UnityAssertEqualMemory((UNITY_INTERNAL_PTR)(expected),                     \
+                           (UNITY_INTERNAL_PTR)(actual),                       \
+                           (UNITY_UINT32)(len),                                \
+                           (UNITY_UINT32)(num_elements),                       \
+                           (message),                                          \
+                           (UNITY_LINE_TYPE)(line),                            \
+                           UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_CHAR(                                     \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_INT8)(expected), 1),                   \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_CHAR,                                              \
+        UNITY_ARRAY_TO_VAL)
 
 #ifdef UNITY_SUPPORT_64
-#define UNITY_TEST_ASSERT_EQUAL_INT64(expected, actual, line, message)                             \
-    UnityAssertEqualIntNumber((UNITY_INT)(expected),                                               \
-                              (UNITY_INT)(actual),                                                 \
-                              (message),                                                           \
-                              (UNITY_LINE_TYPE)(line),                                             \
+#define UNITY_TEST_ASSERT_EQUAL_INT64(expected, actual, line, message)         \
+    UnityAssertEqualIntNumber((UNITY_INT)(expected),                           \
+                              (UNITY_INT)(actual),                             \
+                              (message),                                       \
+                              (UNITY_LINE_TYPE)(line),                         \
                               UNITY_DISPLAY_STYLE_INT64)
-#define UNITY_TEST_ASSERT_EQUAL_UINT64(expected, actual, line, message)                            \
-    UnityAssertEqualIntNumber((UNITY_INT)(expected),                                               \
-                              (UNITY_INT)(actual),                                                 \
-                              (message),                                                           \
-                              (UNITY_LINE_TYPE)(line),                                             \
+#define UNITY_TEST_ASSERT_EQUAL_UINT64(expected, actual, line, message)        \
+    UnityAssertEqualIntNumber((UNITY_INT)(expected),                           \
+                              (UNITY_INT)(actual),                             \
+                              (message),                                       \
+                              (UNITY_LINE_TYPE)(line),                         \
                               UNITY_DISPLAY_STYLE_UINT64)
-#define UNITY_TEST_ASSERT_EQUAL_HEX64(expected, actual, line, message)                             \
-    UnityAssertEqualIntNumber((UNITY_INT)(expected),                                               \
-                              (UNITY_INT)(actual),                                                 \
-                              (message),                                                           \
-                              (UNITY_LINE_TYPE)(line),                                             \
+#define UNITY_TEST_ASSERT_EQUAL_HEX64(expected, actual, line, message)         \
+    UnityAssertEqualIntNumber((UNITY_INT)(expected),                           \
+                              (UNITY_INT)(actual),                             \
+                              (message),                                       \
+                              (UNITY_LINE_TYPE)(line),                         \
                               UNITY_DISPLAY_STYLE_HEX64)
-#define UNITY_TEST_ASSERT_EQUAL_INT64_ARRAY(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_INT64,                                            \
+#define UNITY_TEST_ASSERT_EQUAL_INT64_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_INT64,                        \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_UINT64_ARRAY(expected, actual, num_elements, line, message)        \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_UINT64,                                           \
+#define UNITY_TEST_ASSERT_EQUAL_UINT64_ARRAY(                                  \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_UINT64,                       \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_HEX64_ARRAY(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                                       \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_HEX64,                                            \
+#define UNITY_TEST_ASSERT_EQUAL_HEX64_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray((UNITY_INTERNAL_PTR)(expected),                   \
+                             (UNITY_INTERNAL_PTR)(actual),                     \
+                             (UNITY_UINT32)(num_elements),                     \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_DISPLAY_STYLE_HEX64,                        \
                              UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_INT64(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_INT64)(expected), 8),                 \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_INT64,                                            \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_UINT64(expected, actual, num_elements, line, message)         \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_UINT64)(expected), 8),                \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_UINT64,                                           \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_HEX64(expected, actual, num_elements, line, message)          \
-    UnityAssertEqualIntArray(UnityNumToPtr((UNITY_INT)(UNITY_INT64)(expected), 8),                 \
-                             (UNITY_INTERNAL_PTR)(actual),                                         \
-                             (UNITY_UINT32)(num_elements),                                         \
-                             (message),                                                            \
-                             (UNITY_LINE_TYPE)(line),                                              \
-                             UNITY_DISPLAY_STYLE_HEX64,                                            \
-                             UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_INT64_WITHIN(delta, expected, actual, line, message)                     \
-    UnityAssertIntNumbersWithin((delta),                                                           \
-                                (UNITY_INT)(expected),                                             \
-                                (UNITY_INT)(actual),                                               \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
+#define UNITY_TEST_ASSERT_EACH_EQUAL_INT64(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_INT64)(expected), 8),                  \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_INT64,                                             \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_UINT64(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_UINT64)(expected), 8),                 \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_UINT64,                                            \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_EACH_EQUAL_HEX64(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertEqualIntArray(                                                  \
+        UnityNumToPtr((UNITY_INT)(UNITY_INT64)(expected), 8),                  \
+        (UNITY_INTERNAL_PTR)(actual),                                          \
+        (UNITY_UINT32)(num_elements),                                          \
+        (message),                                                             \
+        (UNITY_LINE_TYPE)(line),                                               \
+        UNITY_DISPLAY_STYLE_HEX64,                                             \
+        UNITY_ARRAY_TO_VAL)
+#define UNITY_TEST_ASSERT_INT64_WITHIN(delta, expected, actual, line, message) \
+    UnityAssertIntNumbersWithin((delta),                                       \
+                                (UNITY_INT)(expected),                         \
+                                (UNITY_INT)(actual),                           \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
                                 UNITY_DISPLAY_STYLE_INT64)
-#define UNITY_TEST_ASSERT_UINT64_WITHIN(delta, expected, actual, line, message)                    \
-    UnityAssertUintNumbersWithin((delta),                                                          \
-                                 (UNITY_UINT)(expected),                                           \
-                                 (UNITY_UINT)(actual),                                             \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
+#define UNITY_TEST_ASSERT_UINT64_WITHIN(                                       \
+    delta, expected, actual, line, message)                                    \
+    UnityAssertUintNumbersWithin((delta),                                      \
+                                 (UNITY_UINT)(expected),                       \
+                                 (UNITY_UINT)(actual),                         \
+                                 (message),                                    \
+                                 (UNITY_LINE_TYPE)(line),                      \
                                  UNITY_DISPLAY_STYLE_UINT64)
-#define UNITY_TEST_ASSERT_HEX64_WITHIN(delta, expected, actual, line, message)                     \
-    UnityAssertUintNumbersWithin((delta),                                                          \
-                                 (UNITY_UINT)(expected),                                           \
-                                 (UNITY_UINT)(actual),                                             \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
+#define UNITY_TEST_ASSERT_HEX64_WITHIN(delta, expected, actual, line, message) \
+    UnityAssertUintNumbersWithin((delta),                                      \
+                                 (UNITY_UINT)(expected),                       \
+                                 (UNITY_UINT)(actual),                         \
+                                 (message),                                    \
+                                 (UNITY_LINE_TYPE)(line),                      \
                                  UNITY_DISPLAY_STYLE_HEX64)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_INT64(threshold, actual, line, message)                        \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),                               \
-                                             (UNITY_INT)(actual),                                  \
-                                             UNITY_NOT_EQUAL,                                      \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
+#define UNITY_TEST_ASSERT_NOT_EQUAL_INT64(threshold, actual, line, message)    \
+    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),           \
+                                             (UNITY_INT)(actual),              \
+                                             UNITY_NOT_EQUAL,                  \
+                                             (message),                        \
+                                             (UNITY_LINE_TYPE)(line),          \
                                              UNITY_DISPLAY_STYLE_INT64)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_UINT64(threshold, actual, line, message)                       \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_NOT_EQUAL,                                     \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_NOT_EQUAL_UINT64(threshold, actual, line, message)   \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_NOT_EQUAL,                 \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_UINT64)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_HEX64(threshold, actual, line, message)                        \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_NOT_EQUAL,                                     \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_NOT_EQUAL_HEX64(threshold, actual, line, message)    \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_NOT_EQUAL,                 \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_HEX64)
-#define UNITY_TEST_ASSERT_GREATER_THAN_INT64(threshold, actual, line, message)                     \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),                               \
-                                             (UNITY_INT)(actual),                                  \
-                                             UNITY_GREATER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
+#define UNITY_TEST_ASSERT_GREATER_THAN_INT64(threshold, actual, line, message) \
+    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),           \
+                                             (UNITY_INT)(actual),              \
+                                             UNITY_GREATER_THAN,               \
+                                             (message),                        \
+                                             (UNITY_LINE_TYPE)(line),          \
                                              UNITY_DISPLAY_STYLE_INT64)
-#define UNITY_TEST_ASSERT_GREATER_THAN_UINT64(threshold, actual, line, message)                    \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_GREATER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_GREATER_THAN_UINT64(                                 \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_GREATER_THAN,              \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_UINT64)
-#define UNITY_TEST_ASSERT_GREATER_THAN_HEX64(threshold, actual, line, message)                     \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_GREATER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_GREATER_THAN_HEX64(threshold, actual, line, message) \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_GREATER_THAN,              \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_HEX64)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT64(threshold, actual, line, message)                 \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),                               \
-                                             (UNITY_INT)(actual),                                  \
-                                             UNITY_GREATER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT64(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),           \
+                                             (UNITY_INT)(actual),              \
+                                             UNITY_GREATER_OR_EQUAL,           \
+                                             (message),                        \
+                                             (UNITY_LINE_TYPE)(line),          \
                                              UNITY_DISPLAY_STYLE_INT64)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT64(threshold, actual, line, message)                \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_GREATER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT64(                             \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_GREATER_OR_EQUAL,          \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_UINT64)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_HEX64(threshold, actual, line, message)                 \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_GREATER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_HEX64(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_GREATER_OR_EQUAL,          \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_HEX64)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_INT64(threshold, actual, line, message)                     \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),                               \
-                                             (UNITY_INT)(actual),                                  \
-                                             UNITY_SMALLER_THAN,                                   \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
+#define UNITY_TEST_ASSERT_SMALLER_THAN_INT64(threshold, actual, line, message) \
+    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),           \
+                                             (UNITY_INT)(actual),              \
+                                             UNITY_SMALLER_THAN,               \
+                                             (message),                        \
+                                             (UNITY_LINE_TYPE)(line),          \
                                              UNITY_DISPLAY_STYLE_INT64)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT64(threshold, actual, line, message)                    \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_SMALLER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT64(                                 \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_SMALLER_THAN,              \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_UINT64)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_HEX64(threshold, actual, line, message)                     \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_SMALLER_THAN,                                  \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_SMALLER_THAN_HEX64(threshold, actual, line, message) \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_SMALLER_THAN,              \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_HEX64)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT64(threshold, actual, line, message)                 \
-    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),                               \
-                                             (UNITY_INT)(actual),                                  \
-                                             UNITY_SMALLER_OR_EQUAL,                               \
-                                             (message),                                            \
-                                             (UNITY_LINE_TYPE)(line),                              \
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT64(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertIntGreaterOrLessOrEqualNumber((UNITY_INT)(threshold),           \
+                                             (UNITY_INT)(actual),              \
+                                             UNITY_SMALLER_OR_EQUAL,           \
+                                             (message),                        \
+                                             (UNITY_LINE_TYPE)(line),          \
                                              UNITY_DISPLAY_STYLE_INT64)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT64(threshold, actual, line, message)                \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_SMALLER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT64(                             \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_SMALLER_OR_EQUAL,          \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_UINT64)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_HEX64(threshold, actual, line, message)                 \
-    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),                             \
-                                              (UNITY_UINT)(actual),                                \
-                                              UNITY_SMALLER_OR_EQUAL,                              \
-                                              (message),                                           \
-                                              (UNITY_LINE_TYPE)(line),                             \
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_HEX64(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertUintGreaterOrLessOrEqualNumber((UNITY_UINT)(threshold),         \
+                                              (UNITY_UINT)(actual),            \
+                                              UNITY_SMALLER_OR_EQUAL,          \
+                                              (message),                       \
+                                              (UNITY_LINE_TYPE)(line),         \
                                               UNITY_DISPLAY_STYLE_HEX64)
-#define UNITY_TEST_ASSERT_INT64_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
-    UnityAssertNumbersArrayWithin((UNITY_UINT64)(delta),                                           \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  (UNITY_UINT32)(num_elements),                                    \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_INT64,                                       \
+#define UNITY_TEST_ASSERT_INT64_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT64)(delta),                       \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  (UNITY_UINT32)(num_elements),                \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_INT64,                   \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_UINT64_ARRAY_WITHIN(                                                     \
-    delta, expected, actual, num_elements, line, message)                                          \
-    UnityAssertNumbersArrayWithin((UNITY_UINT64)(delta),                                           \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  (UNITY_UINT32)(num_elements),                                    \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_UINT64,                                      \
+#define UNITY_TEST_ASSERT_UINT64_ARRAY_WITHIN(                                 \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT64)(delta),                       \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  (UNITY_UINT32)(num_elements),                \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_UINT64,                  \
                                   UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_HEX64_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
-    UnityAssertNumbersArrayWithin((UNITY_UINT64)(delta),                                           \
-                                  (UNITY_INTERNAL_PTR)(expected),                                  \
-                                  (UNITY_INTERNAL_PTR)(actual),                                    \
-                                  (UNITY_UINT32)(num_elements),                                    \
-                                  (message),                                                       \
-                                  (UNITY_LINE_TYPE)(line),                                         \
-                                  UNITY_DISPLAY_STYLE_HEX64,                                       \
+#define UNITY_TEST_ASSERT_HEX64_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertNumbersArrayWithin((UNITY_UINT64)(delta),                       \
+                                  (UNITY_INTERNAL_PTR)(expected),              \
+                                  (UNITY_INTERNAL_PTR)(actual),                \
+                                  (UNITY_UINT32)(num_elements),                \
+                                  (message),                                   \
+                                  (UNITY_LINE_TYPE)(line),                     \
+                                  UNITY_DISPLAY_STYLE_HEX64,                   \
                                   UNITY_ARRAY_TO_ARRAY)
 #else
-#define UNITY_TEST_ASSERT_EQUAL_INT64(expected, actual, line, message)                             \
+#define UNITY_TEST_ASSERT_EQUAL_INT64(expected, actual, line, message)         \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_EQUAL_UINT64(expected, actual, line, message)                            \
+#define UNITY_TEST_ASSERT_EQUAL_UINT64(expected, actual, line, message)        \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_EQUAL_HEX64(expected, actual, line, message)                             \
+#define UNITY_TEST_ASSERT_EQUAL_HEX64(expected, actual, line, message)         \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_EQUAL_INT64_ARRAY(expected, actual, num_elements, line, message)         \
+#define UNITY_TEST_ASSERT_EQUAL_INT64_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_EQUAL_UINT64_ARRAY(expected, actual, num_elements, line, message)        \
+#define UNITY_TEST_ASSERT_EQUAL_UINT64_ARRAY(                                  \
+    expected, actual, num_elements, line, message)                             \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_EQUAL_HEX64_ARRAY(expected, actual, num_elements, line, message)         \
+#define UNITY_TEST_ASSERT_EQUAL_HEX64_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_INT64_WITHIN(delta, expected, actual, line, message)                     \
+#define UNITY_TEST_ASSERT_INT64_WITHIN(delta, expected, actual, line, message) \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_UINT64_WITHIN(delta, expected, actual, line, message)                    \
+#define UNITY_TEST_ASSERT_UINT64_WITHIN(                                       \
+    delta, expected, actual, line, message)                                    \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_HEX64_WITHIN(delta, expected, actual, line, message)                     \
+#define UNITY_TEST_ASSERT_HEX64_WITHIN(delta, expected, actual, line, message) \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_GREATER_THAN_INT64(threshold, actual, line, message)                     \
+#define UNITY_TEST_ASSERT_GREATER_THAN_INT64(threshold, actual, line, message) \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_GREATER_THAN_UINT64(threshold, actual, line, message)                    \
+#define UNITY_TEST_ASSERT_GREATER_THAN_UINT64(                                 \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_GREATER_THAN_HEX64(threshold, actual, line, message)                     \
+#define UNITY_TEST_ASSERT_GREATER_THAN_HEX64(threshold, actual, line, message) \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT64(threshold, actual, line, message)                 \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_INT64(                              \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT64(threshold, actual, line, message)                \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_UINT64(                             \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_HEX64(threshold, actual, line, message)                 \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_HEX64(                              \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_INT64(threshold, actual, line, message)                     \
+#define UNITY_TEST_ASSERT_SMALLER_THAN_INT64(threshold, actual, line, message) \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT64(threshold, actual, line, message)                    \
+#define UNITY_TEST_ASSERT_SMALLER_THAN_UINT64(                                 \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_SMALLER_THAN_HEX64(threshold, actual, line, message)                     \
+#define UNITY_TEST_ASSERT_SMALLER_THAN_HEX64(threshold, actual, line, message) \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT64(threshold, actual, line, message)                 \
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_INT64(                              \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT64(threshold, actual, line, message)                \
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_UINT64(                             \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_HEX64(threshold, actual, line, message)                 \
+#define UNITY_TEST_ASSERT_SMALLER_OR_EQUAL_HEX64(                              \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_INT64_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
+#define UNITY_TEST_ASSERT_INT64_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_UINT64_ARRAY_WITHIN(                                                     \
-    delta, expected, actual, num_elements, line, message)                                          \
+#define UNITY_TEST_ASSERT_UINT64_ARRAY_WITHIN(                                 \
+    delta, expected, actual, num_elements, line, message)                      \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
-#define UNITY_TEST_ASSERT_HEX64_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
+#define UNITY_TEST_ASSERT_HEX64_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErr64)
 #endif
 
 #ifdef UNITY_EXCLUDE_FLOAT
-#define UNITY_TEST_ASSERT_FLOAT_WITHIN(delta, expected, actual, line, message)                     \
+#define UNITY_TEST_ASSERT_FLOAT_WITHIN(delta, expected, actual, line, message) \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_FLOAT_NOT_WITHIN(delta, expected, actual, line, message)                 \
+#define UNITY_TEST_ASSERT_FLOAT_NOT_WITHIN(                                    \
+    delta, expected, actual, line, message)                                    \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_EQUAL_FLOAT(expected, actual, line, message)                             \
+#define UNITY_TEST_ASSERT_EQUAL_FLOAT(expected, actual, line, message)         \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_FLOAT(expected, actual, line, message)                         \
+#define UNITY_TEST_ASSERT_NOT_EQUAL_FLOAT(expected, actual, line, message)     \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_FLOAT_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
+#define UNITY_TEST_ASSERT_FLOAT_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_EQUAL_FLOAT_ARRAY(expected, actual, num_elements, line, message)         \
+#define UNITY_TEST_ASSERT_EQUAL_FLOAT_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_FLOAT(expected, actual, num_elements, line, message)          \
+#define UNITY_TEST_ASSERT_EACH_EQUAL_FLOAT(                                    \
+    expected, actual, num_elements, line, message)                             \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_GREATER_THAN_FLOAT(threshold, actual, line, message)                     \
+#define UNITY_TEST_ASSERT_GREATER_THAN_FLOAT(threshold, actual, line, message) \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_FLOAT(threshold, actual, line, message)                 \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_FLOAT(                              \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_LESS_THAN_FLOAT(threshold, actual, line, message)                        \
+#define UNITY_TEST_ASSERT_LESS_THAN_FLOAT(threshold, actual, line, message)    \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_LESS_OR_EQUAL_FLOAT(threshold, actual, line, message)                    \
+#define UNITY_TEST_ASSERT_LESS_OR_EQUAL_FLOAT(                                 \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_FLOAT_IS_INF(actual, line, message)                                      \
+#define UNITY_TEST_ASSERT_FLOAT_IS_INF(actual, line, message)                  \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NEG_INF(actual, line, message)                                  \
+#define UNITY_TEST_ASSERT_FLOAT_IS_NEG_INF(actual, line, message)              \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NAN(actual, line, message)                                      \
+#define UNITY_TEST_ASSERT_FLOAT_IS_NAN(actual, line, message)                  \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_FLOAT_IS_DETERMINATE(actual, line, message)                              \
+#define UNITY_TEST_ASSERT_FLOAT_IS_DETERMINATE(actual, line, message)          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_INF(actual, line, message)                                  \
+#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_INF(actual, line, message)              \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_NEG_INF(actual, line, message)                              \
+#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_NEG_INF(actual, line, message)          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_NAN(actual, line, message)                                  \
+#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_NAN(actual, line, message)              \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_DETERMINATE(actual, line, message)                          \
+#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_DETERMINATE(actual, line, message)      \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrFloat)
 #else
-#define UNITY_TEST_ASSERT_FLOAT_WITHIN(delta, expected, actual, line, message)                     \
-    UnityAssertFloatsWithin((UNITY_FLOAT)(delta),                                                  \
-                            (UNITY_FLOAT)(expected),                                               \
-                            (UNITY_FLOAT)(actual),                                                 \
-                            (message),                                                             \
+#define UNITY_TEST_ASSERT_FLOAT_WITHIN(delta, expected, actual, line, message) \
+    UnityAssertFloatsWithin((UNITY_FLOAT)(delta),                              \
+                            (UNITY_FLOAT)(expected),                           \
+                            (UNITY_FLOAT)(actual),                             \
+                            (message),                                         \
                             (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_FLOAT_NOT_WITHIN(delta, expected, actual, line, message)                 \
-    UnityAssertFloatsNotWithin((UNITY_FLOAT)(delta),                                               \
-                               (UNITY_FLOAT)(expected),                                            \
-                               (UNITY_FLOAT)(actual),                                              \
-                               (message),                                                          \
+#define UNITY_TEST_ASSERT_FLOAT_NOT_WITHIN(                                    \
+    delta, expected, actual, line, message)                                    \
+    UnityAssertFloatsNotWithin((UNITY_FLOAT)(delta),                           \
+                               (UNITY_FLOAT)(expected),                        \
+                               (UNITY_FLOAT)(actual),                          \
+                               (message),                                      \
                                (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_EQUAL_FLOAT(expected, actual, line, message)                             \
-    UNITY_TEST_ASSERT_FLOAT_WITHIN((UNITY_FLOAT)(expected) * (UNITY_FLOAT)UNITY_FLOAT_PRECISION,   \
-                                   (UNITY_FLOAT)(expected),                                        \
-                                   (UNITY_FLOAT)(actual),                                          \
-                                   (UNITY_LINE_TYPE)(line),                                        \
+#define UNITY_TEST_ASSERT_EQUAL_FLOAT(expected, actual, line, message)         \
+    UNITY_TEST_ASSERT_FLOAT_WITHIN((UNITY_FLOAT)(expected) *                   \
+                                       (UNITY_FLOAT)UNITY_FLOAT_PRECISION,     \
+                                   (UNITY_FLOAT)(expected),                    \
+                                   (UNITY_FLOAT)(actual),                      \
+                                   (UNITY_LINE_TYPE)(line),                    \
                                    (message))
-#define UNITY_TEST_ASSERT_NOT_EQUAL_FLOAT(expected, actual, line, message)                         \
-    UNITY_TEST_ASSERT_FLOAT_NOT_WITHIN((UNITY_FLOAT)(expected) *                                   \
-                                           (UNITY_FLOAT)UNITY_FLOAT_PRECISION,                     \
-                                       (UNITY_FLOAT)(expected),                                    \
-                                       (UNITY_FLOAT)(actual),                                      \
-                                       (UNITY_LINE_TYPE)(line),                                    \
+#define UNITY_TEST_ASSERT_NOT_EQUAL_FLOAT(expected, actual, line, message)     \
+    UNITY_TEST_ASSERT_FLOAT_NOT_WITHIN((UNITY_FLOAT)(expected) *               \
+                                           (UNITY_FLOAT)UNITY_FLOAT_PRECISION, \
+                                       (UNITY_FLOAT)(expected),                \
+                                       (UNITY_FLOAT)(actual),                  \
+                                       (UNITY_LINE_TYPE)(line),                \
                                        (message))
-#define UNITY_TEST_ASSERT_FLOAT_ARRAY_WITHIN(delta, expected, actual, num_elements, line, message) \
-    UnityAssertWithinFloatArray((UNITY_FLOAT)(delta),                                              \
-                                (const UNITY_FLOAT*)(expected),                                    \
-                                (const UNITY_FLOAT*)(actual),                                      \
-                                (UNITY_UINT32)(num_elements),                                      \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
+#define UNITY_TEST_ASSERT_FLOAT_ARRAY_WITHIN(                                  \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertWithinFloatArray((UNITY_FLOAT)(delta),                          \
+                                (const UNITY_FLOAT*)(expected),                \
+                                (const UNITY_FLOAT*)(actual),                  \
+                                (UNITY_UINT32)(num_elements),                  \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
                                 UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_FLOAT_ARRAY(expected, actual, num_elements, line, message)         \
-    UnityAssertWithinFloatArray((UNITY_FLOAT)0,                                                    \
-                                (const UNITY_FLOAT*)(expected),                                    \
-                                (const UNITY_FLOAT*)(actual),                                      \
-                                (UNITY_UINT32)(num_elements),                                      \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
+#define UNITY_TEST_ASSERT_EQUAL_FLOAT_ARRAY(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertWithinFloatArray((UNITY_FLOAT)0,                                \
+                                (const UNITY_FLOAT*)(expected),                \
+                                (const UNITY_FLOAT*)(actual),                  \
+                                (UNITY_UINT32)(num_elements),                  \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
                                 UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_FLOAT(expected, actual, num_elements, line, message)          \
-    UnityAssertWithinFloatArray((UNITY_FLOAT)0,                                                    \
-                                UnityFloatToPtr(expected),                                         \
-                                (const UNITY_FLOAT*)(actual),                                      \
-                                (UNITY_UINT32)(num_elements),                                      \
-                                (message),                                                         \
-                                (UNITY_LINE_TYPE)(line),                                           \
+#define UNITY_TEST_ASSERT_EACH_EQUAL_FLOAT(                                    \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertWithinFloatArray((UNITY_FLOAT)0,                                \
+                                UnityFloatToPtr(expected),                     \
+                                (const UNITY_FLOAT*)(actual),                  \
+                                (UNITY_UINT32)(num_elements),                  \
+                                (message),                                     \
+                                (UNITY_LINE_TYPE)(line),                       \
                                 UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_GREATER_THAN_FLOAT(threshold, actual, line, message)                     \
-    UnityAssertGreaterOrLessFloat((UNITY_FLOAT)(threshold),                                        \
-                                  (UNITY_FLOAT)(actual),                                           \
-                                  UNITY_GREATER_THAN,                                              \
-                                  (message),                                                       \
+#define UNITY_TEST_ASSERT_GREATER_THAN_FLOAT(threshold, actual, line, message) \
+    UnityAssertGreaterOrLessFloat((UNITY_FLOAT)(threshold),                    \
+                                  (UNITY_FLOAT)(actual),                       \
+                                  UNITY_GREATER_THAN,                          \
+                                  (message),                                   \
                                   (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_FLOAT(threshold, actual, line, message)                 \
-    UnityAssertGreaterOrLessFloat((UNITY_FLOAT)(threshold),                                        \
-                                  (UNITY_FLOAT)(actual),                                           \
-                                  UNITY_GREATER_OR_EQUAL,                                          \
-                                  (message),                                                       \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_FLOAT(                              \
+    threshold, actual, line, message)                                          \
+    UnityAssertGreaterOrLessFloat((UNITY_FLOAT)(threshold),                    \
+                                  (UNITY_FLOAT)(actual),                       \
+                                  UNITY_GREATER_OR_EQUAL,                      \
+                                  (message),                                   \
                                   (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_LESS_THAN_FLOAT(threshold, actual, line, message)                        \
-    UnityAssertGreaterOrLessFloat((UNITY_FLOAT)(threshold),                                        \
-                                  (UNITY_FLOAT)(actual),                                           \
-                                  UNITY_SMALLER_THAN,                                              \
-                                  (message),                                                       \
+#define UNITY_TEST_ASSERT_LESS_THAN_FLOAT(threshold, actual, line, message)    \
+    UnityAssertGreaterOrLessFloat((UNITY_FLOAT)(threshold),                    \
+                                  (UNITY_FLOAT)(actual),                       \
+                                  UNITY_SMALLER_THAN,                          \
+                                  (message),                                   \
                                   (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_LESS_OR_EQUAL_FLOAT(threshold, actual, line, message)                    \
-    UnityAssertGreaterOrLessFloat((UNITY_FLOAT)(threshold),                                        \
-                                  (UNITY_FLOAT)(actual),                                           \
-                                  UNITY_SMALLER_OR_EQUAL,                                          \
-                                  (message),                                                       \
+#define UNITY_TEST_ASSERT_LESS_OR_EQUAL_FLOAT(                                 \
+    threshold, actual, line, message)                                          \
+    UnityAssertGreaterOrLessFloat((UNITY_FLOAT)(threshold),                    \
+                                  (UNITY_FLOAT)(actual),                       \
+                                  UNITY_SMALLER_OR_EQUAL,                      \
+                                  (message),                                   \
                                   (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_FLOAT_IS_INF(actual, line, message)                                      \
-    UnityAssertFloatSpecial(                                                                       \
-        (UNITY_FLOAT)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_INF)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NEG_INF(actual, line, message)                                  \
-    UnityAssertFloatSpecial(                                                                       \
-        (UNITY_FLOAT)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NEG_INF)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NAN(actual, line, message)                                      \
-    UnityAssertFloatSpecial(                                                                       \
-        (UNITY_FLOAT)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NAN)
-#define UNITY_TEST_ASSERT_FLOAT_IS_DETERMINATE(actual, line, message)                              \
-    UnityAssertFloatSpecial(                                                                       \
-        (UNITY_FLOAT)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_DET)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_INF(actual, line, message)                                  \
-    UnityAssertFloatSpecial(                                                                       \
-        (UNITY_FLOAT)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NOT_INF)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_NEG_INF(actual, line, message)                              \
-    UnityAssertFloatSpecial(                                                                       \
-        (UNITY_FLOAT)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NOT_NEG_INF)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_NAN(actual, line, message)                                  \
-    UnityAssertFloatSpecial(                                                                       \
-        (UNITY_FLOAT)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NOT_NAN)
-#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_DETERMINATE(actual, line, message)                          \
-    UnityAssertFloatSpecial(                                                                       \
-        (UNITY_FLOAT)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NOT_DET)
+#define UNITY_TEST_ASSERT_FLOAT_IS_INF(actual, line, message)                  \
+    UnityAssertFloatSpecial((UNITY_FLOAT)(actual),                             \
+                            (message),                                         \
+                            (UNITY_LINE_TYPE)(line),                           \
+                            UNITY_FLOAT_IS_INF)
+#define UNITY_TEST_ASSERT_FLOAT_IS_NEG_INF(actual, line, message)              \
+    UnityAssertFloatSpecial((UNITY_FLOAT)(actual),                             \
+                            (message),                                         \
+                            (UNITY_LINE_TYPE)(line),                           \
+                            UNITY_FLOAT_IS_NEG_INF)
+#define UNITY_TEST_ASSERT_FLOAT_IS_NAN(actual, line, message)                  \
+    UnityAssertFloatSpecial((UNITY_FLOAT)(actual),                             \
+                            (message),                                         \
+                            (UNITY_LINE_TYPE)(line),                           \
+                            UNITY_FLOAT_IS_NAN)
+#define UNITY_TEST_ASSERT_FLOAT_IS_DETERMINATE(actual, line, message)          \
+    UnityAssertFloatSpecial((UNITY_FLOAT)(actual),                             \
+                            (message),                                         \
+                            (UNITY_LINE_TYPE)(line),                           \
+                            UNITY_FLOAT_IS_DET)
+#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_INF(actual, line, message)              \
+    UnityAssertFloatSpecial((UNITY_FLOAT)(actual),                             \
+                            (message),                                         \
+                            (UNITY_LINE_TYPE)(line),                           \
+                            UNITY_FLOAT_IS_NOT_INF)
+#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_NEG_INF(actual, line, message)          \
+    UnityAssertFloatSpecial((UNITY_FLOAT)(actual),                             \
+                            (message),                                         \
+                            (UNITY_LINE_TYPE)(line),                           \
+                            UNITY_FLOAT_IS_NOT_NEG_INF)
+#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_NAN(actual, line, message)              \
+    UnityAssertFloatSpecial((UNITY_FLOAT)(actual),                             \
+                            (message),                                         \
+                            (UNITY_LINE_TYPE)(line),                           \
+                            UNITY_FLOAT_IS_NOT_NAN)
+#define UNITY_TEST_ASSERT_FLOAT_IS_NOT_DETERMINATE(actual, line, message)      \
+    UnityAssertFloatSpecial((UNITY_FLOAT)(actual),                             \
+                            (message),                                         \
+                            (UNITY_LINE_TYPE)(line),                           \
+                            UNITY_FLOAT_IS_NOT_DET)
 #endif
 
 #ifdef UNITY_EXCLUDE_DOUBLE
-#define UNITY_TEST_ASSERT_DOUBLE_WITHIN(delta, expected, actual, line, message)                    \
+#define UNITY_TEST_ASSERT_DOUBLE_WITHIN(                                       \
+    delta, expected, actual, line, message)                                    \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_DOUBLE_NOT_WITHIN(delta, expected, actual, line, message)                \
+#define UNITY_TEST_ASSERT_DOUBLE_NOT_WITHIN(                                   \
+    delta, expected, actual, line, message)                                    \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_EQUAL_DOUBLE(expected, actual, line, message)                            \
+#define UNITY_TEST_ASSERT_EQUAL_DOUBLE(expected, actual, line, message)        \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_NOT_EQUAL_DOUBLE(expected, actual, line, message)                        \
+#define UNITY_TEST_ASSERT_NOT_EQUAL_DOUBLE(expected, actual, line, message)    \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_DOUBLE_ARRAY_WITHIN(                                                     \
-    delta, expected, actual, num_elements, line, message)                                          \
+#define UNITY_TEST_ASSERT_DOUBLE_ARRAY_WITHIN(                                 \
+    delta, expected, actual, num_elements, line, message)                      \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_EQUAL_DOUBLE_ARRAY(expected, actual, num_elements, line, message)        \
+#define UNITY_TEST_ASSERT_EQUAL_DOUBLE_ARRAY(                                  \
+    expected, actual, num_elements, line, message)                             \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_DOUBLE(expected, actual, num_elements, line, message)         \
+#define UNITY_TEST_ASSERT_EACH_EQUAL_DOUBLE(                                   \
+    expected, actual, num_elements, line, message)                             \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_GREATER_THAN_DOUBLE(threshold, actual, line, message)                    \
+#define UNITY_TEST_ASSERT_GREATER_THAN_DOUBLE(                                 \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_DOUBLE(threshold, actual, line, message)                \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_DOUBLE(                             \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_LESS_THAN_DOUBLE(threshold, actual, line, message)                       \
+#define UNITY_TEST_ASSERT_LESS_THAN_DOUBLE(threshold, actual, line, message)   \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_LESS_OR_EQUAL_DOUBLE(threshold, actual, line, message)                   \
+#define UNITY_TEST_ASSERT_LESS_OR_EQUAL_DOUBLE(                                \
+    threshold, actual, line, message)                                          \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_INF(actual, line, message)                                     \
+#define UNITY_TEST_ASSERT_DOUBLE_IS_INF(actual, line, message)                 \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NEG_INF(actual, line, message)                                 \
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NEG_INF(actual, line, message)             \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NAN(actual, line, message)                                     \
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NAN(actual, line, message)                 \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_DETERMINATE(actual, line, message)                             \
+#define UNITY_TEST_ASSERT_DOUBLE_IS_DETERMINATE(actual, line, message)         \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_INF(actual, line, message)                                 \
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_INF(actual, line, message)             \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_NEG_INF(actual, line, message)                             \
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_NEG_INF(actual, line, message)         \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_NAN(actual, line, message)                                 \
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_NAN(actual, line, message)             \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_DETERMINATE(actual, line, message)                         \
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_DETERMINATE(actual, line, message)     \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDouble)
 #else
-#define UNITY_TEST_ASSERT_DOUBLE_WITHIN(delta, expected, actual, line, message)                    \
-    UnityAssertDoublesWithin((UNITY_DOUBLE)(delta),                                                \
-                             (UNITY_DOUBLE)(expected),                                             \
-                             (UNITY_DOUBLE)(actual),                                               \
-                             (message),                                                            \
+#define UNITY_TEST_ASSERT_DOUBLE_WITHIN(                                       \
+    delta, expected, actual, line, message)                                    \
+    UnityAssertDoublesWithin((UNITY_DOUBLE)(delta),                            \
+                             (UNITY_DOUBLE)(expected),                         \
+                             (UNITY_DOUBLE)(actual),                           \
+                             (message),                                        \
                              (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_DOUBLE_NOT_WITHIN(delta, expected, actual, line, message)                \
-    UnityAssertDoublesNotWithin((UNITY_DOUBLE)(delta),                                             \
-                                (UNITY_DOUBLE)(expected),                                          \
-                                (UNITY_DOUBLE)(actual),                                            \
-                                (message),                                                         \
+#define UNITY_TEST_ASSERT_DOUBLE_NOT_WITHIN(                                   \
+    delta, expected, actual, line, message)                                    \
+    UnityAssertDoublesNotWithin((UNITY_DOUBLE)(delta),                         \
+                                (UNITY_DOUBLE)(expected),                      \
+                                (UNITY_DOUBLE)(actual),                        \
+                                (message),                                     \
                                 (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_EQUAL_DOUBLE(expected, actual, line, message)                            \
-    UNITY_TEST_ASSERT_DOUBLE_WITHIN((UNITY_DOUBLE)(expected) *                                     \
-                                        (UNITY_DOUBLE)UNITY_DOUBLE_PRECISION,                      \
-                                    (UNITY_DOUBLE)(expected),                                      \
-                                    (UNITY_DOUBLE)(actual),                                        \
-                                    (UNITY_LINE_TYPE)(line),                                       \
+#define UNITY_TEST_ASSERT_EQUAL_DOUBLE(expected, actual, line, message)        \
+    UNITY_TEST_ASSERT_DOUBLE_WITHIN((UNITY_DOUBLE)(expected) *                 \
+                                        (UNITY_DOUBLE)UNITY_DOUBLE_PRECISION,  \
+                                    (UNITY_DOUBLE)(expected),                  \
+                                    (UNITY_DOUBLE)(actual),                    \
+                                    (UNITY_LINE_TYPE)(line),                   \
                                     (message))
-#define UNITY_TEST_ASSERT_NOT_EQUAL_DOUBLE(expected, actual, line, message)                        \
-    UNITY_TEST_ASSERT_DOUBLE_NOT_WITHIN((UNITY_DOUBLE)(expected) *                                 \
-                                            (UNITY_DOUBLE)UNITY_DOUBLE_PRECISION,                  \
-                                        (UNITY_DOUBLE)(expected),                                  \
-                                        (UNITY_DOUBLE)(actual),                                    \
-                                        (UNITY_LINE_TYPE)(line),                                   \
-                                        (message))
-#define UNITY_TEST_ASSERT_DOUBLE_ARRAY_WITHIN(                                                     \
-    delta, expected, actual, num_elements, line, message)                                          \
-    UnityAssertWithinDoubleArray((UNITY_DOUBLE)(delta),                                            \
-                                 (const UNITY_DOUBLE*)(expected),                                  \
-                                 (const UNITY_DOUBLE*)(actual),                                    \
-                                 (UNITY_UINT32)(num_elements),                                     \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
+#define UNITY_TEST_ASSERT_NOT_EQUAL_DOUBLE(expected, actual, line, message)    \
+    UNITY_TEST_ASSERT_DOUBLE_NOT_WITHIN(                                       \
+        (UNITY_DOUBLE)(expected) * (UNITY_DOUBLE)UNITY_DOUBLE_PRECISION,       \
+        (UNITY_DOUBLE)(expected),                                              \
+        (UNITY_DOUBLE)(actual),                                                \
+        (UNITY_LINE_TYPE)(line),                                               \
+        (message))
+#define UNITY_TEST_ASSERT_DOUBLE_ARRAY_WITHIN(                                 \
+    delta, expected, actual, num_elements, line, message)                      \
+    UnityAssertWithinDoubleArray((UNITY_DOUBLE)(delta),                        \
+                                 (const UNITY_DOUBLE*)(expected),              \
+                                 (const UNITY_DOUBLE*)(actual),                \
+                                 (UNITY_UINT32)(num_elements),                 \
+                                 (message),                                    \
+                                 (UNITY_LINE_TYPE)(line),                      \
                                  UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EQUAL_DOUBLE_ARRAY(expected, actual, num_elements, line, message)        \
-    UnityAssertWithinDoubleArray((UNITY_DOUBLE)0,                                                  \
-                                 (const UNITY_DOUBLE*)(expected),                                  \
-                                 (const UNITY_DOUBLE*)(actual),                                    \
-                                 (UNITY_UINT32)(num_elements),                                     \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
+#define UNITY_TEST_ASSERT_EQUAL_DOUBLE_ARRAY(                                  \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertWithinDoubleArray((UNITY_DOUBLE)0,                              \
+                                 (const UNITY_DOUBLE*)(expected),              \
+                                 (const UNITY_DOUBLE*)(actual),                \
+                                 (UNITY_UINT32)(num_elements),                 \
+                                 (message),                                    \
+                                 (UNITY_LINE_TYPE)(line),                      \
                                  UNITY_ARRAY_TO_ARRAY)
-#define UNITY_TEST_ASSERT_EACH_EQUAL_DOUBLE(expected, actual, num_elements, line, message)         \
-    UnityAssertWithinDoubleArray((UNITY_DOUBLE)0,                                                  \
-                                 UnityDoubleToPtr(expected),                                       \
-                                 (const UNITY_DOUBLE*)(actual),                                    \
-                                 (UNITY_UINT32)(num_elements),                                     \
-                                 (message),                                                        \
-                                 (UNITY_LINE_TYPE)(line),                                          \
+#define UNITY_TEST_ASSERT_EACH_EQUAL_DOUBLE(                                   \
+    expected, actual, num_elements, line, message)                             \
+    UnityAssertWithinDoubleArray((UNITY_DOUBLE)0,                              \
+                                 UnityDoubleToPtr(expected),                   \
+                                 (const UNITY_DOUBLE*)(actual),                \
+                                 (UNITY_UINT32)(num_elements),                 \
+                                 (message),                                    \
+                                 (UNITY_LINE_TYPE)(line),                      \
                                  UNITY_ARRAY_TO_VAL)
-#define UNITY_TEST_ASSERT_GREATER_THAN_DOUBLE(threshold, actual, line, message)                    \
-    UnityAssertGreaterOrLessDouble((UNITY_DOUBLE)(threshold),                                      \
-                                   (UNITY_DOUBLE)(actual),                                         \
-                                   UNITY_GREATER_THAN,                                             \
-                                   (message),                                                      \
+#define UNITY_TEST_ASSERT_GREATER_THAN_DOUBLE(                                 \
+    threshold, actual, line, message)                                          \
+    UnityAssertGreaterOrLessDouble((UNITY_DOUBLE)(threshold),                  \
+                                   (UNITY_DOUBLE)(actual),                     \
+                                   UNITY_GREATER_THAN,                         \
+                                   (message),                                  \
                                    (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_DOUBLE(threshold, actual, line, message)                \
-    UnityAssertGreaterOrLessDouble((UNITY_DOUBLE)(threshold),                                      \
-                                   (UNITY_DOUBLE)(actual),                                         \
-                                   UNITY_GREATER_OR_EQUAL,                                         \
-                                   (message),                                                      \
+#define UNITY_TEST_ASSERT_GREATER_OR_EQUAL_DOUBLE(                             \
+    threshold, actual, line, message)                                          \
+    UnityAssertGreaterOrLessDouble((UNITY_DOUBLE)(threshold),                  \
+                                   (UNITY_DOUBLE)(actual),                     \
+                                   UNITY_GREATER_OR_EQUAL,                     \
+                                   (message),                                  \
                                    (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_LESS_THAN_DOUBLE(threshold, actual, line, message)                       \
-    UnityAssertGreaterOrLessDouble((UNITY_DOUBLE)(threshold),                                      \
-                                   (UNITY_DOUBLE)(actual),                                         \
-                                   UNITY_SMALLER_THAN,                                             \
-                                   (message),                                                      \
+#define UNITY_TEST_ASSERT_LESS_THAN_DOUBLE(threshold, actual, line, message)   \
+    UnityAssertGreaterOrLessDouble((UNITY_DOUBLE)(threshold),                  \
+                                   (UNITY_DOUBLE)(actual),                     \
+                                   UNITY_SMALLER_THAN,                         \
+                                   (message),                                  \
                                    (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_LESS_OR_EQUAL_DOUBLE(threshold, actual, line, message)                   \
-    UnityAssertGreaterOrLessDouble((UNITY_DOUBLE)(threshold),                                      \
-                                   (UNITY_DOUBLE)(actual),                                         \
-                                   UNITY_SMALLER_OR_EQUAL,                                         \
-                                   (message),                                                      \
+#define UNITY_TEST_ASSERT_LESS_OR_EQUAL_DOUBLE(                                \
+    threshold, actual, line, message)                                          \
+    UnityAssertGreaterOrLessDouble((UNITY_DOUBLE)(threshold),                  \
+                                   (UNITY_DOUBLE)(actual),                     \
+                                   UNITY_SMALLER_OR_EQUAL,                     \
+                                   (message),                                  \
                                    (UNITY_LINE_TYPE)(line))
-#define UNITY_TEST_ASSERT_DOUBLE_IS_INF(actual, line, message)                                     \
-    UnityAssertDoubleSpecial(                                                                      \
-        (UNITY_DOUBLE)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_INF)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NEG_INF(actual, line, message)                                 \
-    UnityAssertDoubleSpecial(                                                                      \
-        (UNITY_DOUBLE)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NEG_INF)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NAN(actual, line, message)                                     \
-    UnityAssertDoubleSpecial(                                                                      \
-        (UNITY_DOUBLE)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NAN)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_DETERMINATE(actual, line, message)                             \
-    UnityAssertDoubleSpecial(                                                                      \
-        (UNITY_DOUBLE)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_DET)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_INF(actual, line, message)                                 \
-    UnityAssertDoubleSpecial(                                                                      \
-        (UNITY_DOUBLE)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NOT_INF)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_NEG_INF(actual, line, message)                             \
-    UnityAssertDoubleSpecial(                                                                      \
-        (UNITY_DOUBLE)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NOT_NEG_INF)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_NAN(actual, line, message)                                 \
-    UnityAssertDoubleSpecial(                                                                      \
-        (UNITY_DOUBLE)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NOT_NAN)
-#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_DETERMINATE(actual, line, message)                         \
-    UnityAssertDoubleSpecial(                                                                      \
-        (UNITY_DOUBLE)(actual), (message), (UNITY_LINE_TYPE)(line), UNITY_FLOAT_IS_NOT_DET)
+#define UNITY_TEST_ASSERT_DOUBLE_IS_INF(actual, line, message)                 \
+    UnityAssertDoubleSpecial((UNITY_DOUBLE)(actual),                           \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_FLOAT_IS_INF)
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NEG_INF(actual, line, message)             \
+    UnityAssertDoubleSpecial((UNITY_DOUBLE)(actual),                           \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_FLOAT_IS_NEG_INF)
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NAN(actual, line, message)                 \
+    UnityAssertDoubleSpecial((UNITY_DOUBLE)(actual),                           \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_FLOAT_IS_NAN)
+#define UNITY_TEST_ASSERT_DOUBLE_IS_DETERMINATE(actual, line, message)         \
+    UnityAssertDoubleSpecial((UNITY_DOUBLE)(actual),                           \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_FLOAT_IS_DET)
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_INF(actual, line, message)             \
+    UnityAssertDoubleSpecial((UNITY_DOUBLE)(actual),                           \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_FLOAT_IS_NOT_INF)
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_NEG_INF(actual, line, message)         \
+    UnityAssertDoubleSpecial((UNITY_DOUBLE)(actual),                           \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_FLOAT_IS_NOT_NEG_INF)
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_NAN(actual, line, message)             \
+    UnityAssertDoubleSpecial((UNITY_DOUBLE)(actual),                           \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_FLOAT_IS_NOT_NAN)
+#define UNITY_TEST_ASSERT_DOUBLE_IS_NOT_DETERMINATE(actual, line, message)     \
+    UnityAssertDoubleSpecial((UNITY_DOUBLE)(actual),                           \
+                             (message),                                        \
+                             (UNITY_LINE_TYPE)(line),                          \
+                             UNITY_FLOAT_IS_NOT_DET)
 #endif
 
 #if !defined(UNITY_EXCLUDE_DETAILS) && defined(UNITY_DETAIL_STACK_SIZE)
-#define UNITY_DETAIL_PUSH(label, value)                                                            \
-    UnityPushDetail((UNITY_DETAIL_LABEL_TYPE)(label), (UNITY_DETAIL_VALUE_TYPE)(value), __LINE__)
-#define UNITY_DETAIL_POP(label, value)                                                             \
-    UnityPopDetail((UNITY_DETAIL_LABEL_TYPE)(label), (UNITY_DETAIL_VALUE_TYPE)(value), __LINE__)
+#define UNITY_DETAIL_PUSH(label, value)                                        \
+    UnityPushDetail((UNITY_DETAIL_LABEL_TYPE)(label),                          \
+                    (UNITY_DETAIL_VALUE_TYPE)(value),                          \
+                    __LINE__)
+#define UNITY_DETAIL_POP(label, value)                                         \
+    UnityPopDetail((UNITY_DETAIL_LABEL_TYPE)(label),                           \
+                   (UNITY_DETAIL_VALUE_TYPE)(value),                           \
+                   __LINE__)
 #else
-#define UNITY_DETAIL_PUSH(label, value)                                                            \
+#define UNITY_DETAIL_PUSH(label, value)                                        \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDetailStack)
-#define UNITY_DETAIL_POP(label, value)                                                             \
+#define UNITY_DETAIL_POP(label, value)                                         \
     UNITY_TEST_FAIL((UNITY_LINE_TYPE)(line), UnityStrErrDetailStack)
 #endif
 

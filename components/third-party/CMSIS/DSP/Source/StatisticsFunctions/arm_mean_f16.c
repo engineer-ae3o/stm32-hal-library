@@ -64,7 +64,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_mean_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_mean_f16(const float16_t* pSrc,
+                  uint32_t         blockSize,
+                  float16_t*       pResult) {
     int32_t blkCnt; /* loop counters */
     f16x8_t vecSrc;
     f16x8_t sumVec = vdupq_n_f16(0.0f16);
@@ -86,7 +88,9 @@ void arm_mean_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult)
 
 #else
 
-void arm_mean_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_mean_f16(const float16_t* pSrc,
+                  uint32_t         blockSize,
+                  float16_t*       pResult) {
     uint32_t  blkCnt;     /* Loop counter */
     float16_t sum = 0.0f; /* Temporary result storage */
 

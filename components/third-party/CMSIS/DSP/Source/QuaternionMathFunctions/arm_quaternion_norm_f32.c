@@ -83,8 +83,10 @@ void arm_quaternion_norm_f32(const float32_t* pInputQuaternions,
     uint32_t  i;
 
     for (i = 0; i < nbQuaternions; i++) {
-        temp      = SQ(pInputQuaternions[4 * i + 0]) + SQ(pInputQuaternions[4 * i + 1]) +
-                    SQ(pInputQuaternions[4 * i + 2]) + SQ(pInputQuaternions[4 * i + 3]);
+        temp      = SQ(pInputQuaternions[4 * i + 0]) +
+                    SQ(pInputQuaternions[4 * i + 1]) +
+                    SQ(pInputQuaternions[4 * i + 2]) +
+                    SQ(pInputQuaternions[4 * i + 3]);
         pNorms[i] = sqrtf(temp);
     }
 }

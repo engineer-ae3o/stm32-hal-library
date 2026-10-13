@@ -48,7 +48,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_absmax_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
+void arm_absmax_no_idx_q15(const q15_t* pSrc,
+                           uint32_t     blockSize,
+                           q15_t*       pResult) {
     uint16_t     blkCnt; /* loop counters */
     q15x8_t      vecSrc;
     q15_t const* pSrcVec;
@@ -95,9 +97,11 @@ void arm_absmax_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
 
 #else
 #if defined(ARM_MATH_DSP)
-void arm_absmax_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
-    q15_t    cur_absmax, out; /* Temporary variables to store the output value. */
-    uint32_t blkCnt;          /* Loop counter */
+void arm_absmax_no_idx_q15(const q15_t* pSrc,
+                           uint32_t     blockSize,
+                           q15_t*       pResult) {
+    q15_t cur_absmax, out; /* Temporary variables to store the output value. */
+    uint32_t blkCnt;       /* Loop counter */
 
 
     /* Load first input value that act as reference value for comparision */
@@ -108,29 +112,36 @@ void arm_absmax_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
     /* Loop unrolling: Compute 4 outputs at a time */
     blkCnt = (blockSize - 1U) >> 2U;
 
-    while (blkCnt > 0U) { /* Initialize cur_absmax to next consecutive values one by one */
+    while (
+        blkCnt >
+        0U) { /* Initialize cur_absmax to next consecutive values one by one */
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0)
-                         ? cur_absmax
-                         : (q15_t)__QSUB16(0, cur_absmax); /* compare for the extrema value */
+        cur_absmax =
+            (cur_absmax > 0)
+                ? cur_absmax
+                : (q15_t)__QSUB16(
+                      0, cur_absmax); /* compare for the extrema value */
         if (cur_absmax > out) { /* Update the extrema value and it's index */
             out = cur_absmax;
         }
 
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q15_t)__QSUB16(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q15_t)__QSUB16(0, cur_absmax);
         if (cur_absmax > out) {
             out = cur_absmax;
         }
 
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q15_t)__QSUB16(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q15_t)__QSUB16(0, cur_absmax);
         if (cur_absmax > out) {
             out = cur_absmax;
         }
 
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q15_t)__QSUB16(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q15_t)__QSUB16(0, cur_absmax);
         if (cur_absmax > out) {
             out = cur_absmax;
         }
@@ -146,7 +157,8 @@ void arm_absmax_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
 
     while (blkCnt > 0U) {
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q15_t)__QSUB16(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q15_t)__QSUB16(0, cur_absmax);
         if (cur_absmax > out) {
             out = cur_absmax;
         }
@@ -159,7 +171,9 @@ void arm_absmax_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
     *pResult = out;
 }
 #else
-void arm_absmax_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
+void arm_absmax_no_idx_q15(const q15_t* pSrc,
+                           uint32_t     blockSize,
+                           q15_t*       pResult) {
     q15_t    maxVal, out; /* Temporary variables to store the output value. */
     uint32_t blkCnt;      /* Loop counter */
 
@@ -173,7 +187,8 @@ void arm_absmax_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
 
     while (blkCnt > 0U) {
         /* Initialize maxVal to the next consecutive values one by one */
-        maxVal = (*pSrc > 0) ? *pSrc : ((*pSrc == (q15_t)0x8000) ? 0x7fff : -*pSrc);
+        maxVal =
+            (*pSrc > 0) ? *pSrc : ((*pSrc == (q15_t)0x8000) ? 0x7fff : -*pSrc);
         pSrc++;
 
         /* compare for the maximum value */

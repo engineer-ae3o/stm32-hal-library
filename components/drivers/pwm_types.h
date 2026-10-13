@@ -51,18 +51,21 @@ typedef struct {
         ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
     bool ossi; // State of all channels when the timer is inactive
 
-    tim_clk_div_t clk_div; // The timer clock divider to use when configuring the dead time
+    tim_clk_div_t
+        clk_div; // The timer clock divider to use when configuring the dead time
 
     pwm_write_protection_t
         wp_level; // Write protection on the timer's registers to prevent accidental software writes
     // NOTE: Once set, the timer cannot be reconfigured again till a reset (for the most part). Refer to the TRM for more details.
 
     // Complementary channels. Depends on num_channels
-    bool use_complementary_channels; // Whether or not to use the complementary channels
+    bool
+        use_complementary_channels; // Whether or not to use the complementary channels
     struct {
-        bool        output_polarity; // Complementary channel output active low (when this is true)
-        bool        output_idle_state; // State of the channel when MOE is disabled
-        board_pin_t gpio_pin;          // The physical complementary channel's GPIO pin
+        bool
+            output_polarity; // Complementary channel output active low (when this is true)
+        bool output_idle_state; // State of the channel when MOE is disabled
+        board_pin_t gpio_pin;   // The physical complementary channel's GPIO pin
     } complementary_channels[MAX_TIM1_COMPLEMENTARY_CHANNELS];
 
     // Dead time insertion

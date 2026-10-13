@@ -89,9 +89,9 @@
  */
 
 void arm_biquad_cascade_df2T_init_f16(arm_biquad_cascade_df2T_instance_f16* S,
-                                      uint8_t                               numStages,
-                                      const float16_t*                      pCoeffs,
-                                      float16_t*                            pState) {
+                                      uint8_t          numStages,
+                                      const float16_t* pCoeffs,
+                                      float16_t*       pState) {
     /* Assign filter stages */
     S->numStages = numStages;
 

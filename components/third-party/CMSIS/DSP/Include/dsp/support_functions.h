@@ -202,7 +202,9 @@ void arm_sort_f32(const arm_sort_instance_f32* S,
    * @param[in]      alg          Selected algorithm.
    * @param[in]      dir          Sorting order.
    */
-void arm_sort_init_f32(arm_sort_instance_f32* S, arm_sort_alg alg, arm_sort_dir dir);
+void arm_sort_init_f32(arm_sort_instance_f32* S,
+                       arm_sort_alg           alg,
+                       arm_sort_dir           dir);
 
 /**
    * @brief Instance structure for the sorting algorithms.
@@ -228,7 +230,9 @@ void arm_merge_sort_f32(const arm_merge_sort_instance_f32* S,
    * @param[in]      dir          Sorting order.
    * @param[in]      buffer       Working buffer.
    */
-void arm_merge_sort_init_f32(arm_merge_sort_instance_f32* S, arm_sort_dir dir, float32_t* buffer);
+void arm_merge_sort_init_f32(arm_merge_sort_instance_f32* S,
+                             arm_sort_dir                 dir,
+                             float32_t*                   buffer);
 
 
 /**
@@ -331,7 +335,9 @@ void arm_fill_q31(q31_t value, q31_t* pDst, uint32_t blockSize);
  * @return Weighted sum
  *
  */
-float32_t arm_weighted_sum_f32(const float32_t* in, const float32_t* weigths, uint32_t blockSize);
+float32_t arm_weighted_sum_f32(const float32_t* in,
+                               const float32_t* weigths,
+                               uint32_t         blockSize);
 
 
 /**

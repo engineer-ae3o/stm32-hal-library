@@ -64,16 +64,18 @@ void arm_fir_fast_q31(const arm_fir_instance_q31* S,
                       uint32_t                    blockSize) {
     q31_t*       pState  = S->pState;  /* State pointer */
     const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q31_t*       pStateCurnt;          /* Points to the current sample of the state */
-    q31_t*       px;                   /* Temporary pointer for state buffer */
-    const q31_t* pb;                   /* Temporary pointer for coefficient buffer */
-    q31_t        acc0;                 /* Accumulators */
-    uint32_t     numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t     i, tapCnt, blkCnt;    /* Loop counters */
+    q31_t*       pStateCurnt; /* Points to the current sample of the state */
+    q31_t*       px;          /* Temporary pointer for state buffer */
+    const q31_t* pb;          /* Temporary pointer for coefficient buffer */
+    q31_t        acc0;        /* Accumulators */
+    uint32_t     numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t i, tapCnt, blkCnt; /* Loop counters */
 
 #if defined(ARM_MATH_LOOPUNROLL)
-    q31_t acc1, acc2, acc3;   /* Accumulators */
-    q31_t x0, x1, x2, x3, c0; /* Temporary variables to hold state and coefficient values */
+    q31_t acc1, acc2, acc3; /* Accumulators */
+    q31_t x0, x1, x2, x3,
+        c0; /* Temporary variables to hold state and coefficient values */
 #endif
 
     /* S->pState points to state array which contains previous frame (numTaps - 1) samples */

@@ -117,7 +117,8 @@ arm_status arm_convolve_HWC_q15_basic(const q15_t*   Im_in,
                         /* arm_copy_q15((q15_t *) Im_in + (i_ker_y * dim_im_in + i_ker_x) * ch_im_in, pBuffer,
                          * ch_im_in); */
                         memcpy(pBuffer,
-                               (q15_t*)Im_in + (i_ker_y * dim_im_in + i_ker_x) * ch_im_in,
+                               (q15_t*)Im_in +
+                                   (i_ker_y * dim_im_in + i_ker_x) * ch_im_in,
                                sizeof(q15_t) * ch_im_in);
                     }
                     pBuffer += ch_im_in;
@@ -126,7 +127,8 @@ arm_status arm_convolve_HWC_q15_basic(const q15_t*   Im_in,
 
             pA = wt;
             for (i = 0; i < ch_im_out; i++) {
-                q31_t        sum    = ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
+                q31_t sum =
+                    ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
                 const q15_t* pB     = im_buffer;
                 uint16_t     colCnt = ch_im_in * dim_kernel * dim_kernel >> 2;
                 while (colCnt) {
@@ -175,9 +177,12 @@ arm_status arm_convolve_HWC_q15_basic(const q15_t*   Im_in,
                         if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in &&
                             in_col < dim_im_in) {
                             for (l = 0; l < ch_im_in; l++) {
-                                conv_out += Im_in[(in_row * dim_im_in + in_col) * ch_im_in + l] *
-                                            wt[i * ch_im_in * dim_kernel * dim_kernel +
-                                               (m * dim_kernel + n) * ch_im_in + l];
+                                conv_out +=
+                                    Im_in[(in_row * dim_im_in + in_col) *
+                                              ch_im_in +
+                                          l] *
+                                    wt[i * ch_im_in * dim_kernel * dim_kernel +
+                                       (m * dim_kernel + n) * ch_im_in + l];
                             }
                         }
                     }

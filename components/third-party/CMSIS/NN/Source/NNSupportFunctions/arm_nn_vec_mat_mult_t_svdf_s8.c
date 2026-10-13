@@ -67,7 +67,8 @@ arm_status arm_nn_vec_mat_mult_t_svdf_s8(const q7_t*   lhs,
 #if defined(ARM_MATH_MVEI)
     int32_t row_loop_cnt = rhs_rows / 3;
 
-    for (int i_row_loop_cnt = 0; i_row_loop_cnt < row_loop_cnt; i_row_loop_cnt++) {
+    for (int i_row_loop_cnt = 0; i_row_loop_cnt < row_loop_cnt;
+         i_row_loop_cnt++) {
         int32_t acc_0 = 0;
         int32_t acc_1 = 0;
         int32_t acc_2 = 0;
@@ -114,10 +115,10 @@ arm_status arm_nn_vec_mat_mult_t_svdf_s8(const q7_t*   lhs,
         const int32x4_t rhs_sum = {rhs_sum_0, rhs_sum_1, rhs_sum_2, 0};
         acc += vdupq_n_s32(lhs_offset) * rhs_sum;
 
-        acc                     = arm_requantize_mve(acc, dst_multiplier, dst_shift);
-        acc                     = vmaxq_s32(acc, vdupq_n_s32(activation_min));
-        acc                     = vminq_s32(acc, vdupq_n_s32(activation_max));
-        *(dst)                  = (int16_t)acc[0];
+        acc    = arm_requantize_mve(acc, dst_multiplier, dst_shift);
+        acc    = vmaxq_s32(acc, vdupq_n_s32(activation_min));
+        acc    = vminq_s32(acc, vdupq_n_s32(activation_max));
+        *(dst) = (int16_t)acc[0];
         *(dst + dst_offset)     = (int16_t)acc[1];
         *(dst + 2 * dst_offset) = (int16_t)acc[2];
         dst += 3 * dst_offset;
@@ -148,7 +149,7 @@ arm_status arm_nn_vec_mat_mult_t_svdf_s8(const q7_t*   lhs,
 
         const int32_t offsets = rhs_sum_0 * lhs_offset;
         acc_0                 = __QADD(acc_0, offsets);
-        acc_0                 = arm_nn_requantize(acc_0, dst_multiplier, dst_shift);
+        acc_0 = arm_nn_requantize(acc_0, dst_multiplier, dst_shift);
 
         // Clamp the result
         acc_0 = MAX(acc_0, activation_min);
@@ -162,8 +163,10 @@ arm_status arm_nn_vec_mat_mult_t_svdf_s8(const q7_t*   lhs,
     const int16_t lhs_offset_s16 = lhs_offset;
     const int16_t rhs_offset_s16 = rhs_offset;
 
-    const uint32_t lhs_offset_s16x2 = __PKHBT(lhs_offset_s16, lhs_offset_s16, 16);
-    const uint32_t rhs_offset_s16x2 = __PKHBT(rhs_offset_s16, rhs_offset_s16, 16);
+    const uint32_t lhs_offset_s16x2 =
+        __PKHBT(lhs_offset_s16, lhs_offset_s16, 16);
+    const uint32_t rhs_offset_s16x2 =
+        __PKHBT(rhs_offset_s16, rhs_offset_s16, 16);
     for (int32_t i = 0; i < row_loop_cnt; i++) {
         int32_t acc_0 = 0;
         int32_t acc_1 = 0;
@@ -175,18 +178,20 @@ arm_status arm_nn_vec_mat_mult_t_svdf_s8(const q7_t*   lhs,
         rhs += 2 * rhs_cols;
         for (int j = col_loop_cnt; j != 0; j--) {
             int32_t vec_0 = arm_nn_read_q7x4_ia(&lhs_vec);
-            int32_t vec_1 = __SXTAB16_RORn(lhs_offset_s16x2, (uint32_t)vec_0, 8);
+            int32_t vec_1 =
+                __SXTAB16_RORn(lhs_offset_s16x2, (uint32_t)vec_0, 8);
             vec_0         = __SXTAB16(lhs_offset_s16x2, vec_0);
             int32_t ker_0 = arm_nn_read_q7x4_ia(&rhs_0);
-            int32_t ker_1 = __SXTAB16_RORn(rhs_offset_s16x2, (uint32_t)ker_0, 8);
-            ker_0         = __SXTAB16(rhs_offset_s16x2, ker_0);
-            acc_0         = __SMLAD(ker_1, vec_1, acc_0);
-            acc_0         = __SMLAD(ker_0, vec_0, acc_0);
-            ker_0         = arm_nn_read_q7x4_ia(&rhs_1);
-            ker_1         = __SXTAB16_RORn(rhs_offset_s16x2, (uint32_t)ker_0, 8);
-            ker_0         = __SXTAB16(rhs_offset_s16x2, ker_0);
-            acc_1         = __SMLAD(ker_1, vec_1, acc_1);
-            acc_1         = __SMLAD(ker_0, vec_0, acc_1);
+            int32_t ker_1 =
+                __SXTAB16_RORn(rhs_offset_s16x2, (uint32_t)ker_0, 8);
+            ker_0 = __SXTAB16(rhs_offset_s16x2, ker_0);
+            acc_0 = __SMLAD(ker_1, vec_1, acc_0);
+            acc_0 = __SMLAD(ker_0, vec_0, acc_0);
+            ker_0 = arm_nn_read_q7x4_ia(&rhs_1);
+            ker_1 = __SXTAB16_RORn(rhs_offset_s16x2, (uint32_t)ker_0, 8);
+            ker_0 = __SXTAB16(rhs_offset_s16x2, ker_0);
+            acc_1 = __SMLAD(ker_1, vec_1, acc_1);
+            acc_1 = __SMLAD(ker_0, vec_0, acc_1);
         }
         for (int k = col_loop_cnt * 4; k < rhs_cols; k++) {
             const int32_t lhs_temp = (*lhs_vec + lhs_offset);
@@ -215,13 +220,15 @@ arm_status arm_nn_vec_mat_mult_t_svdf_s8(const q7_t*   lhs,
         const int8_t* rhs_0        = rhs;
         for (int i = col_loop_cnt; i != 0; i--) {
             int32_t vec_0 = arm_nn_read_q7x4_ia(&lhs_vec);
-            int32_t vec_1 = __SXTAB16(lhs_offset_s16x2, __ROR((uint32_t)vec_0, 8));
+            int32_t vec_1 =
+                __SXTAB16(lhs_offset_s16x2, __ROR((uint32_t)vec_0, 8));
             vec_0         = __SXTAB16(lhs_offset_s16x2, vec_0);
             int32_t ker_0 = arm_nn_read_q7x4_ia(&rhs_0);
-            int32_t ker_1 = __SXTAB16(rhs_offset_s16x2, __ROR((uint32_t)ker_0, 8));
-            ker_0         = __SXTAB16(rhs_offset_s16x2, ker_0);
-            acc_0         = __SMLAD(ker_1, vec_1, acc_0);
-            acc_0         = __SMLAD(ker_0, vec_0, acc_0);
+            int32_t ker_1 =
+                __SXTAB16(rhs_offset_s16x2, __ROR((uint32_t)ker_0, 8));
+            ker_0 = __SXTAB16(rhs_offset_s16x2, ker_0);
+            acc_0 = __SMLAD(ker_1, vec_1, acc_0);
+            acc_0 = __SMLAD(ker_0, vec_0, acc_0);
         }
         for (int j = col_loop_cnt * 4; j < rhs_cols; j++) {
             const int32_t lhs_temp = (*lhs_vec + lhs_offset);
@@ -242,7 +249,8 @@ arm_status arm_nn_vec_mat_mult_t_svdf_s8(const q7_t*   lhs,
 
     int32_t row_loop_cnt = rhs_rows / 3;
 
-    for (int i_row_loop_cnt = 0; i_row_loop_cnt < row_loop_cnt; i_row_loop_cnt++) {
+    for (int i_row_loop_cnt = 0; i_row_loop_cnt < row_loop_cnt;
+         i_row_loop_cnt++) {
         const q7_t* lhs_ptr   = lhs;
         const q7_t* rhs_ptr_0 = &rhs[0];
         const q7_t* rhs_ptr_1 = &rhs[rhs_cols];
@@ -251,7 +259,8 @@ arm_status arm_nn_vec_mat_mult_t_svdf_s8(const q7_t*   lhs,
         q31_t res00 = 0;
         q31_t res01 = 0;
         q31_t res02 = 0;
-        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols; ++rhs_cols_idx) {
+        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols;
+             ++rhs_cols_idx) {
             const q31_t rhs_value0 = (int8_t)*rhs_ptr_0;
             const q31_t rhs_value1 = (int8_t)*rhs_ptr_1;
             const q31_t rhs_value2 = (int8_t)*rhs_ptr_2;
@@ -294,7 +303,8 @@ arm_status arm_nn_vec_mat_mult_t_svdf_s8(const q7_t*   lhs,
 
         q31_t res00 = 0;
 
-        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols; ++rhs_cols_idx) {
+        for (int32_t rhs_cols_idx = 0; rhs_cols_idx < rhs_cols;
+             ++rhs_cols_idx) {
             q31_t rhs_value0 = (int8_t)rhs_ptr[0] + rhs_offset;
             q31_t lhs_value  = (int8_t)lhs_ptr[0] + lhs_offset;
 

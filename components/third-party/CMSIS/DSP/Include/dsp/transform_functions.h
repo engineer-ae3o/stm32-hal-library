@@ -55,7 +55,7 @@ typedef struct {
         ifftFlag; /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
     uint8_t
         bitReverseFlag; /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
-    const q15_t*    pTwiddle;     /**< points to the Sin twiddle factor table. */
+    const q15_t*    pTwiddle; /**< points to the Sin twiddle factor table. */
     const uint16_t* pBitRevTable; /**< points to the bit reversal table. */
     uint16_t
         twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
@@ -67,7 +67,7 @@ typedef struct {
 arm_status arm_cfft_radix2_init_q15(arm_cfft_radix2_instance_q15* S,
                                     uint16_t                      fftLen,
                                     uint8_t                       ifftFlag,
-                                    uint8_t                       bitReverseFlag);
+                                    uint8_t bitReverseFlag);
 
 /* Deprecated */
 void arm_cfft_radix2_q15(const arm_cfft_radix2_instance_q15* S, q15_t* pSrc);
@@ -94,7 +94,7 @@ typedef struct {
 arm_status arm_cfft_radix4_init_q15(arm_cfft_radix4_instance_q15* S,
                                     uint16_t                      fftLen,
                                     uint8_t                       ifftFlag,
-                                    uint8_t                       bitReverseFlag);
+                                    uint8_t bitReverseFlag);
 
 /* Deprecated */
 void arm_cfft_radix4_q15(const arm_cfft_radix4_instance_q15* S, q15_t* pSrc);
@@ -120,7 +120,7 @@ typedef struct {
 arm_status arm_cfft_radix2_init_q31(arm_cfft_radix2_instance_q31* S,
                                     uint16_t                      fftLen,
                                     uint8_t                       ifftFlag,
-                                    uint8_t                       bitReverseFlag);
+                                    uint8_t bitReverseFlag);
 
 /* Deprecated */
 void arm_cfft_radix2_q31(const arm_cfft_radix2_instance_q31* S, q31_t* pSrc);
@@ -149,7 +149,7 @@ void arm_cfft_radix4_q31(const arm_cfft_radix4_instance_q31* S, q31_t* pSrc);
 arm_status arm_cfft_radix4_init_q31(arm_cfft_radix4_instance_q31* S,
                                     uint16_t                      fftLen,
                                     uint8_t                       ifftFlag,
-                                    uint8_t                       bitReverseFlag);
+                                    uint8_t bitReverseFlag);
 
 /**
    * @brief Instance structure for the floating-point CFFT/CIFFT function.
@@ -174,10 +174,11 @@ typedef struct {
 arm_status arm_cfft_radix2_init_f32(arm_cfft_radix2_instance_f32* S,
                                     uint16_t                      fftLen,
                                     uint8_t                       ifftFlag,
-                                    uint8_t                       bitReverseFlag);
+                                    uint8_t bitReverseFlag);
 
 /* Deprecated */
-void arm_cfft_radix2_f32(const arm_cfft_radix2_instance_f32* S, float32_t* pSrc);
+void arm_cfft_radix2_f32(const arm_cfft_radix2_instance_f32* S,
+                         float32_t*                          pSrc);
 
 /**
    * @brief Instance structure for the floating-point CFFT/CIFFT function.
@@ -202,10 +203,11 @@ typedef struct {
 arm_status arm_cfft_radix4_init_f32(arm_cfft_radix4_instance_f32* S,
                                     uint16_t                      fftLen,
                                     uint8_t                       ifftFlag,
-                                    uint8_t                       bitReverseFlag);
+                                    uint8_t bitReverseFlag);
 
 /* Deprecated */
-void arm_cfft_radix4_f32(const arm_cfft_radix4_instance_f32* S, float32_t* pSrc);
+void arm_cfft_radix4_f32(const arm_cfft_radix4_instance_f32* S,
+                         float32_t*                          pSrc);
 
 /**
    * @brief Instance structure for the fixed-point CFFT/CIFFT function.
@@ -221,9 +223,11 @@ typedef struct {
     const uint32_t*
         rearranged_twiddle_tab_stride2_arr; /**< Per stage reordered twiddle pointer (offset 2) */
     const uint32_t*
-        rearranged_twiddle_tab_stride3_arr;  /**< Per stage reordered twiddle pointer (offset 3) */
-    const q15_t* rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
-    const q15_t* rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
+        rearranged_twiddle_tab_stride3_arr; /**< Per stage reordered twiddle pointer (offset 3) */
+    const q15_t*
+        rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
+    const q15_t*
+        rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
     const q15_t* rearranged_twiddle_stride3;
 #endif
 } arm_cfft_instance_q15;
@@ -249,9 +253,11 @@ typedef struct {
     const uint32_t*
         rearranged_twiddle_tab_stride2_arr; /**< Per stage reordered twiddle pointer (offset 2) */
     const uint32_t*
-        rearranged_twiddle_tab_stride3_arr;  /**< Per stage reordered twiddle pointer (offset 3) */
-    const q31_t* rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
-    const q31_t* rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
+        rearranged_twiddle_tab_stride3_arr; /**< Per stage reordered twiddle pointer (offset 3) */
+    const q31_t*
+        rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
+    const q31_t*
+        rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
     const q31_t* rearranged_twiddle_stride3;
 #endif
 } arm_cfft_instance_q31;
@@ -278,8 +284,10 @@ typedef struct {
         rearranged_twiddle_tab_stride2_arr; /**< Per stage reordered twiddle pointer (offset 2) */
     const uint32_t*
         rearranged_twiddle_tab_stride3_arr; /**< Per stage reordered twiddle pointer (offset 3) */
-    const float32_t* rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
-    const float32_t* rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
+    const float32_t*
+        rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
+    const float32_t*
+        rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
     const float32_t* rearranged_twiddle_stride3;
 #endif
 } arm_cfft_instance_f32;
@@ -326,7 +334,8 @@ typedef struct {
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
     arm_cfft_instance_q15 cfftInst;
 #else
-    const arm_cfft_instance_q15* pCfft; /**< points to the complex FFT instance. */
+    const arm_cfft_instance_q15*
+        pCfft; /**< points to the complex FFT instance. */
 #endif
 } arm_rfft_instance_q15;
 
@@ -353,7 +362,8 @@ typedef struct {
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
     arm_cfft_instance_q31 cfftInst;
 #else
-    const arm_cfft_instance_q31* pCfft; /**< points to the complex FFT instance. */
+    const arm_cfft_instance_q31*
+        pCfft; /**< points to the complex FFT instance. */
 #endif
 } arm_rfft_instance_q31;
 
@@ -376,9 +386,12 @@ typedef struct {
         bitReverseFlagR; /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
     uint32_t
         twidCoefRModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    const float32_t*              pTwiddleAReal; /**< points to the real twiddle factor table. */
-    const float32_t*              pTwiddleBReal; /**< points to the imag twiddle factor table. */
-    arm_cfft_radix4_instance_f32* pCfft;         /**< points to the complex FFT instance. */
+    const float32_t*
+        pTwiddleAReal; /**< points to the real twiddle factor table. */
+    const float32_t*
+        pTwiddleBReal; /**< points to the imag twiddle factor table. */
+    arm_cfft_radix4_instance_f32*
+        pCfft; /**< points to the complex FFT instance. */
 } arm_rfft_instance_f32;
 
 arm_status arm_rfft_init_f32(arm_rfft_instance_f32*        S,
@@ -387,7 +400,9 @@ arm_status arm_rfft_init_f32(arm_rfft_instance_f32*        S,
                              uint32_t                      ifftFlagR,
                              uint32_t                      bitReverseFlag);
 
-void arm_rfft_f32(const arm_rfft_instance_f32* S, float32_t* pSrc, float32_t* pDst);
+void arm_rfft_f32(const arm_rfft_instance_f32* S,
+                  float32_t*                   pSrc,
+                  float32_t*                   pDst);
 
 /**
    * @brief Instance structure for the Double Precision Floating-point RFFT/RIFFT function.
@@ -398,7 +413,8 @@ typedef struct {
     const float64_t*      pTwiddleRFFT; /**< Twiddle factors real stage  */
 } arm_rfft_fast_instance_f64;
 
-arm_status arm_rfft_fast_init_f64(arm_rfft_fast_instance_f64* S, uint16_t fftLen);
+arm_status arm_rfft_fast_init_f64(arm_rfft_fast_instance_f64* S,
+                                  uint16_t                    fftLen);
 
 
 void arm_rfft_fast_f64(arm_rfft_fast_instance_f64* S,
@@ -416,7 +432,8 @@ typedef struct {
     const float32_t*      pTwiddleRFFT; /**< Twiddle factors real stage  */
 } arm_rfft_fast_instance_f32;
 
-arm_status arm_rfft_fast_init_f32(arm_rfft_fast_instance_f32* S, uint16_t fftLen);
+arm_status arm_rfft_fast_init_f32(arm_rfft_fast_instance_f32* S,
+                                  uint16_t                    fftLen);
 
 
 void arm_rfft_fast_f32(const arm_rfft_fast_instance_f32* S,
@@ -428,13 +445,14 @@ void arm_rfft_fast_f32(const arm_rfft_fast_instance_f32* S,
    * @brief Instance structure for the floating-point DCT4/IDCT4 function.
    */
 typedef struct {
-    uint16_t                      N;          /**< length of the DCT4. */
-    uint16_t                      Nby2;       /**< half of the length of the DCT4. */
-    float32_t                     normalize;  /**< normalizing factor. */
-    const float32_t*              pTwiddle;   /**< points to the twiddle factor table. */
-    const float32_t*              pCosFactor; /**< points to the cosFactor table. */
-    arm_rfft_instance_f32*        pRfft;      /**< points to the real FFT instance. */
-    arm_cfft_radix4_instance_f32* pCfft;      /**< points to the complex FFT instance. */
+    uint16_t               N;         /**< length of the DCT4. */
+    uint16_t               Nby2;      /**< half of the length of the DCT4. */
+    float32_t              normalize; /**< normalizing factor. */
+    const float32_t*       pTwiddle; /**< points to the twiddle factor table. */
+    const float32_t*       pCosFactor; /**< points to the cosFactor table. */
+    arm_rfft_instance_f32* pRfft;      /**< points to the real FFT instance. */
+    arm_cfft_radix4_instance_f32*
+        pCfft; /**< points to the complex FFT instance. */
 } arm_dct4_instance_f32;
 
 
@@ -462,20 +480,23 @@ arm_status arm_dct4_init_f32(arm_dct4_instance_f32*        S,
    * @param[in]     pState         points to state buffer.
    * @param[in,out] pInlineBuffer  points to the in-place input and output buffer.
    */
-void arm_dct4_f32(const arm_dct4_instance_f32* S, float32_t* pState, float32_t* pInlineBuffer);
+void arm_dct4_f32(const arm_dct4_instance_f32* S,
+                  float32_t*                   pState,
+                  float32_t*                   pInlineBuffer);
 
 
 /**
    * @brief Instance structure for the Q31 DCT4/IDCT4 function.
    */
 typedef struct {
-    uint16_t                      N;          /**< length of the DCT4. */
-    uint16_t                      Nby2;       /**< half of the length of the DCT4. */
-    q31_t                         normalize;  /**< normalizing factor. */
-    const q31_t*                  pTwiddle;   /**< points to the twiddle factor table. */
-    const q31_t*                  pCosFactor; /**< points to the cosFactor table. */
-    arm_rfft_instance_q31*        pRfft;      /**< points to the real FFT instance. */
-    arm_cfft_radix4_instance_q31* pCfft;      /**< points to the complex FFT instance. */
+    uint16_t               N;         /**< length of the DCT4. */
+    uint16_t               Nby2;      /**< half of the length of the DCT4. */
+    q31_t                  normalize; /**< normalizing factor. */
+    const q31_t*           pTwiddle; /**< points to the twiddle factor table. */
+    const q31_t*           pCosFactor; /**< points to the cosFactor table. */
+    arm_rfft_instance_q31* pRfft;      /**< points to the real FFT instance. */
+    arm_cfft_radix4_instance_q31*
+        pCfft; /**< points to the complex FFT instance. */
 } arm_dct4_instance_q31;
 
 
@@ -503,20 +524,23 @@ arm_status arm_dct4_init_q31(arm_dct4_instance_q31*        S,
    * @param[in]     pState         points to state buffer.
    * @param[in,out] pInlineBuffer  points to the in-place input and output buffer.
    */
-void arm_dct4_q31(const arm_dct4_instance_q31* S, q31_t* pState, q31_t* pInlineBuffer);
+void arm_dct4_q31(const arm_dct4_instance_q31* S,
+                  q31_t*                       pState,
+                  q31_t*                       pInlineBuffer);
 
 
 /**
    * @brief Instance structure for the Q15 DCT4/IDCT4 function.
    */
 typedef struct {
-    uint16_t                      N;          /**< length of the DCT4. */
-    uint16_t                      Nby2;       /**< half of the length of the DCT4. */
-    q15_t                         normalize;  /**< normalizing factor. */
-    const q15_t*                  pTwiddle;   /**< points to the twiddle factor table. */
-    const q15_t*                  pCosFactor; /**< points to the cosFactor table. */
-    arm_rfft_instance_q15*        pRfft;      /**< points to the real FFT instance. */
-    arm_cfft_radix4_instance_q15* pCfft;      /**< points to the complex FFT instance. */
+    uint16_t               N;         /**< length of the DCT4. */
+    uint16_t               Nby2;      /**< half of the length of the DCT4. */
+    q15_t                  normalize; /**< normalizing factor. */
+    const q15_t*           pTwiddle; /**< points to the twiddle factor table. */
+    const q15_t*           pCosFactor; /**< points to the cosFactor table. */
+    arm_rfft_instance_q15* pRfft;      /**< points to the real FFT instance. */
+    arm_cfft_radix4_instance_q15*
+        pCfft; /**< points to the complex FFT instance. */
 } arm_dct4_instance_q15;
 
 
@@ -544,20 +568,22 @@ arm_status arm_dct4_init_q15(arm_dct4_instance_q15*        S,
    * @param[in]     pState         points to state buffer.
    * @param[in,out] pInlineBuffer  points to the in-place input and output buffer.
    */
-void arm_dct4_q15(const arm_dct4_instance_q15* S, q15_t* pState, q15_t* pInlineBuffer);
+void arm_dct4_q15(const arm_dct4_instance_q15* S,
+                  q15_t*                       pState,
+                  q15_t*                       pInlineBuffer);
 
 /**
    * @brief Instance structure for the Floating-point MFCC function.
    */
 typedef struct {
-    const float32_t* dctCoefs;      /**< Internal DCT coefficients */
-    const float32_t* filterCoefs;   /**< Internal Mel filter coefficients */
-    const float32_t* windowCoefs;   /**< Windowing coefficients */
-    const uint32_t*  filterPos;     /**< Internal Mel filter positions in spectrum */
-    const uint32_t*  filterLengths; /**< Internal Mel filter  lengths */
-    uint32_t         fftLen;        /**< FFT length */
-    uint32_t         nbMelFilters;  /**< Number of Mel filters */
-    uint32_t         nbDctOutputs;  /**< Number of DCT outputs */
+    const float32_t* dctCoefs;    /**< Internal DCT coefficients */
+    const float32_t* filterCoefs; /**< Internal Mel filter coefficients */
+    const float32_t* windowCoefs; /**< Windowing coefficients */
+    const uint32_t* filterPos; /**< Internal Mel filter positions in spectrum */
+    const uint32_t* filterLengths; /**< Internal Mel filter  lengths */
+    uint32_t        fftLen;        /**< FFT length */
+    uint32_t        nbMelFilters;  /**< Number of Mel filters */
+    uint32_t        nbDctOutputs;  /**< Number of DCT outputs */
 #if defined(ARM_MFCC_CFFT_BASED)
     /* Implementation of the MFCC is using a CFFT */
     arm_cfft_instance_f32 cfft; /**< Internal CFFT instance */
@@ -592,10 +618,10 @@ void arm_mfcc_f32(const arm_mfcc_instance_f32* S,
                   float32_t*                   pTmp);
 
 typedef struct {
-    const q31_t*    dctCoefs;      /**< Internal DCT coefficients */
-    const q31_t*    filterCoefs;   /**< Internal Mel filter coefficients */
-    const q31_t*    windowCoefs;   /**< Windowing coefficients */
-    const uint32_t* filterPos;     /**< Internal Mel filter positions in spectrum */
+    const q31_t*    dctCoefs;    /**< Internal DCT coefficients */
+    const q31_t*    filterCoefs; /**< Internal Mel filter coefficients */
+    const q31_t*    windowCoefs; /**< Windowing coefficients */
+    const uint32_t* filterPos; /**< Internal Mel filter positions in spectrum */
     const uint32_t* filterLengths; /**< Internal Mel filter  lengths */
     uint32_t        fftLen;        /**< FFT length */
     uint32_t        nbMelFilters;  /**< Number of Mel filters */
@@ -628,13 +654,16 @@ arm_status arm_mfcc_init_q31(arm_mfcc_instance_q31* S,
   @param[inout]     pTmp  points to a temporary buffer of complex
   @return        none
  */
-arm_status arm_mfcc_q31(const arm_mfcc_instance_q31* S, q31_t* pSrc, q31_t* pDst, q31_t* pTmp);
+arm_status arm_mfcc_q31(const arm_mfcc_instance_q31* S,
+                        q31_t*                       pSrc,
+                        q31_t*                       pDst,
+                        q31_t*                       pTmp);
 
 typedef struct {
-    const q15_t*    dctCoefs;      /**< Internal DCT coefficients */
-    const q15_t*    filterCoefs;   /**< Internal Mel filter coefficients */
-    const q15_t*    windowCoefs;   /**< Windowing coefficients */
-    const uint32_t* filterPos;     /**< Internal Mel filter positions in spectrum */
+    const q15_t*    dctCoefs;    /**< Internal DCT coefficients */
+    const q15_t*    filterCoefs; /**< Internal Mel filter coefficients */
+    const q15_t*    windowCoefs; /**< Windowing coefficients */
+    const uint32_t* filterPos; /**< Internal Mel filter positions in spectrum */
     const uint32_t* filterLengths; /**< Internal Mel filter  lengths */
     uint32_t        fftLen;        /**< FFT length */
     uint32_t        nbMelFilters;  /**< Number of Mel filters */
@@ -667,7 +696,10 @@ arm_status arm_mfcc_init_q15(arm_mfcc_instance_q15* S,
   @param[inout]     pTmp  points to a temporary buffer of complex
   @return        error status
  */
-arm_status arm_mfcc_q15(const arm_mfcc_instance_q15* S, q15_t* pSrc, q15_t* pDst, q31_t* pTmp);
+arm_status arm_mfcc_q15(const arm_mfcc_instance_q15* S,
+                        q15_t*                       pSrc,
+                        q15_t*                       pDst,
+                        q31_t*                       pTmp);
 
 
 #ifdef __cplusplus

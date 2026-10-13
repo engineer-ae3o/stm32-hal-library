@@ -31,7 +31,9 @@
 #include "arm_nnfunctions.h"
 #include "arm_nnsupportfunctions.h"
 
-static void compare_and_replace_if_larger_q7(q7_t* base, const q7_t* target, int32_t length) {
+static void compare_and_replace_if_larger_q7(q7_t*       base,
+                                             const q7_t* target,
+                                             int32_t     length) {
 #if defined(ARM_MATH_MVEI)
     int32_t loop_count = (length + 15) / 16;
     for (int i = 0; i < loop_count; i++) {
@@ -85,18 +87,23 @@ static void compare_and_replace_if_larger_q7(q7_t* base, const q7_t* target, int
 #endif
 }
 
-static void
-clamp_output(q7_t* source, int32_t length, const int32_t act_min, const int32_t act_max) {
+static void clamp_output(q7_t*         source,
+                         int32_t       length,
+                         const int32_t act_min,
+                         const int32_t act_max) {
 #if defined(ARM_MATH_MVEI)
     int32_t loop_count = (length + 15) / 16;
     for (int i = 0; i < loop_count; i++) {
         mve_pred16_t p = vctp8q((uint32_t)length);
         length -= 16;
-        const int8x16_t src            = vldrbq_z_s8(source, p);
-        const int8x16_t predicated_min = vdupq_m_n_s8(vuninitializedq_s8(), (int8_t)act_min, p);
-        const int8x16_t predicated_max = vdupq_m_n_s8(vuninitializedq_s8(), (int8_t)act_max, p);
-        int8x16_t       res            = vmaxq_m_s8(vuninitializedq_s8(), src, predicated_min, p);
-        res                            = vminq_m_s8(vuninitializedq_s8(), res, predicated_max, p);
+        const int8x16_t src = vldrbq_z_s8(source, p);
+        const int8x16_t predicated_min =
+            vdupq_m_n_s8(vuninitializedq_s8(), (int8_t)act_min, p);
+        const int8x16_t predicated_max =
+            vdupq_m_n_s8(vuninitializedq_s8(), (int8_t)act_max, p);
+        int8x16_t res =
+            vmaxq_m_s8(vuninitializedq_s8(), src, predicated_min, p);
+        res = vminq_m_s8(vuninitializedq_s8(), res, predicated_max, p);
         vstrbq_p_s8(source, res, p);
         source += 16;
     }
@@ -170,8 +177,10 @@ arm_status arm_max_pool_s8(const cmsis_nn_context*     ctx,
     (void)ctx;
     q7_t* dst_base = dst;
 
-    for (int i_y = 0, base_idx_y = -pad_y; i_y < output_y; base_idx_y += stride_y, i_y++) {
-        for (int i_x = 0, base_idx_x = -pad_x; i_x < output_x; base_idx_x += stride_x, i_x++) {
+    for (int i_y = 0, base_idx_y = -pad_y; i_y < output_y;
+         base_idx_y += stride_y, i_y++) {
+        for (int i_x = 0, base_idx_x = -pad_x; i_x < output_x;
+             base_idx_x += stride_x, i_x++) {
             /* Condition for kernel start dimension: (base_idx_<x,y> + kernel_<x,y>_start) >= 0 */
             const int32_t ker_y_start = MAX(0, -base_idx_y);
             const int32_t ker_x_start = MAX(0, -base_idx_x);
@@ -185,13 +194,15 @@ arm_status arm_max_pool_s8(const cmsis_nn_context*     ctx,
             for (int k_y = ker_y_start; k_y < kernel_y_end; k_y++) {
                 for (int k_x = ker_x_start; k_x < kernel_x_end; k_x++) {
                     const q7_t* start =
-                        src + channel_in * (k_x + base_idx_x + (k_y + base_idx_y) * input_x);
+                        src + channel_in * (k_x + base_idx_x +
+                                            (k_y + base_idx_y) * input_x);
 
                     if (count == 0) {
                         arm_memcpy_q7(dst, start, channel_in);
                         count++;
                     } else {
-                        compare_and_replace_if_larger_q7(dst, start, channel_in);
+                        compare_and_replace_if_larger_q7(
+                            dst, start, channel_in);
                     }
                 }
             }

@@ -106,17 +106,22 @@ __STATIC_FORCEINLINE q31_t divide(q31_t n, q31_t d) {
   @return        none
  */
 
-#if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) && defined(__CMSIS_GCC_H)
-#pragma GCC warning                                                                                \
+#if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) &&       \
+    defined(__CMSIS_GCC_H)
+#pragma GCC warning                                                            \
     "Scalar version of arm_levinson_durbin_q31 built. Helium version has build issues with gcc."
 #endif
 
-#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE) && !defined(__CMSIS_GCC_H)
+#if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE) &&              \
+    !defined(__CMSIS_GCC_H)
 
 #define LANE23_MASK 0xFF00
 
 #include "arm_helium_utils.h"
-void arm_levinson_durbin_q31(const q31_t* phi, q31_t* a, q31_t* err, int nbCoefs) {
+void arm_levinson_durbin_q31(const q31_t* phi,
+                             q31_t*       a,
+                             q31_t*       err,
+                             int          nbCoefs) {
     q31_t e;
 
     static const uint32_t revOffsetArray[4] = {3, 2, 1, 0};
@@ -280,7 +285,10 @@ void arm_levinson_durbin_q31(const q31_t* phi, q31_t* a, q31_t* err, int nbCoefs
 
 #else
 
-void arm_levinson_durbin_q31(const q31_t* phi, q31_t* a, q31_t* err, int nbCoefs) {
+void arm_levinson_durbin_q31(const q31_t* phi,
+                             q31_t*       a,
+                             q31_t*       err,
+                             int          nbCoefs) {
     q31_t e;
     int   p;
 

@@ -19,13 +19,19 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable);
 void gpio_set_output(GPIO_TypeDef* port, gpio_pin_t pin);
 void gpio_set_input(GPIO_TypeDef* port, gpio_pin_t pin);
 void gpio_set_analog(GPIO_TypeDef* port, gpio_pin_t pin);
-void gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t af);
+void gpio_set_alternate_function(GPIO_TypeDef* port,
+                                 gpio_pin_t    pin,
+                                 uint8_t       af);
 
 void gpio_enable_pullup(GPIO_TypeDef* port, gpio_pin_t pin, bool enable);
 void gpio_enable_pulldown(GPIO_TypeDef* port, gpio_pin_t pin, bool enable);
 
-void gpio_set_speed_mode(GPIO_TypeDef* port, gpio_pin_t pin, gpio_speed_mode_t mode);
-void gpio_set_output_type(GPIO_TypeDef* port, gpio_pin_t pin, gpio_output_type_t type);
+void gpio_set_speed_mode(GPIO_TypeDef*     port,
+                         gpio_pin_t        pin,
+                         gpio_speed_mode_t mode);
+void gpio_set_output_type(GPIO_TypeDef*      port,
+                          gpio_pin_t         pin,
+                          gpio_output_type_t type);
 
 void gpio_set_level(GPIO_TypeDef* port, gpio_pin_t pin, bool level);
 void gpio_level_toggle(GPIO_TypeDef* port, gpio_pin_t pin);
