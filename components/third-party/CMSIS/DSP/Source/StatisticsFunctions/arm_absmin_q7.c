@@ -53,7 +53,8 @@
 
 #define MAX_BLKSZ_S8 (UINT8_MAX + 1)
 
-static void arm_small_blk_absmin_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult, uint32_t* pIndex) {
+static void
+arm_small_blk_absmin_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult, uint32_t* pIndex) {
     uint16_t     blkCnt; /* loop counters */
     q7x16_t      vecSrc;
     q7_t const*  pSrcVec;
@@ -186,8 +187,10 @@ void arm_absmin_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult, uint32_t
 
     while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q7_t)__QSUB8(0, cur_absmin); /* compare for the extrema value */
-        if (cur_absmin < out) {                                                    /* Update the extrema value and it's index */
+        cur_absmin = (cur_absmin > 0)
+                         ? cur_absmin
+                         : (q7_t)__QSUB8(0, cur_absmin); /* compare for the extrema value */
+        if (cur_absmin < out) { /* Update the extrema value and it's index */
             out      = cur_absmin;
             outIndex = index + 1U;
         }

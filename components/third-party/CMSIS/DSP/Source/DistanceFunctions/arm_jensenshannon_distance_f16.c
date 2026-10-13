@@ -63,7 +63,8 @@ __STATIC_INLINE float16_t rel_entr(float16_t x, float16_t y) {
 #include "arm_helium_utils.h"
 #include "arm_vec_math_f16.h"
 
-float16_t arm_jensenshannon_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+float16_t
+arm_jensenshannon_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
     uint32_t  blkCnt;
     float16_t tmp;
     f16x8_t   a, b, t, tmpV, accumV;
@@ -142,7 +143,8 @@ float16_t arm_jensenshannon_distance_f16(const float16_t* pA, const float16_t* p
  */
 
 
-float16_t arm_jensenshannon_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+float16_t
+arm_jensenshannon_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
     _Float16  left, right, sum, tmp;
     float16_t result;
     uint32_t  i;

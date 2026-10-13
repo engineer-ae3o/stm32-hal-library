@@ -116,8 +116,10 @@ void arm_absmax_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t*
 
     while (blkCnt > 0U) { /* Initialize cur_absmax to next consecutive values one by one */
         cur_absmax = *pSrc++;
-        cur_absmax = ((_Float16)cur_absmax > 0.0f16) ? cur_absmax : -(_Float16)cur_absmax; /* compare for the extrema value */
-        if ((_Float16)cur_absmax > (_Float16)out) {                                        /* Update the extrema value and it's index */
+        cur_absmax = ((_Float16)cur_absmax > 0.0f16)
+                         ? cur_absmax
+                         : -(_Float16)cur_absmax;   /* compare for the extrema value */
+        if ((_Float16)cur_absmax > (_Float16)out) { /* Update the extrema value and it's index */
             out = cur_absmax;
         }
 

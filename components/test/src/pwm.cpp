@@ -45,7 +45,8 @@ namespace test::pwm {
 
         inline uint32_t get_gpio_afr(GPIO_TypeDef* port, gpio_pin_t pin) {
             const uint32_t p = std::to_underlying(pin);
-            return (p < 8U) ? ((port->AFR[0] >> (p * 4U)) & 0xFU) : ((port->AFR[1] >> ((p - 8U) * 4U)) & 0xFU);
+            return (p < 8U) ? ((port->AFR[0] >> (p * 4U)) & 0xFU)
+                            : ((port->AFR[1] >> ((p - 8U) * 4U)) & 0xFU);
         }
 
         // Per channel register layout. Mirrors the hardware's fixed CCMRx/CCER/CR2 bit
@@ -172,8 +173,14 @@ namespace test::pwm {
             return pred();
         }
 
-        constexpr timer_channel_config_t make_channel(timer_channel_t channel, board_pin_t pin, bool invert = false, bool idle = false) {
-            return {.output_polarity = invert, .output_idle_state = idle, .channel = channel, .gpio_pin = pin};
+        constexpr timer_channel_config_t make_channel(timer_channel_t channel,
+                                                      board_pin_t     pin,
+                                                      bool            invert = false,
+                                                      bool            idle   = false) {
+            return {.output_polarity   = invert,
+                    .output_idle_state = idle,
+                    .channel           = channel,
+                    .gpio_pin          = pin};
         }
 
         // TESTS
@@ -201,7 +208,8 @@ namespace test::pwm {
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
             for (size_t i = 0; i < MAX_TIM2_CHANNELS; i++) {
-                config.channels[i] = make_channel(static_cast<timer_channel_t>(i), BOARD_TIM3_CH1_PA6);
+                config.channels[i] =
+                    make_channel(static_cast<timer_channel_t>(i), BOARD_TIM3_CH1_PA6);
             }
 
             config.num_channels = MAX_TIM1_CHANNELS + 1;
@@ -248,11 +256,14 @@ namespace test::pwm {
             pwm_gp_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
-            config.channels[0]    = make_channel(static_cast<timer_channel_t>(0xFF), BOARD_TIM3_CH1_PA6);
-            config.num_channels   = 1;
+            config.channels[0] =
+                make_channel(static_cast<timer_channel_t>(0xFF), BOARD_TIM3_CH1_PA6);
+            config.num_channels = 1;
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_gp_timer_init(TIM_GP16, &config));
-            TEST_ASSERT_EQUAL_UINT32(0, TIM_GP16->CCMR1); // Never written to, since the rejection happens before writeback
+            TEST_ASSERT_EQUAL_UINT32(
+                0,
+                TIM_GP16->CCMR1); // Never written to, since the rejection happens before writeback
 
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, false));
         }
@@ -264,25 +275,31 @@ namespace test::pwm {
             config.pwm_mode       = PWM_MODE_2;
             config.pwm_count_mode = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
 
-            config.channels[0]  = make_channel(TIMER_CHANNEL_1, BOARD_TIM3_CH1_PA6, /*invert=*/false);
-            config.channels[1]  = make_channel(TIMER_CHANNEL_2, BOARD_TIM3_CH2_PA7, /*invert=*/true);
-            config.channels[2]  = make_channel(TIMER_CHANNEL_3, BOARD_TIM3_CH3_PB0, /*invert=*/false);
-            config.channels[3]  = make_channel(TIMER_CHANNEL_4, BOARD_TIM3_CH4_PB1, /*invert=*/true);
+            config.channels[0] =
+                make_channel(TIMER_CHANNEL_1, BOARD_TIM3_CH1_PA6, /*invert=*/false);
+            config.channels[1] = make_channel(TIMER_CHANNEL_2, BOARD_TIM3_CH2_PA7, /*invert=*/true);
+            config.channels[2] =
+                make_channel(TIMER_CHANNEL_3, BOARD_TIM3_CH3_PB0, /*invert=*/false);
+            config.channels[3] = make_channel(TIMER_CHANNEL_4, BOARD_TIM3_CH4_PB1, /*invert=*/true);
             config.num_channels = 4;
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(TIM_GP16, &config));
 
             for (const auto& ch_cfg : config.channels) {
                 const auto regs = get_channel_regs(TIM_GP16, ch_cfg.channel);
-                TEST_ASSERT_EQUAL_UINT32(0, (*regs.ccmr >> regs.ccxs_pos) & 0b11U); // CCxS == 00: output
+                TEST_ASSERT_EQUAL_UINT32(
+                    0, (*regs.ccmr >> regs.ccxs_pos) & 0b11U); // CCxS == 00: output
                 TEST_ASSERT_TRUE(*regs.ccmr & regs.ocxpe);
-                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(PWM_MODE_2), (*regs.ccmr >> regs.ocxm_pos) & 0b111U);
+                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(PWM_MODE_2),
+                                         (*regs.ccmr >> regs.ocxm_pos) & 0b111U);
                 TEST_ASSERT_TRUE(TIM_GP16->CCER & regs.ccxe);
-                TEST_ASSERT_EQUAL(ch_cfg.output_polarity, static_cast<bool>(TIM_GP16->CCER & regs.ccxp));
+                TEST_ASSERT_EQUAL(ch_cfg.output_polarity,
+                                  static_cast<bool>(TIM_GP16->CCER & regs.ccxp));
             }
 
             TEST_ASSERT_TRUE(TIM_GP16->CR1 & TIM_CR1_ARPE);
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(OUTPUT_COMPARE_EDGE_LEFT_ALIGNED), TIM_GP16->CR1 & (TIM_CR1_CMS | TIM_CR1_DIR));
+            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(OUTPUT_COMPARE_EDGE_LEFT_ALIGNED),
+                                     TIM_GP16->CR1 & (TIM_CR1_CMS | TIM_CR1_DIR));
 
             reset_pwm(TIM_GP16);
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, false));
@@ -300,8 +317,10 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(TIM_GP16, &config));
 
             TEST_ASSERT_TRUE(RCC->AHB1ENR & RCC_AHB1ENR_GPIOAEN);
-            TEST_ASSERT_EQUAL_UINT32(0b10U, get_gpio_moder(GPIOA, GPIO_PIN_6)); // Alternate function mode
-            TEST_ASSERT_EQUAL_UINT32(2U, get_gpio_afr(GPIOA, GPIO_PIN_6));      // AF2, per BOARD_TIM3_CH1_PA6
+            TEST_ASSERT_EQUAL_UINT32(0b10U,
+                                     get_gpio_moder(GPIOA, GPIO_PIN_6)); // Alternate function mode
+            TEST_ASSERT_EQUAL_UINT32(
+                2U, get_gpio_afr(GPIOA, GPIO_PIN_6)); // AF2, per BOARD_TIM3_CH1_PA6
 
             reset_pwm(TIM_GP16);
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, false));
@@ -311,23 +330,25 @@ namespace test::pwm {
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
             config.pwm_count_mode = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
-            config.wp_level       = WP_OFF; // Never anything else yet. See note above the test suite
-            config.channels[0]    = make_channel(TIMER_CHANNEL_1, BOARD_TIM1_CH1_PA8);
-            config.num_channels   = 1;
+            config.wp_level     = WP_OFF; // Never anything else yet. See note above the test suite
+            config.channels[0]  = make_channel(TIMER_CHANNEL_1, BOARD_TIM1_CH1_PA8);
+            config.num_channels = 1;
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_advanced_timer_init(nullptr, &config));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_advanced_timer_init(TIM_ADV, nullptr));
 
             auto zero_channels         = config;
             zero_channels.num_channels = 0;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_advanced_timer_init(TIM_ADV, &zero_channels));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_advanced_timer_init(TIM_ADV, &zero_channels));
 
             auto too_many         = config;
             too_many.num_channels = MAX_TIM1_CHANNELS + 1;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_advanced_timer_init(TIM_ADV, &too_many));
 
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP32, true));
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, pwm_advanced_timer_init(TIM_GP32, &config)); // not an advanced timer
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              pwm_advanced_timer_init(TIM_GP32, &config)); // not an advanced timer
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP32, false));
         }
 
@@ -340,23 +361,34 @@ namespace test::pwm {
             config.wp_level                   = WP_OFF;
             config.use_complementary_channels = true;
 
-            config.channels[0]  = make_channel(TIMER_CHANNEL_1, BOARD_TIM1_CH1_PA8, /*invert=*/false);
-            config.channels[1]  = make_channel(TIMER_CHANNEL_2, BOARD_TIM1_CH2_PA9, /*invert=*/true);
-            config.channels[2]  = make_channel(TIMER_CHANNEL_3, BOARD_TIM1_CH3_PA10, /*invert=*/false);
-            config.channels[3]  = make_channel(TIMER_CHANNEL_4, BOARD_TIM1_CH4_PA11, /*invert=*/true);
+            config.channels[0] =
+                make_channel(TIMER_CHANNEL_1, BOARD_TIM1_CH1_PA8, /*invert=*/false);
+            config.channels[1] = make_channel(TIMER_CHANNEL_2, BOARD_TIM1_CH2_PA9, /*invert=*/true);
+            config.channels[2] =
+                make_channel(TIMER_CHANNEL_3, BOARD_TIM1_CH3_PA10, /*invert=*/false);
+            config.channels[3] =
+                make_channel(TIMER_CHANNEL_4, BOARD_TIM1_CH4_PA11, /*invert=*/true);
             config.num_channels = 4;
 
-            config.complementary_channels[0] = {.output_polarity = true, .output_idle_state = true, .gpio_pin = BOARD_TIM1_CH1N_PA7};
-            config.complementary_channels[1] = {.output_polarity = false, .output_idle_state = false, .gpio_pin = BOARD_TIM1_CH2N_PB0};
-            config.complementary_channels[2] = {.output_polarity = true, .output_idle_state = true, .gpio_pin = BOARD_TIM1_CH3N_PB1};
+            config.complementary_channels[0] = {.output_polarity   = true,
+                                                .output_idle_state = true,
+                                                .gpio_pin          = BOARD_TIM1_CH1N_PA7};
+            config.complementary_channels[1] = {.output_polarity   = false,
+                                                .output_idle_state = false,
+                                                .gpio_pin          = BOARD_TIM1_CH2N_PB0};
+            config.complementary_channels[2] = {.output_polarity   = true,
+                                                .output_idle_state = true,
+                                                .gpio_pin          = BOARD_TIM1_CH3N_PB1};
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &config));
 
             for (const auto& ch_cfg : config.channels) {
                 const auto regs = get_channel_regs(TIM_ADV, ch_cfg.channel);
                 TEST_ASSERT_TRUE(TIM_ADV->CCER & regs.ccxe);
-                TEST_ASSERT_EQUAL(ch_cfg.output_polarity, static_cast<bool>(TIM_ADV->CCER & regs.ccxp));
-                TEST_ASSERT_EQUAL(ch_cfg.output_idle_state, static_cast<bool>(TIM_ADV->CR2 & regs.oisx));
+                TEST_ASSERT_EQUAL(ch_cfg.output_polarity,
+                                  static_cast<bool>(TIM_ADV->CCER & regs.ccxp));
+                TEST_ASSERT_EQUAL(ch_cfg.output_idle_state,
+                                  static_cast<bool>(TIM_ADV->CR2 & regs.oisx));
             }
 
             // Channels 0-2 have complementary outputs
@@ -365,8 +397,10 @@ namespace test::pwm {
                 const auto  regs    = get_channel_regs(TIM_ADV, channel);
                 const auto& comp    = config.complementary_channels[i];
                 TEST_ASSERT_TRUE(TIM_ADV->CCER & regs.ccxne);
-                TEST_ASSERT_EQUAL(comp.output_polarity, static_cast<bool>(TIM_ADV->CCER & regs.ccxnp));
-                TEST_ASSERT_EQUAL(comp.output_idle_state, static_cast<bool>(TIM_ADV->CR2 & regs.oisxn));
+                TEST_ASSERT_EQUAL(comp.output_polarity,
+                                  static_cast<bool>(TIM_ADV->CCER & regs.ccxnp));
+                TEST_ASSERT_EQUAL(comp.output_idle_state,
+                                  static_cast<bool>(TIM_ADV->CR2 & regs.oisxn));
             }
 
             // Channel 3 has no complementary output: its N bits must stay clear
@@ -395,8 +429,10 @@ namespace test::pwm {
             TEST_ASSERT_TRUE(TIM_ADV->BDTR & TIM_BDTR_OSSR);
             TEST_ASSERT_TRUE(TIM_ADV->BDTR & TIM_BDTR_OSSI);
             TEST_ASSERT_EQUAL_UINT32(7, TIM_ADV->RCR & TIM_RCR_REP);
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(TIM_CLK_DIV_4), (TIM_ADV->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos);
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1), TIM_ADV->CR1 & TIM_CR1_CMS);
+            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(TIM_CLK_DIV_4),
+                                     (TIM_ADV->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos);
+            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1),
+                                     TIM_ADV->CR1 & TIM_CR1_CMS);
 
             reset_pwm(TIM_ADV);
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, false));
@@ -421,8 +457,9 @@ namespace test::pwm {
             for (const auto& range : RANGES) {
                 reset_pwm(TIM_ADV);
 
-                constexpr uint64_t DENOM        = 1'000'000'000ULL; // clk_div == TIM_CLK_DIV_1
-                const uint32_t     dead_time_ns = (uint32_t)ceil_div_u64((uint64_t)range.target_ticks * DENOM, timer_freq_hz);
+                constexpr uint64_t DENOM = 1'000'000'000ULL; // clk_div == TIM_CLK_DIV_1
+                const uint32_t     dead_time_ns =
+                    (uint32_t)ceil_div_u64((uint64_t)range.target_ticks * DENOM, timer_freq_hz);
 
                 pwm_advanced_timer_config_t config{};
                 config.pwm_mode       = PWM_MODE_1;
@@ -435,9 +472,10 @@ namespace test::pwm {
 
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &config));
 
-                const uint8_t  dtg            = (TIM_ADV->BDTR & TIM_BDTR_DTG) >> TIM_BDTR_DTG_Pos;
-                const uint32_t expected_ticks = (uint32_t)ceil_div_u64((uint64_t)dead_time_ns * timer_freq_hz, DENOM);
-                const uint32_t decoded_ticks  = decode_dtg_ticks(dtg);
+                const uint8_t  dtg = (TIM_ADV->BDTR & TIM_BDTR_DTG) >> TIM_BDTR_DTG_Pos;
+                const uint32_t expected_ticks =
+                    (uint32_t)ceil_div_u64((uint64_t)dead_time_ns * timer_freq_hz, DENOM);
+                const uint32_t decoded_ticks = decode_dtg_ticks(dtg);
 
                 // Encoding rounds UP to the nearest representable value for its range's step size
                 TEST_ASSERT_TRUE(decoded_ticks >= expected_ticks);
@@ -473,8 +511,8 @@ namespace test::pwm {
             const uint32_t timer_freq_hz = timer_get_frequency_hz(TIM_ADV);
 
             // One tick past range 4's ceiling of 1008
-            constexpr uint64_t DENOM        = 1'000'000'000ULL;
-            const uint32_t     dead_time_ns = (uint32_t)ceil_div_u64(1009ULL * DENOM, timer_freq_hz);
+            constexpr uint64_t DENOM    = 1'000'000'000ULL;
+            const uint32_t dead_time_ns = (uint32_t)ceil_div_u64(1009ULL * DENOM, timer_freq_hz);
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
@@ -512,11 +550,13 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &config));
 
             TEST_ASSERT_TRUE(TIM_ADV->BDTR & TIM_BDTR_BKE);
-            TEST_ASSERT_TRUE(TIM_ADV->BDTR & TIM_BDTR_BKP); // active_low == false -> BKP set (active high)
+            TEST_ASSERT_TRUE(TIM_ADV->BDTR &
+                             TIM_BDTR_BKP); // active_low == false -> BKP set (active high)
             TEST_ASSERT_TRUE(TIM_ADV->BDTR & TIM_BDTR_AOE);
             TEST_ASSERT_TRUE(TIM_ADV->DIER & TIM_DIER_BIE);
             TEST_ASSERT_TRUE(RCC->AHB1ENR & RCC_AHB1ENR_GPIOAEN);
-            TEST_ASSERT_EQUAL_UINT32(1U, get_gpio_afr(GPIOA, GPIO_PIN_6)); // AF1, per BOARD_TIM1_BKIN_PA6
+            TEST_ASSERT_EQUAL_UINT32(
+                1U, get_gpio_afr(GPIOA, GPIO_PIN_6)); // AF1, per BOARD_TIM1_BKIN_PA6
 
             // Simulate a break event with the BG bit in the event generation register.
             TIM_ADV->EGR = TIM_EGR_BG;
@@ -568,7 +608,8 @@ namespace test::pwm {
             const uint32_t timer_freq_hz = timer_get_frequency_hz(TIM_GP16);
 
             uint32_t max_duty = 0;
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, pwm_start(TIM_GP16, timer_freq_hz + 1, &max_duty));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              pwm_start(TIM_GP16, timer_freq_hz + 1, &max_duty));
 
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, false));
         }
@@ -605,7 +646,8 @@ namespace test::pwm {
         void start_center_aligned_uses_the_doubled_period_formula() {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
-            TIM_GP16->CR1 |= std::to_underlying(OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1); // Fake the mode directly; pwm_start only reads CMS
+            TIM_GP16->CR1 |= std::to_underlying(
+                OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1); // Fake the mode directly; pwm_start only reads CMS
 
             constexpr uint32_t REQUESTED_HZ = 500;
             uint32_t           max_duty     = 0;
@@ -632,9 +674,13 @@ namespace test::pwm {
             reset_pwm(TIM_GP16);
             TIM_GP16->ARR = 999; // Edge aligned by default (CMS == 0): max duty == 1000
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(nullptr, TIMER_CHANNEL_1, 500));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 999 + 2));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, static_cast<timer_channel_t>(0xFF), 500));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_set_duty_cycle(nullptr, TIMER_CHANNEL_1, 500));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 999 + 2));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                pwm_set_duty_cycle(TIM_GP16, static_cast<timer_channel_t>(0xFF), 500));
 
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, false));
         }
@@ -645,7 +691,8 @@ namespace test::pwm {
             TIM_GP16->ARR = 999; // CMS == 0: edge aligned, max == 1000
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 1000));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 1001));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 1001));
 
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, false));
         }
@@ -654,10 +701,12 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
             TIM_GP16->ARR = 999;
-            TIM_GP16->CR1 |= std::to_underlying(OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1); // CMS != 0: center aligned, max == ARR == 999
+            TIM_GP16->CR1 |= std::to_underlying(
+                OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1); // CMS != 0: center aligned, max == ARR == 999
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 999));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 1000));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_set_duty_cycle(TIM_GP16, TIMER_CHANNEL_1, 1000));
 
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, false));
         }
@@ -679,7 +728,8 @@ namespace test::pwm {
             reset_pwm(TIM_GP16);
             TIM_GP16->ARR = 999;
 
-            for (const auto channel : {TIMER_CHANNEL_1, TIMER_CHANNEL_2, TIMER_CHANNEL_3, TIMER_CHANNEL_4}) {
+            for (const auto channel :
+                 {TIMER_CHANNEL_1, TIMER_CHANNEL_2, TIMER_CHANNEL_3, TIMER_CHANNEL_4}) {
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_set_duty_cycle(TIM_GP16, channel, 250));
                 TEST_ASSERT_EQUAL_UINT32(250, *get_ccr(TIM_GP16, channel));
             }
@@ -722,8 +772,10 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_resume_channel(nullptr, TIMER_CHANNEL_1));
 
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, true));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_pause_channel(TIM_GP16, static_cast<timer_channel_t>(4)));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_resume_channel(TIM_GP16, static_cast<timer_channel_t>(4)));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_pause_channel(TIM_GP16, static_cast<timer_channel_t>(4)));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_resume_channel(TIM_GP16, static_cast<timer_channel_t>(4)));
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, false));
         }
 
@@ -732,7 +784,8 @@ namespace test::pwm {
             reset_pwm(TIM_GP16);
             TIM_GP16->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E;
 
-            for (const auto channel : {TIMER_CHANNEL_1, TIMER_CHANNEL_2, TIMER_CHANNEL_3, TIMER_CHANNEL_4}) {
+            for (const auto channel :
+                 {TIMER_CHANNEL_1, TIMER_CHANNEL_2, TIMER_CHANNEL_3, TIMER_CHANNEL_4}) {
                 const auto regs = get_channel_regs(TIM_GP16, channel);
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_channel(TIM_GP16, channel));
                 TEST_ASSERT_FALSE(TIM_GP16->CCER & regs.ccxe);
@@ -763,14 +816,17 @@ namespace test::pwm {
             TEST_ASSERT_TRUE(TIM_ADV->CCER & TIM_CCER_CC1E); // untouched by the channel-3 call
 
             // Channel 4 has no complementary output, so *_complementary* API should fail with it
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_pause_complementary_channel(TIM_ADV, TIMER_CHANNEL_4));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_resume_complementary_channel(TIM_ADV, TIMER_CHANNEL_4));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_pause_complementary_channel(TIM_ADV, TIMER_CHANNEL_4));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_resume_complementary_channel(TIM_ADV, TIMER_CHANNEL_4));
 
             reset_pwm(TIM_ADV);
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, false));
         }
 
-        void advanced_timer_init_rejects_reinit_once_locked_but_recovers_after_a_peripheral_reset() {
+        void
+        advanced_timer_init_rejects_reinit_once_locked_but_recovers_after_a_peripheral_reset() {
             // TIM1_BDTR's LOCK bits are write once until a reset in hardware. Software write can
             // clear them once set, including pwm_deinit()'s own BDTR clear, which is a no-op against
             // the hardware's frozen bits. The one recoverable path is a peripheral level reset via
@@ -792,7 +848,8 @@ namespace test::pwm {
             config.num_channels   = 1;
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &config));
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(WP_LOCK_LEVEL_3), (TIM_ADV->BDTR & TIM_BDTR_LOCK) >> TIM_BDTR_LOCK_Pos);
+            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(WP_LOCK_LEVEL_3),
+                                     (TIM_ADV->BDTR & TIM_BDTR_LOCK) >> TIM_BDTR_LOCK_Pos);
 
             // Once locked, reinit must refuse; regardless of what the new request asks for
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, pwm_advanced_timer_init(TIM_ADV, &config));
@@ -812,7 +869,7 @@ namespace test::pwm {
             // Recover via a TIM1 local peripheral reset
             timer_reset(TIM1);
 
-            TEST_ASSERT_EQUAL_UINT32(0, TIM_ADV->BDTR);                            // LOCK (and everything else) is clear again
+            TEST_ASSERT_EQUAL_UINT32(0, TIM_ADV->BDTR); // LOCK (and everything else) is clear again
             TEST_ASSERT_EQUAL(HAL_OK, pwm_advanced_timer_init(TIM_ADV, &no_lock)); // Usable again
 
             // Reset one final time
@@ -827,8 +884,9 @@ namespace test::pwm {
 
         namespace lb = test::loopback;
 
-        constexpr uint32_t INPUT_TICK_HZ = 1'000'000U; // 1us per timer tick in most of the tests below
-        constexpr size_t   INPUT_LOG_N   = 16;
+        constexpr uint32_t INPUT_TICK_HZ =
+            1'000'000U; // 1us per timer tick in most of the tests below
+        constexpr size_t INPUT_LOG_N = 16;
 
         struct input_log_t {
             volatile uint32_t events;
@@ -855,7 +913,8 @@ namespace test::pwm {
             s_in_log.events = s_in_log.events + 1;
         }
 
-        pwm_input_config_t make_input_config(uint32_t prescaler, uint32_t filter_ns = 0, timer_cb_t callback = {}) {
+        pwm_input_config_t
+        make_input_config(uint32_t prescaler, uint32_t filter_ns = 0, timer_cb_t callback = {}) {
             pwm_input_config_t cfg{};
             cfg.pull            = TIMER_PULL_NONE;
             cfg.clk_div         = TIM_CLK_DIV_1;
@@ -911,7 +970,8 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_input_get_data(nullptr, &data));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_input_get_data(lb::MEAS, nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_input_get_timer_frequency(nullptr, &hz));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_input_get_timer_frequency(lb::MEAS, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_input_get_timer_frequency(lb::MEAS, nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_input_start(nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_input_stop(nullptr));
         }
@@ -928,22 +988,27 @@ namespace test::pwm {
             // Channel 1 captures TI1 (period), channel 2 captures the same TI1 indirectly (pulse width)
             TEST_ASSERT_EQUAL_UINT32(0b01U, (t->CCMR1 & TIM_CCMR1_CC1S) >> TIM_CCMR1_CC1S_Pos);
             TEST_ASSERT_EQUAL_UINT32(0b10U, (t->CCMR1 & TIM_CCMR1_CC2S) >> TIM_CCMR1_CC2S_Pos);
-            TEST_ASSERT_EQUAL_UINT32(0U, t->CCMR1 & (TIM_CCMR1_IC1F | TIM_CCMR1_IC2F | TIM_CCMR1_IC1PSC | TIM_CCMR1_IC2PSC));
+            TEST_ASSERT_EQUAL_UINT32(
+                0U,
+                t->CCMR1 & (TIM_CCMR1_IC1F | TIM_CCMR1_IC2F | TIM_CCMR1_IC1PSC | TIM_CCMR1_IC2PSC));
 
             // Channel 1 on the rising edge, channel 2 on the falling edge
             TEST_ASSERT_EQUAL_UINT32(TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC2P,
-                                     t->CCER & (TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NP | TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC2NP));
+                                     t->CCER & (TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NP |
+                                                TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC2NP));
 
             // Triggered by the filtered TI1 (TI1FP1), and the trigger resets the counter
             TEST_ASSERT_EQUAL_UINT32(0b101U, (t->SMCR & TIM_SMCR_TS) >> TIM_SMCR_TS_Pos);
             TEST_ASSERT_EQUAL_UINT32(0b100U, (t->SMCR & TIM_SMCR_SMS) >> TIM_SMCR_SMS_Pos);
 
-            TEST_ASSERT_EQUAL_UINT32(TIM_DIER_CC1IE | TIM_DIER_CC2IE, t->DIER & (TIM_DIER_CC1IE | TIM_DIER_CC2IE));
+            TEST_ASSERT_EQUAL_UINT32(TIM_DIER_CC1IE | TIM_DIER_CC2IE,
+                                     t->DIER & (TIM_DIER_CC1IE | TIM_DIER_CC2IE));
             TEST_ASSERT_TRUE(NVIC->ISER[TIM3_IRQn >> 5] & (1UL << (TIM3_IRQn & 0x1FU)));
 
             TEST_ASSERT_EQUAL_UINT32(6U, t->PSC);
             TEST_ASSERT_EQUAL_UINT32(UINT16_MAX, t->ARR);
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(TIM_CLK_DIV_2), (t->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos);
+            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(TIM_CLK_DIV_2),
+                                     (t->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos);
             TEST_ASSERT_FALSE(t->CR1 & TIM_CR1_CEN);
 
             // Without a callback no capture interrupt is enabled
@@ -965,10 +1030,13 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
 
             uint32_t code = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, timer_filter_ns_to_ic_code(lb::MEAS, TIM_CLK_DIV_1, 500, &code));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              timer_filter_ns_to_ic_code(lb::MEAS, TIM_CLK_DIV_1, 500, &code));
             TEST_ASSERT_TRUE(code != 0U);
-            TEST_ASSERT_EQUAL_UINT32(code, (lb::MEAS->CCMR1 & TIM_CCMR1_IC1F) >> TIM_CCMR1_IC1F_Pos);
-            TEST_ASSERT_EQUAL_UINT32(code, (lb::MEAS->CCMR1 & TIM_CCMR1_IC2F) >> TIM_CCMR1_IC2F_Pos);
+            TEST_ASSERT_EQUAL_UINT32(code,
+                                     (lb::MEAS->CCMR1 & TIM_CCMR1_IC1F) >> TIM_CCMR1_IC1F_Pos);
+            TEST_ASSERT_EQUAL_UINT32(code,
+                                     (lb::MEAS->CCMR1 & TIM_CCMR1_IC2F) >> TIM_CCMR1_IC2F_Pos);
         }
 
         void input_init_configures_the_gpio_pin() {
@@ -1009,8 +1077,11 @@ namespace test::pwm {
 
             const auto cfg = make_input_config(1);
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
-            TEST_ASSERT_EQUAL_UINT32(0U, lb::MEAS->CCMR1 & (TIM_CCMR1_IC1F | TIM_CCMR1_IC2F | TIM_CCMR1_IC1PSC | TIM_CCMR1_IC2PSC));
-            TEST_ASSERT_EQUAL_UINT32(0b01U, (lb::MEAS->CCMR1 & TIM_CCMR1_CC1S) >> TIM_CCMR1_CC1S_Pos);
+            TEST_ASSERT_EQUAL_UINT32(0U,
+                                     lb::MEAS->CCMR1 & (TIM_CCMR1_IC1F | TIM_CCMR1_IC2F |
+                                                        TIM_CCMR1_IC1PSC | TIM_CCMR1_IC2PSC));
+            TEST_ASSERT_EQUAL_UINT32(0b01U,
+                                     (lb::MEAS->CCMR1 & TIM_CCMR1_CC1S) >> TIM_CCMR1_CC1S_Pos);
             TEST_ASSERT_FALSE(lb::MEAS->CCER & TIM_CCER_CC1P);
         }
 
@@ -1026,7 +1097,8 @@ namespace test::pwm {
 
                 uint32_t hz = 0;
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_input_get_timer_frequency(lb::MEAS, &hz));
-                TEST_ASSERT_EQUAL_UINT32(clk / prescaler, hz); // Ticks per second, not the timer's input clock
+                TEST_ASSERT_EQUAL_UINT32(clk / prescaler,
+                                         hz); // Ticks per second, not the timer's input clock
             }
 
             uint32_t   hz  = 0;
@@ -1071,10 +1143,12 @@ namespace test::pwm {
                 lb::reset_fixture();
                 uint32_t compare = 0;
                 uint32_t max     = 0;
-                TEST_ASSERT_EQUAL(HAL_OK, lb::generator_pwm_start(c.hz, c.duty_percent, &compare, &max));
+                TEST_ASSERT_EQUAL(HAL_OK,
+                                  lb::generator_pwm_start(c.hz, c.duty_percent, &compare, &max));
 
                 reset_input_log();
-                const auto cfg = make_input_config(lb::prescaler_for_1us(lb::MEAS), 0, {input_cb, nullptr});
+                const auto cfg =
+                    make_input_config(lb::prescaler_for_1us(lb::MEAS), 0, {input_cb, nullptr});
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
 
@@ -1087,9 +1161,11 @@ namespace test::pwm {
                                          "No PWM input capture events");
                 const auto data = stop_and_read();
 
-                const uint64_t gen_clk         = timer_get_frequency_hz(lb::GEN);
-                const uint32_t expected_period = (uint32_t)((uint64_t)max * INPUT_TICK_HZ / gen_clk);
-                const uint32_t expected_pulse  = (uint32_t)((uint64_t)compare * INPUT_TICK_HZ / gen_clk);
+                const uint64_t gen_clk = timer_get_frequency_hz(lb::GEN);
+                const uint32_t expected_period =
+                    (uint32_t)((uint64_t)max * INPUT_TICK_HZ / gen_clk);
+                const uint32_t expected_pulse =
+                    (uint32_t)((uint64_t)compare * INPUT_TICK_HZ / gen_clk);
 
                 TEST_ASSERT_UINT32_WITHIN(2U, expected_period, data.period);
                 TEST_ASSERT_UINT32_WITHIN(2U, expected_pulse, data.pulse);
@@ -1100,10 +1176,13 @@ namespace test::pwm {
             lb::reset_fixture();
             uint32_t compare = 0;
             uint32_t max     = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, lb::generator_pwm_start(1'000, 25, &compare, &max)); // 250us high, 750us low
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                lb::generator_pwm_start(1'000, 25, &compare, &max)); // 250us high, 750us low
 
             reset_input_log();
-            const auto cfg = make_input_config(lb::prescaler_for_1us(lb::MEAS), 0, {input_cb, nullptr});
+            const auto cfg =
+                make_input_config(lb::prescaler_for_1us(lb::MEAS), 0, {input_cb, nullptr});
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
             TEST_ASSERT_TRUE(lb::wait_for(
@@ -1122,7 +1201,8 @@ namespace test::pwm {
             for (uint32_t i = 0; i + 1 < 10; i++) {
                 if (s_in_log.channel[i] == TIMER_CHANNEL_1) {
                     TEST_ASSERT_EQUAL(TIMER_CHANNEL_2, s_in_log.channel[i + 1]);
-                    const uint32_t gap_us = lb::cycles_to_us32(s_in_log.cycles[i + 1] - s_in_log.cycles[i], sysclk);
+                    const uint32_t gap_us =
+                        lb::cycles_to_us32(s_in_log.cycles[i + 1] - s_in_log.cycles[i], sysclk);
                     TEST_ASSERT_UINT32_WITHIN(25U, 250U, gap_us);
                 }
             }
@@ -1171,7 +1251,8 @@ namespace test::pwm {
             TRY(lb::generator_pwm_start(1'000, 50, &compare, &max));
 
             reset_input_log();
-            const auto cfg = make_input_config(lb::prescaler_for_1us(lb::MEAS), 0, {input_cb, nullptr});
+            const auto cfg =
+                make_input_config(lb::prescaler_for_1us(lb::MEAS), 0, {input_cb, nullptr});
             TRY(pwm_input_init(lb::MEAS, &cfg));
             TRY(pwm_input_get_timer_frequency(lb::MEAS, &out->tick_hz));
             TRY(pwm_input_start(lb::MEAS));
@@ -1205,7 +1286,8 @@ namespace test::pwm {
             if (seen < 3) {
                 return HAL_ERR_TIMEOUT;
             }
-            out->avg_period_us = lb::cycles_to_us32((last - first) / (seen - 1U), get_system_core_clock());
+            out->avg_period_us =
+                lb::cycles_to_us32((last - first) / (seen - 1U), get_system_core_clock());
             return HAL_OK;
         }
 
@@ -1233,14 +1315,19 @@ namespace test::pwm {
 
         void input_deinit_clears_the_slave_mode_and_stops_the_timer() {
             lb::reset_fixture();
-            const auto cfg = make_input_config(lb::prescaler_for_1us(lb::MEAS), 0, {input_cb, nullptr});
+            const auto cfg =
+                make_input_config(lb::prescaler_for_1us(lb::MEAS), 0, {input_cb, nullptr});
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_deinit(lb::MEAS));
             TEST_ASSERT_FALSE(lb::MEAS->CR1 & TIM_CR1_CEN);
-            TEST_ASSERT_EQUAL_UINT32(0U, lb::MEAS->SMCR & (TIM_SMCR_SMS | TIM_SMCR_TS)); // A leftover reset mode would break the next user
-            TEST_ASSERT_EQUAL_UINT32(0U, lb::MEAS->CCER & (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC2P));
+            TEST_ASSERT_EQUAL_UINT32(
+                0U,
+                lb::MEAS->SMCR & (TIM_SMCR_SMS |
+                                  TIM_SMCR_TS)); // A leftover reset mode would break the next user
+            TEST_ASSERT_EQUAL_UINT32(
+                0U, lb::MEAS->CCER & (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC2P));
             TEST_ASSERT_EQUAL_UINT32(0U, lb::MEAS->CCMR1 & (TIM_CCMR1_CC1S | TIM_CCMR1_CC2S));
             TEST_ASSERT_EQUAL_UINT32(0U, lb::MEAS->DIER & (TIM_DIER_CC1IE | TIM_DIER_CC2IE));
             TEST_ASSERT_FALSE(NVIC->ISER[TIM3_IRQn >> 5] & (1UL << (TIM3_IRQn & 0x1FU)));
@@ -1279,8 +1366,10 @@ namespace test::pwm {
         RUN_TEST(freeze_and_unfreeze_toggle_only_cen_on_general_purpose_timers);
         RUN_TEST(pause_and_resume_channel_reject_invalid_arguments);
         RUN_TEST(pause_and_resume_channel_toggle_only_the_main_output_on_general_purpose_timers);
-        RUN_TEST(pause_and_resume_channel_also_toggle_the_complementary_output_on_the_advanced_timer);
-        RUN_TEST(advanced_timer_init_rejects_reinit_once_locked_but_recovers_after_a_peripheral_reset);
+        RUN_TEST(
+            pause_and_resume_channel_also_toggle_the_complementary_output_on_the_advanced_timer);
+        RUN_TEST(
+            advanced_timer_init_rejects_reinit_once_locked_but_recovers_after_a_peripheral_reset);
 
         RUN_TEST(input_init_rejects_invalid_arguments);
         RUN_TEST(input_get_data_and_frequency_reject_invalid_arguments);

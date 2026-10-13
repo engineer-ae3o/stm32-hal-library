@@ -37,7 +37,8 @@ namespace test::timer_ext {
         TIM_TypeDef* const MEAS = lb::MEAS;
         TIM_TypeDef* const GEN  = lb::GEN;
 
-        constexpr uint32_t TICK_HZ = 1'000'000U; // The measurer counts in 1us ticks in most of these tests
+        constexpr uint32_t TICK_HZ =
+            1'000'000U; // The measurer counts in 1us ticks in most of these tests
 
         // Helpers
         // Event log filled in by the capture callback
@@ -84,7 +85,10 @@ namespace test::timer_ext {
             s_oc_events       = s_oc_events + 1;
         }
 
-        input_capture_config_t make_ic_config(uint32_t prescaler, ic_edge_t edge, uint32_t filter_ns = 0, timer_cb_t callback = {}) {
+        input_capture_config_t make_ic_config(uint32_t   prescaler,
+                                              ic_edge_t  edge,
+                                              uint32_t   filter_ns = 0,
+                                              timer_cb_t callback  = {}) {
             input_capture_config_t cfg{};
             cfg.clk_div         = TIM_CLK_DIV_1;
             cfg.count_mode      = TIMER_COUNTER_DIR_UP;
@@ -125,14 +129,16 @@ namespace test::timer_ext {
             };
         }
 
-        constexpr uint32_t ALL_CCXE  = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E;
-        constexpr uint32_t ALL_CCXIE = TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_CC3IE | TIM_DIER_CC4IE;
+        constexpr uint32_t ALL_CCXE = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E;
+        constexpr uint32_t ALL_CCXIE =
+            TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_CC3IE | TIM_DIER_CC4IE;
 
         // Independent model of the digital filter, straight from the reference manual's ICxF table. Number of timer
         // clock ticks an input must stay stable for a given filter code, with and without the DTS clock divider
         struct filter_entry_t {
-            uint32_t sampling_div; // fSAMPLING = fCK_INT (code 1-3) or fDTS (the rest) divided by this
-            uint32_t samples;      // Consecutive samples needed to validate a level change
+            uint32_t
+                sampling_div; // fSAMPLING = fCK_INT (code 1-3) or fDTS (the rest) divided by this
+            uint32_t samples; // Consecutive samples needed to validate a level change
             bool     uses_dts;
         };
 
@@ -157,7 +163,8 @@ namespace test::timer_ext {
 
         uint32_t filter_ticks(uint32_t code, tim_clk_div_t clk_div) {
             const filter_entry_t& entry = FILTER_TABLE[code];
-            return entry.samples * entry.sampling_div * (entry.uses_dts ? (1U << std::to_underlying(clk_div)) : 1U);
+            return entry.samples * entry.sampling_div *
+                   (entry.uses_dts ? (1U << std::to_underlying(clk_div)) : 1U);
         }
 
         // TESTS
@@ -212,7 +219,8 @@ namespace test::timer_ext {
             TEST_ASSERT_EQUAL(HAL_OK, timer_reset(TIM1));
 
             const auto good = make_ic_config(1, IC_EDGE_RISING);
-            TIM1->BDTR |= TIM_BDTR_LOCK; // Write protection level 3. Only a peripheral reset clears it
+            TIM1->BDTR |=
+                TIM_BDTR_LOCK; // Write protection level 3. Only a peripheral reset clears it
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, input_capture_init(TIM1, &good));
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_reset(TIM1));
@@ -239,7 +247,8 @@ namespace test::timer_ext {
                 {.edge = IC_EDGE_FALLING, .ccxp = true, .ccxnp = false},
                 {.edge = IC_EDGE_RISING_FALLING, .ccxp = true, .ccxnp = true},
             }};
-            const auto                       prescalers = std::array{IC_PRESCALER_DIV_1, IC_PRESCALER_DIV_2, IC_PRESCALER_DIV_4, IC_PRESCALER_DIV_8};
+            const auto                       prescalers = std::array{
+                IC_PRESCALER_DIV_1, IC_PRESCALER_DIV_2, IC_PRESCALER_DIV_4, IC_PRESCALER_DIV_8};
 
             for (uint32_t c = 0; c < 4; c++) {
                 const auto channel = static_cast<timer_channel_t>(c);
@@ -254,9 +263,12 @@ namespace test::timer_ext {
                         TEST_ASSERT_EQUAL(HAL_OK, input_capture_init(MEAS, &cfg));
 
                         const uint32_t ccmr = *regs.ccmr >> regs.ccmr_shift;
-                        TEST_ASSERT_EQUAL_UINT32(0b01U, ccmr & 0b11U);                                 // CCxS: mapped to its own TIx
-                        TEST_ASSERT_EQUAL_UINT32(std::to_underlying(prescaler), (ccmr >> 2U) & 0b11U); // ICxPSC
-                        TEST_ASSERT_EQUAL_UINT32(0U, (ccmr >> 4U) & 0xFU);                             // ICxF: no filter requested
+                        TEST_ASSERT_EQUAL_UINT32(0b01U,
+                                                 ccmr & 0b11U); // CCxS: mapped to its own TIx
+                        TEST_ASSERT_EQUAL_UINT32(std::to_underlying(prescaler),
+                                                 (ccmr >> 2U) & 0b11U); // ICxPSC
+                        TEST_ASSERT_EQUAL_UINT32(0U,
+                                                 (ccmr >> 4U) & 0xFU); // ICxF: no filter requested
 
                         const uint32_t ccer = MEAS->CCER >> regs.ccer_shift;
                         TEST_ASSERT_TRUE(ccer & 1U); // CCxE
@@ -298,7 +310,8 @@ namespace test::timer_ext {
 
             TEST_ASSERT_EQUAL_UINT32(6U, MEAS->PSC);
             TEST_ASSERT_EQUAL_UINT32(UINT16_MAX, MEAS->ARR); // Free running, 16 bit
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(TIM_CLK_DIV_4), (MEAS->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos);
+            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(TIM_CLK_DIV_4),
+                                     (MEAS->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos);
             TEST_ASSERT_TRUE(MEAS->CR1 & TIM_CR1_ARPE);
             TEST_ASSERT_FALSE(MEAS->CR1 & TIM_CR1_CEN); // Not counting until started
             TEST_ASSERT_FALSE(MEAS->CR1 & TIM_CR1_DIR);
@@ -352,7 +365,8 @@ namespace test::timer_ext {
 
                 uint32_t hz = 0;
                 TEST_ASSERT_EQUAL(HAL_OK, input_capture_get_timer_frequency(MEAS, &hz));
-                TEST_ASSERT_EQUAL_UINT32(clk / prescaler, hz); // Ticks per second, not the timer's input clock
+                TEST_ASSERT_EQUAL_UINT32(clk / prescaler,
+                                         hz); // Ticks per second, not the timer's input clock
             }
 
             // 1us ticks
@@ -363,7 +377,8 @@ namespace test::timer_ext {
             TEST_ASSERT_EQUAL_UINT32(TICK_HZ, hz);
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, input_capture_get_timer_frequency(nullptr, &hz));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, input_capture_get_timer_frequency(MEAS, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              input_capture_get_timer_frequency(MEAS, nullptr));
         }
 
         void ic_start_and_stop_run_and_freeze_the_counter() {
@@ -388,10 +403,12 @@ namespace test::timer_ext {
 
         void ic_deinit_clears_the_state_and_silences_the_callback() {
             lb::reset_fixture();
-            TEST_ASSERT_EQUAL(HAL_OK, lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, 2'000));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, 2'000));
 
             reset_log();
-            start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {log_cb, nullptr}));
+            start_capture(
+                make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {log_cb, nullptr}));
             TEST_ASSERT_TRUE_MESSAGE(lb::wait_for(
                                          []() {
                                              return s_log.events >= 2;
@@ -417,12 +434,14 @@ namespace test::timer_ext {
         // Input capture: measuring the signal source
         void ic_measures_the_generated_clock_period() {
             lb::reset_fixture();
-            TEST_ASSERT_EQUAL(HAL_OK, lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, 2'000));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, 2'000));
             const uint32_t pin_hz = lb::generator_pin_hz();
             TEST_ASSERT_EQUAL_UINT32(2'000U, pin_hz);
 
             reset_log();
-            start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {log_cb, nullptr}));
+            start_capture(
+                make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {log_cb, nullptr}));
             TEST_ASSERT_TRUE_MESSAGE(lb::wait_for(
                                          []() {
                                              return s_log.stored >= 12;
@@ -434,7 +453,8 @@ namespace test::timer_ext {
             const uint32_t expected_ticks  = TICK_HZ / pin_hz;
             const uint32_t expected_cycles = get_system_core_clock() / pin_hz;
             for (uint32_t i = 1; i < 12; i++) {
-                const uint32_t delta_ticks = (s_log.value[i] - s_log.value[i - 1]) & UINT16_MAX; // 16 bit counter
+                const uint32_t delta_ticks =
+                    (s_log.value[i] - s_log.value[i - 1]) & UINT16_MAX; // 16 bit counter
                 TEST_ASSERT_UINT32_WITHIN(1U, expected_ticks, delta_ticks);
 
                 // The same period against the CPU's cycle counter. ISR entry jitter is a few us at most
@@ -445,10 +465,12 @@ namespace test::timer_ext {
 
         void ic_both_edges_capture_the_half_periods_of_a_square_wave() {
             lb::reset_fixture();
-            TEST_ASSERT_EQUAL(HAL_OK, lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, 2'000));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, 2'000));
 
             reset_log();
-            start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING_FALLING, 0, {log_cb, nullptr}));
+            start_capture(make_ic_config(
+                lb::prescaler_for_1us(MEAS), IC_EDGE_RISING_FALLING, 0, {log_cb, nullptr}));
             TEST_ASSERT_TRUE(lb::wait_for(
                 []() {
                     return s_log.stored >= 16;
@@ -457,7 +479,10 @@ namespace test::timer_ext {
             TEST_ASSERT_EQUAL(HAL_OK, input_capture_stop(MEAS));
 
             for (uint32_t i = 1; i < 16; i++) {
-                TEST_ASSERT_UINT32_WITHIN(1U, TICK_HZ / 4'000U, (s_log.value[i] - s_log.value[i - 1]) & UINT16_MAX); // 50% duty: 250us each
+                TEST_ASSERT_UINT32_WITHIN(1U,
+                                          TICK_HZ / 4'000U,
+                                          (s_log.value[i] - s_log.value[i - 1]) &
+                                              UINT16_MAX); // 50% duty: 250us each
             }
         }
 
@@ -465,7 +490,9 @@ namespace test::timer_ext {
             lb::reset_fixture();
             uint32_t compare = 0;
             uint32_t max     = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, lb::generator_pwm_start(1'000, 25, &compare, &max)); // 250us high, 750us low
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                lb::generator_pwm_start(1'000, 25, &compare, &max)); // 250us high, 750us low
 
             const uint64_t gen_clk    = timer_get_frequency_hz(GEN);
             const uint32_t high_ticks = (uint32_t)((uint64_t)compare * TICK_HZ / gen_clk);
@@ -482,7 +509,8 @@ namespace test::timer_ext {
                      {.edge = IC_EDGE_FALLING, .expected_level = false},
                  }}) {
                 reset_log();
-                start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), c.edge, 0, {log_cb, nullptr}));
+                start_capture(
+                    make_ic_config(lb::prescaler_for_1us(MEAS), c.edge, 0, {log_cb, nullptr}));
                 TEST_ASSERT_TRUE(lb::wait_for(
                     []() {
                         return s_log.stored >= 8;
@@ -497,7 +525,10 @@ namespace test::timer_ext {
 
             // Both edges: levels alternate, and the gap after a rising edge is the high time, after a falling edge the low time
             reset_log();
-            start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING_FALLING, 0, {.cb = log_cb, .arg = nullptr}));
+            start_capture(make_ic_config(lb::prescaler_for_1us(MEAS),
+                                         IC_EDGE_RISING_FALLING,
+                                         0,
+                                         {.cb = log_cb, .arg = nullptr}));
             TEST_ASSERT_TRUE(lb::wait_for(
                 []() {
                     return s_log.stored >= 12;
@@ -515,9 +546,11 @@ namespace test::timer_ext {
         void ic_channels_capture_independently() {
             lb::reset_fixture();
             // Only generator B (-> PB5, timer channel 2) toggles. Channel 1's pin idles low
-            TEST_ASSERT_EQUAL(HAL_OK, lb::generator_toggle_start(TIMER_CHANNEL_2, lb::GEN_B, 2'000));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              lb::generator_toggle_start(TIMER_CHANNEL_2, lb::GEN_B, 2'000));
 
-            auto cfg             = make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {.cb = log_cb, .arg = nullptr});
+            auto cfg = make_ic_config(
+                lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {.cb = log_cb, .arg = nullptr});
             cfg.channels[0].pull = TIMER_USE_PULLDOWN;
             cfg.channels[1]      = {
                 .edge      = IC_EDGE_RISING,
@@ -543,7 +576,8 @@ namespace test::timer_ext {
                 TEST_ASSERT_EQUAL(TIMER_CHANNEL_2, s_log.channel[i]);
             }
             for (uint32_t i = 1; i < 8; i++) {
-                TEST_ASSERT_UINT32_WITHIN(1U, TICK_HZ / 2'000U, (s_log.value[i] - s_log.value[i - 1]) & UINT16_MAX);
+                TEST_ASSERT_UINT32_WITHIN(
+                    1U, TICK_HZ / 2'000U, (s_log.value[i] - s_log.value[i - 1]) & UINT16_MAX);
             }
         }
 
@@ -553,7 +587,8 @@ namespace test::timer_ext {
             lb::take_over_pin(lb::GEN_A, false);
 
             reset_log();
-            start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 500, {.cb = log_cb, .arg = nullptr}));
+            start_capture(make_ic_config(
+                lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 500, {.cb = log_cb, .arg = nullptr}));
             delay_us(20);
 
             lb::glitches(lb::GEN_A, 50);
@@ -581,7 +616,8 @@ namespace test::timer_ext {
                 lb::reset_fixture();
                 lb::take_over_pin(lb::GEN_A, false);
 
-                auto cfg                  = make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {.cb = log_cb, .arg = nullptr});
+                auto cfg = make_ic_config(
+                    lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {.cb = log_cb, .arg = nullptr});
                 cfg.channels[0].prescaler = c.prescaler;
                 reset_log();
                 start_capture(cfg);
@@ -595,43 +631,57 @@ namespace test::timer_ext {
 
         void ic_overcapture_is_reported_once_then_cleared() {
             lb::reset_fixture();
-            TEST_ASSERT_EQUAL(HAL_OK, lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, 2'000));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, 2'000));
 
             // No callback: nothing reads the capture register, so later edges overwrite the first one
             start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING));
             delay_ms(5);
 
             uint32_t sample = 0;
-            TEST_ASSERT_EQUAL(HAL_ERR_TIM_OVER_CAPTURE, input_capture_get_sample(MEAS, TIMER_CHANNEL_1, &sample));
+            TEST_ASSERT_EQUAL(HAL_ERR_TIM_OVER_CAPTURE,
+                              input_capture_get_sample(MEAS, TIMER_CHANNEL_1, &sample));
             TEST_ASSERT_FALSE(MEAS->SR & TIM_SR_CC1OF);
-            TEST_ASSERT_EQUAL(HAL_OK, input_capture_get_sample(MEAS, TIMER_CHANNEL_1, &sample)); // No new edge yet: clean
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                input_capture_get_sample(MEAS, TIMER_CHANNEL_1, &sample)); // No new edge yet: clean
         }
 
         void ic_get_sample_rejects_invalid_arguments() {
             uint32_t sample = 0;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, input_capture_get_sample(nullptr, TIMER_CHANNEL_1, &sample));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, input_capture_get_sample(MEAS, TIMER_CHANNEL_1, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, input_capture_get_sample(MEAS, TIMER_CHANNEL_NC, &sample));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              input_capture_get_sample(nullptr, TIMER_CHANNEL_1, &sample));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              input_capture_get_sample(MEAS, TIMER_CHANNEL_1, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              input_capture_get_sample(MEAS, TIMER_CHANNEL_NC, &sample));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, input_capture_get_sample(TIM10, TIMER_CHANNEL_2, &sample));
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, input_capture_get_sample(TIM10, TIMER_CHANNEL_3, &sample));
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, input_capture_get_sample(TIM9, TIMER_CHANNEL_3, &sample));
-            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, input_capture_get_sample(TIM9, TIMER_CHANNEL_4, &sample));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              input_capture_get_sample(TIM10, TIMER_CHANNEL_2, &sample));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              input_capture_get_sample(TIM10, TIMER_CHANNEL_3, &sample));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              input_capture_get_sample(TIM9, TIMER_CHANNEL_3, &sample));
+            TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
+                              input_capture_get_sample(TIM9, TIMER_CHANNEL_4, &sample));
         }
 
         // The digital filter code helper shared by input capture, the pulse counter, the decoder and PWM input
         void filter_code_is_the_smallest_that_covers_the_request() {
             lb::reset_fixture();
 
-            const uint64_t clk         = timer_get_frequency_hz(MEAS);
-            constexpr auto dividers    = std::array{TIM_CLK_DIV_1, TIM_CLK_DIV_2, TIM_CLK_DIV_4};
-            constexpr auto requests_ns = std::array{1UL, 10UL, 40UL, 100UL, 500UL, 1'000UL, 5'000UL, 10'000UL, 100'000UL};
+            const uint64_t clk      = timer_get_frequency_hz(MEAS);
+            constexpr auto dividers = std::array{TIM_CLK_DIV_1, TIM_CLK_DIV_2, TIM_CLK_DIV_4};
+            constexpr auto requests_ns =
+                std::array{1UL, 10UL, 40UL, 100UL, 500UL, 1'000UL, 5'000UL, 10'000UL, 100'000UL};
 
             for (const auto divider : dividers) {
                 for (const uint32_t ns : requests_ns) {
-                    const uint32_t required_ticks = (uint32_t)((clk * ns + 999'999'999ULL) / 1'000'000'000ULL);
+                    const uint32_t required_ticks =
+                        (uint32_t)((clk * ns + 999'999'999ULL) / 1'000'000'000ULL);
 
-                    uint32_t expected = 0xFFU; // Smallest code whose stable time reaches the request
+                    uint32_t expected =
+                        0xFFU; // Smallest code whose stable time reaches the request
                     for (uint32_t code = 1; code < FILTER_TABLE.size(); code++) {
                         if (filter_ticks(code, divider) >= required_ticks) {
                             expected = code;
@@ -657,9 +707,13 @@ namespace test::timer_ext {
 
         void filter_code_rejects_invalid_arguments() {
             uint32_t code = 0;
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_filter_ns_to_ic_code(nullptr, TIM_CLK_DIV_1, 100, &code));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_filter_ns_to_ic_code(MEAS, TIM_CLK_DIV_1, 100, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_filter_ns_to_ic_code(MEAS, static_cast<tim_clk_div_t>(3), 100, &code));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              timer_filter_ns_to_ic_code(nullptr, TIM_CLK_DIV_1, 100, &code));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              timer_filter_ns_to_ic_code(MEAS, TIM_CLK_DIV_1, 100, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                timer_filter_ns_to_ic_code(MEAS, static_cast<tim_clk_div_t>(3), 100, &code));
         }
 
         // Output compare, toggle mode (the PWM driver covers the PWM modes)
@@ -670,14 +724,19 @@ namespace test::timer_ext {
             cfg.buffer_compare_reload = false;
             cfg.mode                  = OUTPUT_COMPARE_TOGGLE_ON_MATCH;
             cfg.count_mode            = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
-            cfg.channels[0]           = {.output_polarity = false, .output_idle_state = false, .channel = TIMER_CHANNEL_1, .gpio_pin = lb::GEN_A};
+            cfg.channels[0]           = {.output_polarity   = false,
+                                         .output_idle_state = false,
+                                         .channel           = TIMER_CHANNEL_1,
+                                         .gpio_pin          = lb::GEN_A};
             cfg.num_channels          = 1;
             cfg.callback              = {.cb = oc_cb, .arg = nullptr};
             TEST_ASSERT_EQUAL(HAL_OK, output_compare_init(GEN, &cfg));
 
             uint32_t max_compare = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, output_compare_start(GEN, 1'000, &max_compare)); // 1000 periods per second
-            TEST_ASSERT_EQUAL(HAL_OK, output_compare_set_compare(GEN, TIMER_CHANNEL_1, max_compare / 2U));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, output_compare_start(GEN, 1'000, &max_compare)); // 1000 periods per second
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              output_compare_set_compare(GEN, TIMER_CHANNEL_1, max_compare / 2U));
 
             s_oc_events = 0;
             delay_ms(100);
@@ -687,7 +746,8 @@ namespace test::timer_ext {
 
         void oc_pause_and_resume_gate_the_toggling_output() {
             lb::reset_fixture();
-            TEST_ASSERT_EQUAL(HAL_OK, lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, 2'000));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, 2'000));
 
             TEST_ASSERT_TRUE(lb::count_edges(lb::GEN_A, 3'000) >= 5U); // Toggling: 6 edges in 3ms
 
@@ -719,7 +779,8 @@ namespace test::timer_ext {
             out->pin_hz    = lb::generator_pin_hz();
 
             reset_log();
-            const auto cfg = make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {log_cb, nullptr});
+            const auto cfg =
+                make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {log_cb, nullptr});
             TRY(input_capture_init(MEAS, &cfg));
             TRY(input_capture_start(MEAS));
             if (!lb::wait_for(
@@ -736,7 +797,8 @@ namespace test::timer_ext {
                 total_ticks += (s_log.value[i] - s_log.value[i - 1]) & UINT16_MAX;
             }
             out->avg_ticks     = total_ticks / (EVENTS - 1U);
-            out->avg_period_us = lb::cycles_to_us32((s_log.cycles[EVENTS - 1U] - s_log.cycles[0]) / (EVENTS - 1U), out->sysclk_hz);
+            out->avg_period_us = lb::cycles_to_us32(
+                (s_log.cycles[EVENTS - 1U] - s_log.cycles[0]) / (EVENTS - 1U), out->sysclk_hz);
             return HAL_OK;
         }
 
@@ -755,7 +817,8 @@ namespace test::timer_ext {
 
             for (size_t i = 0; i < results.size(); i++) {
                 TEST_ASSERT_EQUAL(HAL_OK, results[i].err);
-                TEST_ASSERT_EQUAL_UINT32(lb::preset_mhz(lb::CLOCK_SWEEP[i], original) * 1'000'000U, results[i].sysclk_hz);
+                TEST_ASSERT_EQUAL_UINT32(lb::preset_mhz(lb::CLOCK_SWEEP[i], original) * 1'000'000U,
+                                         results[i].sysclk_hz);
                 TEST_ASSERT_EQUAL_UINT32(2'000U, results[i].pin_hz);
                 TEST_ASSERT_UINT32_WITHIN(1U, 500U, results[i].avg_ticks);
                 TEST_ASSERT_UINT32_WITHIN(5U, 500U, results[i].avg_period_us); // 1%
@@ -771,7 +834,8 @@ namespace test::timer_ext {
         RUN_TEST(ic_init_rejects_invalid_arguments);
         RUN_TEST(ic_init_rejects_a_locked_advanced_timer);
         RUN_TEST(ic_init_programs_every_channel_edge_and_prescaler);
-        RUN_TEST(ic_init_enables_only_the_interrupts_of_configured_channels_when_a_callback_is_given);
+        RUN_TEST(
+            ic_init_enables_only_the_interrupts_of_configured_channels_when_a_callback_is_given);
         RUN_TEST(ic_init_programs_the_timer_wide_settings);
         RUN_TEST(ic_init_configures_the_gpio_pin);
         RUN_TEST(ic_timer_prescaler_sets_psc_and_the_reported_tick_rate);

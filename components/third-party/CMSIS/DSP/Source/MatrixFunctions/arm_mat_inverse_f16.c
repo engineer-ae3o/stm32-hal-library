@@ -53,11 +53,12 @@
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_instance_f16* pDst) {
-    float16_t* pIn  = pSrc->pData;                               /* input data matrix pointer */
-    float16_t* pOut = pDst->pData;                               /* output data matrix pointer */
-    float16_t *pInT1, *pInT2;                                    /* Temporary input data matrix pointer */
-    float16_t *pOutT1, *pOutT2;                                  /* Temporary output data matrix pointer */
-    float16_t *pPivotRowIn, *pPRT_in, *pPivotRowDst, *pPRT_pDst; /* Temporary input and output data matrix pointer */
+    float16_t* pIn  = pSrc->pData; /* input data matrix pointer */
+    float16_t* pOut = pDst->pData; /* output data matrix pointer */
+    float16_t *pInT1, *pInT2;      /* Temporary input data matrix pointer */
+    float16_t *pOutT1, *pOutT2;    /* Temporary output data matrix pointer */
+    float16_t *pPivotRowIn, *pPRT_in, *pPivotRowDst,
+        *pPRT_pDst; /* Temporary input and output data matrix pointer */
 
     uint32_t   numRows = pSrc->numRows; /* Number of rows in the matrix  */
     uint32_t   numCols = pSrc->numCols; /* Number of Cols in the matrix  */
@@ -70,7 +71,8 @@ arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_i
 
 #ifdef ARM_MATH_MATRIX_CHECK
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -520,13 +522,14 @@ arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_i
 #else
 
 arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_instance_f16* pDst) {
-    float16_t* pIn  = pSrc->pData;                               /* input data matrix pointer */
-    float16_t* pOut = pDst->pData;                               /* output data matrix pointer */
-    float16_t *pInT1, *pInT2;                                    /* Temporary input data matrix pointer */
-    float16_t *pOutT1, *pOutT2;                                  /* Temporary output data matrix pointer */
-    float16_t *pPivotRowIn, *pPRT_in, *pPivotRowDst, *pPRT_pDst; /* Temporary input and output data matrix pointer */
-    uint32_t   numRows = pSrc->numRows;                          /* Number of rows in the matrix  */
-    uint32_t   numCols = pSrc->numCols;                          /* Number of Cols in the matrix  */
+    float16_t* pIn  = pSrc->pData; /* input data matrix pointer */
+    float16_t* pOut = pDst->pData; /* output data matrix pointer */
+    float16_t *pInT1, *pInT2;      /* Temporary input data matrix pointer */
+    float16_t *pOutT1, *pOutT2;    /* Temporary output data matrix pointer */
+    float16_t *pPivotRowIn, *pPRT_in, *pPivotRowDst,
+        *pPRT_pDst;                   /* Temporary input and output data matrix pointer */
+    uint32_t numRows = pSrc->numRows; /* Number of rows in the matrix  */
+    uint32_t numCols = pSrc->numCols; /* Number of Cols in the matrix  */
 
     _Float16   Xchg, in = 0.0f16, in1;                 /* Temporary input values  */
     uint32_t   i, rowCnt, flag = 0U, j, loopCnt, k, l; /* loop counters */
@@ -535,7 +538,8 @@ arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_i
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

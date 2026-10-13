@@ -76,7 +76,8 @@ __STATIC_INLINE arm_status arm_mat_cmplx_mult_q31_2x2_mve(const arm_matrix_insta
     q63_t        acc0, acc1, acc2, acc3;
     q31x4_t      vecB, vecA;
 
-    static const uint32_t offsetB0[4] = {0, 1, MATRIX_DIM2 * CMPLX_DIM, MATRIX_DIM2 * CMPLX_DIM + 1};
+    static const uint32_t offsetB0[4] = {
+        0, 1, MATRIX_DIM2 * CMPLX_DIM, MATRIX_DIM2 * CMPLX_DIM + 1};
 
     vecColBOffs0 = vldrwq_u32(offsetB0);
 
@@ -138,8 +139,10 @@ __STATIC_INLINE arm_status arm_mat_cmplx_mult_q31_3x3_mve(const arm_matrix_insta
      */
     mve_pred16_t p0 = vctp32q(CMPLX_DIM);
 
-    static const uint32_t offsetB0[4] = {0, 1, MATRIX_DIM3 * CMPLX_DIM, MATRIX_DIM3 * CMPLX_DIM + 1};
-    static const uint32_t offsetB1[4] = {2 * MATRIX_DIM3 * CMPLX_DIM, 2 * MATRIX_DIM3 * CMPLX_DIM + 1, INACTIVELANE, INACTIVELANE};
+    static const uint32_t offsetB0[4] = {
+        0, 1, MATRIX_DIM3 * CMPLX_DIM, MATRIX_DIM3 * CMPLX_DIM + 1};
+    static const uint32_t offsetB1[4] = {
+        2 * MATRIX_DIM3 * CMPLX_DIM, 2 * MATRIX_DIM3 * CMPLX_DIM + 1, INACTIVELANE, INACTIVELANE};
 
     vecColBOffs0 = vldrwq_u32(offsetB0);
     vecColBOffs1 = vldrwq_u32(offsetB1);
@@ -282,9 +285,12 @@ __STATIC_INLINE arm_status arm_mat_cmplx_mult_q31_4x4_mve(const arm_matrix_insta
     q63_t        acc0, acc1, acc2, acc3;
     q31x4_t      vecB, vecB1, vecA;
 
-    static const uint32_t offsetB0[4] = {0, 1, MATRIX_DIM4 * CMPLX_DIM, MATRIX_DIM4 * CMPLX_DIM + 1};
-    static const uint32_t offsetB1[4] = {
-        2 * MATRIX_DIM4 * CMPLX_DIM, 2 * MATRIX_DIM4 * CMPLX_DIM + 1, 3 * MATRIX_DIM4 * CMPLX_DIM, 3 * MATRIX_DIM4 * CMPLX_DIM + 1};
+    static const uint32_t offsetB0[4] = {
+        0, 1, MATRIX_DIM4 * CMPLX_DIM, MATRIX_DIM4 * CMPLX_DIM + 1};
+    static const uint32_t offsetB1[4] = {2 * MATRIX_DIM4 * CMPLX_DIM,
+                                         2 * MATRIX_DIM4 * CMPLX_DIM + 1,
+                                         3 * MATRIX_DIM4 * CMPLX_DIM,
+                                         3 * MATRIX_DIM4 * CMPLX_DIM + 1};
 
     vecColBOffs0 = vldrwq_u32(offsetB0);
     vecColBOffs1 = vldrwq_u32(offsetB1);
@@ -494,7 +500,9 @@ __STATIC_INLINE arm_status arm_mat_cmplx_mult_q31_4x4_mve(const arm_matrix_insta
 }
 
 
-arm_status arm_mat_cmplx_mult_q31(const arm_matrix_instance_q31* pSrcA, const arm_matrix_instance_q31* pSrcB, arm_matrix_instance_q31* pDst) {
+arm_status arm_mat_cmplx_mult_q31(const arm_matrix_instance_q31* pSrcA,
+                                  const arm_matrix_instance_q31* pSrcB,
+                                  arm_matrix_instance_q31*       pDst) {
     q31_t const* pInB = (q31_t const*)pSrcB->pData; /* input data matrix pointer B */
     q31_t const* pInA = (q31_t const*)pSrcA->pData; /* input data matrix pointer A */
     q31_t*       pOut = pDst->pData;                /* output data matrix pointer */
@@ -510,7 +518,8 @@ arm_status arm_mat_cmplx_mult_q31(const arm_matrix_instance_q31* pSrcA, const ar
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
 
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
@@ -792,7 +801,9 @@ arm_status arm_mat_cmplx_mult_q31(const arm_matrix_instance_q31* pSrcA, const ar
 }
 
 #else
-arm_status arm_mat_cmplx_mult_q31(const arm_matrix_instance_q31* pSrcA, const arm_matrix_instance_q31* pSrcB, arm_matrix_instance_q31* pDst) {
+arm_status arm_mat_cmplx_mult_q31(const arm_matrix_instance_q31* pSrcA,
+                                  const arm_matrix_instance_q31* pSrcB,
+                                  arm_matrix_instance_q31*       pDst) {
     q31_t*     pIn1 = pSrcA->pData;       /* Input data matrix pointer A */
     q31_t*     pIn2 = pSrcB->pData;       /* Input data matrix pointer B */
     q31_t*     pInA = pSrcA->pData;       /* Input data matrix pointer A */
@@ -813,7 +824,8 @@ arm_status arm_mat_cmplx_mult_q31(const arm_matrix_instance_q31* pSrcA, const ar
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

@@ -51,7 +51,9 @@
 
 #include "arm_helium_utils.h"
 
-arm_status arm_mat_solve_lower_triangular_f32(const arm_matrix_instance_f32* lt, const arm_matrix_instance_f32* a, arm_matrix_instance_f32* dst) {
+arm_status arm_mat_solve_lower_triangular_f32(const arm_matrix_instance_f32* lt,
+                                              const arm_matrix_instance_f32* a,
+                                              arm_matrix_instance_f32*       dst) {
     arm_status status; /* status of matrix inverse */
 
 
@@ -135,7 +137,9 @@ arm_status arm_mat_solve_lower_triangular_f32(const arm_matrix_instance_f32* lt,
 }
 #else
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
-arm_status arm_mat_solve_lower_triangular_f32(const arm_matrix_instance_f32* lt, const arm_matrix_instance_f32* a, arm_matrix_instance_f32* dst) {
+arm_status arm_mat_solve_lower_triangular_f32(const arm_matrix_instance_f32* lt,
+                                              const arm_matrix_instance_f32* a,
+                                              arm_matrix_instance_f32*       dst) {
     arm_status status; /* status of matrix inverse */
 
 
@@ -218,7 +222,9 @@ arm_status arm_mat_solve_lower_triangular_f32(const arm_matrix_instance_f32* lt,
     return (status);
 }
 #else
-arm_status arm_mat_solve_lower_triangular_f32(const arm_matrix_instance_f32* lt, const arm_matrix_instance_f32* a, arm_matrix_instance_f32* dst) {
+arm_status arm_mat_solve_lower_triangular_f32(const arm_matrix_instance_f32* lt,
+                                              const arm_matrix_instance_f32* a,
+                                              arm_matrix_instance_f32*       dst) {
     arm_status status; /* status of matrix inverse */
 
 

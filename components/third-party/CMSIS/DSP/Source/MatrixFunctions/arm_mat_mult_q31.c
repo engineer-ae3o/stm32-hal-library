@@ -325,7 +325,9 @@ __STATIC_INLINE arm_status arm_mat_mult_q31_4x4_mve(const arm_matrix_instance_q3
     return (ARM_MATH_SUCCESS);
 }
 
-arm_status arm_mat_mult_q31(const arm_matrix_instance_q31* pSrcA, const arm_matrix_instance_q31* pSrcB, arm_matrix_instance_q31* pDst) {
+arm_status arm_mat_mult_q31(const arm_matrix_instance_q31* pSrcA,
+                            const arm_matrix_instance_q31* pSrcB,
+                            arm_matrix_instance_q31*       pDst) {
     q31_t const* pInB = (q31_t const*)pSrcB->pData; /* input data matrix pointer B */
     q31_t const* pInA = (q31_t const*)pSrcA->pData; /* input data matrix pointer A */
     q31_t*       pOut = pDst->pData;                /* output data matrix pointer */
@@ -341,7 +343,8 @@ arm_status arm_mat_mult_q31(const arm_matrix_instance_q31* pSrcA, const arm_matr
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -606,7 +609,9 @@ arm_status arm_mat_mult_q31(const arm_matrix_instance_q31* pSrcA, const arm_matr
 }
 
 #else
-arm_status arm_mat_mult_q31(const arm_matrix_instance_q31* pSrcA, const arm_matrix_instance_q31* pSrcB, arm_matrix_instance_q31* pDst) {
+arm_status arm_mat_mult_q31(const arm_matrix_instance_q31* pSrcA,
+                            const arm_matrix_instance_q31* pSrcB,
+                            arm_matrix_instance_q31*       pDst) {
     q31_t*     pIn1 = pSrcA->pData;                 /* Input data matrix pointer A */
     q31_t*     pIn2 = pSrcB->pData;                 /* Input data matrix pointer B */
     q31_t*     pInA = pSrcA->pData;                 /* Input data matrix pointer A */
@@ -623,7 +628,8 @@ arm_status arm_mat_mult_q31(const arm_matrix_instance_q31* pSrcA, const arm_matr
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

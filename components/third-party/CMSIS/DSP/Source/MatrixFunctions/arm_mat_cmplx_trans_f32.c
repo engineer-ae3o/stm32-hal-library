@@ -58,12 +58,19 @@
 
 #include "arm_helium_utils.h"
 
-arm_status arm_mat_cmplx_trans_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
-    return arm_mat_cmplx_trans_32bit(pSrc->numRows, pSrc->numCols, (uint32_t*)pSrc->pData, pDst->numRows, pDst->numCols, (uint32_t*)pDst->pData);
+arm_status arm_mat_cmplx_trans_f32(const arm_matrix_instance_f32* pSrc,
+                                   arm_matrix_instance_f32*       pDst) {
+    return arm_mat_cmplx_trans_32bit(pSrc->numRows,
+                                     pSrc->numCols,
+                                     (uint32_t*)pSrc->pData,
+                                     pDst->numRows,
+                                     pDst->numCols,
+                                     (uint32_t*)pDst->pData);
 }
 
 #else
-arm_status arm_mat_cmplx_trans_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_cmplx_trans_f32(const arm_matrix_instance_f32* pSrc,
+                                   arm_matrix_instance_f32*       pDst) {
     float32_t* pIn  = pSrc->pData;       /* input data matrix pointer */
     float32_t* pOut = pDst->pData;       /* output data matrix pointer */
     float32_t* px;                       /* Temporary output data matrix pointer */

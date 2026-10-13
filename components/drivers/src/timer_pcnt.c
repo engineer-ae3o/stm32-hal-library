@@ -17,7 +17,8 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    if (is_timer_extra_lite(handle) || (config->mode == PCNT_MODE_2 && (handle == TIM5 || handle == TIM9))) {
+    if (is_timer_extra_lite(handle) ||
+        (config->mode == PCNT_MODE_2 && (handle == TIM5 || handle == TIM9))) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
@@ -36,24 +37,28 @@ hal_err_t pcnt_init(TIM_TypeDef* handle, const pcnt_config_t* config) {
     switch (config->mode) {
         case PCNT_MODE_1: {
             // Map the channel as input and apply the input capture digital filter code
-            handle->CCMR1 |= (0b01U << config->settings.mode_1.channel) | (filter_code << (config->settings.mode_1.channel + 4));
+            handle->CCMR1 |= (0b01U << config->settings.mode_1.channel) |
+                             (filter_code << (config->settings.mode_1.channel + 4));
 
             // Set the polarity
             if (config->edge == PCNT_FALLING_EDGE) {
                 // In slave external clock mode, the timer counts only on rising edges by default
                 // To get counting on the falling edge, we have to invert the channel's polarity
-                handle->CCER |= (config->settings.mode_1.channel == PCNT_CHANNEL_1) ? TIM_CCER_CC1P : TIM_CCER_CC2P;
+                handle->CCER |= (config->settings.mode_1.channel == PCNT_CHANNEL_1) ? TIM_CCER_CC1P
+                                                                                    : TIM_CCER_CC2P;
             }
 
             // Select the trigger source and enable the slave external clock mode
-            const uint32_t trigger_selection = (config->settings.mode_1.channel == PCNT_CHANNEL_1) ? 0b101U : 0b110U;
+            const uint32_t trigger_selection =
+                (config->settings.mode_1.channel == PCNT_CHANNEL_1) ? 0b101U : 0b110U;
             handle->SMCR |= (trigger_selection << TIM_SMCR_TS_Pos) | (0b111U << TIM_SMCR_SMS_Pos);
 
             break;
         }
         case PCNT_MODE_2: {
             // Apply the digital filter, external signal prescaler, set the polarity and enable the use of the external clock
-            handle->SMCR |= (filter_code << TIM_SMCR_ETF_Pos) | (uint32_t)(config->settings.mode_2.prescaler << TIM_SMCR_ETPS_Pos) |
+            handle->SMCR |= (filter_code << TIM_SMCR_ETF_Pos) |
+                            (uint32_t)(config->settings.mode_2.prescaler << TIM_SMCR_ETPS_Pos) |
                             ((config->edge == PCNT_FALLING_EDGE) ? TIM_SMCR_ETP : 0) | TIM_SMCR_ECE;
 
             break;

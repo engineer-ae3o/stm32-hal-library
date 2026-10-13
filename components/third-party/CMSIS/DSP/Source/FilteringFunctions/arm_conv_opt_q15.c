@@ -58,7 +58,13 @@
                    Refer to \ref arm_conv_fast_q15() for a faster but less precise version of this function.
  */
 
-void arm_conv_opt_q15(const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst, q15_t* pScratch1, q15_t* pScratch2) {
+void arm_conv_opt_q15(const q15_t* pSrcA,
+                      uint32_t     srcALen,
+                      const q15_t* pSrcB,
+                      uint32_t     srcBLen,
+                      q15_t*       pDst,
+                      q15_t*       pScratch1,
+                      q15_t*       pScratch2) {
     q63_t        acc0;              /* Accumulators */
     const q15_t* pIn1;              /* InputA pointer */
     const q15_t* pIn2;              /* InputB pointer */

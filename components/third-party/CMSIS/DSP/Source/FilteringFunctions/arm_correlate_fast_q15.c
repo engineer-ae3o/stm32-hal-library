@@ -60,19 +60,20 @@
                    Refer to \ref arm_correlate_q15() for a slower implementation of this function which uses a 64-bit accumulator to avoid wrap around distortion.
  */
 
-void arm_correlate_fast_q15(const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
-    const q15_t* pIn1;                               /* InputA pointer */
-    const q15_t* pIn2;                               /* InputB pointer */
-    q15_t*       pOut = pDst;                        /* Output pointer */
-    q31_t        sum, acc0, acc1, acc2, acc3;        /* Accumulators */
-    const q15_t* px;                                 /* Intermediate inputA pointer */
-    const q15_t* py;                                 /* Intermediate inputB pointer */
-    const q15_t* pSrc1;                              /* Intermediate pointers */
-    q31_t        x0, x1, x2, x3, c0;                 /* Temporary variables for holding input and coefficient values */
-    uint32_t     blockSize1, blockSize2, blockSize3; /* Loop counters */
-    uint32_t     j, k, count, blkCnt;                /* Loop counters */
-    uint32_t     outBlockSize;
-    int32_t      inc = 1; /* Destination address modifier */
+void arm_correlate_fast_q15(
+    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
+    const q15_t* pIn1;                        /* InputA pointer */
+    const q15_t* pIn2;                        /* InputB pointer */
+    q15_t*       pOut = pDst;                 /* Output pointer */
+    q31_t        sum, acc0, acc1, acc2, acc3; /* Accumulators */
+    const q15_t* px;                          /* Intermediate inputA pointer */
+    const q15_t* py;                          /* Intermediate inputB pointer */
+    const q15_t* pSrc1;                       /* Intermediate pointers */
+    q31_t    x0, x1, x2, x3, c0; /* Temporary variables for holding input and coefficient values */
+    uint32_t blockSize1, blockSize2, blockSize3; /* Loop counters */
+    uint32_t j, k, count, blkCnt;                /* Loop counters */
+    uint32_t outBlockSize;
+    int32_t  inc = 1; /* Destination address modifier */
 
 
     /* The algorithm implementation is based on the lengths of the inputs. */

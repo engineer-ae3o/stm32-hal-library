@@ -155,7 +155,7 @@ typedef struct {
     // Use adc_regular_group_cont_start_conv(...) to restart the conversion.
     adc_cont_err_cb_t on_transfer_error;    // Called on a DMA transfer error
     adc_cont_err_cb_t on_direct_mode_error; // Called when an error arose from the DMA direct mode.
-    adc_cont_err_cb_t on_data_overrun;      // Called when the DMA is too slow to read and data is lost
+    adc_cont_err_cb_t on_data_overrun; // Called when the DMA is too slow to read and data is lost
 
     // User data to be passed to the callbacks
     void* user;

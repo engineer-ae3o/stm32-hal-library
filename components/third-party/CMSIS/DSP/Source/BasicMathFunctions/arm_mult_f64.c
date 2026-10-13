@@ -46,7 +46,10 @@
   @return        none
  */
 
-void arm_mult_f64(const float64_t* pSrcA, const float64_t* pSrcB, float64_t* pDst, uint32_t blockSize) {
+void arm_mult_f64(const float64_t* pSrcA,
+                  const float64_t* pSrcB,
+                  float64_t*       pDst,
+                  uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
     /* Initialize blkCnt with number of samples */

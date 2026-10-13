@@ -48,14 +48,16 @@
  */
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) && defined(__CMSIS_GCC_H)
-#pragma GCC warning "Scalar version of arm_biquad_cascade_stereo_df2T_f16 built. Helium version has build issues with gcc."
+#pragma GCC warning                                                                                \
+    "Scalar version of arm_biquad_cascade_stereo_df2T_f16 built. Helium version has build issues with gcc."
 #endif
 
-#if (defined(ARM_MATH_MVE_FLOAT16) && defined(ARM_MATH_HELIUM_EXPERIMENTAL)) && !defined(ARM_MATH_AUTOVECTORIZE) && !defined(__CMSIS_GCC_H)
+#if (defined(ARM_MATH_MVE_FLOAT16) && defined(ARM_MATH_HELIUM_EXPERIMENTAL)) &&                    \
+    !defined(ARM_MATH_AUTOVECTORIZE) && !defined(__CMSIS_GCC_H)
 void arm_biquad_cascade_stereo_df2T_f16(const arm_biquad_cascade_stereo_df2T_instance_f16* S,
                                         const float16_t*                                   pSrc,
                                         float16_t*                                         pDst,
-                                        uint32_t                                           blockSize) {
+                                        uint32_t blockSize) {
     float16_t*            pIn     = (float16_t*)pSrc;   /*  source pointer            */
     float16_t*            pOut    = pDst;               /*  destination pointer       */
     float16_t*            pState  = S->pState;          /*  State pointer             */
@@ -155,9 +157,9 @@ void arm_biquad_cascade_stereo_df2T_f16(const arm_biquad_cascade_stereo_df2T_ins
             /*
              * load {d2a, d2b, 0, 0, d2a, d2b, 0, 0}
              */
-            stateVec1          = vldrhq_gather_shifted_offset((float16_t const*)scratch, reshufledIdxVec);
-            stateVec1          = vfmaq(stateVec1, stateVec0, aCoeffs);
-            stateVec1          = vfmaq(stateVec1, inVec, bCoeffs);
+            stateVec1 = vldrhq_gather_shifted_offset((float16_t const*)scratch, reshufledIdxVec);
+            stateVec1 = vfmaq(stateVec1, stateVec0, aCoeffs);
+            stateVec1 = vfmaq(stateVec1, inVec, bCoeffs);
             *(f16x8_t*)scratch = stateVec1;
 
             pIn = pIn + 2;
@@ -191,7 +193,7 @@ void arm_biquad_cascade_stereo_df2T_f16(const arm_biquad_cascade_stereo_df2T_ins
 void arm_biquad_cascade_stereo_df2T_f16(const arm_biquad_cascade_stereo_df2T_instance_f16* S,
                                         const float16_t*                                   pSrc,
                                         float16_t*                                         pDst,
-                                        uint32_t                                           blockSize) {
+                                        uint32_t blockSize) {
     const float16_t* pIn     = pSrc;               /* Source pointer */
     float16_t*       pOut    = pDst;               /* Destination pointer */
     float16_t*       pState  = S->pState;          /* State pointer */

@@ -77,8 +77,13 @@
                    - \ref ARM_MATH_ARGUMENT_ERROR : requested subset is not in the range [0 srcALen+srcBLen-2]
  */
 
-arm_status arm_conv_partial_f32(
-    const float32_t* pSrcA, uint32_t srcALen, const float32_t* pSrcB, uint32_t srcBLen, float32_t* pDst, uint32_t firstIndex, uint32_t numPoints) {
+arm_status arm_conv_partial_f32(const float32_t* pSrcA,
+                                uint32_t         srcALen,
+                                const float32_t* pSrcB,
+                                uint32_t         srcBLen,
+                                float32_t*       pDst,
+                                uint32_t         firstIndex,
+                                uint32_t         numPoints) {
 #if defined(ARM_MATH_DSP)
     const float32_t* pIn1 = pSrcA;  /* InputA pointer */
     const float32_t* pIn2 = pSrcB;  /* InputB pointer */
@@ -127,9 +132,12 @@ arm_status arm_conv_partial_f32(
      * the first and last indices of the output samples to be calculated. */
         check      = firstIndex + numPoints;
         blockSize3 = ((int32_t)check > (int32_t)srcALen) ? (int32_t)check - (int32_t)srcALen : 0;
-        blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1) ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen : blockSize3;
+        blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1)
+                         ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen
+                         : blockSize3;
         blockSize1 = ((int32_t)srcBLen - 1) - (int32_t)firstIndex;
-        blockSize1 = (blockSize1 > 0) ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints) : 0;
+        blockSize1 =
+            (blockSize1 > 0) ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints) : 0;
         blockSize2 = ((int32_t)check - blockSize3) - (blockSize1 + (int32_t)firstIndex);
         blockSize2 = (blockSize2 > 0) ? blockSize2 : 0;
 

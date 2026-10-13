@@ -164,7 +164,10 @@
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 #include "arm_helium_utils.h"
-void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S,
+                                const float32_t*                    pSrc,
+                                float32_t*                          pDst,
+                                uint32_t                            blockSize) {
     const float32_t* pIn     = pSrc;       /*  source pointer            */
     float32_t*       pOut    = pDst;       /*  destination pointer       */
     float32_t*       pState  = S->pState;  /*  pState pointer            */
@@ -327,7 +330,10 @@ void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S, const flo
 }
 #else
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S,
+                                const float32_t*                    pSrc,
+                                float32_t*                          pDst,
+                                uint32_t                            blockSize) {
 
     const float32_t* pIn     = pSrc;       /*  source pointer            */
     float32_t*       pOut    = pDst;       /*  destination pointer       */
@@ -439,8 +445,10 @@ void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S, const flo
             Xns = *pIn++;
 
             /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-            acc = (vgetq_lane_f32(b, 1) * vgetq_lane_f32(Xn, 2)) + (vgetq_lane_f32(b, 2) * vgetq_lane_f32(Xn, 3)) + (vgetq_lane_f32(b, 3) * Xns) +
-                  (vget_lane_f32(a, 0) * vget_lane_f32(Yn, 0)) + (vget_lane_f32(a, 1) * vget_lane_f32(Yn, 1));
+            acc = (vgetq_lane_f32(b, 1) * vgetq_lane_f32(Xn, 2)) +
+                  (vgetq_lane_f32(b, 2) * vgetq_lane_f32(Xn, 3)) + (vgetq_lane_f32(b, 3) * Xns) +
+                  (vget_lane_f32(a, 0) * vget_lane_f32(Yn, 0)) +
+                  (vget_lane_f32(a, 1) * vget_lane_f32(Yn, 1));
 
             /* Store the result in the accumulator in the destination buffer. */
             *pOut++ = acc;
@@ -477,7 +485,10 @@ void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S, const flo
 }
 
 #else
-void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_biquad_cascade_df1_f32(const arm_biquad_casd_df1_inst_f32* S,
+                                const float32_t*                    pSrc,
+                                float32_t*                          pDst,
+                                uint32_t                            blockSize) {
     const float32_t* pIn     = pSrc;               /* Source pointer */
     float32_t*       pOut    = pDst;               /* Destination pointer */
     float32_t*       pState  = S->pState;          /* pState pointer */

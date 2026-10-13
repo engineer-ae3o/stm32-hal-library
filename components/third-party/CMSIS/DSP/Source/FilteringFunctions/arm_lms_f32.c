@@ -163,7 +163,12 @@
   @return        none
  */
 #if defined(ARM_MATH_NEON)
-void arm_lms_f32(const arm_lms_instance_f32* S, const float32_t* pSrc, float32_t* pRef, float32_t* pOut, float32_t* pErr, uint32_t blockSize) {
+void arm_lms_f32(const arm_lms_instance_f32* S,
+                 const float32_t*            pSrc,
+                 float32_t*                  pRef,
+                 float32_t*                  pOut,
+                 float32_t*                  pErr,
+                 uint32_t                    blockSize) {
     float32_t* pState  = S->pState;  /* State pointer */
     float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float32_t* pStateCurnt;          /* Points to the current sample of the state */
@@ -319,7 +324,12 @@ void arm_lms_f32(const arm_lms_instance_f32* S, const float32_t* pSrc, float32_t
     }
 }
 #else
-void arm_lms_f32(const arm_lms_instance_f32* S, const float32_t* pSrc, float32_t* pRef, float32_t* pOut, float32_t* pErr, uint32_t blockSize) {
+void arm_lms_f32(const arm_lms_instance_f32* S,
+                 const float32_t*            pSrc,
+                 float32_t*                  pRef,
+                 float32_t*                  pOut,
+                 float32_t*                  pErr,
+                 uint32_t                    blockSize) {
     float32_t* pState  = S->pState;  /* State pointer */
     float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float32_t* pStateCurnt;          /* Points to the current sample of the state */

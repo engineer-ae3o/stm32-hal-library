@@ -32,9 +32,19 @@
  * Internal functions prototypes
  * -------------------------------------------------------------------- */
 
-void arm_split_rfft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, const q15_t* pBTable, q15_t* pDst, uint32_t modifier);
+void arm_split_rfft_q15(q15_t*       pSrc,
+                        uint32_t     fftLen,
+                        const q15_t* pATable,
+                        const q15_t* pBTable,
+                        q15_t*       pDst,
+                        uint32_t     modifier);
 
-void arm_split_rifft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, const q15_t* pBTable, q15_t* pDst, uint32_t modifier);
+void arm_split_rifft_q15(q15_t*       pSrc,
+                         uint32_t     fftLen,
+                         const q15_t* pATable,
+                         const q15_t* pBTable,
+                         q15_t*       pDst,
+                         uint32_t     modifier);
 
 /**
   @addtogroup RealFFT
@@ -78,7 +88,8 @@ void arm_rfft_q15(const arm_rfft_instance_q15* S, q15_t* pSrc, q15_t* pDst) {
     /* Calculation of RIFFT of input */
     if (S->ifftFlagR == 1U) {
         /*  Real IFFT core process */
-        arm_split_rifft_q15(pSrc, L2, S->pTwiddleAReal, S->pTwiddleBReal, pDst, S->twidCoefRModifier);
+        arm_split_rifft_q15(
+            pSrc, L2, S->pTwiddleAReal, S->pTwiddleBReal, pDst, S->twidCoefRModifier);
 
         /* Complex IFFT process */
         arm_cfft_q15(S_CFFT, pDst, S->ifftFlagR, S->bitReverseFlagR);
@@ -91,7 +102,8 @@ void arm_rfft_q15(const arm_rfft_instance_q15* S, q15_t* pSrc, q15_t* pDst) {
         arm_cfft_q15(S_CFFT, pSrc, S->ifftFlagR, S->bitReverseFlagR);
 
         /*  Real FFT core process */
-        arm_split_rfft_q15(pSrc, L2, S->pTwiddleAReal, S->pTwiddleBReal, pDst, S->twidCoefRModifier);
+        arm_split_rfft_q15(
+            pSrc, L2, S->pTwiddleAReal, S->pTwiddleBReal, pDst, S->twidCoefRModifier);
     }
 }
 
@@ -119,12 +131,19 @@ void arm_rfft_q15(const arm_rfft_instance_q15* S, q15_t* pSrc, q15_t* pDst) {
 #include "arm_vec_fft.h"
 
 #if defined(__CMSIS_GCC_H)
-#define MVE_CMPLX_MULT_FX_AxB_S16(A, B) vqdmladhxq_s16(vqdmlsdhq_s16((__typeof(A))vuninitializedq_s16(), A, B), A, B)
-#define MVE_CMPLX_MULT_FX_AxConjB_S16(A, B) vqdmladhq_s16(vqdmlsdhxq_s16((__typeof(A))vuninitializedq_s16(), A, B), A, B)
+#define MVE_CMPLX_MULT_FX_AxB_S16(A, B)                                                            \
+    vqdmladhxq_s16(vqdmlsdhq_s16((__typeof(A))vuninitializedq_s16(), A, B), A, B)
+#define MVE_CMPLX_MULT_FX_AxConjB_S16(A, B)                                                        \
+    vqdmladhq_s16(vqdmlsdhxq_s16((__typeof(A))vuninitializedq_s16(), A, B), A, B)
 
 #endif
 
-void arm_split_rfft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, const q15_t* pBTable, q15_t* pDst, uint32_t modifier) {
+void arm_split_rfft_q15(q15_t*       pSrc,
+                        uint32_t     fftLen,
+                        const q15_t* pATable,
+                        const q15_t* pBTable,
+                        q15_t*       pDst,
+                        uint32_t     modifier) {
     uint32_t       i;               /* Loop Counter */
     const q15_t *  pCoefA, *pCoefB; /* Temporary pointers for twiddle factors */
     q15_t*         pOut1    = &pDst[2];
@@ -155,9 +174,11 @@ void arm_split_rfft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, cons
         q15x8_t coefB = vldrhq_gather_shifted_offset_s16(pCoefBb, offsetCoef);
 
 #if defined(__CMSIS_GCC_H)
-        q15x8_t out = vhaddq_s16(MVE_CMPLX_MULT_FX_AxB_S16(in1, coefA), MVE_CMPLX_MULT_FX_AxConjB_S16(coefB, in2));
+        q15x8_t out = vhaddq_s16(MVE_CMPLX_MULT_FX_AxB_S16(in1, coefA),
+                                 MVE_CMPLX_MULT_FX_AxConjB_S16(coefB, in2));
 #else
-        q15x8_t out = vhaddq_s16(MVE_CMPLX_MULT_FX_AxB(in1, coefA, q15x8_t), MVE_CMPLX_MULT_FX_AxConjB(coefB, in2, q15x8_t));
+        q15x8_t out = vhaddq_s16(MVE_CMPLX_MULT_FX_AxB(in1, coefA, q15x8_t),
+                                 MVE_CMPLX_MULT_FX_AxConjB(coefB, in2, q15x8_t));
 #endif
         vst1q_s16(pOut1, out);
         pOut1 += 8;
@@ -175,7 +196,12 @@ void arm_split_rfft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, cons
     pDst[1] = 0;
 }
 #else
-void arm_split_rfft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, const q15_t* pBTable, q15_t* pDst, uint32_t modifier) {
+void arm_split_rfft_q15(q15_t*       pSrc,
+                        uint32_t     fftLen,
+                        const q15_t* pATable,
+                        const q15_t* pBTable,
+                        q15_t*       pDst,
+                        uint32_t     modifier) {
     uint32_t     i;               /* Loop Counter */
     q31_t        outR, outI;      /* Temporary variables for output */
     const q15_t *pCoefA, *pCoefB; /* Temporary pointers for twiddle factors */
@@ -329,7 +355,12 @@ void arm_split_rfft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, cons
 #include "arm_helium_utils.h"
 #include "arm_vec_fft.h"
 
-void arm_split_rifft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, const q15_t* pBTable, q15_t* pDst, uint32_t modifier) {
+void arm_split_rifft_q15(q15_t*       pSrc,
+                         uint32_t     fftLen,
+                         const q15_t* pATable,
+                         const q15_t* pBTable,
+                         q15_t*       pDst,
+                         uint32_t     modifier) {
     uint32_t       i;               /* Loop Counter */
     const q15_t *  pCoefA, *pCoefB; /* Temporary pointers for twiddle factors */
     q15_t*         pIn1;
@@ -362,7 +393,8 @@ void arm_split_rifft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, con
         q15x8_t coefB = vldrhq_gather_shifted_offset_s16(pCoefBb, offsetCoef);
 
         /* can we avoid the conjugate here ? */
-        q15x8_t out = vhaddq_s16(MVE_CMPLX_MULT_FX_AxConjB(in1, coefA, q15x8_t), vmulq(conj, MVE_CMPLX_MULT_FX_AxB(in2, coefB, q15x8_t)));
+        q15x8_t out = vhaddq_s16(MVE_CMPLX_MULT_FX_AxConjB(in1, coefA, q15x8_t),
+                                 vmulq(conj, MVE_CMPLX_MULT_FX_AxB(in2, coefB, q15x8_t)));
 
         vst1q_s16(pDst, out);
         pDst += 8;
@@ -375,7 +407,12 @@ void arm_split_rifft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, con
     }
 }
 #else
-void arm_split_rifft_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pATable, const q15_t* pBTable, q15_t* pDst, uint32_t modifier) {
+void arm_split_rifft_q15(q15_t*       pSrc,
+                         uint32_t     fftLen,
+                         const q15_t* pATable,
+                         const q15_t* pBTable,
+                         q15_t*       pDst,
+                         uint32_t     modifier) {
     uint32_t     i;               /* Loop Counter */
     q31_t        outR, outI;      /* Temporary variables for output */
     const q15_t *pCoefA, *pCoefB; /* Temporary pointers for twiddle factors */

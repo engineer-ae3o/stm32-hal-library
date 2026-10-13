@@ -65,7 +65,8 @@
 
 #include "arm_helium_utils.h"
 
-arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc,
+                                arm_matrix_instance_f32*       pDst) {
 
     arm_status status; /* status of matrix inverse */
 
@@ -73,7 +74,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -173,7 +175,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
 #else
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc,
+                                arm_matrix_instance_f32*       pDst) {
 
     arm_status status; /* status of matrix inverse */
 
@@ -181,7 +184,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -334,7 +338,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
 }
 
 #else
-arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc,
+                                arm_matrix_instance_f32*       pDst) {
 
     arm_status status; /* status of matrix inverse */
 
@@ -342,7 +347,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

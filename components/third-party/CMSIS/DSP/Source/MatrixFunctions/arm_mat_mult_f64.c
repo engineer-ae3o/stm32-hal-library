@@ -64,7 +64,9 @@
  */
 
 
-arm_status arm_mat_mult_f64(const arm_matrix_instance_f64* pSrcA, const arm_matrix_instance_f64* pSrcB, arm_matrix_instance_f64* pDst) {
+arm_status arm_mat_mult_f64(const arm_matrix_instance_f64* pSrcA,
+                            const arm_matrix_instance_f64* pSrcB,
+                            arm_matrix_instance_f64*       pDst) {
     float64_t* pIn1 = pSrcA->pData;                 /* Input data matrix pointer A */
     float64_t* pIn2 = pSrcB->pData;                 /* Input data matrix pointer B */
     float64_t* pInA = pSrcA->pData;                 /* Input data matrix pointer A */
@@ -81,7 +83,8 @@ arm_status arm_mat_mult_f64(const arm_matrix_instance_f64* pSrcA, const arm_matr
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

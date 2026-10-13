@@ -61,8 +61,10 @@
 
 #define MVE_ASRL_SAT16(acc, shift) ((sqrshrl_sat48(acc, -(32 - shift)) >> 32) & 0xffffffff)
 
-arm_status
-arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_instance_q15* pSrcB, arm_matrix_instance_q15* pDst, q15_t* pScratch) {
+arm_status arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA,
+                                  const arm_matrix_instance_q15* pSrcB,
+                                  arm_matrix_instance_q15*       pDst,
+                                  q15_t*                         pScratch) {
     q15_t const* pInA = (q15_t const*)pSrcA->pData; /* input data matrix pointer A of Q15 type */
     q15_t const* pInB = (q15_t const*)pSrcB->pData; /* input data matrix pointer B of Q15 type */
     q15_t const* pInB2;
@@ -80,7 +82,8 @@ arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_in
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -293,8 +296,10 @@ arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_in
     return (status);
 }
 #else
-arm_status
-arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_instance_q15* pSrcB, arm_matrix_instance_q15* pDst, q15_t* pScratch) {
+arm_status arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA,
+                                  const arm_matrix_instance_q15* pSrcB,
+                                  arm_matrix_instance_q15*       pDst,
+                                  q15_t*                         pScratch) {
     q15_t*     pSrcBT = pScratch;                   /* input data matrix pointer for transpose */
     q15_t*     pInA   = pSrcA->pData;               /* input data matrix pointer A of Q15 type */
     q15_t*     pInB   = pSrcB->pData;               /* input data matrix pointer B of Q15 type */
@@ -317,7 +322,8 @@ arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_in
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

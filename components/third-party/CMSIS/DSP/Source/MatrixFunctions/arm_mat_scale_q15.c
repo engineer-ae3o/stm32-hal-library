@@ -52,7 +52,10 @@
                    These are multiplied to yield a 2.30 intermediate result and this is shifted with saturation to 1.15 format.
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc, q15_t scaleFract, int32_t shift, arm_matrix_instance_q15* pDst) {
+arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc,
+                             q15_t                          scaleFract,
+                             int32_t                        shift,
+                             arm_matrix_instance_q15*       pDst) {
     arm_status   status;             /* Status of matrix scaling */
     q15_t*       pIn  = pSrc->pData; /* input data matrix pointer */
     q15_t*       pOut = pDst->pData; /* output data matrix pointer */
@@ -123,7 +126,10 @@ arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc, q15_t scaleFra
 }
 
 #else
-arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc, q15_t scaleFract, int32_t shift, arm_matrix_instance_q15* pDst) {
+arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc,
+                             q15_t                          scaleFract,
+                             int32_t                        shift,
+                             arm_matrix_instance_q15*       pDst) {
     q15_t*     pIn  = pSrc->pData;  /* Input data matrix pointer */
     q15_t*     pOut = pDst->pData;  /* Output data matrix pointer */
     uint32_t   numSamples;          /* Total number of elements in the matrix */

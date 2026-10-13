@@ -54,7 +54,8 @@ namespace test::timer {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timx_clk_enable(bogus, true));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timx_clk_enable(bogus, false));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TEST_INSTANCE, true)); // Leave enabled for the other tests
+            TEST_ASSERT_EQUAL(
+                HAL_OK, timx_clk_enable(TEST_INSTANCE, true)); // Leave enabled for the other tests
         }
 
         void clk_enable_toggles_every_valid_timer_bus_bit() {
@@ -81,20 +82,26 @@ namespace test::timer {
                 TEST_ASSERT_TRUE(*combo.enable_reg & combo.enable_bit);
             }
 
-            TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TEST_INSTANCE, true)); // Leave TEST_INSTANCE enabled
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              timx_clk_enable(TEST_INSTANCE, true)); // Leave TEST_INSTANCE enabled
         }
 
         void init_rejects_invalid_arguments() {
             auto* const bogus = reinterpret_cast<TIM_TypeDef*>(1);
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_init(bogus, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {}));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              timer_init(bogus, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {}));
         }
 
         void init_rejects_when_already_running() {
             reset_to_baseline(TEST_INSTANCE);
-            TEST_INSTANCE->CR1 |= TIM_CR1_CEN; // Fake a running timer without going through the public API
+            TEST_INSTANCE->CR1 |=
+                TIM_CR1_CEN; // Fake a running timer without going through the public API
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_STATE,
+                timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
 
             reset_to_baseline(TEST_INSTANCE);
         }
@@ -105,11 +112,16 @@ namespace test::timer {
                 TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(handle));
 
                 const uint32_t cr1_before = handle->CR1;
-                TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED, timer_init(handle, TIMER_COUNTER_DIR_DOWN, {update_done_cb, nullptr}));
-                TEST_ASSERT_EQUAL_UINT32(cr1_before, handle->CR1); // Rejected before CR1 is ever touched
+                TEST_ASSERT_EQUAL(
+                    HAL_ERR_NOT_SUPPORTED,
+                    timer_init(handle, TIMER_COUNTER_DIR_DOWN, {update_done_cb, nullptr}));
+                TEST_ASSERT_EQUAL_UINT32(cr1_before,
+                                         handle->CR1); // Rejected before CR1 is ever touched
 
-                TEST_ASSERT_EQUAL(HAL_OK, timer_init(handle, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
-                TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP, (handle->CR1 & TIM_CR1_DIR) >> TIM_CR1_DIR_Pos);
+                TEST_ASSERT_EQUAL(
+                    HAL_OK, timer_init(handle, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
+                TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP,
+                                  (handle->CR1 & TIM_CR1_DIR) >> TIM_CR1_DIR_Pos);
 
                 TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(handle));
                 TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(handle, false));
@@ -119,10 +131,14 @@ namespace test::timer {
         void init_down_direction_actually_counts_down() {
             reset_to_baseline(TEST_INSTANCE);
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_DOWN, {update_done_cb, nullptr}));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_DOWN, {update_done_cb, nullptr}));
             TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_DOWN, (TEST_INSTANCE->CR1 & TIM_CR1_DIR));
 
-            TEST_ASSERT_EQUAL(HAL_OK, timer_start_periodic(TEST_INSTANCE, 1'000'000)); // Slow, so CNT is easy to sample
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                timer_start_periodic(TEST_INSTANCE, 1'000'000)); // Slow, so CNT is easy to sample
             delay_us(50);
             const uint32_t first_sample = TEST_INSTANCE->CNT;
             delay_us(50);
@@ -152,16 +168,21 @@ namespace test::timer {
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TEST_INSTANCE));
 
             TEST_ASSERT_EQUAL_UINT32(0,
-                                     TEST_INSTANCE->CR1 & (TIM_CR1_CEN | TIM_CR1_UDIS | TIM_CR1_URS | TIM_CR1_OPM | TIM_CR1_DIR | TIM_CR1_CMS |
-                                                           TIM_CR1_ARPE | TIM_CR1_CKD));
+                                     TEST_INSTANCE->CR1 &
+                                         (TIM_CR1_CEN | TIM_CR1_UDIS | TIM_CR1_URS | TIM_CR1_OPM |
+                                          TIM_CR1_DIR | TIM_CR1_CMS | TIM_CR1_ARPE | TIM_CR1_CKD));
+            TEST_ASSERT_EQUAL_UINT32(
+                0,
+                TEST_INSTANCE->CR2 & (TIM_CR2_CCPC | TIM_CR2_CCUS | TIM_CR2_CCDS | TIM_CR2_MMS |
+                                      TIM_CR2_TI1S | TIM_CR2_OIS1 | TIM_CR2_OIS1N | TIM_CR2_OIS2 |
+                                      TIM_CR2_OIS2N | TIM_CR2_OIS3 | TIM_CR2_OIS3N | TIM_CR2_OIS4));
             TEST_ASSERT_EQUAL_UINT32(0,
-                                     TEST_INSTANCE->CR2 &
-                                         (TIM_CR2_CCPC | TIM_CR2_CCUS | TIM_CR2_CCDS | TIM_CR2_MMS | TIM_CR2_TI1S | TIM_CR2_OIS1 | TIM_CR2_OIS1N |
-                                          TIM_CR2_OIS2 | TIM_CR2_OIS2N | TIM_CR2_OIS3 | TIM_CR2_OIS3N | TIM_CR2_OIS4));
-            TEST_ASSERT_EQUAL_UINT32(0,
-                                     TEST_INSTANCE->DIER & (TIM_DIER_UIE | TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_CC3IE | TIM_DIER_CC4IE |
-                                                            TIM_DIER_COMIE | TIM_DIER_TIE | TIM_DIER_BIE | TIM_DIER_UDE | TIM_DIER_CC1DE |
-                                                            TIM_DIER_CC2DE | TIM_DIER_CC3DE | TIM_DIER_CC4DE | TIM_DIER_COMDE | TIM_DIER_TDE));
+                                     TEST_INSTANCE->DIER &
+                                         (TIM_DIER_UIE | TIM_DIER_CC1IE | TIM_DIER_CC2IE |
+                                          TIM_DIER_CC3IE | TIM_DIER_CC4IE | TIM_DIER_COMIE |
+                                          TIM_DIER_TIE | TIM_DIER_BIE | TIM_DIER_UDE |
+                                          TIM_DIER_CC1DE | TIM_DIER_CC2DE | TIM_DIER_CC3DE |
+                                          TIM_DIER_CC4DE | TIM_DIER_COMDE | TIM_DIER_TDE));
             TEST_ASSERT_EQUAL_UINT32(0, TEST_INSTANCE->CNT);
             TEST_ASSERT_EQUAL_UINT32(0, TEST_INSTANCE->PSC);
             TEST_ASSERT_EQUAL_UINT32(0, TEST_INSTANCE->ARR);
@@ -176,7 +197,8 @@ namespace test::timer {
 
         void deinit_stops_a_timer_that_is_currently_running() {
             reset_to_baseline(TEST_INSTANCE);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
             TEST_ASSERT_FALSE(TEST_INSTANCE->CR1 & TIM_CR1_CEN);
             TEST_ASSERT_EQUAL(HAL_OK, timer_start_periodic(TEST_INSTANCE, 1'000'000));
             TEST_ASSERT_TRUE(TEST_INSTANCE->CR1 & TIM_CR1_CEN);
@@ -204,13 +226,16 @@ namespace test::timer {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM10, true));
 
             s_update_done = false;
-            TEST_ASSERT_EQUAL(HAL_OK, timer_init(TIM1, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              timer_init(TIM1, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
             TEST_ASSERT_EQUAL(HAL_OK, timer_start_oneshot(TIM1, 1'000));
-            TEST_ASSERT_TRUE(NVIC->ISER[TIM1_UP_TIM10_IRQn >> 5] & (1UL << (TIM1_UP_TIM10_IRQn & 0x1FU)));
+            TEST_ASSERT_TRUE(NVIC->ISER[TIM1_UP_TIM10_IRQn >> 5] &
+                             (1UL << (TIM1_UP_TIM10_IRQn & 0x1FU)));
 
             // Deiniting TIM10 must NOT rip out the line TIM1 still depends on
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(TIM10));
-            TEST_ASSERT_TRUE(NVIC->ISER[TIM1_UP_TIM10_IRQn >> 5] & (1UL << (TIM1_UP_TIM10_IRQn & 0x1FU)));
+            TEST_ASSERT_TRUE(NVIC->ISER[TIM1_UP_TIM10_IRQn >> 5] &
+                             (1UL << (TIM1_UP_TIM10_IRQn & 0x1FU)));
 
             // And TIM1's still pending oneshot actually completes and fires its callback
             TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
@@ -232,7 +257,8 @@ namespace test::timer {
 
         void start_oneshot_rejects_when_already_running() {
             reset_to_baseline(TEST_INSTANCE);
-            TEST_INSTANCE->CR1 |= TIM_CR1_CEN; // Fake a running timer without going through the public API
+            TEST_INSTANCE->CR1 |=
+                TIM_CR1_CEN; // Fake a running timer without going through the public API
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, timer_start_oneshot(TEST_INSTANCE, 1'000));
 
@@ -258,10 +284,12 @@ namespace test::timer {
             s_update_done = false;
             s_last_arg    = nullptr;
             int marker    = 42;
-            TEST_ASSERT_EQUAL(HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, &marker}));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, &marker}));
             TEST_ASSERT_EQUAL(HAL_OK, timer_start_oneshot(TEST_INSTANCE, 1'000));
 
-            constexpr uint32_t expected_bits = TIM_CR1_CEN | TIM_CR1_OPM | TIM_CR1_ARPE | TIM_CR1_URS;
+            constexpr uint32_t expected_bits =
+                TIM_CR1_CEN | TIM_CR1_OPM | TIM_CR1_ARPE | TIM_CR1_URS;
             TEST_ASSERT_EQUAL_UINT32(expected_bits, TEST_INSTANCE->CR1 & expected_bits);
 
             TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
@@ -269,8 +297,10 @@ namespace test::timer {
                                      }),
                                      "Oneshot timer never fired its callback");
 
-            TEST_ASSERT_FALSE(TEST_INSTANCE->CR1 & TIM_CR1_CEN); // The timer hardware auto clears CEN in OPM on a UEV
-            TEST_ASSERT_FALSE(TEST_INSTANCE->SR & TIM_SR_UIF);   // The ISR clears the UEV interrupt flag
+            TEST_ASSERT_FALSE(TEST_INSTANCE->CR1 &
+                              TIM_CR1_CEN); // The timer hardware auto clears CEN in OPM on a UEV
+            TEST_ASSERT_FALSE(TEST_INSTANCE->SR &
+                              TIM_SR_UIF); // The ISR clears the UEV interrupt flag
             TEST_ASSERT_EQUAL_PTR(&marker, s_last_arg);
 
             reset_to_baseline(TEST_INSTANCE);
@@ -280,11 +310,13 @@ namespace test::timer {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM1, true));
 
             s_update_done = false;
-            TEST_ASSERT_EQUAL(HAL_OK, timer_init(TIM1, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              timer_init(TIM1, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
             TEST_ASSERT_EQUAL(HAL_OK, timer_start_oneshot(TIM1, 1'000));
 
             // TIM1's update event is dispatched through TIM1_UP_TIM10_IRQn, not TIM1_CC_IRQn
-            TEST_ASSERT_TRUE(NVIC->ISER[TIM1_UP_TIM10_IRQn >> 5] & (1UL << (TIM1_UP_TIM10_IRQn & 0x1FU)));
+            TEST_ASSERT_TRUE(NVIC->ISER[TIM1_UP_TIM10_IRQn >> 5] &
+                             (1UL << (TIM1_UP_TIM10_IRQn & 0x1FU)));
 
             TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
                                          return s_update_done;
@@ -302,7 +334,8 @@ namespace test::timer {
 
         void start_periodic_rejects_when_already_running() {
             reset_to_baseline(TEST_INSTANCE);
-            TEST_INSTANCE->CR1 |= TIM_CR1_CEN; // Fake a running timer without going through the public API
+            TEST_INSTANCE->CR1 |=
+                TIM_CR1_CEN; // Fake a running timer without going through the public API
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, timer_start_periodic(TEST_INSTANCE, 1'000));
 
@@ -313,8 +346,11 @@ namespace test::timer {
             reset_to_baseline(TEST_INSTANCE);
 
             s_update_count = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_start_periodic(TEST_INSTANCE, 200)); // Short period: several fire quickly
+            TEST_ASSERT_EQUAL(
+                HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                timer_start_periodic(TEST_INSTANCE, 200)); // Short period: several fire quickly
 
             TEST_ASSERT_FALSE(TEST_INSTANCE->CR1 & TIM_CR1_OPM);
             constexpr uint32_t expected_bits = TIM_CR1_CEN | TIM_CR1_ARPE | TIM_CR1_URS;
@@ -324,7 +360,8 @@ namespace test::timer {
                                          return s_update_count >= 100;
                                      }),
                                      "Periodic timer did not fire repeatedly");
-            TEST_ASSERT_TRUE(TEST_INSTANCE->CR1 & TIM_CR1_CEN); // Should still be running, unlike OPM
+            TEST_ASSERT_TRUE(TEST_INSTANCE->CR1 &
+                             TIM_CR1_CEN); // Should still be running, unlike OPM
 
             TEST_ASSERT_EQUAL(HAL_OK, timer_pause(TEST_INSTANCE));
             reset_to_baseline(TEST_INSTANCE);
@@ -332,8 +369,12 @@ namespace test::timer {
 
         void pause_and_resume_halt_and_continue_the_counter() {
             reset_to_baseline(TEST_INSTANCE);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
-            TEST_ASSERT_EQUAL(HAL_OK, timer_start_periodic(TEST_INSTANCE, 1'000'000)); // Long enough; only CNT progression matters
+            TEST_ASSERT_EQUAL(
+                HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                timer_start_periodic(TEST_INSTANCE,
+                                     1'000'000)); // Long enough; only CNT progression matters
 
             delay_us(50);
             TEST_ASSERT_EQUAL(HAL_OK, timer_pause(TEST_INSTANCE));
@@ -352,11 +393,14 @@ namespace test::timer {
             reset_to_baseline(TEST_INSTANCE);
 
             s_update_count = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, timer_init(TEST_INSTANCE, TIMER_COUNTER_DIR_UP, {update_done_cb, nullptr}));
             TEST_ASSERT_EQUAL(HAL_OK, timer_start_periodic(TEST_INSTANCE, 1'000));
 
             delay_us(50);
-            TEST_ASSERT_EQUAL(HAL_OK, timer_restart(TEST_INSTANCE, 200)); // Much shorter: observe several cycles quickly
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                timer_restart(TEST_INSTANCE, 200)); // Much shorter: observe several cycles quickly
             TEST_ASSERT_FALSE(TEST_INSTANCE->CR1 & TIM_CR1_OPM);
 
             TEST_ASSERT_TRUE_MESSAGE(wait_until([]() {
@@ -402,7 +446,8 @@ namespace test::timer {
             RCC->DCKCFGR |= RCC_DCKCFGR_TIMPRE; // High frequency mode
             freq = timer_get_frequency_hz(TEST_INSTANCE);
 
-            const uint32_t expected_hf = ((sysclk == apb1) || ((sysclk / apb1) == 2)) ? sysclk : (apb1 * 4);
+            const uint32_t expected_hf =
+                ((sysclk == apb1) || ((sysclk / apb1) == 2)) ? sysclk : (apb1 * 4);
             TEST_ASSERT_EQUAL_UINT32(expected_hf, freq);
 
             if (timpre_before) {

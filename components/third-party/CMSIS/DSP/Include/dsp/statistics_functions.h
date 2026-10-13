@@ -86,7 +86,10 @@ float32_t arm_logsumexp_f32(const float32_t* in, uint32_t blockSize);
  */
 
 
-float32_t arm_logsumexp_dot_prod_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize, float32_t* pTmpBuffer);
+float32_t arm_logsumexp_dot_prod_f32(const float32_t* pSrcA,
+                                     const float32_t* pSrcB,
+                                     uint32_t         blockSize,
+                                     float32_t*       pTmpBuffer);
 
 /**
  * @brief Entropy
@@ -123,7 +126,8 @@ float64_t arm_entropy_f64(const float64_t* pSrcA, uint32_t blockSize);
  * @return Kullback-Leibler  Divergence D(A || B)
  *
  */
-float32_t arm_kullback_leibler_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize);
+float32_t
+arm_kullback_leibler_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize);
 
 
 /**
@@ -135,7 +139,8 @@ float32_t arm_kullback_leibler_f32(const float32_t* pSrcA, const float32_t* pSrc
  * @return Kullback-Leibler  Divergence D(A || B)
  *
  */
-float64_t arm_kullback_leibler_f64(const float64_t* pSrcA, const float64_t* pSrcB, uint32_t blockSize);
+float64_t
+arm_kullback_leibler_f64(const float64_t* pSrcA, const float64_t* pSrcB, uint32_t blockSize);
 
 
 /**
@@ -424,7 +429,10 @@ void arm_min_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, 
    * @param[out] pResult    is output pointer
    * @param[out] pIndex     is the array index of the minimum value in the input buffer.
    */
-void arm_absmin_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex);
+void arm_absmin_f32(const float32_t* pSrc,
+                    uint32_t         blockSize,
+                    float32_t*       pResult,
+                    uint32_t*        pIndex);
 
 /**
    * @brief  Minimum value of absolute values of a floating-point vector.
@@ -451,7 +459,10 @@ void arm_min_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult, 
    * @param[out] pResult    is output pointer
    * @param[out] pIndex     is the array index of the minimum value in the input buffer.
    */
-void arm_absmin_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult, uint32_t* pIndex);
+void arm_absmin_f64(const float64_t* pSrc,
+                    uint32_t         blockSize,
+                    float64_t*       pResult,
+                    uint32_t*        pIndex);
 
 /**
    * @brief  Minimum value of absolute values of a floating-point vector.
@@ -557,7 +568,10 @@ void arm_max_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, 
  * @param[out] pResult    maximum value returned here
  * @param[out] pIndex     index of maximum value returned here
  */
-void arm_absmax_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex);
+void arm_absmax_f32(const float32_t* pSrc,
+                    uint32_t         blockSize,
+                    float32_t*       pResult,
+                    uint32_t*        pIndex);
 
 /**
  * @brief Maximum value of absolute values of a floating-point vector.
@@ -583,7 +597,10 @@ void arm_max_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult, 
  * @param[out] pResult    maximum value returned here
  * @param[out] pIndex     index of maximum value returned here
  */
-void arm_absmax_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult, uint32_t* pIndex);
+void arm_absmax_f64(const float64_t* pSrc,
+                    uint32_t         blockSize,
+                    float64_t*       pResult,
+                    uint32_t*        pIndex);
 
 /**
  * @brief Maximum value of absolute values of a floating-point vector.
@@ -725,7 +742,10 @@ void arm_mse_q31(const q31_t* pSrcA, const q31_t* pSrcB, uint32_t blockSize, q31
   @return        none 
 */
 
-void arm_mse_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize, float32_t* pResult);
+void arm_mse_f32(const float32_t* pSrcA,
+                 const float32_t* pSrcB,
+                 uint32_t         blockSize,
+                 float32_t*       pResult);
 
 /**
   @brief         Mean square error between two double precision float vectors.
@@ -736,7 +756,10 @@ void arm_mse_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockS
   @return        none 
 */
 
-void arm_mse_f64(const float64_t* pSrcA, const float64_t* pSrcB, uint32_t blockSize, float64_t* pResult);
+void arm_mse_f64(const float64_t* pSrcA,
+                 const float64_t* pSrcB,
+                 uint32_t         blockSize,
+                 float64_t*       pResult);
 
 #ifdef __cplusplus
 }

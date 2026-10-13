@@ -87,7 +87,8 @@ arm_status arm_avgpool_s16(const cmsis_nn_context*     ctx,
 
                 for (int k_y = ker_y_start; k_y < kernel_y_end; k_y++) {
                     for (int k_x = ker_x_start; k_x < kernel_x_end; k_x++) {
-                        sum += src[i_ch_in + ch_src * (k_x + base_idx_x + (k_y + base_idx_y) * input_x)];
+                        sum += src[i_ch_in +
+                                   ch_src * (k_x + base_idx_x + (k_y + base_idx_y) * input_x)];
                         count++;
                     }
                 }

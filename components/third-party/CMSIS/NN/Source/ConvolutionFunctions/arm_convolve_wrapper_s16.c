@@ -59,16 +59,44 @@ arm_status arm_convolve_wrapper_s16(const cmsis_nn_context*                  ctx
                                     const cmsis_nn_dims*                     output_dims,
                                     q15_t*                                   output_data) {
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
-    if (filter_dims->w * filter_dims->h * input_dims->c < 512 && (conv_params->dilation.w == 1 && conv_params->dilation.h == 1)) {
-        return arm_convolve_fast_s16(
-            ctx, conv_params, quant_params, input_dims, input_data, filter_dims, filter_data, bias_dims, bias_data, output_dims, output_data);
+    if (filter_dims->w * filter_dims->h * input_dims->c < 512 &&
+        (conv_params->dilation.w == 1 && conv_params->dilation.h == 1)) {
+        return arm_convolve_fast_s16(ctx,
+                                     conv_params,
+                                     quant_params,
+                                     input_dims,
+                                     input_data,
+                                     filter_dims,
+                                     filter_data,
+                                     bias_dims,
+                                     bias_data,
+                                     output_dims,
+                                     output_data);
     } else {
-        return arm_convolve_s16(
-            ctx, conv_params, quant_params, input_dims, input_data, filter_dims, filter_data, bias_dims, bias_data, output_dims, output_data);
+        return arm_convolve_s16(ctx,
+                                conv_params,
+                                quant_params,
+                                input_dims,
+                                input_data,
+                                filter_dims,
+                                filter_data,
+                                bias_dims,
+                                bias_data,
+                                output_dims,
+                                output_data);
     }
 #else
-    return arm_convolve_s16(
-        ctx, conv_params, quant_params, input_dims, input_data, filter_dims, filter_data, bias_dims, bias_data, output_dims, output_data);
+    return arm_convolve_s16(ctx,
+                            conv_params,
+                            quant_params,
+                            input_dims,
+                            input_data,
+                            filter_dims,
+                            filter_data,
+                            bias_dims,
+                            bias_data,
+                            output_dims,
+                            output_data);
 #endif
 }
 
@@ -80,7 +108,8 @@ int32_t arm_convolve_wrapper_s16_get_buffer_size(const cmsis_nn_conv_params* con
     (void)output_dims;
 
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
-    if (filter_dims->w * filter_dims->h * input_dims->c < 512 && (conv_params->dilation.w == 1 && conv_params->dilation.h == 1)) {
+    if (filter_dims->w * filter_dims->h * input_dims->c < 512 &&
+        (conv_params->dilation.w == 1 && conv_params->dilation.h == 1)) {
         return arm_convolve_fast_s16_get_buffer_size(input_dims, filter_dims);
     }
 

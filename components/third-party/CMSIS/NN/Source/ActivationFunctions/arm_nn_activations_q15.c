@@ -47,7 +47,10 @@
  *
  */
 
-void arm_nn_activations_direct_q15(q15_t* data, uint16_t size, uint16_t int_width, arm_nn_activation_type type) {
+void arm_nn_activations_direct_q15(q15_t*                 data,
+                                   uint16_t               size,
+                                   uint16_t               int_width,
+                                   arm_nn_activation_type type) {
     uint16_t     i          = size;
     q15_t*       pIn        = data;
     q15_t*       pOut       = data;

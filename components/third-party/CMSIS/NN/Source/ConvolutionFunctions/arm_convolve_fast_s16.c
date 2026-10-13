@@ -97,14 +97,20 @@ arm_status arm_convolve_fast_s16(const cmsis_nn_context*                  ctx,
         /* This part implements the im2col function */
         for (int32_t i_out_y = 0; i_out_y < output_y; i_out_y++) {
             for (int32_t i_out_x = 0; i_out_x < output_x; i_out_x++) {
-                for (int32_t i_ker_y = i_out_y * stride_y - pad_y; i_ker_y < i_out_y * stride_y - pad_y + kernel_y; i_ker_y++) {
-                    for (int32_t i_ker_x = i_out_x * stride_x - pad_x; i_ker_x < i_out_x * stride_x - pad_x + kernel_x; i_ker_x++) {
-                        if (i_ker_y < 0 || i_ker_y >= input_y || i_ker_x < 0 || i_ker_x >= input_x) {
+                for (int32_t i_ker_y = i_out_y * stride_y - pad_y;
+                     i_ker_y < i_out_y * stride_y - pad_y + kernel_y;
+                     i_ker_y++) {
+                    for (int32_t i_ker_x = i_out_x * stride_x - pad_x;
+                         i_ker_x < i_out_x * stride_x - pad_x + kernel_x;
+                         i_ker_x++) {
+                        if (i_ker_y < 0 || i_ker_y >= input_y || i_ker_x < 0 ||
+                            i_ker_x >= input_x) {
                             /* Filling 0 for out-of-bound paddings */
                             arm_memset_q7((q7_t*)two_column_buf, 0, sizeof(q15_t) * input_ch);
                         } else {
                             arm_memcpy_q7((q7_t*)two_column_buf,
-                                          (const q7_t*)(input_data + (i_ker_y * input_x + i_ker_x) * input_ch),
+                                          (const q7_t*)(input_data +
+                                                        (i_ker_y * input_x + i_ker_x) * input_ch),
                                           input_ch * sizeof(q15_t));
                         }
                         two_column_buf += input_ch;
@@ -168,7 +174,7 @@ arm_status arm_convolve_fast_s16(const cmsis_nn_context*                  ctx,
                 if (bias_data) {
                     q31_t reduced_multiplier = REDUCE_MULTIPLIER(output_mult[i]);
                     q63_t acc_64             = sum + bias_data[i];
-                    sum                      = arm_nn_requantize_s64(acc_64, reduced_multiplier, output_shift[i]);
+                    sum = arm_nn_requantize_s64(acc_64, reduced_multiplier, output_shift[i]);
                 } else {
                     sum = arm_nn_requantize(sum, output_mult[i], output_shift[i]);
                 }
@@ -204,7 +210,8 @@ arm_status arm_convolve_fast_s16(const cmsis_nn_context*                  ctx,
     return ARM_MATH_SUCCESS;
 }
 
-int32_t arm_convolve_fast_s16_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims) {
+int32_t arm_convolve_fast_s16_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                              const cmsis_nn_dims* filter_dims) {
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
     return (2 * input_dims->c * filter_dims->w * filter_dims->h) * (int32_t)sizeof(int16_t);
 #else

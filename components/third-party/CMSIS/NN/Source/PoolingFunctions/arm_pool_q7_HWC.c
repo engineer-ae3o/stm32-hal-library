@@ -39,7 +39,8 @@
  *
  */
 
-static void buffer_scale_back_q15_to_q7(q15_t* buffer, q7_t* target, uint16_t length, uint16_t scale) {
+static void
+buffer_scale_back_q15_to_q7(q15_t* buffer, q7_t* target, uint16_t length, uint16_t scale) {
     int i;
 
     for (i = 0; i < length; i++) {
@@ -194,7 +195,8 @@ void arm_maxpool_q7_HWC(q7_t*          Im_in,
             if (i_x * stride - padding + dim_kernel >= dim_im_in) {
                 win_stop = Im_in + (i_y * dim_im_in + dim_im_in) * ch_im_in;
             } else {
-                win_stop = Im_in + (i_y * dim_im_in + i_x * stride - padding + dim_kernel) * ch_im_in;
+                win_stop =
+                    Im_in + (i_y * dim_im_in + i_x * stride - padding + dim_kernel) * ch_im_in;
             }
 
             /* first step is to copy over initial data */
@@ -250,8 +252,10 @@ void arm_maxpool_q7_HWC(q7_t*          Im_in,
         for (i_y = 0; i_y < dim_im_out; i_y++) {
             for (i_x = 0; i_x < dim_im_out; i_x++) {
                 int max = -129;
-                for (k_y = i_y * stride - padding; k_y < i_y * stride - padding + dim_kernel; k_y++) {
-                    for (k_x = i_x * stride - padding; k_x < i_x * stride - padding + dim_kernel; k_x++) {
+                for (k_y = i_y * stride - padding; k_y < i_y * stride - padding + dim_kernel;
+                     k_y++) {
+                    for (k_x = i_x * stride - padding; k_x < i_x * stride - padding + dim_kernel;
+                         k_x++) {
                         if (k_y >= 0 && k_x >= 0 && k_y < dim_im_in && k_x < dim_im_in) {
                             if (Im_in[i_ch_in + ch_im_in * (k_x + k_y * dim_im_in)] > max) {
                                 max = Im_in[i_ch_in + ch_im_in * (k_x + k_y * dim_im_in)];
@@ -327,7 +331,8 @@ void arm_avepool_q7_HWC(q7_t*          Im_in,
             if (i_x * stride - padding + dim_kernel >= dim_im_in) {
                 win_stop = Im_in + (i_y * dim_im_in + dim_im_in) * ch_im_in;
             } else {
-                win_stop = Im_in + (i_y * dim_im_in + i_x * stride - padding + dim_kernel) * ch_im_in;
+                win_stop =
+                    Im_in + (i_y * dim_im_in + i_x * stride - padding + dim_kernel) * ch_im_in;
             }
 
             /* first step is to copy over initial data */
@@ -389,8 +394,10 @@ void arm_avepool_q7_HWC(q7_t*          Im_in,
             for (i_x = 0; i_x < dim_im_out; i_x++) {
                 int sum   = 0;
                 int count = 0;
-                for (k_y = i_y * stride - padding; k_y < i_y * stride - padding + dim_kernel; k_y++) {
-                    for (k_x = i_x * stride - padding; k_x < i_x * stride - padding + dim_kernel; k_x++) {
+                for (k_y = i_y * stride - padding; k_y < i_y * stride - padding + dim_kernel;
+                     k_y++) {
+                    for (k_x = i_x * stride - padding; k_x < i_x * stride - padding + dim_kernel;
+                         k_x++) {
                         if (k_y >= 0 && k_x >= 0 && k_y < dim_im_in && k_x < dim_im_in) {
                             sum += Im_in[i_ch_in + ch_im_in * (k_x + k_y * dim_im_in)];
                             count++;

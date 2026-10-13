@@ -112,7 +112,8 @@ q7_t* arm_nn_mat_mult_s8(const q7_t*          input_row,
         }
         out += 4 * output_ch;
     } else {
-        for (int i_col_batch = (col_batches & ~0x3); i_col_batch < (col_batches & 0x3); i_col_batch++) {
+        for (int i_col_batch = (col_batches & ~0x3); i_col_batch < (col_batches & 0x3);
+             i_col_batch++) {
             for (int i_out_ch = 0; i_out_ch < output_ch; i_out_ch++) {
                 int32_t row_len_tmp = row_len;
 

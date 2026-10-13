@@ -62,25 +62,31 @@
                    updation of filter cofficients are saturted.
  */
 
-void arm_lms_norm_q15(arm_lms_norm_instance_q15* S, const q15_t* pSrc, q15_t* pRef, q15_t* pOut, q15_t* pErr, uint32_t blockSize) {
-    q15_t*   pState  = S->pState;                   /* State pointer */
-    q15_t*   pCoeffs = S->pCoeffs;                  /* Coefficient pointer */
-    q15_t*   pStateCurnt;                           /* Points to the current sample of the state */
-    q15_t *  px, *pb;                               /* Temporary pointers for state and coefficient buffers */
-    q15_t    mu      = S->mu;                       /* Adaptive factor */
-    uint32_t numTaps = S->numTaps;                  /* Number of filter coefficients in the filter */
-    uint32_t tapCnt, blkCnt;                        /* Loop counters */
-    q63_t    acc;                                   /* Accumulator */
-    q31_t    energy;                                /* Energy of the input */
-    q15_t    e = 0, d = 0;                          /* Error, reference data sample */
-    q15_t    w = 0, in;                             /* Weight factor and state */
-    q15_t    x0;                                    /* Temporary variable to hold input sample */
-    q15_t    errorXmu, oneByEnergy;                 /* Temporary variables to store error and mu product and reciprocal of energy */
-    q15_t    postShift;                             /* Post shift to be applied to weight after reciprocal calculation */
-    q31_t    coef;                                  /* Temporary variable for coefficient */
-    q31_t    acc_l, acc_h;                          /* Temporary input */
-    int32_t  lShift = (15 - (int32_t)S->postShift); /*  Post shift  */
-    int32_t  uShift = (32 - lShift);
+void arm_lms_norm_q15(arm_lms_norm_instance_q15* S,
+                      const q15_t*               pSrc,
+                      q15_t*                     pRef,
+                      q15_t*                     pOut,
+                      q15_t*                     pErr,
+                      uint32_t                   blockSize) {
+    q15_t*   pState  = S->pState;  /* State pointer */
+    q15_t*   pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    q15_t*   pStateCurnt;          /* Points to the current sample of the state */
+    q15_t *  px, *pb;              /* Temporary pointers for state and coefficient buffers */
+    q15_t    mu      = S->mu;      /* Adaptive factor */
+    uint32_t numTaps = S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t tapCnt, blkCnt;       /* Loop counters */
+    q63_t    acc;                  /* Accumulator */
+    q31_t    energy;               /* Energy of the input */
+    q15_t    e = 0, d = 0;         /* Error, reference data sample */
+    q15_t    w = 0, in;            /* Weight factor and state */
+    q15_t    x0;                   /* Temporary variable to hold input sample */
+    q15_t    errorXmu,
+        oneByEnergy; /* Temporary variables to store error and mu product and reciprocal of energy */
+    q15_t   postShift;    /* Post shift to be applied to weight after reciprocal calculation */
+    q31_t   coef;         /* Temporary variable for coefficient */
+    q31_t   acc_l, acc_h; /* Temporary input */
+    int32_t lShift = (15 - (int32_t)S->postShift); /*  Post shift  */
+    int32_t uShift = (32 - lShift);
 
     energy = S->energy;
     x0     = S->x0;

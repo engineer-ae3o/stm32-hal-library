@@ -73,7 +73,9 @@
 #define R21 vgetq_lane(q2, 3)
 #define R22 ro22
 
-void arm_rotation2quaternion_f32(const float32_t* pInputRotations, float32_t* pOutputQuaternions, uint32_t nbQuaternions) {
+void arm_rotation2quaternion_f32(const float32_t* pInputRotations,
+                                 float32_t*       pOutputQuaternions,
+                                 uint32_t         nbQuaternions) {
     float32_t ro22, trace;
     f32x4_t   q1, q2, q;
 
@@ -150,7 +152,9 @@ void arm_rotation2quaternion_f32(const float32_t* pInputRotations, float32_t* pO
 }
 
 #else
-void arm_rotation2quaternion_f32(const float32_t* pInputRotations, float32_t* pOutputQuaternions, uint32_t nbQuaternions) {
+void arm_rotation2quaternion_f32(const float32_t* pInputRotations,
+                                 float32_t*       pOutputQuaternions,
+                                 uint32_t         nbQuaternions) {
     uint32_t nb;
     for (nb = 0; nb < nbQuaternions; nb++) {
         const float32_t* r = &pInputRotations[nb * 9];

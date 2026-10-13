@@ -30,11 +30,20 @@
 #include "dsp/transform_functions.h"
 
 
-void arm_radix4_butterfly_q15(q15_t* pSrc16, uint32_t fftLen, const q15_t* pCoef16, uint32_t twidCoefModifier);
+void arm_radix4_butterfly_q15(q15_t*       pSrc16,
+                              uint32_t     fftLen,
+                              const q15_t* pCoef16,
+                              uint32_t     twidCoefModifier);
 
-void arm_radix4_butterfly_inverse_q15(q15_t* pSrc16, uint32_t fftLen, const q15_t* pCoef16, uint32_t twidCoefModifier);
+void arm_radix4_butterfly_inverse_q15(q15_t*       pSrc16,
+                                      uint32_t     fftLen,
+                                      const q15_t* pCoef16,
+                                      uint32_t     twidCoefModifier);
 
-void arm_bitreversal_q15(q15_t* pSrc, uint32_t fftLen, uint16_t bitRevFactor, const uint16_t* pBitRevTab);
+void arm_bitreversal_q15(q15_t*          pSrc,
+                         uint32_t        fftLen,
+                         uint16_t        bitRevFactor,
+                         const uint16_t* pBitRevTab);
 
 /**
   @ingroup groupTransforms
@@ -124,7 +133,10 @@ void arm_cfft_radix4_q15(const arm_cfft_radix4_instance_q15* S, q15_t* pSrc) {
   @return        none
  */
 
-void arm_radix4_butterfly_q15(q15_t* pSrc16, uint32_t fftLen, const q15_t* pCoef16, uint32_t twidCoefModifier) {
+void arm_radix4_butterfly_q15(q15_t*       pSrc16,
+                              uint32_t     fftLen,
+                              const q15_t* pCoef16,
+                              uint32_t     twidCoefModifier) {
 
 #if defined(ARM_MATH_DSP)
 
@@ -172,8 +184,9 @@ void arm_radix4_butterfly_q15(q15_t* pSrc16, uint32_t fftLen, const q15_t* pCoef
         /* Read ya (real), xa(imag) input */
         T = read_q15x2(pSi0);
         T = __SHADD16(T, 0); /* this is just a SIMD arithmetic shift right by 1 */
-        T = __SHADD16(T, 0); /* it turns out doing this twice is 2 cycles, the alternative takes 3 cycles */
-                             /*
+        T = __SHADD16(
+            T, 0); /* it turns out doing this twice is 2 cycles, the alternative takes 3 cycles */
+                   /*
     in = ((int16_t) (T & 0xFFFF)) >> 2;       // alternative code that takes 3 cycles
      T = ((T >> 2) & 0xFFFF0000) | (in & 0xFFFF);
 */
@@ -977,7 +990,10 @@ void arm_radix4_butterfly_q15(q15_t* pSrc16, uint32_t fftLen, const q15_t* pCoef
  *
  */
 
-void arm_radix4_butterfly_inverse_q15(q15_t* pSrc16, uint32_t fftLen, const q15_t* pCoef16, uint32_t twidCoefModifier) {
+void arm_radix4_butterfly_inverse_q15(q15_t*       pSrc16,
+                                      uint32_t     fftLen,
+                                      const q15_t* pCoef16,
+                                      uint32_t     twidCoefModifier) {
 
 #if defined(ARM_MATH_DSP)
 

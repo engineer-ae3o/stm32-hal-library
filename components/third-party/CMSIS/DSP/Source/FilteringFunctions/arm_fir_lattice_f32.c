@@ -118,7 +118,10 @@
   @return        none
  */
 
-void arm_fir_lattice_f32(const arm_fir_lattice_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_fir_lattice_f32(const arm_fir_lattice_instance_f32* S,
+                         const float32_t*                    pSrc,
+                         float32_t*                          pDst,
+                         uint32_t                            blockSize) {
     float32_t*       pState  = S->pState;            /* State pointer */
     const float32_t* pCoeffs = S->pCoeffs;           /* Coefficient pointer */
     float32_t*       px;                             /* Temporary state pointer */

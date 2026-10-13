@@ -62,7 +62,8 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_filtering.h"
 
-void arm_conv_q15(const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
+void arm_conv_q15(
+    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
     const q15_t* pIn1 = pSrcA; /* inputA pointer               */
     const q15_t* pIn2 = pSrcB; /* inputB pointer               */
     /*
@@ -206,20 +207,21 @@ void arm_conv_q15(const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint
     }
 }
 #else
-void arm_conv_q15(const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
+void arm_conv_q15(
+    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
 
 #if defined(ARM_MATH_DSP)
 
-    const q15_t* pIn1;                               /* InputA pointer */
-    const q15_t* pIn2;                               /* InputB pointer */
-    q15_t*       pOut = pDst;                        /* Output pointer */
-    q63_t        sum, acc0, acc1, acc2, acc3;        /* Accumulators */
-    const q15_t* px;                                 /* Intermediate inputA pointer */
-    const q15_t* py;                                 /* Intermediate inputB pointer */
-    const q15_t *pSrc1, *pSrc2;                      /* Intermediate pointers */
-    q31_t        x0, x1, x2, x3, c0;                 /* Temporary input variables to hold state and coefficient values */
-    uint32_t     blockSize1, blockSize2, blockSize3; /* Loop counters */
-    uint32_t     j, k, count, blkCnt;                /* Loop counters */
+    const q15_t* pIn1;                        /* InputA pointer */
+    const q15_t* pIn2;                        /* InputB pointer */
+    q15_t*       pOut = pDst;                 /* Output pointer */
+    q63_t        sum, acc0, acc1, acc2, acc3; /* Accumulators */
+    const q15_t* px;                          /* Intermediate inputA pointer */
+    const q15_t* py;                          /* Intermediate inputB pointer */
+    const q15_t *pSrc1, *pSrc2;               /* Intermediate pointers */
+    q31_t x0, x1, x2, x3, c0; /* Temporary input variables to hold state and coefficient values */
+    uint32_t blockSize1, blockSize2, blockSize3; /* Loop counters */
+    uint32_t j, k, count, blkCnt;                /* Loop counters */
 
     /* The algorithm implementation is based on the lengths of the inputs. */
     /* srcB is always made to slide across srcA. */

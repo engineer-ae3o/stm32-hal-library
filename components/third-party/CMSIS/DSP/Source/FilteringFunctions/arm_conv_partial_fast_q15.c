@@ -53,8 +53,13 @@
                    Refer to \ref arm_conv_partial_q15() for a slower implementation of this function which uses a 64-bit accumulator to avoid wrap around distortion.
  */
 
-arm_status arm_conv_partial_fast_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst, uint32_t firstIndex, uint32_t numPoints) {
+arm_status arm_conv_partial_fast_q15(const q15_t* pSrcA,
+                                     uint32_t     srcALen,
+                                     const q15_t* pSrcB,
+                                     uint32_t     srcBLen,
+                                     q15_t*       pDst,
+                                     uint32_t     firstIndex,
+                                     uint32_t     numPoints) {
     const q15_t* pIn1;                        /* InputA pointer */
     const q15_t* pIn2;                        /* InputB pointer */
     q15_t*       pOut = pDst;                 /* Output pointer */
@@ -98,9 +103,12 @@ arm_status arm_conv_partial_fast_q15(
      * the first and last indices of the output samples to be calculated. */
         check      = firstIndex + numPoints;
         blockSize3 = ((int32_t)check > (int32_t)srcALen) ? (int32_t)check - (int32_t)srcALen : 0;
-        blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1) ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen : blockSize3;
+        blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1)
+                         ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen
+                         : blockSize3;
         blockSize1 = ((int32_t)srcBLen - 1) - (int32_t)firstIndex;
-        blockSize1 = (blockSize1 > 0) ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints) : 0;
+        blockSize1 =
+            (blockSize1 > 0) ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints) : 0;
         blockSize2 = (int32_t)check - ((blockSize3 + blockSize1) + (int32_t)firstIndex);
         blockSize2 = (blockSize2 > 0) ? blockSize2 : 0;
 

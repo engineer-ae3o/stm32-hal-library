@@ -65,7 +65,9 @@
                    - \ref ARM_MATH_SIZE_MISMATCH : Matrix size check failed
  */
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
-arm_status arm_mat_scale_f32(const arm_matrix_instance_f32* pSrc, float32_t scale, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_scale_f32(const arm_matrix_instance_f32* pSrc,
+                             float32_t                      scale,
+                             arm_matrix_instance_f32*       pDst) {
     arm_status status; /* status of matrix scaling     */
 #ifdef ARM_MATH_MATRIX_CHECK
     /* Check for matrix mismatch condition */
@@ -125,7 +127,9 @@ arm_status arm_mat_scale_f32(const arm_matrix_instance_f32* pSrc, float32_t scal
 }
 #else
 #if defined(ARM_MATH_NEON_EXPERIMENTAL)
-arm_status arm_mat_scale_f32(const arm_matrix_instance_f32* pSrc, float32_t scale, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_scale_f32(const arm_matrix_instance_f32* pSrc,
+                             float32_t                      scale,
+                             arm_matrix_instance_f32*       pDst) {
     float32_t* pIn  = pSrc->pData; /* input data matrix pointer */
     float32_t* pOut = pDst->pData; /* output data matrix pointer */
     uint32_t   numSamples;         /* total number of elements in the matrix */
@@ -187,7 +191,9 @@ arm_status arm_mat_scale_f32(const arm_matrix_instance_f32* pSrc, float32_t scal
     return (status);
 }
 #else
-arm_status arm_mat_scale_f32(const arm_matrix_instance_f32* pSrc, float32_t scale, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_scale_f32(const arm_matrix_instance_f32* pSrc,
+                             float32_t                      scale,
+                             arm_matrix_instance_f32*       pDst) {
     float32_t* pIn  = pSrc->pData; /* Input data matrix pointer */
     float32_t* pOut = pDst->pData; /* Output data matrix pointer */
     uint32_t   numSamples;         /* Total number of elements in the matrix */

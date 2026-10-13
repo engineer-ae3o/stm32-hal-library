@@ -68,7 +68,8 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
         return ARM_MATH_SIZE_MISMATCH;
     }
 
-    if (ctx->buf == NULL && arm_depthwise_conv_s8_opt_get_buffer_size(input_dims, filter_dims) > 0) {
+    if (ctx->buf == NULL &&
+        arm_depthwise_conv_s8_opt_get_buffer_size(input_dims, filter_dims) > 0) {
         return ARM_MATH_ARGUMENT_ERROR;
     }
 #ifdef ARM_MATH_DSP
@@ -100,15 +101,19 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
     const int32_t kernel_size  = kernel_x * kernel_y;
 
     /* This part implements the im2col function */
-    for (int i_out_y = 0, base_idx_y = -pad_y; i_out_y < output_y; base_idx_y += stride_y, i_out_y++) {
-        for (int i_out_x = 0, base_idx_x = -pad_x; i_out_x < output_x; base_idx_x += stride_x, i_out_x++) {
+    for (int i_out_y = 0, base_idx_y = -pad_y; i_out_y < output_y;
+         base_idx_y += stride_y, i_out_y++) {
+        for (int i_out_x = 0, base_idx_x = -pad_x; i_out_x < output_x;
+             base_idx_x += stride_x, i_out_x++) {
             for (int i_ker_y = base_idx_y; i_ker_y < base_idx_y + kernel_y; i_ker_y++) {
                 for (int i_ker_x = base_idx_x; i_ker_x < base_idx_x + kernel_x; i_ker_x++) {
                     if (i_ker_y < 0 || i_ker_y >= input_y || i_ker_x < 0 || i_ker_x >= input_x) {
                         arm_memset_q7(lhs_buffer, (int8_t)-input_offset, (uint32_t)input_ch);
                         padded = 1;
                     } else {
-                        arm_memcpy_q7(lhs_buffer, input + (i_ker_y * input_x + i_ker_x) * input_ch, (uint32_t)input_ch);
+                        arm_memcpy_q7(lhs_buffer,
+                                      input + (i_ker_y * input_x + i_ker_x) * input_ch,
+                                      (uint32_t)input_ch);
                     }
                     lhs_buffer += input_ch;
                 }
@@ -157,7 +162,8 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
         int32_t loop_count = (input_ch + 3) / 4;
 
         int32_t num_ch_to_process = input_ch;
-        for (int i_loop_cnt = 0, offset = 0; i_loop_cnt < loop_count; num_ch_to_process -= 4, offset += 4, i_loop_cnt++) {
+        for (int i_loop_cnt = 0, offset = 0; i_loop_cnt < loop_count;
+             num_ch_to_process -= 4, offset += 4, i_loop_cnt++) {
             const int8_t* col_0 = lhs_buffer + (kernel_size * input_ch * i_buf) + offset;
             const int8_t* row_0 = kernel + offset;
             int32x4_t     out_0 = vldrwq_s32(&bias[offset]);
@@ -228,7 +234,11 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
                     if (idx_x < 0 || idx_x >= input_x) {
                         memset(&col_buffer[index], 0, input_ch * sizeof(q15_t));
                     } else {
-                        arm_q7_to_q15_with_offset((q7_t*)input + (idx_y * input_x + idx_x) * input_ch, &col_buffer[index], input_ch, input_offset);
+                        arm_q7_to_q15_with_offset((q7_t*)input +
+                                                      (idx_y * input_x + idx_x) * input_ch,
+                                                  &col_buffer[index],
+                                                  input_ch,
+                                                  input_offset);
                     }
                     index += input_ch;
                 }
@@ -362,14 +372,25 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
 #endif
 #else
     /* Run the following code as reference implementation for Cortex-M0 and Cortex-M3 */
-    return arm_depthwise_conv_s8(ctx, dw_conv_params, quant_params, input_dims, input, filter_dims, kernel, bias_dims, bias, output_dims, output);
+    return arm_depthwise_conv_s8(ctx,
+                                 dw_conv_params,
+                                 quant_params,
+                                 input_dims,
+                                 input,
+                                 filter_dims,
+                                 kernel,
+                                 bias_dims,
+                                 bias,
+                                 output_dims,
+                                 output);
 #endif /* ARM_MATH_MVEI | ARM_MATH_DSP */
 
     /* Return to application */
     return ARM_MATH_SUCCESS;
 }
 
-int32_t arm_depthwise_conv_s8_opt_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims) {
+int32_t arm_depthwise_conv_s8_opt_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                                  const cmsis_nn_dims* filter_dims) {
 #if defined(ARM_MATH_MVEI)
     /* The + 4 accounts for out of bounds read of the lhs buffers in the *_nt_t_* functions.  */
     return (2 * input_dims->c * filter_dims->w * filter_dims->h) * (int32_t)sizeof(int16_t) + 4;

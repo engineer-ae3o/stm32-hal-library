@@ -69,9 +69,10 @@ void arm_rms_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult) {
 
 #else
 void arm_rms_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult) {
-    uint32_t blkCnt;  /* Loop counter */
-    uint64_t sum = 0; /* Temporary result storage (can get never negative. changed type from q63 to uint64 */
-    q31_t    in;      /* Temporary variable to store input value */
+    uint32_t blkCnt; /* Loop counter */
+    uint64_t sum =
+        0; /* Temporary result storage (can get never negative. changed type from q63 to uint64 */
+    q31_t in; /* Temporary variable to store input value */
 
 #if defined(ARM_MATH_LOOPUNROLL)
 

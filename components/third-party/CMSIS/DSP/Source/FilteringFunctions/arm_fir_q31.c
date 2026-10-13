@@ -61,140 +61,143 @@
 #include "arm_helium_utils.h"
 
 
-#define FIR_Q31_CORE(nbAcc, nbVecTaps, pSample, vecCoeffs)                                                                                           \
-    for (int j = 0; j < nbAcc; j++) {                                                                                                                \
-        const q31_t* pSmp = &pSamples[j];                                                                                                            \
-        q31x4_t      vecIn0;                                                                                                                         \
-        q63_t        acc[4];                                                                                                                         \
-                                                                                                                                                     \
-        acc[j] = 0;                                                                                                                                  \
-        for (int i = 0; i < nbVecTaps; i++) {                                                                                                        \
-            vecIn0 = vld1q(pSmp + 4 * i);                                                                                                            \
-            acc[j] = vrmlaldavhaq(acc[j], vecIn0, vecCoeffs[i]);                                                                                     \
-        }                                                                                                                                            \
-        *pOutput++ = (q31_t)asrl(acc[j], 23);                                                                                                        \
+#define FIR_Q31_CORE(nbAcc, nbVecTaps, pSample, vecCoeffs)                                         \
+    for (int j = 0; j < nbAcc; j++) {                                                              \
+        const q31_t* pSmp = &pSamples[j];                                                          \
+        q31x4_t      vecIn0;                                                                       \
+        q63_t        acc[4];                                                                       \
+                                                                                                   \
+        acc[j] = 0;                                                                                \
+        for (int i = 0; i < nbVecTaps; i++) {                                                      \
+            vecIn0 = vld1q(pSmp + 4 * i);                                                          \
+            acc[j] = vrmlaldavhaq(acc[j], vecIn0, vecCoeffs[i]);                                   \
+        }                                                                                          \
+        *pOutput++ = (q31_t)asrl(acc[j], 23);                                                      \
     }
 
 
-#define FIR_Q31_CORE_STR_PARTIAL(nbAcc, nbVecTaps, pSample, vecCoeffs)                                                                               \
-    for (int j = 0; j < nbAcc; j++) {                                                                                                                \
-        const q31_t* pSmp = &pSamples[j];                                                                                                            \
-        q31x4_t      vecIn0;                                                                                                                         \
-                                                                                                                                                     \
-        acc[j] = 0;                                                                                                                                  \
-        for (int i = 0; i < nbVecTaps; i++) {                                                                                                        \
-            vecIn0 = vld1q(pSmp + 4 * i);                                                                                                            \
-            acc[j] = vrmlaldavhaq(acc[j], vecIn0, vecCoeffs[i]);                                                                                     \
-        }                                                                                                                                            \
-        *arm_fir_partial_accu_ptr++ = acc[j];                                                                                                        \
+#define FIR_Q31_CORE_STR_PARTIAL(nbAcc, nbVecTaps, pSample, vecCoeffs)                             \
+    for (int j = 0; j < nbAcc; j++) {                                                              \
+        const q31_t* pSmp = &pSamples[j];                                                          \
+        q31x4_t      vecIn0;                                                                       \
+                                                                                                   \
+        acc[j] = 0;                                                                                \
+        for (int i = 0; i < nbVecTaps; i++) {                                                      \
+            vecIn0 = vld1q(pSmp + 4 * i);                                                          \
+            acc[j] = vrmlaldavhaq(acc[j], vecIn0, vecCoeffs[i]);                                   \
+        }                                                                                          \
+        *arm_fir_partial_accu_ptr++ = acc[j];                                                      \
     }
 
 
-#define FIR_Q31_CORE_LD_PARTIAL(nbAcc, nbVecTaps, pSample, vecCoeffs)                                                                                \
-    for (int j = 0; j < nbAcc; j++) {                                                                                                                \
-        const q31_t* pSmp = &pSamples[j];                                                                                                            \
-        q31x4_t      vecIn0;                                                                                                                         \
-                                                                                                                                                     \
-        acc[j] = *arm_fir_partial_accu_ptr++;                                                                                                        \
-                                                                                                                                                     \
-        for (int i = 0; i < nbVecTaps; i++) {                                                                                                        \
-            vecIn0 = vld1q(pSmp + 4 * i);                                                                                                            \
-            acc[j] = vrmlaldavhaq(acc[j], vecIn0, vecCoeffs[i]);                                                                                     \
-        }                                                                                                                                            \
-        *pOutput++ = (q31_t)asrl(acc[j], 23);                                                                                                        \
+#define FIR_Q31_CORE_LD_PARTIAL(nbAcc, nbVecTaps, pSample, vecCoeffs)                              \
+    for (int j = 0; j < nbAcc; j++) {                                                              \
+        const q31_t* pSmp = &pSamples[j];                                                          \
+        q31x4_t      vecIn0;                                                                       \
+                                                                                                   \
+        acc[j] = *arm_fir_partial_accu_ptr++;                                                      \
+                                                                                                   \
+        for (int i = 0; i < nbVecTaps; i++) {                                                      \
+            vecIn0 = vld1q(pSmp + 4 * i);                                                          \
+            acc[j] = vrmlaldavhaq(acc[j], vecIn0, vecCoeffs[i]);                                   \
+        }                                                                                          \
+        *pOutput++ = (q31_t)asrl(acc[j], 23);                                                      \
     }
 
 
-#define FIR_Q31_MAIN_CORE()                                                                                                                          \
-    {                                                                                                                                                \
-        q31_t*       pRefStatePtr = S->pState + 2 * ROUND_UP(blockSize, 4);                                                                          \
-        q31_t*       pState       = pRefStatePtr; /* State pointer */                                                                                \
-        const q31_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */                                                                          \
-        q31_t*       pStateCur;                   /* Points to the current sample of the state */                                                    \
-        const q31_t* pSamples;                    /* Temporary pointer to the sample buffer */                                                       \
-        q31_t*       pOutput;                     /* Temporary pointer to the output buffer */                                                       \
-        const q31_t* pTempSrc;                    /* Temporary pointer to the source data */                                                         \
-        q31_t*       pTempDest;                   /* Temporary pointer to the destination buffer */                                                  \
-        uint32_t     numTaps = S->numTaps;        /* Number of filter coefficients in the filter */                                                  \
-        int32_t      blkCnt;                                                                                                                         \
-                                                                                                                                                     \
+#define FIR_Q31_MAIN_CORE()                                                                        \
+    {                                                                                              \
+        q31_t*       pRefStatePtr = S->pState + 2 * ROUND_UP(blockSize, 4);                        \
+        q31_t*       pState       = pRefStatePtr; /* State pointer */                              \
+        const q31_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */                        \
+        q31_t*       pStateCur;                   /* Points to the current sample of the state */  \
+        const q31_t* pSamples;                    /* Temporary pointer to the sample buffer */     \
+        q31_t*       pOutput;                     /* Temporary pointer to the output buffer */     \
+        const q31_t* pTempSrc;                    /* Temporary pointer to the source data */       \
+        q31_t*       pTempDest;            /* Temporary pointer to the destination buffer */       \
+        uint32_t     numTaps = S->numTaps; /* Number of filter coefficients in the filter */       \
+        int32_t      blkCnt;                                                                       \
+                                                                                                   \
         /*                                                                                   \
      * load coefs                                                                        \
-     */                                                       \
-        q31x4_t vecCoeffs[NBVECTAPS];                                                                                                                \
-                                                                                                                                                     \
-        for (int i = 0; i < NBVECTAPS; i++) vecCoeffs[i] = vld1q(pCoeffs + 4 * i);                                                                   \
-                                                                                                                                                     \
+     */     \
+        q31x4_t vecCoeffs[NBVECTAPS];                                                              \
+                                                                                                   \
+        for (int i = 0; i < NBVECTAPS; i++) vecCoeffs[i] = vld1q(pCoeffs + 4 * i);                 \
+                                                                                                   \
         /*                                                                                   \
      * pState points to state array which contains previous frame (numTaps - 1) samples  \
      * pStateCur points to the location where the new input data should be written       \
-     */                                                       \
-        pStateCur = &(pState[(numTaps - 1u)]);                                                                                                       \
-        pTempSrc  = pSrc;                                                                                                                            \
-        pSamples  = pState;                                                                                                                          \
-        pOutput   = pDst;                                                                                                                            \
-                                                                                                                                                     \
-        blkCnt = blockSize >> 2;                                                                                                                     \
-        while (blkCnt > 0) {                                                                                                                         \
+     */     \
+        pStateCur = &(pState[(numTaps - 1u)]);                                                     \
+        pTempSrc  = pSrc;                                                                          \
+        pSamples  = pState;                                                                        \
+        pOutput   = pDst;                                                                          \
+                                                                                                   \
+        blkCnt = blockSize >> 2;                                                                   \
+        while (blkCnt > 0) {                                                                       \
             /*                                                                               \
          * Save 4 input samples in the history buffer                                    \
-         */                                                       \
-            vstrwq_s32(pStateCur, vldrwq_s32(pTempSrc));                                                                                             \
-            pStateCur += 4;                                                                                                                          \
-            pTempSrc += 4;                                                                                                                           \
-                                                                                                                                                     \
-            FIR_Q31_CORE(4, NBVECTAPS, pSamples, vecCoeffs);                                                                                         \
-                                                                                                                                                     \
-            pSamples += 4;                                                                                                                           \
+         */     \
+            vstrwq_s32(pStateCur, vldrwq_s32(pTempSrc));                                           \
+            pStateCur += 4;                                                                        \
+            pTempSrc += 4;                                                                         \
+                                                                                                   \
+            FIR_Q31_CORE(4, NBVECTAPS, pSamples, vecCoeffs);                                       \
+                                                                                                   \
+            pSamples += 4;                                                                         \
             /*                                                                               \
          * Decrement the sample block loop counter                                       \
-         */                                                       \
-            blkCnt--;                                                                                                                                \
-        }                                                                                                                                            \
-                                                                                                                                                     \
-        /* tail */                                                                                                                                   \
-        int32_t residual = blockSize & 3;                                                                                                            \
-        switch (residual) {                                                                                                                          \
-            case 3: {                                                                                                                                \
-                for (int i = 0; i < residual; i++) *pStateCur++ = *pTempSrc++;                                                                       \
-                                                                                                                                                     \
-                FIR_Q31_CORE(3, NBVECTAPS, pSamples, vecCoeffs);                                                                                     \
-            } break;                                                                                                                                 \
-                                                                                                                                                     \
-            case 2: {                                                                                                                                \
-                for (int i = 0; i < residual; i++) *pStateCur++ = *pTempSrc++;                                                                       \
-                                                                                                                                                     \
-                FIR_Q31_CORE(2, NBVECTAPS, pSamples, vecCoeffs);                                                                                     \
-            } break;                                                                                                                                 \
-                                                                                                                                                     \
-            case 1: {                                                                                                                                \
-                for (int i = 0; i < residual; i++) *pStateCur++ = *pTempSrc++;                                                                       \
-                                                                                                                                                     \
-                FIR_Q31_CORE(1, NBVECTAPS, pSamples, vecCoeffs);                                                                                     \
-            } break;                                                                                                                                 \
-        }                                                                                                                                            \
-                                                                                                                                                     \
+         */     \
+            blkCnt--;                                                                              \
+        }                                                                                          \
+                                                                                                   \
+        /* tail */                                                                                 \
+        int32_t residual = blockSize & 3;                                                          \
+        switch (residual) {                                                                        \
+            case 3: {                                                                              \
+                for (int i = 0; i < residual; i++) *pStateCur++ = *pTempSrc++;                     \
+                                                                                                   \
+                FIR_Q31_CORE(3, NBVECTAPS, pSamples, vecCoeffs);                                   \
+            } break;                                                                               \
+                                                                                                   \
+            case 2: {                                                                              \
+                for (int i = 0; i < residual; i++) *pStateCur++ = *pTempSrc++;                     \
+                                                                                                   \
+                FIR_Q31_CORE(2, NBVECTAPS, pSamples, vecCoeffs);                                   \
+            } break;                                                                               \
+                                                                                                   \
+            case 1: {                                                                              \
+                for (int i = 0; i < residual; i++) *pStateCur++ = *pTempSrc++;                     \
+                                                                                                   \
+                FIR_Q31_CORE(1, NBVECTAPS, pSamples, vecCoeffs);                                   \
+            } break;                                                                               \
+        }                                                                                          \
+                                                                                                   \
         /*                                                                                   \
      * Copy the samples back into the history buffer start                               \
-     */                                                       \
-        pTempSrc  = &pState[blockSize];                                                                                                              \
-        pTempDest = pState;                                                                                                                          \
-                                                                                                                                                     \
-        blkCnt = (numTaps - 1) >> 2;                                                                                                                 \
-        while (blkCnt > 0) {                                                                                                                         \
-            vstrwq_s32(pTempDest, vldrwq_s32(pTempSrc));                                                                                             \
-            pTempSrc += 4;                                                                                                                           \
-            pTempDest += 4;                                                                                                                          \
-            blkCnt--;                                                                                                                                \
-        }                                                                                                                                            \
-        blkCnt = (numTaps - 1) & 3;                                                                                                                  \
-        if (blkCnt > 0) {                                                                                                                            \
-            mve_pred16_t p0 = vctp32q(blkCnt);                                                                                                       \
-            vstrwq_p_s32(pTempDest, vldrwq_z_s32(pTempSrc, p0), p0);                                                                                 \
-        }                                                                                                                                            \
+     */     \
+        pTempSrc  = &pState[blockSize];                                                            \
+        pTempDest = pState;                                                                        \
+                                                                                                   \
+        blkCnt = (numTaps - 1) >> 2;                                                               \
+        while (blkCnt > 0) {                                                                       \
+            vstrwq_s32(pTempDest, vldrwq_s32(pTempSrc));                                           \
+            pTempSrc += 4;                                                                         \
+            pTempDest += 4;                                                                        \
+            blkCnt--;                                                                              \
+        }                                                                                          \
+        blkCnt = (numTaps - 1) & 3;                                                                \
+        if (blkCnt > 0) {                                                                          \
+            mve_pred16_t p0 = vctp32q(blkCnt);                                                     \
+            vstrwq_p_s32(pTempDest, vldrwq_z_s32(pTempSrc, p0), p0);                               \
+        }                                                                                          \
     }
 
-static void arm_fir_q31_1_4_mve(const arm_fir_instance_q31* S, const q31_t* __restrict pSrc, q31_t* __restrict pDst, uint32_t blockSize) {
+static void arm_fir_q31_1_4_mve(const arm_fir_instance_q31* S,
+                                const q31_t* __restrict pSrc,
+                                q31_t* __restrict pDst,
+                                uint32_t blockSize) {
     q31_t*       pRefStatePtr = S->pState + 2 * ROUND_UP(blockSize, 4);
     q31_t*       pState       = pRefStatePtr; /* State pointer */
     const q31_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */
@@ -350,7 +353,10 @@ static void arm_fir_q31_1_4_mve(const arm_fir_instance_q31* S, const q31_t* __re
 }
 
 
-static void arm_fir_q31_5_8_mve(const arm_fir_instance_q31* S, const q31_t* __restrict pSrc, q31_t* __restrict pDst, uint32_t blockSize) {
+static void arm_fir_q31_5_8_mve(const arm_fir_instance_q31* S,
+                                const q31_t* __restrict pSrc,
+                                q31_t* __restrict pDst,
+                                uint32_t blockSize) {
 #define NBTAPS 8
 #define NBVECTAPS (NBTAPS / 4)
     FIR_Q31_MAIN_CORE();
@@ -359,7 +365,10 @@ static void arm_fir_q31_5_8_mve(const arm_fir_instance_q31* S, const q31_t* __re
 }
 
 
-static void arm_fir_q31_9_12_mve(const arm_fir_instance_q31* S, const q31_t* __restrict pSrc, q31_t* __restrict pDst, uint32_t blockSize) {
+static void arm_fir_q31_9_12_mve(const arm_fir_instance_q31* S,
+                                 const q31_t* __restrict pSrc,
+                                 q31_t* __restrict pDst,
+                                 uint32_t blockSize) {
 #define NBTAPS 12
 #define NBVECTAPS (NBTAPS / 4)
     FIR_Q31_MAIN_CORE();
@@ -368,7 +377,10 @@ static void arm_fir_q31_9_12_mve(const arm_fir_instance_q31* S, const q31_t* __r
 }
 
 
-static void arm_fir_q31_13_16_mve(const arm_fir_instance_q31* S, const q31_t* __restrict pSrc, q31_t* __restrict pDst, uint32_t blockSize) {
+static void arm_fir_q31_13_16_mve(const arm_fir_instance_q31* S,
+                                  const q31_t* __restrict pSrc,
+                                  q31_t* __restrict pDst,
+                                  uint32_t blockSize) {
 #define NBTAPS 16
 #define NBVECTAPS (NBTAPS / 4)
     FIR_Q31_MAIN_CORE();
@@ -377,7 +389,10 @@ static void arm_fir_q31_13_16_mve(const arm_fir_instance_q31* S, const q31_t* __
 }
 
 
-static void arm_fir_q31_17_20_mve(const arm_fir_instance_q31* S, const q31_t* __restrict pSrc, q31_t* __restrict pDst, uint32_t blockSize) {
+static void arm_fir_q31_17_20_mve(const arm_fir_instance_q31* S,
+                                  const q31_t* __restrict pSrc,
+                                  q31_t* __restrict pDst,
+                                  uint32_t blockSize) {
 #define NBTAPS 20
 #define NBVECTAPS (NBTAPS / 4)
     FIR_Q31_MAIN_CORE();
@@ -386,7 +401,10 @@ static void arm_fir_q31_17_20_mve(const arm_fir_instance_q31* S, const q31_t* __
 }
 
 
-static void arm_fir_q31_21_24_mve(const arm_fir_instance_q31* S, const q31_t* __restrict pSrc, q31_t* __restrict pDst, uint32_t blockSize) {
+static void arm_fir_q31_21_24_mve(const arm_fir_instance_q31* S,
+                                  const q31_t* __restrict pSrc,
+                                  q31_t* __restrict pDst,
+                                  uint32_t blockSize) {
 #define NBTAPS 24
 #define NBVECTAPS (NBTAPS / 4)
     FIR_Q31_MAIN_CORE();
@@ -395,7 +413,10 @@ static void arm_fir_q31_21_24_mve(const arm_fir_instance_q31* S, const q31_t* __
 }
 
 
-static void arm_fir_q31_25_28_mve(const arm_fir_instance_q31* S, const q31_t* __restrict pSrc, q31_t* __restrict pDst, uint32_t blockSize) {
+static void arm_fir_q31_25_28_mve(const arm_fir_instance_q31* S,
+                                  const q31_t* __restrict pSrc,
+                                  q31_t* __restrict pDst,
+                                  uint32_t blockSize) {
 #define NBTAPS 28
 #define NBVECTAPS (NBTAPS / 4)
     FIR_Q31_MAIN_CORE();
@@ -403,7 +424,10 @@ static void arm_fir_q31_25_28_mve(const arm_fir_instance_q31* S, const q31_t* __
 #undef NBTAPS
 }
 
-static void arm_fir_q31_29_32_mve(const arm_fir_instance_q31* S, const q31_t* __restrict pSrc, q31_t* __restrict pDst, uint32_t blockSize) {
+static void arm_fir_q31_29_32_mve(const arm_fir_instance_q31* S,
+                                  const q31_t* __restrict pSrc,
+                                  q31_t* __restrict pDst,
+                                  uint32_t blockSize) {
     q31_t*       pRefStatePtr = S->pState + 2 * ROUND_UP(blockSize, 4);
     q31_t*       pState       = pRefStatePtr; /* State pointer */
     const q31_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */
@@ -596,7 +620,10 @@ static void arm_fir_q31_29_32_mve(const arm_fir_instance_q31* S, const q31_t* __
 }
 
 
-void arm_fir_q31(const arm_fir_instance_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+void arm_fir_q31(const arm_fir_instance_q31* S,
+                 const q31_t*                pSrc,
+                 q31_t*                      pDst,
+                 uint32_t                    blockSize) {
     q31_t*       pRefStatePtr = S->pState + 2 * ROUND_UP(blockSize, 4);
     q31_t*       pState       = pRefStatePtr; /* State pointer */
     const q31_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */
@@ -845,7 +872,10 @@ void arm_fir_q31(const arm_fir_instance_q31* S, const q31_t* pSrc, q31_t* pDst, 
 }
 
 #else
-void arm_fir_q31(const arm_fir_instance_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+void arm_fir_q31(const arm_fir_instance_q31* S,
+                 const q31_t*                pSrc,
+                 q31_t*                      pDst,
+                 uint32_t                    blockSize) {
     q31_t*       pState  = S->pState;  /* State pointer */
     const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     q31_t*       pStateCurnt;          /* Points to the current sample of the state */

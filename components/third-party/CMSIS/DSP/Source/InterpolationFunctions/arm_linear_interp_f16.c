@@ -106,7 +106,8 @@ float16_t arm_linear_interp_f16(arm_linear_interp_instance_f16* S, float16_t x) 
         y1 = pYData[i + 1];
 
         /* Calculation of output */
-        y = (_Float16)y0 + ((_Float16)x - (_Float16)x0) * (((_Float16)y1 - (_Float16)y0) / ((_Float16)x1 - (_Float16)x0));
+        y = (_Float16)y0 + ((_Float16)x - (_Float16)x0) *
+                               (((_Float16)y1 - (_Float16)y0) / ((_Float16)x1 - (_Float16)x0));
     }
 
     /* returns output value */

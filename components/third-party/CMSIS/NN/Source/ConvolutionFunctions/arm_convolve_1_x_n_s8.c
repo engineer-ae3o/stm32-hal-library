@@ -104,24 +104,28 @@ arm_status arm_convolve_1_x_n_s8(const cmsis_nn_context*                  ctx,
 
                     (void)arm_nn_mat_mul_core_1x_s8((ker_end_idx[0] - ker_begin_idx[0]) * input_ch,
                                                     input_data + input_begin_idx[0] * input_ch,
-                                                    filter_data + (input_ch * kernel_x * i_out_ch) + (ker_begin_idx[0] * input_ch),
+                                                    filter_data + (input_ch * kernel_x * i_out_ch) +
+                                                        (ker_begin_idx[0] * input_ch),
                                                     &sum_row[0],
                                                     &acc[0]);
                     (void)arm_nn_mat_mul_core_1x_s8((ker_end_idx[1] - ker_begin_idx[1]) * input_ch,
                                                     input_data + input_begin_idx[1] * input_ch,
-                                                    filter_data + (input_ch * kernel_x * i_out_ch) + (ker_begin_idx[1] * input_ch),
+                                                    filter_data + (input_ch * kernel_x * i_out_ch) +
+                                                        (ker_begin_idx[1] * input_ch),
                                                     &sum_row[1],
                                                     &acc[1]);
 
                     (void)arm_nn_mat_mul_core_1x_s8((ker_end_idx[2] - ker_begin_idx[2]) * input_ch,
                                                     input_data + input_begin_idx[2] * input_ch,
-                                                    filter_data + (input_ch * kernel_x * i_out_ch) + (ker_begin_idx[2] * input_ch),
+                                                    filter_data + (input_ch * kernel_x * i_out_ch) +
+                                                        (ker_begin_idx[2] * input_ch),
                                                     &sum_row[2],
                                                     &acc[2]);
 
                     (void)arm_nn_mat_mul_core_1x_s8((ker_end_idx[3] - ker_begin_idx[3]) * input_ch,
                                                     input_data + input_begin_idx[3] * input_ch,
-                                                    filter_data + (input_ch * kernel_x * i_out_ch) + (ker_begin_idx[3] * input_ch),
+                                                    filter_data + (input_ch * kernel_x * i_out_ch) +
+                                                        (ker_begin_idx[3] * input_ch),
                                                     &sum_row[3],
                                                     &acc[3]);
 
@@ -158,8 +162,17 @@ arm_status arm_convolve_1_x_n_s8(const cmsis_nn_context*                  ctx,
     }
 
 #else
-    status = arm_convolve_s8(
-        ctx, conv_params, quant_params, input_dims, input_data, filter_dims, filter_data, bias_dims, bias_data, output_dims, output_data);
+    status = arm_convolve_s8(ctx,
+                             conv_params,
+                             quant_params,
+                             input_dims,
+                             input_data,
+                             filter_dims,
+                             filter_data,
+                             bias_dims,
+                             bias_data,
+                             output_dims,
+                             output_data);
 #endif
 
 out:
@@ -167,7 +180,8 @@ out:
     return status;
 }
 
-int32_t arm_convolve_1_x_n_s8_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims) {
+int32_t arm_convolve_1_x_n_s8_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                              const cmsis_nn_dims* filter_dims) {
 #if !defined(ARM_MATH_MVEI)
     return (2 * input_dims->c * filter_dims->w * filter_dims->h) * sizeof(int16_t);
 #else

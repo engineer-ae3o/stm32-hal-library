@@ -51,7 +51,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-void arm_svm_rbf_predict_f32(const arm_svm_rbf_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_rbf_predict_f32(const arm_svm_rbf_instance_f32* S,
+                             const float32_t*                in,
+                             int32_t*                        pResult) {
     /* inlined Matrix x Vector function interleaved with dot prod */
     uint32_t         numRows  = S->nbOfSupportVectors;
     uint32_t         numCols  = S->vectorDimension;
@@ -239,7 +241,8 @@ void arm_svm_rbf_predict_f32(const arm_svm_rbf_instance_f32* S, const float32_t*
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc0), vtmp, 0);
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc1), vtmp, 1);
 
-        vSum = vfmaq_m_f32(vSum, vld1q(pDualCoef), vexpq_f32(vmulq_n_f32(vtmp, -S->gamma)), vctp32q(2));
+        vSum = vfmaq_m_f32(
+            vSum, vld1q(pDualCoef), vexpq_f32(vmulq_n_f32(vtmp, -S->gamma)), vctp32q(2));
         pDualCoef += 2;
 
         pSrcA += numCols * 2;
@@ -298,7 +301,8 @@ void arm_svm_rbf_predict_f32(const arm_svm_rbf_instance_f32* S, const float32_t*
         f32x4_t vtmp = vuninitializedq_f32();
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc0), vtmp, 0);
 
-        vSum = vfmaq_m_f32(vSum, vld1q(pDualCoef), vexpq_f32(vmulq_n_f32(vtmp, -S->gamma)), vctp32q(1));
+        vSum = vfmaq_m_f32(
+            vSum, vld1q(pDualCoef), vexpq_f32(vmulq_n_f32(vtmp, -S->gamma)), vctp32q(1));
     }
 
 
@@ -312,7 +316,9 @@ void arm_svm_rbf_predict_f32(const arm_svm_rbf_instance_f32* S, const float32_t*
 
 #include "NEMath.h"
 
-void arm_svm_rbf_predict_f32(const arm_svm_rbf_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_rbf_predict_f32(const arm_svm_rbf_instance_f32* S,
+                             const float32_t*                in,
+                             int32_t*                        pResult) {
     float32_t sum = S->intercept;
 
     float32_t   dot;
@@ -473,7 +479,9 @@ void arm_svm_rbf_predict_f32(const arm_svm_rbf_instance_f32* S, const float32_t*
     *pResult = S->classes[STEP(sum)];
 }
 #else
-void arm_svm_rbf_predict_f32(const arm_svm_rbf_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_rbf_predict_f32(const arm_svm_rbf_instance_f32* S,
+                             const float32_t*                in,
+                             int32_t*                        pResult) {
     float32_t        sum = S->intercept;
     float32_t        dot = 0;
     uint32_t         i, j;

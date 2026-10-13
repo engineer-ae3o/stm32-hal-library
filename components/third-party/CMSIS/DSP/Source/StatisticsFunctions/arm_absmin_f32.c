@@ -62,7 +62,10 @@
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "arm_helium_utils.h"
-void arm_absmin_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex) {
+void arm_absmin_f32(const float32_t* pSrc,
+                    uint32_t         blockSize,
+                    float32_t*       pResult,
+                    uint32_t*        pIndex) {
     int32_t          blkCnt; /* loop counters */
     f32x4_t          vecSrc;
     float32_t const* pSrcVec;
@@ -138,7 +141,10 @@ void arm_absmin_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResul
 
 #else
 #if defined(ARM_MATH_LOOPUNROLL)
-void arm_absmin_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex) {
+void arm_absmin_f32(const float32_t* pSrc,
+                    uint32_t         blockSize,
+                    float32_t*       pResult,
+                    uint32_t*        pIndex) {
     float32_t cur_absmin, out;  /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* Loop counter */
     uint32_t  index;            /* index of maximum value */
@@ -154,8 +160,9 @@ void arm_absmin_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResul
 
     while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0.0f) ? cur_absmin : -cur_absmin; /* compare for the extrema value */
-        if (cur_absmin < out) {                                      /* Update the extrema value and it's index */
+        cur_absmin =
+            (cur_absmin > 0.0f) ? cur_absmin : -cur_absmin; /* compare for the extrema value */
+        if (cur_absmin < out) { /* Update the extrema value and it's index */
             out      = cur_absmin;
             outIndex = index + 1U;
         }
@@ -208,7 +215,10 @@ void arm_absmin_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResul
     *pIndex  = outIndex;
 }
 #else
-void arm_absmin_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex) {
+void arm_absmin_f32(const float32_t* pSrc,
+                    uint32_t         blockSize,
+                    float32_t*       pResult,
+                    uint32_t*        pIndex) {
     float32_t minVal, out;      /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* Loop counter */
 

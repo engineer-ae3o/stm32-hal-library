@@ -32,7 +32,8 @@
 #include <math.h>
 
 
-extern void arm_boolean_distance_TF_FT(const uint32_t* pA, const uint32_t* pB, uint32_t numberOfBools, uint32_t* cTF, uint32_t* cFT);
+extern void arm_boolean_distance_TF_FT(
+    const uint32_t* pA, const uint32_t* pB, uint32_t numberOfBools, uint32_t* cTF, uint32_t* cFT);
 
 /**
   @addtogroup BoolDist

@@ -51,7 +51,10 @@
  */
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx, const q31_t* pSrcReal, q31_t* pCmplxDst, uint32_t numSamples) {
+void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx,
+                             const q31_t* pSrcReal,
+                             q31_t*       pCmplxDst,
+                             uint32_t     numSamples) {
 
     static const uint32_t stride_cmplx_x_real_32[4] = {0, 0, 1, 1};
     q31x4_t               rVec;
@@ -96,7 +99,10 @@ void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx, const q31_t* pSrcReal, q31_
     }
 }
 #else
-void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx, const q31_t* pSrcReal, q31_t* pCmplxDst, uint32_t numSamples) {
+void arm_cmplx_mult_real_q31(const q31_t* pSrcCmplx,
+                             const q31_t* pSrcReal,
+                             q31_t*       pCmplxDst,
+                             uint32_t     numSamples) {
     uint32_t blkCnt; /* Loop counter */
     q31_t    in;     /* Temporary variable */
 

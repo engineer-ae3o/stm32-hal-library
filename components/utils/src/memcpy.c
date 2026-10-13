@@ -19,7 +19,8 @@ static volatile memcpy_state_t* s_dma_done_flag = NULL;
 
 
 // Public API
-hal_err_t dma_memcpy(void* dest, const void* src, uint16_t len, volatile memcpy_state_t* dma_done_flag) {
+hal_err_t
+dma_memcpy(void* dest, const void* src, uint16_t len, volatile memcpy_state_t* dma_done_flag) {
     if (dest == NULL || src == NULL || len == 0 || dma_done_flag == NULL || dest == src) {
         return HAL_ERR_INVALID_ARG;
     }

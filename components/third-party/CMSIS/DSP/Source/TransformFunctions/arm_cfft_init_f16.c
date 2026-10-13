@@ -26,9 +26,9 @@
  * limitations under the License.
  */
 
-#define FFTINIT(EXT, SIZE)                                                                                                                           \
-    S->bitRevLength = arm_cfft_sR_##EXT##_len##SIZE.bitRevLength;                                                                                    \
-    S->pBitRevTable = arm_cfft_sR_##EXT##_len##SIZE.pBitRevTable;                                                                                    \
+#define FFTINIT(EXT, SIZE)                                                                         \
+    S->bitRevLength = arm_cfft_sR_##EXT##_len##SIZE.bitRevLength;                                  \
+    S->pBitRevTable = arm_cfft_sR_##EXT##_len##SIZE.pBitRevTable;                                  \
     S->pTwiddle     = arm_cfft_sR_##EXT##_len##SIZE.pTwiddle;
 
 /**
@@ -59,11 +59,13 @@
 #include "arm_vec_fft.h"
 #include "arm_mve_tables_f16.h"
 
-arm_status arm_cfft_radix4by2_rearrange_twiddles_f16(arm_cfft_instance_f16* S, int twidCoefModifier) {
+arm_status arm_cfft_radix4by2_rearrange_twiddles_f16(arm_cfft_instance_f16* S,
+                                                     int                    twidCoefModifier) {
 
     switch (S->fftLen >> (twidCoefModifier - 1)) {
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_TWIDDLECOEF_F16_4096)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_TWIDDLECOEF_F16_4096)
         case 4096U:
             S->rearranged_twiddle_tab_stride1_arr = rearranged_twiddle_tab_stride1_arr_4096_f16;
             S->rearranged_twiddle_stride1         = rearranged_twiddle_stride1_4096_f16;
@@ -76,8 +78,8 @@ arm_status arm_cfft_radix4by2_rearrange_twiddles_f16(arm_cfft_instance_f16* S, i
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_TWIDDLECOEF_F16_1024) ||                                     \
-    defined(ARM_TABLE_TWIDDLECOEF_F16_2048)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_TWIDDLECOEF_F16_1024) || defined(ARM_TABLE_TWIDDLECOEF_F16_2048)
         case 1024U:
             S->rearranged_twiddle_tab_stride1_arr = rearranged_twiddle_tab_stride1_arr_1024_f16;
             S->rearranged_twiddle_stride1         = rearranged_twiddle_stride1_1024_f16;
@@ -90,7 +92,8 @@ arm_status arm_cfft_radix4by2_rearrange_twiddles_f16(arm_cfft_instance_f16* S, i
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_TWIDDLECOEF_F16_256) || defined(ARM_TABLE_TWIDDLECOEF_F16_512)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_TWIDDLECOEF_F16_256) || defined(ARM_TABLE_TWIDDLECOEF_F16_512)
         case 256U:
             S->rearranged_twiddle_tab_stride1_arr = rearranged_twiddle_tab_stride1_arr_256_f16;
             S->rearranged_twiddle_stride1         = rearranged_twiddle_stride1_256_f16;
@@ -104,7 +107,8 @@ arm_status arm_cfft_radix4by2_rearrange_twiddles_f16(arm_cfft_instance_f16* S, i
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_TWIDDLECOEF_F16_64) || defined(ARM_TABLE_TWIDDLECOEF_F16_128)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_TWIDDLECOEF_F16_64) || defined(ARM_TABLE_TWIDDLECOEF_F16_128)
         case 64U:
             S->rearranged_twiddle_tab_stride1_arr = rearranged_twiddle_tab_stride1_arr_64_f16;
             S->rearranged_twiddle_stride1         = rearranged_twiddle_stride1_64_f16;
@@ -117,7 +121,8 @@ arm_status arm_cfft_radix4by2_rearrange_twiddles_f16(arm_cfft_instance_f16* S, i
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_TWIDDLECOEF_F16_16) || defined(ARM_TABLE_TWIDDLECOEF_F16_32)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_TWIDDLECOEF_F16_16) || defined(ARM_TABLE_TWIDDLECOEF_F16_32)
         case 16U:
             S->rearranged_twiddle_tab_stride1_arr = rearranged_twiddle_tab_stride1_arr_16_f16;
             S->rearranged_twiddle_stride1         = rearranged_twiddle_stride1_16_f16;
@@ -154,7 +159,7 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
     /*  Initializations of Instance structure depending on the FFT length */
     switch (S->fftLen) {
         /*  Initializations of structure parameters for 4096 point FFT */
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                                                                                \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
     (defined(ARM_TABLE_BITREVIDX_FXT_4096) && defined(ARM_TABLE_TWIDDLECOEF_F16_4096))
         case 4096U:
             /*  Initialise the bit reversal table modifier */
@@ -165,7 +170,7 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                                                                                \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
     (defined(ARM_TABLE_BITREVIDX_FXT_2048) && defined(ARM_TABLE_TWIDDLECOEF_F16_2048))
             /*  Initializations of structure parameters for 2048 point FFT */
         case 2048U:
@@ -177,7 +182,7 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                                                                                \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
     (defined(ARM_TABLE_BITREVIDX_FXT_1024) && defined(ARM_TABLE_TWIDDLECOEF_F16_1024))
             /*  Initializations of structure parameters for 1024 point FFT */
         case 1024U:
@@ -189,7 +194,8 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_BITREVIDX_FXT_512) && defined(ARM_TABLE_TWIDDLECOEF_F16_512))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_BITREVIDX_FXT_512) && defined(ARM_TABLE_TWIDDLECOEF_F16_512))
             /*  Initializations of structure parameters for 512 point FFT */
         case 512U:
             /*  Initialise the bit reversal table modifier */
@@ -200,7 +206,8 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_BITREVIDX_FXT_256) && defined(ARM_TABLE_TWIDDLECOEF_F16_256))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_BITREVIDX_FXT_256) && defined(ARM_TABLE_TWIDDLECOEF_F16_256))
         case 256U:
             S->bitRevLength = ARMBITREVINDEXTABLE_FIXED_256_TABLE_LENGTH;
             S->pBitRevTable = (uint16_t*)armBitRevIndexTable_fixed_256;
@@ -209,7 +216,8 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_BITREVIDX_FXT_128) && defined(ARM_TABLE_TWIDDLECOEF_F16_128))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_BITREVIDX_FXT_128) && defined(ARM_TABLE_TWIDDLECOEF_F16_128))
         case 128U:
             S->bitRevLength = ARMBITREVINDEXTABLE_FIXED_128_TABLE_LENGTH;
             S->pBitRevTable = (uint16_t*)armBitRevIndexTable_fixed_128;
@@ -218,7 +226,8 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_BITREVIDX_FXT_64) && defined(ARM_TABLE_TWIDDLECOEF_F16_64))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_BITREVIDX_FXT_64) && defined(ARM_TABLE_TWIDDLECOEF_F16_64))
         case 64U:
             S->bitRevLength = ARMBITREVINDEXTABLE_FIXED_64_TABLE_LENGTH;
             S->pBitRevTable = (uint16_t*)armBitRevIndexTable_fixed_64;
@@ -227,7 +236,8 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_BITREVIDX_FXT_32) && defined(ARM_TABLE_TWIDDLECOEF_F16_32))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_BITREVIDX_FXT_32) && defined(ARM_TABLE_TWIDDLECOEF_F16_32))
         case 32U:
             S->bitRevLength = ARMBITREVINDEXTABLE_FIXED_32_TABLE_LENGTH;
             S->pBitRevTable = (uint16_t*)armBitRevIndexTable_fixed_32;
@@ -236,7 +246,8 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_BITREVIDX_FXT_16) && defined(ARM_TABLE_TWIDDLECOEF_F16_16))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_BITREVIDX_FXT_16) && defined(ARM_TABLE_TWIDDLECOEF_F16_16))
         case 16U:
             /*  Initializations of structure parameters for 16 point FFT */
             S->bitRevLength = ARMBITREVINDEXTABLE_FIXED_16_TABLE_LENGTH;
@@ -272,7 +283,7 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
 
     /*  Initializations of Instance structure depending on the FFT length */
     switch (S->fftLen) {
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                                                                                \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
     (defined(ARM_TABLE_TWIDDLECOEF_F16_4096) && defined(ARM_TABLE_BITREVIDX_FLT_4096))
             /*  Initializations of structure parameters for 4096 point FFT */
         case 4096U:
@@ -281,7 +292,7 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                                                                                \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
     (defined(ARM_TABLE_TWIDDLECOEF_F16_2048) && defined(ARM_TABLE_BITREVIDX_FLT_2048))
             /*  Initializations of structure parameters for 2048 point FFT */
         case 2048U:
@@ -291,7 +302,7 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                                                                                \
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
     (defined(ARM_TABLE_TWIDDLECOEF_F16_1024) && defined(ARM_TABLE_BITREVIDX_FLT_1024))
             /*  Initializations of structure parameters for 1024 point FFT */
         case 1024U:
@@ -301,7 +312,8 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F16_512) && defined(ARM_TABLE_BITREVIDX_FLT_512))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_512) && defined(ARM_TABLE_BITREVIDX_FLT_512))
             /*  Initializations of structure parameters for 512 point FFT */
         case 512U:
             /*  Initialise the bit reversal table modifier */
@@ -309,31 +321,36 @@ arm_status arm_cfft_init_f16(arm_cfft_instance_f16* S, uint16_t fftLen) {
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F16_256) && defined(ARM_TABLE_BITREVIDX_FLT_256))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_256) && defined(ARM_TABLE_BITREVIDX_FLT_256))
         case 256U:
             FFTINIT(f16, 256);
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F16_128) && defined(ARM_TABLE_BITREVIDX_FLT_128))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_128) && defined(ARM_TABLE_BITREVIDX_FLT_128))
         case 128U:
             FFTINIT(f16, 128);
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F16_64) && defined(ARM_TABLE_BITREVIDX_FLT_64))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_64) && defined(ARM_TABLE_BITREVIDX_FLT_64))
         case 64U:
             FFTINIT(f16, 64);
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F16_32) && defined(ARM_TABLE_BITREVIDX_FLT_32))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_32) && defined(ARM_TABLE_BITREVIDX_FLT_32))
         case 32U:
             FFTINIT(f16, 32);
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || (defined(ARM_TABLE_TWIDDLECOEF_F16_16) && defined(ARM_TABLE_BITREVIDX_FLT_16))
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    (defined(ARM_TABLE_TWIDDLECOEF_F16_16) && defined(ARM_TABLE_BITREVIDX_FLT_16))
         case 16U:
             /*  Initializations of structure parameters for 16 point FFT */
             FFTINIT(f16, 16);

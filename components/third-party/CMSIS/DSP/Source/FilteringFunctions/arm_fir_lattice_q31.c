@@ -49,7 +49,10 @@
                    In order to avoid overflows the input signal must be scaled down by 2*log2(numStages) bits.
  */
 
-void arm_fir_lattice_q31(const arm_fir_lattice_instance_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+void arm_fir_lattice_q31(const arm_fir_lattice_instance_q31* S,
+                         const q31_t*                        pSrc,
+                         q31_t*                              pDst,
+                         uint32_t                            blockSize) {
     q31_t*       pState  = S->pState;            /* State pointer */
     const q31_t* pCoeffs = S->pCoeffs;           /* Coefficient pointer */
     q31_t*       px;                             /* Temporary state pointer */

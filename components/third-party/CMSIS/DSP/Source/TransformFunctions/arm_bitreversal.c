@@ -39,7 +39,10 @@
   @return        none
  */
 
-void arm_bitreversal_f32(float32_t* pSrc, uint16_t fftSize, uint16_t bitRevFactor, const uint16_t* pBitRevTab) {
+void arm_bitreversal_f32(float32_t*      pSrc,
+                         uint16_t        fftSize,
+                         uint16_t        bitRevFactor,
+                         const uint16_t* pBitRevTab) {
     uint16_t  fftLenBy2, fftLenBy2p1;
     uint16_t  i, j;
     float32_t in;
@@ -101,7 +104,10 @@ void arm_bitreversal_f32(float32_t* pSrc, uint16_t fftSize, uint16_t bitRevFacto
   @return        none
 */
 
-void arm_bitreversal_q31(q31_t* pSrc, uint32_t fftLen, uint16_t bitRevFactor, const uint16_t* pBitRevTab) {
+void arm_bitreversal_q31(q31_t*          pSrc,
+                         uint32_t        fftLen,
+                         uint16_t        bitRevFactor,
+                         const uint16_t* pBitRevTab) {
     uint32_t fftLenBy2, fftLenBy2p1, i, j;
     q31_t    in;
 
@@ -162,7 +168,10 @@ void arm_bitreversal_q31(q31_t* pSrc, uint32_t fftLen, uint16_t bitRevFactor, co
   @return        none
 */
 
-void arm_bitreversal_q15(q15_t* pSrc16, uint32_t fftLen, uint16_t bitRevFactor, const uint16_t* pBitRevTab) {
+void arm_bitreversal_q15(q15_t*          pSrc16,
+                         uint32_t        fftLen,
+                         uint16_t        bitRevFactor,
+                         const uint16_t* pBitRevTab) {
     q31_t*   pSrc = (q31_t*)pSrc16;
     q31_t    in;
     uint32_t fftLenBy2, fftLenBy2p1;

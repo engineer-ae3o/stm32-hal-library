@@ -172,7 +172,11 @@ bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin) {
     return false;
 }
 
-hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigger_t edge, gpio_exti_cb_t callback, void* arg) {
+hal_err_t gpio_set_interrupt(GPIO_TypeDef*       port,
+                             gpio_pin_t          pin,
+                             gpio_edge_trigger_t edge,
+                             gpio_exti_cb_t      callback,
+                             void*               arg) {
     // Extract rising and falling bits from edge variable
     const bool rising  = (uint8_t)edge & 0x1U;
     const bool falling = ((uint8_t)edge >> 0b1U) & 0x1U;
@@ -207,7 +211,8 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigg
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
     // Set external interrupt configuration register
-    SYSCFG->EXTICR[reg_idx] = (SYSCFG->EXTICR[reg_idx] & ~(0xFUL << bit_pos)) | (uint32_t)(port_code << bit_pos);
+    SYSCFG->EXTICR[reg_idx] =
+        (SYSCFG->EXTICR[reg_idx] & ~(0xFUL << bit_pos)) | (uint32_t)(port_code << bit_pos);
 
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(0b1UL << pin);

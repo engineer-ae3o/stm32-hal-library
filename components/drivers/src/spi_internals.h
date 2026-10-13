@@ -11,58 +11,58 @@ extern "C" {
 #include "utils/err.h"
 
 
-#define ENABLE_SPI()                                                                                                                                 \
-    do {                                                                                                                                             \
-        handle->CR1 |= SPI_CR1_SPE;                                                                                                                  \
-        __DSB();                                                                                                                                     \
+#define ENABLE_SPI()                                                                               \
+    do {                                                                                           \
+        handle->CR1 |= SPI_CR1_SPE;                                                                \
+        __DSB();                                                                                   \
     } while (0)
 
-#define DISABLE_SPI()                                                                                                                                \
-    do {                                                                                                                                             \
-        handle->CR1 &= ~SPI_CR1_SPE;                                                                                                                 \
-        __DSB();                                                                                                                                     \
+#define DISABLE_SPI()                                                                              \
+    do {                                                                                           \
+        handle->CR1 &= ~SPI_CR1_SPE;                                                               \
+        __DSB();                                                                                   \
     } while (0)
 
-#define ENABLE_I2S()                                                                                                                                 \
-    do {                                                                                                                                             \
-        handle->I2SCFGR |= SPI_I2SCFGR_I2SE;                                                                                                         \
-        __DSB();                                                                                                                                     \
+#define ENABLE_I2S()                                                                               \
+    do {                                                                                           \
+        handle->I2SCFGR |= SPI_I2SCFGR_I2SE;                                                       \
+        __DSB();                                                                                   \
     } while (0)
 
-#define DISABLE_I2S()                                                                                                                                \
-    do {                                                                                                                                             \
-        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;                                                                                                        \
-        __DSB();                                                                                                                                     \
+#define DISABLE_I2S()                                                                              \
+    do {                                                                                           \
+        handle->I2SCFGR &= ~SPI_I2SCFGR_I2SE;                                                      \
+        __DSB();                                                                                   \
     } while (0)
 
-#define ENABLE_SPI_DMA()                                                                                                                             \
-    do {                                                                                                                                             \
-        handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);                                                                                          \
+#define ENABLE_SPI_DMA()                                                                           \
+    do {                                                                                           \
+        handle->CR2 |= (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);                                        \
     } while (0)
 
-#define DISABLE_SPI_DMA()                                                                                                                            \
-    do {                                                                                                                                             \
-        handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);                                                                                         \
+#define DISABLE_SPI_DMA()                                                                          \
+    do {                                                                                           \
+        handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN);                                       \
     } while (0)
 
-#define ENABLE_SPI_TX_DMA()                                                                                                                          \
-    do {                                                                                                                                             \
-        handle->CR2 |= SPI_CR2_TXDMAEN;                                                                                                              \
+#define ENABLE_SPI_TX_DMA()                                                                        \
+    do {                                                                                           \
+        handle->CR2 |= SPI_CR2_TXDMAEN;                                                            \
     } while (0)
 
-#define DISABLE_SPI_TX_DMA()                                                                                                                         \
-    do {                                                                                                                                             \
-        handle->CR2 &= ~SPI_CR2_TXDMAEN;                                                                                                             \
+#define DISABLE_SPI_TX_DMA()                                                                       \
+    do {                                                                                           \
+        handle->CR2 &= ~SPI_CR2_TXDMAEN;                                                           \
     } while (0)
 
-#define ENABLE_SPI_RX_DMA()                                                                                                                          \
-    do {                                                                                                                                             \
-        handle->CR2 |= SPI_CR2_RXDMAEN;                                                                                                              \
+#define ENABLE_SPI_RX_DMA()                                                                        \
+    do {                                                                                           \
+        handle->CR2 |= SPI_CR2_RXDMAEN;                                                            \
     } while (0)
 
-#define DISABLE_SPI_RX_DMA()                                                                                                                         \
-    do {                                                                                                                                             \
-        handle->CR2 &= ~SPI_CR2_RXDMAEN;                                                                                                             \
+#define DISABLE_SPI_RX_DMA()                                                                       \
+    do {                                                                                           \
+        handle->CR2 &= ~SPI_CR2_RXDMAEN;                                                           \
     } while (0)
 
 

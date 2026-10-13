@@ -57,9 +57,9 @@ __attribute__((cmse_nonsecure_entry)) uint32_t TZ_InitContextSystem_S(void) {
     }
 
     for (n = 0U; n < TZ_PROCESS_STACK_SLOTS; n++) {
-        ProcessStackInfo[n].sp              = 0U;
-        ProcessStackInfo[n].sp_limit        = (uint32_t)&ProcessStackMemory[n];
-        ProcessStackInfo[n].sp_top          = (uint32_t)&ProcessStackMemory[n] + TZ_PROCESS_STACK_SIZE;
+        ProcessStackInfo[n].sp       = 0U;
+        ProcessStackInfo[n].sp_limit = (uint32_t)&ProcessStackMemory[n];
+        ProcessStackInfo[n].sp_top   = (uint32_t)&ProcessStackMemory[n] + TZ_PROCESS_STACK_SIZE;
         *((uint32_t*)ProcessStackMemory[n]) = n + 1U;
     }
     *((uint32_t*)ProcessStackMemory[--n]) = 0xFFFFFFFFU;

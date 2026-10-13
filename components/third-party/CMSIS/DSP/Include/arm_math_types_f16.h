@@ -60,7 +60,8 @@ typedef __fp16 float16_t;
 #define ARM_FLOAT16_SUPPORTED
 #endif
 
-#if defined(ARM_MATH_NEON) || (defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)) /* floating point vector*/
+#if defined(ARM_MATH_NEON) ||                                                                      \
+    (defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)) /* floating point vector*/
 
 #if defined(ARM_MATH_MVE_FLOAT16) || defined(ARM_MATH_NEON_FLOAT16)
 

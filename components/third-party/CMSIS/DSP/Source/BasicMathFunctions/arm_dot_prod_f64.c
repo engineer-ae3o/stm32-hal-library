@@ -46,7 +46,10 @@
   @return        none
  */
 
-void arm_dot_prod_f64(const float64_t* pSrcA, const float64_t* pSrcB, uint32_t blockSize, float64_t* result) {
+void arm_dot_prod_f64(const float64_t* pSrcA,
+                      const float64_t* pSrcB,
+                      uint32_t         blockSize,
+                      float64_t*       result) {
     uint32_t  blkCnt;   /* Loop counter */
     float64_t sum = 0.; /* Temporary return variable */
 

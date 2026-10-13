@@ -54,7 +54,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S,
+                                    const float32_t*                       in,
+                                    int32_t*                               pResult) {
     /* inlined Matrix x Vector function interleaved with dot prod */
     uint32_t         numRows  = S->nbOfSupportVectors;
     uint32_t         numCols  = S->vectorDimension;
@@ -152,7 +154,10 @@ void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S, co
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc2), vtmp, 2);
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc3), vtmp, 3);
 
-        vSum = vfmaq_f32(vSum, vld1q(pDualCoef), arm_vec_exponent_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0), S->degree));
+        vSum = vfmaq_f32(
+            vSum,
+            vld1q(pDualCoef),
+            arm_vec_exponent_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0), S->degree));
 
         pDualCoef += 4;
 
@@ -225,7 +230,11 @@ void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S, co
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc0), vtmp, 0);
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc1), vtmp, 1);
 
-        vSum = vfmaq_m_f32(vSum, vld1q(pDualCoef), arm_vec_exponent_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0), S->degree), vctp32q(2));
+        vSum = vfmaq_m_f32(
+            vSum,
+            vld1q(pDualCoef),
+            arm_vec_exponent_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0), S->degree),
+            vctp32q(2));
 
         pDualCoef += 2;
         pSrcA += numCols * 2;
@@ -281,7 +290,11 @@ void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S, co
          */
         f32x4_t vtmp = vuninitializedq_f32();
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc0), vtmp, 0);
-        vSum = vfmaq_m_f32(vSum, vld1q(pDualCoef), arm_vec_exponent_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0), S->degree), vctp32q(1));
+        vSum         = vfmaq_m_f32(
+            vSum,
+            vld1q(pDualCoef),
+            arm_vec_exponent_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0), S->degree),
+            vctp32q(1));
     }
     sum += vecAddAcrossF32Mve(vSum);
 
@@ -291,7 +304,9 @@ void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S, co
 
 #else
 #if defined(ARM_MATH_NEON)
-void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S,
+                                    const float32_t*                       in,
+                                    int32_t*                               pResult) {
     float32_t sum = S->intercept;
 
     float32_t   dot;
@@ -437,7 +452,9 @@ void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S, co
     *pResult = S->classes[STEP(sum)];
 }
 #else
-void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_polynomial_predict_f32(const arm_svm_polynomial_instance_f32* S,
+                                    const float32_t*                       in,
+                                    int32_t*                               pResult) {
     float32_t        sum = S->intercept;
     float32_t        dot = 0;
     uint32_t         i, j;

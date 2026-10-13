@@ -62,8 +62,8 @@ arm_status arm_convolve_1x1_s8_fast(const cmsis_nn_context*                  ctx
                                     const int32_t*                           bias_data,
                                     const cmsis_nn_dims*                     output_dims,
                                     q7_t*                                    output_data) {
-    if (input_dims->c % 4 != 0 || conv_params->padding.w != 0 || conv_params->padding.h != 0 || conv_params->stride.w != 1 ||
-        conv_params->stride.h != 1) {
+    if (input_dims->c % 4 != 0 || conv_params->padding.w != 0 || conv_params->padding.h != 0 ||
+        conv_params->stride.w != 1 || conv_params->stride.h != 1) {
         return ARM_MATH_SIZE_MISMATCH;
     }
 
@@ -85,8 +85,15 @@ arm_status arm_convolve_1x1_s8_fast(const cmsis_nn_context*                  ctx
 
     for (int i_items = 0; i_items <= (col_len - 4); i_items += 4) {
 
-        output_data = arm_nn_mat_mul_core_4x_s8(
-            input_ch, input_ch, input_data + i_items * input_ch, filter_data, output_ch, conv_params, quant_params, bias_data, output_data);
+        output_data = arm_nn_mat_mul_core_4x_s8(input_ch,
+                                                input_ch,
+                                                input_data + i_items * input_ch,
+                                                filter_data,
+                                                output_ch,
+                                                conv_params,
+                                                quant_params,
+                                                bias_data,
+                                                output_data);
     }
 
     /* Handle left over elements */
@@ -94,7 +101,11 @@ arm_status arm_convolve_1x1_s8_fast(const cmsis_nn_context*                  ctx
         for (int i_out_ch = 0; i_out_ch < output_ch; i_out_ch++) {
             int32_t sum_row = 0;
             int32_t acc;
-            (void)arm_nn_mat_mul_core_1x_s8(input_ch, input_data + i_items * input_ch, filter_data + i_out_ch * input_ch, &sum_row, &acc);
+            (void)arm_nn_mat_mul_core_1x_s8(input_ch,
+                                            input_data + i_items * input_ch,
+                                            filter_data + i_out_ch * input_ch,
+                                            &sum_row,
+                                            &acc);
             if (bias_data) {
                 acc += bias_data[i_out_ch];
             }

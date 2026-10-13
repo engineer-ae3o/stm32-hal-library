@@ -72,7 +72,11 @@ void arm_cmplx_mag_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSampl
    * @param[out] realResult  real part of the result returned here
    * @param[out] imagResult  imaginary part of the result returned here
    */
-void arm_cmplx_dot_prod_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t numSamples, float16_t* realResult, float16_t* imagResult);
+void arm_cmplx_dot_prod_f16(const float16_t* pSrcA,
+                            const float16_t* pSrcB,
+                            uint32_t         numSamples,
+                            float16_t*       realResult,
+                            float16_t*       imagResult);
 
 /**
    * @brief  Floating-point complex-by-real multiplication
@@ -81,7 +85,10 @@ void arm_cmplx_dot_prod_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint
    * @param[out] pCmplxDst   points to the complex output vector
    * @param[in]  numSamples  number of samples in each vector
    */
-void arm_cmplx_mult_real_f16(const float16_t* pSrcCmplx, const float16_t* pSrcReal, float16_t* pCmplxDst, uint32_t numSamples);
+void arm_cmplx_mult_real_f16(const float16_t* pSrcCmplx,
+                             const float16_t* pSrcReal,
+                             float16_t*       pCmplxDst,
+                             uint32_t         numSamples);
 
 /**
    * @brief  Floating-point complex-by-complex multiplication
@@ -90,7 +97,10 @@ void arm_cmplx_mult_real_f16(const float16_t* pSrcCmplx, const float16_t* pSrcRe
    * @param[out] pDst        points to the output vector
    * @param[in]  numSamples  number of complex samples in each vector
    */
-void arm_cmplx_mult_cmplx_f16(const float16_t* pSrcA, const float16_t* pSrcB, float16_t* pDst, uint32_t numSamples);
+void arm_cmplx_mult_cmplx_f16(const float16_t* pSrcA,
+                              const float16_t* pSrcB,
+                              float16_t*       pDst,
+                              uint32_t         numSamples);
 
 #endif /*defined(ARM_FLOAT16_SUPPORTED)*/
 #ifdef __cplusplus

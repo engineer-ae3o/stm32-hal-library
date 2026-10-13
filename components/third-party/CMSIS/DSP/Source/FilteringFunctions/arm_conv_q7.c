@@ -60,7 +60,8 @@
 
 #include "arm_vec_filtering.h"
 
-void arm_conv_q7(const q7_t* pSrcA, uint32_t srcALen, const q7_t* pSrcB, uint32_t srcBLen, q7_t* pDst) {
+void arm_conv_q7(
+    const q7_t* pSrcA, uint32_t srcALen, const q7_t* pSrcB, uint32_t srcBLen, q7_t* pDst) {
     const q7_t* pIn1 = pSrcA; /* inputA pointer               */
     const q7_t* pIn2 = pSrcB; /* inputB pointer               */
     /*
@@ -201,7 +202,8 @@ void arm_conv_q7(const q7_t* pSrcA, uint32_t srcALen, const q7_t* pSrcB, uint32_
 }
 
 #else
-void arm_conv_q7(const q7_t* pSrcA, uint32_t srcALen, const q7_t* pSrcB, uint32_t srcBLen, q7_t* pDst) {
+void arm_conv_q7(
+    const q7_t* pSrcA, uint32_t srcALen, const q7_t* pSrcB, uint32_t srcBLen, q7_t* pDst) {
 
 #if (1)
     //#if !defined(ARM_MATH_CM0_FAMILY)

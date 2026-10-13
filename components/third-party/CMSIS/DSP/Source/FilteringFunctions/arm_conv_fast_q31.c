@@ -60,15 +60,16 @@
                    Refer to \ref arm_conv_q31() for a slower implementation of this function which uses 64-bit accumulation to provide higher precision.
  */
 
-void arm_conv_fast_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
-    const q31_t* pIn1;                               /* InputA pointer */
-    const q31_t* pIn2;                               /* InputB pointer */
-    q31_t*       pOut = pDst;                        /* Output pointer */
-    const q31_t* px;                                 /* Intermediate inputA pointer */
-    const q31_t* py;                                 /* Intermediate inputB pointer */
-    const q31_t *pSrc1, *pSrc2;                      /* Intermediate pointers */
-    q31_t        sum, acc0, acc1, acc2, acc3;        /* Accumulators */
-    q31_t        x0, x1, x2, x3, c0;                 /* Temporary variables to hold state and coefficient values */
+void arm_conv_fast_q31(
+    const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
+    const q31_t* pIn1;                        /* InputA pointer */
+    const q31_t* pIn2;                        /* InputB pointer */
+    q31_t*       pOut = pDst;                 /* Output pointer */
+    const q31_t* px;                          /* Intermediate inputA pointer */
+    const q31_t* py;                          /* Intermediate inputB pointer */
+    const q31_t *pSrc1, *pSrc2;               /* Intermediate pointers */
+    q31_t        sum, acc0, acc1, acc2, acc3; /* Accumulators */
+    q31_t        x0, x1, x2, x3, c0; /* Temporary variables to hold state and coefficient values */
     uint32_t     blockSize1, blockSize2, blockSize3; /* Loop counters */
     uint32_t     j, k, count, blkCnt;                /* Loop counters */
 

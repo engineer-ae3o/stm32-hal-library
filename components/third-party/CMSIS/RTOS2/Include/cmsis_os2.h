@@ -195,13 +195,15 @@ typedef enum {
 
 /// Status code values returned by CMSIS-RTOS functions.
 typedef enum {
-    osOK             = 0,         ///< Operation completed successfully.
-    osError          = -1,        ///< Unspecified RTOS error: run-time error but no other error message fits.
-    osErrorTimeout   = -2,        ///< Operation not completed within the timeout period.
-    osErrorResource  = -3,        ///< Resource not available.
-    osErrorParameter = -4,        ///< Parameter error.
-    osErrorNoMemory  = -5,        ///< System is out of memory: it was impossible to allocate or reserve memory for the operation.
-    osErrorISR       = -6,        ///< Not allowed in ISR context: the function cannot be called from interrupt service routines.
+    osOK    = 0,  ///< Operation completed successfully.
+    osError = -1, ///< Unspecified RTOS error: run-time error but no other error message fits.
+    osErrorTimeout   = -2, ///< Operation not completed within the timeout period.
+    osErrorResource  = -3, ///< Resource not available.
+    osErrorParameter = -4, ///< Parameter error.
+    osErrorNoMemory =
+        -5, ///< System is out of memory: it was impossible to allocate or reserve memory for the operation.
+    osErrorISR =
+        -6, ///< Not allowed in ISR context: the function cannot be called from interrupt service routines.
     osStatusReserved = 0x7FFFFFFF ///< Prevents enum down-size compiler optimization.
 } osStatus_t;
 
@@ -493,7 +495,8 @@ osStatus_t osDelayUntil(uint32_t ticks);
 /// \param[in]     argument      argument to the timer callback function.
 /// \param[in]     attr          timer attributes; NULL: default values.
 /// \return timer ID for reference by other functions or NULL in case of error.
-osTimerId_t osTimerNew(osTimerFunc_t func, osTimerType_t type, void* argument, const osTimerAttr_t* attr);
+osTimerId_t
+osTimerNew(osTimerFunc_t func, osTimerType_t type, void* argument, const osTimerAttr_t* attr);
 
 /// Get name of a timer.
 /// \param[in]     timer_id      timer ID obtained by \ref osTimerNew.
@@ -557,7 +560,8 @@ uint32_t osEventFlagsGet(osEventFlagsId_t ef_id);
 /// \param[in]     options       specifies flags options (osFlagsXxxx).
 /// \param[in]     timeout       \ref CMSIS_RTOS_TimeOutValue or 0 in case of no time-out.
 /// \return event flags before clearing or error code if highest bit set.
-uint32_t osEventFlagsWait(osEventFlagsId_t ef_id, uint32_t flags, uint32_t options, uint32_t timeout);
+uint32_t
+osEventFlagsWait(osEventFlagsId_t ef_id, uint32_t flags, uint32_t options, uint32_t timeout);
 
 /// Delete an Event Flags object.
 /// \param[in]     ef_id         event flags ID obtained by \ref osEventFlagsNew.
@@ -606,7 +610,8 @@ osStatus_t osMutexDelete(osMutexId_t mutex_id);
 /// \param[in]     initial_count initial number of available tokens.
 /// \param[in]     attr          semaphore attributes; NULL: default values.
 /// \return semaphore ID for reference by other functions or NULL in case of error.
-osSemaphoreId_t osSemaphoreNew(uint32_t max_count, uint32_t initial_count, const osSemaphoreAttr_t* attr);
+osSemaphoreId_t
+osSemaphoreNew(uint32_t max_count, uint32_t initial_count, const osSemaphoreAttr_t* attr);
 
 /// Get name of a Semaphore object.
 /// \param[in]     semaphore_id  semaphore ID obtained by \ref osSemaphoreNew.
@@ -642,7 +647,8 @@ osStatus_t osSemaphoreDelete(osSemaphoreId_t semaphore_id);
 /// \param[in]     block_size    memory block size in bytes.
 /// \param[in]     attr          memory pool attributes; NULL: default values.
 /// \return memory pool ID for reference by other functions or NULL in case of error.
-osMemoryPoolId_t osMemoryPoolNew(uint32_t block_count, uint32_t block_size, const osMemoryPoolAttr_t* attr);
+osMemoryPoolId_t
+osMemoryPoolNew(uint32_t block_count, uint32_t block_size, const osMemoryPoolAttr_t* attr);
 
 /// Get name of a Memory Pool object.
 /// \param[in]     mp_id         memory pool ID obtained by \ref osMemoryPoolNew.
@@ -694,7 +700,8 @@ osStatus_t osMemoryPoolDelete(osMemoryPoolId_t mp_id);
 /// \param[in]     msg_size      maximum message size in bytes.
 /// \param[in]     attr          message queue attributes; NULL: default values.
 /// \return message queue ID for reference by other functions or NULL in case of error.
-osMessageQueueId_t osMessageQueueNew(uint32_t msg_count, uint32_t msg_size, const osMessageQueueAttr_t* attr);
+osMessageQueueId_t
+osMessageQueueNew(uint32_t msg_count, uint32_t msg_size, const osMessageQueueAttr_t* attr);
 
 /// Get name of a Message Queue object.
 /// \param[in]     mq_id         message queue ID obtained by \ref osMessageQueueNew.
@@ -707,7 +714,10 @@ const char* osMessageQueueGetName(osMessageQueueId_t mq_id);
 /// \param[in]     msg_prio      message priority.
 /// \param[in]     timeout       \ref CMSIS_RTOS_TimeOutValue or 0 in case of no time-out.
 /// \return status code that indicates the execution status of the function.
-osStatus_t osMessageQueuePut(osMessageQueueId_t mq_id, const void* msg_ptr, uint8_t msg_prio, uint32_t timeout);
+osStatus_t osMessageQueuePut(osMessageQueueId_t mq_id,
+                             const void*        msg_ptr,
+                             uint8_t            msg_prio,
+                             uint32_t           timeout);
 
 /// Get a Message from a Queue or timeout if Queue is empty.
 /// \param[in]     mq_id         message queue ID obtained by \ref osMessageQueueNew.
@@ -715,7 +725,8 @@ osStatus_t osMessageQueuePut(osMessageQueueId_t mq_id, const void* msg_ptr, uint
 /// \param[out]    msg_prio      pointer to buffer for message priority or NULL.
 /// \param[in]     timeout       \ref CMSIS_RTOS_TimeOutValue or 0 in case of no time-out.
 /// \return status code that indicates the execution status of the function.
-osStatus_t osMessageQueueGet(osMessageQueueId_t mq_id, void* msg_ptr, uint8_t* msg_prio, uint32_t timeout);
+osStatus_t
+osMessageQueueGet(osMessageQueueId_t mq_id, void* msg_ptr, uint8_t* msg_prio, uint32_t timeout);
 
 /// Get maximum number of messages in a Message Queue.
 /// \param[in]     mq_id         message queue ID obtained by \ref osMessageQueueNew.

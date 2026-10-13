@@ -51,7 +51,10 @@
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx, const q15_t* pSrcReal, q15_t* pCmplxDst, uint32_t numSamples) {
+void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx,
+                             const q15_t* pSrcReal,
+                             q15_t*       pCmplxDst,
+                             uint32_t     numSamples) {
     static const uint16_t stride_cmplx_x_real_16[8] = {0, 0, 1, 1, 2, 2, 3, 3};
     q15x8_t               rVec;
     q15x8_t               cmplxVec;
@@ -96,7 +99,10 @@ void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx, const q15_t* pSrcReal, q15_
     }
 }
 #else
-void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx, const q15_t* pSrcReal, q15_t* pCmplxDst, uint32_t numSamples) {
+void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx,
+                             const q15_t* pSrcReal,
+                             q15_t*       pCmplxDst,
+                             uint32_t     numSamples) {
     uint32_t blkCnt; /* Loop counter */
     q15_t    in;     /* Temporary variable */
 

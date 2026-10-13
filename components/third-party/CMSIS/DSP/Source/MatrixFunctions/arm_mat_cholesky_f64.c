@@ -52,7 +52,8 @@
    */
 
 
-arm_status arm_mat_cholesky_f64(const arm_matrix_instance_f64* pSrc, arm_matrix_instance_f64* pDst) {
+arm_status arm_mat_cholesky_f64(const arm_matrix_instance_f64* pSrc,
+                                arm_matrix_instance_f64*       pDst) {
 
     arm_status status; /* status of matrix inverse */
 
@@ -60,7 +61,8 @@ arm_status arm_mat_cholesky_f64(const arm_matrix_instance_f64* pSrc, arm_matrix_
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

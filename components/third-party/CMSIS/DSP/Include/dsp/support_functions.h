@@ -192,7 +192,10 @@ typedef struct {
    * @param[out] pDst       points to the block of output data.
    * @param[in]  blockSize  number of samples to process.
    */
-void arm_sort_f32(const arm_sort_instance_f32* S, float32_t* pSrc, float32_t* pDst, uint32_t blockSize);
+void arm_sort_f32(const arm_sort_instance_f32* S,
+                  float32_t*                   pSrc,
+                  float32_t*                   pDst,
+                  uint32_t                     blockSize);
 
 /**
    * @param[in,out]  S            points to an instance of the sorting structure.
@@ -215,7 +218,10 @@ typedef struct {
    * @param[out]     pDst       points to the block of output data
    * @param[in]      blockSize  number of samples to process.
    */
-void arm_merge_sort_f32(const arm_merge_sort_instance_f32* S, float32_t* pSrc, float32_t* pDst, uint32_t blockSize);
+void arm_merge_sort_f32(const arm_merge_sort_instance_f32* S,
+                        float32_t*                         pSrc,
+                        float32_t*                         pDst,
+                        uint32_t                           blockSize);
 
 /**
    * @param[in,out]  S            points to an instance of the sorting structure.
@@ -340,7 +346,11 @@ float32_t arm_weighted_sum_f32(const float32_t* in, const float32_t* weigths, ui
  * @return       None
  *
  */
-void arm_barycenter_f32(const float32_t* in, const float32_t* weights, float32_t* out, uint32_t nbVectors, uint32_t vecDim);
+void arm_barycenter_f32(const float32_t* in,
+                        const float32_t* weights,
+                        float32_t*       out,
+                        uint32_t         nbVectors,
+                        uint32_t         vecDim);
 
 
 #ifdef __cplusplus

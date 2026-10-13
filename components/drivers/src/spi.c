@@ -148,7 +148,8 @@ static dma_stream_ctx_t s_dma_stream_ctx[ARRAY_SIZE(s_spi_i2s_dma_map)] = {};
     }
 }
 
-[[__gnu__::__always_inline__]] static inline hal_err_t poll_transfer_helper(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t size) {
+[[__gnu__::__always_inline__]] static inline hal_err_t
+poll_transfer_helper(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t size) {
     // The DFF bit being set means a 16 bit transfer
     if (handle->CR1 & SPI_CR1_DFF) {
         // Cast to appropriate type
@@ -310,7 +311,8 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 
     if (config->use_mosi) {
         TRY(gpiox_clk_enable(config->mosi_pin.port, true));
-        gpio_set_alternate_function(config->mosi_pin.port, config->mosi_pin.pin, config->mosi_pin.af);
+        gpio_set_alternate_function(
+            config->mosi_pin.port, config->mosi_pin.pin, config->mosi_pin.af);
         gpio_enable_pullup(config->mosi_pin.port, config->mosi_pin.pin, true);
         gpio_set_speed_mode(config->mosi_pin.port, config->mosi_pin.pin, GPIO_FULL_SPEED);
         gpio_set_output_type(config->mosi_pin.port, config->mosi_pin.pin, GPIO_PUSH_PULL);
@@ -318,7 +320,8 @@ hal_err_t spi_master_init(SPI_TypeDef* handle, const spi_master_config_t* config
 
     if (config->use_miso) {
         TRY(gpiox_clk_enable(config->miso_pin.port, true));
-        gpio_set_alternate_function(config->miso_pin.port, config->miso_pin.pin, config->miso_pin.af);
+        gpio_set_alternate_function(
+            config->miso_pin.port, config->miso_pin.pin, config->miso_pin.af);
         gpio_enable_pullup(config->miso_pin.port, config->miso_pin.pin, true);
         gpio_set_speed_mode(config->miso_pin.port, config->miso_pin.pin, GPIO_FULL_SPEED);
         gpio_set_output_type(config->miso_pin.port, config->miso_pin.pin, GPIO_PUSH_PULL);
@@ -334,9 +337,11 @@ hal_err_t spi_master_deinit(SPI_TypeDef* handle) {
 
     DISABLE_SPI();
 
-    handle->CR1 &= ~(SPI_CR1_CPHA | SPI_CR1_CPOL | SPI_CR1_MSTR | SPI_CR1_BR | SPI_CR1_LSBFIRST | SPI_CR1_SSI | SPI_CR1_SSM | SPI_CR1_RXONLY |
-                     SPI_CR1_DFF | SPI_CR1_CRCNEXT | SPI_CR1_CRCEN | SPI_CR1_BIDIOE | SPI_CR1_BIDIMODE);
-    handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN | SPI_CR2_FRF | SPI_CR2_ERRIE | SPI_CR2_RXNEIE | SPI_CR2_TXEIE);
+    handle->CR1 &= ~(SPI_CR1_CPHA | SPI_CR1_CPOL | SPI_CR1_MSTR | SPI_CR1_BR | SPI_CR1_LSBFIRST |
+                     SPI_CR1_SSI | SPI_CR1_SSM | SPI_CR1_RXONLY | SPI_CR1_DFF | SPI_CR1_CRCNEXT |
+                     SPI_CR1_CRCEN | SPI_CR1_BIDIOE | SPI_CR1_BIDIMODE);
+    handle->CR2 &= ~(SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN | SPI_CR2_FRF | SPI_CR2_ERRIE |
+                     SPI_CR2_RXNEIE | SPI_CR2_TXEIE);
 
     return HAL_OK;
 }
@@ -355,7 +360,8 @@ hal_err_t spi_master_dma_init(SPI_TypeDef* handle, dma_priority_t priority) {
     }
 
     // The DFF bit being set means a 16 bit transfer
-    const dma_data_size_t dma_data_size = (handle->CR1 & SPI_CR1_DFF) ? DMA_SIZE_HWORD : DMA_SIZE_BYTE;
+    const dma_data_size_t dma_data_size =
+        (handle->CR1 & SPI_CR1_DFF) ? DMA_SIZE_HWORD : DMA_SIZE_BYTE;
 
     // DMA TX stream configuration
     const dma_stream_config_t tx_stream_config = {
@@ -493,7 +499,8 @@ hal_err_t spi_master_receive_poll(SPI_TypeDef* handle, void* data, size_t size) 
     return error;
 }
 
-hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t size) {
+hal_err_t
+spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, void* rx_data, size_t size) {
     if (handle == NULL || tx_data == NULL || rx_data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -512,7 +519,8 @@ hal_err_t spi_master_transceive_poll(SPI_TypeDef* handle, const void* tx_data, v
 
 
 // DMA transfers API
-hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_t size, dma_done_cb_t cb, void* arg) {
+hal_err_t spi_master_transmit_dma(
+    SPI_TypeDef* handle, const void* data, uint16_t size, dma_done_cb_t cb, void* arg) {
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU || data == NULL || size == 0) {
@@ -531,7 +539,8 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
     }
 
     // Guard against all scenarios possible here: SPI being enabled, the DMA streams being enabled or I2S mode selected
-    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD) || (tx_stream->CR & DMA_SxCR_EN) || (rx_stream->CR & DMA_SxCR_EN)) {
+    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD) ||
+        (tx_stream->CR & DMA_SxCR_EN) || (rx_stream->CR & DMA_SxCR_EN)) {
         return HAL_ERR_INVALID_STATE;
     }
 
@@ -571,7 +580,8 @@ hal_err_t spi_master_transmit_dma(SPI_TypeDef* handle, const void* data, uint16_
     return HAL_OK;
 }
 
-hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size, dma_done_cb_t cb, void* arg) {
+hal_err_t spi_master_receive_dma(
+    SPI_TypeDef* handle, void* data, uint16_t size, dma_done_cb_t cb, void* arg) {
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU || data == NULL || size == 0) {
@@ -589,7 +599,8 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size,
     }
 
     // Guard against all scenarios possible here: SPI being enabled, the DMA streams being enabled or I2S mode selected
-    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD) || (tx_stream->CR & DMA_SxCR_EN) || (rx_stream->CR & DMA_SxCR_EN)) {
+    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD) ||
+        (tx_stream->CR & DMA_SxCR_EN) || (rx_stream->CR & DMA_SxCR_EN)) {
         return HAL_ERR_INVALID_STATE;
     }
 
@@ -628,7 +639,12 @@ hal_err_t spi_master_receive_dma(SPI_TypeDef* handle, void* data, uint16_t size,
     return HAL_OK;
 }
 
-hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, void* rx_data, uint16_t size, dma_done_cb_t cb, void* arg) {
+hal_err_t spi_master_transceive_dma(SPI_TypeDef*  handle,
+                                    const void*   tx_data,
+                                    void*         rx_data,
+                                    uint16_t      size,
+                                    dma_done_cb_t cb,
+                                    void*         arg) {
     // Get index for DMA stream mapping
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU || tx_data == NULL || rx_data == NULL || size == 0) {
@@ -644,7 +660,8 @@ hal_err_t spi_master_transceive_dma(SPI_TypeDef* handle, const void* tx_data, vo
     }
 
     // Guard against all scenarios possible here: SPI being enabled, the DMA streams being enabled or I2S mode selected
-    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD) || (tx_stream->CR & DMA_SxCR_EN) || (rx_stream->CR & DMA_SxCR_EN)) {
+    if ((handle->CR1 & SPI_CR1_SPE) || (handle->I2SCFGR & SPI_I2SCFGR_I2SMOD) ||
+        (tx_stream->CR & DMA_SxCR_EN) || (rx_stream->CR & DMA_SxCR_EN)) {
         return HAL_ERR_INVALID_STATE;
     }
 

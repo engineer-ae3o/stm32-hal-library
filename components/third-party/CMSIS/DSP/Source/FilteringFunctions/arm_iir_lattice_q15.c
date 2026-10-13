@@ -54,7 +54,10 @@
                    Lastly, the accumulator is saturated to yield a result in 1.15 format.
  */
 
-void arm_iir_lattice_q15(const arm_iir_lattice_instance_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+void arm_iir_lattice_q15(const arm_iir_lattice_instance_q15* S,
+                         const q15_t*                        pSrc,
+                         q15_t*                              pDst,
+                         uint32_t                            blockSize) {
     q15_t*   pState = S->pState;                 /* State pointer */
     q15_t*   pStateCur;                          /* State current pointer */
     q31_t    fcurr, fnext = 0, gcurr = 0, gnext; /* Temporary variables for lattice stages */

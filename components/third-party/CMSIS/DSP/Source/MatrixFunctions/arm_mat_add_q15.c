@@ -52,7 +52,9 @@
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-arm_status arm_mat_add_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_instance_q15* pSrcB, arm_matrix_instance_q15* pDst) {
+arm_status arm_mat_add_q15(const arm_matrix_instance_q15* pSrcA,
+                           const arm_matrix_instance_q15* pSrcB,
+                           arm_matrix_instance_q15*       pDst) {
     uint32_t     numSamples; /* total number of elements in the matrix  */
     q15_t *      pDataA, *pDataB, *pDataDst;
     q15x8_t      vecA, vecB, vecDst;
@@ -70,8 +72,8 @@ arm_status arm_mat_add_q15(const arm_matrix_instance_q15* pSrcA, const arm_matri
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) || (pSrcA->numRows != pDst->numRows) ||
-        (pSrcA->numCols != pDst->numCols)) {
+    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) || (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -123,7 +125,9 @@ arm_status arm_mat_add_q15(const arm_matrix_instance_q15* pSrcA, const arm_matri
 }
 
 #else
-arm_status arm_mat_add_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_instance_q15* pSrcB, arm_matrix_instance_q15* pDst) {
+arm_status arm_mat_add_q15(const arm_matrix_instance_q15* pSrcA,
+                           const arm_matrix_instance_q15* pSrcB,
+                           arm_matrix_instance_q15*       pDst) {
     q15_t* pInA = pSrcA->pData; /* input data matrix pointer A */
     q15_t* pInB = pSrcB->pData; /* input data matrix pointer B */
     q15_t* pOut = pDst->pData;  /* output data matrix pointer */
@@ -135,8 +139,8 @@ arm_status arm_mat_add_q15(const arm_matrix_instance_q15* pSrcA, const arm_matri
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) || (pSrcA->numRows != pDst->numRows) ||
-        (pSrcA->numCols != pDst->numCols)) {
+    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) || (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

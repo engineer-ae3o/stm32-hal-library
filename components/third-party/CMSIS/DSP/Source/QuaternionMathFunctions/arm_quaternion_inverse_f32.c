@@ -57,7 +57,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_quaternion_inverse_f32(const float32_t* pInputQuaternions, float32_t* pInverseQuaternions, uint32_t nbQuaternions) {
+void arm_quaternion_inverse_f32(const float32_t* pInputQuaternions,
+                                float32_t*       pInverseQuaternions,
+                                uint32_t         nbQuaternions) {
     f32x4_t   vec1, vec2;
     float32_t squaredSum;
 
@@ -81,14 +83,16 @@ void arm_quaternion_inverse_f32(const float32_t* pInputQuaternions, float32_t* p
 }
 
 #else
-void arm_quaternion_inverse_f32(const float32_t* pInputQuaternions, float32_t* pInverseQuaternions, uint32_t nbQuaternions) {
+void arm_quaternion_inverse_f32(const float32_t* pInputQuaternions,
+                                float32_t*       pInverseQuaternions,
+                                uint32_t         nbQuaternions) {
     float32_t temp;
 
     uint32_t i;
     for (i = 0; i < nbQuaternions; i++) {
 
-        temp =
-            SQ(pInputQuaternions[4 * i + 0]) + SQ(pInputQuaternions[4 * i + 1]) + SQ(pInputQuaternions[4 * i + 2]) + SQ(pInputQuaternions[4 * i + 3]);
+        temp = SQ(pInputQuaternions[4 * i + 0]) + SQ(pInputQuaternions[4 * i + 1]) +
+               SQ(pInputQuaternions[4 * i + 2]) + SQ(pInputQuaternions[4 * i + 3]);
 
         pInverseQuaternions[4 * i + 0] = pInputQuaternions[4 * i + 0] / temp;
         pInverseQuaternions[4 * i + 1] = -pInputQuaternions[4 * i + 1] / temp;

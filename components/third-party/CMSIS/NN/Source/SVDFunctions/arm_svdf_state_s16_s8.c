@@ -97,13 +97,17 @@ arm_status arm_svdf_state_s16_s8(const cmsis_nn_context*                 input_c
     q31_t* buffer_b = (q31_t*)output_ctx->buf;
 
     // Left shift state
-    memmove((q15_t*)state_data, (q15_t*)state_data + 1, (size_t)((input_batches * feature_batches * time_batches - 1) * (int32_t)sizeof(int16_t)));
+    memmove(
+        (q15_t*)state_data,
+        (q15_t*)state_data + 1,
+        (size_t)((input_batches * feature_batches * time_batches - 1) * (int32_t)sizeof(int16_t)));
 
     // Matrix multiplication input * feature weight
     for (int i_batch = 0; i_batch < input_batches; i_batch++) {
-        q15_t*      res_ptr = state_data + (time_batches * i_batch * feature_batches) + (time_batches - 1);
-        const q7_t* weight  = weights_feature_data;
-        const q7_t* input   = input_data + i_batch * input_height;
+        q15_t* res_ptr =
+            state_data + (time_batches * i_batch * feature_batches) + (time_batches - 1);
+        const q7_t* weight = weights_feature_data;
+        const q7_t* input  = input_data + i_batch * input_height;
 
         arm_status res = arm_nn_vec_mat_mult_t_svdf_s8(input,
                                                        weight,
@@ -226,7 +230,10 @@ arm_status arm_svdf_state_s16_s8(const cmsis_nn_context*                 input_c
     }
 #else
     for (int i = 0; i < input_batches * unit_count; i++) {
-        output_data[i] = (q7_t)CLAMP(arm_nn_requantize(buffer_b[i], multiplier_out, shift_2) + zp_out, out_activation_max, out_activation_min);
+        output_data[i] =
+            (q7_t)CLAMP(arm_nn_requantize(buffer_b[i], multiplier_out, shift_2) + zp_out,
+                        out_activation_max,
+                        out_activation_min);
     }
 #endif
 

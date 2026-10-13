@@ -112,8 +112,10 @@ void arm_absmax_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult, uint3
 
     while (blkCnt > 0U) { /* Initialize cur_absmax to next consecutive values one by one */
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q15_t)__QSUB16(0, cur_absmax); /* compare for the extrema value */
-        if (cur_absmax > out) {                                                      /* Update the extrema value and it's index */
+        cur_absmax = (cur_absmax > 0)
+                         ? cur_absmax
+                         : (q15_t)__QSUB16(0, cur_absmax); /* compare for the extrema value */
+        if (cur_absmax > out) { /* Update the extrema value and it's index */
             out      = cur_absmax;
             outIndex = index + 1U;
         }

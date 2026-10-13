@@ -370,7 +370,9 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
 }
 
 
-arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matrix_instance_f16* pSrcB, arm_matrix_instance_f16* pDst) {
+arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA,
+                            const arm_matrix_instance_f16* pSrcB,
+                            arm_matrix_instance_f16*       pDst) {
     float16_t* pInB     = pSrcB->pData;   /* input data matrix pointer B */
     float16_t* pInA     = pSrcA->pData;   /* input data matrix pointer A  */
     float16_t* pOut     = pDst->pData;    /* output data matrix pointer */
@@ -384,7 +386,8 @@ arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matr
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         return (ARM_MATH_SIZE_MISMATCH);
     } else
@@ -598,7 +601,9 @@ arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matr
 #else
 
 
-arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matrix_instance_f16* pSrcB, arm_matrix_instance_f16* pDst) {
+arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA,
+                            const arm_matrix_instance_f16* pSrcB,
+                            arm_matrix_instance_f16*       pDst) {
     float16_t* pIn1 = pSrcA->pData;                 /* Input data matrix pointer A */
     float16_t* pIn2 = pSrcB->pData;                 /* Input data matrix pointer B */
     float16_t* pInA = pSrcA->pData;                 /* Input data matrix pointer A */
@@ -615,7 +620,8 @@ arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matr
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

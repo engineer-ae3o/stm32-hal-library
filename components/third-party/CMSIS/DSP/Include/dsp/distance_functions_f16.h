@@ -153,7 +153,8 @@ float16_t arm_cosine_distance_f16(const float16_t* pA, const float16_t* pB, uint
  *
  */
 
-float16_t arm_jensenshannon_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize);
+float16_t
+arm_jensenshannon_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize);
 
 /**
  * @brief        Minkowski distance between two vectors
@@ -167,7 +168,10 @@ float16_t arm_jensenshannon_distance_f16(const float16_t* pA, const float16_t* p
  */
 
 
-float16_t arm_minkowski_distance_f16(const float16_t* pA, const float16_t* pB, int32_t order, uint32_t blockSize);
+float16_t arm_minkowski_distance_f16(const float16_t* pA,
+                                     const float16_t* pB,
+                                     int32_t          order,
+                                     uint32_t         blockSize);
 
 
 #endif /*defined(ARM_FLOAT16_SUPPORTED)*/

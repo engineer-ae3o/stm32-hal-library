@@ -49,7 +49,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_mat_vec_mult_q7(const arm_matrix_instance_q7* pSrcMat, const q7_t* pSrcVec, q7_t* pDstVec) {
+void arm_mat_vec_mult_q7(const arm_matrix_instance_q7* pSrcMat,
+                         const q7_t*                   pSrcVec,
+                         q7_t*                         pDstVec) {
     const q7_t* pMatSrc = pSrcMat->pData;
     const q7_t *pMat0, *pMat1;
     uint32_t    numRows = pSrcMat->numRows;

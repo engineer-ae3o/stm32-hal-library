@@ -57,7 +57,10 @@
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S,
+                                const q31_t*                        pSrc,
+                                q31_t*                              pDst,
+                                uint32_t                            blockSize) {
     const q31_t* pIn  = pSrc; /*  input pointer initialization  */
     q31_t*       pOut = pDst; /*  output pointer initialization */
     int          shift;
@@ -312,7 +315,10 @@ void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S, const q31
     } while (--stages);
 }
 #else
-void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S,
+                                const q31_t*                        pSrc,
+                                q31_t*                              pDst,
+                                uint32_t                            blockSize) {
     const q31_t* pIn     = pSrc;       /* Source pointer */
     q31_t*       pOut    = pDst;       /* Destination pointer */
     q31_t*       pState  = S->pState;  /* pState pointer */
@@ -359,7 +365,8 @@ void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S, const q31
             Xn = *pIn++;
 
             /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-            acc = ((q63_t)b0 * Xn) + ((q63_t)b1 * Xn1) + ((q63_t)b2 * Xn2) + ((q63_t)a1 * Yn1) + ((q63_t)a2 * Yn2);
+            acc = ((q63_t)b0 * Xn) + ((q63_t)b1 * Xn1) + ((q63_t)b2 * Xn2) + ((q63_t)a1 * Yn1) +
+                  ((q63_t)a2 * Yn2);
 
             /* The result is converted to 1.31 , Yn2 variable is reused */
             acc_l = (acc) & 0xffffffff;       /* Calc lower part of acc */
@@ -375,7 +382,8 @@ void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S, const q31
             Xn2 = *pIn++;
 
             /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-            acc = ((q63_t)b0 * Xn2) + ((q63_t)b1 * Xn) + ((q63_t)b2 * Xn1) + ((q63_t)a1 * Yn2) + ((q63_t)a2 * Yn1);
+            acc = ((q63_t)b0 * Xn2) + ((q63_t)b1 * Xn) + ((q63_t)b2 * Xn1) + ((q63_t)a1 * Yn2) +
+                  ((q63_t)a2 * Yn1);
 
             /* The result is converted to 1.31, Yn1 variable is reused  */
             acc_l = (acc) & 0xffffffff;       /* Calc lower part of acc */
@@ -391,7 +399,8 @@ void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S, const q31
             Xn1 = *pIn++;
 
             /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-            acc = ((q63_t)b0 * Xn1) + ((q63_t)b1 * Xn2) + ((q63_t)b2 * Xn) + ((q63_t)a1 * Yn1) + ((q63_t)a2 * Yn2);
+            acc = ((q63_t)b0 * Xn1) + ((q63_t)b1 * Xn2) + ((q63_t)b2 * Xn) + ((q63_t)a1 * Yn1) +
+                  ((q63_t)a2 * Yn2);
 
             /* The result is converted to 1.31, Yn2 variable is reused  */
             acc_l = (acc) & 0xffffffff;       /* Calc lower part of acc */
@@ -407,7 +416,8 @@ void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S, const q31
             Xn = *pIn++;
 
             /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-            acc = ((q63_t)b0 * Xn) + ((q63_t)b1 * Xn1) + ((q63_t)b2 * Xn2) + ((q63_t)a1 * Yn2) + ((q63_t)a2 * Yn1);
+            acc = ((q63_t)b0 * Xn) + ((q63_t)b1 * Xn1) + ((q63_t)b2 * Xn2) + ((q63_t)a1 * Yn2) +
+                  ((q63_t)a2 * Yn1);
 
             /* The result is converted to 1.31, Yn1 variable is reused  */
             acc_l = (acc) & 0xffffffff;       /* Calc lower part of acc */
@@ -447,7 +457,8 @@ void arm_biquad_cascade_df1_q31(const arm_biquad_casd_df1_inst_q31* S, const q31
             Xn = *pIn++;
 
             /* acc =  b0 * x[n] + b1 * x[n-1] + b2 * x[n-2] + a1 * y[n-1] + a2 * y[n-2] */
-            acc = ((q63_t)b0 * Xn) + ((q63_t)b1 * Xn1) + ((q63_t)b2 * Xn2) + ((q63_t)a1 * Yn1) + ((q63_t)a2 * Yn2);
+            acc = ((q63_t)b0 * Xn) + ((q63_t)b1 * Xn1) + ((q63_t)b2 * Xn2) + ((q63_t)a1 * Yn1) +
+                  ((q63_t)a2 * Yn2);
 
             /* The result is converted to 1.31  */
             acc = acc >> lShift;

@@ -63,7 +63,9 @@
                    which uses 64-bit accumulation to provide higher precision.
  */
 
-arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA, const arm_matrix_instance_q31* pSrcB, arm_matrix_instance_q31* pDst) {
+arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA,
+                                 const arm_matrix_instance_q31* pSrcB,
+                                 arm_matrix_instance_q31*       pDst) {
     q31_t*     pInA = pSrcA->pData; /* Input data matrix pointer A */
     q31_t*     pInB = pSrcB->pData; /* Input data matrix pointer B */
     q31_t*     pInA2;
@@ -81,7 +83,8 @@ arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA, const arm
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

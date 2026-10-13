@@ -77,14 +77,14 @@ extern "C" {
 /// Priority used for thread control.
 /// \note MUST REMAIN UNCHANGED: \b osPriority shall be consistent in every CMSIS-RTOS.
 typedef enum {
-    osPriorityIdle        = -3,  ///< priority: idle (lowest)
-    osPriorityLow         = -2,  ///< priority: low
-    osPriorityBelowNormal = -1,  ///< priority: below normal
-    osPriorityNormal      = 0,   ///< priority: normal (default)
-    osPriorityAboveNormal = +1,  ///< priority: above normal
-    osPriorityHigh        = +2,  ///< priority: high
-    osPriorityRealtime    = +3,  ///< priority: realtime (highest)
-    osPriorityError       = 0x84 ///< system cannot determine priority or thread has illegal priority
+    osPriorityIdle        = -3, ///< priority: idle (lowest)
+    osPriorityLow         = -2, ///< priority: low
+    osPriorityBelowNormal = -1, ///< priority: below normal
+    osPriorityNormal      = 0,  ///< priority: normal (default)
+    osPriorityAboveNormal = +1, ///< priority: above normal
+    osPriorityHigh        = +2, ///< priority: high
+    osPriorityRealtime    = +3, ///< priority: realtime (highest)
+    osPriorityError = 0x84      ///< system cannot determine priority or thread has illegal priority
 } osPriority;
 
 /// Timeout value.
@@ -94,21 +94,25 @@ typedef enum {
 /// Status code values returned by CMSIS-RTOS functions.
 /// \note MUST REMAIN UNCHANGED: \b osStatus shall be consistent in every CMSIS-RTOS.
 typedef enum {
-    osOK                   = 0,    ///< function completed; no error or event occurred.
-    osEventSignal          = 0x08, ///< function completed; signal event occurred.
-    osEventMessage         = 0x10, ///< function completed; message event occurred.
-    osEventMail            = 0x20, ///< function completed; mail event occurred.
-    osEventTimeout         = 0x40, ///< function completed; timeout occurred.
-    osErrorParameter       = 0x80, ///< parameter error: a mandatory parameter was missing or specified an incorrect object.
-    osErrorResource        = 0x81, ///< resource not available: a specified resource was not available.
-    osErrorTimeoutResource = 0xC1, ///< resource not available within given time: a specified resource was not available within the timeout period.
-    osErrorISR             = 0x82, ///< not allowed in ISR context: the function cannot be called from interrupt service routines.
-    osErrorISRRecursive    = 0x83, ///< function called multiple times from ISR with same object.
-    osErrorPriority        = 0x84, ///< system cannot determine priority or thread has illegal priority.
-    osErrorNoMemory        = 0x85, ///< system is out of memory: it was impossible to allocate or reserve memory for the operation.
-    osErrorValue           = 0x86, ///< value of a parameter is out of range.
-    osErrorOS              = 0xFF, ///< unspecified RTOS error: run-time error but no other error message fits.
-    os_status_reserved     = 0x7FFFFFFF ///< prevent from enum down-size compiler optimization.
+    osOK           = 0,    ///< function completed; no error or event occurred.
+    osEventSignal  = 0x08, ///< function completed; signal event occurred.
+    osEventMessage = 0x10, ///< function completed; message event occurred.
+    osEventMail    = 0x20, ///< function completed; mail event occurred.
+    osEventTimeout = 0x40, ///< function completed; timeout occurred.
+    osErrorParameter =
+        0x80, ///< parameter error: a mandatory parameter was missing or specified an incorrect object.
+    osErrorResource = 0x81, ///< resource not available: a specified resource was not available.
+    osErrorTimeoutResource =
+        0xC1, ///< resource not available within given time: a specified resource was not available within the timeout period.
+    osErrorISR =
+        0x82, ///< not allowed in ISR context: the function cannot be called from interrupt service routines.
+    osErrorISRRecursive = 0x83, ///< function called multiple times from ISR with same object.
+    osErrorPriority = 0x84, ///< system cannot determine priority or thread has illegal priority.
+    osErrorNoMemory =
+        0x85, ///< system is out of memory: it was impossible to allocate or reserve memory for the operation.
+    osErrorValue = 0x86, ///< value of a parameter is out of range.
+    osErrorOS = 0xFF, ///< unspecified RTOS error: run-time error but no other error message fits.
+    os_status_reserved = 0x7FFFFFFF ///< prevent from enum down-size compiler optimization.
 } osStatus;
 
 
@@ -257,7 +261,8 @@ uint32_t osKernelSysTick(void);
 /// Convert a microseconds value to a RTOS kernel system timer value.
 /// \param         microsec     time value in microseconds.
 /// \return time value normalized to the \ref osKernelSysTickFrequency
-#define osKernelSysTickMicroSec(microsec) (((uint64_t)microsec * (osKernelSysTickFrequency)) / 1000000)
+#define osKernelSysTickMicroSec(microsec)                                                          \
+    (((uint64_t)microsec * (osKernelSysTickFrequency)) / 1000000)
 
 #endif // System Timer available
 
@@ -271,9 +276,11 @@ uint32_t osKernelSysTick(void);
 /// \note CAN BE CHANGED: The parameters to \b osThreadDef shall be consistent but the
 ///       macro body is implementation specific in every CMSIS-RTOS.
 #if defined(osObjectsExternal) // object is external
-#define osThreadDef(name, priority, instances, stacksz) extern const osThreadDef_t os_thread_def_##name
+#define osThreadDef(name, priority, instances, stacksz)                                            \
+    extern const osThreadDef_t os_thread_def_##name
 #else // define the object
-#define osThreadDef(name, priority, instances, stacksz) const osThreadDef_t os_thread_def_##name = {(name), (priority), (instances), (stacksz)}
+#define osThreadDef(name, priority, instances, stacksz)                                            \
+    const osThreadDef_t os_thread_def_##name = {(name), (priority), (instances), (stacksz)}
 #endif
 
 /// Access a Thread definition.
@@ -563,7 +570,8 @@ osStatus osPoolFree(osPoolId pool_id, void* block);
 #if defined(osObjectsExternal) // object is external
 #define osMessageQDef(name, queue_sz, type) extern const osMessageQDef_t os_messageQ_def_##name
 #else // define the object
-#define osMessageQDef(name, queue_sz, type) const osMessageQDef_t os_messageQ_def_##name = {(queue_sz), sizeof(type)}
+#define osMessageQDef(name, queue_sz, type)                                                        \
+    const osMessageQDef_t os_messageQ_def_##name = {(queue_sz), sizeof(type)}
 #endif
 
 /// \brief Access a Message Queue Definition.
@@ -610,7 +618,8 @@ osEvent osMessageGet(osMessageQId queue_id, uint32_t millisec);
 #if defined(osObjectsExternal) // object is external
 #define osMailQDef(name, queue_sz, type) extern const osMailQDef_t os_mailQ_def_##name
 #else // define the object
-#define osMailQDef(name, queue_sz, type) const osMailQDef_t os_mailQ_def_##name = {(queue_sz), sizeof(type)}
+#define osMailQDef(name, queue_sz, type)                                                           \
+    const osMailQDef_t os_mailQ_def_##name = {(queue_sz), sizeof(type)}
 #endif
 
 /// \brief Access a Mail Queue Definition.

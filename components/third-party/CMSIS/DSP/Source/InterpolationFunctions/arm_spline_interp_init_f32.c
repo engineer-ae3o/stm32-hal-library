@@ -62,8 +62,13 @@
  *
  */
 
-void arm_spline_init_f32(
-    arm_spline_instance_f32* S, arm_spline_type type, const float32_t* x, const float32_t* y, uint32_t n, float32_t* coeffs, float32_t* tempBuffer) {
+void arm_spline_init_f32(arm_spline_instance_f32* S,
+                         arm_spline_type          type,
+                         const float32_t*         x,
+                         const float32_t*         y,
+                         uint32_t                 n,
+                         float32_t*               coeffs,
+                         float32_t*               tempBuffer) {
     /*** COEFFICIENTS COMPUTATION ***/
     /* Type (boundary conditions):
         - Natural spline          ( S1''(x1) = 0 ; Sn''(xn) = 0 )

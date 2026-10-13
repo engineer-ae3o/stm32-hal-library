@@ -82,7 +82,8 @@ arm_status arm_mat_trans_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_ins
             }
         }
 
-        arm_mat_trans_16bit_generic(pSrc->numRows, pSrc->numCols, (uint16_t*)pSrc->pData, (uint16_t*)pDst->pData);
+        arm_mat_trans_16bit_generic(
+            pSrc->numRows, pSrc->numCols, (uint16_t*)pSrc->pData, (uint16_t*)pDst->pData);
         /* Set status as ARM_MATH_SUCCESS */
         status = ARM_MATH_SUCCESS;
     }

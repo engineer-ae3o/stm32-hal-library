@@ -68,8 +68,9 @@ void arm_sin_cos_q31(q31_t theta, q31_t* pSinVal, q31_t* pCosVal) {
     d1 = -sinTable_q31[indexS];
     d2 = -sinTable_q31[indexS + 1];
 
-    Dn = 0x1921FB5; /* delta between the two points (fixed), in this case 2*pi/FAST_MATH_TABLE_SIZE */
-    Df = f2 - f1;   /* delta between the values of the functions */
+    Dn =
+        0x1921FB5; /* delta between the two points (fixed), in this case 2*pi/FAST_MATH_TABLE_SIZE */
+    Df = f2 - f1;  /* delta between the values of the functions */
 
     temp = Dn * ((q63_t)d1 + d2);
     temp = temp - ((q63_t)Df << 32);

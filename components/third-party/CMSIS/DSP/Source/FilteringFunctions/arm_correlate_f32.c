@@ -99,7 +99,11 @@
 #include "arm_vec_filtering.h"
 
 
-void arm_correlate_f32(const float32_t* pSrcA, uint32_t srcALen, const float32_t* pSrcB, uint32_t srcBLen, float32_t* pDst) {
+void arm_correlate_f32(const float32_t* pSrcA,
+                       uint32_t         srcALen,
+                       const float32_t* pSrcB,
+                       uint32_t         srcBLen,
+                       float32_t*       pDst) {
     const float32_t* pIn1 = pSrcA;                  /* inputA pointer               */
     const float32_t* pIn2 = pSrcB + (srcBLen - 1U); /* inputB pointer               */
     const float32_t *pX, *pY;
@@ -281,7 +285,11 @@ void arm_correlate_f32(const float32_t* pSrcA, uint32_t srcALen, const float32_t
 }
 
 #else
-void arm_correlate_f32(const float32_t* pSrcA, uint32_t srcALen, const float32_t* pSrcB, uint32_t srcBLen, float32_t* pDst) {
+void arm_correlate_f32(const float32_t* pSrcA,
+                       uint32_t         srcALen,
+                       const float32_t* pSrcB,
+                       uint32_t         srcBLen,
+                       float32_t*       pDst) {
 
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_AUTOVECTORIZE)
 

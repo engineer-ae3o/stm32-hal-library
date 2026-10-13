@@ -49,13 +49,20 @@
 
 #include "arm_helium_utils.h"
 
-arm_status arm_mat_cmplx_trans_q15(const arm_matrix_instance_q15* pSrc, arm_matrix_instance_q15* pDst) {
-    return arm_mat_cmplx_trans_16bit(pSrc->numRows, pSrc->numCols, (uint16_t*)pSrc->pData, pDst->numRows, pDst->numCols, (uint16_t*)pDst->pData);
+arm_status arm_mat_cmplx_trans_q15(const arm_matrix_instance_q15* pSrc,
+                                   arm_matrix_instance_q15*       pDst) {
+    return arm_mat_cmplx_trans_16bit(pSrc->numRows,
+                                     pSrc->numCols,
+                                     (uint16_t*)pSrc->pData,
+                                     pDst->numRows,
+                                     pDst->numCols,
+                                     (uint16_t*)pDst->pData);
 }
 
 
 #else
-arm_status arm_mat_cmplx_trans_q15(const arm_matrix_instance_q15* pSrc, arm_matrix_instance_q15* pDst) {
+arm_status arm_mat_cmplx_trans_q15(const arm_matrix_instance_q15* pSrc,
+                                   arm_matrix_instance_q15*       pDst) {
     q15_t*     pSrcA    = pSrc->pData;   /* input data matrix pointer */
     q15_t*     pOut     = pDst->pData;   /* output data matrix pointer */
     uint16_t   nRows    = pSrc->numRows; /* number of nRows */

@@ -33,7 +33,12 @@
 
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
 
-static void scale_q31_to_q7_and_clamp(const q31_t* buffer, q7_t* target, int32_t length, const int32_t count, const int act_min, const int act_max) {
+static void scale_q31_to_q7_and_clamp(const q31_t*  buffer,
+                                      q7_t*         target,
+                                      int32_t       length,
+                                      const int32_t count,
+                                      const int     act_min,
+                                      const int     act_max) {
     const int half_count = count / 2;
 
     // Prevent static code issue DIVIDE_BY_ZERO.
@@ -155,25 +160,41 @@ arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
                     return ARM_MATH_ARGUMENT_ERROR;
                 }
 
-                sumV1[0] = sumV1[0] > 0 ? (sumV1[0] + count / 2) / count : (sumV1[0] - count / 2) / count;
-                sumV1[1] = sumV1[1] > 0 ? (sumV1[1] + count / 2) / count : (sumV1[1] - count / 2) / count;
-                sumV1[2] = sumV1[2] > 0 ? (sumV1[2] + count / 2) / count : (sumV1[2] - count / 2) / count;
-                sumV1[3] = sumV1[3] > 0 ? (sumV1[3] + count / 2) / count : (sumV1[3] - count / 2) / count;
+                sumV1[0] =
+                    sumV1[0] > 0 ? (sumV1[0] + count / 2) / count : (sumV1[0] - count / 2) / count;
+                sumV1[1] =
+                    sumV1[1] > 0 ? (sumV1[1] + count / 2) / count : (sumV1[1] - count / 2) / count;
+                sumV1[2] =
+                    sumV1[2] > 0 ? (sumV1[2] + count / 2) / count : (sumV1[2] - count / 2) / count;
+                sumV1[3] =
+                    sumV1[3] > 0 ? (sumV1[3] + count / 2) / count : (sumV1[3] - count / 2) / count;
 
-                sumV2[0] = sumV2[0] > 0 ? (sumV2[0] + count / 2) / count : (sumV2[0] - count / 2) / count;
-                sumV2[1] = sumV2[1] > 0 ? (sumV2[1] + count / 2) / count : (sumV2[1] - count / 2) / count;
-                sumV2[2] = sumV2[2] > 0 ? (sumV2[2] + count / 2) / count : (sumV2[2] - count / 2) / count;
-                sumV2[3] = sumV2[3] > 0 ? (sumV2[3] + count / 2) / count : (sumV2[3] - count / 2) / count;
+                sumV2[0] =
+                    sumV2[0] > 0 ? (sumV2[0] + count / 2) / count : (sumV2[0] - count / 2) / count;
+                sumV2[1] =
+                    sumV2[1] > 0 ? (sumV2[1] + count / 2) / count : (sumV2[1] - count / 2) / count;
+                sumV2[2] =
+                    sumV2[2] > 0 ? (sumV2[2] + count / 2) / count : (sumV2[2] - count / 2) / count;
+                sumV2[3] =
+                    sumV2[3] > 0 ? (sumV2[3] + count / 2) / count : (sumV2[3] - count / 2) / count;
 
-                sumV3[0] = sumV3[0] > 0 ? (sumV3[0] + count / 2) / count : (sumV3[0] - count / 2) / count;
-                sumV3[1] = sumV3[1] > 0 ? (sumV3[1] + count / 2) / count : (sumV3[1] - count / 2) / count;
-                sumV3[2] = sumV3[2] > 0 ? (sumV3[2] + count / 2) / count : (sumV3[2] - count / 2) / count;
-                sumV3[3] = sumV3[3] > 0 ? (sumV3[3] + count / 2) / count : (sumV3[3] - count / 2) / count;
+                sumV3[0] =
+                    sumV3[0] > 0 ? (sumV3[0] + count / 2) / count : (sumV3[0] - count / 2) / count;
+                sumV3[1] =
+                    sumV3[1] > 0 ? (sumV3[1] + count / 2) / count : (sumV3[1] - count / 2) / count;
+                sumV3[2] =
+                    sumV3[2] > 0 ? (sumV3[2] + count / 2) / count : (sumV3[2] - count / 2) / count;
+                sumV3[3] =
+                    sumV3[3] > 0 ? (sumV3[3] + count / 2) / count : (sumV3[3] - count / 2) / count;
 
-                sumV4[0] = sumV4[0] > 0 ? (sumV4[0] + count / 2) / count : (sumV4[0] - count / 2) / count;
-                sumV4[1] = sumV4[1] > 0 ? (sumV4[1] + count / 2) / count : (sumV4[1] - count / 2) / count;
-                sumV4[2] = sumV4[2] > 0 ? (sumV4[2] + count / 2) / count : (sumV4[2] - count / 2) / count;
-                sumV4[3] = sumV4[3] > 0 ? (sumV4[3] + count / 2) / count : (sumV4[3] - count / 2) / count;
+                sumV4[0] =
+                    sumV4[0] > 0 ? (sumV4[0] + count / 2) / count : (sumV4[0] - count / 2) / count;
+                sumV4[1] =
+                    sumV4[1] > 0 ? (sumV4[1] + count / 2) / count : (sumV4[1] - count / 2) / count;
+                sumV4[2] =
+                    sumV4[2] > 0 ? (sumV4[2] + count / 2) / count : (sumV4[2] - count / 2) / count;
+                sumV4[3] =
+                    sumV4[3] > 0 ? (sumV4[3] + count / 2) / count : (sumV4[3] - count / 2) / count;
 
                 sumV1 = vmaxq_s32(sumV1, vdupq_n_s32(act_min));
                 sumV1 = vminq_s32(sumV1, vdupq_n_s32(act_max));
@@ -319,7 +340,8 @@ arm_status arm_avgpool_s8(const cmsis_nn_context*     ctx,
                 int sum   = 0;
                 int count = 0;
                 for (k_y = i_y * stride_y - pad_y; k_y < i_y * stride_y - pad_y + kernel_y; k_y++) {
-                    for (k_x = i_x * stride_x - pad_x; k_x < i_x * stride_x - pad_x + kernel_x; k_x++) {
+                    for (k_x = i_x * stride_x - pad_x; k_x < i_x * stride_x - pad_x + kernel_x;
+                         k_x++) {
                         if (k_y >= 0 && k_x >= 0 && k_y < input_y && k_x < input_x) {
                             sum += src[i_ch_in + ch_src * (k_x + k_y * input_x)];
                             count++;

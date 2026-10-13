@@ -107,7 +107,8 @@ struct __attribute__((packed)) T_UINT32 {
 __PACKED_STRUCT T_UINT16_WRITE {
     uint16_t v;
 };
-#define __UNALIGNED_UINT16_WRITE(addr, val) (void)((((struct T_UINT16_WRITE*)(void*)(addr))->v) = (val))
+#define __UNALIGNED_UINT16_WRITE(addr, val)                                                        \
+    (void)((((struct T_UINT16_WRITE*)(void*)(addr))->v) = (val))
 #endif
 #ifndef __UNALIGNED_UINT16_READ
 __PACKED_STRUCT T_UINT16_READ {
@@ -119,7 +120,8 @@ __PACKED_STRUCT T_UINT16_READ {
 __PACKED_STRUCT T_UINT32_WRITE {
     uint32_t v;
 };
-#define __UNALIGNED_UINT32_WRITE(addr, val) (void)((((struct T_UINT32_WRITE*)(void*)(addr))->v) = (val))
+#define __UNALIGNED_UINT32_WRITE(addr, val)                                                        \
+    (void)((((struct T_UINT32_WRITE*)(void*)(addr))->v) = (val))
 #endif
 #ifndef __UNALIGNED_UINT32_READ
 __PACKED_STRUCT T_UINT32_READ {
@@ -189,7 +191,8 @@ struct __packed__ T_UINT32 {
 __PACKED_STRUCT T_UINT16_WRITE {
     uint16_t v;
 };
-#define __UNALIGNED_UINT16_WRITE(addr, val) (void)((((struct T_UINT16_WRITE*)(void*)(addr))->v) = (val))
+#define __UNALIGNED_UINT16_WRITE(addr, val)                                                        \
+    (void)((((struct T_UINT16_WRITE*)(void*)(addr))->v) = (val))
 #endif
 #ifndef __UNALIGNED_UINT16_READ
 __PACKED_STRUCT T_UINT16_READ {
@@ -201,7 +204,8 @@ __PACKED_STRUCT T_UINT16_READ {
 __PACKED_STRUCT T_UINT32_WRITE {
     uint32_t v;
 };
-#define __UNALIGNED_UINT32_WRITE(addr, val) (void)((((struct T_UINT32_WRITE*)(void*)(addr))->v) = (val))
+#define __UNALIGNED_UINT32_WRITE(addr, val)                                                        \
+    (void)((((struct T_UINT32_WRITE*)(void*)(addr))->v) = (val))
 #endif
 #ifndef __UNALIGNED_UINT32_READ
 __PACKED_STRUCT T_UINT32_READ {
@@ -270,7 +274,8 @@ __PACKED_STRUCT T_UINT32_READ {
 __PACKED_STRUCT T_UINT16_WRITE {
     uint16_t v;
 };
-#define __UNALIGNED_UINT16_WRITE(addr, val) (void)((((struct T_UINT16_WRITE*)(void*)(addr))->v) = (val))
+#define __UNALIGNED_UINT16_WRITE(addr, val)                                                        \
+    (void)((((struct T_UINT16_WRITE*)(void*)(addr))->v) = (val))
 #endif
 #ifndef __UNALIGNED_UINT16_READ
 __PACKED_STRUCT T_UINT16_READ {
@@ -282,7 +287,8 @@ __PACKED_STRUCT T_UINT16_READ {
 __PACKED_STRUCT T_UINT32_WRITE {
     uint32_t v;
 };
-#define __UNALIGNED_UINT32_WRITE(addr, val) (void)((((struct T_UINT32_WRITE*)(void*)(addr))->v) = (val))
+#define __UNALIGNED_UINT32_WRITE(addr, val)                                                        \
+    (void)((((struct T_UINT32_WRITE*)(void*)(addr))->v) = (val))
 #endif
 #ifndef __UNALIGNED_UINT32_READ
 __PACKED_STRUCT T_UINT32_READ {

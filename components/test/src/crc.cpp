@@ -59,9 +59,15 @@ namespace test::crc {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get(data.data(), 0, &result));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get(data.data(), data.size(), nullptr));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get_dma(nullptr, data.size(), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get_dma(data.data(), 0, DMA_PRIORITY_LOW, dma_done_callback, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, crc_get_dma(data.data(), data.size(), DMA_PRIORITY_LOW, nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                crc_get_dma(nullptr, data.size(), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                crc_get_dma(data.data(), 0, DMA_PRIORITY_LOW, dma_done_callback, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                crc_get_dma(data.data(), data.size(), DMA_PRIORITY_LOW, nullptr, nullptr));
         }
 
         void cpu_path_matches_the_software_reference_model() {
@@ -152,7 +158,10 @@ namespace test::crc {
             s_dma_err   = HAL_FAIL;
             s_dma_crc32 = 0;
 
-            TEST_ASSERT_EQUAL(HAL_OK, crc_get_dma(DATA.data(), DATA.size(), DMA_PRIORITY_HIGH, dma_done_callback, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                crc_get_dma(
+                    DATA.data(), DATA.size(), DMA_PRIORITY_HIGH, dma_done_callback, nullptr));
             TEST_ASSERT_TRUE_MESSAGE(wait_for_dma_done(), "CRC DMA transfer never completed");
 
             TEST_ASSERT_EQUAL(HAL_OK, s_dma_err);
@@ -177,11 +186,20 @@ namespace test::crc {
             s_dma_err   = HAL_FAIL;
             s_dma_crc32 = 0;
 
-            TEST_ASSERT_EQUAL(HAL_OK, crc_get_dma(wide_buffer.data(), wide_buffer.size(), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              crc_get_dma(wide_buffer.data(),
+                                          wide_buffer.size(),
+                                          DMA_PRIORITY_LOW,
+                                          dma_done_callback,
+                                          nullptr));
 
             // Immediately re issuing another DMA request must be rejected while the first is still in flight
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE,
-                              crc_get_dma(wide_buffer.data(), wide_buffer.size(), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
+                              crc_get_dma(wide_buffer.data(),
+                                          wide_buffer.size(),
+                                          DMA_PRIORITY_LOW,
+                                          dma_done_callback,
+                                          nullptr));
 
             TEST_ASSERT_TRUE_MESSAGE(wait_for_dma_done(), "CRC DMA transfer never completed");
             TEST_ASSERT_EQUAL(HAL_OK, s_dma_err);
@@ -192,7 +210,12 @@ namespace test::crc {
             s_dma_err   = HAL_FAIL;
             s_dma_crc32 = 0;
 
-            TEST_ASSERT_EQUAL(HAL_OK, crc_get_dma(wide_buffer.data(), wide_buffer.size(), DMA_PRIORITY_LOW, dma_done_callback, nullptr));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              crc_get_dma(wide_buffer.data(),
+                                          wide_buffer.size(),
+                                          DMA_PRIORITY_LOW,
+                                          dma_done_callback,
+                                          nullptr));
             TEST_ASSERT_TRUE_MESSAGE(wait_for_dma_done(), "CRC DMA transfer never completed");
         }
 

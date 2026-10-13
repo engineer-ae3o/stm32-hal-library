@@ -161,7 +161,8 @@ float32_t arm_canberra_distance_f32(const float32_t* pA, const float32_t* pB, ui
          * Force result of a division by 0 to 0. It the behavior of the
          * sklearn canberra function.
          */
-        a      = vreinterpretq_f32_s32(vbicq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_u32(isZeroV)));
+        a = vreinterpretq_f32_s32(
+            vbicq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_u32(isZeroV)));
         c      = vmulq_f32(c, a);
         accumV = vaddq_f32(accumV, c);
 

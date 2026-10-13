@@ -141,7 +141,8 @@ static void USART_Callback(uint32_t event) {
     if (event & ARM_USART_EVENT_RX_OVERFLOW) {
         SetTraceError(DAP_SWO_BUFFER_OVERRUN);
     }
-    if (event & (ARM_USART_EVENT_RX_BREAK | ARM_USART_EVENT_RX_FRAMING_ERROR | ARM_USART_EVENT_RX_PARITY_ERROR)) {
+    if (event & (ARM_USART_EVENT_RX_BREAK | ARM_USART_EVENT_RX_FRAMING_ERROR |
+                 ARM_USART_EVENT_RX_PARITY_ERROR)) {
         SetTraceError(DAP_SWO_STREAM_ERROR);
     }
 }
@@ -193,7 +194,9 @@ __WEAK uint32_t SWO_Baudrate_UART(uint32_t baudrate) {
         }
     }
 
-    status = pUSART->Control(ARM_USART_MODE_ASYNCHRONOUS | ARM_USART_DATA_BITS_8 | ARM_USART_PARITY_NONE | ARM_USART_STOP_BITS_1, baudrate);
+    status = pUSART->Control(ARM_USART_MODE_ASYNCHRONOUS | ARM_USART_DATA_BITS_8 |
+                                 ARM_USART_PARITY_NONE | ARM_USART_STOP_BITS_1,
+                             baudrate);
 
     if (status == ARM_DRIVER_OK) {
         USART_Ready = 1U;
@@ -519,8 +522,8 @@ uint32_t SWO_Mode(const uint8_t* request, uint8_t* response) {
 uint32_t SWO_Baudrate(const uint8_t* request, uint8_t* response) {
     uint32_t baudrate;
 
-    baudrate =
-        (uint32_t)(*(request + 0) << 0) | (uint32_t)(*(request + 1) << 8) | (uint32_t)(*(request + 2) << 16) | (uint32_t)(*(request + 3) << 24);
+    baudrate = (uint32_t)(*(request + 0) << 0) | (uint32_t)(*(request + 1) << 8) |
+               (uint32_t)(*(request + 2) << 16) | (uint32_t)(*(request + 3) << 24);
 
     switch (TraceMode) {
 #if (SWO_UART != 0)

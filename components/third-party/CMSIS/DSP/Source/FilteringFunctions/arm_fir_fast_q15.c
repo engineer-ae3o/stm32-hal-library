@@ -57,7 +57,10 @@
                    Use function \ref arm_fir_init_q15() to initialize the filter structure.
  */
 
-void arm_fir_fast_q15(const arm_fir_instance_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+void arm_fir_fast_q15(const arm_fir_instance_q15* S,
+                      const q15_t*                pSrc,
+                      q15_t*                      pDst,
+                      uint32_t                    blockSize) {
     q15_t*       pState  = S->pState;  /* State pointer */
     const q15_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     q15_t*       pStateCurnt;          /* Points to the current sample of the state */

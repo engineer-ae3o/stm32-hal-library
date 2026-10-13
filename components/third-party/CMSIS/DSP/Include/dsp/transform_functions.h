@@ -50,17 +50,24 @@ extern "C" {
    * @brief Instance structure for the Q15 CFFT/CIFFT function.
    */
 typedef struct {
-    uint16_t        fftLen;           /**< length of the FFT. */
-    uint8_t         ifftFlag;         /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
-    uint8_t         bitReverseFlag;   /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
-    const q15_t*    pTwiddle;         /**< points to the Sin twiddle factor table. */
-    const uint16_t* pBitRevTable;     /**< points to the bit reversal table. */
-    uint16_t        twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    uint16_t        bitRevFactor;     /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+    uint16_t fftLen; /**< length of the FFT. */
+    uint8_t
+        ifftFlag; /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t
+        bitReverseFlag; /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    const q15_t*    pTwiddle;     /**< points to the Sin twiddle factor table. */
+    const uint16_t* pBitRevTable; /**< points to the bit reversal table. */
+    uint16_t
+        twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t
+        bitRevFactor; /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
 } arm_cfft_radix2_instance_q15;
 
 /* Deprecated */
-arm_status arm_cfft_radix2_init_q15(arm_cfft_radix2_instance_q15* S, uint16_t fftLen, uint8_t ifftFlag, uint8_t bitReverseFlag);
+arm_status arm_cfft_radix2_init_q15(arm_cfft_radix2_instance_q15* S,
+                                    uint16_t                      fftLen,
+                                    uint8_t                       ifftFlag,
+                                    uint8_t                       bitReverseFlag);
 
 /* Deprecated */
 void arm_cfft_radix2_q15(const arm_cfft_radix2_instance_q15* S, q15_t* pSrc);
@@ -70,17 +77,24 @@ void arm_cfft_radix2_q15(const arm_cfft_radix2_instance_q15* S, q15_t* pSrc);
    * @brief Instance structure for the Q15 CFFT/CIFFT function.
    */
 typedef struct {
-    uint16_t        fftLen;           /**< length of the FFT. */
-    uint8_t         ifftFlag;         /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
-    uint8_t         bitReverseFlag;   /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
-    const q15_t*    pTwiddle;         /**< points to the twiddle factor table. */
-    const uint16_t* pBitRevTable;     /**< points to the bit reversal table. */
-    uint16_t        twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    uint16_t        bitRevFactor;     /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+    uint16_t fftLen; /**< length of the FFT. */
+    uint8_t
+        ifftFlag; /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t
+        bitReverseFlag; /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    const q15_t*    pTwiddle;     /**< points to the twiddle factor table. */
+    const uint16_t* pBitRevTable; /**< points to the bit reversal table. */
+    uint16_t
+        twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t
+        bitRevFactor; /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
 } arm_cfft_radix4_instance_q15;
 
 /* Deprecated */
-arm_status arm_cfft_radix4_init_q15(arm_cfft_radix4_instance_q15* S, uint16_t fftLen, uint8_t ifftFlag, uint8_t bitReverseFlag);
+arm_status arm_cfft_radix4_init_q15(arm_cfft_radix4_instance_q15* S,
+                                    uint16_t                      fftLen,
+                                    uint8_t                       ifftFlag,
+                                    uint8_t                       bitReverseFlag);
 
 /* Deprecated */
 void arm_cfft_radix4_q15(const arm_cfft_radix4_instance_q15* S, q15_t* pSrc);
@@ -89,17 +103,24 @@ void arm_cfft_radix4_q15(const arm_cfft_radix4_instance_q15* S, q15_t* pSrc);
    * @brief Instance structure for the Radix-2 Q31 CFFT/CIFFT function.
    */
 typedef struct {
-    uint16_t        fftLen;           /**< length of the FFT. */
-    uint8_t         ifftFlag;         /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
-    uint8_t         bitReverseFlag;   /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
-    const q31_t*    pTwiddle;         /**< points to the Twiddle factor table. */
-    const uint16_t* pBitRevTable;     /**< points to the bit reversal table. */
-    uint16_t        twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    uint16_t        bitRevFactor;     /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+    uint16_t fftLen; /**< length of the FFT. */
+    uint8_t
+        ifftFlag; /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t
+        bitReverseFlag; /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    const q31_t*    pTwiddle;     /**< points to the Twiddle factor table. */
+    const uint16_t* pBitRevTable; /**< points to the bit reversal table. */
+    uint16_t
+        twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t
+        bitRevFactor; /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
 } arm_cfft_radix2_instance_q31;
 
 /* Deprecated */
-arm_status arm_cfft_radix2_init_q31(arm_cfft_radix2_instance_q31* S, uint16_t fftLen, uint8_t ifftFlag, uint8_t bitReverseFlag);
+arm_status arm_cfft_radix2_init_q31(arm_cfft_radix2_instance_q31* S,
+                                    uint16_t                      fftLen,
+                                    uint8_t                       ifftFlag,
+                                    uint8_t                       bitReverseFlag);
 
 /* Deprecated */
 void arm_cfft_radix2_q31(const arm_cfft_radix2_instance_q31* S, q31_t* pSrc);
@@ -108,38 +129,52 @@ void arm_cfft_radix2_q31(const arm_cfft_radix2_instance_q31* S, q31_t* pSrc);
    * @brief Instance structure for the Q31 CFFT/CIFFT function.
    */
 typedef struct {
-    uint16_t        fftLen;           /**< length of the FFT. */
-    uint8_t         ifftFlag;         /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
-    uint8_t         bitReverseFlag;   /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
-    const q31_t*    pTwiddle;         /**< points to the twiddle factor table. */
-    const uint16_t* pBitRevTable;     /**< points to the bit reversal table. */
-    uint16_t        twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    uint16_t        bitRevFactor;     /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+    uint16_t fftLen; /**< length of the FFT. */
+    uint8_t
+        ifftFlag; /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t
+        bitReverseFlag; /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    const q31_t*    pTwiddle;     /**< points to the twiddle factor table. */
+    const uint16_t* pBitRevTable; /**< points to the bit reversal table. */
+    uint16_t
+        twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t
+        bitRevFactor; /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
 } arm_cfft_radix4_instance_q31;
 
 /* Deprecated */
 void arm_cfft_radix4_q31(const arm_cfft_radix4_instance_q31* S, q31_t* pSrc);
 
 /* Deprecated */
-arm_status arm_cfft_radix4_init_q31(arm_cfft_radix4_instance_q31* S, uint16_t fftLen, uint8_t ifftFlag, uint8_t bitReverseFlag);
+arm_status arm_cfft_radix4_init_q31(arm_cfft_radix4_instance_q31* S,
+                                    uint16_t                      fftLen,
+                                    uint8_t                       ifftFlag,
+                                    uint8_t                       bitReverseFlag);
 
 /**
    * @brief Instance structure for the floating-point CFFT/CIFFT function.
    */
 typedef struct {
-    uint16_t         fftLen;           /**< length of the FFT. */
-    uint8_t          ifftFlag;         /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
-    uint8_t          bitReverseFlag;   /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
-    const float32_t* pTwiddle;         /**< points to the Twiddle factor table. */
-    const uint16_t*  pBitRevTable;     /**< points to the bit reversal table. */
-    uint16_t         twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    uint16_t         bitRevFactor;     /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
-    float32_t        onebyfftLen;      /**< value of 1/fftLen. */
+    uint16_t fftLen; /**< length of the FFT. */
+    uint8_t
+        ifftFlag; /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t
+        bitReverseFlag; /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    const float32_t* pTwiddle;     /**< points to the Twiddle factor table. */
+    const uint16_t*  pBitRevTable; /**< points to the bit reversal table. */
+    uint16_t
+        twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t
+        bitRevFactor; /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+    float32_t onebyfftLen; /**< value of 1/fftLen. */
 } arm_cfft_radix2_instance_f32;
 
 
 /* Deprecated */
-arm_status arm_cfft_radix2_init_f32(arm_cfft_radix2_instance_f32* S, uint16_t fftLen, uint8_t ifftFlag, uint8_t bitReverseFlag);
+arm_status arm_cfft_radix2_init_f32(arm_cfft_radix2_instance_f32* S,
+                                    uint16_t                      fftLen,
+                                    uint8_t                       ifftFlag,
+                                    uint8_t                       bitReverseFlag);
 
 /* Deprecated */
 void arm_cfft_radix2_f32(const arm_cfft_radix2_instance_f32* S, float32_t* pSrc);
@@ -148,19 +183,26 @@ void arm_cfft_radix2_f32(const arm_cfft_radix2_instance_f32* S, float32_t* pSrc)
    * @brief Instance structure for the floating-point CFFT/CIFFT function.
    */
 typedef struct {
-    uint16_t         fftLen;           /**< length of the FFT. */
-    uint8_t          ifftFlag;         /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
-    uint8_t          bitReverseFlag;   /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
-    const float32_t* pTwiddle;         /**< points to the Twiddle factor table. */
-    const uint16_t*  pBitRevTable;     /**< points to the bit reversal table. */
-    uint16_t         twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    uint16_t         bitRevFactor;     /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
-    float32_t        onebyfftLen;      /**< value of 1/fftLen. */
+    uint16_t fftLen; /**< length of the FFT. */
+    uint8_t
+        ifftFlag; /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t
+        bitReverseFlag; /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    const float32_t* pTwiddle;     /**< points to the Twiddle factor table. */
+    const uint16_t*  pBitRevTable; /**< points to the bit reversal table. */
+    uint16_t
+        twidCoefModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t
+        bitRevFactor; /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+    float32_t onebyfftLen; /**< value of 1/fftLen. */
 } arm_cfft_radix4_instance_f32;
 
 
 /* Deprecated */
-arm_status arm_cfft_radix4_init_f32(arm_cfft_radix4_instance_f32* S, uint16_t fftLen, uint8_t ifftFlag, uint8_t bitReverseFlag);
+arm_status arm_cfft_radix4_init_f32(arm_cfft_radix4_instance_f32* S,
+                                    uint16_t                      fftLen,
+                                    uint8_t                       ifftFlag,
+                                    uint8_t                       bitReverseFlag);
 
 /* Deprecated */
 void arm_cfft_radix4_f32(const arm_cfft_radix4_instance_f32* S, float32_t* pSrc);
@@ -174,18 +216,24 @@ typedef struct {
     const uint16_t* pBitRevTable; /**< points to the bit reversal table. */
     uint16_t        bitRevLength; /**< bit reversal table length. */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-    const uint32_t* rearranged_twiddle_tab_stride1_arr; /**< Per stage reordered twiddle pointer (offset 1) */
-    const uint32_t* rearranged_twiddle_tab_stride2_arr; /**< Per stage reordered twiddle pointer (offset 2) */
-    const uint32_t* rearranged_twiddle_tab_stride3_arr; /**< Per stage reordered twiddle pointer (offset 3) */
-    const q15_t*    rearranged_twiddle_stride1;         /**< reordered twiddle offset 1 storage */
-    const q15_t*    rearranged_twiddle_stride2;         /**< reordered twiddle offset 2 storage */
-    const q15_t*    rearranged_twiddle_stride3;
+    const uint32_t*
+        rearranged_twiddle_tab_stride1_arr; /**< Per stage reordered twiddle pointer (offset 1) */
+    const uint32_t*
+        rearranged_twiddle_tab_stride2_arr; /**< Per stage reordered twiddle pointer (offset 2) */
+    const uint32_t*
+        rearranged_twiddle_tab_stride3_arr;  /**< Per stage reordered twiddle pointer (offset 3) */
+    const q15_t* rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
+    const q15_t* rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
+    const q15_t* rearranged_twiddle_stride3;
 #endif
 } arm_cfft_instance_q15;
 
 arm_status arm_cfft_init_q15(arm_cfft_instance_q15* S, uint16_t fftLen);
 
-void arm_cfft_q15(const arm_cfft_instance_q15* S, q15_t* p1, uint8_t ifftFlag, uint8_t bitReverseFlag);
+void arm_cfft_q15(const arm_cfft_instance_q15* S,
+                  q15_t*                       p1,
+                  uint8_t                      ifftFlag,
+                  uint8_t                      bitReverseFlag);
 
 /**
    * @brief Instance structure for the fixed-point CFFT/CIFFT function.
@@ -196,18 +244,24 @@ typedef struct {
     const uint16_t* pBitRevTable; /**< points to the bit reversal table. */
     uint16_t        bitRevLength; /**< bit reversal table length. */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-    const uint32_t* rearranged_twiddle_tab_stride1_arr; /**< Per stage reordered twiddle pointer (offset 1) */
-    const uint32_t* rearranged_twiddle_tab_stride2_arr; /**< Per stage reordered twiddle pointer (offset 2) */
-    const uint32_t* rearranged_twiddle_tab_stride3_arr; /**< Per stage reordered twiddle pointer (offset 3) */
-    const q31_t*    rearranged_twiddle_stride1;         /**< reordered twiddle offset 1 storage */
-    const q31_t*    rearranged_twiddle_stride2;         /**< reordered twiddle offset 2 storage */
-    const q31_t*    rearranged_twiddle_stride3;
+    const uint32_t*
+        rearranged_twiddle_tab_stride1_arr; /**< Per stage reordered twiddle pointer (offset 1) */
+    const uint32_t*
+        rearranged_twiddle_tab_stride2_arr; /**< Per stage reordered twiddle pointer (offset 2) */
+    const uint32_t*
+        rearranged_twiddle_tab_stride3_arr;  /**< Per stage reordered twiddle pointer (offset 3) */
+    const q31_t* rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
+    const q31_t* rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
+    const q31_t* rearranged_twiddle_stride3;
 #endif
 } arm_cfft_instance_q31;
 
 arm_status arm_cfft_init_q31(arm_cfft_instance_q31* S, uint16_t fftLen);
 
-void arm_cfft_q31(const arm_cfft_instance_q31* S, q31_t* p1, uint8_t ifftFlag, uint8_t bitReverseFlag);
+void arm_cfft_q31(const arm_cfft_instance_q31* S,
+                  q31_t*                       p1,
+                  uint8_t                      ifftFlag,
+                  uint8_t                      bitReverseFlag);
 
 /**
    * @brief Instance structure for the floating-point CFFT/CIFFT function.
@@ -218,11 +272,14 @@ typedef struct {
     const uint16_t*  pBitRevTable; /**< points to the bit reversal table. */
     uint16_t         bitRevLength; /**< bit reversal table length. */
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
-    const uint32_t*  rearranged_twiddle_tab_stride1_arr; /**< Per stage reordered twiddle pointer (offset 1) */
-    const uint32_t*  rearranged_twiddle_tab_stride2_arr; /**< Per stage reordered twiddle pointer (offset 2) */
-    const uint32_t*  rearranged_twiddle_tab_stride3_arr; /**< Per stage reordered twiddle pointer (offset 3) */
-    const float32_t* rearranged_twiddle_stride1;         /**< reordered twiddle offset 1 storage */
-    const float32_t* rearranged_twiddle_stride2;         /**< reordered twiddle offset 2 storage */
+    const uint32_t*
+        rearranged_twiddle_tab_stride1_arr; /**< Per stage reordered twiddle pointer (offset 1) */
+    const uint32_t*
+        rearranged_twiddle_tab_stride2_arr; /**< Per stage reordered twiddle pointer (offset 2) */
+    const uint32_t*
+        rearranged_twiddle_tab_stride3_arr; /**< Per stage reordered twiddle pointer (offset 3) */
+    const float32_t* rearranged_twiddle_stride1; /**< reordered twiddle offset 1 storage */
+    const float32_t* rearranged_twiddle_stride2; /**< reordered twiddle offset 2 storage */
     const float32_t* rearranged_twiddle_stride3;
 #endif
 } arm_cfft_instance_f32;
@@ -230,7 +287,10 @@ typedef struct {
 
 arm_status arm_cfft_init_f32(arm_cfft_instance_f32* S, uint16_t fftLen);
 
-void arm_cfft_f32(const arm_cfft_instance_f32* S, float32_t* p1, uint8_t ifftFlag, uint8_t bitReverseFlag);
+void arm_cfft_f32(const arm_cfft_instance_f32* S,
+                  float32_t*                   p1,
+                  uint8_t                      ifftFlag,
+                  uint8_t                      bitReverseFlag);
 
 
 /**
@@ -245,18 +305,24 @@ typedef struct {
 
 arm_status arm_cfft_init_f64(arm_cfft_instance_f64* S, uint16_t fftLen);
 
-void arm_cfft_f64(const arm_cfft_instance_f64* S, float64_t* p1, uint8_t ifftFlag, uint8_t bitReverseFlag);
+void arm_cfft_f64(const arm_cfft_instance_f64* S,
+                  float64_t*                   p1,
+                  uint8_t                      ifftFlag,
+                  uint8_t                      bitReverseFlag);
 
 /**
    * @brief Instance structure for the Q15 RFFT/RIFFT function.
    */
 typedef struct {
-    uint32_t     fftLenReal;        /**< length of the real FFT. */
-    uint8_t      ifftFlagR;         /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
-    uint8_t      bitReverseFlagR;   /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
-    uint32_t     twidCoefRModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    const q15_t* pTwiddleAReal;     /**< points to the real twiddle factor table. */
-    const q15_t* pTwiddleBReal;     /**< points to the imag twiddle factor table. */
+    uint32_t fftLenReal; /**< length of the real FFT. */
+    uint8_t
+        ifftFlagR; /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
+    uint8_t
+        bitReverseFlagR; /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
+    uint32_t
+        twidCoefRModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    const q15_t* pTwiddleAReal; /**< points to the real twiddle factor table. */
+    const q15_t* pTwiddleBReal; /**< points to the imag twiddle factor table. */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
     arm_cfft_instance_q15 cfftInst;
 #else
@@ -264,7 +330,10 @@ typedef struct {
 #endif
 } arm_rfft_instance_q15;
 
-arm_status arm_rfft_init_q15(arm_rfft_instance_q15* S, uint32_t fftLenReal, uint32_t ifftFlagR, uint32_t bitReverseFlag);
+arm_status arm_rfft_init_q15(arm_rfft_instance_q15* S,
+                             uint32_t               fftLenReal,
+                             uint32_t               ifftFlagR,
+                             uint32_t               bitReverseFlag);
 
 void arm_rfft_q15(const arm_rfft_instance_q15* S, q15_t* pSrc, q15_t* pDst);
 
@@ -272,12 +341,15 @@ void arm_rfft_q15(const arm_rfft_instance_q15* S, q15_t* pSrc, q15_t* pDst);
    * @brief Instance structure for the Q31 RFFT/RIFFT function.
    */
 typedef struct {
-    uint32_t     fftLenReal;        /**< length of the real FFT. */
-    uint8_t      ifftFlagR;         /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
-    uint8_t      bitReverseFlagR;   /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
-    uint32_t     twidCoefRModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    const q31_t* pTwiddleAReal;     /**< points to the real twiddle factor table. */
-    const q31_t* pTwiddleBReal;     /**< points to the imag twiddle factor table. */
+    uint32_t fftLenReal; /**< length of the real FFT. */
+    uint8_t
+        ifftFlagR; /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
+    uint8_t
+        bitReverseFlagR; /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
+    uint32_t
+        twidCoefRModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    const q31_t* pTwiddleAReal; /**< points to the real twiddle factor table. */
+    const q31_t* pTwiddleBReal; /**< points to the imag twiddle factor table. */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
     arm_cfft_instance_q31 cfftInst;
 #else
@@ -285,7 +357,10 @@ typedef struct {
 #endif
 } arm_rfft_instance_q31;
 
-arm_status arm_rfft_init_q31(arm_rfft_instance_q31* S, uint32_t fftLenReal, uint32_t ifftFlagR, uint32_t bitReverseFlag);
+arm_status arm_rfft_init_q31(arm_rfft_instance_q31* S,
+                             uint32_t               fftLenReal,
+                             uint32_t               ifftFlagR,
+                             uint32_t               bitReverseFlag);
 
 void arm_rfft_q31(const arm_rfft_instance_q31* S, q31_t* pSrc, q31_t* pDst);
 
@@ -293,18 +368,24 @@ void arm_rfft_q31(const arm_rfft_instance_q31* S, q31_t* pSrc, q31_t* pDst);
    * @brief Instance structure for the floating-point RFFT/RIFFT function.
    */
 typedef struct {
-    uint32_t         fftLenReal;         /**< length of the real FFT. */
-    uint16_t         fftLenBy2;          /**< length of the complex FFT. */
-    uint8_t          ifftFlagR;          /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
-    uint8_t          bitReverseFlagR;    /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
-    uint32_t         twidCoefRModifier;  /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    const float32_t* pTwiddleAReal;      /**< points to the real twiddle factor table. */
-    const float32_t* pTwiddleBReal;      /**< points to the imag twiddle factor table. */
-    arm_cfft_radix4_instance_f32* pCfft; /**< points to the complex FFT instance. */
+    uint32_t fftLenReal; /**< length of the real FFT. */
+    uint16_t fftLenBy2;  /**< length of the complex FFT. */
+    uint8_t
+        ifftFlagR; /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
+    uint8_t
+        bitReverseFlagR; /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
+    uint32_t
+        twidCoefRModifier; /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    const float32_t*              pTwiddleAReal; /**< points to the real twiddle factor table. */
+    const float32_t*              pTwiddleBReal; /**< points to the imag twiddle factor table. */
+    arm_cfft_radix4_instance_f32* pCfft;         /**< points to the complex FFT instance. */
 } arm_rfft_instance_f32;
 
-arm_status
-arm_rfft_init_f32(arm_rfft_instance_f32* S, arm_cfft_radix4_instance_f32* S_CFFT, uint32_t fftLenReal, uint32_t ifftFlagR, uint32_t bitReverseFlag);
+arm_status arm_rfft_init_f32(arm_rfft_instance_f32*        S,
+                             arm_cfft_radix4_instance_f32* S_CFFT,
+                             uint32_t                      fftLenReal,
+                             uint32_t                      ifftFlagR,
+                             uint32_t                      bitReverseFlag);
 
 void arm_rfft_f32(const arm_rfft_instance_f32* S, float32_t* pSrc, float32_t* pDst);
 
@@ -320,7 +401,10 @@ typedef struct {
 arm_status arm_rfft_fast_init_f64(arm_rfft_fast_instance_f64* S, uint16_t fftLen);
 
 
-void arm_rfft_fast_f64(arm_rfft_fast_instance_f64* S, float64_t* p, float64_t* pOut, uint8_t ifftFlag);
+void arm_rfft_fast_f64(arm_rfft_fast_instance_f64* S,
+                       float64_t*                  p,
+                       float64_t*                  pOut,
+                       uint8_t                     ifftFlag);
 
 
 /**
@@ -335,7 +419,10 @@ typedef struct {
 arm_status arm_rfft_fast_init_f32(arm_rfft_fast_instance_f32* S, uint16_t fftLen);
 
 
-void arm_rfft_fast_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut, uint8_t ifftFlag);
+void arm_rfft_fast_f32(const arm_rfft_fast_instance_f32* S,
+                       float32_t*                        p,
+                       float32_t*                        pOut,
+                       uint8_t                           ifftFlag);
 
 /**
    * @brief Instance structure for the floating-point DCT4/IDCT4 function.
@@ -361,8 +448,12 @@ typedef struct {
    * @param[in]     normalize  normalizing factor.
    * @return      arm_status function returns ARM_MATH_SUCCESS if initialization is successful or ARM_MATH_ARGUMENT_ERROR if <code>fftLenReal</code> is not a supported transform length.
    */
-arm_status arm_dct4_init_f32(
-    arm_dct4_instance_f32* S, arm_rfft_instance_f32* S_RFFT, arm_cfft_radix4_instance_f32* S_CFFT, uint16_t N, uint16_t Nby2, float32_t normalize);
+arm_status arm_dct4_init_f32(arm_dct4_instance_f32*        S,
+                             arm_rfft_instance_f32*        S_RFFT,
+                             arm_cfft_radix4_instance_f32* S_CFFT,
+                             uint16_t                      N,
+                             uint16_t                      Nby2,
+                             float32_t                     normalize);
 
 
 /**
@@ -398,8 +489,12 @@ typedef struct {
    * @param[in]     normalize  normalizing factor.
    * @return      arm_status function returns ARM_MATH_SUCCESS if initialization is successful or ARM_MATH_ARGUMENT_ERROR if <code>N</code> is not a supported transform length.
    */
-arm_status arm_dct4_init_q31(
-    arm_dct4_instance_q31* S, arm_rfft_instance_q31* S_RFFT, arm_cfft_radix4_instance_q31* S_CFFT, uint16_t N, uint16_t Nby2, q31_t normalize);
+arm_status arm_dct4_init_q31(arm_dct4_instance_q31*        S,
+                             arm_rfft_instance_q31*        S_RFFT,
+                             arm_cfft_radix4_instance_q31* S_CFFT,
+                             uint16_t                      N,
+                             uint16_t                      Nby2,
+                             q31_t                         normalize);
 
 
 /**
@@ -435,8 +530,12 @@ typedef struct {
    * @param[in]     normalize  normalizing factor.
    * @return      arm_status function returns ARM_MATH_SUCCESS if initialization is successful or ARM_MATH_ARGUMENT_ERROR if <code>N</code> is not a supported transform length.
    */
-arm_status arm_dct4_init_q15(
-    arm_dct4_instance_q15* S, arm_rfft_instance_q15* S_RFFT, arm_cfft_radix4_instance_q15* S_CFFT, uint16_t N, uint16_t Nby2, q15_t normalize);
+arm_status arm_dct4_init_q15(arm_dct4_instance_q15*        S,
+                             arm_rfft_instance_q15*        S_RFFT,
+                             arm_cfft_radix4_instance_q15* S_CFFT,
+                             uint16_t                      N,
+                             uint16_t                      Nby2,
+                             q15_t                         normalize);
 
 
 /**
@@ -487,7 +586,10 @@ arm_status arm_mfcc_init_f32(arm_mfcc_instance_f32* S,
   @param[inout]     pTmp  points to a temporary buffer of complex
   @return        none
  */
-void arm_mfcc_f32(const arm_mfcc_instance_f32* S, float32_t* pSrc, float32_t* pDst, float32_t* pTmp);
+void arm_mfcc_f32(const arm_mfcc_instance_f32* S,
+                  float32_t*                   pSrc,
+                  float32_t*                   pDst,
+                  float32_t*                   pTmp);
 
 typedef struct {
     const q31_t*    dctCoefs;      /**< Internal DCT coefficients */

@@ -113,8 +113,8 @@ arm_status arm_convolve_1x1_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
     q15_t* pBuffer = bufferA;
     q7_t*  pOut    = Im_out;
 
-    if (ch_im_in % 4 != 0 || ch_im_out % 2 != 0 || dim_kernel_x != 1 || dim_kernel_y != 1 || padding_x != 0 || padding_y != 0 || stride_x != 1 ||
-        stride_y != 1) {
+    if (ch_im_in % 4 != 0 || ch_im_out % 2 != 0 || dim_kernel_x != 1 || dim_kernel_y != 1 ||
+        padding_x != 0 || padding_y != 0 || stride_x != 1 || stride_y != 1) {
         /* check if the input dimension meets the constraints */
         return ARM_MATH_SIZE_MISMATCH;
     }
@@ -122,11 +122,13 @@ arm_status arm_convolve_1x1_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
     for (i_out_y = 0; i_out_y < dim_im_out_y; i_out_y++) {
         for (i_out_x = 0; i_out_x < dim_im_out_x; i_out_x++) {
             /* This part implements the im2col function */
-            arm_q7_to_q15_reordered_no_shift((q7_t*)Im_in + (i_out_y * dim_im_in_x + i_out_x) * ch_im_in, pBuffer, ch_im_in);
+            arm_q7_to_q15_reordered_no_shift(
+                (q7_t*)Im_in + (i_out_y * dim_im_in_x + i_out_x) * ch_im_in, pBuffer, ch_im_in);
             pBuffer += ch_im_in;
 
             if (pBuffer == bufferA + 2 * ch_im_in * dim_kernel_x * dim_kernel_y) {
-                pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(wt, bufferA, ch_im_out, ch_im_in, bias_shift, out_shift, bias, pOut);
+                pOut = arm_nn_mat_mult_kernel_q7_q15_reordered(
+                    wt, bufferA, ch_im_out, ch_im_in, bias_shift, out_shift, bias, pOut);
                 /* counter reset */
                 pBuffer = bufferA;
             }
@@ -176,8 +178,8 @@ arm_status arm_convolve_1x1_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
     int conv_out;
     int in_row, in_col;
 
-    if (ch_im_in % 4 != 0 || ch_im_out % 2 != 0 || dim_kernel_x != 1 || dim_kernel_y != 1 || padding_x != 0 || padding_y != 0 || stride_x != 1 ||
-        stride_y != 1) {
+    if (ch_im_in % 4 != 0 || ch_im_out % 2 != 0 || dim_kernel_x != 1 || dim_kernel_y != 1 ||
+        padding_x != 0 || padding_y != 0 || stride_x != 1 || stride_y != 1) {
         /* check if the input dimension meets the constraints */
         return ARM_MATH_SIZE_MISMATCH;
     }
@@ -191,15 +193,18 @@ arm_status arm_convolve_1x1_HWC_q7_fast_nonsquare(const q7_t*    Im_in,
                         // if-for implementation
                         in_row = stride_y * j + m - padding_y;
                         in_col = stride_x * k + n - padding_x;
-                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in_y && in_col < dim_im_in_x) {
+                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in_y &&
+                            in_col < dim_im_in_x) {
                             for (l = 0; l < ch_im_in; l++) {
                                 conv_out += Im_in[(in_row * dim_im_in_x + in_col) * ch_im_in + l] *
-                                            wt[i * ch_im_in * dim_kernel_y * dim_kernel_x + (m * dim_kernel_y + n) * ch_im_in + l];
+                                            wt[i * ch_im_in * dim_kernel_y * dim_kernel_x +
+                                               (m * dim_kernel_y + n) * ch_im_in + l];
                             }
                         }
                     }
                 }
-                Im_out[i + (j * dim_im_out_x + k) * ch_im_out] = (q7_t)__SSAT((conv_out >> out_shift), 8);
+                Im_out[i + (j * dim_im_out_x + k) * ch_im_out] =
+                    (q7_t)__SSAT((conv_out >> out_shift), 8);
             }
         }
     }

@@ -30,9 +30,13 @@
 #include "arm_common_tables.h"
 
 
-extern void arm_radix4_butterfly_f64(float64_t* pSrc, uint16_t fftLen, const float64_t* pCoef, uint16_t twidCoefModifier);
+extern void arm_radix4_butterfly_f64(float64_t*       pSrc,
+                                     uint16_t         fftLen,
+                                     const float64_t* pCoef,
+                                     uint16_t         twidCoefModifier);
 
-extern void arm_bitreversal_64(uint64_t* pSrc, const uint16_t bitRevLen, const uint16_t* pBitRevTable);
+extern void
+arm_bitreversal_64(uint64_t* pSrc, const uint16_t bitRevLen, const uint16_t* pBitRevTable);
 
 /**
 * @} end of ComplexFFT group
@@ -51,7 +55,10 @@ extern void arm_bitreversal_64(uint64_t* pSrc, const uint16_t bitRevLen, const u
 * @return none.
 */
 
-void arm_radix4_butterfly_f64(float64_t* pSrc, uint16_t fftLen, const float64_t* pCoef, uint16_t twidCoefModifier) {
+void arm_radix4_butterfly_f64(float64_t*       pSrc,
+                              uint16_t         fftLen,
+                              const float64_t* pCoef,
+                              uint16_t         twidCoefModifier) {
 
     float64_t co1, co2, co3, si1, si2, si3;
     uint32_t  ia1, ia2, ia3;
@@ -235,7 +242,10 @@ void arm_cfft_radix4by2_f64(float64_t* pSrc, uint32_t fftLen, const float64_t* p
   @return        none
  */
 
-void arm_cfft_f64(const arm_cfft_instance_f64* S, float64_t* p1, uint8_t ifftFlag, uint8_t bitReverseFlag) {
+void arm_cfft_f64(const arm_cfft_instance_f64* S,
+                  float64_t*                   p1,
+                  uint8_t                      ifftFlag,
+                  uint8_t                      bitReverseFlag) {
     uint32_t  L = S->fftLen, l;
     float64_t invL, *pSrc;
 

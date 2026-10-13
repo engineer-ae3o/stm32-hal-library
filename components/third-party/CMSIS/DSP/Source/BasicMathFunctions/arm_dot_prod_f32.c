@@ -64,7 +64,10 @@
 #include "arm_helium_utils.h"
 
 
-void arm_dot_prod_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize, float32_t* result) {
+void arm_dot_prod_f32(const float32_t* pSrcA,
+                      const float32_t* pSrcB,
+                      uint32_t         blockSize,
+                      float32_t*       result) {
     f32x4_t   vecA, vecB;
     f32x4_t   vecSum;
     uint32_t  blkCnt;
@@ -111,7 +114,10 @@ void arm_dot_prod_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t b
 
 #else
 
-void arm_dot_prod_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize, float32_t* result) {
+void arm_dot_prod_f32(const float32_t* pSrcA,
+                      const float32_t* pSrcB,
+                      uint32_t         blockSize,
+                      float32_t*       result) {
     uint32_t  blkCnt;     /* Loop counter */
     float32_t sum = 0.0f; /* Temporary return variable */
 

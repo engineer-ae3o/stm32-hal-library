@@ -45,7 +45,10 @@
   @param[out]    pIndex     index of maximum value returned here
   @return        none
  */
-void arm_absmax_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult, uint32_t* pIndex) {
+void arm_absmax_f64(const float64_t* pSrc,
+                    uint32_t         blockSize,
+                    float64_t*       pResult,
+                    uint32_t*        pIndex) {
     float64_t maxVal, out;      /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* Loop counter */
 

@@ -80,40 +80,84 @@ namespace test::spi {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_init(TEST_INSTANCE, &no_pins_config));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_deinit(nullptr));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transmit_poll(nullptr, data.data(), data.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transmit_poll(TEST_INSTANCE, nullptr, data.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transmit_poll(TEST_INSTANCE, data.data(), 0));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              spi_master_transmit_poll(nullptr, data.data(), data.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              spi_master_transmit_poll(TEST_INSTANCE, nullptr, data.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              spi_master_transmit_poll(TEST_INSTANCE, data.data(), 0));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_receive_poll(nullptr, rx_buf.data(), rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_receive_poll(TEST_INSTANCE, nullptr, rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_receive_poll(TEST_INSTANCE, rx_buf.data(), 0));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              spi_master_receive_poll(nullptr, rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              spi_master_receive_poll(TEST_INSTANCE, nullptr, rx_buf.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              spi_master_receive_poll(TEST_INSTANCE, rx_buf.data(), 0));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transceive_poll(nullptr, data.data(), rx_buf.data(), data.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transceive_poll(TEST_INSTANCE, nullptr, rx_buf.data(), data.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transceive_poll(TEST_INSTANCE, data.data(), nullptr, data.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transceive_poll(TEST_INSTANCE, data.data(), rx_buf.data(), 0));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transceive_poll(nullptr, data.data(), rx_buf.data(), data.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transceive_poll(TEST_INSTANCE, nullptr, rx_buf.data(), data.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transceive_poll(TEST_INSTANCE, data.data(), nullptr, data.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transceive_poll(TEST_INSTANCE, data.data(), rx_buf.data(), 0));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transmit_dma(nullptr, data.data(), data.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transmit_dma(TEST_INSTANCE, nullptr, data.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transmit_dma(TEST_INSTANCE, data.data(), 0, nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transmit_dma(nullptr, data.data(), data.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transmit_dma(TEST_INSTANCE, nullptr, data.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transmit_dma(TEST_INSTANCE, data.data(), 0, nullptr, nullptr));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_receive_dma(nullptr, rx_buf.data(), rx_buf.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_receive_dma(TEST_INSTANCE, nullptr, rx_buf.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_receive_dma(TEST_INSTANCE, rx_buf.data(), 0, nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_receive_dma(nullptr, rx_buf.data(), rx_buf.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_receive_dma(TEST_INSTANCE, nullptr, rx_buf.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_receive_dma(TEST_INSTANCE, rx_buf.data(), 0, nullptr, nullptr));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transceive_dma(nullptr, data.data(), rx_buf.data(), data.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transceive_dma(TEST_INSTANCE, nullptr, rx_buf.data(), data.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transceive_dma(TEST_INSTANCE, data.data(), nullptr, data.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transceive_dma(TEST_INSTANCE, data.data(), rx_buf.data(), 0, nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transceive_dma(
+                    nullptr, data.data(), rx_buf.data(), data.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transceive_dma(
+                    TEST_INSTANCE, nullptr, rx_buf.data(), data.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transceive_dma(
+                    TEST_INSTANCE, data.data(), nullptr, data.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              spi_master_transceive_dma(
+                                  TEST_INSTANCE, data.data(), rx_buf.data(), 0, nullptr, nullptr));
 
             // A handle with no DMA mapping (or an unrecognized handle entirely) must be rejected too
             auto* const bogus_handle = reinterpret_cast<SPI_TypeDef*>(0x1);
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_dma_init(bogus_handle, DMA_PRIORITY_LOW));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_dma_deinit(bogus_handle));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_transmit_dma(bogus_handle, data.data(), data.size(), nullptr, nullptr));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_receive_dma(bogus_handle, rx_buf.data(), rx_buf.size(), nullptr, nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              spi_master_transceive_dma(bogus_handle, data.data(), rx_buf.data(), data.size(), nullptr, nullptr));
+                              spi_master_dma_init(bogus_handle, DMA_PRIORITY_LOW));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spi_master_dma_deinit(bogus_handle));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transmit_dma(bogus_handle, data.data(), data.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              spi_master_receive_dma(
+                                  bogus_handle, rx_buf.data(), rx_buf.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                spi_master_transceive_dma(
+                    bogus_handle, data.data(), rx_buf.data(), data.size(), nullptr, nullptr));
         }
 
         void clk_enable_toggles_the_correct_bus_bit() {
@@ -147,7 +191,8 @@ namespace test::spi {
             TEST_ASSERT_TRUE(RCC->APB2ENR & RCC_APB2ENR_SPI5EN);
             spix_clk_enable(SPI5, false);
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, spix_clk_enable(reinterpret_cast<SPI_TypeDef*>(0x1), true));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              spix_clk_enable(reinterpret_cast<SPI_TypeDef*>(0x1), true));
         }
 
         void dma_init_rejects_unsupported_instances() {
@@ -197,10 +242,13 @@ namespace test::spi {
         void transceive_poll_loopback_8bit() {
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &DEFAULT_CONFIG));
 
-            constexpr std::array<uint8_t, 16>   TX_DATA = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+            constexpr std::array<uint8_t, 16> TX_DATA = {
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
             std::array<uint8_t, TX_DATA.size()> rx_buf{};
 
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_transceive_poll(TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size()));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              spi_master_transceive_poll(
+                                  TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size()));
             TEST_ASSERT_TRUE(std::equal(TX_DATA.begin(), TX_DATA.end(), rx_buf.begin()));
 
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_deinit(TEST_INSTANCE));
@@ -211,10 +259,13 @@ namespace test::spi {
             config.data_size           = SPI_DATA_16_BITS;
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &config));
 
-            constexpr std::array<uint16_t, 8>    TX_DATA = {0x0102, 0x0304, 0x0506, 0x0708, 0xDEAD, 0xBEEF, 0xCAFE, 0xF00D};
+            constexpr std::array<uint16_t, 8> TX_DATA = {
+                0x0102, 0x0304, 0x0506, 0x0708, 0xDEAD, 0xBEEF, 0xCAFE, 0xF00D};
             std::array<uint16_t, TX_DATA.size()> rx_buf{};
 
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_transceive_poll(TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size()));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              spi_master_transceive_poll(
+                                  TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size()));
             TEST_ASSERT_TRUE(std::equal(TX_DATA.begin(), TX_DATA.end(), rx_buf.begin()));
 
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_deinit(TEST_INSTANCE));
@@ -231,7 +282,10 @@ namespace test::spi {
                     config.cpha                = cpha;
 
                     TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &config));
-                    TEST_ASSERT_EQUAL(HAL_OK, spi_master_transceive_poll(TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size()));
+                    TEST_ASSERT_EQUAL(
+                        HAL_OK,
+                        spi_master_transceive_poll(
+                            TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size()));
                     TEST_ASSERT_TRUE(std::equal(TX_DATA.begin(), TX_DATA.end(), rx_buf.begin()));
                     TEST_ASSERT_EQUAL(HAL_OK, spi_master_deinit(TEST_INSTANCE));
                 }
@@ -242,14 +296,20 @@ namespace test::spi {
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &DEFAULT_CONFIG));
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_dma_init(TEST_INSTANCE, DMA_PRIORITY_HIGH));
 
-            constexpr std::array<uint8_t, 16>   TX_DATA = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+            constexpr std::array<uint8_t, 16> TX_DATA = {
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
             std::array<uint8_t, TX_DATA.size()> rx_buf{};
 
             s_tx_done = false;
             s_tx_err  = HAL_FAIL;
 
             TEST_ASSERT_EQUAL(HAL_OK,
-                              spi_master_transceive_dma(TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size(), tx_done_callback, nullptr));
+                              spi_master_transceive_dma(TEST_INSTANCE,
+                                                        TX_DATA.data(),
+                                                        rx_buf.data(),
+                                                        TX_DATA.size(),
+                                                        tx_done_callback,
+                                                        nullptr));
 
             TEST_ASSERT_TRUE_MESSAGE(wait_for(s_tx_done), "SPI DMA transceive never completed");
             TEST_ASSERT_EQUAL(HAL_OK, s_tx_err);
@@ -266,7 +326,13 @@ namespace test::spi {
             constexpr std::array<uint8_t, 4>    TX_DATA = {0xDE, 0xAD, 0xBE, 0xEF};
             std::array<uint8_t, TX_DATA.size()> rx_buf{};
 
-            TEST_ASSERT_EQUAL(HAL_OK, spi_master_transceive_dma(TEST_INSTANCE, TX_DATA.data(), rx_buf.data(), TX_DATA.size(), nullptr, nullptr));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              spi_master_transceive_dma(TEST_INSTANCE,
+                                                        TX_DATA.data(),
+                                                        rx_buf.data(),
+                                                        TX_DATA.size(),
+                                                        nullptr,
+                                                        nullptr));
 
             // Poll until we are sure the transfer should have been
             // completed. 20ms should be more than enough in this case
@@ -283,7 +349,8 @@ namespace test::spi {
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_init(TEST_INSTANCE, &DEFAULT_CONFIG));
             TEST_ASSERT_EQUAL(HAL_OK, spi_master_deinit(TEST_INSTANCE));
 
-            TEST_ASSERT_FALSE(TEST_INSTANCE->CR1 & (SPI_CR1_SPE | SPI_CR1_MSTR | SPI_CR1_BR | SPI_CR1_DFF));
+            TEST_ASSERT_FALSE(TEST_INSTANCE->CR1 &
+                              (SPI_CR1_SPE | SPI_CR1_MSTR | SPI_CR1_BR | SPI_CR1_DFF));
             TEST_ASSERT_FALSE(TEST_INSTANCE->CR2 & (SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN));
         }
 

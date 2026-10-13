@@ -118,8 +118,10 @@ void arm_absmin_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t*
 
     while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin; /* compare for the extrema value */
-        if ((_Float16)cur_absmin < (_Float16)out) {                                        /* Update the extrema value and it's index */
+        cur_absmin = ((_Float16)cur_absmin > 0.0f16)
+                         ? cur_absmin
+                         : -(_Float16)cur_absmin;   /* compare for the extrema value */
+        if ((_Float16)cur_absmin < (_Float16)out) { /* Update the extrema value and it's index */
             out = cur_absmin;
         }
 

@@ -39,7 +39,10 @@
 
 #if defined(ARM_FLOAT16_SUPPORTED)
 
-void arm_bitreversal_f16(float16_t* pSrc, uint16_t fftSize, uint16_t bitRevFactor, const uint16_t* pBitRevTab) {
+void arm_bitreversal_f16(float16_t*      pSrc,
+                         uint16_t        fftSize,
+                         uint16_t        bitRevFactor,
+                         const uint16_t* pBitRevTab) {
     uint16_t  fftLenBy2, fftLenBy2p1;
     uint16_t  i, j;
     float16_t in;

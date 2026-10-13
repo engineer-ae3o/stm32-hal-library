@@ -57,8 +57,13 @@
                    number of samples processed by the <code>arm_fir_sparse_q7()</code> function.
  */
 
-void arm_fir_sparse_init_q7(
-    arm_fir_sparse_instance_q7* S, uint16_t numTaps, const q7_t* pCoeffs, q7_t* pState, int32_t* pTapDelay, uint16_t maxDelay, uint32_t blockSize) {
+void arm_fir_sparse_init_q7(arm_fir_sparse_instance_q7* S,
+                            uint16_t                    numTaps,
+                            const q7_t*                 pCoeffs,
+                            q7_t*                       pState,
+                            int32_t*                    pTapDelay,
+                            uint16_t                    maxDelay,
+                            uint32_t                    blockSize) {
     /* Assign filter taps */
     S->numTaps = numTaps;
 

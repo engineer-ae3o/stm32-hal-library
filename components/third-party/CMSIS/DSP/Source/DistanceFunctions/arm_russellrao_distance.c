@@ -32,7 +32,10 @@
 #include <math.h>
 
 
-extern void arm_boolean_distance_TT(const uint32_t* pA, const uint32_t* pB, uint32_t numberOfBools, uint32_t* cTT);
+extern void arm_boolean_distance_TT(const uint32_t* pA,
+                                    const uint32_t* pB,
+                                    uint32_t        numberOfBools,
+                                    uint32_t*       cTT);
 
 
 /**

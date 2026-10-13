@@ -56,21 +56,27 @@
                    Finally, the result is truncated to 1.7 format.
  */
 
-void arm_fir_sparse_q7(arm_fir_sparse_instance_q7* S, const q7_t* pSrc, q7_t* pDst, q7_t* pScratchIn, q31_t* pScratchOut, uint32_t blockSize) {
-    q7_t*       pState  = S->pState;                 /* State pointer */
-    const q7_t* pCoeffs = S->pCoeffs;                /* Coefficient pointer */
-    q7_t*       px;                                  /* Scratch buffer pointer */
-    q7_t*       py        = pState;                  /* Temporary pointers for state buffer */
-    q7_t*       pb        = pScratchIn;              /* Temporary pointers for scratch buffer */
-    q7_t*       pOut      = pDst;                    /* Destination pointer */
-    int32_t*    pTapDelay = S->pTapDelay;            /* Pointer to the array containing offset of the non-zero tap values. */
-    uint32_t    delaySize = S->maxDelay + blockSize; /* state length */
-    uint16_t    numTaps   = S->numTaps;              /* Number of filter coefficients in the filter  */
-    int32_t     readIndex;                           /* Read index of the state buffer */
-    uint32_t    tapCnt, blkCnt;                      /* loop counters */
-    q31_t*      pScr2 = pScratchOut;                 /* Working pointer for scratch buffer of output values */
-    q31_t       in;
-    q7_t        coeff = *pCoeffs++; /* Read the coefficient value */
+void arm_fir_sparse_q7(arm_fir_sparse_instance_q7* S,
+                       const q7_t*                 pSrc,
+                       q7_t*                       pDst,
+                       q7_t*                       pScratchIn,
+                       q31_t*                      pScratchOut,
+                       uint32_t                    blockSize) {
+    q7_t*       pState  = S->pState;  /* State pointer */
+    const q7_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    q7_t*       px;                   /* Scratch buffer pointer */
+    q7_t*       py   = pState;        /* Temporary pointers for state buffer */
+    q7_t*       pb   = pScratchIn;    /* Temporary pointers for scratch buffer */
+    q7_t*       pOut = pDst;          /* Destination pointer */
+    int32_t*    pTapDelay =
+        S->pTapDelay; /* Pointer to the array containing offset of the non-zero tap values. */
+    uint32_t delaySize = S->maxDelay + blockSize; /* state length */
+    uint16_t numTaps   = S->numTaps;              /* Number of filter coefficients in the filter  */
+    int32_t  readIndex;                           /* Read index of the state buffer */
+    uint32_t tapCnt, blkCnt;                      /* loop counters */
+    q31_t*   pScr2 = pScratchOut; /* Working pointer for scratch buffer of output values */
+    q31_t    in;
+    q7_t     coeff = *pCoeffs++; /* Read the coefficient value */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q7_t in1, in2, in3, in4;
@@ -95,7 +101,8 @@ void arm_fir_sparse_q7(arm_fir_sparse_instance_q7* S, const q7_t* pSrc, q7_t* pD
     py = pState;
 
     /* blockSize samples are read from the state buffer */
-    arm_circularRead_q7(py, (int32_t)delaySize, &readIndex, 1, pb, pb, (int32_t)blockSize, 1, blockSize);
+    arm_circularRead_q7(
+        py, (int32_t)delaySize, &readIndex, 1, pb, pb, (int32_t)blockSize, 1, blockSize);
 
     /* Working pointer for the scratch buffer of state values */
     px = pb;
@@ -158,7 +165,8 @@ void arm_fir_sparse_q7(arm_fir_sparse_instance_q7* S, const q7_t* pSrc, q7_t* pD
         py = pState;
 
         /* blockSize samples are read from the state buffer */
-        arm_circularRead_q7(py, (int32_t)delaySize, &readIndex, 1, pb, pb, (int32_t)blockSize, 1, blockSize);
+        arm_circularRead_q7(
+            py, (int32_t)delaySize, &readIndex, 1, pb, pb, (int32_t)blockSize, 1, blockSize);
 
         /* Working pointer for the scratch buffer of state values */
         px = pb;
@@ -228,7 +236,8 @@ void arm_fir_sparse_q7(arm_fir_sparse_instance_q7* S, const q7_t* pSrc, q7_t* pD
     py = pState;
 
     /* blockSize samples are read from the state buffer */
-    arm_circularRead_q7(py, (int32_t)delaySize, &readIndex, 1, pb, pb, (int32_t)blockSize, 1, blockSize);
+    arm_circularRead_q7(
+        py, (int32_t)delaySize, &readIndex, 1, pb, pb, (int32_t)blockSize, 1, blockSize);
 
     /* Working pointer for the scratch buffer of state values */
     px = pb;

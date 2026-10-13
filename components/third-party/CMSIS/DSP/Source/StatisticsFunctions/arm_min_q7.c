@@ -50,7 +50,8 @@
 
 #include "arm_helium_utils.h"
 
-static void arm_small_blk_min_q7(const q7_t* pSrc, uint8_t blockSize, q7_t* pResult, uint32_t* pIndex) {
+static void
+arm_small_blk_min_q7(const q7_t* pSrc, uint8_t blockSize, q7_t* pResult, uint32_t* pIndex) {
     uint32_t     blkCnt; /* loop counters */
     q7x16_t      vecSrc;
     q7x16_t      curExtremValVec = vdupq_n_s8(Q7_MAX);

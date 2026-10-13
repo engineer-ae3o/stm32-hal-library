@@ -275,7 +275,8 @@ __STATIC_INLINE f32x4_t vpowq_f32(f32x4_t val, f32x4_t n) {
 #if (defined(ARM_MATH_MVEI) || defined(ARM_MATH_HELIUM)) && !defined(ARM_MATH_AUTOVECTORIZE)
 #endif /* (defined(ARM_MATH_MVEI) || defined(ARM_MATH_HELIUM)) */
 
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_NEON_EXPERIMENTAL)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_NEON_EXPERIMENTAL)) &&                             \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "NEMath.h"
 /**

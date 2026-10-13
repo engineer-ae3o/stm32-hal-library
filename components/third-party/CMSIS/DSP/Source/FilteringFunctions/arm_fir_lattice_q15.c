@@ -46,7 +46,10 @@
   @return        none
  */
 
-void arm_fir_lattice_q15(const arm_fir_lattice_instance_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+void arm_fir_lattice_q15(const arm_fir_lattice_instance_q15* S,
+                         const q15_t*                        pSrc,
+                         q15_t*                              pDst,
+                         uint32_t                            blockSize) {
     q15_t*       pState  = S->pState;            /* State pointer */
     const q15_t* pCoeffs = S->pCoeffs;           /* Coefficient pointer */
     q15_t*       px;                             /* Temporary state pointer */

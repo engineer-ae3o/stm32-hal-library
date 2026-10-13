@@ -60,8 +60,12 @@
                    <code>M</code> is the decimation factor.
  */
 
-arm_status
-arm_fir_decimate_init_q31(arm_fir_decimate_instance_q31* S, uint16_t numTaps, uint8_t M, const q31_t* pCoeffs, q31_t* pState, uint32_t blockSize) {
+arm_status arm_fir_decimate_init_q31(arm_fir_decimate_instance_q31* S,
+                                     uint16_t                       numTaps,
+                                     uint8_t                        M,
+                                     const q31_t*                   pCoeffs,
+                                     q31_t*                         pState,
+                                     uint32_t                       blockSize) {
     arm_status status;
 
     /* The size of the input block must be a multiple of the decimation factor */

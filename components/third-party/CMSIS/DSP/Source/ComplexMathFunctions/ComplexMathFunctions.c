@@ -36,15 +36,18 @@
 #include "arm_cmplx_mag_f64.c"
 
 #if (defined(ARM_MATH_HELIUM) || defined(ARM_MATH_MVEI)) && !defined(ARM_MATH_AUTOVECTORIZE)
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_FAST_SQRT_Q31_MVE)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) ||                             \
+    defined(ARM_TABLE_FAST_SQRT_Q31_MVE)
 #include "arm_cmplx_mag_q15.c"
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_FAST_SQRT_Q15_MVE)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) ||                             \
+    defined(ARM_TABLE_FAST_SQRT_Q15_MVE)
 #include "arm_cmplx_mag_fast_q15.c"
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_FAST_SQRT_Q31_MVE)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) ||                             \
+    defined(ARM_TABLE_FAST_SQRT_Q31_MVE)
 #include "arm_cmplx_mag_q31.c"
 #endif
 #else

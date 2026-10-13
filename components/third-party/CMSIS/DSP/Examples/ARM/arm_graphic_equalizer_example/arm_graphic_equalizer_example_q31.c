@@ -1172,15 +1172,35 @@ int32_t main(void) {
 
     /* Initialize the state and coefficient buffers for all Biquad sections */
 
-    arm_biquad_cas_df1_32x64_init_q31(&S1, NUMSTAGES, (q31_t*)&coeffTable[190 * 0 + 10 * (gainDB[0] + 9)], &biquadStateBand1Q31[0], 2);
+    arm_biquad_cas_df1_32x64_init_q31(&S1,
+                                      NUMSTAGES,
+                                      (q31_t*)&coeffTable[190 * 0 + 10 * (gainDB[0] + 9)],
+                                      &biquadStateBand1Q31[0],
+                                      2);
 
-    arm_biquad_cas_df1_32x64_init_q31(&S2, NUMSTAGES, (q31_t*)&coeffTable[190 * 1 + 10 * (gainDB[1] + 9)], &biquadStateBand2Q31[0], 2);
+    arm_biquad_cas_df1_32x64_init_q31(&S2,
+                                      NUMSTAGES,
+                                      (q31_t*)&coeffTable[190 * 1 + 10 * (gainDB[1] + 9)],
+                                      &biquadStateBand2Q31[0],
+                                      2);
 
-    arm_biquad_cascade_df1_init_q31(&S3, NUMSTAGES, (q31_t*)&coeffTable[190 * 2 + 10 * (gainDB[2] + 9)], &biquadStateBand3Q31[0], 2);
+    arm_biquad_cascade_df1_init_q31(&S3,
+                                    NUMSTAGES,
+                                    (q31_t*)&coeffTable[190 * 2 + 10 * (gainDB[2] + 9)],
+                                    &biquadStateBand3Q31[0],
+                                    2);
 
-    arm_biquad_cascade_df1_init_q31(&S4, NUMSTAGES, (q31_t*)&coeffTable[190 * 3 + 10 * (gainDB[3] + 9)], &biquadStateBand4Q31[0], 2);
+    arm_biquad_cascade_df1_init_q31(&S4,
+                                    NUMSTAGES,
+                                    (q31_t*)&coeffTable[190 * 3 + 10 * (gainDB[3] + 9)],
+                                    &biquadStateBand4Q31[0],
+                                    2);
 
-    arm_biquad_cascade_df1_init_q31(&S5, NUMSTAGES, (q31_t*)&coeffTable[190 * 4 + 10 * (gainDB[4] + 9)], &biquadStateBand5Q31[0], 2);
+    arm_biquad_cascade_df1_init_q31(&S5,
+                                    NUMSTAGES,
+                                    (q31_t*)&coeffTable[190 * 4 + 10 * (gainDB[4] + 9)],
+                                    &biquadStateBand5Q31[0],
+                                    2);
 
 
     /* Call the process functions and needs to change filter coefficients

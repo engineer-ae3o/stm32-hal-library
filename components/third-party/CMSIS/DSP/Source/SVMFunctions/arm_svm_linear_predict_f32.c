@@ -49,7 +49,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_svm_linear_predict_f32(const arm_svm_linear_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_linear_predict_f32(const arm_svm_linear_instance_f32* S,
+                                const float32_t*                   in,
+                                int32_t*                           pResult) {
     /* inlined Matrix x Vector function interleaved with dot prod */
     uint32_t         numRows  = S->nbOfSupportVectors;
     uint32_t         numCols  = S->vectorDimension;
@@ -277,7 +279,9 @@ void arm_svm_linear_predict_f32(const arm_svm_linear_instance_f32* S, const floa
 
 #else
 #if defined(ARM_MATH_NEON)
-void arm_svm_linear_predict_f32(const arm_svm_linear_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_linear_predict_f32(const arm_svm_linear_instance_f32* S,
+                                const float32_t*                   in,
+                                int32_t*                           pResult) {
     float32_t sum = S->intercept;
 
     float32_t   dot;
@@ -416,7 +420,9 @@ void arm_svm_linear_predict_f32(const arm_svm_linear_instance_f32* S, const floa
     *pResult = S->classes[STEP(sum)];
 }
 #else
-void arm_svm_linear_predict_f32(const arm_svm_linear_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_linear_predict_f32(const arm_svm_linear_instance_f32* S,
+                                const float32_t*                   in,
+                                int32_t*                           pResult) {
     float32_t        sum = S->intercept;
     float32_t        dot = 0;
     uint32_t         i, j;

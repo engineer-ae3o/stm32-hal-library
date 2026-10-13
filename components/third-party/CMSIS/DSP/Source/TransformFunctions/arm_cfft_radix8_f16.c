@@ -44,7 +44,10 @@
   return        none
 */
 
-void arm_radix8_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const float16_t* pCoef, uint16_t twidCoefModifier) {
+void arm_radix8_butterfly_f16(float16_t*       pSrc,
+                              uint16_t         fftLen,
+                              const float16_t* pCoef,
+                              uint16_t         twidCoefModifier) {
     uint32_t ia1, ia2, ia3, ia4, ia5, ia6, ia7;
     uint32_t i1, i2, i3, i4, i5, i6, i7, i8;
     uint32_t id;

@@ -55,8 +55,13 @@
                    where <code>blockSize</code> is the number of input samples processed by each call to <code>arm_lms_norm_q31()</code>.
  */
 
-void arm_lms_norm_init_q31(
-    arm_lms_norm_instance_q31* S, uint16_t numTaps, q31_t* pCoeffs, q31_t* pState, q31_t mu, uint32_t blockSize, uint8_t postShift) {
+void arm_lms_norm_init_q31(arm_lms_norm_instance_q31* S,
+                           uint16_t                   numTaps,
+                           q31_t*                     pCoeffs,
+                           q31_t*                     pState,
+                           q31_t                      mu,
+                           uint32_t                   blockSize,
+                           uint8_t                    postShift) {
     /* Assign filter taps */
     S->numTaps = numTaps;
 

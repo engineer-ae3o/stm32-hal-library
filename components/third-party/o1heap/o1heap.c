@@ -93,8 +93,9 @@ O1HEAP_PRIVATE uint_fast8_t O1HEAP_CLZ(const size_t x) {
 
 #if __STDC_VERSION__ < 201112L
 // Intentional violation of MISRA: static assertion macro cannot be replaced with a function definition.
-#define static_assert(x, ...) typedef char _static_assert_gl(_static_assertion_, __LINE__)[(x) ? 1 : -1] // NOSONAR
-#define _static_assert_gl(a, b) _static_assert_gl_impl(a, b)                                             // NOSONAR
+#define static_assert(x, ...)                                                                      \
+    typedef char _static_assert_gl(_static_assertion_, __LINE__)[(x) ? 1 : -1] // NOSONAR
+#define _static_assert_gl(a, b) _static_assert_gl_impl(a, b)                   // NOSONAR
 // Intentional violation of MISRA: the paste operator ## cannot be avoided in this context.
 #define _static_assert_gl_impl(a, b) a##b // NOSONAR
 #endif
@@ -136,19 +137,24 @@ static_assert(sizeof(Fragment) <= FRAGMENT_SIZE_MIN, "Memory layout error");
 
 struct O1HeapInstance {
     Fragment* bins[NUM_BINS_MAX]; ///< Smallest fragments are in the bin at index 0.
-    size_t    nonempty_bin_mask;  ///< Bit 1 represents a non-empty bin; bin at index 0 is for the smallest fragments.
+    size_t
+        nonempty_bin_mask; ///< Bit 1 represents a non-empty bin; bin at index 0 is for the smallest fragments.
 
-    char* arena_end; ///< Points past the last byte of the arena; used for computing size of the last fragment.
+    char*
+        arena_end; ///< Points past the last byte of the arena; used for computing size of the last fragment.
 
     O1HeapDiagnostics diagnostics;
 };
 
 /// The amount of space allocated for the heap instance.
 /// Its size is padded up to O1HEAP_ALIGNMENT to ensure correct alignment of the allocation arena that follows.
-#define INSTANCE_SIZE_PADDED ((sizeof(O1HeapInstance) + O1HEAP_ALIGNMENT - 1U) & ~(O1HEAP_ALIGNMENT - 1U))
+#define INSTANCE_SIZE_PADDED                                                                       \
+    ((sizeof(O1HeapInstance) + O1HEAP_ALIGNMENT - 1U) & ~(O1HEAP_ALIGNMENT - 1U))
 
-static_assert(INSTANCE_SIZE_PADDED >= sizeof(O1HeapInstance), "Invalid instance footprint computation");
-static_assert((INSTANCE_SIZE_PADDED % O1HEAP_ALIGNMENT) == 0U, "Invalid instance footprint computation");
+static_assert(INSTANCE_SIZE_PADDED >= sizeof(O1HeapInstance),
+              "Invalid instance footprint computation");
+static_assert((INSTANCE_SIZE_PADDED % O1HEAP_ALIGNMENT) == 0U,
+              "Invalid instance footprint computation");
 
 O1HEAP_PRIVATE size_t larger(const size_t a, const size_t b) {
     return (a > b) ? a : b;
@@ -202,8 +208,9 @@ O1HEAP_PRIVATE size_t fragGetSize(const O1HeapInstance* const handle, const Frag
     O1HEAP_ASSERT((((size_t)fragGetNext(frag)) % sizeof(Fragment*)) == 0U);
     O1HEAP_ASSERT((((size_t)fragGetPrev(frag)) % sizeof(Fragment*)) == 0U);
 
-    const size_t sz = (frag->header.next != NULL) ? (size_t)(((const char*)frag->header.next) - ((const char*)frag))
-                                                  : (size_t)(handle->arena_end - ((const char*)frag));
+    const size_t sz = (frag->header.next != NULL)
+                          ? (size_t)(((const char*)frag->header.next) - ((const char*)frag))
+                          : (size_t)(handle->arena_end - ((const char*)frag));
 
     O1HEAP_ASSERT(sz >= FRAGMENT_SIZE_MIN);
     O1HEAP_ASSERT(sz <= handle->diagnostics.capacity);
@@ -245,11 +252,13 @@ O1HEAP_PRIVATE void interlink(Fragment* const left, Fragment* const right) {
 }
 
 /// Adds a new fragment into the appropriate bin and updates the lookup mask.
-O1HEAP_PRIVATE void rebin(O1HeapInstance* const handle, Fragment* const fragment, const size_t fragment_size) {
+O1HEAP_PRIVATE void
+rebin(O1HeapInstance* const handle, Fragment* const fragment, const size_t fragment_size) {
     O1HEAP_ASSERT(handle != NULL);
     O1HEAP_ASSERT(fragment != NULL);
     O1HEAP_ASSERT((fragment_size % FRAGMENT_SIZE_MIN) == 0U);
-    const uint_fast8_t idx = log2Floor(fragment_size / FRAGMENT_SIZE_MIN); // Round DOWN when inserting.
+    const uint_fast8_t idx =
+        log2Floor(fragment_size / FRAGMENT_SIZE_MIN); // Round DOWN when inserting.
     O1HEAP_ASSERT(idx < NUM_BINS_MAX);
     // Add the new fragment to the beginning of the bin list.
     // I.e., each allocation will be returning the most-recently-used fragment -- good for caching.
@@ -263,11 +272,13 @@ O1HEAP_PRIVATE void rebin(O1HeapInstance* const handle, Fragment* const fragment
 }
 
 /// Removes the specified fragment from its bin.
-O1HEAP_PRIVATE void unbin(O1HeapInstance* const handle, const Fragment* const fragment, const size_t fragment_size) {
+O1HEAP_PRIVATE void
+unbin(O1HeapInstance* const handle, const Fragment* const fragment, const size_t fragment_size) {
     O1HEAP_ASSERT(handle != NULL);
     O1HEAP_ASSERT(fragment != NULL);
     O1HEAP_ASSERT((fragment_size % FRAGMENT_SIZE_MIN) == 0U);
-    const uint_fast8_t idx = log2Floor(fragment_size / FRAGMENT_SIZE_MIN); // Round DOWN when removing.
+    const uint_fast8_t idx =
+        log2Floor(fragment_size / FRAGMENT_SIZE_MIN); // Round DOWN when removing.
     O1HEAP_ASSERT(idx < NUM_BINS_MAX);
     // Remove the bin from the free fragment list.
     if (O1HEAP_LIKELY(fragment->next_free != NULL)) {
@@ -292,7 +303,8 @@ const size_t o1heapMinArenaSize = INSTANCE_SIZE_PADDED + FRAGMENT_SIZE_MIN;
 
 O1HeapInstance* o1heapInit(void* const base, const size_t size) {
     O1HeapInstance* out = NULL;
-    if ((base != NULL) && ((((size_t)base) % O1HEAP_ALIGNMENT) == 0U) && (size >= o1heapMinArenaSize)) {
+    if ((base != NULL) && ((((size_t)base) % O1HEAP_ALIGNMENT) == 0U) &&
+        (size >= o1heapMinArenaSize)) {
         // Allocate the core heap metadata structure in the beginning of the arena.
         O1HEAP_ASSERT(((size_t)base) % sizeof(O1HeapInstance*) == 0U);
         out                    = (O1HeapInstance*)base;
@@ -348,7 +360,8 @@ void* o1heapAllocate(O1HeapInstance* const handle, const size_t amount) {
     // If the amount approaches approx. SIZE_MAX/2, an undetected integer overflow may occur.
     // To avoid that, we do not attempt allocation if the amount exceeds the hard limit.
     // We perform multiple redundant checks to account for a possible unaccounted overflow.
-    if (O1HEAP_LIKELY((amount > 0U) && (amount <= (handle->diagnostics.capacity - O1HEAP_ALIGNMENT)))) {
+    if (O1HEAP_LIKELY((amount > 0U) &&
+                      (amount <= (handle->diagnostics.capacity - O1HEAP_ALIGNMENT)))) {
         // Add the header size and align the allocation size to the power of 2.
         // See "Timing-Predictable Memory Allocation In Hard Real-Time Systems", Herter, page 27.
         const size_t alloc_size = roundUpToPowerOf2(amount + O1HEAP_ALIGNMENT);
@@ -360,14 +373,17 @@ void* o1heapAllocate(O1HeapInstance* const handle, const size_t amount) {
         // Since alloc_size and FRAGMENT_SIZE_MIN are both powers of 2, the quotient is also a power of 2,
         // meaning log2Ceil == log2Floor. We use log2Floor because it is slightly faster (no x-1 before CLZ).
         const size_t alloc_bins = alloc_size / FRAGMENT_SIZE_MIN;
-        O1HEAP_ASSERT((alloc_bins & (alloc_bins - 1U)) == 0U);        // Is power of 2 => log2Ceil == log2Floor.
-        const uint_fast8_t optimal_bin_index = log2Floor(alloc_bins); // Should be ceil, but in this case identical.
+        O1HEAP_ASSERT((alloc_bins & (alloc_bins - 1U)) ==
+                      0U); // Is power of 2 => log2Ceil == log2Floor.
+        const uint_fast8_t optimal_bin_index =
+            log2Floor(alloc_bins); // Should be ceil, but in this case identical.
         O1HEAP_ASSERT(optimal_bin_index < NUM_BINS_MAX);
         const size_t candidate_bin_mask = ~(pow2(optimal_bin_index) - 1U);
 
         // Find the smallest non-empty bin we can use.
-        const size_t suitable_bins     = handle->nonempty_bin_mask & candidate_bin_mask;
-        const size_t smallest_bin_mask = suitable_bins & ~(suitable_bins - 1U); // Clear all bits but the lowest.
+        const size_t suitable_bins = handle->nonempty_bin_mask & candidate_bin_mask;
+        const size_t smallest_bin_mask =
+            suitable_bins & ~(suitable_bins - 1U); // Clear all bits but the lowest.
         if (O1HEAP_LIKELY(smallest_bin_mask != 0)) {
             O1HEAP_ASSERT((smallest_bin_mask & (smallest_bin_mask - 1U)) == 0U); // Is power of 2.
             const uint_fast8_t bin_index = log2Floor(smallest_bin_mask);
@@ -400,7 +416,8 @@ void* o1heapAllocate(O1HeapInstance* const handle, const size_t amount) {
             O1HEAP_ASSERT((handle->diagnostics.allocated % FRAGMENT_SIZE_MIN) == 0U);
             handle->diagnostics.allocated += alloc_size;
             O1HEAP_ASSERT(handle->diagnostics.allocated <= handle->diagnostics.capacity);
-            handle->diagnostics.peak_allocated = larger(handle->diagnostics.peak_allocated, handle->diagnostics.allocated);
+            handle->diagnostics.peak_allocated =
+                larger(handle->diagnostics.peak_allocated, handle->diagnostics.allocated);
 
             // Finalize the fragment we just allocated.
             O1HEAP_ASSERT(fragGetSize(handle, frag) >= amount + O1HEAP_ALIGNMENT);
@@ -429,7 +446,8 @@ void o1heapFree(O1HeapInstance* const handle, void* const pointer) {
         // Check for heap corruption in debug builds.
         O1HEAP_ASSERT(((size_t)frag) % sizeof(Fragment*) == 0U);
         O1HEAP_ASSERT(((size_t)frag) >= (((size_t)handle) + INSTANCE_SIZE_PADDED));
-        O1HEAP_ASSERT(((size_t)frag) <= (((size_t)handle) + INSTANCE_SIZE_PADDED + handle->diagnostics.capacity - FRAGMENT_SIZE_MIN));
+        O1HEAP_ASSERT(((size_t)frag) <= (((size_t)handle) + INSTANCE_SIZE_PADDED +
+                                         handle->diagnostics.capacity - FRAGMENT_SIZE_MIN));
         O1HEAP_ASSERT(fragIsUsed(frag)); // Catch double-free
         O1HEAP_ASSERT(((size_t)fragGetNext(frag)) % sizeof(Fragment*) == 0U);
         O1HEAP_ASSERT(((size_t)fragGetPrev(frag)) % sizeof(Fragment*) == 0U);
@@ -492,7 +510,8 @@ void* o1heapReallocate(O1HeapInstance* const handle, void* const pointer, const 
     }
 
     // SPECIAL CASE: Prevent size overflow like in o1heapAllocate().
-    handle->diagnostics.peak_request_size = larger(handle->diagnostics.peak_request_size, new_amount);
+    handle->diagnostics.peak_request_size =
+        larger(handle->diagnostics.peak_request_size, new_amount);
     if (O1HEAP_UNLIKELY(new_amount > (handle->diagnostics.capacity - O1HEAP_ALIGNMENT))) {
         handle->diagnostics.oom_count++;
         return NULL; // MISRA: Early return simplifies control flow.
@@ -537,7 +556,8 @@ void* o1heapReallocate(O1HeapInstance* const handle, void* const pointer, const 
                 rebin(handle, new_frag, leftover);
             }
             O1HEAP_ASSERT(fragGetSize(handle, frag) == new_frag_size);
-            O1HEAP_ASSERT(fragGetSize(handle, new_frag) == (next_free ? (leftover + next_size) : leftover));
+            O1HEAP_ASSERT(fragGetSize(handle, new_frag) ==
+                          (next_free ? (leftover + next_size) : leftover));
         }
         return pointer; // MISRA: Early return simplifies control flow.
     }
@@ -547,7 +567,9 @@ void* o1heapReallocate(O1HeapInstance* const handle, void* const pointer, const 
         unbin(handle, next, next_size);
         const size_t leftover = (frag_size + next_size) - new_frag_size;
         O1HEAP_ASSERT((leftover % FRAGMENT_SIZE_MIN) == 0U);
-        if (O1HEAP_LIKELY(leftover >= FRAGMENT_SIZE_MIN)) // [ frag ][ --- next --- ] => [ --- frag --- ][ next ]
+        if (O1HEAP_LIKELY(
+                leftover >=
+                FRAGMENT_SIZE_MIN)) // [ frag ][ --- next --- ] => [ --- frag --- ][ next ]
         {
             Fragment* const new_frag = (Fragment*)(void*)(((char*)frag) + new_frag_size);
             fragSetUsed(new_frag, false);
@@ -560,7 +582,8 @@ void* o1heapReallocate(O1HeapInstance* const handle, void* const pointer, const 
             interlink(frag, fragGetNext(next));
             handle->diagnostics.allocated += next_size;
         }
-        handle->diagnostics.peak_allocated = larger(handle->diagnostics.peak_allocated, handle->diagnostics.allocated);
+        handle->diagnostics.peak_allocated =
+            larger(handle->diagnostics.peak_allocated, handle->diagnostics.allocated);
         return pointer; // MISRA: Early return simplifies control flow.
     }
 
@@ -573,8 +596,13 @@ void* o1heapReallocate(O1HeapInstance* const handle, void* const pointer, const 
         if (next_free) {
             unbin(handle, next, next_size);
         }
-        void* const out = ((char*)prev) + O1HEAP_ALIGNMENT; // Move all the way to the back before fragments updated.
-        (void)memmove(out, pointer, old_amount);            // ATTENTION: Invalidates the old frag due to potential overwrite.
+        void* const out =
+            ((char*)prev) +
+            O1HEAP_ALIGNMENT; // Move all the way to the back before fragments updated.
+        (void)memmove(
+            out,
+            pointer,
+            old_amount); // ATTENTION: Invalidates the old frag due to potential overwrite.
         fragSetUsed(prev, true);
         const size_t leftover = (prev_size + frag_size + next_size) - new_frag_size;
         O1HEAP_ASSERT((leftover % FRAGMENT_SIZE_MIN) == 0U);
@@ -589,7 +617,8 @@ void* o1heapReallocate(O1HeapInstance* const handle, void* const pointer, const 
             interlink(prev, next_free ? fragGetNext(next) : next);
             handle->diagnostics.allocated += prev_size + next_size;
         }
-        handle->diagnostics.peak_allocated = larger(handle->diagnostics.peak_allocated, handle->diagnostics.allocated);
+        handle->diagnostics.peak_allocated =
+            larger(handle->diagnostics.peak_allocated, handle->diagnostics.allocated);
         return out; // MISRA: Early return simplifies control flow.
     }
 
@@ -626,19 +655,24 @@ bool o1heapDoInvariantsHold(const O1HeapInstance* const handle) {
     const O1HeapDiagnostics diag = handle->diagnostics;
 
     // Capacity check.
-    valid = valid && (diag.capacity <= FRAGMENT_SIZE_MAX) && (diag.capacity >= FRAGMENT_SIZE_MIN) && ((diag.capacity % FRAGMENT_SIZE_MIN) == 0U);
+    valid = valid && (diag.capacity <= FRAGMENT_SIZE_MAX) && (diag.capacity >= FRAGMENT_SIZE_MIN) &&
+            ((diag.capacity % FRAGMENT_SIZE_MIN) == 0U);
 
     // Allocation info check.
-    valid = valid && (diag.allocated <= diag.capacity) && ((diag.allocated % FRAGMENT_SIZE_MIN) == 0U) && (diag.peak_allocated <= diag.capacity) &&
-            (diag.peak_allocated >= diag.allocated) && ((diag.peak_allocated % FRAGMENT_SIZE_MIN) == 0U);
+    valid = valid && (diag.allocated <= diag.capacity) &&
+            ((diag.allocated % FRAGMENT_SIZE_MIN) == 0U) &&
+            (diag.peak_allocated <= diag.capacity) && (diag.peak_allocated >= diag.allocated) &&
+            ((diag.peak_allocated % FRAGMENT_SIZE_MIN) == 0U);
 
     // Peak request check
     valid = valid && ((diag.peak_request_size < diag.capacity) || (diag.oom_count > 0U));
     if (diag.peak_request_size == 0U) {
-        valid = valid && (diag.peak_allocated == 0U) && (diag.allocated == 0U) && (diag.oom_count == 0U);
+        valid = valid && (diag.peak_allocated == 0U) && (diag.allocated == 0U) &&
+                (diag.oom_count == 0U);
     } else {
         valid = valid && // Overflow on summation is possible but safe to ignore.
-                (((diag.peak_request_size + O1HEAP_ALIGNMENT) <= diag.peak_allocated) || (diag.oom_count > 0U));
+                (((diag.peak_request_size + O1HEAP_ALIGNMENT) <= diag.peak_allocated) ||
+                 (diag.oom_count > 0U));
     }
 
     return valid;

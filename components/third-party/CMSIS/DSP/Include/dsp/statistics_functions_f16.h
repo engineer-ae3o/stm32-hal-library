@@ -98,7 +98,10 @@ void arm_min_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, 
    * @param[out] pResult    is output pointer
    * @param[out] pIndex     is the array index of the minimum value in the input buffer.
    */
-void arm_absmin_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, uint32_t* pIndex);
+void arm_absmin_f16(const float16_t* pSrc,
+                    uint32_t         blockSize,
+                    float16_t*       pResult,
+                    uint32_t*        pIndex);
 
 /**
  * @brief Maximum value of a floating-point vector.
@@ -116,7 +119,10 @@ void arm_max_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, 
  * @param[out] pResult    maximum value returned here
  * @param[out] pIndex     index of maximum value returned here
  */
-void arm_absmax_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, uint32_t* pIndex);
+void arm_absmax_f16(const float16_t* pSrc,
+                    uint32_t         blockSize,
+                    float16_t*       pResult,
+                    uint32_t*        pIndex);
 
 /**
    * @brief  Minimum value of absolute values of a floating-point vector.
@@ -163,7 +169,10 @@ float16_t arm_logsumexp_f16(const float16_t* in, uint32_t blockSize);
  */
 
 
-float16_t arm_logsumexp_dot_prod_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize, float16_t* pTmpBuffer);
+float16_t arm_logsumexp_dot_prod_f16(const float16_t* pSrcA,
+                                     const float16_t* pSrcB,
+                                     uint32_t         blockSize,
+                                     float16_t*       pTmpBuffer);
 
 /**
  * @brief Kullback-Leibler
@@ -174,7 +183,8 @@ float16_t arm_logsumexp_dot_prod_f16(const float16_t* pSrcA, const float16_t* pS
  * @return Kullback-Leibler  Divergence D(A || B)
  *
  */
-float16_t arm_kullback_leibler_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize);
+float16_t
+arm_kullback_leibler_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize);
 
 /**
     @brief         Maximum value of a floating-point vector.
@@ -203,7 +213,10 @@ void arm_min_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pR
   @return        none 
 */
 
-void arm_mse_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize, float16_t* pResult);
+void arm_mse_f16(const float16_t* pSrcA,
+                 const float16_t* pSrcB,
+                 uint32_t         blockSize,
+                 float16_t*       pResult);
 
 #endif /*defined(ARM_FLOAT16_SUPPORTED)*/
 #ifdef __cplusplus

@@ -30,7 +30,8 @@ void system_init(void) {
     SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk);
 
     // Enable the MemManage, bus fault, and usage fault exceptions.
-    SCB->SHCSR |= (SCB_SHCSR_MEMFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
+    SCB->SHCSR |=
+        (SCB_SHCSR_MEMFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
 
     // Initialize the logging interface (SEGGER RTT), the debug trace counter and the SysTick counter
     SEGGER_RTT_Init();
@@ -41,7 +42,8 @@ void system_init(void) {
     system_core_clock_config(HSE_PLL_100MHz);
     audio_pll_clock_config(AUDIO_PLL_DISABLE);
 
-    LOGI("System_Init", "------------------- FPU, PLL and system clock setup complete -------------------");
+    LOGI("System_Init",
+         "------------------- FPU, PLL and system clock setup complete -------------------");
     LOGI("System_Init",
          "System Clock: %luMHz, APB1 Bus Clock: %luMHz, APB2 Bus Clock: %luMHz from the %s",
          (get_system_core_clock() / 1'000'000U),
@@ -80,16 +82,16 @@ typedef enum {
     FAULT_TYPE_USAGE,
 } fault_type_t;
 
-#define DEFINE_FAULT_TRAMPOLINE(handler_name, fault_id)                                                                                              \
-    [[__gnu__::__naked__]] void handler_name(void) {                                                                                                 \
-        __asm volatile("tst lr, #4\n"                                                                                                                \
-                       "ite eq\n"                                                                                                                    \
-                       "mrseq r0, msp\n"                                                                                                             \
-                       "mrsne r0, psp\n"                                                                                                             \
-                       "mov r1, lr\n"                                                                                                                \
-                       "movs r2, %0\n"                                                                                                               \
-                       "b decode_fault\n" ::"i"(fault_id)                                                                                            \
-                       : "r0", "r1", "r2");                                                                                                          \
+#define DEFINE_FAULT_TRAMPOLINE(handler_name, fault_id)                                            \
+    [[__gnu__::__naked__]] void handler_name(void) {                                               \
+        __asm volatile("tst lr, #4\n"                                                              \
+                       "ite eq\n"                                                                  \
+                       "mrseq r0, msp\n"                                                           \
+                       "mrsne r0, psp\n"                                                           \
+                       "mov r1, lr\n"                                                              \
+                       "movs r2, %0\n"                                                             \
+                       "b decode_fault\n" ::"i"(fault_id)                                          \
+                       : "r0", "r1", "r2");                                                        \
     }
 
 DEFINE_FAULT_TRAMPOLINE(HardFault_Handler, FAULT_TYPE_HARD)
@@ -116,7 +118,9 @@ void NMI_Handler(void) {
             PANIC();
         }
 
-        LOGI(TAG, "Clock Security System fault: HSE failure. Reconfiguring to use the HSI as the PLL clock source");
+        LOGI(TAG,
+             "Clock Security System fault: HSE failure. Reconfiguring to use the HSI as the PLL "
+             "clock source");
 
         // Reconfigure the main PLL back to whatever value it was on, but its HSI equivalent
         const system_clock_t system_clock = get_system_core_clock_type();
@@ -147,7 +151,9 @@ void NMI_Handler(void) {
                 break;
         }
 
-        LOGI(TAG, "Resuming normal operation with the HSI with a system clock of %luMHz", get_system_core_clock() / 1'000'000U);
+        LOGI(TAG,
+             "Resuming normal operation with the HSI with a system clock of %luMHz",
+             get_system_core_clock() / 1'000'000U);
     }
 }
 
@@ -186,7 +192,9 @@ decode_fault(const fault_frame_t* frame, uint32_t exc_return, fault_type_t fault
                 LOGE("MemFault", "MPU violation on exception return (unstacking)");
             }
             if (cfsr & SCB_CFSR_MSTKERR_Msk) {
-                LOGE("MemFault", "MPU violation on exception entry (stacking). Possible stack overflow into a guarded region");
+                LOGE("MemFault",
+                     "MPU violation on exception entry (stacking). Possible stack overflow into a "
+                     "guarded region");
             }
             if (cfsr & SCB_CFSR_MLSPERR_Msk) {
                 LOGE("MemFault", "MPU violation during lazy FP state preservation");

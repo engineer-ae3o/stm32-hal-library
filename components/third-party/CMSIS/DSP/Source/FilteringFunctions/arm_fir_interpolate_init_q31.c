@@ -61,8 +61,12 @@
                    where <code>blockSize</code> is the number of input samples processed by each call to <code>arm_fir_interpolate_q31()</code>.
  */
 
-arm_status arm_fir_interpolate_init_q31(
-    arm_fir_interpolate_instance_q31* S, uint8_t L, uint16_t numTaps, const q31_t* pCoeffs, q31_t* pState, uint32_t blockSize) {
+arm_status arm_fir_interpolate_init_q31(arm_fir_interpolate_instance_q31* S,
+                                        uint8_t                           L,
+                                        uint16_t                          numTaps,
+                                        const q31_t*                      pCoeffs,
+                                        q31_t*                            pState,
+                                        uint32_t                          blockSize) {
     arm_status status;
 
     /* The filter length must be a multiple of the interpolation factor */

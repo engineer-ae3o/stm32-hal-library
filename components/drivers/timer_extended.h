@@ -23,8 +23,10 @@ extern "C" {
 hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t* config);
 hal_err_t output_compare_deinit(TIM_TypeDef* handle);
 
-hal_err_t output_compare_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_compare_level);
-hal_err_t output_compare_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uint32_t compare_level);
+hal_err_t
+output_compare_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_compare_level);
+hal_err_t
+output_compare_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uint32_t compare_level);
 
 hal_err_t output_compare_pause_channel(TIM_TypeDef* handle, timer_channel_t channel);
 hal_err_t output_compare_resume_channel(TIM_TypeDef* handle, timer_channel_t channel);

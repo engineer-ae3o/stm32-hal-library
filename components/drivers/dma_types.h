@@ -90,11 +90,14 @@ typedef struct {
 } dma_stream_info_t;
 
 typedef struct {
-    bool deconfigure;   // Set to deinitialize the given stream. All other fields are ignored if this is true
+    bool
+        deconfigure; // Set to deinitialize the given stream. All other fields are ignored if this is true
     bool enable_stream; // Enable the DMA stream immediately after configuring it
 
-    bool per_addr_increment; // Increment the peripheral address (or source address in M2M transfers)
-    bool mem_addr_increment; // Increment the memory address(es) (or destination address(es) in M2M transfers)
+    bool
+        per_addr_increment; // Increment the peripheral address (or source address in M2M transfers)
+    bool
+        mem_addr_increment; // Increment the memory address(es) (or destination address(es) in M2M transfers)
 
     bool tc_irq_enable;  // Transfer complete interrupt enable
     bool ht_irq_enable;  // Half transfer interrupt enable

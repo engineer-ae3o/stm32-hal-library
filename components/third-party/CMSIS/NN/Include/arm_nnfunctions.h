@@ -336,7 +336,8 @@ arm_status arm_convolve_s8(const cmsis_nn_context*                  ctx,
  * @return          The function returns  required buffer size(bytes)
  *
  */
-int32_t arm_convolve_s8_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims);
+int32_t arm_convolve_s8_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                        const cmsis_nn_dims* filter_dims);
 
 /**
  * @brief Basic s16 convolution function
@@ -427,7 +428,8 @@ arm_status arm_convolve_fast_s16(const cmsis_nn_context*                  ctx,
  * @return          The function returns  required buffer size(bytes)
  *
  */
-int32_t arm_convolve_s16_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims);
+int32_t arm_convolve_s16_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                         const cmsis_nn_dims* filter_dims);
 
 /**
  * @brief Get the required buffer size for fast s16 convolution function
@@ -438,7 +440,8 @@ int32_t arm_convolve_s16_get_buffer_size(const cmsis_nn_dims* input_dims, const 
  * @return          The function returns required buffer size(bytes)
  *
  */
-int32_t arm_convolve_fast_s16_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims);
+int32_t arm_convolve_fast_s16_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                              const cmsis_nn_dims* filter_dims);
 
 /**
  * @brief Basic Q7 convolution function
@@ -815,7 +818,8 @@ arm_status arm_convolve_1_x_n_s8(const cmsis_nn_context*                  ctx,
  * @return          The function returns  required buffer size(bytes)
  *
  */
-int32_t arm_convolve_1_x_n_s8_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims);
+int32_t arm_convolve_1_x_n_s8_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                              const cmsis_nn_dims* filter_dims);
 
 /**
  * @brief Q7 version of convolution for RGB image
@@ -1280,7 +1284,8 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
  * @return          The function returns  required buffer size in bytes
  *
  */
-int32_t arm_depthwise_conv_s8_opt_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims);
+int32_t arm_depthwise_conv_s8_opt_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                                  const cmsis_nn_dims* filter_dims);
 
 /**
  * @defgroup FC Fully-connected Layer Functions
@@ -1790,7 +1795,10 @@ void arm_relu_q15(q15_t* data, uint16_t size);
  * @return none.
  */
 
-void arm_nn_activations_direct_q7(q7_t* data, uint16_t size, uint16_t int_width, arm_nn_activation_type type);
+void arm_nn_activations_direct_q7(q7_t*                  data,
+                                  uint16_t               size,
+                                  uint16_t               int_width,
+                                  arm_nn_activation_type type);
 
 /**
  * @brief Q15 neural network activation function using direct table look-up
@@ -1809,7 +1817,10 @@ void arm_nn_activations_direct_q7(q7_t* data, uint16_t size, uint16_t int_width,
  * saturation followed by any of these activation functions.
  */
 
-void arm_nn_activations_direct_q15(q15_t* data, uint16_t size, uint16_t int_width, arm_nn_activation_type type);
+void arm_nn_activations_direct_q15(q15_t*                 data,
+                                   uint16_t               size,
+                                   uint16_t               int_width,
+                                   arm_nn_activation_type type);
 
 /**
  * @defgroup Pooling Pooling Functions
@@ -2049,7 +2060,10 @@ void arm_softmax_q7(const q7_t* vec_in, const uint16_t dim_vec, q7_t* p_out);
  *
  */
 
-void arm_softmax_with_batch_q7(const q7_t* vec_in, const uint16_t nb_batches, const uint16_t dim_vec, q7_t* p_out);
+void arm_softmax_with_batch_q7(const q7_t*    vec_in,
+                               const uint16_t nb_batches,
+                               const uint16_t dim_vec,
+                               q7_t*          p_out);
 /**
  * @brief Q15 softmax function
  * @param[in]       vec_in      pointer to input vector

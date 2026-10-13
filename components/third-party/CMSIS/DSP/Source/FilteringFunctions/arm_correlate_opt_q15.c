@@ -58,7 +58,12 @@
                    Refer to \ref arm_correlate_fast_q15() for a faster but less precise version of this function.
  */
 
-void arm_correlate_opt_q15(const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst, q15_t* pScratch) {
+void arm_correlate_opt_q15(const q15_t* pSrcA,
+                           uint32_t     srcALen,
+                           const q15_t* pSrcB,
+                           uint32_t     srcBLen,
+                           q15_t*       pDst,
+                           q15_t*       pScratch) {
     q63_t        acc0;                    /* Accumulators */
     q15_t*       pOut = pDst;             /* Output pointer */
     q15_t*       pScr1;                   /* Temporary pointer for scratch1 */

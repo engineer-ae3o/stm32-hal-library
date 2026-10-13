@@ -73,7 +73,10 @@ __attribute__((weak)) float __powisf2(float a, int b) {
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-float32_t arm_minkowski_distance_f32(const float32_t* pA, const float32_t* pB, int32_t order, uint32_t blockSize) {
+float32_t arm_minkowski_distance_f32(const float32_t* pA,
+                                     const float32_t* pB,
+                                     int32_t          order,
+                                     uint32_t         blockSize) {
     uint32_t blkCnt;
     f32x4_t  a, b, tmpV, sumV;
 
@@ -117,7 +120,10 @@ float32_t arm_minkowski_distance_f32(const float32_t* pA, const float32_t* pB, i
 
 #include "NEMath.h"
 
-float32_t arm_minkowski_distance_f32(const float32_t* pA, const float32_t* pB, int32_t order, uint32_t blockSize) {
+float32_t arm_minkowski_distance_f32(const float32_t* pA,
+                                     const float32_t* pB,
+                                     int32_t          order,
+                                     uint32_t         blockSize) {
     float32_t   sum;
     uint32_t    blkCnt;
     float32x4_t sumV, aV, bV, tmpV, n;
@@ -159,7 +165,10 @@ float32_t arm_minkowski_distance_f32(const float32_t* pA, const float32_t* pB, i
 #else
 
 
-float32_t arm_minkowski_distance_f32(const float32_t* pA, const float32_t* pB, int32_t order, uint32_t blockSize) {
+float32_t arm_minkowski_distance_f32(const float32_t* pA,
+                                     const float32_t* pB,
+                                     int32_t          order,
+                                     uint32_t         blockSize) {
     float32_t sum;
     uint32_t  i;
 

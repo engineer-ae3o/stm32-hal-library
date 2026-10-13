@@ -61,7 +61,8 @@ static void compare_and_replace_if_larger(int16_t* base, const int16_t* target, 
     }
 }
 
-static void clamp_output(int16_t* source, int32_t length, const int16_t act_min, const int16_t act_max) {
+static void
+clamp_output(int16_t* source, int32_t length, const int16_t act_min, const int16_t act_max) {
     union arm_nnword in;
     int32_t          cnt = length >> 1;
 
@@ -138,7 +139,8 @@ arm_status arm_max_pool_s16(const cmsis_nn_context*     ctx,
 
             for (int k_y = ker_y_start; k_y < kernel_y_end; k_y++) {
                 for (int k_x = ker_x_start; k_x < kernel_x_end; k_x++) {
-                    const int16_t* start = src + channel_in * (k_x + base_idx_x + (k_y + base_idx_y) * input_x);
+                    const int16_t* start =
+                        src + channel_in * (k_x + base_idx_x + (k_y + base_idx_y) * input_x);
 
                     if (count == 0) {
                         memcpy(dst, start, channel_in * sizeof(int16_t));

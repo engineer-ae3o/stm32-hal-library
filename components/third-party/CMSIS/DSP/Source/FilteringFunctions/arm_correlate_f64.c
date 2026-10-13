@@ -47,7 +47,11 @@
   @return        none
  */
 
-void arm_correlate_f64(const float64_t* pSrcA, uint32_t srcALen, const float64_t* pSrcB, uint32_t srcBLen, float64_t* pDst) {
+void arm_correlate_f64(const float64_t* pSrcA,
+                       uint32_t         srcALen,
+                       const float64_t* pSrcB,
+                       uint32_t         srcBLen,
+                       float64_t*       pDst) {
     const float64_t* pIn1;        /* InputA pointer */
     const float64_t* pIn2;        /* InputB pointer */
     float64_t*       pOut = pDst; /* Output pointer */

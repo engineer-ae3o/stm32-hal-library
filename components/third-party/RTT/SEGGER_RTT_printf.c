@@ -94,14 +94,19 @@ static void _StoreChar(SEGGER_RTT_PRINTF_DESC* p, char c) {
 *
 *       _PrintUnsigned
 */
-static void
-_PrintUnsigned(SEGGER_RTT_PRINTF_DESC* pBufferDesc, unsigned v, unsigned Base, unsigned NumDigits, unsigned FieldWidth, unsigned FormatFlags) {
-    static const char _aV2C[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-    unsigned          Div;
-    unsigned          Digit;
-    unsigned          Number;
-    unsigned          Width;
-    char              c;
+static void _PrintUnsigned(SEGGER_RTT_PRINTF_DESC* pBufferDesc,
+                           unsigned                v,
+                           unsigned                Base,
+                           unsigned                NumDigits,
+                           unsigned                FieldWidth,
+                           unsigned                FormatFlags) {
+    static const char _aV2C[16] = {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+    unsigned Div;
+    unsigned Digit;
+    unsigned Number;
+    unsigned Width;
+    char     c;
 
     Number = v;
     Digit  = 1u;
@@ -121,7 +126,8 @@ _PrintUnsigned(SEGGER_RTT_PRINTF_DESC* pBufferDesc, unsigned v, unsigned Base, u
     //
     if ((FormatFlags & FORMAT_FLAG_LEFT_JUSTIFY) == 0u) {
         if (FieldWidth != 0u) {
-            if (((FormatFlags & FORMAT_FLAG_PAD_ZERO) == FORMAT_FLAG_PAD_ZERO) && (NumDigits == 0u)) {
+            if (((FormatFlags & FORMAT_FLAG_PAD_ZERO) == FORMAT_FLAG_PAD_ZERO) &&
+                (NumDigits == 0u)) {
                 c = '0';
             } else {
                 c = ' ';
@@ -147,7 +153,8 @@ _PrintUnsigned(SEGGER_RTT_PRINTF_DESC* pBufferDesc, unsigned v, unsigned Base, u
                 NumDigits--;
             } else {
                 Div = v / Digit;
-                if (Div < Base) { // Is our divider big enough to extract the highest digit from value? => Done
+                if (Div <
+                    Base) { // Is our divider big enough to extract the highest digit from value? => Done
                     break;
                 }
             }
@@ -186,7 +193,12 @@ _PrintUnsigned(SEGGER_RTT_PRINTF_DESC* pBufferDesc, unsigned v, unsigned Base, u
 *
 *       _PrintInt
 */
-static void _PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc, int v, unsigned Base, unsigned NumDigits, unsigned FieldWidth, unsigned FormatFlags) {
+static void _PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc,
+                      int                     v,
+                      unsigned                Base,
+                      unsigned                NumDigits,
+                      unsigned                FieldWidth,
+                      unsigned                FormatFlags) {
     unsigned Width;
     int      Number;
 
@@ -203,14 +215,16 @@ static void _PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc, int v, unsigned Base,
     if (NumDigits > Width) {
         Width = NumDigits;
     }
-    if ((FieldWidth > 0u) && ((v < 0) || ((FormatFlags & FORMAT_FLAG_PRINT_SIGN) == FORMAT_FLAG_PRINT_SIGN))) {
+    if ((FieldWidth > 0u) &&
+        ((v < 0) || ((FormatFlags & FORMAT_FLAG_PRINT_SIGN) == FORMAT_FLAG_PRINT_SIGN))) {
         FieldWidth--;
     }
 
     //
     // Print leading spaces if necessary
     //
-    if ((((FormatFlags & FORMAT_FLAG_PAD_ZERO) == 0u) || (NumDigits != 0u)) && ((FormatFlags & FORMAT_FLAG_LEFT_JUSTIFY) == 0u)) {
+    if ((((FormatFlags & FORMAT_FLAG_PAD_ZERO) == 0u) || (NumDigits != 0u)) &&
+        ((FormatFlags & FORMAT_FLAG_LEFT_JUSTIFY) == 0u)) {
         if (FieldWidth != 0u) {
             while ((FieldWidth != 0u) && (Width < FieldWidth)) {
                 FieldWidth--;
@@ -236,8 +250,8 @@ static void _PrintInt(SEGGER_RTT_PRINTF_DESC* pBufferDesc, int v, unsigned Base,
             //
             // Print leading zeros if necessary
             //
-            if (((FormatFlags & FORMAT_FLAG_PAD_ZERO) == FORMAT_FLAG_PAD_ZERO) && ((FormatFlags & FORMAT_FLAG_LEFT_JUSTIFY) == 0u) &&
-                (NumDigits == 0u)) {
+            if (((FormatFlags & FORMAT_FLAG_PAD_ZERO) == FORMAT_FLAG_PAD_ZERO) &&
+                ((FormatFlags & FORMAT_FLAG_LEFT_JUSTIFY) == 0u) && (NumDigits == 0u)) {
                 if (FieldWidth != 0u) {
                     while ((FieldWidth != 0u) && (Width < FieldWidth)) {
                         FieldWidth--;
@@ -399,18 +413,21 @@ int SEGGER_RTT_vprintf(unsigned BufferIndex, const char* sFormat, va_list* pPara
                     break;
                 case 'u':
                     v = va_arg(*pParamList, int);
-                    _PrintUnsigned(&BufferDesc, (unsigned)v, 10u, Precision, FieldWidth, FormatFlags);
+                    _PrintUnsigned(
+                        &BufferDesc, (unsigned)v, 10u, Precision, FieldWidth, FormatFlags);
                     break;
                 case 'x':
                 case 'X':
                     v = va_arg(*pParamList, int);
-                    _PrintUnsigned(&BufferDesc, (unsigned)v, 16u, Precision, FieldWidth, FormatFlags);
+                    _PrintUnsigned(
+                        &BufferDesc, (unsigned)v, 16u, Precision, FieldWidth, FormatFlags);
                     break;
                 case 's': {
                     const char* s = va_arg(*pParamList, const char*);
                     if (s == NULL) {
-                        s            = "(NULL)"; // Print (NULL) instead of crashing or breaking, as it is more informative to the user.
-                        PrecisionSet = 0;        // Make sure (NULL) is printed, even when precision was set.
+                        s = "(NULL)"; // Print (NULL) instead of crashing or breaking, as it is more informative to the user.
+                        PrecisionSet =
+                            0; // Make sure (NULL) is printed, even when precision was set.
                     }
                     do {
                         c = *s;

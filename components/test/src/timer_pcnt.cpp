@@ -45,8 +45,10 @@ namespace test::timer_pcnt {
             return (channel == PCNT_CHANNEL_1) ? lb::IN_A : lb::IN_B;
         }
 
-        pcnt_config_t
-        make_pcnt_mode_1(pcnt_channel_t channel, pcnt_edge_t edge = PCNT_RISING_EDGE, uint32_t filter_ns = 0, timer_cb_t callback = {}) {
+        pcnt_config_t make_pcnt_mode_1(pcnt_channel_t channel,
+                                       pcnt_edge_t    edge      = PCNT_RISING_EDGE,
+                                       uint32_t       filter_ns = 0,
+                                       timer_cb_t     callback  = {}) {
             pcnt_config_t cfg{};
             cfg.mode                    = PCNT_MODE_1;
             cfg.edge                    = edge;
@@ -59,7 +61,9 @@ namespace test::timer_pcnt {
             return cfg;
         }
 
-        pcnt_config_t make_pcnt_mode_2(pcnt_prescale_t prescaler = PCNT_ETR_DIV_1, pcnt_edge_t edge = PCNT_RISING_EDGE, uint32_t filter_ns = 0) {
+        pcnt_config_t make_pcnt_mode_2(pcnt_prescale_t prescaler = PCNT_ETR_DIV_1,
+                                       pcnt_edge_t     edge      = PCNT_RISING_EDGE,
+                                       uint32_t        filter_ns = 0) {
             pcnt_config_t cfg{};
             cfg.mode                      = PCNT_MODE_2;
             cfg.edge                      = edge;
@@ -72,7 +76,10 @@ namespace test::timer_pcnt {
             return cfg;
         }
 
-        qdec_config_t make_qdec(encoder_mode_t mode, bool invert = false, uint32_t filter_ns = 0, timer_cb_t callback = {}) {
+        qdec_config_t make_qdec(encoder_mode_t mode,
+                                bool           invert    = false,
+                                uint32_t       filter_ns = 0,
+                                timer_cb_t     callback  = {}) {
             qdec_config_t cfg{};
             cfg.mode             = mode;
             cfg.pull             = TIMER_PULL_NONE;
@@ -107,7 +114,7 @@ namespace test::timer_pcnt {
         constexpr uint32_t SMCR_ETR = TIM_SMCR_ETF | TIM_SMCR_ETPS | TIM_SMCR_ECE | TIM_SMCR_ETP;
 
         volatile uint32_t          s_update_events = 0;
-        volatile timer_count_dir_t s_update_dir[8] = {}; // NOLINT(cppcoreguidelines-avoid-c-arrays, modernize-avoid-c-arrays)
+        volatile timer_count_dir_t s_update_dir[8] = {}; // NOLINT
 
         void update_cb(void*, timer_channel_t, timer_count_dir_t direction) {
             const uint32_t i = s_update_events;
@@ -169,8 +176,14 @@ namespace test::timer_pcnt {
                 uint32_t       trigger_selection; // TI1FP1 or TI2FP2
             };
             constexpr std::array<channel_case_t, 2> channels = {{
-                {.channel = PCNT_CHANNEL_1, .ccxs_pos = 0, .ccxp = TIM_CCER_CC1P, .trigger_selection = 0b101},
-                {.channel = PCNT_CHANNEL_2, .ccxs_pos = 8, .ccxp = TIM_CCER_CC2P, .trigger_selection = 0b110},
+                {.channel           = PCNT_CHANNEL_1,
+                 .ccxs_pos          = 0,
+                 .ccxp              = TIM_CCER_CC1P,
+                 .trigger_selection = 0b101},
+                {.channel           = PCNT_CHANNEL_2,
+                 .ccxs_pos          = 8,
+                 .ccxp              = TIM_CCER_CC2P,
+                 .trigger_selection = 0b110},
             }};
 
             for (const auto& c : channels) {
@@ -178,15 +191,22 @@ namespace test::timer_pcnt {
                     const auto cfg = make_pcnt_mode_1(c.channel, edge);
                     TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &cfg));
 
-                    TEST_ASSERT_EQUAL_UINT32(0b01U, (MEAS->CCMR1 >> c.ccxs_pos) & 0b11U);              // The channel's own TIx is the input
-                    TEST_ASSERT_EQUAL_UINT32(0b111U, (MEAS->SMCR & TIM_SMCR_SMS) >> TIM_SMCR_SMS_Pos); // External clock mode 1
-                    TEST_ASSERT_EQUAL_UINT32(c.trigger_selection, (MEAS->SMCR & TIM_SMCR_TS) >> TIM_SMCR_TS_Pos);
-                    TEST_ASSERT_EQUAL_UINT32((edge == PCNT_FALLING_EDGE) ? c.ccxp : 0U, MEAS->CCER & c.ccxp);
+                    TEST_ASSERT_EQUAL_UINT32(0b01U,
+                                             (MEAS->CCMR1 >> c.ccxs_pos) &
+                                                 0b11U); // The channel's own TIx is the input
+                    TEST_ASSERT_EQUAL_UINT32(0b111U,
+                                             (MEAS->SMCR & TIM_SMCR_SMS) >>
+                                                 TIM_SMCR_SMS_Pos); // External clock mode 1
+                    TEST_ASSERT_EQUAL_UINT32(c.trigger_selection,
+                                             (MEAS->SMCR & TIM_SMCR_TS) >> TIM_SMCR_TS_Pos);
+                    TEST_ASSERT_EQUAL_UINT32((edge == PCNT_FALLING_EDGE) ? c.ccxp : 0U,
+                                             MEAS->CCER & c.ccxp);
 
                     TEST_ASSERT_EQUAL_UINT32(UINT16_MAX, MEAS->ARR); // Free running
                     TEST_ASSERT_EQUAL_UINT32(0U, MEAS->PSC);
-                    TEST_ASSERT_FALSE(MEAS->CR1 & TIM_CR1_CEN);              // Not counting until started
-                    TEST_ASSERT_EQUAL_UINT32(0U, MEAS->DIER & TIM_DIER_UIE); // No overflow callback requested
+                    TEST_ASSERT_FALSE(MEAS->CR1 & TIM_CR1_CEN); // Not counting until started
+                    TEST_ASSERT_EQUAL_UINT32(
+                        0U, MEAS->DIER & TIM_DIER_UIE); // No overflow callback requested
                 }
             }
         }
@@ -194,16 +214,20 @@ namespace test::timer_pcnt {
         void pcnt_mode_2_programs_the_external_trigger_path() {
             lb::reset_fixture();
 
-            const std::array<pcnt_prescale_t, 4> prescalers = {PCNT_ETR_DIV_1, PCNT_ETR_DIV_2, PCNT_ETR_DIV_4, PCNT_ETR_DIV_8};
+            const std::array<pcnt_prescale_t, 4> prescalers = {
+                PCNT_ETR_DIV_1, PCNT_ETR_DIV_2, PCNT_ETR_DIV_4, PCNT_ETR_DIV_8};
             for (const auto prescaler : prescalers) {
                 for (const auto edge : {PCNT_RISING_EDGE, PCNT_FALLING_EDGE}) {
                     const auto cfg = make_pcnt_mode_2(prescaler, edge);
                     TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &cfg));
 
-                    TEST_ASSERT_TRUE(MEAS->SMCR & TIM_SMCR_ECE);             // External clock mode 2
-                    TEST_ASSERT_EQUAL_UINT32(0U, MEAS->SMCR & TIM_SMCR_SMS); // Slave mode controller untouched
-                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(prescaler), (MEAS->SMCR & TIM_SMCR_ETPS) >> TIM_SMCR_ETPS_Pos);
-                    TEST_ASSERT_EQUAL_UINT32((edge == PCNT_FALLING_EDGE) ? TIM_SMCR_ETP : 0U, MEAS->SMCR & TIM_SMCR_ETP);
+                    TEST_ASSERT_TRUE(MEAS->SMCR & TIM_SMCR_ECE); // External clock mode 2
+                    TEST_ASSERT_EQUAL_UINT32(
+                        0U, MEAS->SMCR & TIM_SMCR_SMS); // Slave mode controller untouched
+                    TEST_ASSERT_EQUAL_UINT32(std::to_underlying(prescaler),
+                                             (MEAS->SMCR & TIM_SMCR_ETPS) >> TIM_SMCR_ETPS_Pos);
+                    TEST_ASSERT_EQUAL_UINT32((edge == PCNT_FALLING_EDGE) ? TIM_SMCR_ETP : 0U,
+                                             MEAS->SMCR & TIM_SMCR_ETP);
                     TEST_ASSERT_EQUAL_UINT32(0U, MEAS->SMCR & TIM_SMCR_ETF); // No filter requested
                     TEST_ASSERT_EQUAL_UINT32(UINT16_MAX, MEAS->ARR);
                 }
@@ -213,21 +237,25 @@ namespace test::timer_pcnt {
             const auto filtered = make_pcnt_mode_2(PCNT_ETR_DIV_1, PCNT_RISING_EDGE, 500);
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &filtered));
             uint32_t expected_code = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, timer_filter_ns_to_ic_code(MEAS, TIM_CLK_DIV_1, 500, &expected_code));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              timer_filter_ns_to_ic_code(MEAS, TIM_CLK_DIV_1, 500, &expected_code));
             TEST_ASSERT_TRUE(expected_code != 0U);
-            TEST_ASSERT_EQUAL_UINT32(expected_code, (MEAS->SMCR & TIM_SMCR_ETF) >> TIM_SMCR_ETF_Pos);
+            TEST_ASSERT_EQUAL_UINT32(expected_code,
+                                     (MEAS->SMCR & TIM_SMCR_ETF) >> TIM_SMCR_ETF_Pos);
         }
 
         void pcnt_init_programs_the_clock_divider_and_the_overflow_callback() {
             lb::reset_fixture();
 
-            auto cfg    = make_pcnt_mode_1(PCNT_CHANNEL_1, PCNT_RISING_EDGE, 0, {update_cb, nullptr});
+            auto cfg = make_pcnt_mode_1(PCNT_CHANNEL_1, PCNT_RISING_EDGE, 0, {update_cb, nullptr});
             cfg.clk_div = TIM_CLK_DIV_4;
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &cfg));
 
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(TIM_CLK_DIV_4), (MEAS->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos);
+            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(TIM_CLK_DIV_4),
+                                     (MEAS->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos);
             TEST_ASSERT_TRUE(MEAS->DIER & TIM_DIER_UIE);
-            TEST_ASSERT_TRUE(MEAS->CR1 & TIM_CR1_URS); // Only overflows interrupt, not the UG at init
+            TEST_ASSERT_TRUE(MEAS->CR1 &
+                             TIM_CR1_URS); // Only overflows interrupt, not the UG at init
             TEST_ASSERT_TRUE(NVIC->ISER[TIM3_IRQn >> 5] & (1UL << (TIM3_IRQn & 0x1FU)));
         }
 
@@ -347,8 +375,8 @@ namespace test::timer_pcnt {
                 lb::take_over_pin(lb::GEN_A, false);
                 delay_us(20);
 
-                const auto cfg =
-                    use_etr ? make_pcnt_mode_2(PCNT_ETR_DIV_1, PCNT_RISING_EDGE, 500) : make_pcnt_mode_1(PCNT_CHANNEL_1, PCNT_RISING_EDGE, 500);
+                const auto cfg = use_etr ? make_pcnt_mode_2(PCNT_ETR_DIV_1, PCNT_RISING_EDGE, 500)
+                                         : make_pcnt_mode_1(PCNT_CHANNEL_1, PCNT_RISING_EDGE, 500);
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &cfg));
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 0));
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
@@ -406,7 +434,8 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, UINT16_MAX));
             TEST_ASSERT_EQUAL_UINT32(UINT16_MAX, read_count());
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pcnt_set_count(MEAS, UINT16_MAX + 1U));
-            TEST_ASSERT_EQUAL_UINT32(UINT16_MAX, read_count()); // The rejected write changed nothing
+            TEST_ASSERT_EQUAL_UINT32(UINT16_MAX,
+                                     read_count()); // The rejected write changed nothing
 
             // 32 bit timer
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(GEN, UINT32_MAX - 5U));
@@ -416,7 +445,8 @@ namespace test::timer_pcnt {
 
         void pcnt_deinit_stops_counting_and_clears_the_slave_configuration() {
             lb::reset_fixture();
-            const auto cfg = make_pcnt_mode_1(PCNT_CHANNEL_1, PCNT_FALLING_EDGE, 0, {update_cb, nullptr});
+            const auto cfg =
+                make_pcnt_mode_1(PCNT_CHANNEL_1, PCNT_FALLING_EDGE, 0, {update_cb, nullptr});
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
 
@@ -464,7 +494,10 @@ namespace test::timer_pcnt {
         };
 
         // Count the generated clock for 'window_ms' with the given counter configuration
-        hal_err_t count_generated_clock(const pcnt_config_t& cfg, uint32_t pin_hz, uint32_t window_ms, count_result_t* out) {
+        hal_err_t count_generated_clock(const pcnt_config_t& cfg,
+                                        uint32_t             pin_hz,
+                                        uint32_t             window_ms,
+                                        count_result_t*      out) {
             TRY(lb::reset_fixture_hal());
             TRY(lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, pin_hz));
             out->sysclk_hz = get_system_core_clock();
@@ -499,11 +532,13 @@ namespace test::timer_pcnt {
                 {.cfg = make_pcnt_mode_2(PCNT_ETR_DIV_4), .divisor = 4},
             }};
 
-            std::array<std::array<count_result_t, lb::CLOCK_SWEEP.size()>, variants.size()> results{};
+            std::array<std::array<count_result_t, lb::CLOCK_SWEEP.size()>, variants.size()>
+                results{};
             for (size_t v = 0; v < variants.size(); v++) {
                 for (size_t i = 0; i < lb::CLOCK_SWEEP.size(); i++) {
                     lb::switch_clock(lb::pick_preset(lb::CLOCK_SWEEP[i], original));
-                    results[v][i].err = count_generated_clock(variants[v].cfg, 100'000, 50, &results[v][i]);
+                    results[v][i].err =
+                        count_generated_clock(variants[v].cfg, 100'000, 50, &results[v][i]);
                     (void)pcnt_deinit(MEAS);
                     lb::generator_stop();
                 }
@@ -515,11 +550,14 @@ namespace test::timer_pcnt {
                 for (size_t i = 0; i < lb::CLOCK_SWEEP.size(); i++) {
                     const auto& r = results[v][i];
                     TEST_ASSERT_EQUAL(HAL_OK, r.err);
-                    TEST_ASSERT_EQUAL_UINT32(lb::preset_mhz(lb::CLOCK_SWEEP[i], original) * 1'000'000U, r.sysclk_hz);
+                    TEST_ASSERT_EQUAL_UINT32(
+                        lb::preset_mhz(lb::CLOCK_SWEEP[i], original) * 1'000'000U, r.sysclk_hz);
                     TEST_ASSERT_EQUAL_UINT32(100'000U, r.pin_hz);
 
                     // Frequency from the count and the independently timed window, within 0.3%
-                    const uint32_t measured_hz = (uint32_t)((uint64_t)r.count * variants[v].divisor * 1'000'000ULL / r.window_us);
+                    const uint32_t measured_hz =
+                        (uint32_t)((uint64_t)r.count * variants[v].divisor * 1'000'000ULL /
+                                   r.window_us);
                     TEST_ASSERT_UINT32_WITHIN(300U, 100'000U, measured_hz);
                 }
             }
@@ -528,16 +566,21 @@ namespace test::timer_pcnt {
         void pcnt_overflow_callback_fires_once_per_wrap_of_the_counter() {
             // 500kHz for 150ms is about 75000 counts: one wrap of a 16 bit counter
             count_result_t result{};
-            const auto     cfg = make_pcnt_mode_1(PCNT_CHANNEL_1, PCNT_RISING_EDGE, 0, {update_cb, nullptr});
+            const auto     cfg =
+                make_pcnt_mode_1(PCNT_CHANNEL_1, PCNT_RISING_EDGE, 0, {update_cb, nullptr});
             TEST_ASSERT_EQUAL(HAL_OK, count_generated_clock(cfg, 500'000, 150, &result));
             TEST_ASSERT_EQUAL_UINT32(500'000U, result.pin_hz);
 
-            const uint32_t total    = result.overflows * 65'536U + result.count;
-            const uint32_t expected = (uint32_t)((uint64_t)result.pin_hz * result.window_us / 1'000'000ULL);
-            TEST_ASSERT_UINT32_WITHIN(expected / 500U + 5U, expected, total); // 0.2% + a few counts for the start and stop skew
+            const uint32_t total = result.overflows * 65'536U + result.count;
+            const uint32_t expected =
+                (uint32_t)((uint64_t)result.pin_hz * result.window_us / 1'000'000ULL);
+            TEST_ASSERT_UINT32_WITHIN(expected / 500U + 5U,
+                                      expected,
+                                      total); // 0.2% + a few counts for the start and stop skew
             TEST_ASSERT_UINT32_WITHIN(1U, expected / 65'536U, result.overflows);
             TEST_ASSERT_TRUE(result.overflows >= 1U);
-            TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP, s_update_dir[0]); // A pulse counter only ever counts up
+            TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP,
+                              s_update_dir[0]); // A pulse counter only ever counts up
         }
 
         // Quadrature decoder
@@ -572,9 +615,12 @@ namespace test::timer_pcnt {
                 TEST_ASSERT_EQUAL(HAL_OK, qdec_init(MEAS, &cfg));
 
                 TEST_ASSERT_EQUAL_UINT32(std::to_underlying(mode), MEAS->SMCR & TIM_SMCR_SMS);
-                TEST_ASSERT_EQUAL_UINT32(0b01U, MEAS->CCMR1 & TIM_CCMR1_CC1S); // Both channels read their own pin
-                TEST_ASSERT_EQUAL_UINT32(0b01U, (MEAS->CCMR1 & TIM_CCMR1_CC2S) >> TIM_CCMR1_CC2S_Pos);
-                TEST_ASSERT_EQUAL_UINT32(0U, MEAS->CCER & (TIM_CCER_CC1P | TIM_CCER_CC2P)); // Not inverted
+                TEST_ASSERT_EQUAL_UINT32(
+                    0b01U, MEAS->CCMR1 & TIM_CCMR1_CC1S); // Both channels read their own pin
+                TEST_ASSERT_EQUAL_UINT32(0b01U,
+                                         (MEAS->CCMR1 & TIM_CCMR1_CC2S) >> TIM_CCMR1_CC2S_Pos);
+                TEST_ASSERT_EQUAL_UINT32(
+                    0U, MEAS->CCER & (TIM_CCER_CC1P | TIM_CCER_CC2P)); // Not inverted
                 TEST_ASSERT_EQUAL_UINT32(UINT16_MAX, MEAS->ARR);
                 TEST_ASSERT_FALSE(MEAS->CR1 & TIM_CR1_CEN);
 
@@ -630,7 +676,8 @@ namespace test::timer_pcnt {
                     delay_us(20);
 
                     // A leading B counts up, B leading A counts down
-                    const int32_t expected = static_cast<int32_t>(CYCLES * counts_per_cycle(mode)) * (a_leads_b ? 1 : -1);
+                    const int32_t expected = static_cast<int32_t>(CYCLES * counts_per_cycle(mode)) *
+                                             (a_leads_b ? 1 : -1);
                     TEST_ASSERT_EQUAL_INT32(expected, read_signed_count());
                 }
             }
@@ -670,7 +717,8 @@ namespace test::timer_pcnt {
                     delay_us(20);
 
                     // Same magnitude as without the inversion, opposite sign
-                    const int32_t expected = static_cast<int32_t>(CYCLES * counts_per_cycle(mode)) * (a_leads_b ? -1 : 1);
+                    const int32_t expected = static_cast<int32_t>(CYCLES * counts_per_cycle(mode)) *
+                                             (a_leads_b ? -1 : 1);
                     TEST_ASSERT_EQUAL_INT32(expected, read_signed_count());
                 }
             }

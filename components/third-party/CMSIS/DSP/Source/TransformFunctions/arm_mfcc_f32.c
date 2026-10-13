@@ -74,7 +74,10 @@
                    The source buffer is modified by this function.
 
  */
-void arm_mfcc_f32(const arm_mfcc_instance_f32* S, float32_t* pSrc, float32_t* pDst, float32_t* pTmp) {
+void arm_mfcc_f32(const arm_mfcc_instance_f32* S,
+                  float32_t*                   pSrc,
+                  float32_t*                   pDst,
+                  float32_t*                   pTmp) {
     float32_t               maxValue;
     uint32_t                index;
     uint32_t                i;

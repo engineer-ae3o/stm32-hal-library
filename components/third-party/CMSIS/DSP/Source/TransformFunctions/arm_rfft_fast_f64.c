@@ -184,7 +184,10 @@ void merge_rfft_f64(const arm_rfft_fast_instance_f64* S, float64_t* p, float64_t
   @return        none
 */
 
-void arm_rfft_fast_f64(arm_rfft_fast_instance_f64* S, float64_t* p, float64_t* pOut, uint8_t ifftFlag) {
+void arm_rfft_fast_f64(arm_rfft_fast_instance_f64* S,
+                       float64_t*                  p,
+                       float64_t*                  pOut,
+                       uint8_t                     ifftFlag) {
     arm_cfft_instance_f64* Sint = &(S->Sint);
     Sint->fftLen                = S->fftLenRFFT / 2;
 

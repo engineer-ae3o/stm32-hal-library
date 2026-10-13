@@ -89,18 +89,20 @@ arm_status arm_convolve_s16(const cmsis_nn_context*                  ctx,
         for (int32_t i_out_ch = 0; i_out_ch < output_ch; i_out_ch++) {
             const q31_t reduced_multiplier = REDUCE_MULTIPLIER(output_mult[i_out_ch]);
 
-            for (int32_t base_idx_y = -pad_y, i_out_y = 0; i_out_y < output_y; base_idx_y += stride_y, i_out_y++) {
-                for (int32_t base_idx_x = -pad_x, i_out_x = 0; i_out_x < output_x; base_idx_x += stride_x, i_out_x++) {
+            for (int32_t base_idx_y = -pad_y, i_out_y = 0; i_out_y < output_y;
+                 base_idx_y += stride_y, i_out_y++) {
+                for (int32_t base_idx_x = -pad_x, i_out_x = 0; i_out_x < output_x;
+                     base_idx_x += stride_x, i_out_x++) {
                     int64_t conv_out_acc = 0;
 
                     const int32_t start_y_max = (-base_idx_y + dilation_y - 1) / dilation_y;
                     const int32_t ker_y_start = MAX(0, start_y_max);
                     const int32_t start_x_max = (-base_idx_x + dilation_x - 1) / dilation_x;
                     const int32_t ker_x_start = MAX(0, start_x_max);
-                    const int32_t end_min_y   = (input_y - base_idx_y + dilation_y - 1) / dilation_y;
-                    const int32_t ker_y_end   = MIN(kernel_y, end_min_y);
-                    const int32_t end_min_x   = (input_x - base_idx_x + dilation_x - 1) / dilation_x;
-                    const int32_t ker_x_end   = MIN(kernel_x, end_min_x);
+                    const int32_t end_min_y = (input_y - base_idx_y + dilation_y - 1) / dilation_y;
+                    const int32_t ker_y_end = MIN(kernel_y, end_min_y);
+                    const int32_t end_min_x = (input_x - base_idx_x + dilation_x - 1) / dilation_x;
+                    const int32_t ker_x_end = MIN(kernel_x, end_min_x);
 
                     for (int32_t i_ker_y = ker_y_start; i_ker_y < ker_y_end; i_ker_y++) {
                         for (int32_t i_ker_x = ker_x_start; i_ker_x < ker_x_end; i_ker_x++) {
@@ -109,8 +111,11 @@ arm_status arm_convolve_s16(const cmsis_nn_context*                  ctx,
 
                             for (int32_t i_input_ch = 0; i_input_ch < input_ch; i_input_ch++) {
                                 conv_out_acc +=
-                                    input_data[(in_row * input_x + in_col) * input_ch + i_input_ch] *
-                                    filter_data[i_out_ch * input_ch * kernel_y * kernel_x + (i_ker_y * kernel_x + i_ker_x) * input_ch + i_input_ch];
+                                    input_data[(in_row * input_x + in_col) * input_ch +
+                                               i_input_ch] *
+                                    filter_data[i_out_ch * input_ch * kernel_y * kernel_x +
+                                                (i_ker_y * kernel_x + i_ker_x) * input_ch +
+                                                i_input_ch];
                             }
                         }
                     }
@@ -119,10 +124,12 @@ arm_status arm_convolve_s16(const cmsis_nn_context*                  ctx,
                         conv_out_acc += bias_data[i_out_ch];
                     }
 
-                    int32_t conv_out = arm_nn_requantize_s64(conv_out_acc, reduced_multiplier, output_shift[i_out_ch]);
-                    conv_out         = MAX(conv_out, out_activation_min);
-                    conv_out         = MIN(conv_out, out_activation_max);
-                    output_data[i_out_ch + (i_out_y * output_x + i_out_x) * output_ch] = (int16_t)conv_out;
+                    int32_t conv_out = arm_nn_requantize_s64(
+                        conv_out_acc, reduced_multiplier, output_shift[i_out_ch]);
+                    conv_out = MAX(conv_out, out_activation_min);
+                    conv_out = MIN(conv_out, out_activation_max);
+                    output_data[i_out_ch + (i_out_y * output_x + i_out_x) * output_ch] =
+                        (int16_t)conv_out;
                 }
             }
         }
@@ -135,7 +142,8 @@ arm_status arm_convolve_s16(const cmsis_nn_context*                  ctx,
     return ARM_MATH_SUCCESS;
 }
 
-int32_t arm_convolve_s16_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims) {
+int32_t arm_convolve_s16_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                         const cmsis_nn_dims* filter_dims) {
     (void)input_dims;
     (void)filter_dims;
     return 0;

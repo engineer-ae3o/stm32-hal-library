@@ -66,13 +66,17 @@
                    This Function also initializes Twiddle factor table pointer and Bit reversal table pointer.
 */
 
-arm_status arm_cfft_radix2_init_q15(arm_cfft_radix2_instance_q15* S, uint16_t fftLen, uint8_t ifftFlag, uint8_t bitReverseFlag) {
+arm_status arm_cfft_radix2_init_q15(arm_cfft_radix2_instance_q15* S,
+                                    uint16_t                      fftLen,
+                                    uint8_t                       ifftFlag,
+                                    uint8_t                       bitReverseFlag) {
     /*  Initialise the default arm status */
     arm_status status = ARM_MATH_ARGUMENT_ERROR;
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_FFT_ALLOW_TABLES)
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_TWIDDLECOEF_Q15_4096)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_TWIDDLECOEF_Q15_4096)
 
     /*  Initialise the default arm status */
     status = ARM_MATH_SUCCESS;

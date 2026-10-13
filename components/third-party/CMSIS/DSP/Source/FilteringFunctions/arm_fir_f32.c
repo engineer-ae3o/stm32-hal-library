@@ -152,17 +152,19 @@
 
 #define FIR_F32_MAX_COEF_BLK 8
 
-#define FIR_F32_CORE(pSamples, c, NB_TAPS)                                                                                                           \
-    vecAcc0 = vdupq_n_f32(0.0f);                                                                                                                     \
-    for (int i = 0; i < NB_TAPS; i++) {                                                                                                              \
-        vecIn0  = vld1q(&pSamples[i]);                                                                                                               \
-        vecAcc0 = vfmaq(vecAcc0, vecIn0, c[i]);                                                                                                      \
+#define FIR_F32_CORE(pSamples, c, NB_TAPS)                                                         \
+    vecAcc0 = vdupq_n_f32(0.0f);                                                                   \
+    for (int i = 0; i < NB_TAPS; i++) {                                                            \
+        vecIn0  = vld1q(&pSamples[i]);                                                             \
+        vecAcc0 = vfmaq(vecAcc0, vecIn0, c[i]);                                                    \
     }
 
 
 #define NB_TAPS 4
-__STATIC_INLINE void
-arm_fir_f32_1_4_mve(const arm_fir_instance_f32* S, const float32_t* __restrict pSrc, float32_t* __restrict pDst, uint32_t blockSize) {
+__STATIC_INLINE void arm_fir_f32_1_4_mve(const arm_fir_instance_f32* S,
+                                         const float32_t* __restrict pSrc,
+                                         float32_t* __restrict pDst,
+                                         uint32_t blockSize) {
     float32_t*       pRefStatePtr = S->pState + blockSize;
     float32_t*       pState       = pRefStatePtr; /* State pointer */
     const float32_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */
@@ -242,8 +244,10 @@ arm_fir_f32_1_4_mve(const arm_fir_instance_f32* S, const float32_t* __restrict p
 }
 #undef NB_TAPS
 
-__STATIC_INLINE void
-arm_fir_f32_5_8_mve(const arm_fir_instance_f32* S, const float32_t* __restrict pSrc, float32_t* __restrict pDst, uint32_t blockSize) {
+__STATIC_INLINE void arm_fir_f32_5_8_mve(const arm_fir_instance_f32* S,
+                                         const float32_t* __restrict pSrc,
+                                         float32_t* __restrict pDst,
+                                         uint32_t blockSize) {
     float32_t*       pRefStatePtr = S->pState + blockSize;
     float32_t*       pState       = pRefStatePtr; /* State pointer */
     const float32_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */
@@ -345,7 +349,10 @@ arm_fir_f32_5_8_mve(const arm_fir_instance_f32* S, const float32_t* __restrict p
 }
 
 
-void arm_fir_f32(const arm_fir_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_fir_f32(const arm_fir_instance_f32* S,
+                 const float32_t*            pSrc,
+                 float32_t*                  pDst,
+                 uint32_t                    blockSize) {
     /* 
        S->pState is the arm_fir_partial_accu
        S->pState + blockSize is the FIR state
@@ -665,7 +672,10 @@ void arm_fir_f32(const arm_fir_instance_f32* S, const float32_t* pSrc, float32_t
 #else
 #if defined(ARM_MATH_NEON)
 
-void arm_fir_f32(const arm_fir_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_fir_f32(const arm_fir_instance_f32* S,
+                 const float32_t*            pSrc,
+                 float32_t*                  pDst,
+                 uint32_t                    blockSize) {
     float32_t*       pState  = S->pState;  /* State pointer */
     const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float32_t*       pStateCurnt;          /* Points to the current sample of the state */
@@ -865,7 +875,10 @@ void arm_fir_f32(const arm_fir_instance_f32* S, const float32_t* pSrc, float32_t
     }
 }
 #else
-void arm_fir_f32(const arm_fir_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_fir_f32(const arm_fir_instance_f32* S,
+                 const float32_t*            pSrc,
+                 float32_t*                  pDst,
+                 uint32_t                    blockSize) {
     float32_t*       pState  = S->pState;  /* State pointer */
     const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float32_t*       pStateCurnt;          /* Points to the current sample of the state */
@@ -877,8 +890,8 @@ void arm_fir_f32(const arm_fir_instance_f32* S, const float32_t* pSrc, float32_t
 
 #if defined(ARM_MATH_LOOPUNROLL)
     float32_t acc1, acc2, acc3, acc4, acc5, acc6, acc7; /* Accumulators */
-    float32_t x0, x1, x2, x3, x4, x5, x6, x7;           /* Temporary variables to hold state values */
-    float32_t c0;                                       /* Temporary variable to hold coefficient value */
+    float32_t x0, x1, x2, x3, x4, x5, x6, x7; /* Temporary variables to hold state values */
+    float32_t c0;                             /* Temporary variable to hold coefficient value */
 #endif
 
     /* S->pState points to state array which contains previous frame (numTaps - 1) samples */

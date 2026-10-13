@@ -51,7 +51,10 @@
 #if defined(ARM_MATH_MVEF)
 #include "arm_helium_utils.h"
 
-void arm_mse_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize, float32_t* result)
+void arm_mse_f32(const float32_t* pSrcA,
+                 const float32_t* pSrcB,
+                 uint32_t         blockSize,
+                 float32_t*       result)
 
 {
     float32x4_t vecA, vecB;
@@ -98,7 +101,10 @@ void arm_mse_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockS
 #endif
 
 #if defined(ARM_MATH_NEON)
-void arm_mse_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize, float32_t* result)
+void arm_mse_f32(const float32_t* pSrcA,
+                 const float32_t* pSrcB,
+                 uint32_t         blockSize,
+                 float32_t*       result)
 
 {
     float32x4_t vecA, vecB;
@@ -160,7 +166,10 @@ void arm_mse_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockS
 #if (!defined(ARM_MATH_MVEF) && !defined(ARM_MATH_NEON)) || defined(ARM_MATH_AUTOVECTORIZE)
 
 
-void arm_mse_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize, float32_t* result)
+void arm_mse_f32(const float32_t* pSrcA,
+                 const float32_t* pSrcB,
+                 uint32_t         blockSize,
+                 float32_t*       result)
 
 {
     uint32_t  blkCnt; /* Loop counter */

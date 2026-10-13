@@ -548,7 +548,10 @@ void merge_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t
   @return        none
 */
 
-void arm_rfft_fast_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut, uint8_t ifftFlag) {
+void arm_rfft_fast_f32(const arm_rfft_fast_instance_f32* S,
+                       float32_t*                        p,
+                       float32_t*                        pOut,
+                       uint8_t                           ifftFlag) {
     const arm_cfft_instance_f32* Sint = &(S->Sint);
 
     /* Calculation of Real FFT */

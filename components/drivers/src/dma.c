@@ -50,7 +50,8 @@ hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream) {
     return HAL_OK;
 }
 
-hal_err_t dma_get_stream_flags(DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number) {
+hal_err_t
+dma_get_stream_flags(DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number) {
     if (controller == NULL || flags == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -127,22 +128,70 @@ hal_err_t dma_get_stream_info(DMA_Stream_TypeDef* stream, dma_stream_info_t* str
     }
 
     static const dma_stream_info_t stream_info_lut[] = {
-        {.stream = DMA1_Stream0, .controller = DMA1, .stream_number = 0, .nvic_irq_type = DMA1_Stream0_IRQn},
-        {.stream = DMA1_Stream1, .controller = DMA1, .stream_number = 1, .nvic_irq_type = DMA1_Stream1_IRQn},
-        {.stream = DMA1_Stream2, .controller = DMA1, .stream_number = 2, .nvic_irq_type = DMA1_Stream2_IRQn},
-        {.stream = DMA1_Stream3, .controller = DMA1, .stream_number = 3, .nvic_irq_type = DMA1_Stream3_IRQn},
-        {.stream = DMA1_Stream4, .controller = DMA1, .stream_number = 4, .nvic_irq_type = DMA1_Stream4_IRQn},
-        {.stream = DMA1_Stream5, .controller = DMA1, .stream_number = 5, .nvic_irq_type = DMA1_Stream5_IRQn},
-        {.stream = DMA1_Stream6, .controller = DMA1, .stream_number = 6, .nvic_irq_type = DMA1_Stream6_IRQn},
-        {.stream = DMA1_Stream7, .controller = DMA1, .stream_number = 7, .nvic_irq_type = DMA1_Stream7_IRQn},
-        {.stream = DMA2_Stream0, .controller = DMA2, .stream_number = 0, .nvic_irq_type = DMA2_Stream0_IRQn},
-        {.stream = DMA2_Stream1, .controller = DMA2, .stream_number = 1, .nvic_irq_type = DMA2_Stream1_IRQn},
-        {.stream = DMA2_Stream2, .controller = DMA2, .stream_number = 2, .nvic_irq_type = DMA2_Stream2_IRQn},
-        {.stream = DMA2_Stream3, .controller = DMA2, .stream_number = 3, .nvic_irq_type = DMA2_Stream3_IRQn},
-        {.stream = DMA2_Stream4, .controller = DMA2, .stream_number = 4, .nvic_irq_type = DMA2_Stream4_IRQn},
-        {.stream = DMA2_Stream5, .controller = DMA2, .stream_number = 5, .nvic_irq_type = DMA2_Stream5_IRQn},
-        {.stream = DMA2_Stream6, .controller = DMA2, .stream_number = 6, .nvic_irq_type = DMA2_Stream6_IRQn},
-        {.stream = DMA2_Stream7, .controller = DMA2, .stream_number = 7, .nvic_irq_type = DMA2_Stream7_IRQn},
+        {.stream        = DMA1_Stream0,
+         .controller    = DMA1,
+         .stream_number = 0,
+         .nvic_irq_type = DMA1_Stream0_IRQn},
+        {.stream        = DMA1_Stream1,
+         .controller    = DMA1,
+         .stream_number = 1,
+         .nvic_irq_type = DMA1_Stream1_IRQn},
+        {.stream        = DMA1_Stream2,
+         .controller    = DMA1,
+         .stream_number = 2,
+         .nvic_irq_type = DMA1_Stream2_IRQn},
+        {.stream        = DMA1_Stream3,
+         .controller    = DMA1,
+         .stream_number = 3,
+         .nvic_irq_type = DMA1_Stream3_IRQn},
+        {.stream        = DMA1_Stream4,
+         .controller    = DMA1,
+         .stream_number = 4,
+         .nvic_irq_type = DMA1_Stream4_IRQn},
+        {.stream        = DMA1_Stream5,
+         .controller    = DMA1,
+         .stream_number = 5,
+         .nvic_irq_type = DMA1_Stream5_IRQn},
+        {.stream        = DMA1_Stream6,
+         .controller    = DMA1,
+         .stream_number = 6,
+         .nvic_irq_type = DMA1_Stream6_IRQn},
+        {.stream        = DMA1_Stream7,
+         .controller    = DMA1,
+         .stream_number = 7,
+         .nvic_irq_type = DMA1_Stream7_IRQn},
+        {.stream        = DMA2_Stream0,
+         .controller    = DMA2,
+         .stream_number = 0,
+         .nvic_irq_type = DMA2_Stream0_IRQn},
+        {.stream        = DMA2_Stream1,
+         .controller    = DMA2,
+         .stream_number = 1,
+         .nvic_irq_type = DMA2_Stream1_IRQn},
+        {.stream        = DMA2_Stream2,
+         .controller    = DMA2,
+         .stream_number = 2,
+         .nvic_irq_type = DMA2_Stream2_IRQn},
+        {.stream        = DMA2_Stream3,
+         .controller    = DMA2,
+         .stream_number = 3,
+         .nvic_irq_type = DMA2_Stream3_IRQn},
+        {.stream        = DMA2_Stream4,
+         .controller    = DMA2,
+         .stream_number = 4,
+         .nvic_irq_type = DMA2_Stream4_IRQn},
+        {.stream        = DMA2_Stream5,
+         .controller    = DMA2,
+         .stream_number = 5,
+         .nvic_irq_type = DMA2_Stream5_IRQn},
+        {.stream        = DMA2_Stream6,
+         .controller    = DMA2,
+         .stream_number = 6,
+         .nvic_irq_type = DMA2_Stream6_IRQn},
+        {.stream        = DMA2_Stream7,
+         .controller    = DMA2,
+         .stream_number = 7,
+         .nvic_irq_type = DMA2_Stream7_IRQn},
     };
 
     for (size_t i = 0; i < ARRAY_SIZE(stream_info_lut); i++) {
@@ -171,12 +220,14 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     // Get the DMA status flags for this stream and the corresponding status and irq clear register
     dma_stream_flags_t flags;
     TRY(dma_get_stream_flags(stream_info.controller, &flags, stream_info.stream_number));
-    *flags.irq_clear_register = (flags.tc_mask | flags.te_mask | flags.ht_mask | flags.fe_mask | flags.dme_mask);
+    *flags.irq_clear_register =
+        (flags.tc_mask | flags.te_mask | flags.ht_mask | flags.fe_mask | flags.dme_mask);
 
     // Clear all state before proceeding
-    stream->CR &= ~(DMA_SxCR_CHSEL | DMA_SxCR_MBURST | DMA_SxCR_PBURST | DMA_SxCR_CT | DMA_SxCR_DBM | DMA_SxCR_PL | DMA_SxCR_PINCOS | DMA_SxCR_MSIZE |
-                    DMA_SxCR_PSIZE | DMA_SxCR_MINC | DMA_SxCR_PINC | DMA_SxCR_CIRC | DMA_SxCR_DIR | DMA_SxCR_PFCTRL | DMA_SxCR_TCIE | DMA_SxCR_HTIE |
-                    DMA_SxCR_TEIE | DMA_SxCR_DMEIE);
+    stream->CR &= ~(DMA_SxCR_CHSEL | DMA_SxCR_MBURST | DMA_SxCR_PBURST | DMA_SxCR_CT |
+                    DMA_SxCR_DBM | DMA_SxCR_PL | DMA_SxCR_PINCOS | DMA_SxCR_MSIZE | DMA_SxCR_PSIZE |
+                    DMA_SxCR_MINC | DMA_SxCR_PINC | DMA_SxCR_CIRC | DMA_SxCR_DIR | DMA_SxCR_PFCTRL |
+                    DMA_SxCR_TCIE | DMA_SxCR_HTIE | DMA_SxCR_TEIE | DMA_SxCR_DMEIE);
     stream->FCR &= ~(DMA_SxFCR_FEIE | DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);
 
     if (config->deconfigure) {
@@ -194,8 +245,10 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
     // controller are not allowed. Additionally, circular and double buffering mode are not allowed.
     // Also, if we are going to enable the stream here, the transfer size cannot be 0.
     if ((config->mode == DMA_MODE_DIRECT && (config->per_data_size != config->mem_data_size)) ||
-        ((config->direction == DMA_DIR_M2M) && (config->mode == DMA_MODE_DIRECT || config->flow_controller == DMA_FLOW_CONTROLLER_PERIPHERAL ||
-                                                config->circular_mode != DMA_MODE_ONESHOT)) ||
+        ((config->direction == DMA_DIR_M2M) &&
+         (config->mode == DMA_MODE_DIRECT ||
+          config->flow_controller == DMA_FLOW_CONTROLLER_PERIPHERAL ||
+          config->circular_mode != DMA_MODE_ONESHOT)) ||
         (config->enable_stream && config->buffer_size == 0)) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -250,7 +303,8 @@ hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_conf
 
 void dma_set_channel(DMA_Stream_TypeDef* stream, uint32_t channel) {
     if (stream) {
-        stream->CR = (stream->CR & ~DMA_SxCR_CHSEL) | ((uint32_t)(channel << DMA_SxCR_CHSEL_Pos) & DMA_SxCR_CHSEL);
+        stream->CR = (stream->CR & ~DMA_SxCR_CHSEL) |
+                     ((uint32_t)(channel << DMA_SxCR_CHSEL_Pos) & DMA_SxCR_CHSEL);
     }
 }
 
@@ -315,7 +369,8 @@ void dma_set_circular_mode(DMA_Stream_TypeDef* stream, dma_circ_mode_t circ_mode
 
 void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc, bool te, bool ht, bool dme) {
     if (stream) {
-        uint32_t mask = stream->CR & ~(DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_HTIE | DMA_SxCR_DMEIE);
+        uint32_t mask =
+            stream->CR & ~(DMA_SxCR_TCIE | DMA_SxCR_TEIE | DMA_SxCR_HTIE | DMA_SxCR_DMEIE);
         mask |= tc ? DMA_SxCR_TCIE : 0;
         mask |= te ? DMA_SxCR_TEIE : 0;
         mask |= ht ? DMA_SxCR_HTIE : 0;
@@ -326,12 +381,15 @@ void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc, bool te, bool ht, bool
 
 void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_data_size_t mem) {
     if (stream) {
-        stream->CR =
-            (stream->CR & ~(DMA_SxCR_PSIZE | DMA_SxCR_MSIZE)) | ((uint32_t)per << DMA_SxCR_PSIZE_Pos) | ((uint32_t)mem << DMA_SxCR_MSIZE_Pos);
+        stream->CR = (stream->CR & ~(DMA_SxCR_PSIZE | DMA_SxCR_MSIZE)) |
+                     ((uint32_t)per << DMA_SxCR_PSIZE_Pos) | ((uint32_t)mem << DMA_SxCR_MSIZE_Pos);
     }
 }
 
-void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, const volatile void* mem_0, const volatile void* mem_1) {
+void dma_set_addresses(DMA_Stream_TypeDef*  stream,
+                       const volatile void* per,
+                       const volatile void* mem_0,
+                       const volatile void* mem_1) {
     if (stream) {
         if (per) {
             stream->PAR = (uint32_t)per;

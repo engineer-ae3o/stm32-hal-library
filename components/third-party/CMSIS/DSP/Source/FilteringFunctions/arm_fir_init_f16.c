@@ -74,7 +74,11 @@
 
  */
 
-void arm_fir_init_f16(arm_fir_instance_f16* S, uint16_t numTaps, const float16_t* pCoeffs, float16_t* pState, uint32_t blockSize) {
+void arm_fir_init_f16(arm_fir_instance_f16* S,
+                      uint16_t              numTaps,
+                      const float16_t*      pCoeffs,
+                      float16_t*            pState,
+                      uint32_t              blockSize) {
     /* Assign filter taps */
     S->numTaps = numTaps;
 

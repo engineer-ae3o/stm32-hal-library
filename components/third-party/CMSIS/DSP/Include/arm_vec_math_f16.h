@@ -133,16 +133,16 @@ __STATIC_INLINE float16x8_t vtaylor_polyq_f16(float16x8_t x, const float16_t* co
     return res;
 }
 
-#define VMANT_EXP_F16(x)                                                                                                                             \
-    any16x8_t r;                                                                                                                                     \
-    int16x8_t n;                                                                                                                                     \
-                                                                                                                                                     \
-    r.f = x;                                                                                                                                         \
-    n   = r.i >> 10;                                                                                                                                 \
-    n   = n - 15;                                                                                                                                    \
-    r.i = r.i - (n << 10);                                                                                                                           \
-                                                                                                                                                     \
-    vecExpUnBiased = n;                                                                                                                              \
+#define VMANT_EXP_F16(x)                                                                           \
+    any16x8_t r;                                                                                   \
+    int16x8_t n;                                                                                   \
+                                                                                                   \
+    r.f = x;                                                                                       \
+    n   = r.i >> 10;                                                                               \
+    n   = n - 15;                                                                                  \
+    r.i = r.i - (n << 10);                                                                         \
+                                                                                                   \
+    vecExpUnBiased = n;                                                                            \
     vecTmpFlt1     = r.f;
 
 __STATIC_INLINE float16x8_t vlogq_f16(float16x8_t vecIn) {

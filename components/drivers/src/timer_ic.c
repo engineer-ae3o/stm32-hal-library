@@ -14,8 +14,9 @@
 
 // Public API
 hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* config) {
-    if (handle == NULL || config == NULL || config->num_channels == 0 || config->num_channels > timer_get_num_channels(handle) ||
-        config->timer_prescaler == 0 || config->count_mode > TIMER_COUNTER_DIR_DOWN) {
+    if (handle == NULL || config == NULL || config->num_channels == 0 ||
+        config->num_channels > timer_get_num_channels(handle) || config->timer_prescaler == 0 ||
+        config->count_mode > TIMER_COUNTER_DIR_DOWN) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -49,7 +50,8 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
         // Configure the channel in the CCMRx register
         switch (channel.channel) {
             case TIMER_CHANNEL_1: {
-                ccmr1 |= (0b01U << TIM_CCMR1_CC1S_Pos) | (filter_code << TIM_CCMR1_IC1F_Pos) | (uint32_t)(channel.prescaler << TIM_CCMR1_IC1PSC_Pos);
+                ccmr1 |= (0b01U << TIM_CCMR1_CC1S_Pos) | (filter_code << TIM_CCMR1_IC1F_Pos) |
+                         (uint32_t)(channel.prescaler << TIM_CCMR1_IC1PSC_Pos);
                 uint32_t polarity = 0;
                 if (channel.edge == IC_EDGE_RISING_FALLING) {
                     polarity = TIM_CCER_CC1P | TIM_CCER_CC1NP;
@@ -64,7 +66,8 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
                 if (timer_extra_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr1 |= (0b01U << TIM_CCMR1_CC2S_Pos) | (filter_code << TIM_CCMR1_IC2F_Pos) | (uint32_t)(channel.prescaler << TIM_CCMR1_IC2PSC_Pos);
+                ccmr1 |= (0b01U << TIM_CCMR1_CC2S_Pos) | (filter_code << TIM_CCMR1_IC2F_Pos) |
+                         (uint32_t)(channel.prescaler << TIM_CCMR1_IC2PSC_Pos);
                 uint32_t polarity = 0;
                 if (channel.edge == IC_EDGE_RISING_FALLING) {
                     polarity = TIM_CCER_CC2P | TIM_CCER_CC2NP;
@@ -79,7 +82,8 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr2 |= (0b01U << TIM_CCMR2_CC3S_Pos) | (filter_code << TIM_CCMR2_IC3F_Pos) | (uint32_t)(channel.prescaler << TIM_CCMR2_IC3PSC_Pos);
+                ccmr2 |= (0b01U << TIM_CCMR2_CC3S_Pos) | (filter_code << TIM_CCMR2_IC3F_Pos) |
+                         (uint32_t)(channel.prescaler << TIM_CCMR2_IC3PSC_Pos);
                 uint32_t polarity = 0;
                 if (channel.edge == IC_EDGE_RISING_FALLING) {
                     polarity = TIM_CCER_CC3P | TIM_CCER_CC3NP;
@@ -94,7 +98,8 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr2 |= (0b01U << TIM_CCMR2_CC4S_Pos) | (filter_code << TIM_CCMR2_IC4F_Pos) | (uint32_t)(channel.prescaler << TIM_CCMR2_IC4PSC_Pos);
+                ccmr2 |= (0b01U << TIM_CCMR2_CC4S_Pos) | (filter_code << TIM_CCMR2_IC4F_Pos) |
+                         (uint32_t)(channel.prescaler << TIM_CCMR2_IC4PSC_Pos);
                 uint32_t polarity = 0;
                 if (channel.edge == IC_EDGE_RISING_FALLING) {
                     polarity = TIM_CCER_CC4P | TIM_CCER_CC4NP;
@@ -143,7 +148,8 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
     handle->PSC = config->timer_prescaler - 1;
 
     // Set the timer's counting mode, apply the clock divider, and enable auto-reload register buffering
-    handle->CR1 |= (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE);
+    handle->CR1 |=
+        (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE);
 
     // Generate an update event so the timer's internal registers start afresh, and clear the update status flag
     handle->EGR = TIM_EGR_UG;

@@ -64,14 +64,18 @@
                    This function also initializes Twiddle factor table.
  */
 
-arm_status
-arm_rfft_init_f32(arm_rfft_instance_f32* S, arm_cfft_radix4_instance_f32* S_CFFT, uint32_t fftLenReal, uint32_t ifftFlagR, uint32_t bitReverseFlag) {
+arm_status arm_rfft_init_f32(arm_rfft_instance_f32*        S,
+                             arm_cfft_radix4_instance_f32* S_CFFT,
+                             uint32_t                      fftLenReal,
+                             uint32_t                      ifftFlagR,
+                             uint32_t                      bitReverseFlag) {
     /*  Initialise the default arm status */
     arm_status status = ARM_MATH_ARGUMENT_ERROR;
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_FFT_ALLOW_TABLES)
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_REALCOEF_F32)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_REALCOEF_F32)
 
     /*  Initialise the default arm status */
     status = ARM_MATH_SUCCESS;

@@ -46,7 +46,10 @@
   @return        none
  */
 
-void arm_fir_f64(const arm_fir_instance_f64* S, const float64_t* pSrc, float64_t* pDst, uint32_t blockSize) {
+void arm_fir_f64(const arm_fir_instance_f64* S,
+                 const float64_t*            pSrc,
+                 float64_t*                  pDst,
+                 uint32_t                    blockSize) {
     float64_t*       pState  = S->pState;  /* State pointer */
     const float64_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float64_t*       pStateCurnt;          /* Points to the current sample of the state */

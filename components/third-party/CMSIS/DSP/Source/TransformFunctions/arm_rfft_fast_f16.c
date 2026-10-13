@@ -553,7 +553,10 @@ void merge_rfft_f16(const arm_rfft_fast_instance_f16* S, float16_t* p, float16_t
   @return        none
 */
 
-void arm_rfft_fast_f16(const arm_rfft_fast_instance_f16* S, float16_t* p, float16_t* pOut, uint8_t ifftFlag) {
+void arm_rfft_fast_f16(const arm_rfft_fast_instance_f16* S,
+                       float16_t*                        p,
+                       float16_t*                        pOut,
+                       uint8_t                           ifftFlag) {
     const arm_cfft_instance_f16* Sint = &(S->Sint);
 
 

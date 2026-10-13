@@ -57,12 +57,21 @@ hal_err_t i2c_master_deinit(I2C_TypeDef* handle);
 
 // Bus recovery
 hal_err_t i2c_master_software_reset(I2C_TypeDef* handle);
-hal_err_t i2c_master_hardware_reset(GPIO_TypeDef* scl_port, gpio_pin_t scl_pin, GPIO_TypeDef* sda_port, gpio_pin_t sda_pin);
+hal_err_t i2c_master_hardware_reset(GPIO_TypeDef* scl_port,
+                                    gpio_pin_t    scl_pin,
+                                    GPIO_TypeDef* sda_port,
+                                    gpio_pin_t    sda_pin);
 
 // Polling API. DMA not supported
-hal_err_t i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
+hal_err_t
+i2c_master_transmit(I2C_TypeDef* handle, uint8_t address, const uint8_t* data, size_t size);
 hal_err_t i2c_master_receive(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
-hal_err_t i2c_master_transceive(I2C_TypeDef* handle, uint8_t address, const uint8_t* tx_data, size_t tx_size, uint8_t* rx_data, size_t rx_size);
+hal_err_t i2c_master_transceive(I2C_TypeDef*   handle,
+                                uint8_t        address,
+                                const uint8_t* tx_data,
+                                size_t         tx_size,
+                                uint8_t*       rx_data,
+                                size_t         rx_size);
 
 
 #ifdef __cplusplus

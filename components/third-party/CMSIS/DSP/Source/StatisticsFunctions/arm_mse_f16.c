@@ -51,7 +51,10 @@
 #if defined(ARM_MATH_MVE_FLOAT16)
 #include "arm_helium_utils.h"
 
-void arm_mse_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize, float16_t* result)
+void arm_mse_f16(const float16_t* pSrcA,
+                 const float16_t* pSrcB,
+                 uint32_t         blockSize,
+                 float16_t*       result)
 
 {
     float16x8_t vecA, vecB;
@@ -105,7 +108,10 @@ void arm_mse_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockS
 #if (!defined(ARM_MATH_MVE_FLOAT16)) || defined(ARM_MATH_AUTOVECTORIZE)
 
 
-void arm_mse_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize, float16_t* result)
+void arm_mse_f16(const float16_t* pSrcA,
+                 const float16_t* pSrcB,
+                 uint32_t         blockSize,
+                 float16_t*       result)
 
 {
     uint32_t blkCnt; /* Loop counter */

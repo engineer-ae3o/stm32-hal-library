@@ -38,7 +38,8 @@ namespace test::i2c {
             std::array<uint8_t, 4>           rx_buf{};
 
             // cppcheck-suppress intToPointerCast
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2cx_clk_enable(reinterpret_cast<I2C_TypeDef*>(1), true));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2cx_clk_enable(reinterpret_cast<I2C_TypeDef*>(1), true));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_init(nullptr, &PORT_CONFIG));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_init(TEST_PORT, nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_deinit(nullptr));
@@ -48,25 +49,54 @@ namespace test::i2c {
             TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
             TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transmit(nullptr, 0x50, data.data(), data.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transmit(TEST_PORT, 0, data.data(), data.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transmit(TEST_PORT, 0x80, data.data(), data.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transmit(TEST_PORT, 0x50, nullptr, data.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transmit(TEST_PORT, 0x50, data.data(), 0));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_transmit(nullptr, 0x50, data.data(), data.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_transmit(TEST_PORT, 0, data.data(), data.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_transmit(TEST_PORT, 0x80, data.data(), data.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_transmit(TEST_PORT, 0x50, nullptr, data.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_transmit(TEST_PORT, 0x50, data.data(), 0));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_receive(nullptr, 0x50, rx_buf.data(), rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_receive(TEST_PORT, 0, rx_buf.data(), rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_receive(TEST_PORT, 0x80, rx_buf.data(), rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_receive(TEST_PORT, 0x50, nullptr, rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_receive(TEST_PORT, 0x50, rx_buf.data(), 0));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_receive(nullptr, 0x50, rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_receive(TEST_PORT, 0, rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_receive(TEST_PORT, 0x80, rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_receive(TEST_PORT, 0x50, nullptr, rx_buf.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_receive(TEST_PORT, 0x50, rx_buf.data(), 0));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transceive(nullptr, 0x50, data.data(), data.size(), rx_buf.data(), rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transceive(TEST_PORT, 0, data.data(), data.size(), rx_buf.data(), rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transceive(TEST_PORT, 0x80, data.data(), data.size(), rx_buf.data(), rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transceive(TEST_PORT, 0x50, nullptr, data.size(), rx_buf.data(), rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transceive(TEST_PORT, 0x50, data.data(), 0, rx_buf.data(), rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transceive(TEST_PORT, 0x50, data.data(), data.size(), nullptr, rx_buf.size()));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2c_master_transceive(TEST_PORT, 0x50, data.data(), data.size(), rx_buf.data(), 0));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2c_master_transceive(
+                    nullptr, 0x50, data.data(), data.size(), rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2c_master_transceive(
+                    TEST_PORT, 0, data.data(), data.size(), rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2c_master_transceive(
+                    TEST_PORT, 0x80, data.data(), data.size(), rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2c_master_transceive(
+                    TEST_PORT, 0x50, nullptr, data.size(), rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2c_master_transceive(
+                                  TEST_PORT, 0x50, data.data(), 0, rx_buf.data(), rx_buf.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2c_master_transceive(
+                    TEST_PORT, 0x50, data.data(), data.size(), nullptr, rx_buf.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                i2c_master_transceive(TEST_PORT, 0x50, data.data(), data.size(), rx_buf.data(), 0));
         }
 
         void clk_enable_toggles_the_correct_bus_bit() {
@@ -88,7 +118,8 @@ namespace test::i2c {
             TEST_ASSERT_TRUE(RCC->APB1ENR & RCC_APB1ENR_I2C3EN);
             i2cx_clk_enable(I2C3, false);
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, i2cx_clk_enable(reinterpret_cast<I2C_TypeDef*>(0x1), true));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              i2cx_clk_enable(reinterpret_cast<I2C_TypeDef*>(0x1), true));
         }
 
         void deinit_clears_control_registers() {
@@ -141,7 +172,8 @@ namespace test::i2c {
             TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2c_master_init(TEST_PORT, &config));
 
-            TEST_ASSERT_EQUAL_UINT32(I2C_DIGITAL_FILTER_9, (TEST_PORT->FLTR & I2C_FLTR_DNF) >> I2C_FLTR_DNF_Pos);
+            TEST_ASSERT_EQUAL_UINT32(I2C_DIGITAL_FILTER_9,
+                                     (TEST_PORT->FLTR & I2C_FLTR_DNF) >> I2C_FLTR_DNF_Pos);
 
             TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
             TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
@@ -155,7 +187,8 @@ namespace test::i2c {
             TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, true));
             TEST_ASSERT_EQUAL(HAL_OK, i2c_master_init(TEST_PORT, &PORT_CONFIG));
 
-            TEST_ASSERT_EQUAL(HAL_ERR_I2C_DEVICE_NOT_FOUND, i2c_master_transmit(TEST_PORT, UNUSED_ADDRESS, &data, sizeof(data)));
+            TEST_ASSERT_EQUAL(HAL_ERR_I2C_DEVICE_NOT_FOUND,
+                              i2c_master_transmit(TEST_PORT, UNUSED_ADDRESS, &data, sizeof(data)));
 
             TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
             TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
@@ -176,13 +209,21 @@ namespace test::i2c {
 
             // Transmit the initialization sequence for the AHT20
             constexpr std::array<uint8_t, 3> tx_buffer = {0xBE, 0x08, 0x00};
-            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, tx_buffer.data(), tx_buffer.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                i2c_master_transmit(
+                    TEST_PORT, AHT20_I2C_ADDRESS, tx_buffer.data(), tx_buffer.size()));
 
             // Get the initialization status byte from the AHt20
             constexpr uint8_t tx_init_rq = 0x71;
             uint8_t           rx_init_rq = 0;
             TEST_ASSERT_EQUAL(HAL_OK,
-                              i2c_master_transceive(TEST_PORT, AHT20_I2C_ADDRESS, &tx_init_rq, sizeof(tx_init_rq), &rx_init_rq, sizeof(rx_init_rq)));
+                              i2c_master_transceive(TEST_PORT,
+                                                    AHT20_I2C_ADDRESS,
+                                                    &tx_init_rq,
+                                                    sizeof(tx_init_rq),
+                                                    &rx_init_rq,
+                                                    sizeof(rx_init_rq)));
 
             // If the third bit of the received byte is 1, the AHT20 is initialized
             TEST_ASSERT_EQUAL_UINT32(1U, ((rx_init_rq >> 3U) & 1U));
@@ -194,7 +235,10 @@ namespace test::i2c {
         void read_attempt_from_aht20() {
             // Buffer which contains the values to trigger a read from the AHT20
             constexpr std::array<uint8_t, 3> tx_trigger = {0xAC, 0x33, 0x00};
-            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, tx_trigger.data(), tx_trigger.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                i2c_master_transmit(
+                    TEST_PORT, AHT20_I2C_ADDRESS, tx_trigger.data(), tx_trigger.size()));
 
             // Delay to allow the AHT20 take measurements. The datasheet recommends 80ms. This is not a production
             // grade driver nor does it claims to be one, so we just poll for 100ms and then read the measured data.
@@ -202,7 +246,9 @@ namespace test::i2c {
 
             // Get the raw measured data after the 100ms
             std::array<uint8_t, 7> rx_data{};
-            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, rx_data.data(), rx_data.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, rx_data.data(), rx_data.size()));
 
             // Run the CRC8 checksum on the data
             uint8_t crc8 = 0xFF;
@@ -214,13 +260,15 @@ namespace test::i2c {
             }
             TEST_ASSERT_EQUAL_UINT8(crc8, rx_data[6]);
 
-            const uint32_t raw_hmdt = (uint32_t)((rx_data[1] << 12) | (rx_data[2] << 4) | ((rx_data[3] >> 4) & 0xF));
-            const uint32_t raw_temp = (uint32_t)(((rx_data[3] & 0xF) << 16) | (rx_data[4] << 8) | (rx_data[5]));
+            const uint32_t raw_hmdt =
+                (uint32_t)((rx_data[1] << 12) | (rx_data[2] << 4) | ((rx_data[3] >> 4) & 0xF));
+            const uint32_t raw_temp =
+                (uint32_t)(((rx_data[3] & 0xF) << 16) | (rx_data[4] << 8) | (rx_data[5]));
 
             // Convert the raw readings to temperature in celsius and humidity in percent
             constexpr uint32_t conversion_factor = (1 << 20);
             const float        humidity          = ((float)raw_hmdt / conversion_factor) * 100;
-            const float        temperature       = (((float)raw_temp / conversion_factor) * 200) - 50;
+            const float        temperature = (((float)raw_temp / conversion_factor) * 200) - 50;
 
             // Validate the ranges of the received data with the specified ranges from the datasheet
             TEST_ASSERT_TRUE(humidity >= 0 && humidity <= 100);
@@ -244,15 +292,27 @@ namespace test::i2c {
 
             uint32_t timeout = TIMEOUT;
             while (!(TEST_PORT->SR1 & I2C_SR1_SB) && --timeout);
-            TEST_ASSERT_TRUE_MESSAGE(timeout != 0, "Never observed SB after manually issuing a start condition");
+            TEST_ASSERT_TRUE_MESSAGE(timeout != 0,
+                                     "Never observed SB after manually issuing a start condition");
             (void)TEST_PORT->SR1; // Clear SB the same way the driver does
 
-            TEST_ASSERT_TRUE_MESSAGE(TEST_PORT->SR2 & I2C_SR2_BUSY, "Bus did not report BUSY after an unterminated start condition");
+            TEST_ASSERT_TRUE_MESSAGE(
+                TEST_PORT->SR2 & I2C_SR2_BUSY,
+                "Bus did not report BUSY after an unterminated start condition");
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, &tx_data, sizeof(tx_data)));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE, i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, &rx_data, sizeof(rx_data)));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_STATE,
+                i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, &tx_data, sizeof(tx_data)));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_STATE,
+                i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, &rx_data, sizeof(rx_data)));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE,
-                              i2c_master_transceive(TEST_PORT, AHT20_I2C_ADDRESS, &tx_data, sizeof(tx_data), &rx_data, sizeof(rx_data)));
+                              i2c_master_transceive(TEST_PORT,
+                                                    AHT20_I2C_ADDRESS,
+                                                    &tx_data,
+                                                    sizeof(tx_data),
+                                                    &rx_data,
+                                                    sizeof(rx_data)));
 
             // Release the bus so later tests don't inherit a stuck BUSY flag
             TEST_PORT->CR1 |= I2C_CR1_STOP;
@@ -270,20 +330,30 @@ namespace test::i2c {
 
             // Trigger a measurement so the AHT20 has fresh bytes queued up to read back
             constexpr std::array<uint8_t, 3> tx_trigger = {0xAC, 0x33, 0x00};
-            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, tx_trigger.data(), tx_trigger.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                i2c_master_transmit(
+                    TEST_PORT, AHT20_I2C_ADDRESS, tx_trigger.data(), tx_trigger.size()));
             delay_ms(100);
 
             // N == 1: status byte only
             uint8_t status_byte = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, &status_byte, 1));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, &status_byte, 1));
 
             // Trigger again for a clean 2-byte read
-            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, tx_trigger.data(), tx_trigger.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                i2c_master_transmit(
+                    TEST_PORT, AHT20_I2C_ADDRESS, tx_trigger.data(), tx_trigger.size()));
             delay_ms(100);
 
             // N == 2
             std::array<uint8_t, 2> two_bytes{};
-            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_receive(TEST_PORT, AHT20_I2C_ADDRESS, two_bytes.data(), two_bytes.size()));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                i2c_master_receive(
+                    TEST_PORT, AHT20_I2C_ADDRESS, two_bytes.data(), two_bytes.size()));
 
             // Leave the sensor in a known state for whatever runs next
             delay_ms(15);
@@ -292,7 +362,10 @@ namespace test::i2c {
         void aht20_deinits_fine() {
             // This test must run last after all other AHT20 tests since it tears up the bus and deinitializes the AHT20
             constexpr uint8_t aht20_reset_code = 0xBA;
-            TEST_ASSERT_EQUAL(HAL_OK, i2c_master_transmit(TEST_PORT, AHT20_I2C_ADDRESS, &aht20_reset_code, sizeof(aht20_reset_code)));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                i2c_master_transmit(
+                    TEST_PORT, AHT20_I2C_ADDRESS, &aht20_reset_code, sizeof(aht20_reset_code)));
             TEST_ASSERT_EQUAL(HAL_OK, i2c_master_deinit(TEST_PORT));
             TEST_ASSERT_EQUAL(HAL_OK, i2cx_clk_enable(TEST_PORT, false));
         }

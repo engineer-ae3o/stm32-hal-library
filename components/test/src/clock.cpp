@@ -180,11 +180,14 @@ namespace test::clock {
         // Decodes the live main PLL registers, independently of the driver's own bookkeeping
         inline pll_view_t read_main_pll() {
             const uint32_t cfgr = RCC->PLLCFGR;
-            const uint32_t src  = (cfgr & RCC_PLLCFGR_PLLSRC) == RCC_PLLCFGR_PLLSRC_HSE ? HSE_VALUE_Hz : HSI_VALUE_Hz;
+            const uint32_t src =
+                (cfgr & RCC_PLLCFGR_PLLSRC) == RCC_PLLCFGR_PLLSRC_HSE ? HSE_VALUE_Hz : HSI_VALUE_Hz;
             const uint32_t pllm = (cfgr & RCC_PLLCFGR_PLLM) >> RCC_PLLCFGR_PLLM_Pos;
             const uint32_t plln = (cfgr & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos;
             const uint32_t pllq = (cfgr & RCC_PLLCFGR_PLLQ) >> RCC_PLLCFGR_PLLQ_Pos;
-            return {.input_hz = src / pllm, .vco_hz = (src / pllm) * plln, .pllq_hz = ((src / pllm) * plln) / pllq};
+            return {.input_hz = src / pllm,
+                    .vco_hz   = (src / pllm) * plln,
+                    .pllq_hz  = ((src / pllm) * plln) / pllq};
         }
 
         // Helpers
@@ -228,7 +231,8 @@ namespace test::clock {
             assert_system_clock({HSI_PLL_DIRECT, HSI_VALUE_Hz, HSI_VALUE_Hz, HSI_VALUE_Hz, false});
 
             system_core_clock_config(HSI_PLL_100MHz);
-            assert_system_clock({HSI_PLL_100MHz, 100'000'000UL, 50'000'000UL, 100'000'000UL, false});
+            assert_system_clock(
+                {HSI_PLL_100MHz, 100'000'000UL, 50'000'000UL, 100'000'000UL, false});
 
             system_core_clock_config(HSI_PLL_DIRECT);
             assert_system_clock({HSI_PLL_DIRECT, HSI_VALUE_Hz, HSI_VALUE_Hz, HSI_VALUE_Hz, false});
@@ -281,10 +285,12 @@ namespace test::clock {
 
         void match_presets_report_their_actual_source_not_their_frequency() {
             system_core_clock_config(HSE_PLL_MATCH_HSI);
-            assert_system_clock({HSE_PLL_MATCH_HSI, HSI_VALUE_Hz, HSI_VALUE_Hz, HSI_VALUE_Hz, true});
+            assert_system_clock(
+                {HSE_PLL_MATCH_HSI, HSI_VALUE_Hz, HSI_VALUE_Hz, HSI_VALUE_Hz, true});
 
             system_core_clock_config(HSI_PLL_MATCH_HSE);
-            assert_system_clock({HSI_PLL_MATCH_HSE, HSE_VALUE_Hz, HSE_VALUE_Hz, HSE_VALUE_Hz, false});
+            assert_system_clock(
+                {HSI_PLL_MATCH_HSE, HSE_VALUE_Hz, HSE_VALUE_Hz, HSE_VALUE_Hz, false});
         }
 
         void each_audio_clock_preset_configures_correctly() {

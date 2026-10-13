@@ -155,7 +155,8 @@ int32_t main(void) {
     uint32_t   i;
     arm_status status;
 
-    arm_linear_interp_instance_f32 S = {1884, -3.141592653589793238, XSPACING, (float*)&arm_linear_interep_table[0]};
+    arm_linear_interp_instance_f32 S = {
+        1884, -3.141592653589793238, XSPACING, (float*)&arm_linear_interep_table[0]};
 
     /*------------------------------------------------------------------------------
   *  Method 1: Test out Calculated from Cubic Interpolation

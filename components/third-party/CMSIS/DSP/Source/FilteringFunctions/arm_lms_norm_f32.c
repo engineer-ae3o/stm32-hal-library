@@ -157,7 +157,12 @@
  */
 
 #if defined(ARM_MATH_NEON)
-void arm_lms_norm_f32(arm_lms_norm_instance_f32* S, const float32_t* pSrc, float32_t* pRef, float32_t* pOut, float32_t* pErr, uint32_t blockSize) {
+void arm_lms_norm_f32(arm_lms_norm_instance_f32* S,
+                      const float32_t*           pSrc,
+                      float32_t*                 pRef,
+                      float32_t*                 pOut,
+                      float32_t*                 pErr,
+                      uint32_t                   blockSize) {
     float32_t* pState  = S->pState;  /* State pointer */
     float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float32_t* pStateCurnt;          /* Points to the current sample of the state */
@@ -167,7 +172,7 @@ void arm_lms_norm_f32(arm_lms_norm_instance_f32* S, const float32_t* pSrc, float
     uint32_t   tapCnt, blkCnt;       /* Loop counters */
     float32_t  energy;               /* Energy of the input */
     float32_t  sum, e, d;            /* accumulator, error, reference data sample */
-    float32_t  w, x0, in;            /* weight factor, temporary variable to hold input sample and state */
+    float32_t  w, x0, in; /* weight factor, temporary variable to hold input sample and state */
 
     float32x4_t tempV, sumV, xV, bV;
     float32x2_t tempV2;
@@ -331,7 +336,12 @@ void arm_lms_norm_f32(arm_lms_norm_instance_f32* S, const float32_t* pSrc, float
     }
 }
 #else
-void arm_lms_norm_f32(arm_lms_norm_instance_f32* S, const float32_t* pSrc, float32_t* pRef, float32_t* pOut, float32_t* pErr, uint32_t blockSize) {
+void arm_lms_norm_f32(arm_lms_norm_instance_f32* S,
+                      const float32_t*           pSrc,
+                      float32_t*                 pRef,
+                      float32_t*                 pOut,
+                      float32_t*                 pErr,
+                      uint32_t                   blockSize) {
     float32_t* pState  = S->pState;  /* State pointer */
     float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float32_t* pStateCurnt;          /* Points to the current sample of the state */

@@ -128,12 +128,15 @@
 
 #include "arm_helium_utils.h"
 
-void arm_fir_decimate_f32(const arm_fir_decimate_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
-    float32_t*       pState  = S->pState;                                /* State pointer */
-    const float32_t* pCoeffs = S->pCoeffs;                               /* Coefficient pointer */
-    float32_t*       pStateCurnt;                                        /* Points to the current sample of the state */
-    const float32_t *px, *pb;                                            /* Temporary pointers for state and coefficient buffers */
-    uint32_t         numTaps = S->numTaps;                               /* Number of filter coefficients in the filter */
+void arm_fir_decimate_f32(const arm_fir_decimate_instance_f32* S,
+                          const float32_t*                     pSrc,
+                          float32_t*                           pDst,
+                          uint32_t                             blockSize) {
+    float32_t*       pState  = S->pState;  /* State pointer */
+    const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float32_t*       pStateCurnt;          /* Points to the current sample of the state */
+    const float32_t *px, *pb; /* Temporary pointers for state and coefficient buffers */
+    uint32_t         numTaps = S->numTaps; /* Number of filter coefficients in the filter */
     uint32_t         i, tapCnt, blkCnt, outBlockSize = blockSize / S->M; /* Loop counters */
     uint32_t         blkCntN4;
     const float32_t *px0, *px1, *px2, *px3;
@@ -357,15 +360,18 @@ void arm_fir_decimate_f32(const arm_fir_decimate_instance_f32* S, const float32_
 }
 #else
 #if defined(ARM_MATH_NEON)
-void arm_fir_decimate_f32(const arm_fir_decimate_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
-    float32_t*       pState  = S->pState;                                /* State pointer */
-    const float32_t* pCoeffs = S->pCoeffs;                               /* Coefficient pointer */
-    float32_t*       pStateCurnt;                                        /* Points to the current sample of the state */
-    float32_t*       px;                                                 /* Temporary pointer for state buffer */
-    const float32_t* pb;                                                 /* Temporary pointer for coefficient buffer */
-    float32_t        sum0;                                               /* Accumulator */
-    float32_t        x0, c0;                                             /* Temporary variables to hold state and coefficient values */
-    uint32_t         numTaps = S->numTaps;                               /* Number of filter coefficients in the filter */
+void arm_fir_decimate_f32(const arm_fir_decimate_instance_f32* S,
+                          const float32_t*                     pSrc,
+                          float32_t*                           pDst,
+                          uint32_t                             blockSize) {
+    float32_t*       pState  = S->pState;  /* State pointer */
+    const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float32_t*       pStateCurnt;          /* Points to the current sample of the state */
+    float32_t*       px;                   /* Temporary pointer for state buffer */
+    const float32_t* pb;                   /* Temporary pointer for coefficient buffer */
+    float32_t        sum0;                 /* Accumulator */
+    float32_t        x0, c0; /* Temporary variables to hold state and coefficient values */
+    uint32_t         numTaps = S->numTaps; /* Number of filter coefficients in the filter */
     uint32_t         i, tapCnt, blkCnt, outBlockSize = blockSize / S->M; /* Loop counters */
 
     uint32_t   blkCntN4;
@@ -586,15 +592,18 @@ void arm_fir_decimate_f32(const arm_fir_decimate_instance_f32* S, const float32_
     }
 }
 #else
-void arm_fir_decimate_f32(const arm_fir_decimate_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
-    float32_t*       pState  = S->pState;                                /* State pointer */
-    const float32_t* pCoeffs = S->pCoeffs;                               /* Coefficient pointer */
-    float32_t*       pStateCur;                                          /* Points to the current sample of the state */
-    float32_t*       px0;                                                /* Temporary pointer for state buffer */
-    const float32_t* pb;                                                 /* Temporary pointer for coefficient buffer */
-    float32_t        x0, c0;                                             /* Temporary variables to hold state and coefficient values */
-    float32_t        acc0;                                               /* Accumulator */
-    uint32_t         numTaps = S->numTaps;                               /* Number of filter coefficients in the filter */
+void arm_fir_decimate_f32(const arm_fir_decimate_instance_f32* S,
+                          const float32_t*                     pSrc,
+                          float32_t*                           pDst,
+                          uint32_t                             blockSize) {
+    float32_t*       pState  = S->pState;  /* State pointer */
+    const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float32_t*       pStateCur;            /* Points to the current sample of the state */
+    float32_t*       px0;                  /* Temporary pointer for state buffer */
+    const float32_t* pb;                   /* Temporary pointer for coefficient buffer */
+    float32_t        x0, c0; /* Temporary variables to hold state and coefficient values */
+    float32_t        acc0;   /* Accumulator */
+    uint32_t         numTaps = S->numTaps; /* Number of filter coefficients in the filter */
     uint32_t         i, tapCnt, blkCnt, outBlockSize = blockSize / S->M; /* Loop counters */
 
 #if defined(ARM_MATH_LOOPUNROLL)

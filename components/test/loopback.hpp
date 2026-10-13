@@ -69,7 +69,8 @@ namespace test::loopback {
 
     inline uint32_t afr(const board_pin_t& pin) {
         const uint32_t n = pin_number(pin);
-        return (n < 8U) ? ((pin.port->AFR[0] >> (n * 4U)) & 0xFU) : ((pin.port->AFR[1] >> ((n - 8U) * 4U)) & 0xFU);
+        return (n < 8U) ? ((pin.port->AFR[0] >> (n * 4U)) & 0xFU)
+                        : ((pin.port->AFR[1] >> ((n - 8U) * 4U)) & 0xFU);
     }
 
     inline void drive(const board_pin_t& pin, bool level) {
@@ -155,12 +156,16 @@ namespace test::loopback {
 
     // Signal source (TIM5)
     // A square wave of the given frequency on 'pin': the output toggles on a compare match once per timer period
-    inline hal_err_t generator_toggle_start(timer_channel_t channel, const board_pin_t& pin, uint32_t pin_hz) {
+    inline hal_err_t
+    generator_toggle_start(timer_channel_t channel, const board_pin_t& pin, uint32_t pin_hz) {
         output_compare_config_t cfg{};
         cfg.buffer_compare_reload = false;
         cfg.mode                  = OUTPUT_COMPARE_TOGGLE_ON_MATCH;
         cfg.count_mode            = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
-        cfg.channels[0]           = {.output_polarity = false, .output_idle_state = false, .channel = channel, .gpio_pin = pin};
+        cfg.channels[0]           = {.output_polarity   = false,
+                                     .output_idle_state = false,
+                                     .channel           = channel,
+                                     .gpio_pin          = pin};
         cfg.num_channels          = 1;
 
         TRY(output_compare_init(GEN, &cfg));
@@ -178,11 +183,17 @@ namespace test::loopback {
     }
 
     // A PWM wave on GEN_A. 'compare' and 'max_duty' are the duty cycle numbers the PWM driver ended up using
-    inline hal_err_t generator_pwm_start(uint32_t pwm_hz, uint32_t duty_percent, uint32_t* compare, uint32_t* max_duty) {
+    inline hal_err_t generator_pwm_start(uint32_t  pwm_hz,
+                                         uint32_t  duty_percent,
+                                         uint32_t* compare,
+                                         uint32_t* max_duty) {
         pwm_gp_timer_config_t cfg{};
         cfg.pwm_mode       = PWM_MODE_1;
         cfg.pwm_count_mode = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
-        cfg.channels[0]    = {.output_polarity = false, .output_idle_state = false, .channel = TIMER_CHANNEL_1, .gpio_pin = GEN_A};
+        cfg.channels[0]    = {.output_polarity   = false,
+                              .output_idle_state = false,
+                              .channel           = TIMER_CHANNEL_1,
+                              .gpio_pin          = GEN_A};
         cfg.num_channels   = 1;
 
         TRY(pwm_gp_timer_init(GEN, &cfg));
@@ -255,7 +266,10 @@ namespace test::loopback {
         {.hse = HSE_PLL_48MHz, .hsi = HSI_PLL_48MHz, .hse_mhz = 48, .hsi_mhz = 48},
         {.hse = HSE_PLL_84MHz, .hsi = HSI_PLL_84MHz, .hse_mhz = 84, .hsi_mhz = 84},
         {.hse = HSE_PLL_100MHz, .hsi = HSI_PLL_100MHz, .hse_mhz = 100, .hsi_mhz = 100},
-        {.hse = HSE_PLL_DIRECT, .hsi = HSI_PLL_DIRECT, .hse_mhz = HSE_VALUE_MHz, .hsi_mhz = HSI_VALUE_MHz},
+        {.hse     = HSE_PLL_DIRECT,
+         .hsi     = HSI_PLL_DIRECT,
+         .hse_mhz = HSE_VALUE_MHz,
+         .hsi_mhz = HSI_VALUE_MHz},
     }};
 
     // Pick the preset from the same oscillator family the board is currently running on

@@ -51,7 +51,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_biquad_cascade_df1_f16(const arm_biquad_casd_df1_inst_f16* S, const float16_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+void arm_biquad_cascade_df1_f16(const arm_biquad_casd_df1_inst_f16* S,
+                                const float16_t*                    pSrc,
+                                float16_t*                          pDst,
+                                uint32_t                            blockSize) {
     float16_t*       pIn     = (float16_t*)pSrc; /*  source pointer            */
     float16_t*       pOut    = pDst;             /*  destination pointer       */
     float16_t*       pState  = S->pState;        /*  pState pointer            */
@@ -300,7 +303,10 @@ void arm_biquad_cascade_df1_f16(const arm_biquad_casd_df1_inst_f16* S, const flo
 }
 
 #else
-void arm_biquad_cascade_df1_f16(const arm_biquad_casd_df1_inst_f16* S, const float16_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+void arm_biquad_cascade_df1_f16(const arm_biquad_casd_df1_inst_f16* S,
+                                const float16_t*                    pSrc,
+                                float16_t*                          pDst,
+                                uint32_t                            blockSize) {
     const float16_t* pIn     = pSrc;               /* Source pointer */
     float16_t*       pOut    = pDst;               /* Destination pointer */
     float16_t*       pState  = S->pState;          /* pState pointer */

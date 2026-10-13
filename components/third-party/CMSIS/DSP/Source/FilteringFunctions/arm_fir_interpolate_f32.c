@@ -133,11 +133,14 @@
 
 #include "arm_helium_utils.h"
 
-static void arm_fir_interpolate2_f32_mve(const arm_fir_interpolate_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+static void arm_fir_interpolate2_f32_mve(const arm_fir_interpolate_instance_f32* S,
+                                         const float32_t*                        pSrc,
+                                         float32_t*                              pDst,
+                                         uint32_t                                blockSize) {
     float32_t*       pState  = S->pState;  /* State pointer */
     const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float32_t*       pStateCurnt;          /* Points to the current sample of the state */
-    const float32_t *ptr1, *ptr2;          /* Temporary pointers for state and coefficient buffers */
+    const float32_t *ptr1, *ptr2; /* Temporary pointers for state and coefficient buffers */
     uint32_t         tapCnt;
     uint32_t         blkCnt;                        /* Loop counters */
     uint16_t         phaseLen     = S->phaseLength; /* Length of each polyphase filter component */
@@ -245,11 +248,14 @@ static void arm_fir_interpolate2_f32_mve(const arm_fir_interpolate_instance_f32*
     }
 }
 
-void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
+                             const float32_t*                        pSrc,
+                             float32_t*                              pDst,
+                             uint32_t                                blockSize) {
     float32_t*       pState  = S->pState;  /* State pointer */
     const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float32_t*       pStateCurnt;          /* Points to the current sample of the state */
-    const float32_t *ptr1, *ptr2;          /* Temporary pointers for state and coefficient buffers */
+    const float32_t *ptr1, *ptr2; /* Temporary pointers for state and coefficient buffers */
     uint32_t         tapCnt;
     uint32_t         i, blkCnt;                     /* Loop counters */
     uint16_t         phaseLen     = S->phaseLength; /* Length of each polyphase filter component */
@@ -443,18 +449,21 @@ void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S, const fl
 
 #else
 #if defined(ARM_MATH_NEON)
-void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
-    float32_t*       pState  = S->pState;               /* State pointer */
-    const float32_t* pCoeffs = S->pCoeffs;              /* Coefficient pointer */
-    float32_t*       pStateCurnt;                       /* Points to the current sample of the state */
-    float32_t*       ptr1;                              /* Temporary pointers for state buffer */
-    const float32_t* ptr2;                              /* Temporary pointers for coefficient buffer */
-    float32_t        sum0;                              /* Accumulators */
-    float32_t        c0;                                /* Temporary variables to hold state and coefficient values */
-    uint32_t         i, blkCnt, j;                      /* Loop counters */
-    uint16_t         phaseLen = S->phaseLength, tapCnt; /* Length of each polyphase filter component */
-    uint32_t         blkCntN4;
-    float32_t        c1, c2, c3;
+void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
+                             const float32_t*                        pSrc,
+                             float32_t*                              pDst,
+                             uint32_t                                blockSize) {
+    float32_t*       pState  = S->pState;  /* State pointer */
+    const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float32_t*       pStateCurnt;          /* Points to the current sample of the state */
+    float32_t*       ptr1;                 /* Temporary pointers for state buffer */
+    const float32_t* ptr2;                 /* Temporary pointers for coefficient buffer */
+    float32_t        sum0;                 /* Accumulators */
+    float32_t        c0;           /* Temporary variables to hold state and coefficient values */
+    uint32_t         i, blkCnt, j; /* Loop counters */
+    uint16_t  phaseLen = S->phaseLength, tapCnt; /* Length of each polyphase filter component */
+    uint32_t  blkCntN4;
+    float32_t c1, c2, c3;
 
     float32x4_t sum0v;
     float32x4_t accV0, accV1;
@@ -778,7 +787,10 @@ void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S, const fl
 }
 #else
 
-void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_fir_interpolate_f32(const arm_fir_interpolate_instance_f32* S,
+                             const float32_t*                        pSrc,
+                             float32_t*                              pDst,
+                             uint32_t                                blockSize) {
 #if (1)
     //#if !defined(ARM_MATH_CM0_FAMILY)
 

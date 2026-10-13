@@ -68,13 +68,17 @@
 
 #if defined(ARM_FLOAT16_SUPPORTED)
 
-arm_status arm_cfft_radix4_init_f16(arm_cfft_radix4_instance_f16* S, uint16_t fftLen, uint8_t ifftFlag, uint8_t bitReverseFlag) {
+arm_status arm_cfft_radix4_init_f16(arm_cfft_radix4_instance_f16* S,
+                                    uint16_t                      fftLen,
+                                    uint8_t                       ifftFlag,
+                                    uint8_t                       bitReverseFlag) {
     /*  Initialise the default arm status */
     arm_status status = ARM_MATH_ARGUMENT_ERROR;
 
 #if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_FFT_ALLOW_TABLES)
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_TWIDDLECOEF_F16_4096)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_TWIDDLECOEF_F16_4096)
 
     /*  Initialise the default arm status */
     status = ARM_MATH_SUCCESS;

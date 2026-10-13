@@ -115,7 +115,9 @@ arm_status arm_convolve_s8(const cmsis_nn_context*                  ctx,
                             memset(im2col_buf, (int8_t)-input_offset, sizeof(q7_t) * input_ch);
                             padded = 1;
                         } else {
-                            arm_memcpy_q7(im2col_buf, input_data + (k_y * input_x + k_x) * input_ch, input_ch);
+                            arm_memcpy_q7(im2col_buf,
+                                          input_data + (k_y * input_x + k_x) * input_ch,
+                                          input_ch);
                         }
                         im2col_buf += input_ch;
                     }
@@ -126,9 +128,16 @@ arm_status arm_convolve_s8(const cmsis_nn_context*                  ctx,
                 /* Computation is filed for every 4 columns */
                 if (buffer_fill_cnt == 4 && (padded == 0)) {
                     buffer_fill_cnt = 0;
-                    out             = arm_nn_mat_mul_core_4x_s8(
-                        num_elem, num_elem, (q7_t*)buffer_a, filter_data, output_ch, conv_params, quant_params, bias_data, out);
-                    im2col_buf = (q7_t*)buffer_a;
+                    out             = arm_nn_mat_mul_core_4x_s8(num_elem,
+                                                                num_elem,
+                                                                (q7_t*)buffer_a,
+                                                                filter_data,
+                                                                output_ch,
+                                                                conv_params,
+                                                                quant_params,
+                                                                bias_data,
+                                                                out);
+                    im2col_buf      = (q7_t*)buffer_a;
                 } else if (buffer_fill_cnt == 4 && (padded != 0)) {
                     buffer_fill_cnt = 0;
                     out             = arm_nn_mat_mult_s8(filter_data,
@@ -194,7 +203,10 @@ arm_status arm_convolve_s8(const cmsis_nn_context*                  ctx,
                             memset(two_column_buf, 0, sizeof(q15_t) * input_ch);
                         } else {
                             /* Copying the pixel data to column */
-                            arm_q7_to_q15_with_offset(input_data + (k_y * input_x + k_x) * input_ch, two_column_buf, input_ch, input_offset);
+                            arm_q7_to_q15_with_offset(input_data + (k_y * input_x + k_x) * input_ch,
+                                                      two_column_buf,
+                                                      input_ch,
+                                                      input_offset);
                         }
                         two_column_buf += input_ch;
                     }
@@ -281,7 +293,8 @@ arm_status arm_convolve_s8(const cmsis_nn_context*                  ctx,
     return ARM_MATH_SUCCESS;
 }
 
-int32_t arm_convolve_s8_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims) {
+int32_t arm_convolve_s8_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                        const cmsis_nn_dims* filter_dims) {
 #if defined(ARM_MATH_MVEI)
     int32_t col_length = input_dims->c * filter_dims->w * filter_dims->h;
     // Get number of complete int16 lanes(multiple of 8) for given col_length. This is dependent on

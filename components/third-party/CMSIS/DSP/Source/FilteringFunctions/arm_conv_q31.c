@@ -63,7 +63,8 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_filtering.h"
 
-void arm_conv_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
+void arm_conv_q31(
+    const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
     const q31_t* pIn1 = pSrcA; /* inputA pointer               */
     const q31_t* pIn2 = pSrcB; /* inputB pointer               */
     /*
@@ -208,7 +209,8 @@ void arm_conv_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint
 }
 
 #else
-void arm_conv_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
+void arm_conv_q31(
+    const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
 
 #if (1)
     //#if !defined(ARM_MATH_CM0_FAMILY)

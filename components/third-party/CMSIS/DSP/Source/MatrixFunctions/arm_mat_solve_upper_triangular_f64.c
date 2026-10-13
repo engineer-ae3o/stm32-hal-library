@@ -46,7 +46,9 @@
    * @param[out] dst The solution X of UT . X = A
    * @return The function returns ARM_MATH_SINGULAR, if the system can't be solved.
   */
-arm_status arm_mat_solve_upper_triangular_f64(const arm_matrix_instance_f64* ut, const arm_matrix_instance_f64* a, arm_matrix_instance_f64* dst) {
+arm_status arm_mat_solve_upper_triangular_f64(const arm_matrix_instance_f64* ut,
+                                              const arm_matrix_instance_f64* a,
+                                              arm_matrix_instance_f64*       dst) {
     arm_status status; /* status of matrix inverse */
 
 

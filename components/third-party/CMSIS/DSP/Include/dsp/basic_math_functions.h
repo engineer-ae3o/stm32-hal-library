@@ -79,7 +79,10 @@ void arm_mult_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t 
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_mult_f32(const float32_t* pSrcA, const float32_t* pSrcB, float32_t* pDst, uint32_t blockSize);
+void arm_mult_f32(const float32_t* pSrcA,
+                  const float32_t* pSrcB,
+                  float32_t*       pDst,
+                  uint32_t         blockSize);
 
 
 /**
@@ -89,7 +92,10 @@ void arm_mult_f32(const float32_t* pSrcA, const float32_t* pSrcB, float32_t* pDs
  * @param[out] pDst       points to the output vector
  * @param[in]  blockSize  number of samples in each vector
  */
-void arm_mult_f64(const float64_t* pSrcA, const float64_t* pSrcB, float64_t* pDst, uint32_t blockSize);
+void arm_mult_f64(const float64_t* pSrcA,
+                  const float64_t* pSrcB,
+                  float64_t*       pDst,
+                  uint32_t         blockSize);
 
 
 /**
@@ -99,7 +105,10 @@ void arm_mult_f64(const float64_t* pSrcA, const float64_t* pSrcB, float64_t* pDs
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_add_f32(const float32_t* pSrcA, const float32_t* pSrcB, float32_t* pDst, uint32_t blockSize);
+void arm_add_f32(const float32_t* pSrcA,
+                 const float32_t* pSrcB,
+                 float32_t*       pDst,
+                 uint32_t         blockSize);
 
 
 /**
@@ -109,7 +118,10 @@ void arm_add_f32(const float32_t* pSrcA, const float32_t* pSrcB, float32_t* pDst
   * @param[out] pDst       points to the output vector
   * @param[in]  blockSize  number of samples in each vector
   */
-void arm_add_f64(const float64_t* pSrcA, const float64_t* pSrcB, float64_t* pDst, uint32_t blockSize);
+void arm_add_f64(const float64_t* pSrcA,
+                 const float64_t* pSrcB,
+                 float64_t*       pDst,
+                 uint32_t         blockSize);
 
 
 /**
@@ -149,7 +161,10 @@ void arm_add_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t b
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_sub_f32(const float32_t* pSrcA, const float32_t* pSrcB, float32_t* pDst, uint32_t blockSize);
+void arm_sub_f32(const float32_t* pSrcA,
+                 const float32_t* pSrcB,
+                 float32_t*       pDst,
+                 uint32_t         blockSize);
 
 
 /**
@@ -159,7 +174,10 @@ void arm_sub_f32(const float32_t* pSrcA, const float32_t* pSrcB, float32_t* pDst
    * @param[out] pDst       points to the output vector
    * @param[in]  blockSize  number of samples in each vector
    */
-void arm_sub_f64(const float64_t* pSrcA, const float64_t* pSrcB, float64_t* pDst, uint32_t blockSize);
+void arm_sub_f64(const float64_t* pSrcA,
+                 const float64_t* pSrcB,
+                 float64_t*       pDst,
+                 uint32_t         blockSize);
 
 
 /**
@@ -231,7 +249,8 @@ void arm_scale_q7(const q7_t* pSrc, q7_t scaleFract, int8_t shift, q7_t* pDst, u
    * @param[out] pDst        points to the output vector
    * @param[in]  blockSize   number of samples in the vector
    */
-void arm_scale_q15(const q15_t* pSrc, q15_t scaleFract, int8_t shift, q15_t* pDst, uint32_t blockSize);
+void arm_scale_q15(
+    const q15_t* pSrc, q15_t scaleFract, int8_t shift, q15_t* pDst, uint32_t blockSize);
 
 
 /**
@@ -242,7 +261,8 @@ void arm_scale_q15(const q15_t* pSrc, q15_t scaleFract, int8_t shift, q15_t* pDs
    * @param[out] pDst        points to the output vector
    * @param[in]  blockSize   number of samples in the vector
    */
-void arm_scale_q31(const q31_t* pSrc, q31_t scaleFract, int8_t shift, q31_t* pDst, uint32_t blockSize);
+void arm_scale_q31(
+    const q31_t* pSrc, q31_t scaleFract, int8_t shift, q31_t* pDst, uint32_t blockSize);
 
 
 /**
@@ -297,7 +317,10 @@ void arm_abs_q31(const q31_t* pSrc, q31_t* pDst, uint32_t blockSize);
    * @param[in]  blockSize  number of samples in each vector
    * @param[out] result     output result returned here
    */
-void arm_dot_prod_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize, float32_t* result);
+void arm_dot_prod_f32(const float32_t* pSrcA,
+                      const float32_t* pSrcB,
+                      uint32_t         blockSize,
+                      float32_t*       result);
 
 
 /**
@@ -307,7 +330,10 @@ void arm_dot_prod_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t b
  * @param[in]  blockSize  number of samples in each vector
  * @param[out] result     output result returned here
  */
-void arm_dot_prod_f64(const float64_t* pSrcA, const float64_t* pSrcB, uint32_t blockSize, float64_t* result);
+void arm_dot_prod_f64(const float64_t* pSrcA,
+                      const float64_t* pSrcB,
+                      uint32_t         blockSize,
+                      float64_t*       result);
 
 
 /**
@@ -591,7 +617,8 @@ void arm_xor_u8(const uint8_t* pSrcA, const uint8_t* pSrcB, uint8_t* pDst, uint3
   @return        none
  */
 
-void arm_clip_f32(const float32_t* pSrc, float32_t* pDst, float32_t low, float32_t high, uint32_t numSamples);
+void arm_clip_f32(
+    const float32_t* pSrc, float32_t* pDst, float32_t low, float32_t high, uint32_t numSamples);
 
 /**
   @brief         Elementwise fixed-point clipping

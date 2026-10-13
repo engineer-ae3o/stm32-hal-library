@@ -402,7 +402,12 @@ __STATIC_FORCEINLINE q15_t arm_pid_q15(arm_pid_instance_q15* S, q15_t in) {
    * The function implements the forward Park transform.
    *
    */
-__STATIC_FORCEINLINE void arm_park_f32(float32_t Ialpha, float32_t Ibeta, float32_t* pId, float32_t* pIq, float32_t sinVal, float32_t cosVal) {
+__STATIC_FORCEINLINE void arm_park_f32(float32_t  Ialpha,
+                                       float32_t  Ibeta,
+                                       float32_t* pId,
+                                       float32_t* pIq,
+                                       float32_t  sinVal,
+                                       float32_t  cosVal) {
     /* Calculate pId using the equation, pId = Ialpha * cosVal + Ibeta * sinVal */
     *pId = Ialpha * cosVal + Ibeta * sinVal;
 
@@ -426,7 +431,8 @@ __STATIC_FORCEINLINE void arm_park_f32(float32_t Ialpha, float32_t Ibeta, float3
          The accumulator maintains 1.31 format by truncating lower 31 bits of the intermediate multiplication in 2.62 format.
          There is saturation on the addition and subtraction, hence there is no risk of overflow.
  */
-__STATIC_FORCEINLINE void arm_park_q31(q31_t Ialpha, q31_t Ibeta, q31_t* pId, q31_t* pIq, q31_t sinVal, q31_t cosVal) {
+__STATIC_FORCEINLINE void
+arm_park_q31(q31_t Ialpha, q31_t Ibeta, q31_t* pId, q31_t* pIq, q31_t sinVal, q31_t cosVal) {
     q31_t product1, product2; /* Temporary variables used to store intermediate results */
     q31_t product3, product4; /* Temporary variables used to store intermediate results */
 
@@ -491,7 +497,12 @@ __STATIC_FORCEINLINE void arm_park_q31(q31_t Ialpha, q31_t Ibeta, q31_t* pId, q3
    * @param[in]  cosVal   cosine value of rotation angle theta
    * @return     none
    */
-__STATIC_FORCEINLINE void arm_inv_park_f32(float32_t Id, float32_t Iq, float32_t* pIalpha, float32_t* pIbeta, float32_t sinVal, float32_t cosVal) {
+__STATIC_FORCEINLINE void arm_inv_park_f32(float32_t  Id,
+                                           float32_t  Iq,
+                                           float32_t* pIalpha,
+                                           float32_t* pIbeta,
+                                           float32_t  sinVal,
+                                           float32_t  cosVal) {
     /* Calculate pIalpha using the equation, pIalpha = Id * cosVal - Iq * sinVal */
     *pIalpha = Id * cosVal - Iq * sinVal;
 
@@ -515,7 +526,8 @@ __STATIC_FORCEINLINE void arm_inv_park_f32(float32_t Id, float32_t Iq, float32_t
          The accumulator maintains 1.31 format by truncating lower 31 bits of the intermediate multiplication in 2.62 format.
          There is saturation on the addition, hence there is no risk of overflow.
  */
-__STATIC_FORCEINLINE void arm_inv_park_q31(q31_t Id, q31_t Iq, q31_t* pIalpha, q31_t* pIbeta, q31_t sinVal, q31_t cosVal) {
+__STATIC_FORCEINLINE void
+arm_inv_park_q31(q31_t Id, q31_t Iq, q31_t* pIalpha, q31_t* pIbeta, q31_t sinVal, q31_t cosVal) {
     q31_t product1, product2; /* Temporary variables used to store intermediate results */
     q31_t product3, product4; /* Temporary variables used to store intermediate results */
 
@@ -583,7 +595,8 @@ __STATIC_FORCEINLINE void arm_inv_park_q31(q31_t Id, q31_t Iq, q31_t* pIalpha, q
    * @param[out] pIbeta   points to output two-phase orthogonal vector axis beta
    * @return        none
    */
-__STATIC_FORCEINLINE void arm_clarke_f32(float32_t Ia, float32_t Ib, float32_t* pIalpha, float32_t* pIbeta) {
+__STATIC_FORCEINLINE void
+arm_clarke_f32(float32_t Ia, float32_t Ib, float32_t* pIalpha, float32_t* pIbeta) {
     /* Calculate pIalpha using the equation, pIalpha = Ia */
     *pIalpha = Ia;
 
@@ -659,7 +672,8 @@ __STATIC_FORCEINLINE void arm_clarke_q31(q31_t Ia, q31_t Ib, q31_t* pIalpha, q31
    * @param[out] pIb     points to output three-phase coordinate <code>b</code>
    * @return     none
    */
-__STATIC_FORCEINLINE void arm_inv_clarke_f32(float32_t Ialpha, float32_t Ibeta, float32_t* pIa, float32_t* pIb) {
+__STATIC_FORCEINLINE void
+arm_inv_clarke_f32(float32_t Ialpha, float32_t Ibeta, float32_t* pIa, float32_t* pIb) {
     /* Calculating pIa from Ialpha by equation pIa = Ialpha */
     *pIa = Ialpha;
 

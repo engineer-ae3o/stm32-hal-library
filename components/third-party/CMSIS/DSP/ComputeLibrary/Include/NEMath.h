@@ -198,16 +198,20 @@ inline float32x4_t vfloorq_f32(float32x4_t val) {
 
 inline float32x2_t vinvsqrt_f32(float32x2_t x) {
     float32x2_t sqrt_reciprocal = vrsqrte_f32(x);
-    sqrt_reciprocal             = vmul_f32(vrsqrts_f32(vmul_f32(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
-    sqrt_reciprocal             = vmul_f32(vrsqrts_f32(vmul_f32(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
+    sqrt_reciprocal =
+        vmul_f32(vrsqrts_f32(vmul_f32(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
+    sqrt_reciprocal =
+        vmul_f32(vrsqrts_f32(vmul_f32(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
 
     return sqrt_reciprocal;
 }
 
 inline float32x4_t vinvsqrtq_f32(float32x4_t x) {
     float32x4_t sqrt_reciprocal = vrsqrteq_f32(x);
-    sqrt_reciprocal             = vmulq_f32(vrsqrtsq_f32(vmulq_f32(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
-    sqrt_reciprocal             = vmulq_f32(vrsqrtsq_f32(vmulq_f32(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
+    sqrt_reciprocal =
+        vmulq_f32(vrsqrtsq_f32(vmulq_f32(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
+    sqrt_reciprocal =
+        vmulq_f32(vrsqrtsq_f32(vmulq_f32(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
 
     return sqrt_reciprocal;
 }
@@ -238,8 +242,10 @@ inline float32x4_t vtaylor_polyq_f32(float32x4_t x, const float32_t* coeffs) {
 }
 
 inline float32x4_t vexpq_f32(float32x4_t x) {
-    static const float32_t CONST_LN2[4]          = {0.6931471805f, 0.6931471805f, 0.6931471805f, 0.6931471805f}; // ln(2)
-    static const float32_t CONST_INV_LN2[4]      = {1.4426950408f, 1.4426950408f, 1.4426950408f, 1.4426950408f}; // 1/ln(2)
+    static const float32_t CONST_LN2[4] = {
+        0.6931471805f, 0.6931471805f, 0.6931471805f, 0.6931471805f}; // ln(2)
+    static const float32_t CONST_INV_LN2[4] = {
+        1.4426950408f, 1.4426950408f, 1.4426950408f, 1.4426950408f}; // 1/ln(2)
     static const float32_t CONST_0[4]            = {0.f, 0.f, 0.f, 0.f};
     static const int32_t   CONST_NEGATIVE_126[4] = {-126, -126, -126, -126};
 
@@ -258,12 +264,15 @@ inline float32x4_t vexpq_f32(float32x4_t x) {
 }
 
 inline float32x4_t vlogq_f32(float32x4_t x) {
-    static const int32_t   CONST_127[4] = {127, 127, 127, 127};                                         // 127
-    static const float32_t CONST_LN2[4] = {0.6931471805f, 0.6931471805f, 0.6931471805f, 0.6931471805f}; // ln(2)
+    static const int32_t   CONST_127[4] = {127, 127, 127, 127}; // 127
+    static const float32_t CONST_LN2[4] = {
+        0.6931471805f, 0.6931471805f, 0.6931471805f, 0.6931471805f}; // ln(2)
 
     // Extract exponent
-    int32x4_t   m   = vsubq_s32(vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_f32(x), 23)), vld1q_s32(CONST_127));
-    float32x4_t val = vreinterpretq_f32_s32(vsubq_s32(vreinterpretq_s32_f32(x), vshlq_n_s32(m, 23)));
+    int32x4_t   m = vsubq_s32(vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_f32(x), 23)),
+                              vld1q_s32(CONST_127));
+    float32x4_t val =
+        vreinterpretq_f32_s32(vsubq_s32(vreinterpretq_s32_f32(x), vshlq_n_s32(m, 23)));
 
     // Polynomial Approximation
     float32x4_t poly = vtaylor_polyq_f32(val, log_tab);
@@ -280,7 +289,7 @@ inline float32x4_t vtanhq_f32(float32x4_t val) {
     static const float32_t CONST_MIN_TANH[4] = {-10.f, -10.f, -10.f, -10.f};
     static const float32_t CONST_MAX_TANH[4] = {10.f, 10.f, 10.f, 10.f};
 
-    float32x4_t x     = vminq_f32(vmaxq_f32(val, vld1q_f32(CONST_MIN_TANH)), vld1q_f32(CONST_MAX_TANH));
+    float32x4_t x = vminq_f32(vmaxq_f32(val, vld1q_f32(CONST_MIN_TANH)), vld1q_f32(CONST_MAX_TANH));
     float32x4_t exp2x = vexpq_f32(vmulq_f32(vld1q_f32(CONST_2), x));
     float32x4_t num   = vsubq_f32(exp2x, vld1q_f32(CONST_1));
     float32x4_t den   = vaddq_f32(exp2x, vld1q_f32(CONST_1));
@@ -307,15 +316,19 @@ inline float16x8_t vfloorq_f16(float16x8_t val) {
 }
 inline float16x4_t vinvsqrt_f16(float16x4_t x) {
     float16x4_t sqrt_reciprocal = vrsqrte_f16(x);
-    sqrt_reciprocal             = vmul_f16(vrsqrts_f16(vmul_f16(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
-    sqrt_reciprocal             = vmul_f16(vrsqrts_f16(vmul_f16(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
+    sqrt_reciprocal =
+        vmul_f16(vrsqrts_f16(vmul_f16(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
+    sqrt_reciprocal =
+        vmul_f16(vrsqrts_f16(vmul_f16(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
     return sqrt_reciprocal;
 }
 
 inline float16x8_t vinvsqrtq_f16(float16x8_t x) {
     float16x8_t sqrt_reciprocal = vrsqrteq_f16(x);
-    sqrt_reciprocal             = vmulq_f16(vrsqrtsq_f16(vmulq_f16(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
-    sqrt_reciprocal             = vmulq_f16(vrsqrtsq_f16(vmulq_f16(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
+    sqrt_reciprocal =
+        vmulq_f16(vrsqrtsq_f16(vmulq_f16(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
+    sqrt_reciprocal =
+        vmulq_f16(vrsqrtsq_f16(vmulq_f16(x, sqrt_reciprocal), sqrt_reciprocal), sqrt_reciprocal);
     return sqrt_reciprocal;
 }
 
@@ -339,7 +352,8 @@ inline float16x8_t vtanhq_f16(float16x8_t val) {
     const float16_t CONST_MIN_TANH[8] = {-10.f, -10.f, -10.f, -10.f, -10.f, -10.f, -10.f, -10.f};
     const float16_t CONST_MAX_TANH[8] = {10.f, 10.f, 10.f, 10.f, 10.f, 10.f, 10.f, 10.f};
 
-    const float16x8_t x     = vminq_f16(vmaxq_f16(val, vld1q_f16(CONST_MIN_TANH)), vld1q_f16(CONST_MAX_TANH));
+    const float16x8_t x =
+        vminq_f16(vmaxq_f16(val, vld1q_f16(CONST_MIN_TANH)), vld1q_f16(CONST_MAX_TANH));
     const float16x8_t exp2x = vexpq_f16(vmulq_f16(vld1q_f16(CONST_2), x));
     const float16x8_t num   = vsubq_f16(exp2x, vld1q_f16(CONST_1));
     const float16x8_t den   = vaddq_f16(exp2x, vld1q_f16(CONST_1));
@@ -348,13 +362,18 @@ inline float16x8_t vtanhq_f16(float16x8_t val) {
 }
 
 inline float16x8_t vtaylor_polyq_f16(float16x8_t x, const float16_t* coeffs) {
-    const float16x8_t A   = vaddq_f16(vld1q_f16(&coeffs[8 * 0]), vmulq_f16(vld1q_f16(&coeffs[8 * 4]), x));
-    const float16x8_t B   = vaddq_f16(vld1q_f16(&coeffs[8 * 2]), vmulq_f16(vld1q_f16(&coeffs[8 * 6]), x));
-    const float16x8_t C   = vaddq_f16(vld1q_f16(&coeffs[8 * 1]), vmulq_f16(vld1q_f16(&coeffs[8 * 5]), x));
-    const float16x8_t D   = vaddq_f16(vld1q_f16(&coeffs[8 * 3]), vmulq_f16(vld1q_f16(&coeffs[8 * 7]), x));
-    const float16x8_t x2  = vmulq_f16(x, x);
-    const float16x8_t x4  = vmulq_f16(x2, x2);
-    const float16x8_t res = vaddq_f16(vaddq_f16(A, vmulq_f16(B, x2)), vmulq_f16(vaddq_f16(C, vmulq_f16(D, x2)), x4));
+    const float16x8_t A =
+        vaddq_f16(vld1q_f16(&coeffs[8 * 0]), vmulq_f16(vld1q_f16(&coeffs[8 * 4]), x));
+    const float16x8_t B =
+        vaddq_f16(vld1q_f16(&coeffs[8 * 2]), vmulq_f16(vld1q_f16(&coeffs[8 * 6]), x));
+    const float16x8_t C =
+        vaddq_f16(vld1q_f16(&coeffs[8 * 1]), vmulq_f16(vld1q_f16(&coeffs[8 * 5]), x));
+    const float16x8_t D =
+        vaddq_f16(vld1q_f16(&coeffs[8 * 3]), vmulq_f16(vld1q_f16(&coeffs[8 * 7]), x));
+    const float16x8_t x2 = vmulq_f16(x, x);
+    const float16x8_t x4 = vmulq_f16(x2, x2);
+    const float16x8_t res =
+        vaddq_f16(vaddq_f16(A, vmulq_f16(B, x2)), vmulq_f16(vaddq_f16(C, vmulq_f16(D, x2)), x4));
     return res;
 }
 

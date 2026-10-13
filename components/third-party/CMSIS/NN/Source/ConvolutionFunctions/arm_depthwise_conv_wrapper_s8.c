@@ -58,20 +58,49 @@ arm_status arm_depthwise_conv_wrapper_s8(const cmsis_nn_context*                
                                          const cmsis_nn_dims*                     output_dims,
                                          q7_t*                                    output) {
     arm_status status = ARM_MATH_SUCCESS;
-    if (1 == dw_conv_params->ch_mult && input_dims->n == 1 && dw_conv_params->dilation.w == 1 && dw_conv_params->dilation.h == 1) {
+    if (1 == dw_conv_params->ch_mult && input_dims->n == 1 && dw_conv_params->dilation.w == 1 &&
+        dw_conv_params->dilation.h == 1) {
 #if !defined(ARM_MATH_MVEI)
-        if ((filter_dims->w == 3) && (filter_dims->h == 3) && (dw_conv_params->padding.h <= 1) && (dw_conv_params->padding.w <= 1)) {
-            status = arm_depthwise_conv_3x3_s8(
-                ctx, dw_conv_params, quant_params, input_dims, input, filter_dims, filter, bias_dims, bias, output_dims, output);
+        if ((filter_dims->w == 3) && (filter_dims->h == 3) && (dw_conv_params->padding.h <= 1) &&
+            (dw_conv_params->padding.w <= 1)) {
+            status = arm_depthwise_conv_3x3_s8(ctx,
+                                               dw_conv_params,
+                                               quant_params,
+                                               input_dims,
+                                               input,
+                                               filter_dims,
+                                               filter,
+                                               bias_dims,
+                                               bias,
+                                               output_dims,
+                                               output);
         } else
 #endif
         {
-            status = arm_depthwise_conv_s8_opt(
-                ctx, dw_conv_params, quant_params, input_dims, input, filter_dims, filter, bias_dims, bias, output_dims, output);
+            status = arm_depthwise_conv_s8_opt(ctx,
+                                               dw_conv_params,
+                                               quant_params,
+                                               input_dims,
+                                               input,
+                                               filter_dims,
+                                               filter,
+                                               bias_dims,
+                                               bias,
+                                               output_dims,
+                                               output);
         }
     } else {
-        status =
-            arm_depthwise_conv_s8(ctx, dw_conv_params, quant_params, input_dims, input, filter_dims, filter, bias_dims, bias, output_dims, output);
+        status = arm_depthwise_conv_s8(ctx,
+                                       dw_conv_params,
+                                       quant_params,
+                                       input_dims,
+                                       input,
+                                       filter_dims,
+                                       filter,
+                                       bias_dims,
+                                       bias,
+                                       output_dims,
+                                       output);
     }
 
     /* Return to application */
@@ -85,7 +114,8 @@ int32_t arm_depthwise_conv_wrapper_s8_get_buffer_size(const cmsis_nn_dw_conv_par
     (void)dw_conv_params;
     int32_t size = 0;
 
-    if (input_dims->c == output_dims->c && input_dims->n == 1 && dw_conv_params->dilation.w == 1 && dw_conv_params->dilation.h == 1) {
+    if (input_dims->c == output_dims->c && input_dims->n == 1 && dw_conv_params->dilation.w == 1 &&
+        dw_conv_params->dilation.h == 1) {
         size = arm_depthwise_conv_s8_opt_get_buffer_size(input_dims, filter_dims);
     }
 

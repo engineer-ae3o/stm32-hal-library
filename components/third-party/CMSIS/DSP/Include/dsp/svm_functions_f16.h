@@ -144,7 +144,9 @@ void arm_svm_linear_init_f16(arm_svm_linear_instance_f16* S,
  *
  */
 
-void arm_svm_linear_predict_f16(const arm_svm_linear_instance_f16* S, const float16_t* in, int32_t* pResult);
+void arm_svm_linear_predict_f16(const arm_svm_linear_instance_f16* S,
+                                const float16_t*                   in,
+                                int32_t*                           pResult);
 
 
 /**
@@ -183,7 +185,9 @@ void arm_svm_polynomial_init_f16(arm_svm_polynomial_instance_f16* S,
  * @return none.
  *
  */
-void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S, const float16_t* in, int32_t* pResult);
+void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S,
+                                    const float16_t*                       in,
+                                    int32_t*                               pResult);
 
 
 /**
@@ -217,7 +221,9 @@ void arm_svm_rbf_init_f16(arm_svm_rbf_instance_f16* S,
  * @return none.
  *
  */
-void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S, const float16_t* in, int32_t* pResult);
+void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S,
+                             const float16_t*                in,
+                             int32_t*                        pResult);
 
 /**
  * @brief        SVM sigmoid instance init function
@@ -252,7 +258,9 @@ void arm_svm_sigmoid_init_f16(arm_svm_sigmoid_instance_f16* S,
  * @return none.
  *
  */
-void arm_svm_sigmoid_predict_f16(const arm_svm_sigmoid_instance_f16* S, const float16_t* in, int32_t* pResult);
+void arm_svm_sigmoid_predict_f16(const arm_svm_sigmoid_instance_f16* S,
+                                 const float16_t*                    in,
+                                 int32_t*                            pResult);
 
 
 #endif /*defined(ARM_FLOAT16_SUPPORTED)*/

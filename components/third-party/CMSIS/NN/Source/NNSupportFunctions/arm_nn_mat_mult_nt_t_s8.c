@@ -213,10 +213,14 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t*    lhs,
             }
 
             // Quantize down
-            res00 = arm_nn_requantize(res00, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
-            res01 = arm_nn_requantize(res01, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
-            res10 = arm_nn_requantize(res10, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
-            res11 = arm_nn_requantize(res11, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
+            res00 =
+                arm_nn_requantize(res00, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
+            res01 = arm_nn_requantize(
+                res01, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
+            res10 =
+                arm_nn_requantize(res10, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
+            res11 = arm_nn_requantize(
+                res11, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
 
             // Add offset
             res00 += dst_offset;
@@ -336,8 +340,10 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t*    lhs,
             }
 
             // Quantize down
-            res00 = arm_nn_requantize(res00, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
-            res01 = arm_nn_requantize(res01, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
+            res00 =
+                arm_nn_requantize(res00, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
+            res01 = arm_nn_requantize(
+                res01, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
 
             // Add offset
             res00 += dst_offset;
@@ -379,7 +385,8 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t*    lhs,
             }
 
             // Quantize down
-            res00 = arm_nn_requantize(res00, dst_multipliers[rhs_rows - 1], dst_shifts[rhs_rows - 1]);
+            res00 =
+                arm_nn_requantize(res00, dst_multipliers[rhs_rows - 1], dst_shifts[rhs_rows - 1]);
 
             // Add offset
             res00 += dst_offset;
@@ -439,10 +446,14 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t*    lhs,
             }
 
             // Quantize down
-            res00 = arm_nn_requantize(res00, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
-            res01 = arm_nn_requantize(res01, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
-            res10 = arm_nn_requantize(res10, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
-            res11 = arm_nn_requantize(res11, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
+            res00 =
+                arm_nn_requantize(res00, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
+            res01 = arm_nn_requantize(
+                res01, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
+            res10 =
+                arm_nn_requantize(res10, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
+            res11 = arm_nn_requantize(
+                res11, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
 
             // Add offset
             res00 += dst_offset;
@@ -492,8 +503,10 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t*    lhs,
             }
 
             // Quantize down
-            res00 = arm_nn_requantize(res00, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
-            res01 = arm_nn_requantize(res01, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
+            res00 =
+                arm_nn_requantize(res00, dst_multipliers[rhs_rows_idx], dst_shifts[rhs_rows_idx]);
+            res01 = arm_nn_requantize(
+                res01, dst_multipliers[rhs_rows_idx + 1], dst_shifts[rhs_rows_idx + 1]);
 
             // Add offset
             res00 += dst_offset;
@@ -535,7 +548,8 @@ arm_status arm_nn_mat_mult_nt_t_s8(const q7_t*    lhs,
             }
 
             // Quantize down
-            res00 = arm_nn_requantize(res00, dst_multipliers[rhs_rows - 1], dst_shifts[rhs_rows - 1]);
+            res00 =
+                arm_nn_requantize(res00, dst_multipliers[rhs_rows - 1], dst_shifts[rhs_rows - 1]);
 
             // Add offset
             res00 += dst_offset;

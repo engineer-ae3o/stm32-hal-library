@@ -176,7 +176,10 @@
 
 #include "arm_helium_utils.h"
 
-static void arm_biquad_cas_df1_32x64_q31_scalar(const arm_biquad_cas_df1_32x64_ins_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+static void arm_biquad_cas_df1_32x64_q31_scalar(const arm_biquad_cas_df1_32x64_ins_q31* S,
+                                                const q31_t*                            pSrc,
+                                                q31_t*                                  pDst,
+                                                uint32_t                                blockSize) {
     const q31_t* pIn     = pSrc;                    /* input pointer initialization */
     q31_t*       pOut    = pDst;                    /* output pointer initialization */
     q63_t*       pState  = S->pState;               /* state pointer initialization */
@@ -274,7 +277,10 @@ static void arm_biquad_cas_df1_32x64_q31_scalar(const arm_biquad_cas_df1_32x64_i
     } while (--stage);
 }
 
-void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S,
+                                  const q31_t*                            pSrc,
+                                  q31_t*                                  pDst,
+                                  uint32_t                                blockSize) {
     const q31_t* pIn     = pSrc;                    /*  input pointer initialization  */
     q31_t*       pOut    = pDst;                    /*  output pointer initialization */
     q63_t*       pState  = S->pState;               /*  state pointer initialization  */
@@ -494,7 +500,10 @@ void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S, con
     }
 }
 #else
-void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S,
+                                  const q31_t*                            pSrc,
+                                  q31_t*                                  pDst,
+                                  uint32_t                                blockSize) {
     const q31_t* pIn     = pSrc;                    /* input pointer initialization */
     q31_t*       pOut    = pDst;                    /* output pointer initialization */
     q63_t*       pState  = S->pState;               /* state pointer initialization */

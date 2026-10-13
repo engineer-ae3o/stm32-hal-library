@@ -116,8 +116,9 @@ void arm_absmin_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t*
 
     while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0.0f) ? cur_absmin : -cur_absmin; /* compare for the extrema value */
-        if (cur_absmin < out) {                                      /* Update the extrema value and it's index */
+        cur_absmin =
+            (cur_absmin > 0.0f) ? cur_absmin : -cur_absmin; /* compare for the extrema value */
+        if (cur_absmin < out) { /* Update the extrema value and it's index */
             out = cur_absmin;
         }
 

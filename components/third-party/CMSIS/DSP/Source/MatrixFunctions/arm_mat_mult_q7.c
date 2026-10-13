@@ -261,28 +261,32 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_q7_4x4_mve(const arm_matrix_instanc
     return (ARM_MATH_SUCCESS);
 }
 
-arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA, const arm_matrix_instance_q7* pSrcB, arm_matrix_instance_q7* pDst, q7_t* pState) {
+arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA,
+                           const arm_matrix_instance_q7* pSrcB,
+                           arm_matrix_instance_q7*       pDst,
+                           q7_t*                         pState) {
     q7_t*                  pInA = pSrcA->pData; /* input data matrix pointer A of Q7 type */
     q7_t*                  pInB = pSrcB->pData; /* input data matrix pointer B of Q7 type */
     q7_t*                  pInA2;
     q7_t*                  pInB2;
-    q7_t*                  px;                             /* Temporary output data matrix pointer */
-    q7_t*                  px2;                            /* Temporary output data matrix pointer */
-    uint32_t               numRowsA = pSrcA->numRows;      /* number of rows of input matrix A    */
-    uint32_t               numColsB = pSrcB->numCols;      /* number of columns of input matrix B */
-    uint32_t               numColsA = pSrcA->numCols;      /* number of columns of input matrix A */
-    uint32_t               numRowsB = pSrcB->numRows;      /* number of rows of input matrix A    */
+    q7_t*                  px;                        /* Temporary output data matrix pointer */
+    q7_t*                  px2;                       /* Temporary output data matrix pointer */
+    uint32_t               numRowsA = pSrcA->numRows; /* number of rows of input matrix A    */
+    uint32_t               numColsB = pSrcB->numCols; /* number of columns of input matrix B */
+    uint32_t               numColsA = pSrcA->numCols; /* number of columns of input matrix A */
+    uint32_t               numRowsB = pSrcB->numRows; /* number of rows of input matrix A    */
     uint32_t               col, i = 0u, j, row = numRowsB; /* loop counters */
-    q7_t*                  pSrcBT = pState;                /* input data matrix pointer for transpose */
-    uint32_t               blkCnt;                         /* loop counters */
-    arm_status             status;                         /* status of matrix multiplication */
+    q7_t*                  pSrcBT = pState; /* input data matrix pointer for transpose */
+    uint32_t               blkCnt;          /* loop counters */
+    arm_status             status;          /* status of matrix multiplication */
     arm_matrix_instance_q7 BT;
 
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -549,7 +553,10 @@ arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA, const arm_matrix
     return (status);
 }
 #else
-arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA, const arm_matrix_instance_q7* pSrcB, arm_matrix_instance_q7* pDst, q7_t* pState) {
+arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA,
+                           const arm_matrix_instance_q7* pSrcB,
+                           arm_matrix_instance_q7*       pDst,
+                           q7_t*                         pState) {
     q31_t      sum;                                 /* accumulator */
     q7_t*      pIn1 = pSrcA->pData;                 /* input data matrix pointer A */
     q7_t*      pIn2 = pSrcB->pData;                 /* input data matrix pointer B */
@@ -568,7 +575,8 @@ arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA, const arm_matrix
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

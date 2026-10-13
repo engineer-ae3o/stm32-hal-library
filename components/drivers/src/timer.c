@@ -12,11 +12,13 @@
 // Helper
 static inline hal_err_t timer_set_arr_and_psc(TIM_TypeDef* handle, uint32_t timeout_us) {
     // Set the (PSC + 1) * (ARR + 1) value from the timer's clock frequency and the timeout
-    const uint64_t psc_times_arr = ((uint64_t)timer_get_frequency_hz(handle) * timeout_us) / 1'000'000U;
+    const uint64_t psc_times_arr =
+        ((uint64_t)timer_get_frequency_hz(handle) * timeout_us) / 1'000'000U;
 
     // Get the maximum width of the prescaler and auto-reload registers
     const uint32_t max_psc_plus_1 = UINT16_MAX + 1;
-    const uint64_t max_arr_plus_1 = (uint64_t)(is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX) + 1;
+    const uint64_t max_arr_plus_1 =
+        (uint64_t)(is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX) + 1;
 
     // Bounds check the arguments against the width of the timers' registers
     const uint64_t max_psc_times_arr = max_psc_plus_1 * max_arr_plus_1;
@@ -147,17 +149,22 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     }
 
     // Clear all the mapped bits of the timer's registers to 0
-    handle->CR1 &= ~(TIM_CR1_CEN | TIM_CR1_UDIS | TIM_CR1_URS | TIM_CR1_OPM | TIM_CR1_DIR | TIM_CR1_CMS | TIM_CR1_ARPE | TIM_CR1_CKD);
+    handle->CR1 &= ~(TIM_CR1_CEN | TIM_CR1_UDIS | TIM_CR1_URS | TIM_CR1_OPM | TIM_CR1_DIR |
+                     TIM_CR1_CMS | TIM_CR1_ARPE | TIM_CR1_CKD);
     handle->DIER &=
-        ~(TIM_DIER_UIE | TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_CC3IE | TIM_DIER_CC4IE | TIM_DIER_COMIE | TIM_DIER_TIE | TIM_DIER_BIE |
-          TIM_DIER_UDE | TIM_DIER_CC1DE | TIM_DIER_CC2DE | TIM_DIER_CC3DE | TIM_DIER_CC4DE | TIM_DIER_COMDE | TIM_DIER_TDE);
-    handle->SR = ~(TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF | TIM_SR_CC3IF | TIM_SR_CC4IF | TIM_SR_COMIF | TIM_SR_TIF | TIM_SR_BIF | TIM_SR_CC1OF |
-                   TIM_SR_CC2OF | TIM_SR_CC3OF | TIM_SR_CC4OF);
+        ~(TIM_DIER_UIE | TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_CC3IE | TIM_DIER_CC4IE |
+          TIM_DIER_COMIE | TIM_DIER_TIE | TIM_DIER_BIE | TIM_DIER_UDE | TIM_DIER_CC1DE |
+          TIM_DIER_CC2DE | TIM_DIER_CC3DE | TIM_DIER_CC4DE | TIM_DIER_COMDE | TIM_DIER_TDE);
+    handle->SR =
+        ~(TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF | TIM_SR_CC3IF | TIM_SR_CC4IF | TIM_SR_COMIF |
+          TIM_SR_TIF | TIM_SR_BIF | TIM_SR_CC1OF | TIM_SR_CC2OF | TIM_SR_CC3OF | TIM_SR_CC4OF);
     handle->CCER &=
-        ~(TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NE | TIM_CCER_CC1NP | TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC2NP | TIM_CCER_CC2NE |
-          TIM_CCER_CC3E | TIM_CCER_CC3P | TIM_CCER_CC3NE | TIM_CCER_CC3NP | TIM_CCER_CC4E | TIM_CCER_CC4P | TIM_CCER_CC4NP);
-    handle->CCMR1 &= ~(TIM_CCMR1_CC1S | TIM_CCMR1_OC1FE | TIM_CCMR1_OC1PE | TIM_CCMR1_OC1M | TIM_CCMR1_OC1CE | TIM_CCMR1_CC2S | TIM_CCMR1_OC2FE |
-                       TIM_CCMR1_OC2PE | TIM_CCMR1_OC2M | TIM_CCMR1_OC2CE);
+        ~(TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NE | TIM_CCER_CC1NP | TIM_CCER_CC2E |
+          TIM_CCER_CC2P | TIM_CCER_CC2NP | TIM_CCER_CC2NE | TIM_CCER_CC3E | TIM_CCER_CC3P |
+          TIM_CCER_CC3NE | TIM_CCER_CC3NP | TIM_CCER_CC4E | TIM_CCER_CC4P | TIM_CCER_CC4NP);
+    handle->CCMR1 &=
+        ~(TIM_CCMR1_CC1S | TIM_CCMR1_OC1FE | TIM_CCMR1_OC1PE | TIM_CCMR1_OC1M | TIM_CCMR1_OC1CE |
+          TIM_CCMR1_CC2S | TIM_CCMR1_OC2FE | TIM_CCMR1_OC2PE | TIM_CCMR1_OC2M | TIM_CCMR1_OC2CE);
     handle->CNT  = 0;
     handle->PSC  = 0;
     handle->ARR  = 0;
@@ -167,13 +174,16 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
     if (!is_timer_extra_lite(handle)) {
         // TIM10 and TIM11 don't have a CR2 and SMCR register whilst TIM9 does
         handle->CCR2 = 0;
-        handle->SMCR &= ~(TIM_SMCR_SMS | TIM_SMCR_TS | TIM_SMCR_MSM | TIM_SMCR_ETF | TIM_SMCR_ETPS | TIM_SMCR_ECE | TIM_SMCR_ETP);
+        handle->SMCR &= ~(TIM_SMCR_SMS | TIM_SMCR_TS | TIM_SMCR_MSM | TIM_SMCR_ETF | TIM_SMCR_ETPS |
+                          TIM_SMCR_ECE | TIM_SMCR_ETP);
         if (handle != TIM9) {
             // The lite timers don't have a CR2, CCMR2, DCR, CCR3, CCR4 or DMAR register
-            handle->CR2 &= ~(TIM_CR2_CCPC | TIM_CR2_CCUS | TIM_CR2_CCDS | TIM_CR2_MMS | TIM_CR2_TI1S | TIM_CR2_OIS1 | TIM_CR2_OIS1N | TIM_CR2_OIS2 |
+            handle->CR2 &= ~(TIM_CR2_CCPC | TIM_CR2_CCUS | TIM_CR2_CCDS | TIM_CR2_MMS |
+                             TIM_CR2_TI1S | TIM_CR2_OIS1 | TIM_CR2_OIS1N | TIM_CR2_OIS2 |
                              TIM_CR2_OIS2N | TIM_CR2_OIS3 | TIM_CR2_OIS3N | TIM_CR2_OIS4);
-            handle->CCMR2 &= ~(TIM_CCMR2_CC3S | TIM_CCMR2_OC3FE | TIM_CCMR2_OC3PE | TIM_CCMR2_OC3M | TIM_CCMR2_OC3CE | TIM_CCMR2_CC4S |
-                               TIM_CCMR2_OC4FE | TIM_CCMR2_OC4PE | TIM_CCMR2_OC4M | TIM_CCMR2_OC4CE);
+            handle->CCMR2 &= ~(TIM_CCMR2_CC3S | TIM_CCMR2_OC3FE | TIM_CCMR2_OC3PE | TIM_CCMR2_OC3M |
+                               TIM_CCMR2_OC3CE | TIM_CCMR2_CC4S | TIM_CCMR2_OC4FE |
+                               TIM_CCMR2_OC4PE | TIM_CCMR2_OC4M | TIM_CCMR2_OC4CE);
             handle->DCR &= ~(TIM_DCR_DBA | TIM_DCR_DBL);
             handle->DMAR &= ~TIM_DMAR_DMAB;
             handle->CCR3 = 0;

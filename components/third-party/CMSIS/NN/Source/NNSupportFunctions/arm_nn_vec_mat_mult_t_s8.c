@@ -62,7 +62,8 @@ arm_status arm_nn_vec_mat_mult_t_s8(const q7_t*   lhs,
     (void)rhs_offset;
 #if defined(ARM_MATH_MVEI)
     const int32_t    row_loop_cnt         = rhs_rows / 3;
-    const uint32x4_t address_offset_array = {0, address_offset, address_offset * 2, address_offset * 3};
+    const uint32x4_t address_offset_array = {
+        0, address_offset, address_offset * 2, address_offset * 3};
 
     for (int i_row_loop_cnt = 0; i_row_loop_cnt < row_loop_cnt; i_row_loop_cnt++) {
         int32_t acc_0 = 0;

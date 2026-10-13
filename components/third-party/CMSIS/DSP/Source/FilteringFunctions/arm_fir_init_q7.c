@@ -65,7 +65,11 @@
 
  */
 
-void arm_fir_init_q7(arm_fir_instance_q7* S, uint16_t numTaps, const q7_t* pCoeffs, q7_t* pState, uint32_t blockSize) {
+void arm_fir_init_q7(arm_fir_instance_q7* S,
+                     uint16_t             numTaps,
+                     const q7_t*          pCoeffs,
+                     q7_t*                pState,
+                     uint32_t             blockSize) {
     /* Assign filter taps */
     S->numTaps = numTaps;
 

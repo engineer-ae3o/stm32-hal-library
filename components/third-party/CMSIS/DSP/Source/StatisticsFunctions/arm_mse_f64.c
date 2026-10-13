@@ -47,7 +47,10 @@
  */
 
 
-void arm_mse_f64(const float64_t* pSrcA, const float64_t* pSrcB, uint32_t blockSize, float64_t* result)
+void arm_mse_f64(const float64_t* pSrcA,
+                 const float64_t* pSrcB,
+                 uint32_t         blockSize,
+                 float64_t*       result)
 
 {
     uint32_t  blkCnt; /* Loop counter */

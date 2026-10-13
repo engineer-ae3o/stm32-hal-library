@@ -200,7 +200,8 @@ osMessageQId osMessageCreate(const osMessageQDef_t* queue_def, osThreadId thread
     if (queue_def == NULL) {
         return (osMessageQId)NULL;
     }
-    return ((osMessageQId)(osMessageQueueNew(queue_def->queue_sz, sizeof(uint32_t), &queue_def->attr)));
+    return (
+        (osMessageQId)(osMessageQueueNew(queue_def->queue_sz, sizeof(uint32_t), &queue_def->attr)));
 }
 
 osStatus osMessagePut(osMessageQId queue_id, uint32_t info, uint32_t millisec) {

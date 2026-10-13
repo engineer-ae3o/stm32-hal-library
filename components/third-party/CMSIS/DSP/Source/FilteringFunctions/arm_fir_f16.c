@@ -52,16 +52,18 @@
 
 #define FIR_F32_MAX_COEF_BLK 8
 
-#define FIR_F16_CORE(pSamples, c, NB_TAPS)                                                                                                           \
-    vecAcc0 = vdupq_n_f16(0.0f16);                                                                                                                   \
-    for (int i = 0; i < NB_TAPS; i++) {                                                                                                              \
-        vecIn0  = vld1q(&pSamples[i]);                                                                                                               \
-        vecAcc0 = vfmaq(vecAcc0, vecIn0, c[i]);                                                                                                      \
+#define FIR_F16_CORE(pSamples, c, NB_TAPS)                                                         \
+    vecAcc0 = vdupq_n_f16(0.0f16);                                                                 \
+    for (int i = 0; i < NB_TAPS; i++) {                                                            \
+        vecIn0  = vld1q(&pSamples[i]);                                                             \
+        vecAcc0 = vfmaq(vecAcc0, vecIn0, c[i]);                                                    \
     }
 
 #define NB_TAPS 4
-__STATIC_INLINE void
-arm_fir_f16_1_4_mve(const arm_fir_instance_f16* S, const float16_t* __restrict pSrc, float16_t* __restrict pDst, uint32_t blockSize) {
+__STATIC_INLINE void arm_fir_f16_1_4_mve(const arm_fir_instance_f16* S,
+                                         const float16_t* __restrict pSrc,
+                                         float16_t* __restrict pDst,
+                                         uint32_t blockSize) {
     float16_t*       pState  = S->pState;  /* State pointer */
     const float16_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float16_t*       pStateCur;            /* Points to the current sample of the state */
@@ -147,8 +149,10 @@ arm_fir_f16_1_4_mve(const arm_fir_instance_f16* S, const float16_t* __restrict p
 #undef NB_TAPS
 
 #define NB_TAPS 8
-__STATIC_INLINE void
-arm_fir_f16_5_8_mve(const arm_fir_instance_f16* S, const float16_t* __restrict pSrc, float16_t* __restrict pDst, uint32_t blockSize) {
+__STATIC_INLINE void arm_fir_f16_5_8_mve(const arm_fir_instance_f16* S,
+                                         const float16_t* __restrict pSrc,
+                                         float16_t* __restrict pDst,
+                                         uint32_t blockSize) {
     float16_t*       pState  = S->pState;  /* State pointer */
     const float16_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float16_t*       pStateCur;            /* Points to the current sample of the state */
@@ -233,7 +237,10 @@ arm_fir_f16_5_8_mve(const arm_fir_instance_f16* S, const float16_t* __restrict p
 }
 #undef NB_TAPS
 
-void arm_fir_f16(const arm_fir_instance_f16* S, const float16_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+void arm_fir_f16(const arm_fir_instance_f16* S,
+                 const float16_t*            pSrc,
+                 float16_t*                  pDst,
+                 uint32_t                    blockSize) {
     float16_t*       pRefStatePtr = S->pState + ROUND_UP(blockSize, 8);
     float16_t*       pState       = pRefStatePtr; /* State pointer */
     const float16_t* pCoeffs      = S->pCoeffs;   /* Coefficient pointer */
@@ -551,7 +558,10 @@ void arm_fir_f16(const arm_fir_instance_f16* S, const float16_t* pSrc, float16_t
 
 #else
 
-void arm_fir_f16(const arm_fir_instance_f16* S, const float16_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+void arm_fir_f16(const arm_fir_instance_f16* S,
+                 const float16_t*            pSrc,
+                 float16_t*                  pDst,
+                 uint32_t                    blockSize) {
     float16_t*       pState  = S->pState;  /* State pointer */
     const float16_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     float16_t*       pStateCurnt;          /* Points to the current sample of the state */
@@ -563,8 +573,8 @@ void arm_fir_f16(const arm_fir_instance_f16* S, const float16_t* pSrc, float16_t
 
 #if defined(ARM_MATH_LOOPUNROLL)
     _Float16 acc1, acc2, acc3, acc4, acc5, acc6, acc7; /* Accumulators */
-    _Float16 x0, x1, x2, x3, x4, x5, x6, x7;           /* Temporary variables to hold state values */
-    _Float16 c0;                                       /* Temporary variable to hold coefficient value */
+    _Float16 x0, x1, x2, x3, x4, x5, x6, x7; /* Temporary variables to hold state values */
+    _Float16 c0;                             /* Temporary variable to hold coefficient value */
 #endif
 
     /* S->pState points to state array which contains previous frame (numTaps - 1) samples */

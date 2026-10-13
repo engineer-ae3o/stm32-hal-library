@@ -22,7 +22,8 @@ hal_err_t dma_enable_stream(DMA_Stream_TypeDef* stream);
 hal_err_t dma_disable_stream(DMA_Stream_TypeDef* stream);
 hal_err_t dma_get_stream_info(DMA_Stream_TypeDef* stream, dma_stream_info_t* stream_info);
 hal_err_t dma_configure_stream(DMA_Stream_TypeDef* stream, const dma_stream_config_t* config);
-hal_err_t dma_get_stream_flags(DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number);
+hal_err_t
+dma_get_stream_flags(DMA_TypeDef* controller, dma_stream_flags_t* flags, uint32_t stream_number);
 
 // Low level setters. They do not validate the arguments passed in. They no-op if the stream is NULL
 void dma_set_channel(DMA_Stream_TypeDef* stream, uint32_t channel);
@@ -34,8 +35,12 @@ void dma_set_flow_controller(DMA_Stream_TypeDef* stream, bool dma_is_flow_ctrler
 void dma_set_stream_priority(DMA_Stream_TypeDef* stream, dma_priority_t priority);
 void dma_set_circular_mode(DMA_Stream_TypeDef* stream, dma_circ_mode_t circ_mode);
 void dma_set_per_mem_size(DMA_Stream_TypeDef* stream, dma_data_size_t per, dma_data_size_t mem);
-void dma_enable_irqs(DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, bool ht_mask, bool dme_mask);
-void dma_set_addresses(DMA_Stream_TypeDef* stream, const volatile void* per, const volatile void* mem_0, const volatile void* mem_1);
+void dma_enable_irqs(
+    DMA_Stream_TypeDef* stream, bool tc_mask, bool te_mask, bool ht_mask, bool dme_mask);
+void dma_set_addresses(DMA_Stream_TypeDef*  stream,
+                       const volatile void* per,
+                       const volatile void* mem_0,
+                       const volatile void* mem_1);
 
 
 // Helper to assist with the checking and clearing of interrupt flags and propagation of errors

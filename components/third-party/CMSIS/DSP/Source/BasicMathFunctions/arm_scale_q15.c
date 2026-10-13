@@ -55,7 +55,8 @@
 
 #include "arm_helium_utils.h"
 
-void arm_scale_q15(const q15_t* pSrc, q15_t scaleFract, int8_t shift, q15_t* pDst, uint32_t blockSize) {
+void arm_scale_q15(
+    const q15_t* pSrc, q15_t scaleFract, int8_t shift, q15_t* pDst, uint32_t blockSize) {
     uint32_t blkCnt; /* loop counters */
     q15x8_t  vecSrc;
     q15x8_t  vecDst;
@@ -99,7 +100,8 @@ void arm_scale_q15(const q15_t* pSrc, q15_t scaleFract, int8_t shift, q15_t* pDs
 
 
 #else
-void arm_scale_q15(const q15_t* pSrc, q15_t scaleFract, int8_t shift, q15_t* pDst, uint32_t blockSize) {
+void arm_scale_q15(
+    const q15_t* pSrc, q15_t scaleFract, int8_t shift, q15_t* pDst, uint32_t blockSize) {
     uint32_t blkCnt;              /* Loop counter */
     int8_t   kShift = 15 - shift; /* Shift to apply after scaling */
 

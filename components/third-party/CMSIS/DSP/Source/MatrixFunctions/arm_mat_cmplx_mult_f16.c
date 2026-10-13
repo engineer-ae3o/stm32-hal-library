@@ -52,7 +52,8 @@
  */
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) && defined(__CMSIS_GCC_H)
-#pragma GCC warning "Scalar version of arm_mat_cmplx_mult_f16 built. Helium version has build issues with gcc."
+#pragma GCC warning                                                                                \
+    "Scalar version of arm_mat_cmplx_mult_f16 built. Helium version has build issues with gcc."
 #endif
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) && !defined(__CMSIS_GCC_H)
@@ -64,7 +65,7 @@
 
 __STATIC_FORCEINLINE arm_status arm_mat_cmplx_mult_f16_2x2_mve(const arm_matrix_instance_f16* pSrcA,
                                                                const arm_matrix_instance_f16* pSrcB,
-                                                               arm_matrix_instance_f16*       pDst) {
+                                                               arm_matrix_instance_f16* pDst) {
 #define MATRIX_DIM 2
     float16_t const*      pInB = pSrcB->pData; /* input data matrix pointer B */
     float16_t*            pInA = pSrcA->pData; /* input data matrix pointer A */
@@ -140,7 +141,7 @@ __STATIC_FORCEINLINE arm_status arm_mat_cmplx_mult_f16_2x2_mve(const arm_matrix_
 
 __STATIC_FORCEINLINE arm_status arm_mat_cmplx_mult_f16_3x3_mve(const arm_matrix_instance_f16* pSrcA,
                                                                const arm_matrix_instance_f16* pSrcB,
-                                                               arm_matrix_instance_f16*       pDst) {
+                                                               arm_matrix_instance_f16* pDst) {
 #define MATRIX_DIM 3
     float16_t const*      pInB = pSrcB->pData; /* input data matrix pointer B */
     float16_t*            pInA = pSrcA->pData; /* input data matrix pointer A */
@@ -151,8 +152,14 @@ __STATIC_FORCEINLINE arm_status arm_mat_cmplx_mult_f16_3x3_mve(const arm_matrix_
     float16_t*            pInA2 = pInA1 + CMPLX_DIM * MATRIX_DIM;
     f16x8_t               acc0, acc1, acc2;
     f16x8_t               vecB, vecA0, vecA1, vecA2;
-    static const uint16_t offsetB0[8] = {
-        0, 1, MATRIX_DIM * CMPLX_DIM, MATRIX_DIM * CMPLX_DIM + 1, 2 * MATRIX_DIM * CMPLX_DIM, 2 * MATRIX_DIM * CMPLX_DIM + 1, DONTCARE, DONTCARE};
+    static const uint16_t offsetB0[8] = {0,
+                                         1,
+                                         MATRIX_DIM * CMPLX_DIM,
+                                         MATRIX_DIM * CMPLX_DIM + 1,
+                                         2 * MATRIX_DIM * CMPLX_DIM,
+                                         2 * MATRIX_DIM * CMPLX_DIM + 1,
+                                         DONTCARE,
+                                         DONTCARE};
 
 
     /* enable predication to disable upper half complex vector element */
@@ -230,7 +237,7 @@ __STATIC_FORCEINLINE arm_status arm_mat_cmplx_mult_f16_3x3_mve(const arm_matrix_
 
 __STATIC_FORCEINLINE arm_status arm_mat_cmplx_mult_f16_4x4_mve(const arm_matrix_instance_f16* pSrcA,
                                                                const arm_matrix_instance_f16* pSrcB,
-                                                               arm_matrix_instance_f16*       pDst) {
+                                                               arm_matrix_instance_f16* pDst) {
 #define MATRIX_DIM 4
     float16_t const*      pInB = pSrcB->pData; /* input data matrix pointer B */
     float16_t*            pInA = pSrcA->pData; /* input data matrix pointer A */
@@ -373,23 +380,26 @@ __STATIC_FORCEINLINE arm_status arm_mat_cmplx_mult_f16_4x4_mve(const arm_matrix_
 }
 
 
-arm_status arm_mat_cmplx_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matrix_instance_f16* pSrcB, arm_matrix_instance_f16* pDst) {
+arm_status arm_mat_cmplx_mult_f16(const arm_matrix_instance_f16* pSrcA,
+                                  const arm_matrix_instance_f16* pSrcB,
+                                  arm_matrix_instance_f16*       pDst) {
     float16_t const* pInB = (float16_t const*)pSrcB->pData; /* input data matrix pointer B */
     float16_t const* pInA = (float16_t const*)pSrcA->pData; /* input data matrix pointer A */
     float16_t*       pOut = pDst->pData;                    /* output data matrix pointer */
-    float16_t*       px;                                    /* Temporary output data matrix pointer */
-    uint16_t         numRowsA = pSrcA->numRows;             /* number of rows of input matrix A    */
-    uint16_t         numColsB = pSrcB->numCols;             /* number of columns of input matrix B */
-    uint16_t         numColsA = pSrcA->numCols;             /* number of columns of input matrix A */
-    uint16_t         col, i = 0U, row = numRowsA;           /* loop counters */
-    arm_status       status;                                /* status of matrix multiplication */
+    float16_t*       px;                          /* Temporary output data matrix pointer */
+    uint16_t         numRowsA = pSrcA->numRows;   /* number of rows of input matrix A    */
+    uint16_t         numColsB = pSrcB->numCols;   /* number of columns of input matrix B */
+    uint16_t         numColsA = pSrcA->numCols;   /* number of columns of input matrix A */
+    uint16_t         col, i = 0U, row = numRowsA; /* loop counters */
+    arm_status       status;                      /* status of matrix multiplication */
     uint16x8_t       vecOffs, vecColBOffs;
     uint32_t         blkCnt, rowCnt; /* loop counters */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -403,8 +413,10 @@ arm_status arm_mat_cmplx_mult_f16(const arm_matrix_instance_f16* pSrcA, const ar
      */
         if (numRowsA == numColsB && numColsB == numColsA) {
             if (numRowsA == 1) {
-                pOut[0] = (_Float16)pInA[0] * (_Float16)pInB[0] - (_Float16)pInA[1] * (_Float16)pInB[1];
-                pOut[1] = (_Float16)pInA[0] * (_Float16)pInB[1] + (_Float16)pInA[1] * (_Float16)pInB[0];
+                pOut[0] =
+                    (_Float16)pInA[0] * (_Float16)pInB[0] - (_Float16)pInA[1] * (_Float16)pInB[1];
+                pOut[1] =
+                    (_Float16)pInA[0] * (_Float16)pInB[1] + (_Float16)pInA[1] * (_Float16)pInB[0];
                 return (ARM_MATH_SUCCESS);
             } else if (numRowsA == 2) {
                 return arm_mat_cmplx_mult_f16_2x2_mve(pSrcA, pSrcB, pDst);
@@ -682,7 +694,9 @@ arm_status arm_mat_cmplx_mult_f16(const arm_matrix_instance_f16* pSrcA, const ar
 }
 #else
 
-arm_status arm_mat_cmplx_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matrix_instance_f16* pSrcB, arm_matrix_instance_f16* pDst) {
+arm_status arm_mat_cmplx_mult_f16(const arm_matrix_instance_f16* pSrcA,
+                                  const arm_matrix_instance_f16* pSrcB,
+                                  arm_matrix_instance_f16*       pDst) {
     float16_t* pIn1 = pSrcA->pData;       /* Input data matrix pointer A */
     float16_t* pIn2 = pSrcB->pData;       /* Input data matrix pointer B */
     float16_t* pInA = pSrcA->pData;       /* Input data matrix pointer A */
@@ -703,7 +717,8 @@ arm_status arm_mat_cmplx_mult_f16(const arm_matrix_instance_f16* pSrcA, const ar
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

@@ -60,7 +60,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_absmax_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex) {
+void arm_absmax_f32(const float32_t* pSrc,
+                    uint32_t         blockSize,
+                    float32_t*       pResult,
+                    uint32_t*        pIndex) {
     int32_t      blkSize = blockSize;
     f32x4_t      vecSrc;
     f32x4_t      curExtremValVec = vdupq_n_f32(F32_ABSMIN);
@@ -118,7 +121,10 @@ void arm_absmax_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResul
 
 #else
 #if defined(ARM_MATH_LOOPUNROLL)
-void arm_absmax_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex) {
+void arm_absmax_f32(const float32_t* pSrc,
+                    uint32_t         blockSize,
+                    float32_t*       pResult,
+                    uint32_t*        pIndex) {
     float32_t cur_absmax, out;  /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* Loop counter */
     uint32_t  index;            /* index of maximum value */
@@ -134,8 +140,9 @@ void arm_absmax_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResul
 
     while (blkCnt > 0U) { /* Initialize cur_absmax to next consecutive values one by one */
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0.0f) ? cur_absmax : -cur_absmax; /* compare for the extrema value */
-        if (cur_absmax > out) {                                      /* Update the extrema value and it's index */
+        cur_absmax =
+            (cur_absmax > 0.0f) ? cur_absmax : -cur_absmax; /* compare for the extrema value */
+        if (cur_absmax > out) { /* Update the extrema value and it's index */
             out      = cur_absmax;
             outIndex = index + 1U;
         }
@@ -188,7 +195,10 @@ void arm_absmax_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResul
     *pIndex  = outIndex;
 }
 #else
-void arm_absmax_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult, uint32_t* pIndex) {
+void arm_absmax_f32(const float32_t* pSrc,
+                    uint32_t         blockSize,
+                    float32_t*       pResult,
+                    uint32_t*        pIndex) {
     float32_t maxVal, out;      /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* Loop counter */
 

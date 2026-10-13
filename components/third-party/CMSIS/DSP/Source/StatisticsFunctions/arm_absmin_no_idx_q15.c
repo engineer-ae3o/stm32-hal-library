@@ -111,8 +111,10 @@ void arm_absmin_no_idx_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult
 
     while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q15_t)__QSUB16(0, cur_absmin); /* compare for the extrema value */
-        if (cur_absmin < out) {                                                      /* Update the extrema value and it's index */
+        cur_absmin = (cur_absmin > 0)
+                         ? cur_absmin
+                         : (q15_t)__QSUB16(0, cur_absmin); /* compare for the extrema value */
+        if (cur_absmin < out) { /* Update the extrema value and it's index */
             out = cur_absmin;
         }
 

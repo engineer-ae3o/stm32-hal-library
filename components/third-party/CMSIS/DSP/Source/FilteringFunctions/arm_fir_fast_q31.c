@@ -58,7 +58,10 @@
                    Use function \ref arm_fir_init_q31() to initialize the filter structure.
  */
 
-void arm_fir_fast_q31(const arm_fir_instance_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+void arm_fir_fast_q31(const arm_fir_instance_q31* S,
+                      const q31_t*                pSrc,
+                      q31_t*                      pDst,
+                      uint32_t                    blockSize) {
     q31_t*       pState  = S->pState;  /* State pointer */
     const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     q31_t*       pStateCurnt;          /* Points to the current sample of the state */

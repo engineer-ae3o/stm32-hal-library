@@ -44,7 +44,8 @@ atan for argument between in [0, 1.0]
 
 #define ATAN2_NB_COEFS_F16 5
 
-static const float16_t atan2_coefs_f16[ATAN2_NB_COEFS_F16] = {0.f16, 1.f16, 0.f16, -0.367f16, 0.152f16};
+static const float16_t atan2_coefs_f16[ATAN2_NB_COEFS_F16] = {
+    0.f16, 1.f16, 0.f16, -0.367f16, 0.152f16};
 
 __STATIC_FORCEINLINE float16_t arm_atan_limited_f16(float16_t x) {
     float16_t res = atan2_coefs_f16[ATAN2_NB_COEFS_F16 - 1];

@@ -123,7 +123,8 @@ namespace test::gpio {
                 gpio_set_output(SCRATCH_PORT, pin);
                 for (const auto other : ALL_PINS) {
                     if (other != pin) {
-                        TEST_ASSERT_EQUAL_UINT32(0b00U, get_mode_register_bits(SCRATCH_PORT, other));
+                        TEST_ASSERT_EQUAL_UINT32(0b00U,
+                                                 get_mode_register_bits(SCRATCH_PORT, other));
                     }
                 }
 
@@ -141,16 +142,19 @@ namespace test::gpio {
 
             // The alternate value deliberately exceeds 4 bits to verify the driver masks it to 4 bits
             constexpr uint8_t  alternate_value = 0xABU;
-            constexpr uint32_t EXPECTED_NIBBLE = alternate_value & 0xFU; // Only the low nibble should survive
+            constexpr uint32_t EXPECTED_NIBBLE =
+                alternate_value & 0xFU; // Only the low nibble should survive
 
             for (const auto pin : ALL_PINS) {
                 gpio_set_alternate_function(SCRATCH_PORT, pin, alternate_value);
                 TEST_ASSERT_EQUAL_UINT32(0b10U, get_mode_register_bits(SCRATCH_PORT, pin));
 
                 if (pin <= GPIO_PIN_7) {
-                    TEST_ASSERT_EQUAL_UINT32(EXPECTED_NIBBLE, (SCRATCH_PORT->AFR[0] >> (pin * 4)) & 0xFU);
+                    TEST_ASSERT_EQUAL_UINT32(EXPECTED_NIBBLE,
+                                             (SCRATCH_PORT->AFR[0] >> (pin * 4)) & 0xFU);
                 } else if (pin <= GPIO_PIN_15) {
-                    TEST_ASSERT_EQUAL_UINT32(EXPECTED_NIBBLE, (SCRATCH_PORT->AFR[1] >> ((pin - 8) * 4)) & 0xFU);
+                    TEST_ASSERT_EQUAL_UINT32(EXPECTED_NIBBLE,
+                                             (SCRATCH_PORT->AFR[1] >> ((pin - 8) * 4)) & 0xFU);
                 } else {
                     TEST_FAIL_MESSAGE("Invalid GPIO pin");
                 }
@@ -168,17 +172,21 @@ namespace test::gpio {
 
             for (const auto pin : ALL_PINS) {
                 gpio_enable_pullup(SCRATCH_PORT, pin, true);
-                TEST_ASSERT_EQUAL_UINT32(0b01U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b01U,
+                                         get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
                 // Enabling the pulldown must replace the pullup bit, not OR into it
                 gpio_enable_pulldown(SCRATCH_PORT, pin, true);
-                TEST_ASSERT_EQUAL_UINT32(0b10U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b10U,
+                                         get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
                 gpio_enable_pulldown(SCRATCH_PORT, pin, false);
-                TEST_ASSERT_EQUAL_UINT32(0b00U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b00U,
+                                         get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
 
                 gpio_enable_pullup(SCRATCH_PORT, pin, false);
-                TEST_ASSERT_EQUAL_UINT32(0b00U, get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
+                TEST_ASSERT_EQUAL_UINT32(0b00U,
+                                         get_pullup_pulldown_register_bits(SCRATCH_PORT, pin));
             }
 
             reset_port(SCRATCH_PORT);
@@ -195,10 +203,12 @@ namespace test::gpio {
             gpio_set_output_type(SCRATCH_PORT, SCRATCH_PIN, GPIO_PUSH_PULL);
             TEST_ASSERT_FALSE(SCRATCH_PORT->OTYPER & (1UL << SCRATCH_PIN));
 
-            constexpr auto SPEEDS = std::array{GPIO_LOW_SPEED, GPIO_MEDIUM_SPEED, GPIO_HIGH_SPEED, GPIO_FULL_SPEED};
+            constexpr auto SPEEDS =
+                std::array{GPIO_LOW_SPEED, GPIO_MEDIUM_SPEED, GPIO_HIGH_SPEED, GPIO_FULL_SPEED};
             for (const auto speed : SPEEDS) {
                 gpio_set_speed_mode(SCRATCH_PORT, SCRATCH_PIN, speed);
-                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(speed), (SCRATCH_PORT->OSPEEDR >> (SCRATCH_PIN * 2)) & 0b11UL);
+                TEST_ASSERT_EQUAL_UINT32(std::to_underlying(speed),
+                                         (SCRATCH_PORT->OSPEEDR >> (SCRATCH_PIN * 2)) & 0b11UL);
             }
 
             reset_port(SCRATCH_PORT);
@@ -298,7 +308,9 @@ namespace test::gpio {
                 gpio_clear_interrupt(PIN);
             }
 
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, gpio_set_interrupt(nullptr, PIN, GPIO_RISING_FALLING_EDGE, nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_ERR_INVALID_ARG,
+                gpio_set_interrupt(nullptr, PIN, GPIO_RISING_FALLING_EDGE, nullptr, nullptr));
 
             reset_port(SCRATCH_PORT);
             enable_all_port_clocks(false);
@@ -316,9 +328,11 @@ namespace test::gpio {
             // The register index is 1, so the second register, that is EXTICR2. So
             // SYSCFG_EXTICR2_EXTI5. It's port B, so SYSCFG_EXTICR2_EXTI5_PB.
 
-            TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(PORT, PIN, GPIO_RISING_FALLING_EDGE, nullptr, nullptr));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, gpio_set_interrupt(PORT, PIN, GPIO_RISING_FALLING_EDGE, nullptr, nullptr));
 
-            TEST_ASSERT_EQUAL_UINT32(SYSCFG_EXTICR2_EXTI5_PB, (SYSCFG->EXTICR[REG_IDX] & SYSCFG_EXTICR2_EXTI5));
+            TEST_ASSERT_EQUAL_UINT32(SYSCFG_EXTICR2_EXTI5_PB,
+                                     (SYSCFG->EXTICR[REG_IDX] & SYSCFG_EXTICR2_EXTI5));
             TEST_ASSERT_EQUAL_UINT32(EXTI_RTSR_TR5, (EXTI->RTSR & EXTI_RTSR_TR5));
             TEST_ASSERT_EQUAL_UINT32(EXTI_FTSR_TR5, (EXTI->FTSR & EXTI_FTSR_TR5));
             TEST_ASSERT_EQUAL_UINT32(EXTI_IMR_MR5, (EXTI->IMR & EXTI_IMR_MR5));
@@ -345,7 +359,8 @@ namespace test::gpio {
                 TEST_ASSERT_EQUAL(EXTI9_5_IRQn, gpio_get_nvic_irq_type(pin));
             }
 
-            for (const auto pin : {GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15}) {
+            for (const auto pin :
+                 {GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15}) {
                 TEST_ASSERT_EQUAL(EXTI15_10_IRQn, gpio_get_nvic_irq_type(pin));
             }
         }
@@ -360,7 +375,8 @@ namespace test::gpio {
             s_last_cb_arg    = nullptr;
             s_gpio_irq_fired = false;
 
-            TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(GPIOC, PIN, GPIO_RISING_EDGE, irq_handler, &sentinel));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, gpio_set_interrupt(GPIOC, PIN, GPIO_RISING_EDGE, irq_handler, &sentinel));
 
             gpio_generate_software_interrupt(PIN);
 
@@ -383,8 +399,14 @@ namespace test::gpio {
             int sentinel_8 = 2;
 
             // Two pins sharing the EXTI9_5 vector, both registered with distinct args
-            TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(GPIOA, GPIO_PIN_5, GPIO_RISING_FALLING_EDGE, irq_handler, &sentinel_5));
-            TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(GPIOB, GPIO_PIN_8, GPIO_RISING_FALLING_EDGE, irq_handler, &sentinel_8));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                gpio_set_interrupt(
+                    GPIOA, GPIO_PIN_5, GPIO_RISING_FALLING_EDGE, irq_handler, &sentinel_5));
+            TEST_ASSERT_EQUAL(
+                HAL_OK,
+                gpio_set_interrupt(
+                    GPIOB, GPIO_PIN_8, GPIO_RISING_FALLING_EDGE, irq_handler, &sentinel_8));
 
             s_gpio_irq_fired = false;
 
@@ -412,7 +434,8 @@ namespace test::gpio {
             constexpr gpio_pin_t PIN      = GPIO_PIN_12;
             int                  sentinel = 3;
 
-            TEST_ASSERT_EQUAL(HAL_OK, gpio_set_interrupt(GPIOD, PIN, GPIO_RISING_EDGE, irq_handler, &sentinel));
+            TEST_ASSERT_EQUAL(
+                HAL_OK, gpio_set_interrupt(GPIOD, PIN, GPIO_RISING_EDGE, irq_handler, &sentinel));
 
             s_gpio_irq_fired = false;
 

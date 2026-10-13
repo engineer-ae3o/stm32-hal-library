@@ -40,9 +40,11 @@ extern "C" {
  ******************************************************************************/
 
 /*  CMSIS CA definitions */
-#define __CA_CMSIS_VERSION_MAIN (1U)                                                   /*!< \brief [31:16] CMSIS-Core(A) main version   */
-#define __CA_CMSIS_VERSION_SUB (1U)                                                    /*!< \brief [15:0]  CMSIS-Core(A) sub version    */
-#define __CA_CMSIS_VERSION ((__CA_CMSIS_VERSION_MAIN << 16U) | __CA_CMSIS_VERSION_SUB) /*!< \brief CMSIS-Core(A) version number         */
+#define __CA_CMSIS_VERSION_MAIN (1U) /*!< \brief [31:16] CMSIS-Core(A) main version   */
+#define __CA_CMSIS_VERSION_SUB (1U)  /*!< \brief [15:0]  CMSIS-Core(A) sub version    */
+#define __CA_CMSIS_VERSION                                                                         \
+    ((__CA_CMSIS_VERSION_MAIN << 16U) |                                                            \
+     __CA_CMSIS_VERSION_SUB) /*!< \brief CMSIS-Core(A) version number         */
 
 #if defined(__CC_ARM)
 #if defined __TARGET_FPU_VFP
@@ -172,9 +174,9 @@ extern "C" {
 #define __IO volatile /*!< \brief Defines 'read / write' permissions */
 
 /* following defines should be used for structure members */
-#define __IM volatile const           /*!< \brief Defines 'read only' structure member permissions */
-#define __OM volatile                 /*!< \brief Defines 'write only' structure member permissions */
-#define __IOM volatile                /*!< \brief Defines 'read / write' structure member permissions */
+#define __IM volatile const /*!< \brief Defines 'read only' structure member permissions */
+#define __OM volatile       /*!< \brief Defines 'write only' structure member permissions */
+#define __IOM volatile      /*!< \brief Defines 'read / write' structure member permissions */
 #define RESERVED(N, T) T RESERVED##N; // placeholder struct members used for "reserved" areas
 
 /*******************************************************************************
@@ -376,13 +378,15 @@ typedef union {
         uint32_t SMP : 1;  /*!< \brief bit:     6  Enables coherent requests to the processor */
         uint32_t EXCL : 1; /*!< \brief bit:     7  Exclusive L1/L2 cache control */
         RESERVED(1 : 2, uint32_t)
-        uint32_t DODMBS : 1; /*!< \brief bit:    10  Disable optimized data memory barrier behavior */
+        uint32_t DODMBS
+            : 1; /*!< \brief bit:    10  Disable optimized data memory barrier behavior */
         uint32_t DWBST : 1;  /*!< \brief bit:    11  AXI data write bursts to Normal memory */
         uint32_t RADIS : 1;  /*!< \brief bit:    12  L1 Data Cache read-allocate mode disable */
         uint32_t L1PCTL : 2; /*!< \brief bit:13..14  L1 Data prefetch control */
         uint32_t BP : 2;     /*!< \brief bit:16..15  Branch prediction policy */
         uint32_t RSDIS : 1;  /*!< \brief bit:    17  Disable return stack operation */
-        uint32_t BTDIS : 1;  /*!< \brief bit:    18  Disable indirect Branch Target Address Cache (BTAC) */
+        uint32_t BTDIS
+            : 1; /*!< \brief bit:    18  Disable indirect Branch Target Address Cache (BTAC) */
         RESERVED(3 : 9, uint32_t)
         uint32_t DBDI : 1; /*!< \brief bit:    28  Disable branch dual issue */
         RESERVED(7 : 3, uint32_t)
@@ -394,11 +398,13 @@ typedef union {
         RESERVED(0 : 6, uint32_t)
         uint32_t SMP : 1; /*!< \brief bit:     6  Enables coherent requests to the processor */
         RESERVED(1 : 3, uint32_t)
-        uint32_t DODMBS : 1;  /*!< \brief bit:    10  Disable optimized data memory barrier behavior */
+        uint32_t DODMBS
+            : 1; /*!< \brief bit:    10  Disable optimized data memory barrier behavior */
         uint32_t L2RADIS : 1; /*!< \brief bit:    11  L2 Data Cache read-allocate mode disable */
         uint32_t L1RADIS : 1; /*!< \brief bit:    12  L1 Data Cache read-allocate mode disable */
         uint32_t L1PCTL : 2;  /*!< \brief bit:13..14  L1 Data prefetch control */
-        uint32_t DDVM : 1;    /*!< \brief bit:    15  Disable Distributed Virtual Memory (DVM) transactions */
+        uint32_t DDVM
+            : 1; /*!< \brief bit:    15  Disable Distributed Virtual Memory (DVM) transactions */
         RESERVED(3 : 12, uint32_t)
         uint32_t DDI : 1; /*!< \brief bit:    28  Disable dual issue */
         RESERVED(7 : 3, uint32_t)
@@ -498,7 +504,8 @@ typedef union {
         uint32_t CP13 : 2;   /*!< \brief bit:26..27  Access rights for coprocessor 11 */
         uint32_t TRCDIS : 1; /*!< \brief bit:    28  Disable CP14 access to trace registers */
         RESERVED(0 : 1, uint32_t)
-        uint32_t D32DIS : 1; /*!< \brief bit:    30  Disable use of registers D16-D31 of the VFP register file */
+        uint32_t D32DIS
+            : 1; /*!< \brief bit:    30  Disable use of registers D16-D31 of the VFP register file */
         uint32_t ASEDIS : 1; /*!< \brief bit:    31  Disable Advanced SIMD Functionality */
     } b;                     /*!< \brief Structure used for bit  access */
     uint32_t w;              /*!< \brief Type      used for word access */
@@ -663,14 +670,21 @@ typedef struct {
     __IOM uint32_t CONTROL; /*!< \brief Offset: 0x0100 (R/W) Control Register                */
     __IOM uint32_t AUX_CNT; /*!< \brief Offset: 0x0104 (R/W) Auxiliary Control               */
     RESERVED(1 [0x3e], uint32_t)
-    __IOM uint32_t EVENT_CONTROL;       /*!< \brief Offset: 0x0200 (R/W) Event Counter Control           */
-    __IOM uint32_t EVENT_COUNTER1_CONF; /*!< \brief Offset: 0x0204 (R/W) Event Counter 1 Configuration   */
-    __IOM uint32_t EVENT_COUNTER0_CONF; /*!< \brief Offset: 0x0208 (R/W) Event Counter 1 Configuration   */
+    __IOM uint32_t
+        EVENT_CONTROL; /*!< \brief Offset: 0x0200 (R/W) Event Counter Control           */
+    __IOM uint32_t
+        EVENT_COUNTER1_CONF; /*!< \brief Offset: 0x0204 (R/W) Event Counter 1 Configuration   */
+    __IOM uint32_t
+        EVENT_COUNTER0_CONF; /*!< \brief Offset: 0x0208 (R/W) Event Counter 1 Configuration   */
     RESERVED(2 [0x2], uint32_t)
-    __IOM uint32_t INTERRUPT_MASK;    /*!< \brief Offset: 0x0214 (R/W) Interrupt Mask                  */
-    __IM uint32_t  MASKED_INT_STATUS; /*!< \brief Offset: 0x0218 (R/ ) Masked Interrupt Status         */
-    __IM uint32_t  RAW_INT_STATUS;    /*!< \brief Offset: 0x021c (R/ ) Raw Interrupt Status            */
-    __OM uint32_t  INTERRUPT_CLEAR;   /*!< \brief Offset: 0x0220 ( /W) Interrupt Clear                 */
+    __IOM uint32_t
+        INTERRUPT_MASK; /*!< \brief Offset: 0x0214 (R/W) Interrupt Mask                  */
+    __IM uint32_t
+        MASKED_INT_STATUS; /*!< \brief Offset: 0x0218 (R/ ) Masked Interrupt Status         */
+    __IM uint32_t
+        RAW_INT_STATUS; /*!< \brief Offset: 0x021c (R/ ) Raw Interrupt Status            */
+    __OM uint32_t
+        INTERRUPT_CLEAR; /*!< \brief Offset: 0x0220 ( /W) Interrupt Clear                 */
     RESERVED(3 [0x143], uint32_t)
     __IOM uint32_t CACHE_SYNC; /*!< \brief Offset: 0x0730 (R/W) Cache Sync                      */
     RESERVED(4 [0xf], uint32_t)
@@ -678,40 +692,65 @@ typedef struct {
     RESERVED(6 [2], uint32_t)
     __IOM uint32_t INV_WAY; /*!< \brief Offset: 0x077c (R/W) Invalidate by Way               */
     RESERVED(5 [0xc], uint32_t)
-    __IOM uint32_t CLEAN_LINE_PA; /*!< \brief Offset: 0x07b0 (R/W) Clean Line by PA                */
+    __IOM uint32_t
+        CLEAN_LINE_PA; /*!< \brief Offset: 0x07b0 (R/W) Clean Line by PA                */
     RESERVED(7 [1], uint32_t)
-    __IOM uint32_t CLEAN_LINE_INDEX_WAY; /*!< \brief Offset: 0x07b8 (R/W) Clean Line by Index/Way         */
-    __IOM uint32_t CLEAN_WAY;            /*!< \brief Offset: 0x07bc (R/W) Clean by Way                    */
+    __IOM uint32_t
+        CLEAN_LINE_INDEX_WAY; /*!< \brief Offset: 0x07b8 (R/W) Clean Line by Index/Way         */
+    __IOM uint32_t CLEAN_WAY; /*!< \brief Offset: 0x07bc (R/W) Clean by Way                    */
     RESERVED(8 [0xc], uint32_t)
-    __IOM uint32_t CLEAN_INV_LINE_PA; /*!< \brief Offset: 0x07f0 (R/W) Clean and Invalidate Line by PA  */
+    __IOM uint32_t
+        CLEAN_INV_LINE_PA; /*!< \brief Offset: 0x07f0 (R/W) Clean and Invalidate Line by PA  */
     RESERVED(9 [1], uint32_t)
-    __IOM uint32_t CLEAN_INV_LINE_INDEX_WAY; /*!< \brief Offset: 0x07f8 (R/W) Clean and Invalidate Line by Index/Way  */
-    __IOM uint32_t CLEAN_INV_WAY;            /*!< \brief Offset: 0x07fc (R/W) Clean and Invalidate by Way     */
+    __IOM uint32_t
+        CLEAN_INV_LINE_INDEX_WAY; /*!< \brief Offset: 0x07f8 (R/W) Clean and Invalidate Line by Index/Way  */
+    __IOM uint32_t
+        CLEAN_INV_WAY; /*!< \brief Offset: 0x07fc (R/W) Clean and Invalidate by Way     */
     RESERVED(10 [0x40], uint32_t)
-    __IOM uint32_t DATA_LOCK_0_WAY; /*!< \brief Offset: 0x0900 (R/W) Data Lockdown 0 by Way          */
-    __IOM uint32_t INST_LOCK_0_WAY; /*!< \brief Offset: 0x0904 (R/W) Instruction Lockdown 0 by Way   */
-    __IOM uint32_t DATA_LOCK_1_WAY; /*!< \brief Offset: 0x0908 (R/W) Data Lockdown 1 by Way          */
-    __IOM uint32_t INST_LOCK_1_WAY; /*!< \brief Offset: 0x090c (R/W) Instruction Lockdown 1 by Way   */
-    __IOM uint32_t DATA_LOCK_2_WAY; /*!< \brief Offset: 0x0910 (R/W) Data Lockdown 2 by Way          */
-    __IOM uint32_t INST_LOCK_2_WAY; /*!< \brief Offset: 0x0914 (R/W) Instruction Lockdown 2 by Way   */
-    __IOM uint32_t DATA_LOCK_3_WAY; /*!< \brief Offset: 0x0918 (R/W) Data Lockdown 3 by Way          */
-    __IOM uint32_t INST_LOCK_3_WAY; /*!< \brief Offset: 0x091c (R/W) Instruction Lockdown 3 by Way   */
-    __IOM uint32_t DATA_LOCK_4_WAY; /*!< \brief Offset: 0x0920 (R/W) Data Lockdown 4 by Way          */
-    __IOM uint32_t INST_LOCK_4_WAY; /*!< \brief Offset: 0x0924 (R/W) Instruction Lockdown 4 by Way   */
-    __IOM uint32_t DATA_LOCK_5_WAY; /*!< \brief Offset: 0x0928 (R/W) Data Lockdown 5 by Way          */
-    __IOM uint32_t INST_LOCK_5_WAY; /*!< \brief Offset: 0x092c (R/W) Instruction Lockdown 5 by Way   */
-    __IOM uint32_t DATA_LOCK_6_WAY; /*!< \brief Offset: 0x0930 (R/W) Data Lockdown 5 by Way          */
-    __IOM uint32_t INST_LOCK_6_WAY; /*!< \brief Offset: 0x0934 (R/W) Instruction Lockdown 5 by Way   */
-    __IOM uint32_t DATA_LOCK_7_WAY; /*!< \brief Offset: 0x0938 (R/W) Data Lockdown 6 by Way          */
-    __IOM uint32_t INST_LOCK_7_WAY; /*!< \brief Offset: 0x093c (R/W) Instruction Lockdown 6 by Way   */
+    __IOM uint32_t
+        DATA_LOCK_0_WAY; /*!< \brief Offset: 0x0900 (R/W) Data Lockdown 0 by Way          */
+    __IOM uint32_t
+        INST_LOCK_0_WAY; /*!< \brief Offset: 0x0904 (R/W) Instruction Lockdown 0 by Way   */
+    __IOM uint32_t
+        DATA_LOCK_1_WAY; /*!< \brief Offset: 0x0908 (R/W) Data Lockdown 1 by Way          */
+    __IOM uint32_t
+        INST_LOCK_1_WAY; /*!< \brief Offset: 0x090c (R/W) Instruction Lockdown 1 by Way   */
+    __IOM uint32_t
+        DATA_LOCK_2_WAY; /*!< \brief Offset: 0x0910 (R/W) Data Lockdown 2 by Way          */
+    __IOM uint32_t
+        INST_LOCK_2_WAY; /*!< \brief Offset: 0x0914 (R/W) Instruction Lockdown 2 by Way   */
+    __IOM uint32_t
+        DATA_LOCK_3_WAY; /*!< \brief Offset: 0x0918 (R/W) Data Lockdown 3 by Way          */
+    __IOM uint32_t
+        INST_LOCK_3_WAY; /*!< \brief Offset: 0x091c (R/W) Instruction Lockdown 3 by Way   */
+    __IOM uint32_t
+        DATA_LOCK_4_WAY; /*!< \brief Offset: 0x0920 (R/W) Data Lockdown 4 by Way          */
+    __IOM uint32_t
+        INST_LOCK_4_WAY; /*!< \brief Offset: 0x0924 (R/W) Instruction Lockdown 4 by Way   */
+    __IOM uint32_t
+        DATA_LOCK_5_WAY; /*!< \brief Offset: 0x0928 (R/W) Data Lockdown 5 by Way          */
+    __IOM uint32_t
+        INST_LOCK_5_WAY; /*!< \brief Offset: 0x092c (R/W) Instruction Lockdown 5 by Way   */
+    __IOM uint32_t
+        DATA_LOCK_6_WAY; /*!< \brief Offset: 0x0930 (R/W) Data Lockdown 5 by Way          */
+    __IOM uint32_t
+        INST_LOCK_6_WAY; /*!< \brief Offset: 0x0934 (R/W) Instruction Lockdown 5 by Way   */
+    __IOM uint32_t
+        DATA_LOCK_7_WAY; /*!< \brief Offset: 0x0938 (R/W) Data Lockdown 6 by Way          */
+    __IOM uint32_t
+        INST_LOCK_7_WAY; /*!< \brief Offset: 0x093c (R/W) Instruction Lockdown 6 by Way   */
     RESERVED(11 [0x4], uint32_t)
-    __IOM uint32_t LOCK_LINE_EN;      /*!< \brief Offset: 0x0950 (R/W) Lockdown by Line Enable         */
-    __IOM uint32_t UNLOCK_ALL_BY_WAY; /*!< \brief Offset: 0x0954 (R/W) Unlock All Lines by Way         */
+    __IOM uint32_t LOCK_LINE_EN; /*!< \brief Offset: 0x0950 (R/W) Lockdown by Line Enable         */
+    __IOM uint32_t
+        UNLOCK_ALL_BY_WAY; /*!< \brief Offset: 0x0954 (R/W) Unlock All Lines by Way         */
     RESERVED(12 [0xaa], uint32_t)
-    __IOM uint32_t ADDRESS_FILTER_START; /*!< \brief Offset: 0x0c00 (R/W) Address Filtering Start         */
-    __IOM uint32_t ADDRESS_FILTER_END;   /*!< \brief Offset: 0x0c04 (R/W) Address Filtering End           */
+    __IOM uint32_t
+        ADDRESS_FILTER_START; /*!< \brief Offset: 0x0c00 (R/W) Address Filtering Start         */
+    __IOM uint32_t
+        ADDRESS_FILTER_END; /*!< \brief Offset: 0x0c04 (R/W) Address Filtering End           */
     RESERVED(13 [0xce], uint32_t)
-    __IOM uint32_t DEBUG_CONTROL; /*!< \brief Offset: 0x0f40 (R/W) Debug Control Register          */
+    __IOM uint32_t
+        DEBUG_CONTROL; /*!< \brief Offset: 0x0f40 (R/W) Debug Control Register          */
 } L2C_310_TypeDef;
 
 #define L2C_310 ((L2C_310_TypeDef*)L2C_310_BASE) /*!< \brief L2C_310 register set access pointer */
@@ -724,9 +763,11 @@ typedef struct {
 typedef struct {
     __IOM uint32_t CTLR;  /*!< \brief  Offset: 0x000 (R/W) Distributor Control Register */
     __IM uint32_t  TYPER; /*!< \brief  Offset: 0x004 (R/ ) Interrupt Controller Type Register */
-    __IM uint32_t  IIDR;  /*!< \brief  Offset: 0x008 (R/ ) Distributor Implementer Identification Register */
+    __IM uint32_t
+        IIDR; /*!< \brief  Offset: 0x008 (R/ ) Distributor Implementer Identification Register */
     RESERVED(0, uint32_t)
-    __IOM uint32_t STATUSR; /*!< \brief  Offset: 0x010 (R/W) Error Reporting Status Register, optional */
+    __IOM uint32_t
+        STATUSR; /*!< \brief  Offset: 0x010 (R/W) Error Reporting Status Register, optional */
     RESERVED(1 [11], uint32_t)
     __OM uint32_t SETSPI_NSR; /*!< \brief  Offset: 0x040 ( /W) Set SPI Register */
     RESERVED(2, uint32_t)
@@ -736,22 +777,27 @@ typedef struct {
     RESERVED(4, uint32_t)
     __OM uint32_t CLRSPI_SR; /*!< \brief  Offset: 0x058 ( /W) Clear SPI, Secure Register */
     RESERVED(5 [9], uint32_t)
-    __IOM uint32_t IGROUPR[32];     /*!< \brief  Offset: 0x080 (R/W) Interrupt Group Registers */
-    __IOM uint32_t ISENABLER[32];   /*!< \brief  Offset: 0x100 (R/W) Interrupt Set-Enable Registers */
-    __IOM uint32_t ICENABLER[32];   /*!< \brief  Offset: 0x180 (R/W) Interrupt Clear-Enable Registers */
-    __IOM uint32_t ISPENDR[32];     /*!< \brief  Offset: 0x200 (R/W) Interrupt Set-Pending Registers */
-    __IOM uint32_t ICPENDR[32];     /*!< \brief  Offset: 0x280 (R/W) Interrupt Clear-Pending Registers */
-    __IOM uint32_t ISACTIVER[32];   /*!< \brief  Offset: 0x300 (R/W) Interrupt Set-Active Registers */
-    __IOM uint32_t ICACTIVER[32];   /*!< \brief  Offset: 0x380 (R/W) Interrupt Clear-Active Registers */
+    __IOM uint32_t IGROUPR[32];   /*!< \brief  Offset: 0x080 (R/W) Interrupt Group Registers */
+    __IOM uint32_t ISENABLER[32]; /*!< \brief  Offset: 0x100 (R/W) Interrupt Set-Enable Registers */
+    __IOM uint32_t
+        ICENABLER[32];          /*!< \brief  Offset: 0x180 (R/W) Interrupt Clear-Enable Registers */
+    __IOM uint32_t ISPENDR[32]; /*!< \brief  Offset: 0x200 (R/W) Interrupt Set-Pending Registers */
+    __IOM uint32_t
+        ICPENDR[32]; /*!< \brief  Offset: 0x280 (R/W) Interrupt Clear-Pending Registers */
+    __IOM uint32_t ISACTIVER[32]; /*!< \brief  Offset: 0x300 (R/W) Interrupt Set-Active Registers */
+    __IOM uint32_t
+        ICACTIVER[32]; /*!< \brief  Offset: 0x380 (R/W) Interrupt Clear-Active Registers */
     __IOM uint32_t IPRIORITYR[255]; /*!< \brief  Offset: 0x400 (R/W) Interrupt Priority Registers */
     RESERVED(6, uint32_t)
     __IOM uint32_t ITARGETSR[255]; /*!< \brief  Offset: 0x800 (R/W) Interrupt Targets Registers */
     RESERVED(7, uint32_t)
-    __IOM uint32_t ICFGR[64];    /*!< \brief  Offset: 0xC00 (R/W) Interrupt Configuration Registers */
-    __IOM uint32_t IGRPMODR[32]; /*!< \brief  Offset: 0xD00 (R/W) Interrupt Group Modifier Registers */
+    __IOM uint32_t ICFGR[64]; /*!< \brief  Offset: 0xC00 (R/W) Interrupt Configuration Registers */
+    __IOM uint32_t
+        IGRPMODR[32]; /*!< \brief  Offset: 0xD00 (R/W) Interrupt Group Modifier Registers */
     RESERVED(8 [32], uint32_t)
-    __IOM uint32_t NSACR[64]; /*!< \brief  Offset: 0xE00 (R/W) Non-secure Access Control Registers */
-    __OM uint32_t  SGIR;      /*!< \brief  Offset: 0xF00 ( /W) Software Generated Interrupt Register */
+    __IOM uint32_t
+                  NSACR[64]; /*!< \brief  Offset: 0xE00 (R/W) Non-secure Access Control Registers */
+    __OM uint32_t SGIR; /*!< \brief  Offset: 0xF00 ( /W) Software Generated Interrupt Register */
     RESERVED(9 [3], uint32_t)
     __IOM uint32_t CPENDSGIR[4]; /*!< \brief  Offset: 0xF10 (R/W) SGI Clear-Pending Registers */
     __IOM uint32_t SPENDSGIR[4]; /*!< \brief  Offset: 0xF20 (R/W) SGI Set-Pending Registers */
@@ -759,23 +805,28 @@ typedef struct {
     __IOM uint64_t IROUTER[988]; /*!< \brief  Offset: 0x6100(R/W) Interrupt Routing Registers */
 } GICDistributor_Type;
 
-#define GICDistributor ((GICDistributor_Type*)GIC_DISTRIBUTOR_BASE) /*!< \brief GIC Distributor register set access pointer */
+#define GICDistributor                                                                             \
+    ((GICDistributor_Type*)                                                                        \
+         GIC_DISTRIBUTOR_BASE) /*!< \brief GIC Distributor register set access pointer */
 
 /** \brief  Structure type to access the Generic Interrupt Controller Interface (GICC)
 */
 typedef struct {
-    __IOM uint32_t CTLR;    /*!< \brief  Offset: 0x000 (R/W) CPU Interface Control Register */
-    __IOM uint32_t PMR;     /*!< \brief  Offset: 0x004 (R/W) Interrupt Priority Mask Register */
-    __IOM uint32_t BPR;     /*!< \brief  Offset: 0x008 (R/W) Binary Point Register */
-    __IM uint32_t  IAR;     /*!< \brief  Offset: 0x00C (R/ ) Interrupt Acknowledge Register */
-    __OM uint32_t  EOIR;    /*!< \brief  Offset: 0x010 ( /W) End Of Interrupt Register */
-    __IM uint32_t  RPR;     /*!< \brief  Offset: 0x014 (R/ ) Running Priority Register */
-    __IM uint32_t  HPPIR;   /*!< \brief  Offset: 0x018 (R/ ) Highest Priority Pending Interrupt Register */
-    __IOM uint32_t ABPR;    /*!< \brief  Offset: 0x01C (R/W) Aliased Binary Point Register */
-    __IM uint32_t  AIAR;    /*!< \brief  Offset: 0x020 (R/ ) Aliased Interrupt Acknowledge Register */
-    __OM uint32_t  AEOIR;   /*!< \brief  Offset: 0x024 ( /W) Aliased End Of Interrupt Register */
-    __IM uint32_t  AHPPIR;  /*!< \brief  Offset: 0x028 (R/ ) Aliased Highest Priority Pending Interrupt Register */
-    __IOM uint32_t STATUSR; /*!< \brief  Offset: 0x02C (R/W) Error Reporting Status Register, optional */
+    __IOM uint32_t CTLR; /*!< \brief  Offset: 0x000 (R/W) CPU Interface Control Register */
+    __IOM uint32_t PMR;  /*!< \brief  Offset: 0x004 (R/W) Interrupt Priority Mask Register */
+    __IOM uint32_t BPR;  /*!< \brief  Offset: 0x008 (R/W) Binary Point Register */
+    __IM uint32_t  IAR;  /*!< \brief  Offset: 0x00C (R/ ) Interrupt Acknowledge Register */
+    __OM uint32_t  EOIR; /*!< \brief  Offset: 0x010 ( /W) End Of Interrupt Register */
+    __IM uint32_t  RPR;  /*!< \brief  Offset: 0x014 (R/ ) Running Priority Register */
+    __IM uint32_t
+        HPPIR; /*!< \brief  Offset: 0x018 (R/ ) Highest Priority Pending Interrupt Register */
+    __IOM uint32_t ABPR;  /*!< \brief  Offset: 0x01C (R/W) Aliased Binary Point Register */
+    __IM uint32_t  AIAR;  /*!< \brief  Offset: 0x020 (R/ ) Aliased Interrupt Acknowledge Register */
+    __OM uint32_t  AEOIR; /*!< \brief  Offset: 0x024 ( /W) Aliased End Of Interrupt Register */
+    __IM uint32_t
+        AHPPIR; /*!< \brief  Offset: 0x028 (R/ ) Aliased Highest Priority Pending Interrupt Register */
+    __IOM uint32_t
+        STATUSR; /*!< \brief  Offset: 0x02C (R/W) Error Reporting Status Register, optional */
     RESERVED(1 [40], uint32_t)
     __IOM uint32_t APR[4];   /*!< \brief  Offset: 0x0D0 (R/W) Active Priority Register */
     __IOM uint32_t NSAPR[4]; /*!< \brief  Offset: 0x0E0 (R/W) Non-secure Active Priority Register */
@@ -785,7 +836,9 @@ typedef struct {
     __OM uint32_t DIR; /*!< \brief  Offset: 0x1000( /W) Deactivate Interrupt Register */
 } GICInterface_Type;
 
-#define GICInterface ((GICInterface_Type*)GIC_INTERFACE_BASE) /*!< \brief GIC Interface register set access pointer */
+#define GICInterface                                                                               \
+    ((GICInterface_Type*)                                                                          \
+         GIC_INTERFACE_BASE) /*!< \brief GIC Interface register set access pointer */
 #endif
 
 #if (__TIM_PRESENT == 1U) || defined(DOXYGEN)
@@ -947,7 +1000,8 @@ __STATIC_FORCEINLINE void __L1C_MaintainDCacheSetWay(uint32_t level, uint32_t ma
     shift_way = 32U - (uint32_t)log2_num_ways;
     for (int32_t way = num_ways - 1; way >= 0; way--) {
         for (int32_t set = num_sets - 1; set >= 0; set--) {
-            Dummy = (level << 1U) | (((uint32_t)set) << log2_linesize) | (((uint32_t)way) << shift_way);
+            Dummy =
+                (level << 1U) | (((uint32_t)set) << log2_linesize) | (((uint32_t)way) << shift_way);
             switch (maint) {
                 case 0U:
                     __set_DCISW(Dummy);
@@ -1142,7 +1196,7 @@ __STATIC_INLINE uint32_t GIC_DistributorImplementer(void) {
 * \param [in] cpu_target CPU interfaces to assign this interrupt to.
 */
 __STATIC_INLINE void GIC_SetTarget(IRQn_Type IRQn, uint32_t cpu_target) {
-    uint32_t mask                        = GICDistributor->ITARGETSR[IRQn / 4U] & ~(0xFFUL << ((IRQn % 4U) * 8U));
+    uint32_t mask = GICDistributor->ITARGETSR[IRQn / 4U] & ~(0xFFUL << ((IRQn % 4U) * 8U));
     GICDistributor->ITARGETSR[IRQn / 4U] = mask | ((cpu_target & 0xFFUL) << ((IRQn % 4U) * 8U));
 }
 
@@ -1279,7 +1333,7 @@ __STATIC_INLINE uint32_t GIC_GetConfiguration(IRQn_Type IRQn) {
 * \param [in] priority The priority for the interrupt, lower values denote higher priorities.
 */
 __STATIC_INLINE void GIC_SetPriority(IRQn_Type IRQn, uint32_t priority) {
-    uint32_t mask                         = GICDistributor->IPRIORITYR[IRQn / 4U] & ~(0xFFUL << ((IRQn % 4U) * 8U));
+    uint32_t mask = GICDistributor->IPRIORITYR[IRQn / 4U] & ~(0xFFUL << ((IRQn % 4U) * 8U));
     GICDistributor->IPRIORITYR[IRQn / 4U] = mask | ((priority & 0xFFUL) << ((IRQn % 4U) * 8U));
 }
 
@@ -1337,7 +1391,8 @@ __STATIC_INLINE uint32_t GIC_GetIRQStatus(IRQn_Type IRQn) {
 * \param [in] filter_list Filter to be applied to determine interrupt receivers.
 */
 __STATIC_INLINE void GIC_SendSGI(IRQn_Type IRQn, uint32_t target_list, uint32_t filter_list) {
-    GICDistributor->SGIR = ((filter_list & 3U) << 24U) | ((target_list & 0xFFUL) << 16U) | (IRQn & 0x0FUL);
+    GICDistributor->SGIR =
+        ((filter_list & 3U) << 24U) | ((target_list & 0xFFUL) << 16U) | (IRQn & 0x0FUL);
 }
 
 /** \brief Get the interrupt number of the highest interrupt pending from CPU's HPPIR register.
@@ -1762,161 +1817,161 @@ typedef struct RegionStruct {
 
 //Following macros define the descriptors and attributes
 //Sect_Normal. Outer & inner wb/wa, non-shareable, executable, rw, domain 0
-#define section_normal(descriptor_l1, region)                                                                                                        \
-    region.rg_t         = SECTION;                                                                                                                   \
-    region.domain       = 0x0;                                                                                                                       \
-    region.e_t          = ECC_DISABLED;                                                                                                              \
-    region.g_t          = GLOBAL;                                                                                                                    \
-    region.inner_norm_t = WB_WA;                                                                                                                     \
-    region.outer_norm_t = WB_WA;                                                                                                                     \
-    region.mem_t        = NORMAL;                                                                                                                    \
-    region.sec_t        = SECURE;                                                                                                                    \
-    region.xn_t         = EXECUTE;                                                                                                                   \
-    region.priv_t       = RW;                                                                                                                        \
-    region.user_t       = RW;                                                                                                                        \
-    region.sh_t         = NON_SHARED;                                                                                                                \
+#define section_normal(descriptor_l1, region)                                                      \
+    region.rg_t         = SECTION;                                                                 \
+    region.domain       = 0x0;                                                                     \
+    region.e_t          = ECC_DISABLED;                                                            \
+    region.g_t          = GLOBAL;                                                                  \
+    region.inner_norm_t = WB_WA;                                                                   \
+    region.outer_norm_t = WB_WA;                                                                   \
+    region.mem_t        = NORMAL;                                                                  \
+    region.sec_t        = SECURE;                                                                  \
+    region.xn_t         = EXECUTE;                                                                 \
+    region.priv_t       = RW;                                                                      \
+    region.user_t       = RW;                                                                      \
+    region.sh_t         = NON_SHARED;                                                              \
     MMU_GetSectionDescriptor(&descriptor_l1, region);
 
 //Sect_Normal_NC. Outer & inner non-cacheable, non-shareable, executable, rw, domain 0
-#define section_normal_nc(descriptor_l1, region)                                                                                                     \
-    region.rg_t         = SECTION;                                                                                                                   \
-    region.domain       = 0x0;                                                                                                                       \
-    region.e_t          = ECC_DISABLED;                                                                                                              \
-    region.g_t          = GLOBAL;                                                                                                                    \
-    region.inner_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.outer_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.mem_t        = NORMAL;                                                                                                                    \
-    region.sec_t        = SECURE;                                                                                                                    \
-    region.xn_t         = EXECUTE;                                                                                                                   \
-    region.priv_t       = RW;                                                                                                                        \
-    region.user_t       = RW;                                                                                                                        \
-    region.sh_t         = NON_SHARED;                                                                                                                \
+#define section_normal_nc(descriptor_l1, region)                                                   \
+    region.rg_t         = SECTION;                                                                 \
+    region.domain       = 0x0;                                                                     \
+    region.e_t          = ECC_DISABLED;                                                            \
+    region.g_t          = GLOBAL;                                                                  \
+    region.inner_norm_t = NON_CACHEABLE;                                                           \
+    region.outer_norm_t = NON_CACHEABLE;                                                           \
+    region.mem_t        = NORMAL;                                                                  \
+    region.sec_t        = SECURE;                                                                  \
+    region.xn_t         = EXECUTE;                                                                 \
+    region.priv_t       = RW;                                                                      \
+    region.user_t       = RW;                                                                      \
+    region.sh_t         = NON_SHARED;                                                              \
     MMU_GetSectionDescriptor(&descriptor_l1, region);
 
 //Sect_Normal_Cod. Outer & inner wb/wa, non-shareable, executable, ro, domain 0
-#define section_normal_cod(descriptor_l1, region)                                                                                                    \
-    region.rg_t         = SECTION;                                                                                                                   \
-    region.domain       = 0x0;                                                                                                                       \
-    region.e_t          = ECC_DISABLED;                                                                                                              \
-    region.g_t          = GLOBAL;                                                                                                                    \
-    region.inner_norm_t = WB_WA;                                                                                                                     \
-    region.outer_norm_t = WB_WA;                                                                                                                     \
-    region.mem_t        = NORMAL;                                                                                                                    \
-    region.sec_t        = SECURE;                                                                                                                    \
-    region.xn_t         = EXECUTE;                                                                                                                   \
-    region.priv_t       = READ;                                                                                                                      \
-    region.user_t       = READ;                                                                                                                      \
-    region.sh_t         = NON_SHARED;                                                                                                                \
+#define section_normal_cod(descriptor_l1, region)                                                  \
+    region.rg_t         = SECTION;                                                                 \
+    region.domain       = 0x0;                                                                     \
+    region.e_t          = ECC_DISABLED;                                                            \
+    region.g_t          = GLOBAL;                                                                  \
+    region.inner_norm_t = WB_WA;                                                                   \
+    region.outer_norm_t = WB_WA;                                                                   \
+    region.mem_t        = NORMAL;                                                                  \
+    region.sec_t        = SECURE;                                                                  \
+    region.xn_t         = EXECUTE;                                                                 \
+    region.priv_t       = READ;                                                                    \
+    region.user_t       = READ;                                                                    \
+    region.sh_t         = NON_SHARED;                                                              \
     MMU_GetSectionDescriptor(&descriptor_l1, region);
 
 //Sect_Normal_RO. Sect_Normal_Cod, but not executable
-#define section_normal_ro(descriptor_l1, region)                                                                                                     \
-    region.rg_t         = SECTION;                                                                                                                   \
-    region.domain       = 0x0;                                                                                                                       \
-    region.e_t          = ECC_DISABLED;                                                                                                              \
-    region.g_t          = GLOBAL;                                                                                                                    \
-    region.inner_norm_t = WB_WA;                                                                                                                     \
-    region.outer_norm_t = WB_WA;                                                                                                                     \
-    region.mem_t        = NORMAL;                                                                                                                    \
-    region.sec_t        = SECURE;                                                                                                                    \
-    region.xn_t         = NON_EXECUTE;                                                                                                               \
-    region.priv_t       = READ;                                                                                                                      \
-    region.user_t       = READ;                                                                                                                      \
-    region.sh_t         = NON_SHARED;                                                                                                                \
+#define section_normal_ro(descriptor_l1, region)                                                   \
+    region.rg_t         = SECTION;                                                                 \
+    region.domain       = 0x0;                                                                     \
+    region.e_t          = ECC_DISABLED;                                                            \
+    region.g_t          = GLOBAL;                                                                  \
+    region.inner_norm_t = WB_WA;                                                                   \
+    region.outer_norm_t = WB_WA;                                                                   \
+    region.mem_t        = NORMAL;                                                                  \
+    region.sec_t        = SECURE;                                                                  \
+    region.xn_t         = NON_EXECUTE;                                                             \
+    region.priv_t       = READ;                                                                    \
+    region.user_t       = READ;                                                                    \
+    region.sh_t         = NON_SHARED;                                                              \
     MMU_GetSectionDescriptor(&descriptor_l1, region);
 
 //Sect_Normal_RW. Sect_Normal_Cod, but writeable and not executable
-#define section_normal_rw(descriptor_l1, region)                                                                                                     \
-    region.rg_t         = SECTION;                                                                                                                   \
-    region.domain       = 0x0;                                                                                                                       \
-    region.e_t          = ECC_DISABLED;                                                                                                              \
-    region.g_t          = GLOBAL;                                                                                                                    \
-    region.inner_norm_t = WB_WA;                                                                                                                     \
-    region.outer_norm_t = WB_WA;                                                                                                                     \
-    region.mem_t        = NORMAL;                                                                                                                    \
-    region.sec_t        = SECURE;                                                                                                                    \
-    region.xn_t         = NON_EXECUTE;                                                                                                               \
-    region.priv_t       = RW;                                                                                                                        \
-    region.user_t       = RW;                                                                                                                        \
-    region.sh_t         = NON_SHARED;                                                                                                                \
+#define section_normal_rw(descriptor_l1, region)                                                   \
+    region.rg_t         = SECTION;                                                                 \
+    region.domain       = 0x0;                                                                     \
+    region.e_t          = ECC_DISABLED;                                                            \
+    region.g_t          = GLOBAL;                                                                  \
+    region.inner_norm_t = WB_WA;                                                                   \
+    region.outer_norm_t = WB_WA;                                                                   \
+    region.mem_t        = NORMAL;                                                                  \
+    region.sec_t        = SECURE;                                                                  \
+    region.xn_t         = NON_EXECUTE;                                                             \
+    region.priv_t       = RW;                                                                      \
+    region.user_t       = RW;                                                                      \
+    region.sh_t         = NON_SHARED;                                                              \
     MMU_GetSectionDescriptor(&descriptor_l1, region);
 //Sect_SO. Strongly-ordered (therefore shareable), not executable, rw, domain 0, base addr 0
-#define section_so(descriptor_l1, region)                                                                                                            \
-    region.rg_t         = SECTION;                                                                                                                   \
-    region.domain       = 0x0;                                                                                                                       \
-    region.e_t          = ECC_DISABLED;                                                                                                              \
-    region.g_t          = GLOBAL;                                                                                                                    \
-    region.inner_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.outer_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.mem_t        = STRONGLY_ORDERED;                                                                                                          \
-    region.sec_t        = SECURE;                                                                                                                    \
-    region.xn_t         = NON_EXECUTE;                                                                                                               \
-    region.priv_t       = RW;                                                                                                                        \
-    region.user_t       = RW;                                                                                                                        \
-    region.sh_t         = NON_SHARED;                                                                                                                \
+#define section_so(descriptor_l1, region)                                                          \
+    region.rg_t         = SECTION;                                                                 \
+    region.domain       = 0x0;                                                                     \
+    region.e_t          = ECC_DISABLED;                                                            \
+    region.g_t          = GLOBAL;                                                                  \
+    region.inner_norm_t = NON_CACHEABLE;                                                           \
+    region.outer_norm_t = NON_CACHEABLE;                                                           \
+    region.mem_t        = STRONGLY_ORDERED;                                                        \
+    region.sec_t        = SECURE;                                                                  \
+    region.xn_t         = NON_EXECUTE;                                                             \
+    region.priv_t       = RW;                                                                      \
+    region.user_t       = RW;                                                                      \
+    region.sh_t         = NON_SHARED;                                                              \
     MMU_GetSectionDescriptor(&descriptor_l1, region);
 
 //Sect_Device_RO. Device, non-shareable, non-executable, ro, domain 0, base addr 0
-#define section_device_ro(descriptor_l1, region)                                                                                                     \
-    region.rg_t         = SECTION;                                                                                                                   \
-    region.domain       = 0x0;                                                                                                                       \
-    region.e_t          = ECC_DISABLED;                                                                                                              \
-    region.g_t          = GLOBAL;                                                                                                                    \
-    region.inner_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.outer_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.mem_t        = STRONGLY_ORDERED;                                                                                                          \
-    region.sec_t        = SECURE;                                                                                                                    \
-    region.xn_t         = NON_EXECUTE;                                                                                                               \
-    region.priv_t       = READ;                                                                                                                      \
-    region.user_t       = READ;                                                                                                                      \
-    region.sh_t         = NON_SHARED;                                                                                                                \
+#define section_device_ro(descriptor_l1, region)                                                   \
+    region.rg_t         = SECTION;                                                                 \
+    region.domain       = 0x0;                                                                     \
+    region.e_t          = ECC_DISABLED;                                                            \
+    region.g_t          = GLOBAL;                                                                  \
+    region.inner_norm_t = NON_CACHEABLE;                                                           \
+    region.outer_norm_t = NON_CACHEABLE;                                                           \
+    region.mem_t        = STRONGLY_ORDERED;                                                        \
+    region.sec_t        = SECURE;                                                                  \
+    region.xn_t         = NON_EXECUTE;                                                             \
+    region.priv_t       = READ;                                                                    \
+    region.user_t       = READ;                                                                    \
+    region.sh_t         = NON_SHARED;                                                              \
     MMU_GetSectionDescriptor(&descriptor_l1, region);
 
 //Sect_Device_RW. Sect_Device_RO, but writeable
-#define section_device_rw(descriptor_l1, region)                                                                                                     \
-    region.rg_t         = SECTION;                                                                                                                   \
-    region.domain       = 0x0;                                                                                                                       \
-    region.e_t          = ECC_DISABLED;                                                                                                              \
-    region.g_t          = GLOBAL;                                                                                                                    \
-    region.inner_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.outer_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.mem_t        = STRONGLY_ORDERED;                                                                                                          \
-    region.sec_t        = SECURE;                                                                                                                    \
-    region.xn_t         = NON_EXECUTE;                                                                                                               \
-    region.priv_t       = RW;                                                                                                                        \
-    region.user_t       = RW;                                                                                                                        \
-    region.sh_t         = NON_SHARED;                                                                                                                \
+#define section_device_rw(descriptor_l1, region)                                                   \
+    region.rg_t         = SECTION;                                                                 \
+    region.domain       = 0x0;                                                                     \
+    region.e_t          = ECC_DISABLED;                                                            \
+    region.g_t          = GLOBAL;                                                                  \
+    region.inner_norm_t = NON_CACHEABLE;                                                           \
+    region.outer_norm_t = NON_CACHEABLE;                                                           \
+    region.mem_t        = STRONGLY_ORDERED;                                                        \
+    region.sec_t        = SECURE;                                                                  \
+    region.xn_t         = NON_EXECUTE;                                                             \
+    region.priv_t       = RW;                                                                      \
+    region.user_t       = RW;                                                                      \
+    region.sh_t         = NON_SHARED;                                                              \
     MMU_GetSectionDescriptor(&descriptor_l1, region);
 //Page_4k_Device_RW.  Shared device, not executable, rw, domain 0
-#define page4k_device_rw(descriptor_l1, descriptor_l2, region)                                                                                       \
-    region.rg_t         = PAGE_4k;                                                                                                                   \
-    region.domain       = 0x0;                                                                                                                       \
-    region.e_t          = ECC_DISABLED;                                                                                                              \
-    region.g_t          = GLOBAL;                                                                                                                    \
-    region.inner_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.outer_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.mem_t        = SHARED_DEVICE;                                                                                                             \
-    region.sec_t        = SECURE;                                                                                                                    \
-    region.xn_t         = NON_EXECUTE;                                                                                                               \
-    region.priv_t       = RW;                                                                                                                        \
-    region.user_t       = RW;                                                                                                                        \
-    region.sh_t         = NON_SHARED;                                                                                                                \
+#define page4k_device_rw(descriptor_l1, descriptor_l2, region)                                     \
+    region.rg_t         = PAGE_4k;                                                                 \
+    region.domain       = 0x0;                                                                     \
+    region.e_t          = ECC_DISABLED;                                                            \
+    region.g_t          = GLOBAL;                                                                  \
+    region.inner_norm_t = NON_CACHEABLE;                                                           \
+    region.outer_norm_t = NON_CACHEABLE;                                                           \
+    region.mem_t        = SHARED_DEVICE;                                                           \
+    region.sec_t        = SECURE;                                                                  \
+    region.xn_t         = NON_EXECUTE;                                                             \
+    region.priv_t       = RW;                                                                      \
+    region.user_t       = RW;                                                                      \
+    region.sh_t         = NON_SHARED;                                                              \
     MMU_GetPageDescriptor(&descriptor_l1, &descriptor_l2, region);
 
 //Page_64k_Device_RW.  Shared device, not executable, rw, domain 0
-#define page64k_device_rw(descriptor_l1, descriptor_l2, region)                                                                                      \
-    region.rg_t         = PAGE_64k;                                                                                                                  \
-    region.domain       = 0x0;                                                                                                                       \
-    region.e_t          = ECC_DISABLED;                                                                                                              \
-    region.g_t          = GLOBAL;                                                                                                                    \
-    region.inner_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.outer_norm_t = NON_CACHEABLE;                                                                                                             \
-    region.mem_t        = SHARED_DEVICE;                                                                                                             \
-    region.sec_t        = SECURE;                                                                                                                    \
-    region.xn_t         = NON_EXECUTE;                                                                                                               \
-    region.priv_t       = RW;                                                                                                                        \
-    region.user_t       = RW;                                                                                                                        \
-    region.sh_t         = NON_SHARED;                                                                                                                \
+#define page64k_device_rw(descriptor_l1, descriptor_l2, region)                                    \
+    region.rg_t         = PAGE_64k;                                                                \
+    region.domain       = 0x0;                                                                     \
+    region.e_t          = ECC_DISABLED;                                                            \
+    region.g_t          = GLOBAL;                                                                  \
+    region.inner_norm_t = NON_CACHEABLE;                                                           \
+    region.outer_norm_t = NON_CACHEABLE;                                                           \
+    region.mem_t        = SHARED_DEVICE;                                                           \
+    region.sec_t        = SECURE;                                                                  \
+    region.xn_t         = NON_EXECUTE;                                                             \
+    region.priv_t       = RW;                                                                      \
+    region.user_t       = RW;                                                                      \
+    region.sh_t         = NON_SHARED;                                                              \
     MMU_GetPageDescriptor(&descriptor_l1, &descriptor_l2, region);
 
 /** \brief  Set section execution-never attribute
@@ -1967,7 +2022,8 @@ __STATIC_INLINE int MMU_PSection(uint32_t* descriptor_l1, mmu_ecc_check_Type p_b
 
   \return          0
 */
-__STATIC_INLINE int MMU_APSection(uint32_t* descriptor_l1, mmu_access_Type user, mmu_access_Type priv, uint32_t afe) {
+__STATIC_INLINE int
+MMU_APSection(uint32_t* descriptor_l1, mmu_access_Type user, mmu_access_Type priv, uint32_t afe) {
     uint32_t ap = 0;
 
     if (afe == 0) { //full access
@@ -2053,7 +2109,8 @@ __STATIC_INLINE int MMU_SecureSection(uint32_t* descriptor_l1, mmu_secure_Type s
 
   \return          0
 */
-__STATIC_INLINE int MMU_XNPage(uint32_t* descriptor_l2, mmu_execute_Type xn, mmu_region_size_Type page) {
+__STATIC_INLINE int
+MMU_XNPage(uint32_t* descriptor_l2, mmu_execute_Type xn, mmu_region_size_Type page) {
     if (page == PAGE_4k) {
         *descriptor_l2 &= PAGE_XN_4K_MASK;
         *descriptor_l2 |= ((xn & 0x1) << PAGE_XN_4K_SHIFT);
@@ -2099,7 +2156,8 @@ __STATIC_INLINE int MMU_PPage(uint32_t* descriptor_l1, mmu_ecc_check_Type p_bit)
 
   \return          0
 */
-__STATIC_INLINE int MMU_APPage(uint32_t* descriptor_l2, mmu_access_Type user, mmu_access_Type priv, uint32_t afe) {
+__STATIC_INLINE int
+MMU_APPage(uint32_t* descriptor_l2, mmu_access_Type user, mmu_access_Type priv, uint32_t afe) {
     uint32_t ap = 0;
 
     if (afe == 0) { //full access
@@ -2185,7 +2243,10 @@ __STATIC_INLINE int MMU_SecurePage(uint32_t* descriptor_l1, mmu_secure_Type s_bi
 
   \return          0
 */
-__STATIC_INLINE int MMU_MemorySection(uint32_t* descriptor_l1, mmu_memory_Type mem, mmu_cacheability_Type outer, mmu_cacheability_Type inner) {
+__STATIC_INLINE int MMU_MemorySection(uint32_t*             descriptor_l1,
+                                      mmu_memory_Type       mem,
+                                      mmu_cacheability_Type outer,
+                                      mmu_cacheability_Type inner) {
     *descriptor_l1 &= SECTION_TEXCB_MASK;
 
     if (STRONGLY_ORDERED == mem) {
@@ -2236,8 +2297,11 @@ __STATIC_INLINE int MMU_MemorySection(uint32_t* descriptor_l1, mmu_memory_Type m
 
   \return          0
 */
-__STATIC_INLINE int
-MMU_MemoryPage(uint32_t* descriptor_l2, mmu_memory_Type mem, mmu_cacheability_Type outer, mmu_cacheability_Type inner, mmu_region_size_Type page) {
+__STATIC_INLINE int MMU_MemoryPage(uint32_t*             descriptor_l2,
+                                   mmu_memory_Type       mem,
+                                   mmu_cacheability_Type outer,
+                                   mmu_cacheability_Type inner,
+                                   mmu_region_size_Type  page) {
     *descriptor_l2 &= PAGE_4K_TEXCB_MASK;
 
     if (page == PAGE_64k) {
@@ -2317,7 +2381,8 @@ __STATIC_INLINE int MMU_GetSectionDescriptor(uint32_t* descriptor, mmu_region_at
 
   \return          0
 */
-__STATIC_INLINE int MMU_GetPageDescriptor(uint32_t* descriptor, uint32_t* descriptor2, mmu_region_attributes_Type reg) {
+__STATIC_INLINE int
+MMU_GetPageDescriptor(uint32_t* descriptor, uint32_t* descriptor2, mmu_region_attributes_Type reg) {
     *descriptor  = 0;
     *descriptor2 = 0;
 
@@ -2368,7 +2433,8 @@ __STATIC_INLINE int MMU_GetPageDescriptor(uint32_t* descriptor, uint32_t* descri
   \param [in]     descriptor_l1  L1 descriptor (region attributes)
 
 */
-__STATIC_INLINE void MMU_TTSection(uint32_t* ttb, uint32_t base_address, uint32_t count, uint32_t descriptor_l1) {
+__STATIC_INLINE void
+MMU_TTSection(uint32_t* ttb, uint32_t base_address, uint32_t count, uint32_t descriptor_l1) {
     uint32_t offset;
     uint32_t entry;
     uint32_t i;
@@ -2396,8 +2462,12 @@ __STATIC_INLINE void MMU_TTSection(uint32_t* ttb, uint32_t base_address, uint32_
   \param [in]     descriptor_l2  L2 descriptor (region attributes)
 
 */
-__STATIC_INLINE void
-MMU_TTPage4k(uint32_t* ttb, uint32_t base_address, uint32_t count, uint32_t descriptor_l1, uint32_t* ttb_l2, uint32_t descriptor_l2) {
+__STATIC_INLINE void MMU_TTPage4k(uint32_t* ttb,
+                                  uint32_t  base_address,
+                                  uint32_t  count,
+                                  uint32_t  descriptor_l1,
+                                  uint32_t* ttb_l2,
+                                  uint32_t  descriptor_l2) {
 
     uint32_t offset, offset2;
     uint32_t entry, entry2;
@@ -2431,8 +2501,12 @@ MMU_TTPage4k(uint32_t* ttb, uint32_t base_address, uint32_t count, uint32_t desc
   \param [in]     descriptor_l2  L2 descriptor (region attributes)
 
 */
-__STATIC_INLINE void
-MMU_TTPage64k(uint32_t* ttb, uint32_t base_address, uint32_t count, uint32_t descriptor_l1, uint32_t* ttb_l2, uint32_t descriptor_l2) {
+__STATIC_INLINE void MMU_TTPage64k(uint32_t* ttb,
+                                   uint32_t  base_address,
+                                   uint32_t  count,
+                                   uint32_t  descriptor_l1,
+                                   uint32_t* ttb_l2,
+                                   uint32_t  descriptor_l2) {
     uint32_t offset, offset2;
     uint32_t entry, entry2;
     uint32_t i, j;

@@ -52,7 +52,9 @@
  */
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-arm_status arm_mat_scale_f16(const arm_matrix_instance_f16* pSrc, float16_t scale, arm_matrix_instance_f16* pDst) {
+arm_status arm_mat_scale_f16(const arm_matrix_instance_f16* pSrc,
+                             float16_t                      scale,
+                             arm_matrix_instance_f16*       pDst) {
     arm_status status; /* status of matrix scaling     */
 #ifdef ARM_MATH_MATRIX_CHECK
     /* Check for matrix mismatch condition */
@@ -114,7 +116,9 @@ arm_status arm_mat_scale_f16(const arm_matrix_instance_f16* pSrc, float16_t scal
 }
 #else
 
-arm_status arm_mat_scale_f16(const arm_matrix_instance_f16* pSrc, float16_t scale, arm_matrix_instance_f16* pDst) {
+arm_status arm_mat_scale_f16(const arm_matrix_instance_f16* pSrc,
+                             float16_t                      scale,
+                             arm_matrix_instance_f16*       pDst) {
     float16_t* pIn  = pSrc->pData; /* Input data matrix pointer */
     float16_t* pOut = pDst->pData; /* Output data matrix pointer */
     uint32_t   numSamples;         /* Total number of elements in the matrix */

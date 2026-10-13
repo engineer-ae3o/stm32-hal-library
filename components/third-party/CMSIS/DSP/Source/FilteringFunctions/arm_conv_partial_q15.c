@@ -56,22 +56,27 @@
                    Refer to \ref arm_conv_partial_opt_q15() for a faster implementation of this function using scratch buffers.
  */
 
-arm_status arm_conv_partial_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst, uint32_t firstIndex, uint32_t numPoints) {
+arm_status arm_conv_partial_q15(const q15_t* pSrcA,
+                                uint32_t     srcALen,
+                                const q15_t* pSrcB,
+                                uint32_t     srcBLen,
+                                q15_t*       pDst,
+                                uint32_t     firstIndex,
+                                uint32_t     numPoints) {
 
 #if defined(ARM_MATH_DSP)
 
-    const q15_t* pIn1;                               /* InputA pointer */
-    const q15_t* pIn2;                               /* InputB pointer */
-    q15_t*       pOut = pDst;                        /* Output pointer */
-    q63_t        sum, acc0, acc1, acc2, acc3;        /* Accumulator */
-    const q15_t* px;                                 /* Intermediate inputA pointer */
-    const q15_t* py;                                 /* Intermediate inputB pointer */
-    const q15_t *pSrc1, *pSrc2;                      /* Intermediate pointers */
-    q31_t        x0, x1, x2, x3, c0;                 /* Temporary input variables to hold state and coefficient values */
-    int32_t      blockSize1, blockSize2, blockSize3; /* Loop counters */
-    uint32_t     j, k, count, blkCnt, check;
-    arm_status   status; /* Status of Partial convolution */
+    const q15_t* pIn1;                        /* InputA pointer */
+    const q15_t* pIn2;                        /* InputB pointer */
+    q15_t*       pOut = pDst;                 /* Output pointer */
+    q63_t        sum, acc0, acc1, acc2, acc3; /* Accumulator */
+    const q15_t* px;                          /* Intermediate inputA pointer */
+    const q15_t* py;                          /* Intermediate inputB pointer */
+    const q15_t *pSrc1, *pSrc2;               /* Intermediate pointers */
+    q31_t   x0, x1, x2, x3, c0; /* Temporary input variables to hold state and coefficient values */
+    int32_t blockSize1, blockSize2, blockSize3; /* Loop counters */
+    uint32_t   j, k, count, blkCnt, check;
+    arm_status status; /* Status of Partial convolution */
 
     /* Check for range of output samples to be calculated */
     if ((firstIndex + numPoints) > ((srcALen + (srcBLen - 1U)))) {
@@ -104,9 +109,12 @@ arm_status arm_conv_partial_q15(
      * the first and last indices of the output samples to be calculated. */
         check      = firstIndex + numPoints;
         blockSize3 = ((int32_t)check > (int32_t)srcALen) ? (int32_t)check - (int32_t)srcALen : 0;
-        blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1) ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen : blockSize3;
+        blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1)
+                         ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen
+                         : blockSize3;
         blockSize1 = ((int32_t)srcBLen - 1) - (int32_t)firstIndex;
-        blockSize1 = (blockSize1 > 0) ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints) : 0;
+        blockSize1 =
+            (blockSize1 > 0) ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints) : 0;
         blockSize2 = (int32_t)check - ((blockSize3 + blockSize1) + (int32_t)firstIndex);
         blockSize2 = (blockSize2 > 0) ? blockSize2 : 0;
 
@@ -427,11 +435,15 @@ arm_status arm_conv_partial_q15(
 
                 /* Store the results in the accumulators in the destination buffer. */
 #ifndef ARM_MATH_BIG_ENDIAN
-                write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc0 >> 15), 16), __SSAT((acc1 >> 15), 16), 16));
-                write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc2 >> 15), 16), __SSAT((acc3 >> 15), 16), 16));
+                write_q15x2_ia(&pOut,
+                               __PKHBT(__SSAT((acc0 >> 15), 16), __SSAT((acc1 >> 15), 16), 16));
+                write_q15x2_ia(&pOut,
+                               __PKHBT(__SSAT((acc2 >> 15), 16), __SSAT((acc3 >> 15), 16), 16));
 #else
-                write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc1 >> 15), 16), __SSAT((acc0 >> 15), 16), 16));
-                write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc3 >> 15), 16), __SSAT((acc2 >> 15), 16), 16));
+                write_q15x2_ia(&pOut,
+                               __PKHBT(__SSAT((acc1 >> 15), 16), __SSAT((acc0 >> 15), 16), 16));
+                write_q15x2_ia(&pOut,
+                               __PKHBT(__SSAT((acc3 >> 15), 16), __SSAT((acc2 >> 15), 16), 16));
 #endif /* #ifndef  ARM_MATH_BIG_ENDIAN */
 
                 /* Increment the pointer pIn1 index, count by 4 */

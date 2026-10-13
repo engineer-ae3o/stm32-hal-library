@@ -51,7 +51,9 @@
                    Results outside of the allowable Q31 range [0x80000000 0x7FFFFFFF] are saturated.
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-arm_status arm_mat_sub_q31(const arm_matrix_instance_q31* pSrcA, const arm_matrix_instance_q31* pSrcB, arm_matrix_instance_q31* pDst) {
+arm_status arm_mat_sub_q31(const arm_matrix_instance_q31* pSrcA,
+                           const arm_matrix_instance_q31* pSrcB,
+                           arm_matrix_instance_q31*       pDst) {
     uint32_t     numSamples; /* total number of elements in the matrix  */
     q31_t *      pDataA, *pDataB, *pDataDst;
     q31x4_t      vecA, vecB, vecDst;
@@ -69,8 +71,8 @@ arm_status arm_mat_sub_q31(const arm_matrix_instance_q31* pSrcA, const arm_matri
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) || (pSrcA->numRows != pDst->numRows) ||
-        (pSrcA->numCols != pDst->numCols)) {
+    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) || (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -119,7 +121,9 @@ arm_status arm_mat_sub_q31(const arm_matrix_instance_q31* pSrcA, const arm_matri
 }
 
 #else
-arm_status arm_mat_sub_q31(const arm_matrix_instance_q31* pSrcA, const arm_matrix_instance_q31* pSrcB, arm_matrix_instance_q31* pDst) {
+arm_status arm_mat_sub_q31(const arm_matrix_instance_q31* pSrcA,
+                           const arm_matrix_instance_q31* pSrcB,
+                           arm_matrix_instance_q31*       pDst) {
     q31_t* pInA = pSrcA->pData; /* input data matrix pointer A */
     q31_t* pInB = pSrcB->pData; /* input data matrix pointer B */
     q31_t* pOut = pDst->pData;  /* output data matrix pointer */
@@ -131,8 +135,8 @@ arm_status arm_mat_sub_q31(const arm_matrix_instance_q31* pSrcA, const arm_matri
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) || (pSrcA->numRows != pDst->numRows) ||
-        (pSrcA->numCols != pDst->numCols)) {
+    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) || (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

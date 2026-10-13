@@ -45,13 +45,14 @@
   @param[in]     blockSize number of samples to process
   @return        none
  */
-#if (defined(ARM_MATH_MVEF) && defined(ARM_MATH_HELIUM_EXPERIMENTAL)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_MVEF) && defined(ARM_MATH_HELIUM_EXPERIMENTAL)) &&                           \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include "arm_helium_utils.h"
 
 void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_instance_f32* S,
                                         const float32_t*                                   pSrc,
                                         float32_t*                                         pDst,
-                                        uint32_t                                           blockSize) {
+                                        uint32_t blockSize) {
     const float32_t* pIn     = pSrc;               /*  source pointer            */
     float32_t*       pOut    = pDst;               /*  destination pointer       */
     float32_t*       pState  = S->pState;          /*  State pointer             */
@@ -178,7 +179,7 @@ void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_ins
 void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_instance_f32* S,
                                         const float32_t*                                   pSrc,
                                         float32_t*                                         pDst,
-                                        uint32_t                                           blockSize) {
+                                        uint32_t blockSize) {
     const float32_t* pIn     = pSrc;               /* Source pointer */
     float32_t*       pOut    = pDst;               /* Destination pointer */
     float32_t*       pState  = S->pState;          /* State pointer */

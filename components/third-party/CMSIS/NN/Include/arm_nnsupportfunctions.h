@@ -53,8 +53,9 @@ extern "C" {
 /**
  * @brief definition to pack four 8 bit values.
  */
-#define PACK_Q7x4_32x1(v0, v1, v2, v3)                                                                                                               \
-    ((((int32_t)(v0) << 0) & (int32_t)0x000000FF) | (((int32_t)(v1) << 8) & (int32_t)0x0000FF00) | (((int32_t)(v2) << 16) & (int32_t)0x00FF0000) |   \
+#define PACK_Q7x4_32x1(v0, v1, v2, v3)                                                             \
+    ((((int32_t)(v0) << 0) & (int32_t)0x000000FF) | (((int32_t)(v1) << 8) & (int32_t)0x0000FF00) | \
+     (((int32_t)(v2) << 16) & (int32_t)0x00FF0000) |                                               \
      (((int32_t)(v3) << 24) & (int32_t)0xFF000000))
 
 /**
@@ -157,7 +158,10 @@ void arm_q7_to_q15_with_offset(const q7_t* src, q15_t* dst, uint32_t block_size,
  * original order.
  *
  */
-void arm_q7_to_q15_reordered_with_offset(const q7_t* src, q15_t* dst, uint32_t block_size, q15_t offset);
+void arm_q7_to_q15_reordered_with_offset(const q7_t* src,
+                                         q15_t*      dst,
+                                         uint32_t    block_size,
+                                         q15_t       offset);
 
 /**
  * @brief Converts the elements from a q7 vector and accumulate to a q15 vector
@@ -291,8 +295,11 @@ q15_t* arm_nn_mat_mult_kernel_s16(const q7_t*          input_a,
  *          sum_col += col_base[i]
  *
  */
-arm_status
-arm_nn_mat_mul_core_1x_s8(int32_t row_elements, const int8_t* row_base, const int8_t* col_base, int32_t* const sum_col, int32_t* const output);
+arm_status arm_nn_mat_mul_core_1x_s8(int32_t        row_elements,
+                                     const int8_t*  row_base,
+                                     const int8_t*  col_base,
+                                     int32_t* const sum_col,
+                                     int32_t* const output);
 
 /**
  * @brief Matrix-multiplication with requantization & activation function for four rows and one column
@@ -679,7 +686,8 @@ __STATIC_FORCEINLINE const q7_t* read_and_pad(const q7_t* source, q31_t* out1, q
  * @brief read and expand one q7 word into two q15 words with reordering
  */
 
-__STATIC_FORCEINLINE const q7_t* read_and_pad_reordered(const q7_t* source, q31_t* out1, q31_t* out2) {
+__STATIC_FORCEINLINE const q7_t*
+read_and_pad_reordered(const q7_t* source, q31_t* out1, q31_t* out2) {
     q31_t inA = arm_nn_read_q7x4_ia(&source);
 #ifndef ARM_MATH_BIG_ENDIAN
     *out2 = __SXTB16(__ROR((uint32_t)inA, 8));
@@ -695,7 +703,8 @@ __STATIC_FORCEINLINE const q7_t* read_and_pad_reordered(const q7_t* source, q31_
 /**
  * @brief read and expand one q7 word into two q15 words with reordering and add an offset
  */
-__STATIC_FORCEINLINE const q7_t* read_and_pad_reordered_with_offset(const q7_t* source, q31_t* out1, q31_t* out2, q31_t offset) {
+__STATIC_FORCEINLINE const q7_t*
+read_and_pad_reordered_with_offset(const q7_t* source, q31_t* out1, q31_t* out2, q31_t offset) {
     q31_t inA = arm_nn_read_q7x4_ia(&source);
 
 #ifndef ARM_MATH_BIG_ENDIAN
@@ -735,7 +744,8 @@ __STATIC_FORCEINLINE const q7_t* read_and_pad_reordered_with_offset(const q7_t* 
  * Results outside of the allowable q15 range [0x8000 0x7FFF] will be saturated.
  */
 
-void arm_nn_mult_q15(q15_t* pSrcA, q15_t* pSrcB, q15_t* pDst, const uint16_t out_shift, uint32_t blockSize);
+void arm_nn_mult_q15(
+    q15_t* pSrcA, q15_t* pSrcB, q15_t* pDst, const uint16_t out_shift, uint32_t blockSize);
 
 /**
  * @brief           q7 vector multiplication with variable output shifts
@@ -752,7 +762,8 @@ void arm_nn_mult_q15(q15_t* pSrcA, q15_t* pSrcB, q15_t* pDst, const uint16_t out
  * Results outside of the allowable q7 range [0x80 0x7F] will be saturated.
  */
 
-void arm_nn_mult_q7(q7_t* pSrcA, q7_t* pSrcB, q7_t* pDst, const uint16_t out_shift, uint32_t blockSize);
+void arm_nn_mult_q7(
+    q7_t* pSrcA, q7_t* pSrcB, q7_t* pDst, const uint16_t out_shift, uint32_t blockSize);
 
 /**
  * @brief Matrix-multiplication function for convolution with per-channel requantization.
@@ -901,7 +912,8 @@ __STATIC_FORCEINLINE q31_t arm_nn_doubling_high_mult_no_sat(const q31_t m1, cons
  * @return          Rounded result of division. Midpoint is rounded away from zero.
  *
  */
-__STATIC_FORCEINLINE q31_t arm_nn_divide_by_power_of_two(const q31_t dividend, const q31_t exponent) {
+__STATIC_FORCEINLINE q31_t arm_nn_divide_by_power_of_two(const q31_t dividend,
+                                                         const q31_t exponent) {
     q31_t       result         = 0;
     const q31_t remainder_mask = (1 << exponent) - 1;
     int32_t     remainder      = remainder_mask & dividend;
@@ -930,7 +942,9 @@ __STATIC_FORCEINLINE q31_t arm_nn_divide_by_power_of_two(const q31_t dividend, c
  * @return          Returns (val * multiplier)/(2 ^ shift)
  *
  */
-__STATIC_FORCEINLINE q31_t arm_nn_requantize(const q31_t val, const q31_t multiplier, const q31_t shift) {
+__STATIC_FORCEINLINE q31_t arm_nn_requantize(const q31_t val,
+                                             const q31_t multiplier,
+                                             const q31_t shift) {
 #ifdef CMSIS_NN_USE_SINGLE_ROUNDING
     const int64_t total_shift = 31 - shift;
     const int64_t new_val     = val * (int64_t)multiplier;
@@ -940,7 +954,9 @@ __STATIC_FORCEINLINE q31_t arm_nn_requantize(const q31_t val, const q31_t multip
 
     return result;
 #else
-    return arm_nn_divide_by_power_of_two(arm_nn_doubling_high_mult_no_sat(val * (1 << LEFT_SHIFT(shift)), multiplier), RIGHT_SHIFT(shift));
+    return arm_nn_divide_by_power_of_two(
+        arm_nn_doubling_high_mult_no_sat(val * (1 << LEFT_SHIFT(shift)), multiplier),
+        RIGHT_SHIFT(shift));
 #endif
 }
 
@@ -954,7 +970,9 @@ __STATIC_FORCEINLINE q31_t arm_nn_requantize(const q31_t val, const q31_t multip
  * @return          Returns (val * multiplier)/(2 ^ shift)
  *
  */
-__STATIC_FORCEINLINE q31_t arm_nn_requantize_s64(const q63_t val, const q31_t reduced_multiplier, const q31_t shift) {
+__STATIC_FORCEINLINE q31_t arm_nn_requantize_s64(const q63_t val,
+                                                 const q31_t reduced_multiplier,
+                                                 const q31_t shift) {
     const q63_t new_val = val * reduced_multiplier;
 
     q31_t result = new_val >> (14 - shift); // 64->32 bit reduction
@@ -970,7 +988,8 @@ __STATIC_FORCEINLINE q31_t arm_nn_requantize_s64(const q63_t val, const q31_t re
  * @param[in]       block_size  Number of bytes to copy.
  *
  */
-__STATIC_FORCEINLINE void arm_memcpy_q7(q7_t* __RESTRICT dst, const q7_t* __RESTRICT src, uint32_t block_size) {
+__STATIC_FORCEINLINE void
+arm_memcpy_q7(q7_t* __RESTRICT dst, const q7_t* __RESTRICT src, uint32_t block_size) {
 #if defined(ARM_MATH_MVEI)
     __asm volatile("   wlstp.8                 lr, %[cnt], 1f             \n"
                    "2:                                                    \n"
@@ -1006,7 +1025,8 @@ __STATIC_FORCEINLINE int32x4_t arm_doubling_high_mult_mve(const int32x4_t m1, co
  * @return          Rounded result of division. Midpoint is rounded away from zero.
  *
  */
-__STATIC_FORCEINLINE int32x4_t arm_divide_by_power_of_two_mve(const int32x4_t dividend, const q31_t exponent) {
+__STATIC_FORCEINLINE int32x4_t arm_divide_by_power_of_two_mve(const int32x4_t dividend,
+                                                              const q31_t     exponent) {
     const int32x4_t shift             = vdupq_n_s32(-exponent);
     const int32x4_t fixup             = vshrq_n_s32(vandq_s32(dividend, shift), 31);
     const int32x4_t fixed_up_dividend = vqaddq_s32(dividend, fixup);
@@ -1022,7 +1042,9 @@ __STATIC_FORCEINLINE int32x4_t arm_divide_by_power_of_two_mve(const int32x4_t di
  * @return          Returns (val * multiplier)/(2 ^ shift)
  *
  */
-__STATIC_FORCEINLINE int32x4_t arm_requantize_mve(const int32x4_t val, const q31_t multiplier, const q31_t shift) {
+__STATIC_FORCEINLINE int32x4_t arm_requantize_mve(const int32x4_t val,
+                                                  const q31_t     multiplier,
+                                                  const q31_t     shift) {
 #ifdef CMSIS_NN_USE_SINGLE_ROUNDING
     const int right_shift = MIN(-1, shift);
     const int left_shift  = shift - right_shift;
@@ -1035,22 +1057,28 @@ __STATIC_FORCEINLINE int32x4_t arm_requantize_mve(const int32x4_t val, const q31
 
     return result;
 #else
-    return arm_divide_by_power_of_two_mve(arm_doubling_high_mult_mve(vshlq_s32(val, vdupq_n_s32(LEFT_SHIFT(shift))), multiplier), RIGHT_SHIFT(shift));
+    return arm_divide_by_power_of_two_mve(
+        arm_doubling_high_mult_mve(vshlq_s32(val, vdupq_n_s32(LEFT_SHIFT(shift))), multiplier),
+        RIGHT_SHIFT(shift));
 #endif
 }
 
-__STATIC_FORCEINLINE int32x4_t arm_doubling_high_mult_mve_32x4(const int32x4_t m1, const int32x4_t m2) {
+__STATIC_FORCEINLINE int32x4_t arm_doubling_high_mult_mve_32x4(const int32x4_t m1,
+                                                               const int32x4_t m2) {
     return vqrdmulhq_s32(m1, m2);
 }
 
-__STATIC_FORCEINLINE int32x4_t arm_divide_by_power_of_two_mve_32x4(const int32x4_t dividend, const int32x4_t exponent) {
+__STATIC_FORCEINLINE int32x4_t arm_divide_by_power_of_two_mve_32x4(const int32x4_t dividend,
+                                                                   const int32x4_t exponent) {
     const int32x4_t shift             = -exponent;
     const int32x4_t fixup             = vshrq_n_s32(vandq_s32(dividend, shift), 31);
     const int32x4_t fixed_up_dividend = vqaddq_s32(dividend, fixup);
     return vrshlq_s32(fixed_up_dividend, shift);
 }
 
-__STATIC_FORCEINLINE int32x4_t arm_requantize_mve_32x4(const int32x4_t val, const int32x4_t multiplier, const int32x4_t shift) {
+__STATIC_FORCEINLINE int32x4_t arm_requantize_mve_32x4(const int32x4_t val,
+                                                       const int32x4_t multiplier,
+                                                       const int32x4_t shift) {
 #ifdef CMSIS_NN_USE_SINGLE_ROUNDING
     const int32x4_t right_shift = vminq_s32(vdupq_n_s32(-1), shift);
     const int32x4_t left_shift  = vqsubq_s32(shift, right_shift);
@@ -1066,7 +1094,8 @@ __STATIC_FORCEINLINE int32x4_t arm_requantize_mve_32x4(const int32x4_t val, cons
     const int32x4_t left_shift  = vpselq_s32(shift, zz, p);
     const int32x4_t right_shift = -vpselq_s32(zz, shift, p);
 
-    return arm_divide_by_power_of_two_mve_32x4(arm_doubling_high_mult_mve_32x4(vshlq_s32(val, left_shift), multiplier), right_shift);
+    return arm_divide_by_power_of_two_mve_32x4(
+        arm_doubling_high_mult_mve_32x4(vshlq_s32(val, left_shift), multiplier), right_shift);
 #endif
 }
 #endif
@@ -1082,12 +1111,16 @@ __STATIC_FORCEINLINE int32_t arm_nn_exp_on_negative_values(int32_t val) {
     const int32_t x                     = (val_mod_minus_quarter << 5) + (1 << 28);
     const int32_t x2                    = MUL_SAT(x, x);
 
-    int32_t result = 1895147668 + MUL_SAT(1895147668, x + DIV_POW2(MUL_SAT(DIV_POW2(MUL_SAT(x2, x2), 2) + MUL_SAT(x2, x), 715827883) + x2, 1));
+    int32_t result =
+        1895147668 +
+        MUL_SAT(1895147668,
+                x + DIV_POW2(MUL_SAT(DIV_POW2(MUL_SAT(x2, x2), 2) + MUL_SAT(x2, x), 715827883) + x2,
+                             1));
 
-#define SELECT_IF_NON_ZERO(x)                                                                                                                        \
-    {                                                                                                                                                \
-        mask   = MASK_IF_NON_ZERO(remainder & (1 << shift++));                                                                                       \
-        result = SELECT_USING_MASK(mask, MUL_SAT(result, x), result);                                                                                \
+#define SELECT_IF_NON_ZERO(x)                                                                      \
+    {                                                                                              \
+        mask   = MASK_IF_NON_ZERO(remainder & (1 << shift++));                                     \
+        result = SELECT_USING_MASK(mask, MUL_SAT(result, x), result);                              \
     }
 
     SELECT_IF_NON_ZERO(1672461947)

@@ -57,8 +57,12 @@
                    \image html dct4NormalizingQ31Table.gif
  */
 
-arm_status arm_dct4_init_q31(
-    arm_dct4_instance_q31* S, arm_rfft_instance_q31* S_RFFT, arm_cfft_radix4_instance_q31* S_CFFT, uint16_t N, uint16_t Nby2, q31_t normalize) {
+arm_status arm_dct4_init_q31(arm_dct4_instance_q31*        S,
+                             arm_rfft_instance_q31*        S_RFFT,
+                             arm_cfft_radix4_instance_q31* S_CFFT,
+                             uint16_t                      N,
+                             uint16_t                      Nby2,
+                             q31_t                         normalize) {
     /* Initialize the default arm status */
     arm_status status = ARM_MATH_SUCCESS;
 
@@ -78,7 +82,8 @@ arm_status arm_dct4_init_q31(
     S->pCfft = S_CFFT;
 
     switch (N) {
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q31_8192)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_DCT4_Q31_8192)
             /* Initialize the table modifier values */
         case 8192U:
             S->pTwiddle   = WeightsQ31_8192;
@@ -86,21 +91,24 @@ arm_status arm_dct4_init_q31(
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q31_2048)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_DCT4_Q31_2048)
         case 2048U:
             S->pTwiddle   = WeightsQ31_2048;
             S->pCosFactor = cos_factorsQ31_2048;
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q31_512)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_DCT4_Q31_512)
         case 512U:
             S->pTwiddle   = WeightsQ31_512;
             S->pCosFactor = cos_factorsQ31_512;
             break;
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) || defined(ARM_TABLE_DCT4_Q31_128)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FFT_TABLES) ||                              \
+    defined(ARM_TABLE_DCT4_Q31_128)
         case 128U:
             S->pTwiddle   = WeightsQ31_128;
             S->pCosFactor = cos_factorsQ31_128;

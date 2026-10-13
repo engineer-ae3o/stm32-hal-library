@@ -63,9 +63,13 @@ extern "C" {
 #include "cmsis_version.h"
 
 /*  CMSIS CM1 definitions */
-#define __CM1_CMSIS_VERSION_MAIN (__CM_CMSIS_VERSION_MAIN)                                /*!< \deprecated [31:16] CMSIS HAL main version */
-#define __CM1_CMSIS_VERSION_SUB (__CM_CMSIS_VERSION_SUB)                                  /*!< \deprecated [15:0]  CMSIS HAL sub version */
-#define __CM1_CMSIS_VERSION ((__CM1_CMSIS_VERSION_MAIN << 16U) | __CM1_CMSIS_VERSION_SUB) /*!< \deprecated CMSIS HAL version number */
+#define __CM1_CMSIS_VERSION_MAIN                                                                   \
+    (__CM_CMSIS_VERSION_MAIN) /*!< \deprecated [31:16] CMSIS HAL main version */
+#define __CM1_CMSIS_VERSION_SUB                                                                    \
+    (__CM_CMSIS_VERSION_SUB) /*!< \deprecated [15:0]  CMSIS HAL sub version */
+#define __CM1_CMSIS_VERSION                                                                        \
+    ((__CM1_CMSIS_VERSION_MAIN << 16U) |                                                           \
+     __CM1_CMSIS_VERSION_SUB) /*!< \deprecated CMSIS HAL version number */
 
 #define __CORTEX_M (1U) /*!< Cortex-M Core */
 
@@ -331,32 +335,37 @@ typedef struct {
     __IM uint32_t  CPUID; /*!< Offset: 0x000 (R/ )  CPUID Base Register */
     __IOM uint32_t ICSR;  /*!< Offset: 0x004 (R/W)  Interrupt Control and State Register */
     uint32_t       RESERVED0;
-    __IOM uint32_t AIRCR; /*!< Offset: 0x00C (R/W)  Application Interrupt and Reset Control Register */
-    __IOM uint32_t SCR;   /*!< Offset: 0x010 (R/W)  System Control Register */
-    __IOM uint32_t CCR;   /*!< Offset: 0x014 (R/W)  Configuration Control Register */
+    __IOM uint32_t
+        AIRCR; /*!< Offset: 0x00C (R/W)  Application Interrupt and Reset Control Register */
+    __IOM uint32_t SCR; /*!< Offset: 0x010 (R/W)  System Control Register */
+    __IOM uint32_t CCR; /*!< Offset: 0x014 (R/W)  Configuration Control Register */
     uint32_t       RESERVED1;
-    __IOM uint32_t SHP[2U]; /*!< Offset: 0x01C (R/W)  System Handlers Priority Registers. [0] is RESERVED */
-    __IOM uint32_t SHCSR;   /*!< Offset: 0x024 (R/W)  System Handler Control and State Register */
+    __IOM uint32_t
+        SHP[2U]; /*!< Offset: 0x01C (R/W)  System Handlers Priority Registers. [0] is RESERVED */
+    __IOM uint32_t SHCSR; /*!< Offset: 0x024 (R/W)  System Handler Control and State Register */
 } SCB_Type;
 
 /* SCB CPUID Register Definitions */
-#define SCB_CPUID_IMPLEMENTER_Pos 24U                                   /*!< SCB CPUID: IMPLEMENTER Position */
-#define SCB_CPUID_IMPLEMENTER_Msk (0xFFUL << SCB_CPUID_IMPLEMENTER_Pos) /*!< SCB CPUID: IMPLEMENTER Mask */
+#define SCB_CPUID_IMPLEMENTER_Pos 24U /*!< SCB CPUID: IMPLEMENTER Position */
+#define SCB_CPUID_IMPLEMENTER_Msk                                                                  \
+    (0xFFUL << SCB_CPUID_IMPLEMENTER_Pos) /*!< SCB CPUID: IMPLEMENTER Mask */
 
 #define SCB_CPUID_VARIANT_Pos 20U                              /*!< SCB CPUID: VARIANT Position */
 #define SCB_CPUID_VARIANT_Msk (0xFUL << SCB_CPUID_VARIANT_Pos) /*!< SCB CPUID: VARIANT Mask */
 
-#define SCB_CPUID_ARCHITECTURE_Pos 16U                                   /*!< SCB CPUID: ARCHITECTURE Position */
-#define SCB_CPUID_ARCHITECTURE_Msk (0xFUL << SCB_CPUID_ARCHITECTURE_Pos) /*!< SCB CPUID: ARCHITECTURE Mask */
+#define SCB_CPUID_ARCHITECTURE_Pos 16U /*!< SCB CPUID: ARCHITECTURE Position */
+#define SCB_CPUID_ARCHITECTURE_Msk                                                                 \
+    (0xFUL << SCB_CPUID_ARCHITECTURE_Pos) /*!< SCB CPUID: ARCHITECTURE Mask */
 
 #define SCB_CPUID_PARTNO_Pos 4U                                /*!< SCB CPUID: PARTNO Position */
 #define SCB_CPUID_PARTNO_Msk (0xFFFUL << SCB_CPUID_PARTNO_Pos) /*!< SCB CPUID: PARTNO Mask */
 
-#define SCB_CPUID_REVISION_Pos 0U                                    /*!< SCB CPUID: REVISION Position */
-#define SCB_CPUID_REVISION_Msk (0xFUL /*<< SCB_CPUID_REVISION_Pos*/) /*!< SCB CPUID: REVISION Mask */
+#define SCB_CPUID_REVISION_Pos 0U /*!< SCB CPUID: REVISION Position */
+#define SCB_CPUID_REVISION_Msk                                                                     \
+    (0xFUL /*<< SCB_CPUID_REVISION_Pos*/) /*!< SCB CPUID: REVISION Mask */
 
 /* SCB Interrupt Control State Register Definitions */
-#define SCB_ICSR_NMIPENDSET_Pos 31U                              /*!< SCB ICSR: NMIPENDSET Position */
+#define SCB_ICSR_NMIPENDSET_Pos 31U /*!< SCB ICSR: NMIPENDSET Position */
 #define SCB_ICSR_NMIPENDSET_Msk (1UL << SCB_ICSR_NMIPENDSET_Pos) /*!< SCB ICSR: NMIPENDSET Mask */
 
 #define SCB_ICSR_PENDSVSET_Pos 28U                             /*!< SCB ICSR: PENDSVSET Position */
@@ -371,33 +380,38 @@ typedef struct {
 #define SCB_ICSR_PENDSTCLR_Pos 25U                             /*!< SCB ICSR: PENDSTCLR Position */
 #define SCB_ICSR_PENDSTCLR_Msk (1UL << SCB_ICSR_PENDSTCLR_Pos) /*!< SCB ICSR: PENDSTCLR Mask */
 
-#define SCB_ICSR_ISRPREEMPT_Pos 23U                              /*!< SCB ICSR: ISRPREEMPT Position */
+#define SCB_ICSR_ISRPREEMPT_Pos 23U /*!< SCB ICSR: ISRPREEMPT Position */
 #define SCB_ICSR_ISRPREEMPT_Msk (1UL << SCB_ICSR_ISRPREEMPT_Pos) /*!< SCB ICSR: ISRPREEMPT Mask */
 
-#define SCB_ICSR_ISRPENDING_Pos 22U                              /*!< SCB ICSR: ISRPENDING Position */
+#define SCB_ICSR_ISRPENDING_Pos 22U /*!< SCB ICSR: ISRPENDING Position */
 #define SCB_ICSR_ISRPENDING_Msk (1UL << SCB_ICSR_ISRPENDING_Pos) /*!< SCB ICSR: ISRPENDING Mask */
 
-#define SCB_ICSR_VECTPENDING_Pos 12U                                   /*!< SCB ICSR: VECTPENDING Position */
-#define SCB_ICSR_VECTPENDING_Msk (0x1FFUL << SCB_ICSR_VECTPENDING_Pos) /*!< SCB ICSR: VECTPENDING Mask */
+#define SCB_ICSR_VECTPENDING_Pos 12U /*!< SCB ICSR: VECTPENDING Position */
+#define SCB_ICSR_VECTPENDING_Msk                                                                   \
+    (0x1FFUL << SCB_ICSR_VECTPENDING_Pos) /*!< SCB ICSR: VECTPENDING Mask */
 
-#define SCB_ICSR_VECTACTIVE_Pos 0U                                       /*!< SCB ICSR: VECTACTIVE Position */
-#define SCB_ICSR_VECTACTIVE_Msk (0x1FFUL /*<< SCB_ICSR_VECTACTIVE_Pos*/) /*!< SCB ICSR: VECTACTIVE Mask */
+#define SCB_ICSR_VECTACTIVE_Pos 0U /*!< SCB ICSR: VECTACTIVE Position */
+#define SCB_ICSR_VECTACTIVE_Msk                                                                    \
+    (0x1FFUL /*<< SCB_ICSR_VECTACTIVE_Pos*/) /*!< SCB ICSR: VECTACTIVE Mask */
 
 /* SCB Application Interrupt and Reset Control Register Definitions */
-#define SCB_AIRCR_VECTKEY_Pos 16U                                 /*!< SCB AIRCR: VECTKEY Position */
+#define SCB_AIRCR_VECTKEY_Pos 16U /*!< SCB AIRCR: VECTKEY Position */
 #define SCB_AIRCR_VECTKEY_Msk (0xFFFFUL << SCB_AIRCR_VECTKEY_Pos) /*!< SCB AIRCR: VECTKEY Mask */
 
-#define SCB_AIRCR_VECTKEYSTAT_Pos 16U                                     /*!< SCB AIRCR: VECTKEYSTAT Position */
-#define SCB_AIRCR_VECTKEYSTAT_Msk (0xFFFFUL << SCB_AIRCR_VECTKEYSTAT_Pos) /*!< SCB AIRCR: VECTKEYSTAT Mask */
+#define SCB_AIRCR_VECTKEYSTAT_Pos 16U /*!< SCB AIRCR: VECTKEYSTAT Position */
+#define SCB_AIRCR_VECTKEYSTAT_Msk                                                                  \
+    (0xFFFFUL << SCB_AIRCR_VECTKEYSTAT_Pos) /*!< SCB AIRCR: VECTKEYSTAT Mask */
 
-#define SCB_AIRCR_ENDIANESS_Pos 15U                              /*!< SCB AIRCR: ENDIANESS Position */
+#define SCB_AIRCR_ENDIANESS_Pos 15U /*!< SCB AIRCR: ENDIANESS Position */
 #define SCB_AIRCR_ENDIANESS_Msk (1UL << SCB_AIRCR_ENDIANESS_Pos) /*!< SCB AIRCR: ENDIANESS Mask */
 
-#define SCB_AIRCR_SYSRESETREQ_Pos 2U                                 /*!< SCB AIRCR: SYSRESETREQ Position */
-#define SCB_AIRCR_SYSRESETREQ_Msk (1UL << SCB_AIRCR_SYSRESETREQ_Pos) /*!< SCB AIRCR: SYSRESETREQ Mask */
+#define SCB_AIRCR_SYSRESETREQ_Pos 2U /*!< SCB AIRCR: SYSRESETREQ Position */
+#define SCB_AIRCR_SYSRESETREQ_Msk                                                                  \
+    (1UL << SCB_AIRCR_SYSRESETREQ_Pos) /*!< SCB AIRCR: SYSRESETREQ Mask */
 
-#define SCB_AIRCR_VECTCLRACTIVE_Pos 1U                                   /*!< SCB AIRCR: VECTCLRACTIVE Position */
-#define SCB_AIRCR_VECTCLRACTIVE_Msk (1UL << SCB_AIRCR_VECTCLRACTIVE_Pos) /*!< SCB AIRCR: VECTCLRACTIVE Mask */
+#define SCB_AIRCR_VECTCLRACTIVE_Pos 1U /*!< SCB AIRCR: VECTCLRACTIVE Position */
+#define SCB_AIRCR_VECTCLRACTIVE_Msk                                                                \
+    (1UL << SCB_AIRCR_VECTCLRACTIVE_Pos) /*!< SCB AIRCR: VECTCLRACTIVE Mask */
 
 /* SCB System Control Register Definitions */
 #define SCB_SCR_SEVONPEND_Pos 4U                             /*!< SCB SCR: SEVONPEND Position */
@@ -406,19 +420,20 @@ typedef struct {
 #define SCB_SCR_SLEEPDEEP_Pos 2U                             /*!< SCB SCR: SLEEPDEEP Position */
 #define SCB_SCR_SLEEPDEEP_Msk (1UL << SCB_SCR_SLEEPDEEP_Pos) /*!< SCB SCR: SLEEPDEEP Mask */
 
-#define SCB_SCR_SLEEPONEXIT_Pos 1U                               /*!< SCB SCR: SLEEPONEXIT Position */
+#define SCB_SCR_SLEEPONEXIT_Pos 1U /*!< SCB SCR: SLEEPONEXIT Position */
 #define SCB_SCR_SLEEPONEXIT_Msk (1UL << SCB_SCR_SLEEPONEXIT_Pos) /*!< SCB SCR: SLEEPONEXIT Mask */
 
 /* SCB Configuration Control Register Definitions */
 #define SCB_CCR_STKALIGN_Pos 9U                            /*!< SCB CCR: STKALIGN Position */
 #define SCB_CCR_STKALIGN_Msk (1UL << SCB_CCR_STKALIGN_Pos) /*!< SCB CCR: STKALIGN Mask */
 
-#define SCB_CCR_UNALIGN_TRP_Pos 3U                               /*!< SCB CCR: UNALIGN_TRP Position */
+#define SCB_CCR_UNALIGN_TRP_Pos 3U /*!< SCB CCR: UNALIGN_TRP Position */
 #define SCB_CCR_UNALIGN_TRP_Msk (1UL << SCB_CCR_UNALIGN_TRP_Pos) /*!< SCB CCR: UNALIGN_TRP Mask */
 
 /* SCB System Handler Control and State Register Definitions */
-#define SCB_SHCSR_SVCALLPENDED_Pos 15U                                 /*!< SCB SHCSR: SVCALLPENDED Position */
-#define SCB_SHCSR_SVCALLPENDED_Msk (1UL << SCB_SHCSR_SVCALLPENDED_Pos) /*!< SCB SHCSR: SVCALLPENDED Mask */
+#define SCB_SHCSR_SVCALLPENDED_Pos 15U /*!< SCB SHCSR: SVCALLPENDED Position */
+#define SCB_SHCSR_SVCALLPENDED_Msk                                                                 \
+    (1UL << SCB_SHCSR_SVCALLPENDED_Pos) /*!< SCB SHCSR: SVCALLPENDED Mask */
 
 /*@} end of group CMSIS_SCB */
 
@@ -439,11 +454,13 @@ typedef struct {
 } SCnSCB_Type;
 
 /* Auxiliary Control Register Definitions */
-#define SCnSCB_ACTLR_ITCMUAEN_Pos 4U                                 /*!< ACTLR: Instruction TCM Upper Alias Enable Position */
-#define SCnSCB_ACTLR_ITCMUAEN_Msk (1UL << SCnSCB_ACTLR_ITCMUAEN_Pos) /*!< ACTLR: Instruction TCM Upper Alias Enable Mask */
+#define SCnSCB_ACTLR_ITCMUAEN_Pos 4U /*!< ACTLR: Instruction TCM Upper Alias Enable Position */
+#define SCnSCB_ACTLR_ITCMUAEN_Msk                                                                  \
+    (1UL << SCnSCB_ACTLR_ITCMUAEN_Pos) /*!< ACTLR: Instruction TCM Upper Alias Enable Mask */
 
-#define SCnSCB_ACTLR_ITCMLAEN_Pos 3U                                 /*!< ACTLR: Instruction TCM Lower Alias Enable Position */
-#define SCnSCB_ACTLR_ITCMLAEN_Msk (1UL << SCnSCB_ACTLR_ITCMLAEN_Pos) /*!< ACTLR: Instruction TCM Lower Alias Enable Mask */
+#define SCnSCB_ACTLR_ITCMLAEN_Pos 3U /*!< ACTLR: Instruction TCM Lower Alias Enable Position */
+#define SCnSCB_ACTLR_ITCMLAEN_Msk                                                                  \
+    (1UL << SCnSCB_ACTLR_ITCMLAEN_Pos) /*!< ACTLR: Instruction TCM Lower Alias Enable Mask */
 
 /*@} end of group CMSIS_SCnotSCB */
 
@@ -466,35 +483,42 @@ typedef struct {
 } SysTick_Type;
 
 /* SysTick Control / Status Register Definitions */
-#define SysTick_CTRL_COUNTFLAG_Pos 16U                                 /*!< SysTick CTRL: COUNTFLAG Position */
-#define SysTick_CTRL_COUNTFLAG_Msk (1UL << SysTick_CTRL_COUNTFLAG_Pos) /*!< SysTick CTRL: COUNTFLAG Mask */
+#define SysTick_CTRL_COUNTFLAG_Pos 16U /*!< SysTick CTRL: COUNTFLAG Position */
+#define SysTick_CTRL_COUNTFLAG_Msk                                                                 \
+    (1UL << SysTick_CTRL_COUNTFLAG_Pos) /*!< SysTick CTRL: COUNTFLAG Mask */
 
-#define SysTick_CTRL_CLKSOURCE_Pos 2U                                  /*!< SysTick CTRL: CLKSOURCE Position */
-#define SysTick_CTRL_CLKSOURCE_Msk (1UL << SysTick_CTRL_CLKSOURCE_Pos) /*!< SysTick CTRL: CLKSOURCE Mask */
+#define SysTick_CTRL_CLKSOURCE_Pos 2U /*!< SysTick CTRL: CLKSOURCE Position */
+#define SysTick_CTRL_CLKSOURCE_Msk                                                                 \
+    (1UL << SysTick_CTRL_CLKSOURCE_Pos) /*!< SysTick CTRL: CLKSOURCE Mask */
 
-#define SysTick_CTRL_TICKINT_Pos 1U                                /*!< SysTick CTRL: TICKINT Position */
-#define SysTick_CTRL_TICKINT_Msk (1UL << SysTick_CTRL_TICKINT_Pos) /*!< SysTick CTRL: TICKINT Mask */
+#define SysTick_CTRL_TICKINT_Pos 1U /*!< SysTick CTRL: TICKINT Position */
+#define SysTick_CTRL_TICKINT_Msk                                                                   \
+    (1UL << SysTick_CTRL_TICKINT_Pos) /*!< SysTick CTRL: TICKINT Mask */
 
-#define SysTick_CTRL_ENABLE_Pos 0U                                   /*!< SysTick CTRL: ENABLE Position */
-#define SysTick_CTRL_ENABLE_Msk (1UL /*<< SysTick_CTRL_ENABLE_Pos*/) /*!< SysTick CTRL: ENABLE Mask */
+#define SysTick_CTRL_ENABLE_Pos 0U /*!< SysTick CTRL: ENABLE Position */
+#define SysTick_CTRL_ENABLE_Msk                                                                    \
+    (1UL /*<< SysTick_CTRL_ENABLE_Pos*/) /*!< SysTick CTRL: ENABLE Mask */
 
 /* SysTick Reload Register Definitions */
-#define SysTick_LOAD_RELOAD_Pos 0U                                          /*!< SysTick LOAD: RELOAD Position */
-#define SysTick_LOAD_RELOAD_Msk (0xFFFFFFUL /*<< SysTick_LOAD_RELOAD_Pos*/) /*!< SysTick LOAD: RELOAD Mask */
+#define SysTick_LOAD_RELOAD_Pos 0U /*!< SysTick LOAD: RELOAD Position */
+#define SysTick_LOAD_RELOAD_Msk                                                                    \
+    (0xFFFFFFUL /*<< SysTick_LOAD_RELOAD_Pos*/) /*!< SysTick LOAD: RELOAD Mask */
 
 /* SysTick Current Register Definitions */
-#define SysTick_VAL_CURRENT_Pos 0U                                          /*!< SysTick VAL: CURRENT Position */
-#define SysTick_VAL_CURRENT_Msk (0xFFFFFFUL /*<< SysTick_VAL_CURRENT_Pos*/) /*!< SysTick VAL: CURRENT Mask */
+#define SysTick_VAL_CURRENT_Pos 0U /*!< SysTick VAL: CURRENT Position */
+#define SysTick_VAL_CURRENT_Msk                                                                    \
+    (0xFFFFFFUL /*<< SysTick_VAL_CURRENT_Pos*/) /*!< SysTick VAL: CURRENT Mask */
 
 /* SysTick Calibration Register Definitions */
-#define SysTick_CALIB_NOREF_Pos 31U                              /*!< SysTick CALIB: NOREF Position */
+#define SysTick_CALIB_NOREF_Pos 31U /*!< SysTick CALIB: NOREF Position */
 #define SysTick_CALIB_NOREF_Msk (1UL << SysTick_CALIB_NOREF_Pos) /*!< SysTick CALIB: NOREF Mask */
 
 #define SysTick_CALIB_SKEW_Pos 30U                             /*!< SysTick CALIB: SKEW Position */
 #define SysTick_CALIB_SKEW_Msk (1UL << SysTick_CALIB_SKEW_Pos) /*!< SysTick CALIB: SKEW Mask */
 
-#define SysTick_CALIB_TENMS_Pos 0U                                          /*!< SysTick CALIB: TENMS Position */
-#define SysTick_CALIB_TENMS_Msk (0xFFFFFFUL /*<< SysTick_CALIB_TENMS_Pos*/) /*!< SysTick CALIB: TENMS Mask */
+#define SysTick_CALIB_TENMS_Pos 0U /*!< SysTick CALIB: TENMS Position */
+#define SysTick_CALIB_TENMS_Msk                                                                    \
+    (0xFFFFFFUL /*<< SysTick_CALIB_TENMS_Pos*/) /*!< SysTick CALIB: TENMS Mask */
 
 /*@} end of group CMSIS_SysTick */
 
@@ -611,9 +635,12 @@ typedef struct {
 
 
 /* The following EXC_RETURN values are saved the LR on exception entry */
-#define EXC_RETURN_HANDLER (0xFFFFFFF1UL)    /* return to Handler mode, uses MSP after return                               */
-#define EXC_RETURN_THREAD_MSP (0xFFFFFFF9UL) /* return to Thread mode, uses MSP after return                                */
-#define EXC_RETURN_THREAD_PSP (0xFFFFFFFDUL) /* return to Thread mode, uses PSP after return                                */
+#define EXC_RETURN_HANDLER                                                                         \
+    (0xFFFFFFF1UL) /* return to Handler mode, uses MSP after return                               */
+#define EXC_RETURN_THREAD_MSP                                                                      \
+    (0xFFFFFFF9UL) /* return to Thread mode, uses MSP after return                                */
+#define EXC_RETURN_THREAD_PSP                                                                      \
+    (0xFFFFFFFDUL) /* return to Thread mode, uses PSP after return                                */
 
 
 /* Interrupt Priorities are WORD accessible only under Armv6-M                  */
@@ -650,7 +677,8 @@ __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn) {
  */
 __STATIC_INLINE uint32_t __NVIC_GetEnableIRQ(IRQn_Type IRQn) {
     if ((int32_t)(IRQn) >= 0) {
-        return ((uint32_t)(((NVIC->ISER[0U] & (1UL << (((uint32_t)IRQn) & 0x1FUL))) != 0UL) ? 1UL : 0UL));
+        return ((uint32_t)(((NVIC->ISER[0U] & (1UL << (((uint32_t)IRQn) & 0x1FUL))) != 0UL) ? 1UL
+                                                                                            : 0UL));
     } else {
         return (0U);
     }
@@ -682,7 +710,8 @@ __STATIC_INLINE void __NVIC_DisableIRQ(IRQn_Type IRQn) {
  */
 __STATIC_INLINE uint32_t __NVIC_GetPendingIRQ(IRQn_Type IRQn) {
     if ((int32_t)(IRQn) >= 0) {
-        return ((uint32_t)(((NVIC->ISPR[0U] & (1UL << (((uint32_t)IRQn) & 0x1FUL))) != 0UL) ? 1UL : 0UL));
+        return ((uint32_t)(((NVIC->ISPR[0U] & (1UL << (((uint32_t)IRQn) & 0x1FUL))) != 0UL) ? 1UL
+                                                                                            : 0UL));
     } else {
         return (0U);
     }
@@ -726,11 +755,13 @@ __STATIC_INLINE void __NVIC_ClearPendingIRQ(IRQn_Type IRQn) {
  */
 __STATIC_INLINE void __NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority) {
     if ((int32_t)(IRQn) >= 0) {
-        NVIC->IP[_IP_IDX(IRQn)] = ((uint32_t)(NVIC->IP[_IP_IDX(IRQn)] & ~(0xFFUL << _BIT_SHIFT(IRQn))) |
-                                   (((priority << (8U - __NVIC_PRIO_BITS)) & (uint32_t)0xFFUL) << _BIT_SHIFT(IRQn)));
+        NVIC->IP[_IP_IDX(IRQn)] =
+            ((uint32_t)(NVIC->IP[_IP_IDX(IRQn)] & ~(0xFFUL << _BIT_SHIFT(IRQn))) |
+             (((priority << (8U - __NVIC_PRIO_BITS)) & (uint32_t)0xFFUL) << _BIT_SHIFT(IRQn)));
     } else {
-        SCB->SHP[_SHP_IDX(IRQn)] = ((uint32_t)(SCB->SHP[_SHP_IDX(IRQn)] & ~(0xFFUL << _BIT_SHIFT(IRQn))) |
-                                    (((priority << (8U - __NVIC_PRIO_BITS)) & (uint32_t)0xFFUL) << _BIT_SHIFT(IRQn)));
+        SCB->SHP[_SHP_IDX(IRQn)] =
+            ((uint32_t)(SCB->SHP[_SHP_IDX(IRQn)] & ~(0xFFUL << _BIT_SHIFT(IRQn))) |
+             (((priority << (8U - __NVIC_PRIO_BITS)) & (uint32_t)0xFFUL) << _BIT_SHIFT(IRQn)));
     }
 }
 
@@ -747,9 +778,11 @@ __STATIC_INLINE void __NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority) {
 __STATIC_INLINE uint32_t __NVIC_GetPriority(IRQn_Type IRQn) {
 
     if ((int32_t)(IRQn) >= 0) {
-        return ((uint32_t)(((NVIC->IP[_IP_IDX(IRQn)] >> _BIT_SHIFT(IRQn)) & (uint32_t)0xFFUL) >> (8U - __NVIC_PRIO_BITS)));
+        return ((uint32_t)(((NVIC->IP[_IP_IDX(IRQn)] >> _BIT_SHIFT(IRQn)) & (uint32_t)0xFFUL) >>
+                           (8U - __NVIC_PRIO_BITS)));
     } else {
-        return ((uint32_t)(((SCB->SHP[_SHP_IDX(IRQn)] >> _BIT_SHIFT(IRQn)) & (uint32_t)0xFFUL) >> (8U - __NVIC_PRIO_BITS)));
+        return ((uint32_t)(((SCB->SHP[_SHP_IDX(IRQn)] >> _BIT_SHIFT(IRQn)) & (uint32_t)0xFFUL) >>
+                           (8U - __NVIC_PRIO_BITS)));
     }
 }
 
@@ -765,19 +798,24 @@ __STATIC_INLINE uint32_t __NVIC_GetPriority(IRQn_Type IRQn) {
   \param [in]       SubPriority  Subpriority value (starting from 0).
   \return                        Encoded priority. Value can be used in the function \ref NVIC_SetPriority().
  */
-__STATIC_INLINE uint32_t NVIC_EncodePriority(uint32_t PriorityGroup, uint32_t PreemptPriority, uint32_t SubPriority) {
-    uint32_t PriorityGroupTmp = (PriorityGroup & (uint32_t)0x07UL); /* only values 0..7 are used          */
+__STATIC_INLINE uint32_t NVIC_EncodePriority(uint32_t PriorityGroup,
+                                             uint32_t PreemptPriority,
+                                             uint32_t SubPriority) {
+    uint32_t PriorityGroupTmp =
+        (PriorityGroup & (uint32_t)0x07UL); /* only values 0..7 are used          */
     uint32_t PreemptPriorityBits;
     uint32_t SubPriorityBits;
 
-    PreemptPriorityBits =
-        ((7UL - PriorityGroupTmp) > (uint32_t)(__NVIC_PRIO_BITS)) ? (uint32_t)(__NVIC_PRIO_BITS) : (uint32_t)(7UL - PriorityGroupTmp);
-    SubPriorityBits = ((PriorityGroupTmp + (uint32_t)(__NVIC_PRIO_BITS)) < (uint32_t)7UL)
-                          ? (uint32_t)0UL
-                          : (uint32_t)((PriorityGroupTmp - 7UL) + (uint32_t)(__NVIC_PRIO_BITS));
+    PreemptPriorityBits = ((7UL - PriorityGroupTmp) > (uint32_t)(__NVIC_PRIO_BITS))
+                              ? (uint32_t)(__NVIC_PRIO_BITS)
+                              : (uint32_t)(7UL - PriorityGroupTmp);
+    SubPriorityBits     = ((PriorityGroupTmp + (uint32_t)(__NVIC_PRIO_BITS)) < (uint32_t)7UL)
+                              ? (uint32_t)0UL
+                              : (uint32_t)((PriorityGroupTmp - 7UL) + (uint32_t)(__NVIC_PRIO_BITS));
 
-    return (((PreemptPriority & (uint32_t)((1UL << (PreemptPriorityBits)) - 1UL)) << SubPriorityBits) |
-            ((SubPriority & (uint32_t)((1UL << (SubPriorityBits)) - 1UL))));
+    return (
+        ((PreemptPriority & (uint32_t)((1UL << (PreemptPriorityBits)) - 1UL)) << SubPriorityBits) |
+        ((SubPriority & (uint32_t)((1UL << (SubPriorityBits)) - 1UL))));
 }
 
 
@@ -792,19 +830,25 @@ __STATIC_INLINE uint32_t NVIC_EncodePriority(uint32_t PriorityGroup, uint32_t Pr
   \param [out] pPreemptPriority  Preemptive priority value (starting from 0).
   \param [out]     pSubPriority  Subpriority value (starting from 0).
  */
-__STATIC_INLINE void NVIC_DecodePriority(uint32_t Priority, uint32_t PriorityGroup, uint32_t* const pPreemptPriority, uint32_t* const pSubPriority) {
-    uint32_t PriorityGroupTmp = (PriorityGroup & (uint32_t)0x07UL); /* only values 0..7 are used          */
+__STATIC_INLINE void NVIC_DecodePriority(uint32_t        Priority,
+                                         uint32_t        PriorityGroup,
+                                         uint32_t* const pPreemptPriority,
+                                         uint32_t* const pSubPriority) {
+    uint32_t PriorityGroupTmp =
+        (PriorityGroup & (uint32_t)0x07UL); /* only values 0..7 are used          */
     uint32_t PreemptPriorityBits;
     uint32_t SubPriorityBits;
 
-    PreemptPriorityBits =
-        ((7UL - PriorityGroupTmp) > (uint32_t)(__NVIC_PRIO_BITS)) ? (uint32_t)(__NVIC_PRIO_BITS) : (uint32_t)(7UL - PriorityGroupTmp);
-    SubPriorityBits = ((PriorityGroupTmp + (uint32_t)(__NVIC_PRIO_BITS)) < (uint32_t)7UL)
-                          ? (uint32_t)0UL
-                          : (uint32_t)((PriorityGroupTmp - 7UL) + (uint32_t)(__NVIC_PRIO_BITS));
+    PreemptPriorityBits = ((7UL - PriorityGroupTmp) > (uint32_t)(__NVIC_PRIO_BITS))
+                              ? (uint32_t)(__NVIC_PRIO_BITS)
+                              : (uint32_t)(7UL - PriorityGroupTmp);
+    SubPriorityBits     = ((PriorityGroupTmp + (uint32_t)(__NVIC_PRIO_BITS)) < (uint32_t)7UL)
+                              ? (uint32_t)0UL
+                              : (uint32_t)((PriorityGroupTmp - 7UL) + (uint32_t)(__NVIC_PRIO_BITS));
 
-    *pPreemptPriority = (Priority >> SubPriorityBits) & (uint32_t)((1UL << (PreemptPriorityBits)) - 1UL);
-    *pSubPriority     = (Priority) & (uint32_t)((1UL << (SubPriorityBits)) - 1UL);
+    *pPreemptPriority =
+        (Priority >> SubPriorityBits) & (uint32_t)((1UL << (PreemptPriorityBits)) - 1UL);
+    *pSubPriority = (Priority) & (uint32_t)((1UL << (SubPriorityBits)) - 1UL);
 }
 
 
@@ -907,11 +951,13 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks) {
         return (1UL); /* Reload value impossible */
     }
 
-    SysTick->LOAD = (uint32_t)(ticks - 1UL);                                                         /* set reload register */
-    NVIC_SetPriority(SysTick_IRQn, (1UL << __NVIC_PRIO_BITS) - 1UL);                                 /* set Priority for Systick Interrupt */
-    SysTick->VAL  = 0UL;                                                                             /* Load the SysTick Counter Value */
-    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk; /* Enable SysTick IRQ and SysTick Timer */
-    return (0UL);                                                                                    /* Function successful */
+    SysTick->LOAD = (uint32_t)(ticks - 1UL); /* set reload register */
+    NVIC_SetPriority(SysTick_IRQn,
+                     (1UL << __NVIC_PRIO_BITS) - 1UL); /* set Priority for Systick Interrupt */
+    SysTick->VAL  = 0UL;                               /* Load the SysTick Counter Value */
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk |
+                    SysTick_CTRL_ENABLE_Msk; /* Enable SysTick IRQ and SysTick Timer */
+    return (0UL);                            /* Function successful */
 }
 
 #endif

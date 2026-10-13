@@ -112,7 +112,11 @@ float16_t arm_weighted_sum_f16(const float16_t* in, const float16_t* weigths, ui
  * @return       None
  *
  */
-void arm_barycenter_f16(const float16_t* in, const float16_t* weights, float16_t* out, uint32_t nbVectors, uint32_t vecDim);
+void arm_barycenter_f16(const float16_t* in,
+                        const float16_t* weights,
+                        float16_t*       out,
+                        uint32_t         nbVectors,
+                        uint32_t         vecDim);
 
 
 /**

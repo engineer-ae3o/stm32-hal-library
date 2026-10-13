@@ -396,16 +396,18 @@ uint32_t UART_Configure(const uint8_t* request, uint8_t* response) {
     int32_t  result;
 
     if (UartTransport != DAP_UART_TRANSPORT_DAP_COMMAND) {
-        status   = DAP_UART_CFG_ERROR_DATA_BITS | DAP_UART_CFG_ERROR_PARITY | DAP_UART_CFG_ERROR_STOP_BITS;
+        status =
+            DAP_UART_CFG_ERROR_DATA_BITS | DAP_UART_CFG_ERROR_PARITY | DAP_UART_CFG_ERROR_STOP_BITS;
         baudrate = 0U; // baudrate error
     } else {
 
-        status  = 0U;
-        control = *request;
-        baudrate =
-            (uint32_t)(*(request + 1) << 0) | (uint32_t)(*(request + 2) << 8) | (uint32_t)(*(request + 3) << 16) | (uint32_t)(*(request + 4) << 24);
+        status   = 0U;
+        control  = *request;
+        baudrate = (uint32_t)(*(request + 1) << 0) | (uint32_t)(*(request + 2) << 8) |
+                   (uint32_t)(*(request + 3) << 16) | (uint32_t)(*(request + 4) << 24);
 
-        result = pUSART->Control(control | ARM_USART_MODE_ASYNCHRONOUS | ARM_USART_FLOW_CONTROL_NONE, baudrate);
+        result = pUSART->Control(
+            control | ARM_USART_MODE_ASYNCHRONOUS | ARM_USART_FLOW_CONTROL_NONE, baudrate);
         if (result == ARM_DRIVER_OK) {
             UartConfigured = 1U;
         } else {
@@ -425,7 +427,8 @@ uint32_t UART_Configure(const uint8_t* request, uint8_t* response) {
                     status = DAP_UART_CFG_ERROR_STOP_BITS;
                     break;
                 default:
-                    status   = DAP_UART_CFG_ERROR_DATA_BITS | DAP_UART_CFG_ERROR_PARITY | DAP_UART_CFG_ERROR_STOP_BITS;
+                    status   = DAP_UART_CFG_ERROR_DATA_BITS | DAP_UART_CFG_ERROR_PARITY |
+                               DAP_UART_CFG_ERROR_STOP_BITS;
                     baudrate = 0U;
                     break;
             }

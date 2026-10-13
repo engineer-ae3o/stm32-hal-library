@@ -59,7 +59,13 @@
                    <code>arm_lms_q31()</code>.
  */
 
-void arm_lms_init_q31(arm_lms_instance_q31* S, uint16_t numTaps, q31_t* pCoeffs, q31_t* pState, q31_t mu, uint32_t blockSize, uint32_t postShift) {
+void arm_lms_init_q31(arm_lms_instance_q31* S,
+                      uint16_t              numTaps,
+                      q31_t*                pCoeffs,
+                      q31_t*                pState,
+                      q31_t                 mu,
+                      uint32_t              blockSize,
+                      uint32_t              postShift) {
     /* Assign filter taps */
     S->numTaps = numTaps;
 

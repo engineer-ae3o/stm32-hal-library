@@ -67,7 +67,11 @@
                    The state variables are updated after each block of data is processed; the coefficients are untouched.
  */
 
-void arm_biquad_cascade_df1_init_q31(arm_biquad_casd_df1_inst_q31* S, uint8_t numStages, const q31_t* pCoeffs, q31_t* pState, int8_t postShift) {
+void arm_biquad_cascade_df1_init_q31(arm_biquad_casd_df1_inst_q31* S,
+                                     uint8_t                       numStages,
+                                     const q31_t*                  pCoeffs,
+                                     q31_t*                        pState,
+                                     int8_t                        postShift) {
     /* Assign filter stages */
     S->numStages = numStages;
 

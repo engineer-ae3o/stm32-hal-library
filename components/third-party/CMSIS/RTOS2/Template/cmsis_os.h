@@ -206,21 +206,25 @@ typedef enum {
 /// Status code values returned by CMSIS-RTOS functions.
 #if (osCMSIS < 0x20000U)
 typedef enum {
-    osOK                   = 0,    ///< Function completed; no error or event occurred.
-    osEventSignal          = 0x08, ///< Function completed; signal event occurred.
-    osEventMessage         = 0x10, ///< Function completed; message event occurred.
-    osEventMail            = 0x20, ///< Function completed; mail event occurred.
-    osEventTimeout         = 0x40, ///< Function completed; timeout occurred.
-    osErrorParameter       = 0x80, ///< Parameter error: a mandatory parameter was missing or specified an incorrect object.
-    osErrorResource        = 0x81, ///< Resource not available: a specified resource was not available.
-    osErrorTimeoutResource = 0xC1, ///< Resource not available within given time: a specified resource was not available within the timeout period.
-    osErrorISR             = 0x82, ///< Not allowed in ISR context: the function cannot be called from interrupt service routines.
-    osErrorISRRecursive    = 0x83, ///< Function called multiple times from ISR with same object.
-    osErrorPriority        = 0x84, ///< System cannot determine priority or thread has illegal priority.
-    osErrorNoMemory        = 0x85, ///< System is out of memory: it was impossible to allocate or reserve memory for the operation.
-    osErrorValue           = 0x86, ///< Value of a parameter is out of range.
-    osErrorOS              = 0xFF, ///< Unspecified RTOS error: run-time error but no other error message fits.
-    osStatusReserved       = 0x7FFFFFFF ///< Prevents enum down-size compiler optimization.
+    osOK           = 0,    ///< Function completed; no error or event occurred.
+    osEventSignal  = 0x08, ///< Function completed; signal event occurred.
+    osEventMessage = 0x10, ///< Function completed; message event occurred.
+    osEventMail    = 0x20, ///< Function completed; mail event occurred.
+    osEventTimeout = 0x40, ///< Function completed; timeout occurred.
+    osErrorParameter =
+        0x80, ///< Parameter error: a mandatory parameter was missing or specified an incorrect object.
+    osErrorResource = 0x81, ///< Resource not available: a specified resource was not available.
+    osErrorTimeoutResource =
+        0xC1, ///< Resource not available within given time: a specified resource was not available within the timeout period.
+    osErrorISR =
+        0x82, ///< Not allowed in ISR context: the function cannot be called from interrupt service routines.
+    osErrorISRRecursive = 0x83, ///< Function called multiple times from ISR with same object.
+    osErrorPriority = 0x84, ///< System cannot determine priority or thread has illegal priority.
+    osErrorNoMemory =
+        0x85, ///< System is out of memory: it was impossible to allocate or reserve memory for the operation.
+    osErrorValue = 0x86, ///< Value of a parameter is out of range.
+    osErrorOS = 0xFF, ///< Unspecified RTOS error: run-time error but no other error message fits.
+    osStatusReserved = 0x7FFFFFFF ///< Prevents enum down-size compiler optimization.
 } osStatus;
 #else
 typedef int32_t osStatus;
@@ -436,9 +440,11 @@ uint32_t osKernelSysTick(void);
 /// \param         microsec     time value in microseconds.
 /// \return time value normalized to the \ref osKernelSysTickFrequency
 #if (osCMSIS < 0x20000U)
-#define osKernelSysTickMicroSec(microsec) (((uint64_t)microsec * (osKernelSysTickFrequency)) / 1000000)
+#define osKernelSysTickMicroSec(microsec)                                                          \
+    (((uint64_t)microsec * (osKernelSysTickFrequency)) / 1000000)
 #else
-#define osKernelSysTickMicroSec(microsec) (((uint64_t)microsec * osKernelGetSysTimerFreq()) / 1000000)
+#define osKernelSysTickMicroSec(microsec)                                                          \
+    (((uint64_t)microsec * osKernelGetSysTimerFreq()) / 1000000)
 #endif
 
 #endif // System Timer available
@@ -454,13 +460,17 @@ uint32_t osKernelSysTick(void);
 /// \note CAN BE CHANGED: The parameters to \b osThreadDef shall be consistent but the
 ///       macro body is implementation specific in every CMSIS-RTOS.
 #if defined(osObjectsExternal) // object is external
-#define osThreadDef(name, priority, instances, stacksz) extern const osThreadDef_t os_thread_def_##name
+#define osThreadDef(name, priority, instances, stacksz)                                            \
+    extern const osThreadDef_t os_thread_def_##name
 #else // define the object
 #if (osCMSIS < 0x20000U)
-#define osThreadDef(name, priority, instances, stacksz) const osThreadDef_t os_thread_def_##name = {(name), (priority), (instances), (stacksz)}
+#define osThreadDef(name, priority, instances, stacksz)                                            \
+    const osThreadDef_t os_thread_def_##name = {(name), (priority), (instances), (stacksz)}
 #else
-#define osThreadDef(name, priority, instances, stacksz)                                                                                              \
-    const osThreadDef_t os_thread_def_##name = {(name), {NULL, osThreadDetached, NULL, 0U, NULL, 8 * ((stacksz + 7) / 8), (priority), 0U, 0U}}
+#define osThreadDef(name, priority, instances, stacksz)                                            \
+    const osThreadDef_t os_thread_def_##name = {                                                   \
+        (name),                                                                                    \
+        {NULL, osThreadDetached, NULL, 0U, NULL, 8 * ((stacksz + 7) / 8), (priority), 0U, 0U}}
 #endif
 #endif
 
@@ -564,7 +574,8 @@ osEvent osWait(uint32_t millisec);
 #if (osCMSIS < 0x20000U)
 #define osTimerDef(name, function) const osTimerDef_t os_timer_def_##name = {(function)}
 #else
-#define osTimerDef(name, function) const osTimerDef_t os_timer_def_##name = {(function), {NULL, 0U, NULL, 0U}}
+#define osTimerDef(name, function)                                                                 \
+    const osTimerDef_t os_timer_def_##name = {(function), {NULL, 0U, NULL, 0U}}
 #endif
 #endif
 
@@ -616,7 +627,9 @@ osStatus osTimerDelete(osTimerId timer_id);
 #if (osCMSIS < 0x20000U)
 #define osMutexDef(name) const osMutexDef_t os_mutex_def_##name = {0}
 #else
-#define osMutexDef(name) const osMutexDef_t os_mutex_def_##name = {NULL, osMutexRecursive | osMutexPrioInherit | osMutexRobust, NULL, 0U}
+#define osMutexDef(name)                                                                           \
+    const osMutexDef_t os_mutex_def_##name = {                                                     \
+        NULL, osMutexRecursive | osMutexPrioInherit | osMutexRobust, NULL, 0U}
 #endif
 #endif
 
@@ -725,7 +738,8 @@ osStatus osSemaphoreDelete(osSemaphoreId semaphore_id);
 #if (osCMSIS < 0x20000U)
 #define osPoolDef(name, no, type) const osPoolDef_t os_pool_def_##name = {(no), sizeof(type), NULL}
 #else
-#define osPoolDef(name, no, type) const osPoolDef_t os_pool_def_##name = {(no), sizeof(type), {NULL, 0U, NULL, 0U, NULL, 0U}}
+#define osPoolDef(name, no, type)                                                                  \
+    const osPoolDef_t os_pool_def_##name = {(no), sizeof(type), {NULL, 0U, NULL, 0U, NULL, 0U}}
 #endif
 #endif
 
@@ -773,9 +787,11 @@ osStatus osPoolFree(osPoolId pool_id, void* block);
 #define osMessageQDef(name, queue_sz, type) extern const osMessageQDef_t os_messageQ_def_##name
 #else // define the object
 #if (osCMSIS < 0x20000U)
-#define osMessageQDef(name, queue_sz, type) const osMessageQDef_t os_messageQ_def_##name = {(queue_sz), NULL}
+#define osMessageQDef(name, queue_sz, type)                                                        \
+    const osMessageQDef_t os_messageQ_def_##name = {(queue_sz), NULL}
 #else
-#define osMessageQDef(name, queue_sz, type) const osMessageQDef_t os_messageQ_def_##name = {(queue_sz), {NULL, 0U, NULL, 0U, NULL, 0U}}
+#define osMessageQDef(name, queue_sz, type)                                                        \
+    const osMessageQDef_t os_messageQ_def_##name = {(queue_sz), {NULL, 0U, NULL, 0U, NULL, 0U}}
 #endif
 #endif
 
@@ -821,12 +837,16 @@ osEvent osMessageGet(osMessageQId queue_id, uint32_t millisec);
 #define osMailQDef(name, queue_sz, type) extern const osMailQDef_t os_mailQ_def_##name
 #else // define the object
 #if (osCMSIS < 0x20000U)
-#define osMailQDef(name, queue_sz, type) const osMailQDef_t os_mailQ_def_##name = {(queue_sz), sizeof(type), NULL}
+#define osMailQDef(name, queue_sz, type)                                                           \
+    const osMailQDef_t os_mailQ_def_##name = {(queue_sz), sizeof(type), NULL}
 #else
-#define osMailQDef(name, queue_sz, type)                                                                                                             \
-    static void*       os_mail_p_##name[2];                                                                                                          \
-    const osMailQDef_t os_mailQ_def_##name = {                                                                                                       \
-        (queue_sz), sizeof(type), (&os_mail_p_##name), {NULL, 0U, NULL, 0U, NULL, 0U}, {NULL, 0U, NULL, 0U, NULL, 0U}}
+#define osMailQDef(name, queue_sz, type)                                                           \
+    static void*       os_mail_p_##name[2];                                                        \
+    const osMailQDef_t os_mailQ_def_##name = {(queue_sz),                                          \
+                                              sizeof(type),                                        \
+                                              (&os_mail_p_##name),                                 \
+                                              {NULL, 0U, NULL, 0U, NULL, 0U},                      \
+                                              {NULL, 0U, NULL, 0U, NULL, 0U}}
 #endif
 #endif
 

@@ -259,13 +259,17 @@ __IAR_FT void __iar_uint32_write(void const* ptr, uint32_t val) {
 #define __get_FPEXC() (__arm_rsr("FPEXC"))
 #define __set_FPEXC(VALUE) (__arm_wsr("FPEXC", VALUE))
 
-#define __get_CP(cp, op1, RT, CRn, CRm, op2) ((RT) = __arm_rsr("p" #cp ":" #op1 ":c" #CRn ":c" #CRm ":" #op2))
+#define __get_CP(cp, op1, RT, CRn, CRm, op2)                                                       \
+    ((RT) = __arm_rsr("p" #cp ":" #op1 ":c" #CRn ":c" #CRm ":" #op2))
 
-#define __set_CP(cp, op1, RT, CRn, CRm, op2) (__arm_wsr("p" #cp ":" #op1 ":c" #CRn ":c" #CRm ":" #op2, (RT)))
+#define __set_CP(cp, op1, RT, CRn, CRm, op2)                                                       \
+    (__arm_wsr("p" #cp ":" #op1 ":c" #CRn ":c" #CRm ":" #op2, (RT)))
 
-#define __get_CP64(cp, op1, Rt, CRm) __ASM volatile("MRRC p" #cp ", " #op1 ", %Q0, %R0, c" #CRm : "=r"(Rt) : : "memory")
+#define __get_CP64(cp, op1, Rt, CRm)                                                               \
+    __ASM volatile("MRRC p" #cp ", " #op1 ", %Q0, %R0, c" #CRm : "=r"(Rt) : : "memory")
 
-#define __set_CP64(cp, op1, Rt, CRm) __ASM volatile("MCRR p" #cp ", " #op1 ", %Q0, %R0, c" #CRm : : "r"(Rt) : "memory")
+#define __set_CP64(cp, op1, Rt, CRm)                                                               \
+    __ASM volatile("MCRR p" #cp ", " #op1 ", %Q0, %R0, c" #CRm : : "r"(Rt) : "memory")
 
 #include "cmsis_cp15.h"
 
@@ -437,10 +441,16 @@ __IAR_FT void __set_FPEXC(uint32_t fpexc) {
 }
 
 
-#define __get_CP(cp, op1, Rt, CRn, CRm, op2) __ASM volatile("MRC p" #cp ", " #op1 ", %0, c" #CRn ", c" #CRm ", " #op2 : "=r"(Rt) : : "memory")
-#define __set_CP(cp, op1, Rt, CRn, CRm, op2) __ASM volatile("MCR p" #cp ", " #op1 ", %0, c" #CRn ", c" #CRm ", " #op2 : : "r"(Rt) : "memory")
-#define __get_CP64(cp, op1, Rt, CRm) __ASM volatile("MRRC p" #cp ", " #op1 ", %Q0, %R0, c" #CRm : "=r"(Rt) : : "memory")
-#define __set_CP64(cp, op1, Rt, CRm) __ASM volatile("MCRR p" #cp ", " #op1 ", %Q0, %R0, c" #CRm : : "r"(Rt) : "memory")
+#define __get_CP(cp, op1, Rt, CRn, CRm, op2)                                                       \
+    __ASM volatile("MRC p" #cp ", " #op1 ", %0, c" #CRn ", c" #CRm                                 \
+                   ", " #op2 : "=r"(Rt) : : "memory")
+#define __set_CP(cp, op1, Rt, CRn, CRm, op2)                                                       \
+    __ASM volatile("MCR p" #cp ", " #op1 ", %0, c" #CRn ", c" #CRm ", " #op2 : : "r"(Rt) : "memor" \
+                                                                                           "y")
+#define __get_CP64(cp, op1, Rt, CRm)                                                               \
+    __ASM volatile("MRRC p" #cp ", " #op1 ", %Q0, %R0, c" #CRm : "=r"(Rt) : : "memory")
+#define __set_CP64(cp, op1, Rt, CRm)                                                               \
+    __ASM volatile("MCRR p" #cp ", " #op1 ", %Q0, %R0, c" #CRm : : "r"(Rt) : "memory")
 
 #include "cmsis_cp15.h"
 

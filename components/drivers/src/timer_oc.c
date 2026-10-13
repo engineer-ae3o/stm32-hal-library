@@ -34,7 +34,8 @@
 
 // Public API
 hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t* config) {
-    if (handle == NULL || config == NULL || config->num_channels == 0 || config->num_channels > timer_get_num_channels(handle)) {
+    if (handle == NULL || config == NULL || config->num_channels == 0 ||
+        config->num_channels > timer_get_num_channels(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -70,9 +71,11 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
         // Configure the channel in the CCMRx register
         switch (config->channels[i].channel) {
             case TIMER_CHANNEL_1:
-                ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | (uint32_t)(config->buffer_compare_reload ? TIM_CCMR1_OC1PE : 0) |
+                ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) |
+                         (uint32_t)(config->buffer_compare_reload ? TIM_CCMR1_OC1PE : 0) |
                          (uint32_t)(config->mode << TIM_CCMR1_OC1M_Pos);
-                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC1E | TIM_CCER_CC1P) : (TIM_CCER_CC1E);
+                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC1E | TIM_CCER_CC1P)
+                                                            : (TIM_CCER_CC1E);
                 dier |= enable_cc_irq ? TIM_DIER_CC1IE : 0;
                 cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS1 : 0;
                 break;
@@ -80,9 +83,11 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
                 if (timer_extra_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | (uint32_t)(config->buffer_compare_reload ? TIM_CCMR1_OC2PE : 0) |
+                ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) |
+                         (uint32_t)(config->buffer_compare_reload ? TIM_CCMR1_OC2PE : 0) |
                          (uint32_t)(config->mode << TIM_CCMR1_OC2M_Pos);
-                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC2E | TIM_CCER_CC2P) : (TIM_CCER_CC2E);
+                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC2E | TIM_CCER_CC2P)
+                                                            : (TIM_CCER_CC2E);
                 dier |= enable_cc_irq ? TIM_DIER_CC2IE : 0;
                 cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS2 : 0;
                 break;
@@ -90,9 +95,11 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC3PE : 0) |
+                ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) |
+                         (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC3PE : 0) |
                          (uint32_t)(config->mode << TIM_CCMR2_OC3M_Pos);
-                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC3E | TIM_CCER_CC3P) : (TIM_CCER_CC3E);
+                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC3E | TIM_CCER_CC3P)
+                                                            : (TIM_CCER_CC3E);
                 dier |= enable_cc_irq ? TIM_DIER_CC3IE : 0;
                 cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS3 : 0;
                 break;
@@ -100,9 +107,11 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
                 if (timer_lite) {
                     return HAL_ERR_INVALID_ARG;
                 }
-                ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC4PE : 0) |
+                ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) |
+                         (uint32_t)(config->buffer_compare_reload ? TIM_CCMR2_OC4PE : 0) |
                          (uint32_t)(config->mode << TIM_CCMR2_OC4M_Pos);
-                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
+                ccer |= config->channels[i].output_polarity ? (TIM_CCER_CC4E | TIM_CCER_CC4P)
+                                                            : (TIM_CCER_CC4E);
                 dier |= enable_cc_irq ? TIM_DIER_CC4IE : 0;
                 cr2 |= (timer_advanced && config->channels[i].output_idle_state) ? TIM_CR2_OIS4 : 0;
                 break;
@@ -152,7 +161,8 @@ hal_err_t output_compare_deinit(TIM_TypeDef* handle) {
     return timer_deinit(handle);
 }
 
-hal_err_t output_compare_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_compare_level) {
+hal_err_t
+output_compare_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t* max_compare_level) {
     if (handle == NULL || period_hz == 0 || max_compare_level == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -214,8 +224,10 @@ hal_err_t output_compare_start(TIM_TypeDef* handle, uint32_t period_hz, uint32_t
     return HAL_OK;
 }
 
-hal_err_t output_compare_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uint32_t compare_level) {
-    if (handle == NULL || channel >= timer_get_num_channels(handle) || compare_level > get_max_compare_level(handle)) {
+hal_err_t
+output_compare_set_compare(TIM_TypeDef* handle, timer_channel_t channel, uint32_t compare_level) {
+    if (handle == NULL || channel >= timer_get_num_channels(handle) ||
+        compare_level > get_max_compare_level(handle)) {
         return HAL_ERR_INVALID_ARG;
     }
 

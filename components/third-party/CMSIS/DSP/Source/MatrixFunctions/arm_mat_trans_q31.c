@@ -74,7 +74,8 @@ arm_status arm_mat_trans_q31(const arm_matrix_instance_q31* pSrc, arm_matrix_ins
             }
         }
 
-        arm_mat_trans_32bit_generic_mve(pSrc->numRows, pSrc->numCols, (uint32_t*)pSrc->pData, (uint32_t*)pDst->pData);
+        arm_mat_trans_32bit_generic_mve(
+            pSrc->numRows, pSrc->numCols, (uint32_t*)pSrc->pData, (uint32_t*)pDst->pData);
         /* Set status as ARM_MATH_SUCCESS */
         status = ARM_MATH_SUCCESS;
 

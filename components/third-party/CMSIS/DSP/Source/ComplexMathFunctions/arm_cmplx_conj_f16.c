@@ -72,11 +72,12 @@
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 void arm_cmplx_conj_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSamples) {
-    static const float16_t cmplx_conj_sign[8] = {1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f};
-    uint32_t               blockSize          = numSamples * CMPLX_DIM; /* loop counters */
-    uint32_t               blkCnt;
-    f16x8_t                vecSrc;
-    f16x8_t                vecSign;
+    static const float16_t cmplx_conj_sign[8] = {
+        1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f};
+    uint32_t blockSize = numSamples * CMPLX_DIM; /* loop counters */
+    uint32_t blkCnt;
+    f16x8_t  vecSrc;
+    f16x8_t  vecSign;
 
     /*
      * load sign vector

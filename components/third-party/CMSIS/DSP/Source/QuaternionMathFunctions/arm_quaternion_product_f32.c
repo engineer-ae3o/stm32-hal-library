@@ -67,7 +67,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_quaternion_product_f32(const float32_t* qa, const float32_t* qb, float32_t* qr, uint32_t nbQuaternions) {
+void arm_quaternion_product_f32(const float32_t* qa,
+                                const float32_t* qb,
+                                float32_t*       qr,
+                                uint32_t         nbQuaternions) {
     static uint32_t  patternA[4] = {0, 1, 0, 1};
     static uint32_t  patternB[4] = {3, 2, 3, 2};
     static uint32_t  patternC[4] = {3, 2, 1, 0};
@@ -122,7 +125,10 @@ void arm_quaternion_product_f32(const float32_t* qa, const float32_t* qb, float3
 
 #else
 
-void arm_quaternion_product_f32(const float32_t* qa, const float32_t* qb, float32_t* qr, uint32_t nbQuaternions) {
+void arm_quaternion_product_f32(const float32_t* qa,
+                                const float32_t* qb,
+                                float32_t*       qr,
+                                uint32_t         nbQuaternions) {
     uint32_t i;
     for (i = 0; i < nbQuaternions; i++) {
         arm_quaternion_product_single_f32(qa, qb, qr);

@@ -57,15 +57,18 @@
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "arm_helium_utils.h"
-void arm_fir_interpolate_q15(const arm_fir_interpolate_instance_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+void arm_fir_interpolate_q15(const arm_fir_interpolate_instance_q15* S,
+                             const q15_t*                            pSrc,
+                             q15_t*                                  pDst,
+                             uint32_t                                blockSize) {
     q15_t*       pState  = S->pState;  /* State pointer */
     const q15_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     q15_t*       pStateCurnt;          /* Points to the current sample of the state */
     const q15_t *ptr1, *ptr2;          /* Temporary pointers for state and coefficient buffers */
 
-    uint32_t   i, blkCnt;                     /* Loop counters */
-    uint16_t   phaseLen     = S->phaseLength; /* Length of each polyphase filter component */
-    uint16_t   strides[8]   = {0, 1 * S->L, 2 * S->L, 3 * S->L, 4 * S->L, 5 * S->L, 6 * S->L, 7 * S->L};
+    uint32_t i, blkCnt;                   /* Loop counters */
+    uint16_t phaseLen   = S->phaseLength; /* Length of each polyphase filter component */
+    uint16_t strides[8] = {0, 1 * S->L, 2 * S->L, 3 * S->L, 4 * S->L, 5 * S->L, 6 * S->L, 7 * S->L};
     uint16x8_t vec_strides0 = *(uint16x8_t*)strides;
     uint16x8_t vec_strides1 = vec_strides0 + 1;
     uint16x8_t vec_strides2 = vec_strides0 + 2;
@@ -325,7 +328,10 @@ void arm_fir_interpolate_q15(const arm_fir_interpolate_instance_q15* S, const q1
     }
 }
 #else
-void arm_fir_interpolate_q15(const arm_fir_interpolate_instance_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+void arm_fir_interpolate_q15(const arm_fir_interpolate_instance_q15* S,
+                             const q15_t*                            pSrc,
+                             q15_t*                                  pDst,
+                             uint32_t                                blockSize) {
 #if (1)
     //#if !defined(ARM_MATH_CM0_FAMILY)
 

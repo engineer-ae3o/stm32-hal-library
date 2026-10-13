@@ -28,11 +28,20 @@
 
 #include "dsp/transform_functions.h"
 
-void arm_radix2_butterfly_q31(q31_t* pSrc, uint32_t fftLen, const q31_t* pCoef, uint16_t twidCoefModifier);
+void arm_radix2_butterfly_q31(q31_t*       pSrc,
+                              uint32_t     fftLen,
+                              const q31_t* pCoef,
+                              uint16_t     twidCoefModifier);
 
-void arm_radix2_butterfly_inverse_q31(q31_t* pSrc, uint32_t fftLen, const q31_t* pCoef, uint16_t twidCoefModifier);
+void arm_radix2_butterfly_inverse_q31(q31_t*       pSrc,
+                                      uint32_t     fftLen,
+                                      const q31_t* pCoef,
+                                      uint16_t     twidCoefModifier);
 
-void arm_bitreversal_q31(q31_t* pSrc, uint32_t fftLen, uint16_t bitRevFactor, const uint16_t* pBitRevTab);
+void arm_bitreversal_q31(q31_t*          pSrc,
+                         uint32_t        fftLen,
+                         uint16_t        bitRevFactor,
+                         const uint16_t* pBitRevTab);
 
 /**
   @ingroup groupTransforms
@@ -66,7 +75,10 @@ void arm_cfft_radix2_q31(const arm_cfft_radix2_instance_q31* S, q31_t* pSrc) {
   @} end of ComplexFFT group
  */
 
-void arm_radix2_butterfly_q31(q31_t* pSrc, uint32_t fftLen, const q31_t* pCoef, uint16_t twidCoefModifier) {
+void arm_radix2_butterfly_q31(q31_t*       pSrc,
+                              uint32_t     fftLen,
+                              const q31_t* pCoef,
+                              uint16_t     twidCoefModifier) {
 
     unsigned i, j, k, l, m;
     unsigned n1, n2, ia;
@@ -182,7 +194,10 @@ void arm_radix2_butterfly_q31(q31_t* pSrc, uint32_t fftLen, const q31_t* pCoef, 
 }
 
 
-void arm_radix2_butterfly_inverse_q31(q31_t* pSrc, uint32_t fftLen, const q31_t* pCoef, uint16_t twidCoefModifier) {
+void arm_radix2_butterfly_inverse_q31(q31_t*       pSrc,
+                                      uint32_t     fftLen,
+                                      const q31_t* pCoef,
+                                      uint16_t     twidCoefModifier) {
 
     unsigned i, j, k, l;
     unsigned n1, n2, ia;

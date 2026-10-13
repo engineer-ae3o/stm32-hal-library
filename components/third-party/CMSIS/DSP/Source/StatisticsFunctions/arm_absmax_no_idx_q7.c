@@ -112,8 +112,10 @@ void arm_absmax_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
 
     while (blkCnt > 0U) { /* Initialize cur_absmax to next consecutive values one by one */
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q7_t)__QSUB8(0, cur_absmax); /* compare for the extrema value */
-        if (cur_absmax > out) {                                                    /* Update the extrema value and it's index */
+        cur_absmax = (cur_absmax > 0)
+                         ? cur_absmax
+                         : (q7_t)__QSUB8(0, cur_absmax); /* compare for the extrema value */
+        if (cur_absmax > out) { /* Update the extrema value and it's index */
             out = cur_absmax;
         }
 

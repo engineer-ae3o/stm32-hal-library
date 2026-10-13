@@ -38,7 +38,8 @@ extern "C" {
 Definitions available for MVEF and MVEI
 
 ***************************************/
-#if (defined(ARM_MATH_HELIUM) || defined(ARM_MATH_MVEF) || defined(ARM_MATH_MVEI)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_HELIUM) || defined(ARM_MATH_MVEF) || defined(ARM_MATH_MVEI)) &&              \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 
 #define INACTIVELANE 0 /* inactive lane content */
 
@@ -66,17 +67,17 @@ __STATIC_FORCEINLINE float32_t vecAddAcrossF32Mve(float32x4_t in) {
 #define INV_NEWTON_INIT_F32 0x7EF127EA
 
 
-#define INVSQRT_NEWTON_MVE_F32(invSqrt, xHalf, xStart)                                                                                               \
-    {                                                                                                                                                \
-        float32x4_t tmp;                                                                                                                             \
-                                                                                                                                                     \
-        /* tmp = xhalf * x * x */                                                                                                                    \
-        tmp = vmulq(xStart, xStart);                                                                                                                 \
-        tmp = vmulq(tmp, xHalf);                                                                                                                     \
-        /* (1.5f - xhalf * x * x) */                                                                                                                 \
-        tmp = vsubq(vdupq_n_f32(1.5f), tmp);                                                                                                         \
-        /* x = x*(1.5f-xhalf*x*x); */                                                                                                                \
-        invSqrt = vmulq(tmp, xStart);                                                                                                                \
+#define INVSQRT_NEWTON_MVE_F32(invSqrt, xHalf, xStart)                                             \
+    {                                                                                              \
+        float32x4_t tmp;                                                                           \
+                                                                                                   \
+        /* tmp = xhalf * x * x */                                                                  \
+        tmp = vmulq(xStart, xStart);                                                               \
+        tmp = vmulq(tmp, xHalf);                                                                   \
+        /* (1.5f - xhalf * x * x) */                                                               \
+        tmp = vsubq(vdupq_n_f32(1.5f), tmp);                                                       \
+        /* x = x*(1.5f-xhalf*x*x); */                                                              \
+        invSqrt = vmulq(tmp, xStart);                                                              \
     }
 #endif /* defined (ARM_MATH_HELIUM) || defined(ARM_MATH_MVEF) */
 
@@ -134,11 +135,11 @@ __STATIC_FORCEINLINE float16x8_t __mve_cmplx_sum_intra_vec_f16(float16x8_t vecIn
 }
 
 
-#define mve_cmplx_sum_intra_r_i_f16(vec, Re, Im)                                                                                                     \
-    {                                                                                                                                                \
-        float16x8_t vecOut = __mve_cmplx_sum_intra_vec_f16(vec);                                                                                     \
-        Re                 = vgetq_lane(vecOut, 4);                                                                                                  \
-        Im                 = vgetq_lane(vecOut, 5);                                                                                                  \
+#define mve_cmplx_sum_intra_r_i_f16(vec, Re, Im)                                                   \
+    {                                                                                              \
+        float16x8_t vecOut = __mve_cmplx_sum_intra_vec_f16(vec);                                   \
+        Re                 = vgetq_lane(vecOut, 4);                                                \
+        Im                 = vgetq_lane(vecOut, 5);                                                \
     }
 
 __STATIC_FORCEINLINE void mve_cmplx_sum_intra_vec_f16(float16x8_t vecIn, float16_t* pOut) {
@@ -154,17 +155,17 @@ __STATIC_FORCEINLINE void mve_cmplx_sum_intra_vec_f16(float16x8_t vecIn, float16
 #define INVSQRT_MAGIC_F16 0x59ba /*  ( 0x1ba = 0x3759df >> 13) */
 
 /* canonical version of INVSQRT_NEWTON_MVE_F16 leads to bad performance */
-#define INVSQRT_NEWTON_MVE_F16(invSqrt, xHalf, xStart)                                                                                               \
-    {                                                                                                                                                \
-        float16x8_t tmp;                                                                                                                             \
-                                                                                                                                                     \
-        /* tmp = xhalf * x * x */                                                                                                                    \
-        tmp = vmulq(xStart, xStart);                                                                                                                 \
-        tmp = vmulq(tmp, xHalf);                                                                                                                     \
-        /* (1.5f - xhalf * x * x) */                                                                                                                 \
-        tmp = vsubq(vdupq_n_f16((float16_t)1.5), tmp);                                                                                               \
-        /* x = x*(1.5f-xhalf*x*x); */                                                                                                                \
-        invSqrt = vmulq(tmp, xStart);                                                                                                                \
+#define INVSQRT_NEWTON_MVE_F16(invSqrt, xHalf, xStart)                                             \
+    {                                                                                              \
+        float16x8_t tmp;                                                                           \
+                                                                                                   \
+        /* tmp = xhalf * x * x */                                                                  \
+        tmp = vmulq(xStart, xStart);                                                               \
+        tmp = vmulq(tmp, xHalf);                                                                   \
+        /* (1.5f - xhalf * x * x) */                                                               \
+        tmp = vsubq(vdupq_n_f16((float16_t)1.5), tmp);                                             \
+        /* x = x*(1.5f-xhalf*x*x); */                                                              \
+        invSqrt = vmulq(tmp, xStart);                                                              \
     }
 
 #endif
@@ -175,7 +176,8 @@ __STATIC_FORCEINLINE void mve_cmplx_sum_intra_vec_f16(float16x8_t vecIn, float16
 Definitions available for MVEI and MVEF only
 
 ***************************************/
-#if (defined(ARM_MATH_HELIUM) || defined(ARM_MATH_MVEF) || defined(ARM_MATH_MVEI)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_HELIUM) || defined(ARM_MATH_MVEF) || defined(ARM_MATH_MVEI)) &&              \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 /* Following functions are used to transpose matrix in f32 and q31 cases */
 __STATIC_INLINE arm_status arm_mat_trans_32bit_2x2_mve(uint32_t* pDataSrc, uint32_t* pDataDest) {
     static const uint32x4_t vecOffs = {0, 2, 1, 3};
@@ -238,7 +240,10 @@ __STATIC_INLINE arm_status arm_mat_trans_32bit_4x4_mve(uint32_t* pDataSrc, uint3
 }
 
 
-__STATIC_INLINE arm_status arm_mat_trans_32bit_generic_mve(uint16_t srcRows, uint16_t srcCols, uint32_t* pDataSrc, uint32_t* pDataDest) {
+__STATIC_INLINE arm_status arm_mat_trans_32bit_generic_mve(uint16_t  srcRows,
+                                                           uint16_t  srcCols,
+                                                           uint32_t* pDataSrc,
+                                                           uint32_t* pDataDest) {
     uint32x4_t      vecOffs;
     uint32_t        i;
     uint32_t        blkCnt;
@@ -283,8 +288,12 @@ __STATIC_INLINE arm_status arm_mat_trans_32bit_generic_mve(uint16_t srcRows, uin
     return (ARM_MATH_SUCCESS);
 }
 
-__STATIC_INLINE arm_status
-arm_mat_cmplx_trans_32bit(uint16_t srcRows, uint16_t srcCols, uint32_t* pDataSrc, uint16_t dstRows, uint16_t dstCols, uint32_t* pDataDest) {
+__STATIC_INLINE arm_status arm_mat_cmplx_trans_32bit(uint16_t  srcRows,
+                                                     uint16_t  srcCols,
+                                                     uint32_t* pDataSrc,
+                                                     uint16_t  dstRows,
+                                                     uint16_t  dstCols,
+                                                     uint32_t* pDataDest) {
     uint32_t        i;
     uint32_t const* pDataC;
     uint32_t*       pDataRow;
@@ -413,7 +422,10 @@ __STATIC_INLINE arm_status arm_mat_trans_16bit_4x4_mve(uint16_t* pDataSrc, uint1
 }
 
 
-__STATIC_INLINE arm_status arm_mat_trans_16bit_generic(uint16_t srcRows, uint16_t srcCols, uint16_t* pDataSrc, uint16_t* pDataDest) {
+__STATIC_INLINE arm_status arm_mat_trans_16bit_generic(uint16_t  srcRows,
+                                                       uint16_t  srcCols,
+                                                       uint16_t* pDataSrc,
+                                                       uint16_t* pDataDest) {
     uint16x8_t      vecOffs;
     uint32_t        i;
     uint32_t        blkCnt;
@@ -459,8 +471,12 @@ __STATIC_INLINE arm_status arm_mat_trans_16bit_generic(uint16_t srcRows, uint16_
 }
 
 
-__STATIC_INLINE arm_status
-arm_mat_cmplx_trans_16bit(uint16_t srcRows, uint16_t srcCols, uint16_t* pDataSrc, uint16_t dstRows, uint16_t dstCols, uint16_t* pDataDest) {
+__STATIC_INLINE arm_status arm_mat_cmplx_trans_16bit(uint16_t  srcRows,
+                                                     uint16_t  srcCols,
+                                                     uint16_t* pDataSrc,
+                                                     uint16_t  dstRows,
+                                                     uint16_t  dstCols,
+                                                     uint16_t* pDataDest) {
     static const uint16_t loadCmplxCol[8] = {0, 0, 1, 1, 2, 2, 3, 3};
     int                   i;
     uint16x8_t            vecOffsRef, vecOffsCur;
@@ -494,7 +510,8 @@ arm_mat_cmplx_trans_16bit(uint16_t srcRows, uint16_t srcCols, uint16_t* pDataSrc
      * build  [0, 1, 2xcol, 2xcol+1, 4xcol, 4xcol+1, 6xcol, 6xcol+1]
      */
     vecOffsRef = vldrhq_u16((uint16_t const*)loadCmplxCol);
-    vecOffsRef = vmulq(vecOffsRef, (uint16_t)(srcCols * CMPLX_DIM)) + viwdupq_u16((uint32_t)0, (uint16_t)2, 1);
+    vecOffsRef = vmulq(vecOffsRef, (uint16_t)(srcCols * CMPLX_DIM)) +
+                 viwdupq_u16((uint32_t)0, (uint16_t)2, 1);
 
     pDataRow     = pDataSrc;
     pDataDestRow = pDataDest;
@@ -547,7 +564,8 @@ Definitions available for MVEI only
 #define MVE_ASRL_SAT32(acc, shift) ((sqrshrl(acc, -(32 - shift)) >> 32) & 0xffffffff)
 
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_FAST_SQRT_Q31_MVE)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) ||                             \
+    defined(ARM_TABLE_FAST_SQRT_Q31_MVE)
 __STATIC_INLINE q31x4_t FAST_VSQRT_Q31(q31x4_t vecIn) {
     q63x2_t vecTmpLL;
     q31x4_t vecTmp0, vecTmp1;
@@ -614,7 +632,8 @@ __STATIC_INLINE q31x4_t FAST_VSQRT_Q31(q31x4_t vecIn) {
 }
 #endif
 
-#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) || defined(ARM_TABLE_FAST_SQRT_Q15_MVE)
+#if !defined(ARM_DSP_CONFIG_TABLES) || defined(ARM_ALL_FAST_TABLES) ||                             \
+    defined(ARM_TABLE_FAST_SQRT_Q15_MVE)
 __STATIC_INLINE q15x8_t FAST_VSQRT_Q15(q15x8_t vecIn) {
     q31x4_t vecTmpLev, vecTmpLodd, vecSignL;
     q15x8_t vecTmp0, vecTmp1;

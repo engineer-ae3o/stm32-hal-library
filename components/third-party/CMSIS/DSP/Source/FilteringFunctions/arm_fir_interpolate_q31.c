@@ -57,7 +57,10 @@
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "arm_helium_utils.h"
-void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
+                             const q31_t*                            pSrc,
+                             q31_t*                                  pDst,
+                             uint32_t                                blockSize) {
     q31_t*       pState  = S->pState;  /* State pointer */
     const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
     q31_t*       pStateCurnt;          /* Points to the current sample of the state */
@@ -322,7 +325,10 @@ void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S, const q3
     }
 }
 #else
-void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
+void arm_fir_interpolate_q31(const arm_fir_interpolate_instance_q31* S,
+                             const q31_t*                            pSrc,
+                             q31_t*                                  pDst,
+                             uint32_t                                blockSize) {
 #if (1)
     //#if !defined(ARM_MATH_CM0_FAMILY)
 

@@ -31,27 +31,27 @@
 
 
 /// @private
-#define SWAP_ROWS_F64(A, i, j)                                                                                                                       \
-    {                                                                                                                                                \
-        int w;                                                                                                                                       \
-        for (w = 0; w < n; w++) {                                                                                                                    \
-            float64_t tmp;                                                                                                                           \
-            tmp          = A[i * n + w];                                                                                                             \
-            A[i * n + w] = A[j * n + w];                                                                                                             \
-            A[j * n + w] = tmp;                                                                                                                      \
-        }                                                                                                                                            \
+#define SWAP_ROWS_F64(A, i, j)                                                                     \
+    {                                                                                              \
+        int w;                                                                                     \
+        for (w = 0; w < n; w++) {                                                                  \
+            float64_t tmp;                                                                         \
+            tmp          = A[i * n + w];                                                           \
+            A[i * n + w] = A[j * n + w];                                                           \
+            A[j * n + w] = tmp;                                                                    \
+        }                                                                                          \
     }
 
 /// @private
-#define SWAP_COLS_F64(A, i, j)                                                                                                                       \
-    {                                                                                                                                                \
-        int w;                                                                                                                                       \
-        for (w = 0; w < n; w++) {                                                                                                                    \
-            float64_t tmp;                                                                                                                           \
-            tmp          = A[w * n + i];                                                                                                             \
-            A[w * n + i] = A[w * n + j];                                                                                                             \
-            A[w * n + j] = tmp;                                                                                                                      \
-        }                                                                                                                                            \
+#define SWAP_COLS_F64(A, i, j)                                                                     \
+    {                                                                                              \
+        int w;                                                                                     \
+        for (w = 0; w < n; w++) {                                                                  \
+            float64_t tmp;                                                                         \
+            tmp          = A[w * n + i];                                                           \
+            A[w * n + i] = A[w * n + j];                                                           \
+            A[w * n + j] = tmp;                                                                    \
+        }                                                                                          \
     }
 
 /**
@@ -78,7 +78,10 @@
    *  Computes the LDL^t decomposition of a matrix A such that P A P^t = L D L^t.
    */
 
-arm_status arm_mat_ldlt_f64(const arm_matrix_instance_f64* pSrc, arm_matrix_instance_f64* pl, arm_matrix_instance_f64* pd, uint16_t* pp) {
+arm_status arm_mat_ldlt_f64(const arm_matrix_instance_f64* pSrc,
+                            arm_matrix_instance_f64*       pl,
+                            arm_matrix_instance_f64*       pd,
+                            uint16_t*                      pp) {
 
     arm_status status; /* status of matrix inverse */
 
@@ -86,7 +89,8 @@ arm_status arm_mat_ldlt_f64(const arm_matrix_instance_f64* pSrc, arm_matrix_inst
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pl->numRows != pl->numCols) || (pd->numRows != pd->numCols) || (pl->numRows != pd->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pl->numRows != pl->numCols) ||
+        (pd->numRows != pd->numCols) || (pl->numRows != pd->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

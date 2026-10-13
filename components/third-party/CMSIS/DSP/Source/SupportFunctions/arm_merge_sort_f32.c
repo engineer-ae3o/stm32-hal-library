@@ -30,7 +30,8 @@
 #include "arm_sorting.h"
 
 
-static void topDownMerge(float32_t* pA, uint32_t begin, uint32_t middle, uint32_t end, float32_t* pB, uint8_t dir) {
+static void topDownMerge(
+    float32_t* pA, uint32_t begin, uint32_t middle, uint32_t end, float32_t* pB, uint8_t dir) {
     /* Left  array is pA[begin:middle-1]
      * Right Array is pA[middle:end-1] 
      * They are merged in pB
@@ -53,7 +54,8 @@ static void topDownMerge(float32_t* pA, uint32_t begin, uint32_t middle, uint32_
     }
 }
 
-static void arm_merge_sort_core_f32(float32_t* pB, uint32_t begin, uint32_t end, float32_t* pA, uint8_t dir) {
+static void
+arm_merge_sort_core_f32(float32_t* pB, uint32_t begin, uint32_t end, float32_t* pA, uint8_t dir) {
     if ((int32_t)end - (int32_t)begin >= 2) // If run size != 1 divide
     {
         int32_t middle = (end + begin) / 2; // Take the middle point
@@ -94,7 +96,10 @@ static void arm_merge_sort_core_f32(float32_t* pB, uint32_t begin, uint32_t end,
    */
 
 
-void arm_merge_sort_f32(const arm_merge_sort_instance_f32* S, float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_merge_sort_f32(const arm_merge_sort_instance_f32* S,
+                        float32_t*                         pSrc,
+                        float32_t*                         pDst,
+                        uint32_t                           blockSize) {
     float32_t* pA;
 
     /* Out-of-place */

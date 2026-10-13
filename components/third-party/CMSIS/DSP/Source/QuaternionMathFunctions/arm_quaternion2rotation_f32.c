@@ -78,7 +78,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_quaternion2rotation_f32(const float32_t* pInputQuaternions, float32_t* pOutputRotations, uint32_t nbQuaternions) {
+void arm_quaternion2rotation_f32(const float32_t* pInputQuaternions,
+                                 float32_t*       pOutputRotations,
+                                 uint32_t         nbQuaternions) {
     f32x4_t   vec0, vec1, vec2, vec3;
     float32_t q2q3, tmp1, tmp2;
 
@@ -136,7 +138,9 @@ void arm_quaternion2rotation_f32(const float32_t* pInputQuaternions, float32_t* 
 }
 
 #else
-void arm_quaternion2rotation_f32(const float32_t* pInputQuaternions, float32_t* pOutputRotations, uint32_t nbQuaternions) {
+void arm_quaternion2rotation_f32(const float32_t* pInputQuaternions,
+                                 float32_t*       pOutputRotations,
+                                 uint32_t         nbQuaternions) {
     uint32_t nb;
     for (nb = 0; nb < nbQuaternions; nb++) {
         float32_t q00 = SQ(pInputQuaternions[0 + nb * 4]);

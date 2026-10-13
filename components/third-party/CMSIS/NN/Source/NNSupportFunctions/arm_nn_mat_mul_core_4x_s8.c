@@ -112,7 +112,8 @@ int8_t* arm_nn_mat_mul_core_4x_s8(const int32_t                            row_e
         res = vmaxq_s32(res, vdupq_n_s32(conv_params->activation.min));
         res = vminq_s32(res, vdupq_n_s32(conv_params->activation.max));
 
-        const uint32x4_t scatter_offset = {0, (uint32_t)out_ch, (uint32_t)out_ch * 2, (uint32_t)out_ch * 3};
+        const uint32x4_t scatter_offset = {
+            0, (uint32_t)out_ch, (uint32_t)out_ch * 2, (uint32_t)out_ch * 3};
         vstrbq_scatter_offset_s32(output, scatter_offset, res);
         output++;
     }
