@@ -3,11 +3,10 @@
 
 #include "drivers/src/timer_internals.h"
 #include "drivers/timer_extended.h"
-#include "drivers/timer_types.h"
-#include "drivers/timer.h"
-#include "drivers/gpio.h"
 #include "test/timer_extended.hpp"
+#include "drivers/timer_types.h"
 #include "test/loopback.hpp"
+#include "drivers/timer.h"
 #include "utils/common.h"
 #include "utils/board.h"
 #include "utils/clock.h"
