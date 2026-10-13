@@ -46,10 +46,12 @@ namespace test::timer_ext {
         struct capture_log_t {
             volatile uint32_t events; // Every callback
             volatile uint32_t stored; // Callbacks that fit in the arrays below
-            uint32_t          value[LOG_N];
-            uint32_t          cycles[LOG_N];
-            bool              level[LOG_N];
-            timer_channel_t   channel[LOG_N];
+
+            std::array<bool, LOG_N>            level;
+            std::array<timer_channel_t, LOG_N> channel;
+
+            std::array<uint32_t, LOG_N> cycles;
+            std::array<uint32_t, LOG_N> value;
         };
 
         capture_log_t s_log;
@@ -135,22 +137,22 @@ namespace test::timer_ext {
         };
 
         constexpr std::array<filter_entry_t, 16> FILTER_TABLE = {{
-            {1, 0, false}, // Code 0: no filter
-            {1, 2, false},
-            {1, 4, false},
-            {1, 8, false},
-            {2, 6, true},
-            {2, 8, true},
-            {4, 6, true},
-            {4, 8, true},
-            {8, 6, true},
-            {8, 8, true},
-            {16, 5, true},
-            {16, 6, true},
-            {16, 8, true},
-            {32, 5, true},
-            {32, 6, true},
-            {32, 8, true},
+            {.sampling_div = 1, .samples = 0, .uses_dts = false}, // Code 0: no filter
+            {.sampling_div = 1, .samples = 2, .uses_dts = false},
+            {.sampling_div = 1, .samples = 4, .uses_dts = false},
+            {.sampling_div = 1, .samples = 8, .uses_dts = false},
+            {.sampling_div = 2, .samples = 6, .uses_dts = true},
+            {.sampling_div = 2, .samples = 8, .uses_dts = true},
+            {.sampling_div = 4, .samples = 6, .uses_dts = true},
+            {.sampling_div = 4, .samples = 8, .uses_dts = true},
+            {.sampling_div = 8, .samples = 6, .uses_dts = true},
+            {.sampling_div = 8, .samples = 8, .uses_dts = true},
+            {.sampling_div = 16, .samples = 5, .uses_dts = true},
+            {.sampling_div = 16, .samples = 6, .uses_dts = true},
+            {.sampling_div = 16, .samples = 8, .uses_dts = true},
+            {.sampling_div = 32, .samples = 5, .uses_dts = true},
+            {.sampling_div = 32, .samples = 6, .uses_dts = true},
+            {.sampling_div = 32, .samples = 8, .uses_dts = true},
         }};
 
         uint32_t filter_ticks(uint32_t code, tim_clk_div_t clk_div) {
@@ -220,19 +222,24 @@ namespace test::timer_ext {
         void ic_init_programs_every_channel_edge_and_prescaler() {
             lb::reset_fixture();
 
-            const board_pin_t pins[4] = {BOARD_TIM3_CH1_PB4, BOARD_TIM3_CH2_PB5, BOARD_TIM3_CH3_PB0, BOARD_TIM3_CH4_PB1};
+            const std::array<board_pin_t, 4> pins = {{
+                BOARD_TIM3_CH1_PB4,
+                BOARD_TIM3_CH2_PB5,
+                BOARD_TIM3_CH3_PB0,
+                BOARD_TIM3_CH4_PB1,
+            }};
 
             struct edge_case_t {
                 ic_edge_t edge;
                 bool      ccxp;
                 bool      ccxnp;
             };
-            const std::array<edge_case_t, 3>    edges      = {{
-                {IC_EDGE_RISING, false, false},
-                {IC_EDGE_FALLING, true, false},
-                {IC_EDGE_RISING_FALLING, true, true},
+            const std::array<edge_case_t, 3> edges      = {{
+                {.edge = IC_EDGE_RISING, .ccxp = false, .ccxnp = false},
+                {.edge = IC_EDGE_FALLING, .ccxp = true, .ccxnp = false},
+                {.edge = IC_EDGE_RISING_FALLING, .ccxp = true, .ccxnp = true},
             }};
-            const std::array<ic_prescaler_t, 4> prescalers = {IC_PRESCALER_DIV_1, IC_PRESCALER_DIV_2, IC_PRESCALER_DIV_4, IC_PRESCALER_DIV_8};
+            const auto                       prescalers = std::array{IC_PRESCALER_DIV_1, IC_PRESCALER_DIV_2, IC_PRESCALER_DIV_4, IC_PRESCALER_DIV_8};
 
             for (uint32_t c = 0; c < 4; c++) {
                 const auto channel = static_cast<timer_channel_t>(c);
@@ -315,7 +322,11 @@ namespace test::timer_ext {
                 timer_pull_t pull;
                 uint32_t     pupdr;
             };
-            const std::array<pull_case_t, 3> pulls = {{{TIMER_PULL_NONE, 0b00}, {TIMER_USE_PULLUP, 0b01}, {TIMER_USE_PULLDOWN, 0b10}}};
+            const std::array<pull_case_t, 3> pulls = {{
+                {.pull = TIMER_PULL_NONE, .pupdr = 0b00},
+                {.pull = TIMER_USE_PULLUP, .pupdr = 0b01},
+                {.pull = TIMER_USE_PULLDOWN, .pupdr = 0b10},
+            }};
 
             for (const auto& p : pulls) {
                 auto cfg             = make_ic_config(1, IC_EDGE_RISING);
@@ -465,7 +476,11 @@ namespace test::timer_ext {
                 ic_edge_t edge;
                 bool      expected_level;
             };
-            for (const auto& c : std::array<edge_case_t, 2>{{{IC_EDGE_RISING, true}, {IC_EDGE_FALLING, false}}}) {
+
+            for (const auto& c : std::array<edge_case_t, 2>{{
+                     {.edge = IC_EDGE_RISING, .expected_level = true},
+                     {.edge = IC_EDGE_FALLING, .expected_level = false},
+                 }}) {
                 reset_log();
                 start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), c.edge, 0, {log_cb, nullptr}));
                 TEST_ASSERT_TRUE(lb::wait_for(
@@ -482,7 +497,7 @@ namespace test::timer_ext {
 
             // Both edges: levels alternate, and the gap after a rising edge is the high time, after a falling edge the low time
             reset_log();
-            start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING_FALLING, 0, {log_cb, nullptr}));
+            start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING_FALLING, 0, {.cb = log_cb, .arg = nullptr}));
             TEST_ASSERT_TRUE(lb::wait_for(
                 []() {
                     return s_log.stored >= 12;
@@ -502,15 +517,17 @@ namespace test::timer_ext {
             // Only generator B (-> PB5, timer channel 2) toggles. Channel 1's pin idles low
             TEST_ASSERT_EQUAL(HAL_OK, lb::generator_toggle_start(TIMER_CHANNEL_2, lb::GEN_B, 2'000));
 
-            auto cfg             = make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {log_cb, nullptr});
+            auto cfg             = make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {.cb = log_cb, .arg = nullptr});
             cfg.channels[0].pull = TIMER_USE_PULLDOWN;
-            cfg.channels[1]      = {.edge      = IC_EDGE_RISING,
-                                    .pull      = TIMER_USE_PULLDOWN,
-                                    .prescaler = IC_PRESCALER_DIV_1,
-                                    .channel   = TIMER_CHANNEL_2,
-                                    .gpio_pin  = lb::IN_B,
-                                    .filter_ns = 0};
-            cfg.num_channels     = 2;
+            cfg.channels[1]      = {
+                .edge      = IC_EDGE_RISING,
+                .pull      = TIMER_USE_PULLDOWN,
+                .prescaler = IC_PRESCALER_DIV_1,
+                .channel   = TIMER_CHANNEL_2,
+                .gpio_pin  = lb::IN_B,
+                .filter_ns = 0,
+            };
+            cfg.num_channels = 2;
 
             reset_log();
             TEST_ASSERT_EQUAL(HAL_OK, input_capture_init(MEAS, &cfg));
@@ -536,7 +553,7 @@ namespace test::timer_ext {
             lb::take_over_pin(lb::GEN_A, false);
 
             reset_log();
-            start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 500, {log_cb, nullptr}));
+            start_capture(make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 500, {.cb = log_cb, .arg = nullptr}));
             delay_us(20);
 
             lb::glitches(lb::GEN_A, 50);
@@ -553,14 +570,18 @@ namespace test::timer_ext {
                 ic_prescaler_t prescaler;
                 uint32_t       divisor;
             };
-            const std::array<div_case_t, 4> cases = {
-                {{IC_PRESCALER_DIV_1, 1}, {IC_PRESCALER_DIV_2, 2}, {IC_PRESCALER_DIV_4, 4}, {IC_PRESCALER_DIV_8, 8}}};
+            const std::array<div_case_t, 4> cases = {{
+                {.prescaler = IC_PRESCALER_DIV_1, .divisor = 1},
+                {.prescaler = IC_PRESCALER_DIV_2, .divisor = 2},
+                {.prescaler = IC_PRESCALER_DIV_4, .divisor = 4},
+                {.prescaler = IC_PRESCALER_DIV_8, .divisor = 8},
+            }};
 
             for (const auto& c : cases) {
                 lb::reset_fixture();
                 lb::take_over_pin(lb::GEN_A, false);
 
-                auto cfg                  = make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {log_cb, nullptr});
+                auto cfg                  = make_ic_config(lb::prescaler_for_1us(MEAS), IC_EDGE_RISING, 0, {.cb = log_cb, .arg = nullptr});
                 cfg.channels[0].prescaler = c.prescaler;
                 reset_log();
                 start_capture(cfg);
@@ -602,9 +623,9 @@ namespace test::timer_ext {
         void filter_code_is_the_smallest_that_covers_the_request() {
             lb::reset_fixture();
 
-            const uint64_t                     clk         = timer_get_frequency_hz(MEAS);
-            const std::array<tim_clk_div_t, 3> dividers    = {TIM_CLK_DIV_1, TIM_CLK_DIV_2, TIM_CLK_DIV_4};
-            const std::array<uint32_t, 9>      requests_ns = {1, 10, 40, 100, 500, 1'000, 5'000, 10'000, 100'000};
+            const uint64_t clk         = timer_get_frequency_hz(MEAS);
+            constexpr auto dividers    = std::array{TIM_CLK_DIV_1, TIM_CLK_DIV_2, TIM_CLK_DIV_4};
+            constexpr auto requests_ns = std::array{1UL, 10UL, 40UL, 100UL, 500UL, 1'000UL, 5'000UL, 10'000UL, 100'000UL};
 
             for (const auto divider : dividers) {
                 for (const uint32_t ns : requests_ns) {
@@ -651,7 +672,7 @@ namespace test::timer_ext {
             cfg.count_mode            = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
             cfg.channels[0]           = {.output_polarity = false, .output_idle_state = false, .channel = TIMER_CHANNEL_1, .gpio_pin = lb::GEN_A};
             cfg.num_channels          = 1;
-            cfg.callback              = {oc_cb, nullptr};
+            cfg.callback              = {.cb = oc_cb, .arg = nullptr};
             TEST_ASSERT_EQUAL(HAL_OK, output_compare_init(GEN, &cfg));
 
             uint32_t max_compare = 0;
@@ -734,7 +755,7 @@ namespace test::timer_ext {
 
             for (size_t i = 0; i < results.size(); i++) {
                 TEST_ASSERT_EQUAL(HAL_OK, results[i].err);
-                TEST_ASSERT_EQUAL_UINT32(lb::CLOCK_SWEEP[i].mhz * 1'000'000U, results[i].sysclk_hz);
+                TEST_ASSERT_EQUAL_UINT32(lb::preset_mhz(lb::CLOCK_SWEEP[i], original) * 1'000'000U, results[i].sysclk_hz);
                 TEST_ASSERT_EQUAL_UINT32(2'000U, results[i].pin_hz);
                 TEST_ASSERT_UINT32_WITHIN(1U, 500U, results[i].avg_ticks);
                 TEST_ASSERT_UINT32_WITHIN(5U, 500U, results[i].avg_period_us); // 1%
@@ -771,10 +792,10 @@ namespace test::timer_ext {
         RUN_TEST(ic_measured_period_tracks_the_generated_clock_across_system_clocks);
 
         // Leave the timers and clocks the way they were found
-        (void)input_capture_deinit(MEAS);
+        TRY_THEN_FAIL(input_capture_deinit(MEAS));
         lb::generator_stop();
-        (void)timx_clk_enable(lb::MEAS, false);
-        (void)timx_clk_enable(lb::GEN, false);
+        TRY_THEN_FAIL(timx_clk_enable(lb::MEAS, false));
+        TRY_THEN_FAIL(timx_clk_enable(lb::GEN, false));
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the extended timer driver");

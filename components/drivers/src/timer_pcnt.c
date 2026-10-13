@@ -124,8 +124,8 @@ hal_err_t qdec_init(TIM_TypeDef* handle, const qdec_config_t* config) {
     handle->CCMR1 |= ((0b01U << TIM_CCMR1_CC1S_Pos) | (ic_filter_code << TIM_CCMR1_IC1F_Pos)) |
                      ((0b01U << TIM_CCMR1_CC2S_Pos) | (ic_filter_code << TIM_CCMR1_IC2F_Pos));
 
-    // Set the rotational polarity
-    handle->CCER |= config->invert_direction ? (TIM_CCER_CC1P | TIM_CCER_CC2P) : 0;
+    // Set the rotational polarity (we invert only channel's output)
+    handle->CCER |= config->invert_direction ? TIM_CCER_CC1P : 0;
 
     // Apply the encoder mode
     handle->SMCR |= config->mode;

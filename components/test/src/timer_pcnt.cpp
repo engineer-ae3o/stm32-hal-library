@@ -107,7 +107,7 @@ namespace test::timer_pcnt {
         constexpr uint32_t SMCR_ETR = TIM_SMCR_ETF | TIM_SMCR_ETPS | TIM_SMCR_ECE | TIM_SMCR_ETP;
 
         volatile uint32_t          s_update_events = 0;
-        volatile timer_count_dir_t s_update_dir[8] = {};
+        volatile timer_count_dir_t s_update_dir[8] = {}; // NOLINT(cppcoreguidelines-avoid-c-arrays, modernize-avoid-c-arrays)
 
         void update_cb(void*, timer_channel_t, timer_count_dir_t direction) {
             const uint32_t i = s_update_events;
@@ -168,9 +168,9 @@ namespace test::timer_pcnt {
                 uint32_t       ccxp;
                 uint32_t       trigger_selection; // TI1FP1 or TI2FP2
             };
-            const std::array<channel_case_t, 2> channels = {{
-                {PCNT_CHANNEL_1, 0, TIM_CCER_CC1P, 0b101},
-                {PCNT_CHANNEL_2, 8, TIM_CCER_CC2P, 0b110},
+            constexpr std::array<channel_case_t, 2> channels = {{
+                {.channel = PCNT_CHANNEL_1, .ccxs_pos = 0, .ccxp = TIM_CCER_CC1P, .trigger_selection = 0b101},
+                {.channel = PCNT_CHANNEL_2, .ccxs_pos = 8, .ccxp = TIM_CCER_CC2P, .trigger_selection = 0b110},
             }};
 
             for (const auto& c : channels) {
@@ -238,7 +238,11 @@ namespace test::timer_pcnt {
                 timer_pull_t pull;
                 uint32_t     pupdr;
             };
-            const std::array<pull_case_t, 3> pulls = {{{TIMER_PULL_NONE, 0b00}, {TIMER_USE_PULLUP, 0b01}, {TIMER_USE_PULLDOWN, 0b10}}};
+            constexpr std::array<pull_case_t, 3> pulls = {{
+                {.pull = TIMER_PULL_NONE, .pupdr = 0b00},
+                {.pull = TIMER_USE_PULLUP, .pupdr = 0b01},
+                {.pull = TIMER_USE_PULLDOWN, .pupdr = 0b10},
+            }};
 
             for (const auto& p : pulls) {
                 auto mode_1 = make_pcnt_mode_1(PCNT_CHANNEL_2);
@@ -292,7 +296,12 @@ namespace test::timer_pcnt {
                 pcnt_prescale_t prescaler;
                 uint32_t        divisor;
             };
-            const std::array<div_case_t, 4> cases = {{{PCNT_ETR_DIV_1, 1}, {PCNT_ETR_DIV_2, 2}, {PCNT_ETR_DIV_4, 4}, {PCNT_ETR_DIV_8, 8}}};
+            const std::array<div_case_t, 4> cases = {{
+                {.prescaler = PCNT_ETR_DIV_1, .divisor = 1},
+                {.prescaler = PCNT_ETR_DIV_2, .divisor = 2},
+                {.prescaler = PCNT_ETR_DIV_4, .divisor = 4},
+                {.prescaler = PCNT_ETR_DIV_8, .divisor = 8},
+            }};
 
             for (const auto& c : cases) {
                 lb::reset_fixture();
@@ -486,8 +495,8 @@ namespace test::timer_pcnt {
 
             // Mode 1 on the channel 1 pin, and mode 2 on the external trigger pin with the /4 prescaler
             const std::array<variant_t, 2> variants = {{
-                {make_pcnt_mode_1(PCNT_CHANNEL_1), 1},
-                {make_pcnt_mode_2(PCNT_ETR_DIV_4), 4},
+                {.cfg = make_pcnt_mode_1(PCNT_CHANNEL_1), .divisor = 1},
+                {.cfg = make_pcnt_mode_2(PCNT_ETR_DIV_4), .divisor = 4},
             }};
 
             std::array<std::array<count_result_t, lb::CLOCK_SWEEP.size()>, variants.size()> results{};
@@ -506,7 +515,7 @@ namespace test::timer_pcnt {
                 for (size_t i = 0; i < lb::CLOCK_SWEEP.size(); i++) {
                     const auto& r = results[v][i];
                     TEST_ASSERT_EQUAL(HAL_OK, r.err);
-                    TEST_ASSERT_EQUAL_UINT32(lb::CLOCK_SWEEP[i].mhz * 1'000'000U, r.sysclk_hz);
+                    TEST_ASSERT_EQUAL_UINT32(lb::preset_mhz(lb::CLOCK_SWEEP[i], original) * 1'000'000U, r.sysclk_hz);
                     TEST_ASSERT_EQUAL_UINT32(100'000U, r.pin_hz);
 
                     // Frequency from the count and the independently timed window, within 0.3%
@@ -584,7 +593,11 @@ namespace test::timer_pcnt {
                 timer_pull_t pull;
                 uint32_t     pupdr;
             };
-            const std::array<pull_case_t, 3> pulls = {{{TIMER_PULL_NONE, 0b00}, {TIMER_USE_PULLUP, 0b01}, {TIMER_USE_PULLDOWN, 0b10}}};
+            const std::array<pull_case_t, 3> pulls = {{
+                {.pull = TIMER_PULL_NONE, .pupdr = 0b00},
+                {.pull = TIMER_USE_PULLUP, .pupdr = 0b01},
+                {.pull = TIMER_USE_PULLDOWN, .pupdr = 0b10},
+            }};
 
             for (const auto& p : pulls) {
                 auto cfg = make_qdec(ENCODER_MODE_3);
@@ -687,7 +700,7 @@ namespace test::timer_pcnt {
             start_counting_from_idle();
             reset_update_log();
 
-            const auto cfg = make_qdec(ENCODER_MODE_3, false, 0, {update_cb, nullptr});
+            const auto cfg = make_qdec(ENCODER_MODE_3, false, 0, {.cb = update_cb, .arg = nullptr});
             TEST_ASSERT_EQUAL(HAL_OK, qdec_init(MEAS, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 0));
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
@@ -738,10 +751,10 @@ namespace test::timer_pcnt {
         RUN_TEST(pcnt_frequency_of_the_generated_clock_matches_across_system_clocks);
 
         // Leave the timers and clocks the way they were found
-        (void)pcnt_deinit(MEAS);
+        TRY_THEN_FAIL(pcnt_deinit(MEAS));
         lb::generator_stop();
-        (void)timx_clk_enable(lb::MEAS, false);
-        (void)timx_clk_enable(lb::GEN, false);
+        TRY_THEN_FAIL(timx_clk_enable(lb::MEAS, false));
+        TRY_THEN_FAIL(timx_clk_enable(lb::GEN, false));
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the PCNT driver");

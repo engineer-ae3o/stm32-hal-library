@@ -147,7 +147,16 @@ void assert_check(bool cond, const char* msg, const char* function, const char* 
     do {                                                                                                                                             \
         hal_err_t ret_ = (func);                                                                                                                     \
         if (ret_ != HAL_OK) {                                                                                                                        \
-            LOGE(TAG, "%s: %s", msg, hal_err_to_string(ret_));                                                                                       \
+            LOGE("ERROR", "%s: %s", msg, hal_err_to_string(ret_));                                                                                   \
+        }                                                                                                                                            \
+    } while (0)
+
+#define TRY_THEN_FAIL(func)                                                                                                                          \
+    do {                                                                                                                                             \
+        hal_err_t ret_ = (func);                                                                                                                     \
+        if (ret_ != HAL_OK) {                                                                                                                        \
+            LOGE("ERROR", "%s (%s:%d) failed: %s", #func, __FILE__, __LINE__, hal_err_to_string(ret_));                                              \
+            ASSERT(false);                                                                                                                           \
         }                                                                                                                                            \
     } while (0)
 

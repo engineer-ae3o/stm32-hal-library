@@ -246,7 +246,7 @@ hal_err_t pwm_resume_complementary_channel(TIM_TypeDef* handle, timer_channel_t 
 
 // PWM input mode
 hal_err_t pwm_input_init(TIM_TypeDef* handle, const pwm_input_config_t* config) {
-    if (handle == NULL || config == NULL) {
+    if (handle == NULL || config == NULL || config->timer_prescaler == 0 || config->count_mode > TIMER_COUNTER_DIR_DOWN) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -329,16 +329,15 @@ hal_err_t pwm_input_get_data(TIM_TypeDef* handle, pwm_input_data_t* data) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    data->pulse  = handle->CCR2;
-    data->period = handle->CCR1;
+    // Loop till we get consistent reads
+    do {
+        data->pulse  = handle->CCR2;
+        data->period = handle->CCR1;
+    } while (data->pulse != handle->CCR2);
 
     return HAL_OK;
 }
 
 hal_err_t pwm_input_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz) {
-    if (handle == NULL || frequency_hz == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    *frequency_hz = timer_get_frequency_hz(handle);
-    return HAL_OK;
+    return input_capture_get_timer_frequency(handle, frequency_hz);
 }

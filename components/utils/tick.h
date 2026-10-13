@@ -33,9 +33,9 @@ uint64_t ms_since_boot(void);
 
 #define delay_us(us)                                                                                                                                 \
     do {                                                                                                                                             \
-        uint32_t cycles = (us) * (get_system_core_clock() / 1'000'000U);                                                                             \
-        uint32_t start  = DWT->CYCCNT;                                                                                                               \
-        while ((DWT->CYCCNT - start) < cycles);                                                                                                      \
+        uint32_t cycles_ = (us) * (get_system_core_clock() / 1'000'000U);                                                                            \
+        uint32_t start_  = DWT->CYCCNT;                                                                                                              \
+        while ((DWT->CYCCNT - start_) < cycles_);                                                                                                    \
     } while (0)
 
 

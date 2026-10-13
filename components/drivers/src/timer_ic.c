@@ -14,7 +14,8 @@
 
 // Public API
 hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* config) {
-    if (handle == NULL || config == NULL || config->num_channels == 0 || config->num_channels > timer_get_num_channels(handle)) {
+    if (handle == NULL || config == NULL || config->num_channels == 0 || config->num_channels > timer_get_num_channels(handle) ||
+        config->timer_prescaler == 0 || config->count_mode > TIMER_COUNTER_DIR_DOWN) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -123,6 +124,10 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
         }
     }
 
+    if (enable_cc_irq) {
+        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
+    }
+
     // Final writeback
     handle->CCER |= ccer;
     handle->DIER |= dier;
@@ -133,12 +138,9 @@ hal_err_t input_capture_init(TIM_TypeDef* handle, const input_capture_config_t* 
         handle->CCMR2 |= ccmr2;
     }
 
-    if (enable_cc_irq) {
-        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
-    }
-
     // Since the counter should be free running, the maximum reload value is used
     handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+    handle->PSC = config->timer_prescaler - 1;
 
     // Set the timer's counting mode, apply the clock divider, and enable auto-reload register buffering
     handle->CR1 |= (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE);
@@ -155,26 +157,18 @@ hal_err_t input_capture_deinit(TIM_TypeDef* handle) {
 }
 
 hal_err_t input_capture_start(TIM_TypeDef* handle) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    handle->CR1 |= TIM_CR1_CEN;
-    return HAL_OK;
+    return timer_start_counter(handle);
 }
 
 hal_err_t input_capture_stop(TIM_TypeDef* handle) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-    handle->CR1 &= ~TIM_CR1_CEN;
-    return HAL_OK;
+    return timer_stop_counter(handle);
 }
 
 hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle, uint32_t* frequency_hz) {
     if (handle == NULL || frequency_hz == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
-    *frequency_hz = timer_get_frequency_hz(handle);
+    *frequency_hz = round_div_u32(timer_get_frequency_hz(handle), (handle->PSC + 1));
     return HAL_OK;
 }
 

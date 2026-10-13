@@ -154,6 +154,8 @@ typedef struct {
     tim_clk_div_t     clk_div;
     timer_count_dir_t count_mode;
 
+    uint16_t timer_prescaler;
+
     ic_channel_config_t channels[MAX_TIM2_CHANNELS];
     size_t              num_channels;
 

@@ -106,7 +106,7 @@ hal_err_t timx_clk_enable(TIM_TypeDef* handle, bool enable) {
 }
 
 hal_err_t timer_init(TIM_TypeDef* handle, timer_count_dir_t direction, timer_cb_t callback) {
-    if (handle == NULL || callback.cb == NULL) {
+    if (handle == NULL || callback.cb == NULL || direction > TIMER_COUNTER_DIR_DOWN) {
         return HAL_ERR_INVALID_ARG;
     }
 

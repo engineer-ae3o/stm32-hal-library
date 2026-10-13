@@ -102,7 +102,7 @@ typedef struct {
 typedef struct {
     uint32_t pulse;  // Signal HIGH time
     uint32_t period; // Signal HIGH + LOW time (1 / PWM frequency)
-    // Duty cycle (%) = (pulse_width_us * 100%) / period_us
+    // Duty cycle (%) = (pulse * 100%) / period
 } pwm_input_data_t;
 
 

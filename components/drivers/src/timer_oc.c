@@ -118,6 +118,10 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
         gpio_set_output_type(gpio_pin.port, gpio_pin.pin, GPIO_PUSH_PULL);
     }
 
+    if (enable_cc_irq) {
+        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
+    }
+
     // Final writeback
     handle->CCER |= ccer;
     handle->DIER |= dier;
@@ -132,10 +136,6 @@ hal_err_t output_compare_init(TIM_TypeDef* handle, const output_compare_config_t
         handle->CR2 |= cr2;
         // Configure the run and idle off-state selection of the channels
         handle->BDTR |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0);
-    }
-
-    if (enable_cc_irq) {
-        TRY(timer_register_callback(handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
     }
 
     // Generate an update event so the timer's internal registers start afresh, and clear the update status flag

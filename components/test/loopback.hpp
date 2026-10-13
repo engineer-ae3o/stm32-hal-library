@@ -125,8 +125,8 @@ namespace test::loopback {
     // Walk GEN_A (channel A) and GEN_B (channel B) through 'cycles' full quadrature cycles starting from (A=0, B=0).
     // a_leads_b: A rises first (the sequence 00 > 10 > 11 > 01 > 00), otherwise B leads (00 > 01 > 11 > 10 > 00)
     inline void quad_walk(uint32_t cycles, bool a_leads_b) {
-        static constexpr bool lead[4] = {true, true, false, false};
-        static constexpr bool lag[4]  = {false, true, true, false};
+        constexpr auto lead = std::array{true, true, false, false};
+        constexpr auto lag  = std::array{false, true, true, false};
         for (uint32_t c = 0; c < cycles; c++) {
             for (uint32_t s = 0; s < 4; s++) {
                 drive(GEN_A, a_leads_b ? lead[s] : lag[s]);
@@ -242,20 +242,29 @@ namespace test::loopback {
     // deliberately no RAII guard here. Measure with the non asserting _hal helpers while switched, restore the
     // clock, and only then assert on the recorded results.
     struct clock_preset_t {
-        system_clock_t hse;
-        system_clock_t hsi;
-        uint32_t       mhz;
+        system_clock_t hse; // The preset when the board runs from the HSE family
+        system_clock_t hsi; // And from the HSI family
+        uint32_t       hse_mhz;
+        uint32_t       hsi_mhz;
     };
 
-    inline constexpr std::array<clock_preset_t, 3> CLOCK_SWEEP = {{
-        {HSE_PLL_48MHz, HSI_PLL_48MHz, 48},
-        {HSE_PLL_84MHz, HSI_PLL_84MHz, 84},
-        {HSE_PLL_100MHz, HSI_PLL_100MHz, 100},
+    // Every preset here gives a timer clock equal to HCLK: APB1 is divided by 2 down to its 50MHz limit and the
+    // timer doubling brings it back up (100/84MHz), while 48MHz and the direct oscillator presets (APB1 undivided)
+    // get no doubling. So the sweep exercises both branches of timer_get_frequency_hz(...)
+    inline constexpr std::array<clock_preset_t, 4> CLOCK_SWEEP = {{
+        {.hse = HSE_PLL_48MHz, .hsi = HSI_PLL_48MHz, .hse_mhz = 48, .hsi_mhz = 48},
+        {.hse = HSE_PLL_84MHz, .hsi = HSI_PLL_84MHz, .hse_mhz = 84, .hsi_mhz = 84},
+        {.hse = HSE_PLL_100MHz, .hsi = HSI_PLL_100MHz, .hse_mhz = 100, .hsi_mhz = 100},
+        {.hse = HSE_PLL_DIRECT, .hsi = HSI_PLL_DIRECT, .hse_mhz = HSE_VALUE_MHz, .hsi_mhz = HSI_VALUE_MHz},
     }};
 
     // Pick the preset from the same oscillator family the board is currently running on
     inline system_clock_t pick_preset(const clock_preset_t& preset, system_clock_t original) {
         return (original <= HSE_PLL_DIRECT) ? preset.hse : preset.hsi;
+    }
+
+    inline uint32_t preset_mhz(const clock_preset_t& preset, system_clock_t original) {
+        return (original <= HSE_PLL_DIRECT) ? preset.hse_mhz : preset.hsi_mhz;
     }
 
     inline void switch_clock(system_clock_t clock) {

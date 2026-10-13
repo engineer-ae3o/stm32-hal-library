@@ -822,25 +822,20 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, false));
         }
 
-        // ---------------------------------------------------------------------------------------------------------
+
         // PWM input mode. Hardware loopback: TIM5's PWM output (PA0) feeds TIM3's channel 1 pin (PB4).
-        // See test/loopback.hpp for the wiring.
-        //
-        // ASSUMPTION: pwm_input_config_t.timer_prescaler = N gives PSC = N - 1, N == 0 and a count_mode of
-        // TIMER_COUNTER_DIR_NONE are rejected with HAL_ERR_INVALID_ARG, and pwm_input_get_timer_frequency(...)
-        // reports the tick rate (timer clock / N).
-        // ---------------------------------------------------------------------------------------------------------
+
         namespace lb = test::loopback;
 
         constexpr uint32_t INPUT_TICK_HZ = 1'000'000U; // 1us per timer tick in most of the tests below
-
-        constexpr size_t INPUT_LOG_N = 16;
+        constexpr size_t   INPUT_LOG_N   = 16;
 
         struct input_log_t {
             volatile uint32_t events;
             volatile uint32_t stored;
-            timer_channel_t   channel[INPUT_LOG_N];
-            uint32_t          cycles[INPUT_LOG_N];
+
+            std::array<timer_channel_t, INPUT_LOG_N> channel;
+            std::array<uint32_t, INPUT_LOG_N>        cycles;
         };
 
         input_log_t s_in_log;
@@ -983,7 +978,11 @@ namespace test::pwm {
                 timer_pull_t pull;
                 uint32_t     pupdr;
             };
-            const std::array<pull_case_t, 3> pulls = {{{TIMER_PULL_NONE, 0b00}, {TIMER_USE_PULLUP, 0b01}, {TIMER_USE_PULLDOWN, 0b10}}};
+            constexpr std::array<pull_case_t, 3> pulls = {{
+                {.pull = TIMER_PULL_NONE, .pupdr = 0b00},
+                {.pull = TIMER_USE_PULLUP, .pupdr = 0b01},
+                {.pull = TIMER_USE_PULLDOWN, .pupdr = 0b10},
+            }};
 
             for (const auto& p : pulls) {
                 auto cfg = make_input_config(1);
@@ -1060,7 +1059,13 @@ namespace test::pwm {
                 uint32_t hz;
                 uint32_t duty_percent;
             };
-            const std::array<pwm_case_t, 5> cases = {{{1'000, 25}, {1'000, 75}, {5'000, 50}, {200, 10}, {20'000, 50}}};
+            const std::array<pwm_case_t, 5> cases = {{
+                {.hz = 1'000, .duty_percent = 25},
+                {.hz = 1'000, .duty_percent = 75},
+                {.hz = 5'000, .duty_percent = 50},
+                {.hz = 200, .duty_percent = 10},
+                {.hz = 20'000, .duty_percent = 50},
+            }};
 
             for (const auto& c : cases) {
                 lb::reset_fixture();
@@ -1292,10 +1297,10 @@ namespace test::pwm {
         RUN_TEST(input_period_agrees_with_the_cpu_cycle_counter_across_system_clocks);
 
         // Leave the loopback timers and clocks the way they were found
-        (void)pwm_input_deinit(lb::MEAS);
+        TRY_THEN_FAIL(pwm_input_deinit(lb::MEAS));
         lb::generator_stop();
-        (void)timx_clk_enable(lb::MEAS, false);
-        (void)timx_clk_enable(lb::GEN, false);
+        TRY_THEN_FAIL(timx_clk_enable(lb::MEAS, false));
+        TRY_THEN_FAIL(timx_clk_enable(lb::GEN, false));
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the PWM driver");
