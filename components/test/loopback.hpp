@@ -1,7 +1,6 @@
 #pragma once
 
 
-#include "drivers/gpio_types.h"
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
@@ -10,9 +9,9 @@
 #include "drivers/timer_types.h"
 #include "drivers/pwm_types.h"
 #include "drivers/timer.h"
-#include "utils/common.h"
 #include "drivers/gpio.h"
 #include "drivers/pwm.h"
+#include "utils/common.h"
 #include "utils/board.h"
 #include "utils/clock.h"
 #include "utils/tick.h"
@@ -26,33 +25,28 @@
 // Shared wiring and helpers for the hardware loopback timer tests
 // (timer_extended.cpp, timer_pcnt.cpp and the PWM input tests in pwm.cpp).
 //
-// WIRING: one jumper wire each. Change the pins below if they clash with something on your board.
+// WIRING: 
+//         GEN_A -------> IN_A and IN_ETR
+//         GEN_B -------> IN_B
 //
-//   PA0 (TIM5_CH1, "generator A") ---> PB4 (TIM3_CH1, measurer channel 1)
-//                                  \-> PD2 (TIM3_ETR, measurer external trigger input)
-//   PA1 (TIM5_CH2, "generator B") ---> PB5 (TIM3_CH2, measurer channel 2)
-//
-// TIM5 (32 bit) is the signal source. Either its output compare / PWM output drives the pins (generated clocks
+// TIM3 (16 bit) is the signal source. Either its output compare / PWM output drives the pins (generated clocks
 // and PWM), or the CPU takes the pins over as plain GPIO outputs and bit bangs exact pulse trains and
 // quadrature sequences, so the expected counts are exact rather than statistical.
-// TIM3 (16 bit) is the instrument under test.
+// TIM2 (32 bit) is the instrument under test.
 
 
 namespace test::loopback {
 
-    inline TIM_TypeDef* const GENERATOR = TIM3;
-    inline const board_pin_t  GEN_A     = BOARD_TIM3_CH1_PB4;
-    inline const board_pin_t  GEN_B     = BOARD_TIM3_CH2_PB5;
+    inline TIM_TypeDef* const GEN   = TIM3;
+    inline const board_pin_t  GEN_A = BOARD_TIM3_CH1_PB4;
+    inline const board_pin_t  GEN_B = BOARD_TIM3_CH2_PB5;
 
-    inline TIM_TypeDef* const MEASURED = TIM2;
-    inline const board_pin_t  IN_A     = BOARD_TIM2_CH1_PA5;
-    inline const board_pin_t  IN_B     = BOARD_TIM2_CH2_PB3;
-    inline const board_pin_t  IN_ETR   = BOARD_TIM2_ETR_PA15;
+    inline TIM_TypeDef* const MEAS   = TIM2;
+    inline const board_pin_t  IN_A   = BOARD_TIM2_CH1_PA5;
+    inline const board_pin_t  IN_B   = BOARD_TIM2_CH2_PB3;
+    inline const board_pin_t  IN_ETR = BOARD_TIM2_ETR_PA15;
 
-    // How long each quadrature state is held. Comfortably above any filter the tests ask for
-    inline constexpr uint32_t STEP_US = 4;
-
-    // GPIO register helpers
+    // Pin access
     inline uint32_t moder(const board_pin_t& pin) {
         return (pin.port->MODER >> (std::to_underlying(pin.pin) * 2U)) & 0b11U;
     }
@@ -69,7 +63,7 @@ namespace test::loopback {
 
     // Turn the pin into a plain push pull output driving the given level. The next
     // driver init that touches the pin switches it back to its alternate function
-    inline void take_over_pin(const board_pin_t& pin, bool level) {
+    inline void take_over(const board_pin_t& pin, bool level) {
         TEST_ASSERT_EQUAL(HAL_OK, gpiox_clk_enable(pin.port, true));
         gpio_set_output(pin.port, pin.pin);
         gpio_set_output_type(pin.port, pin.pin, GPIO_PUSH_PULL);
@@ -77,28 +71,34 @@ namespace test::loopback {
         gpio_set_level(pin.port, pin.pin, level);
     }
 
-    // Park the pin as an input with a pulldown, so a wire hanging off a previous test's output idles low
-    inline void park_pin(const board_pin_t& pin) {
-        TEST_ASSERT_EQUAL(HAL_OK, gpiox_clk_enable(pin.port, true));
-        gpio_set_input(pin.port, pin.pin);
-        gpio_enable_pulldown(pin.port, pin.pin, true);
+    // Fresh start for a test: both timers clocked and reset, both stimulus pins driven low
+    inline void reset() {
+        for (auto* timer : {GEN, MEAS}) {
+            TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(timer, true));
+            TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(timer));
+            TEST_ASSERT_EQUAL(HAL_OK, timer_reset(timer));
+        }
+        take_over(GEN_A, false);
+        take_over(GEN_B, false);
     }
 
-    // Bit banged stimulus
-    // 'count' full pulses: high for high_us, then low for low_us
-    inline void pulses(const board_pin_t& pin,
-                       uint32_t           count,
-                       uint32_t           high_us,
-                       uint32_t           low_us) {
+    // Timer prescaler that gives the timer under test 1us ticks
+    inline uint16_t ticks_1us() {
+        return static_cast<uint16_t>(timer_get_frequency_hz(MEAS) / 1'000'000U);
+    }
+
+    // Generate a given number of pulses on the given pin
+    inline void
+    pulses(const board_pin_t& pin, uint32_t count, uint32_t width_us) {
         for (uint32_t i = 0; i < count; i++) {
             gpio_set_level(pin.port, pin.pin, true);
-            delay_us(high_us);
+            delay_us(width_us);
             gpio_set_level(pin.port, pin.pin, false);
-            delay_us(low_us);
+            delay_us(width_us);
         }
     }
 
-    // 'count' pulses as short as two back to back BSRR writes allow (tens of ns): below any filter these tests use
+    // 'count' pulses as short as two back to back writes can make them (tens of ns)
     inline void glitches(const board_pin_t& pin, uint32_t count) {
         for (uint32_t i = 0; i < count; i++) {
             gpio_set_level(pin.port, pin.pin, true);
@@ -107,8 +107,8 @@ namespace test::loopback {
         }
     }
 
-    // Walk GEN_A (channel A) and GEN_B (channel B) through 'cycles' full quadrature cycles starting from (A=0, B=0).
-    // a_leads_b: A rises first (the sequence 00 > 10 > 11 > 01 > 00), otherwise B leads (00 > 01 > 11 > 10 > 00)
+    // 'cycles' full quadrature cycles on GEN_A (channel A) and GEN_B (channel B), starting from A = B = 0.
+    // A leading B: 00 > 10 > 11 > 01 > 00. B leading A: 00 > 01 > 11 > 10 > 00
     inline void quad_walk(uint32_t cycles, bool a_leads_b) {
         constexpr auto lead = std::array{true, true, false, false};
         constexpr auto lag  = std::array{false, true, true, false};
@@ -119,177 +119,71 @@ namespace test::loopback {
                     GEN_A.port, GEN_A.pin, a_leads_b ? lead[s] : lag[s]);
                 gpio_set_level(
                     GEN_B.port, GEN_B.pin, a_leads_b ? lag[s] : lead[s]);
-                delay_us(STEP_US);
+                delay_us(5);
             }
         }
     }
 
-    // Count the transitions seen on a pin over a window, sampling in a tight loop
+    // Transitions seen on a pin over a window
     inline uint32_t count_edges(const board_pin_t& pin, uint32_t duration_us) {
         uint32_t       edges = 0;
         bool           last  = gpio_get_level(pin.port, pin.pin);
-        const uint32_t t0    = DWT->CYCCNT;
-        const uint32_t span =
-            duration_us * (get_system_core_clock() / 1'000'000U);
-        while ((DWT->CYCCNT - t0) < span) {
+        const uint32_t start = DWT->CYCCNT;
+
+        const uint32_t clock_mhz = get_system_core_clock() / 1'000'000U;
+        const uint32_t span      = duration_us * clock_mhz;
+
+        while ((DWT->CYCCNT - start) < span) {
             const bool now = gpio_get_level(pin.port, pin.pin);
-            if (now != last) {
-                edges += 1;
-                last = now;
-            }
+            edges += (now != last) ? 1U : 0U;
+            last = now;
         }
         return edges;
     }
 
-
-    // Signal source (TIM5)
-    // A square wave of the given frequency on 'pin': the output toggles on a compare match once per timer period
-    inline hal_err_t generator_toggle_start(timer_channel_t    channel,
-                                            const board_pin_t& pin,
-                                            uint32_t           pin_hz) {
+    // Generate a clock of given frequency on channel 1 of TIM3
+    inline void toggle_clock(uint32_t frequency_hz) {
         output_compare_config_t cfg{};
-        cfg.buffer_compare_reload = false;
-        cfg.mode                  = OUTPUT_COMPARE_TOGGLE_ON_MATCH;
-        cfg.count_mode            = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
-        cfg.channels[0]           = {.output_polarity   = false,
-                                     .output_idle_state = false,
-                                     .channel           = channel,
-                                     .gpio_pin          = pin};
-        cfg.num_channels          = 1;
+        cfg.mode        = OUTPUT_COMPARE_TOGGLE_ON_MATCH;
+        cfg.count_mode  = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
+        cfg.channels[0] = {
+            .output_polarity   = false,
+            .output_idle_state = false,
+            .channel           = TIMER_CHANNEL_1,
+            .gpio_pin          = GEN_A,
+        };
+        cfg.num_channels = 1;
 
-        TRY(output_compare_init(GENERATOR, &cfg));
-
-        // The pin toggles once per period, so the period frequency has to be twice the pin frequency
-        uint32_t max_compare = 0;
-        TRY(output_compare_start(GENERATOR, 2U * pin_hz, &max_compare));
-        return output_compare_set_compare(GENERATOR, channel, max_compare / 2U);
+        uint32_t max = 0;
+        TEST_ASSERT_EQUAL(HAL_OK, output_compare_init(GEN, &cfg));
+        TEST_ASSERT_EQUAL(
+            HAL_OK,
+            output_compare_start(GEN,
+                                 2U * frequency_hz,
+                                 &max)); // The output toggles once per period
+        TEST_ASSERT_EQUAL(
+            HAL_OK, output_compare_set_compare(GEN, TIMER_CHANNEL_1, max / 2U));
     }
 
-    // Frequency actually coming out of the generator, derived from its registers
-    inline uint32_t generator_pin_hz() {
-        const uint64_t divisor = (uint64_t)(GENERATOR->PSC + 1U) *
-                                 ((uint64_t)GENERATOR->ARR + 1U) * 2U;
-        return (uint32_t)(((uint64_t)timer_get_frequency_hz(GENERATOR) +
-                           (divisor / 2U)) /
-                          divisor);
-    }
-
-    // A PWM wave on GEN_A. 'compare' and 'max_duty' are the duty cycle numbers the PWM driver ended up using
-    inline hal_err_t generator_pwm_start(uint32_t  pwm_hz,
-                                         uint32_t  duty_percent,
-                                         uint32_t* compare,
-                                         uint32_t* max_duty) {
+    inline void generate_pwm(uint32_t hz, uint32_t duty_percent) {
         pwm_gp_timer_config_t cfg{};
         cfg.pwm_mode       = PWM_MODE_1;
         cfg.pwm_count_mode = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
-        cfg.channels[0]    = {.output_polarity   = false,
-                              .output_idle_state = false,
-                              .channel           = TIMER_CHANNEL_1,
-                              .gpio_pin          = GEN_A};
-        cfg.num_channels   = 1;
+        cfg.channels[0]    = {
+            .output_polarity   = false,
+            .output_idle_state = false,
+            .channel           = TIMER_CHANNEL_1,
+            .gpio_pin          = GEN_A,
+        };
+        cfg.num_channels = 1;
 
-        TRY(pwm_gp_timer_init(GENERATOR, &cfg));
-        TRY(pwm_start(GENERATOR, pwm_hz, max_duty));
-        *compare = (uint32_t)((uint64_t)(*max_duty) * duty_percent / 100U);
-        return pwm_set_duty_cycle(GENERATOR, TIMER_CHANNEL_1, *compare);
-    }
-
-    inline void generator_stop() {
-        (void)output_compare_deinit(GENERATOR);
-    }
-
-    // Instrument helpers
-    // Timer prescaler that makes the measurer count in exact 1us ticks
-    inline uint32_t prescaler_for_1us(TIM_TypeDef* handle) {
-        return timer_get_frequency_hz(handle) / 1'000'000U;
-    }
-
-    inline uint32_t cycles_to_us32(uint32_t cycles, uint32_t sysclk_hz) {
-        return (uint32_t)((uint64_t)cycles * 1'000'000ULL / sysclk_hz);
-    }
-
-    // Fixture
-    // Clocks on, both timers back to their reset state, loopback pins parked low.
-    // The _hal flavor never asserts, so it is safe to use while the system clock is switched
-    inline hal_err_t reset_fixture_hal() {
-        TRY(timx_clk_enable(GENERATOR, true));
-        TRY(timer_reset(GENERATOR));
-        park_pin(GEN_A);
-        park_pin(GEN_B);
-
-        TRY(timx_clk_enable(MEASURED, true));
-        TRY(timer_reset(MEASURED));
-        return HAL_OK;
-    }
-
-    inline void reset_fixture() {
-        TEST_ASSERT_EQUAL(HAL_OK, reset_fixture_hal());
-    }
-
-    // Poll until the predicate holds or the timeout (in ms) runs out
-    template<typename predicate>
-    bool wait_for(predicate pred, uint32_t timeout_ms) {
-        const uint64_t t0 = ms_since_boot();
-        while (!pred() && ((ms_since_boot() - t0) < timeout_ms));
-        return pred();
-    }
-
-    // System clock sweep. Changing the system clock moves the timer clock, and the SysTick/DWT based time
-    // bases used to cross check the timers are independent of the timers' own clock arithmetic.
-    // NOTE: TEST_ASSERT_* longjmps out of the test on failure and C++ destructors would not run, so there is
-    // deliberately no RAII guard here. Measure with the non asserting _hal helpers while switched, restore the
-    // clock, and only then assert on the recorded results.
-    struct clock_preset_t {
-        system_clock_t hse;
-        system_clock_t hsi;
-        uint32_t       hse_mhz;
-        uint32_t       hsi_mhz;
-    };
-
-    // Every preset here gives a timer clock equal to HCLK: APB1 is divided by 2 down to its 50MHz limit and the
-    // timer doubling brings it back up (100/84MHz), while 48MHz and the direct oscillator presets (APB1 undivided)
-    // get no doubling. So the sweep exercises both branches of timer_get_frequency_hz(...)
-    inline constexpr std::array<clock_preset_t, 4> CLOCK_SWEEP = {{
-        {
-            .hse     = HSE_PLL_48MHz,
-            .hsi     = HSI_PLL_48MHz,
-            .hse_mhz = 48,
-            .hsi_mhz = 48,
-        },
-        {
-            .hse     = HSE_PLL_84MHz,
-            .hsi     = HSI_PLL_84MHz,
-            .hse_mhz = 84,
-            .hsi_mhz = 84,
-        },
-        {
-            .hse     = HSE_PLL_100MHz,
-            .hsi     = HSI_PLL_100MHz,
-            .hse_mhz = 100,
-            .hsi_mhz = 100,
-        },
-        {
-            .hse     = HSE_PLL_DIRECT,
-            .hsi     = HSI_PLL_DIRECT,
-            .hse_mhz = HSE_VALUE_MHz,
-            .hsi_mhz = HSI_VALUE_MHz,
-        },
-    }};
-
-    // Pick the preset from the same oscillator family the board is currently running on
-    inline system_clock_t pick_preset(const clock_preset_t& preset,
-                                      system_clock_t        original) {
-        return (original <= HSE_PLL_DIRECT) ? preset.hse : preset.hsi;
-    }
-
-    inline uint32_t preset_mhz(const clock_preset_t& preset,
-                               system_clock_t        original) {
-        return (original <= HSE_PLL_DIRECT) ? preset.hse_mhz : preset.hsi_mhz;
-    }
-
-    inline void switch_clock(system_clock_t clock) {
-        system_core_clock_config(clock);
-        systick_init();
+        uint32_t max = 0;
+        TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(GEN, &cfg));
+        TEST_ASSERT_EQUAL(HAL_OK, pwm_start(GEN, hz, &max));
+        TEST_ASSERT_EQUAL(HAL_OK,
+                          pwm_set_duty_cycle(GEN,
+                                             TIMER_CHANNEL_1,
+                                             (max * duty_percent) / 100U));
     }
 
 } // namespace test::loopback

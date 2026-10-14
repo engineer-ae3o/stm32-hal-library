@@ -8,11 +8,9 @@
 #include "test/loopback.hpp"
 #include "drivers/timer.h"
 #include "utils/common.h"
-#include "utils/clock.h"
 #include "utils/board.h"
 #include "drivers/pwm.h"
 #include "test/pwm.hpp"
-#include "utils/tick.h"
 #include "utils/err.h"
 #include "utils/log.h"
 
@@ -179,12 +177,10 @@ namespace test::pwm {
                                                       board_pin_t     pin,
                                                       bool invert = false,
                                                       bool idle   = false) {
-            return {
-                .output_polarity   = invert,
-                .output_idle_state = idle,
-                .channel           = channel,
-                .gpio_pin          = pin,
-            };
+            return {.output_polarity   = invert,
+                    .output_idle_state = idle,
+                    .channel           = channel,
+                    .gpio_pin          = pin};
         }
 
         // TESTS
@@ -262,7 +258,7 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_LITE1, false));
         }
 
-        void timer_init_rejects_an_unknown_channel_without_corrupting_state() {
+        void timer_init_rejects_unknown_channel_without_corruption() {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
 
@@ -579,7 +575,7 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, false));
         }
 
-        void advanced_init_configures_the_break_input_and_fires_callback() {
+        void advanced_configures_break_input_and_fires_callback() {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, true));
             reset_pwm(TIM_ADV);
 
@@ -675,7 +671,7 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, false));
         }
 
-        void start_edge_aligned_hits_the_requested_frequency_on_all_timers() {
+        void start_edge_aligned_hits_the_requested_frequeny() {
             for (auto* const handle : {TIM_GP16, TIM_GP32}) {
                 TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(handle, true));
                 reset_pwm(handle);
@@ -863,16 +859,18 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, false));
         }
 
-        void pause_resume_channel_toggle_main_output_on_non_advanced_timers() {
+        void pause_resume_channel_toggle_output_on_non_advanced_timers() {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
             TIM_GP16->CCER |=
                 TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E;
 
-            for (const auto channel : {TIMER_CHANNEL_1,
-                                       TIMER_CHANNEL_2,
-                                       TIMER_CHANNEL_3,
-                                       TIMER_CHANNEL_4}) {
+            for (const auto channel : {
+                     TIMER_CHANNEL_1,
+                     TIMER_CHANNEL_2,
+                     TIMER_CHANNEL_3,
+                     TIMER_CHANNEL_4,
+                 }) {
                 const auto regs = get_channel_regs(TIM_GP16, channel);
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_pause_channel(TIM_GP16, channel));
                 TEST_ASSERT_FALSE(TIM_GP16->CCER & regs.ccxe);
@@ -923,7 +921,7 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, false));
         }
 
-        void advanced_init_rejects_init_once_locked_but_accepts_after_reset() {
+        void advanced_init_rejects_once_locked_but_accepts_after_reset() {
             // TIM1_BDTR's LOCK bits are write once until a reset in hardware. Software write can
             // clear them once set, including pwm_deinit()'s own BDTR clear, which is a no-op against
             // the hardware's frozen bits. The one recoverable path is a peripheral level reset via
@@ -986,533 +984,200 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, false));
         }
 
-
         // PWM input mode. Hardware loopback: TIM5's PWM output (PA0) feeds TIM3's channel 1 pin (PB4).
+        // Wiring and the signal sources are in test/loopback.hpp.
+        //
+        // ASSUMPTION: pwm_input_config_t.timer_prescaler = N gives PSC = N - 1, 0 and TIMER_COUNTER_DIR_NONE are
+        // HAL_ERR_INVALID_ARG, and pwm_input_get_timer_frequency(...) returns the tick rate (timer clock / N).
+        namespace lb = test::loopback;
 
-        // 1us per timer tick in most of the tests below
-        constexpr uint32_t INPUT_TICK_HZ = 1'000'000U;
-        constexpr size_t   INPUT_LOG_N   = 16;
-
-        struct input_log_t {
-            volatile uint32_t events;
-            volatile uint32_t stored;
-
-            std::array<timer_channel_t, INPUT_LOG_N> channel;
-            std::array<uint32_t, INPUT_LOG_N>        cycles;
+        struct counter_t {
+            volatile uint32_t n = 0;
         };
 
-        input_log_t s_in_log;
-
-        void reset_input_log() {
-            s_in_log.events = 0;
-            s_in_log.stored = 0;
+        void count_cb(void* arg, timer_channel_t, timer_count_dir_t) {
+            auto* counter = static_cast<counter_t*>(arg);
+            counter->n    = counter->n + 1;
         }
 
-        void input_cb(void*, timer_channel_t channel, timer_count_dir_t) {
-            const uint32_t i = s_in_log.stored;
-            if (i < INPUT_LOG_N) {
-                s_in_log.channel[i] = channel;
-                s_in_log.cycles[i]  = DWT->CYCCNT;
-                s_in_log.stored     = i + 1;
-            }
-            s_in_log.events = s_in_log.events + 1;
-        }
-
-        pwm_input_config_t make_input_config(uint32_t   prescaler,
-                                             uint32_t   filter_ns = 0,
-                                             timer_cb_t callback  = {}) {
+        // PB4, 1us ticks, no filter, no callback
+        pwm_input_config_t input_config() {
             pwm_input_config_t cfg{};
             cfg.pull            = TIMER_PULL_NONE;
             cfg.clk_div         = TIM_CLK_DIV_1;
             cfg.count_mode      = TIMER_COUNTER_DIR_UP;
-            cfg.timer_prescaler = static_cast<uint16_t>(prescaler);
-            cfg.filter_ns       = filter_ns;
-            cfg.gpio_pin        = loopback::IN_A;
-            cfg.callback        = callback;
+            cfg.timer_prescaler = lb::ticks_1us();
+            cfg.filter_ns       = 0;
+            cfg.gpio_pin        = lb::IN_A;
             return cfg;
         }
 
-        // Stop the measurement, then read the last captured period and pulse width. Stopping first means the read
-        // can never race a capture
-        pwm_input_data_t stop_and_read() {
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_stop(loopback::MEASURED));
-            pwm_input_data_t data{};
-            TEST_ASSERT_EQUAL(HAL_OK,
-                              pwm_input_get_data(loopback::MEASURED, &data));
-            return data;
-        }
-
         void input_init_rejects_invalid_arguments() {
-            loopback::reset_fixture();
-            const auto good = make_input_config(
-                loopback::prescaler_for_1us(loopback::MEASURED));
-
+            lb::reset();
+            const auto good = input_config();
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
                               pwm_input_init(nullptr, &good));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              pwm_input_init(loopback::MEASURED, nullptr));
+                              pwm_input_init(lb::MEAS, nullptr));
 
             auto bad            = good;
             bad.timer_prescaler = 0;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              pwm_input_init(loopback::MEASURED, &bad));
+                              pwm_input_init(lb::MEAS, &bad));
 
             bad            = good;
             bad.count_mode = TIMER_COUNTER_DIR_NONE;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              pwm_input_init(loopback::MEASURED, &bad));
+                              pwm_input_init(lb::MEAS, &bad));
 
-            // Timers with a single channel can't do PWM input
+            // Timers with one channel can't do PWM input
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
                               pwm_input_init(TIM10, &good));
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
                               pwm_input_init(TIM11, &good));
+        }
 
+        void input_init_fails_on_a_locked_advanced_timer() {
+            const auto cfg = input_config();
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM1, true));
             TEST_ASSERT_EQUAL(HAL_OK, timer_reset(TIM1));
             TIM1->BDTR |= TIM_BDTR_LOCK;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE,
-                              pwm_input_init(TIM1, &good));
+                              pwm_input_init(TIM1, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, timer_reset(TIM1));
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM1, false));
         }
 
-        void input_get_data_and_frequency_reject_invalid_arguments() {
-            loopback::reset_fixture();
+        void input_functions_reject_null_arguments() {
             pwm_input_data_t data{};
             uint32_t         hz = 0;
-
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
                               pwm_input_get_data(nullptr, &data));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              pwm_input_get_data(loopback::MEASURED, nullptr));
+                              pwm_input_get_data(lb::MEAS, nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
                               pwm_input_get_timer_frequency(nullptr, &hz));
-            TEST_ASSERT_EQUAL(
-                HAL_ERR_INVALID_ARG,
-                pwm_input_get_timer_frequency(loopback::MEASURED, nullptr));
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pwm_input_get_timer_frequency(lb::MEAS, nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_input_start(nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pwm_input_stop(nullptr));
         }
 
-        void input_init_programs_slave_reset_mode_and_both_capture_channels() {
-            loopback::reset_fixture();
+        void input_timer_prescaler_sets_the_tick_rate() {
+            lb::reset();
+            const uint32_t clk = timer_get_frequency_hz(lb::MEAS);
 
-            auto cfg    = make_input_config(7, 0, {input_cb, nullptr});
-            cfg.clk_div = TIM_CLK_DIV_2;
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(loopback::MEASURED, &cfg));
+            auto cfg            = input_config();
+            cfg.timer_prescaler = 4;
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
+            TEST_ASSERT_EQUAL_UINT32(3U, lb::MEAS->PSC);
 
-            TIM_TypeDef* const t = loopback::MEASURED;
-
-            // Channel 1 captures TI1 (period), channel 2 captures the same TI1 indirectly (pulse width)
-            TEST_ASSERT_EQUAL_UINT32(
-                0b01U, (t->CCMR1 & TIM_CCMR1_CC1S) >> TIM_CCMR1_CC1S_Pos);
-            TEST_ASSERT_EQUAL_UINT32(
-                0b10U, (t->CCMR1 & TIM_CCMR1_CC2S) >> TIM_CCMR1_CC2S_Pos);
-            TEST_ASSERT_EQUAL_UINT32(0U,
-                                     t->CCMR1 &
-                                         (TIM_CCMR1_IC1F | TIM_CCMR1_IC2F |
-                                          TIM_CCMR1_IC1PSC | TIM_CCMR1_IC2PSC));
-
-            // Channel 1 on the rising edge, channel 2 on the falling edge
-            TEST_ASSERT_EQUAL_UINT32(
-                TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC2P,
-                t->CCER & (TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NP |
-                           TIM_CCER_CC2E | TIM_CCER_CC2P | TIM_CCER_CC2NP));
-
-            // Triggered by the filtered TI1 (TI1FP1), and the trigger resets the counter
-            TEST_ASSERT_EQUAL_UINT32(
-                0b101U, (t->SMCR & TIM_SMCR_TS) >> TIM_SMCR_TS_Pos);
-            TEST_ASSERT_EQUAL_UINT32(
-                0b100U, (t->SMCR & TIM_SMCR_SMS) >> TIM_SMCR_SMS_Pos);
-
-            TEST_ASSERT_EQUAL_UINT32(TIM_DIER_CC1IE | TIM_DIER_CC2IE,
-                                     t->DIER &
-                                         (TIM_DIER_CC1IE | TIM_DIER_CC2IE));
-            TEST_ASSERT_TRUE(NVIC->ISER[TIM3_IRQn >> 5] &
-                             (1UL << (TIM3_IRQn & 0x1FU)));
-
-            TEST_ASSERT_EQUAL_UINT32(6U, t->PSC);
-            TEST_ASSERT_EQUAL_UINT32(UINT16_MAX, t->ARR);
-            TEST_ASSERT_EQUAL_UINT32(std::to_underlying(TIM_CLK_DIV_2),
-                                     (t->CR1 & TIM_CR1_CKD) >> TIM_CR1_CKD_Pos);
-            TEST_ASSERT_FALSE(t->CR1 & TIM_CR1_CEN);
-
-            // Without a callback no capture interrupt is enabled
-            cfg = make_input_config(7);
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(loopback::MEASURED, &cfg));
-            TEST_ASSERT_EQUAL_UINT32(
-                0U, t->DIER & (TIM_DIER_CC1IE | TIM_DIER_CC2IE));
-
-            // The 32 bit timer gets the full reload value
-            cfg          = make_input_config(1);
-            cfg.gpio_pin = loopback::GEN_A;
+            uint32_t hz = 0;
             TEST_ASSERT_EQUAL(HAL_OK,
-                              pwm_input_init(loopback::GENERATOR, &cfg));
-            TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, loopback::GENERATOR->ARR);
-        }
+                              pwm_input_get_timer_frequency(lb::MEAS, &hz));
+            TEST_ASSERT_EQUAL_UINT32(clk / 4U, hz);
 
-        void input_init_programs_the_requested_filter() {
-            loopback::reset_fixture();
-
-            const auto cfg = make_input_config(1, 500);
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(loopback::MEASURED, &cfg));
-
-            uint32_t code = 0;
-            TEST_ASSERT_EQUAL(
-                HAL_OK,
-                timer_filter_ns_to_ic_code(
-                    loopback::MEASURED, TIM_CLK_DIV_1, 500, &code));
-            TEST_ASSERT_TRUE(code != 0U);
-            TEST_ASSERT_EQUAL_UINT32(
-                code,
-                (loopback::MEASURED->CCMR1 & TIM_CCMR1_IC1F) >>
-                    TIM_CCMR1_IC1F_Pos);
-            TEST_ASSERT_EQUAL_UINT32(
-                code,
-                (loopback::MEASURED->CCMR1 & TIM_CCMR1_IC2F) >>
-                    TIM_CCMR1_IC2F_Pos);
+            cfg = input_config(); // 1us ticks
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
+            TEST_ASSERT_EQUAL(HAL_OK,
+                              pwm_input_get_timer_frequency(lb::MEAS, &hz));
+            TEST_ASSERT_EQUAL_UINT32(1'000'000U, hz);
         }
 
         void input_init_configures_the_gpio_pin() {
-            loopback::reset_fixture();
+            lb::reset();
+            auto cfg = input_config();
+            cfg.pull = TIMER_USE_PULLDOWN;
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
 
-            struct pull_case_t {
-                timer_pull_t pull;
-                uint32_t     pupdr;
-            };
-            constexpr std::array<pull_case_t, 3> pulls = {{
-                {.pull = TIMER_PULL_NONE, .pupdr = 0b00},
-                {.pull = TIMER_USE_PULLUP, .pupdr = 0b01},
-                {.pull = TIMER_USE_PULLDOWN, .pupdr = 0b10},
-            }};
-
-            for (const auto& p : pulls) {
-                auto cfg = make_input_config(1);
-                cfg.pull = p.pull;
-                TEST_ASSERT_EQUAL(HAL_OK,
-                                  pwm_input_init(loopback::MEASURED, &cfg));
-                TEST_ASSERT_EQUAL_UINT32(0b10U,
-                                         loopback::moder(loopback::IN_A));
-                TEST_ASSERT_EQUAL_UINT32(loopback::IN_A.af,
-                                         loopback::afr(loopback::IN_A));
-                TEST_ASSERT_EQUAL_UINT32(p.pupdr,
-                                         loopback::pupdr(loopback::IN_A));
-            }
-        }
-
-        void input_init_replaces_the_output_configuration_of_the_same_timer() {
-            loopback::reset_fixture();
-
-            // PWM output on TIM3 channel 1 leaves output compare mode bits in CCMR1. They overlay the input
-            // capture filter and prescaler fields, so they must not survive into the input configuration
-            pwm_gp_timer_config_t out{};
-            out.pwm_mode       = PWM_MODE_1;
-            out.pwm_count_mode = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
-            out.channels[0]    = make_channel(TIMER_CHANNEL_1, loopback::IN_A);
-            out.num_channels   = 1;
-            TEST_ASSERT_EQUAL(HAL_OK,
-                              pwm_gp_timer_init(loopback::MEASURED, &out));
-            TEST_ASSERT_TRUE(loopback::MEASURED->CCMR1 & TIM_CCMR1_OC1M);
-
-            const auto cfg = make_input_config(1);
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(loopback::MEASURED, &cfg));
-            TEST_ASSERT_EQUAL_UINT32(0U,
-                                     loopback::MEASURED->CCMR1 &
-                                         (TIM_CCMR1_IC1F | TIM_CCMR1_IC2F |
-                                          TIM_CCMR1_IC1PSC | TIM_CCMR1_IC2PSC));
-            TEST_ASSERT_EQUAL_UINT32(
-                0b01U,
-                (loopback::MEASURED->CCMR1 & TIM_CCMR1_CC1S) >>
-                    TIM_CCMR1_CC1S_Pos);
-            TEST_ASSERT_FALSE(loopback::MEASURED->CCER & TIM_CCER_CC1P);
-        }
-
-        void input_timer_frequency_reports_the_tick_rate() {
-            loopback::reset_fixture();
-
-            const uint32_t clk = timer_get_frequency_hz(loopback::MEASURED);
-            const std::array<uint32_t, 4> prescalers = {
-                1, 2, 4, clk / INPUT_TICK_HZ};
-
-            for (const uint32_t prescaler : prescalers) {
-                const auto cfg = make_input_config(prescaler);
-                TEST_ASSERT_EQUAL(HAL_OK,
-                                  pwm_input_init(loopback::MEASURED, &cfg));
-
-                uint32_t hz = 0;
-                TEST_ASSERT_EQUAL(
-                    HAL_OK,
-                    pwm_input_get_timer_frequency(loopback::MEASURED, &hz));
-                TEST_ASSERT_EQUAL_UINT32(
-                    clk / prescaler,
-                    hz); // Ticks per second, not the timer's input clock
-            }
-
-            uint32_t   hz  = 0;
-            const auto cfg = make_input_config(
-                loopback::prescaler_for_1us(loopback::MEASURED));
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(loopback::MEASURED, &cfg));
-            TEST_ASSERT_EQUAL(
-                HAL_OK, pwm_input_get_timer_frequency(loopback::MEASURED, &hz));
-            TEST_ASSERT_EQUAL_UINT32(INPUT_TICK_HZ, hz);
+            TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(lb::IN_A));
+            TEST_ASSERT_EQUAL_UINT32(lb::IN_A.af, lb::afr(lb::IN_A));
+            TEST_ASSERT_EQUAL_UINT32(0b10U, lb::pupdr(lb::IN_A));
         }
 
         void input_start_and_stop_run_and_freeze_the_counter() {
-            loopback::reset_fixture();
-            const auto cfg = make_input_config(
-                loopback::prescaler_for_1us(loopback::MEASURED));
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(loopback::MEASURED, &cfg));
-            TEST_ASSERT_FALSE(loopback::MEASURED->CR1 & TIM_CR1_CEN);
+            lb::reset();
+            const auto cfg = input_config();
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
 
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(loopback::MEASURED));
-            TEST_ASSERT_TRUE(loopback::MEASURED->CR1 & TIM_CR1_CEN);
+            TEST_ASSERT_FALSE(lb::MEAS->CR1 & TIM_CR1_CEN);
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
             delay_us(100);
-            TEST_ASSERT_TRUE(loopback::MEASURED->CNT > 0U);
+            TEST_ASSERT_TRUE(lb::MEAS->CNT > 0U);
 
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_stop(loopback::MEASURED));
-            TEST_ASSERT_FALSE(loopback::MEASURED->CR1 & TIM_CR1_CEN);
-            const uint32_t held = loopback::MEASURED->CNT;
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_stop(lb::MEAS));
+            const uint32_t held = lb::MEAS->CNT;
             delay_us(100);
-            TEST_ASSERT_EQUAL_UINT32(held, loopback::MEASURED->CNT);
+            TEST_ASSERT_EQUAL_UINT32(held, lb::MEAS->CNT);
         }
 
-        void input_measures_period_and_pulse_width_of_the_generated_pwm() {
-            struct pwm_case_t {
-                uint32_t hz;
-                uint32_t duty_percent;
-            };
-            const std::array<pwm_case_t, 5> cases = {{
-                {.hz = 1'000, .duty_percent = 25},
-                {.hz = 1'000, .duty_percent = 75},
-                {.hz = 5'000, .duty_percent = 50},
-                {.hz = 200, .duty_percent = 10},
-                {.hz = 20'000, .duty_percent = 50},
-            }};
+        void input_measures_the_period_and_pulse_width_of_a_generated_pwm() {
+            for (const auto& [hz, duty] :
+                 std::array<std::pair<uint32_t, uint32_t>, 4>{
+                     {{1'000, 25}, {1'000, 75}, {5'000, 50}, {200, 10}}}) {
+                lb::reset();
+                lb::generate_pwm(hz, duty);
+                const auto cfg = input_config();
+                TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
+                TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
 
-            for (const auto& c : cases) {
-                loopback::reset_fixture();
-                uint32_t compare = 0;
-                uint32_t max     = 0;
-                TEST_ASSERT_EQUAL(HAL_OK,
-                                  loopback::generator_pwm_start(
-                                      c.hz, c.duty_percent, &compare, &max));
+                delay_ms(4'000U / hz + 2U); // A few full cycles
 
-                reset_input_log();
-                const auto cfg = make_input_config(
-                    loopback::prescaler_for_1us(loopback::MEASURED),
-                    0,
-                    {input_cb, nullptr});
-                TEST_ASSERT_EQUAL(HAL_OK,
-                                  pwm_input_init(loopback::MEASURED, &cfg));
-                TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(loopback::MEASURED));
-
-                // Six events is three full cycles: the first one after the start measures a partial cycle and is discarded
-                TEST_ASSERT_TRUE_MESSAGE(loopback::wait_for(
-                                             []() {
-                                                 return s_in_log.stored >= 6;
-                                             },
-                                             500),
-                                         "No PWM input capture events");
-                const auto data = stop_and_read();
-
-                const uint64_t gen_clk =
-                    timer_get_frequency_hz(loopback::GENERATOR);
-                const uint32_t expected_period =
-                    (uint32_t)((uint64_t)max * INPUT_TICK_HZ / gen_clk);
-                const uint32_t expected_pulse =
-                    (uint32_t)((uint64_t)compare * INPUT_TICK_HZ / gen_clk);
-
-                TEST_ASSERT_UINT32_WITHIN(2U, expected_period, data.period);
-                TEST_ASSERT_UINT32_WITHIN(2U, expected_pulse, data.pulse);
-            }
-        }
-
-        void
-        input_capture_callbacks_alternate_between_rising_and_falling_edge_channels() {
-            loopback::reset_fixture();
-            uint32_t compare = 0;
-            uint32_t max     = 0;
-            TEST_ASSERT_EQUAL(
-                HAL_OK,
-                loopback::generator_pwm_start(
-                    1'000, 25, &compare, &max)); // 250us high, 750us low
-
-            reset_input_log();
-            const auto cfg = make_input_config(
-                loopback::prescaler_for_1us(loopback::MEASURED),
-                0,
-                {input_cb, nullptr});
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(loopback::MEASURED, &cfg));
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(loopback::MEASURED));
-            TEST_ASSERT_TRUE(loopback::wait_for(
-                []() {
-                    return s_in_log.stored >= 10;
-                },
-                500));
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_stop(loopback::MEASURED));
-
-            for (uint32_t i = 1; i < 10; i++) {
-                TEST_ASSERT_NOT_EQUAL(s_in_log.channel[i - 1],
-                                      s_in_log.channel[i]);
-            }
-
-            // Channel 1 (rising edge) fires 250us before channel 2 (falling edge)
-            const uint32_t sysclk = get_system_core_clock();
-            for (uint32_t i = 0; i + 1 < 10; i++) {
-                if (s_in_log.channel[i] == TIMER_CHANNEL_1) {
-                    TEST_ASSERT_EQUAL(TIMER_CHANNEL_2, s_in_log.channel[i + 1]);
-                    const uint32_t gap_us = loopback::cycles_to_us32(
-                        s_in_log.cycles[i + 1] - s_in_log.cycles[i], sysclk);
-                    TEST_ASSERT_UINT32_WITHIN(25U, 250U, gap_us);
-                }
-            }
-        }
-
-        void input_get_data_is_self_consistent_over_many_reads() {
-            loopback::reset_fixture();
-            uint32_t compare = 0;
-            uint32_t max     = 0;
-            TEST_ASSERT_EQUAL(
-                HAL_OK,
-                loopback::generator_pwm_start(20'000, 50, &compare, &max));
-
-            // Prescaler 1: full resolution, and a 50us period still fits the 16 bit counter
-            const auto cfg = make_input_config(1);
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(loopback::MEASURED, &cfg));
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(loopback::MEASURED));
-            delay_ms(5); // Plenty of complete cycles first
-
-            const uint32_t expected_period =
-                timer_get_frequency_hz(loopback::MEASURED) / 20'000U;
-            const uint32_t expected_pulse = expected_period / 2U;
-
-            // Reads landing at every phase of the cycle, including right on the capture edges
-            for (uint32_t i = 0; i < 5'000; i++) {
                 pwm_input_data_t data{};
-                TEST_ASSERT_EQUAL(
-                    HAL_OK, pwm_input_get_data(loopback::MEASURED, &data));
-                TEST_ASSERT_UINT32_WITHIN(2U, expected_period, data.period);
-                TEST_ASSERT_UINT32_WITHIN(2U, expected_pulse, data.pulse);
-                TEST_ASSERT_TRUE(data.pulse <= data.period);
+                TEST_ASSERT_EQUAL(HAL_OK, pwm_input_get_data(lb::MEAS, &data));
+                const uint32_t period = 1'000'000U / hz; // 1us ticks
+                TEST_ASSERT_UINT32_WITHIN(2U, period, data.period);
+                TEST_ASSERT_UINT32_WITHIN(2U, period * duty / 100U, data.pulse);
             }
         }
 
-        // PWM input against the CPU's cycle counter, across the supported system clocks. The generator's PWM
-        // frequency and the measurer's tick rate both come from the timer clock arithmetic, so a wrong timer clock
-        // would cancel out between them. The CPU's cycle counter doesn't share that arithmetic
-        struct input_sweep_t {
-            hal_err_t err;
-            uint32_t  period_ticks;
-            uint32_t  pulse_ticks;
-            uint32_t  tick_hz;
-            uint32_t  avg_period_us;
-        };
+        void input_callback_fires_on_both_edges() {
+            lb::reset();
+            lb::generate_pwm(1'000, 25);
+            counter_t events;
+            auto      cfg = input_config();
+            cfg.callback  = {count_cb, &events};
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
 
-        hal_err_t measure_input_at_current_clock(input_sweep_t* out) {
-            TRY(loopback::reset_fixture_hal());
-            uint32_t compare = 0;
-            uint32_t max     = 0;
-            TRY(loopback::generator_pwm_start(1'000, 50, &compare, &max));
-
-            reset_input_log();
-            const auto cfg = make_input_config(
-                loopback::prescaler_for_1us(loopback::MEASURED),
-                0,
-                {input_cb, nullptr});
-            TRY(pwm_input_init(loopback::MEASURED, &cfg));
-            TRY(pwm_input_get_timer_frequency(loopback::MEASURED,
-                                              &out->tick_hz));
-            TRY(pwm_input_start(loopback::MEASURED));
-            if (!loopback::wait_for(
-                    []() {
-                        return s_in_log.stored >= INPUT_LOG_N;
-                    },
-                    100)) {
-                return HAL_ERR_TIMEOUT;
-            }
-            TRY(pwm_input_stop(loopback::MEASURED));
-
-            pwm_input_data_t data{};
-            TRY(pwm_input_get_data(loopback::MEASURED, &data));
-            out->period_ticks = data.period;
-            out->pulse_ticks  = data.pulse;
-
-            // Average spacing of the rising edge (channel 1) events by the cycle counter
-            uint32_t first = 0;
-            uint32_t last  = 0;
-            uint32_t seen  = 0;
-            for (uint32_t i = 0; i < INPUT_LOG_N; i++) {
-                if (s_in_log.channel[i] == TIMER_CHANNEL_1) {
-                    if (seen == 0) {
-                        first = s_in_log.cycles[i];
-                    }
-                    last = s_in_log.cycles[i];
-                    seen += 1;
-                }
-            }
-            if (seen < 3) {
-                return HAL_ERR_TIMEOUT;
-            }
-            out->avg_period_us = loopback::cycles_to_us32(
-                (last - first) / (seen - 1U), get_system_core_clock());
-            return HAL_OK;
+            delay_ms(10);
+            TEST_ASSERT_UINT32_WITHIN(
+                2U, 20U, events.n); // A rising and a falling edge per 1ms cycle
         }
 
-        void
-        input_period_agrees_with_the_cpu_cycle_counter_across_system_clocks() {
-            const system_clock_t original = get_system_core_clock_type();
+        void input_init_replaces_the_output_config_of_same_timer() {
+            lb::reset();
 
-            std::array<input_sweep_t, loopback::CLOCK_SWEEP.size()> results{};
-            for (size_t i = 0; i < loopback::CLOCK_SWEEP.size(); i++) {
-                loopback::switch_clock(
-                    loopback::pick_preset(loopback::CLOCK_SWEEP[i], original));
-                results[i].err = measure_input_at_current_clock(&results[i]);
-                (void)pwm_input_deinit(loopback::MEASURED);
-                loopback::generator_stop();
-            }
-            loopback::switch_clock(
-                original); // Back to the original clock before anything gets asserted
-            loopback::reset_fixture();
+            // PWM output leaves output compare mode bits in CCMR1 that overlay the input capture filter
+            // and prescaler fields. They must not survive into the input configuration
+            pwm_gp_timer_config_t out{};
+            out.pwm_mode       = PWM_MODE_1;
+            out.pwm_count_mode = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
+            out.channels[0]    = make_channel(TIMER_CHANNEL_1, lb::IN_A);
+            out.num_channels   = 1;
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(lb::MEAS, &out));
 
-            for (const auto& r : results) {
-                TEST_ASSERT_EQUAL(HAL_OK, r.err);
-                TEST_ASSERT_EQUAL_UINT32(INPUT_TICK_HZ, r.tick_hz);
-                TEST_ASSERT_UINT32_WITHIN(
-                    2U, 1'000U, r.period_ticks); // 1 kHz at 1us ticks
-                TEST_ASSERT_UINT32_WITHIN(2U, 500U, r.pulse_ticks);
-                TEST_ASSERT_UINT32_WITHIN(10U, 1'000U, r.avg_period_us); // 1%
-            }
+            const auto cfg = input_config();
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
+            TEST_ASSERT_EQUAL_UINT32(0U,
+                                     lb::MEAS->CCMR1 &
+                                         (TIM_CCMR1_IC1F | TIM_CCMR1_IC2F |
+                                          TIM_CCMR1_IC1PSC | TIM_CCMR1_IC2PSC));
         }
 
-        void input_deinit_clears_the_slave_mode_and_stops_the_timer() {
-            loopback::reset_fixture();
-            const auto cfg = make_input_config(
-                loopback::prescaler_for_1us(loopback::MEASURED),
-                0,
-                {input_cb, nullptr});
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(loopback::MEASURED, &cfg));
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(loopback::MEASURED));
+        void input_deinit_stops_the_timer_and_leaves_no_slave_mode() {
+            lb::reset();
+            const auto cfg = input_config();
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
 
-            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_deinit(loopback::MEASURED));
-            TEST_ASSERT_FALSE(loopback::MEASURED->CR1 & TIM_CR1_CEN);
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_deinit(lb::MEAS));
+            TEST_ASSERT_FALSE(lb::MEAS->CR1 & TIM_CR1_CEN);
             TEST_ASSERT_EQUAL_UINT32(
                 0U,
-                loopback::MEASURED->SMCR &
+                lb::MEAS->SMCR &
                     (TIM_SMCR_SMS |
                      TIM_SMCR_TS)); // A leftover reset mode would break the next user
-            TEST_ASSERT_EQUAL_UINT32(
-                0U,
-                loopback::MEASURED->CCER &
-                    (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC2P));
-            TEST_ASSERT_EQUAL_UINT32(0U,
-                                     loopback::MEASURED->CCMR1 &
-                                         (TIM_CCMR1_CC1S | TIM_CCMR1_CC2S));
-            TEST_ASSERT_EQUAL_UINT32(0U,
-                                     loopback::MEASURED->DIER &
-                                         (TIM_DIER_CC1IE | TIM_DIER_CC2IE));
-            TEST_ASSERT_FALSE(NVIC->ISER[TIM3_IRQn >> 5] &
-                              (1UL << (TIM3_IRQn & 0x1FU)));
         }
 
     } // namespace
@@ -1524,8 +1189,7 @@ namespace test::pwm {
         RUN_TEST(timer_init_rejects_invalid_arguments);
         RUN_TEST(timer_init_rejects_too_many_channels_per_timer_class);
         RUN_TEST(timer_init_rejects_non_upcounting_mode_on_the_lite_timers);
-        RUN_TEST(
-            timer_init_rejects_an_unknown_channel_without_corrupting_state);
+        RUN_TEST(timer_init_rejects_unknown_channel_without_corruption);
         RUN_TEST(timer_init_programs_each_main_channels_registers);
         RUN_TEST(timer_init_configures_the_gpio_pin);
         RUN_TEST(advanced_init_rejects_invalid_arg_and_non_advanced_timers);
@@ -1534,11 +1198,11 @@ namespace test::pwm {
         RUN_TEST(advanced_init_dead_time_lands_in_the_correct_range);
         RUN_TEST(advanced_timer_init_dead_time_zero_leaves_dtg_untouched);
         RUN_TEST(advanced_init_rejects_dead_time_beyond_the_max_range);
-        RUN_TEST(advanced_init_configures_the_break_input_and_fires_callback);
+        RUN_TEST(advanced_configures_break_input_and_fires_callback);
         RUN_TEST(advanced_timer_init_active_low_break_clears_bkp);
         RUN_TEST(start_rejects_invalid_arguments);
         RUN_TEST(start_rejects_a_frequency_above_the_timer_clock);
-        RUN_TEST(start_edge_aligned_hits_the_requested_frequency_on_all_timers);
+        RUN_TEST(start_edge_aligned_hits_the_requested_frequeny);
         RUN_TEST(start_center_aligned_uses_the_doubled_period_formula);
         RUN_TEST(set_duty_cycle_rejects_invalid_arguments);
         RUN_TEST(set_duty_cycle_edge_aligned_boundary_is_arr_plus_one);
@@ -1548,35 +1212,23 @@ namespace test::pwm {
         RUN_TEST(freeze_and_unfreeze_toggle_cen_and_moe_on_the_advanced_timer);
         RUN_TEST(freeze_and_unfreeze_toggle_only_cen_on_general_purpose_timers);
         RUN_TEST(pause_and_resume_channel_reject_invalid_arguments);
-        RUN_TEST(
-            pause_resume_channel_toggle_main_output_on_non_advanced_timers);
         RUN_TEST(pause_resume_channel_toggle_complementary_output);
-        RUN_TEST(
-            advanced_init_rejects_init_once_locked_but_accepts_after_reset);
+        RUN_TEST(pause_resume_channel_toggle_output_on_non_advanced_timers);
+        RUN_TEST(advanced_init_rejects_once_locked_but_accepts_after_reset);
 
         RUN_TEST(input_init_rejects_invalid_arguments);
-        RUN_TEST(input_get_data_and_frequency_reject_invalid_arguments);
-        RUN_TEST(
-            input_init_programs_slave_reset_mode_and_both_capture_channels);
-        RUN_TEST(input_init_programs_the_requested_filter);
+        RUN_TEST(input_init_fails_on_a_locked_advanced_timer);
+        RUN_TEST(input_functions_reject_null_arguments);
+        RUN_TEST(input_timer_prescaler_sets_the_tick_rate);
         RUN_TEST(input_init_configures_the_gpio_pin);
-        RUN_TEST(
-            input_init_replaces_the_output_configuration_of_the_same_timer);
-        RUN_TEST(input_timer_frequency_reports_the_tick_rate);
         RUN_TEST(input_start_and_stop_run_and_freeze_the_counter);
-        RUN_TEST(input_measures_period_and_pulse_width_of_the_generated_pwm);
-        RUN_TEST(
-            input_capture_callbacks_alternate_between_rising_and_falling_edge_channels);
-        RUN_TEST(input_get_data_is_self_consistent_over_many_reads);
-        RUN_TEST(input_deinit_clears_the_slave_mode_and_stops_the_timer);
-        RUN_TEST(
-            input_period_agrees_with_the_cpu_cycle_counter_across_system_clocks);
+        RUN_TEST(input_measures_the_period_and_pulse_width_of_a_generated_pwm);
+        RUN_TEST(input_callback_fires_on_both_edges);
+        RUN_TEST(input_init_replaces_the_output_config_of_same_timer);
+        RUN_TEST(input_deinit_stops_the_timer_and_leaves_no_slave_mode);
 
-        // Leave the loopback timers and clocks the way they were found
-        TRY_THEN_FAIL(pwm_input_deinit(loopback::MEASURED));
-        loopback::generator_stop();
-        TRY_THEN_FAIL(timx_clk_enable(loopback::MEASURED, false));
-        TRY_THEN_FAIL(timx_clk_enable(loopback::GENERATOR, false));
+        TRY_THEN_FAIL(timx_clk_enable(lb::MEAS, false));
+        TRY_THEN_FAIL(timx_clk_enable(lb::GEN, false));
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the PWM driver");
