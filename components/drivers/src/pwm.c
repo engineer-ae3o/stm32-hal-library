@@ -76,7 +76,6 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef*                       handle,
     uint32_t ccmr1 = handle->CCMR1;
     uint32_t ccmr2 = handle->CCMR2;
     uint32_t ccer  = handle->CCER;
-    uint32_t bdtr  = handle->BDTR;
     uint32_t cr2   = handle->CR2;
 
     // Configure the main and compementary PWM channels and zero out the capture compare registers
@@ -173,10 +172,10 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef*                       handle,
     }
 
     // Configure the run and idle off-state selection of the channels and the write protection level
-    bdtr |= (config->ossi ? TIM_BDTR_OSSI : 0) |
-            (config->ossr ? TIM_BDTR_OSSR : 0) |
-            (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos) |
-            (uint32_t)(dtg << TIM_BDTR_DTG_Pos);
+    uint32_t bdtr = (config->ossi ? TIM_BDTR_OSSI : 0) |
+                    (config->ossr ? TIM_BDTR_OSSR : 0) |
+                    (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos) |
+                    (uint32_t)(dtg << TIM_BDTR_DTG_Pos);
 
     // Configure the break input
     if (config->break_input.use_break_input) {

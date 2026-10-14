@@ -25,7 +25,7 @@
 // Shared wiring and helpers for the hardware loopback timer tests
 // (timer_extended.cpp, timer_pcnt.cpp and the PWM input tests in pwm.cpp).
 //
-// WIRING: 
+// WIRING:
 //         GEN_A -------> IN_A and IN_ETR
 //         GEN_B -------> IN_B
 //
@@ -89,7 +89,7 @@ namespace test::loopback {
 
     // Generate a given number of pulses on the given pin
     inline void
-    pulses(const board_pin_t& pin, uint32_t count, uint32_t width_us) {
+    pulses(const board_pin_t& pin, uint64_t count, uint32_t width_us) {
         for (uint32_t i = 0; i < count; i++) {
             gpio_set_level(pin.port, pin.pin, true);
             delay_us(width_us);
@@ -101,8 +101,8 @@ namespace test::loopback {
     // 'count' pulses as short as two back to back writes can make them (tens of ns)
     inline void glitches(const board_pin_t& pin, uint32_t count) {
         for (uint32_t i = 0; i < count; i++) {
-            gpio_set_level(pin.port, pin.pin, true);
             gpio_set_level(pin.port, pin.pin, false);
+            gpio_set_level(pin.port, pin.pin, true);
             delay_us(10);
         }
     }

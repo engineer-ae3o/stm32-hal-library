@@ -230,7 +230,7 @@ __STATIC_FORCEINLINE uint32_t __SMUAD(uint32_t op1, uint32_t op2) {
      ((((uint32_t)(ARG2)) >> (ARG3)) & 0x0000FFFFUL))
 
 __STATIC_FORCEINLINE
-    uint32_t __SMLAD(uint32_t op1, uint32_t op2, uint32_t op3) {
+uint32_t __SMLAD(uint32_t op1, uint32_t op2, uint32_t op3) {
     uint32_t result;
 
     __ASM volatile(

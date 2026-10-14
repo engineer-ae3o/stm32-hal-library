@@ -933,7 +933,7 @@ namespace test::pwm {
             reset_pwm(TIM_ADV);
 
             // Reset TIM1 since the LOCK bits have been written to it in previous tests
-            timer_reset(TIM1);
+            timer_reset(TIM_ADV);
 
             pwm_advanced_timer_config_t config{};
             config.pwm_mode       = PWM_MODE_1;
@@ -984,7 +984,7 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_ADV, false));
         }
 
-        // PWM input mode. Hardware loopback: TIM5's PWM output (PA0) feeds TIM3's channel 1 pin (PB4).
+        // PWM input mode. Hardware loopback: TIM3's PWM channel 1 feeds TIM2's channel 1 pin.
         // Wiring and the signal sources are in test/loopback.hpp.
         //
         // ASSUMPTION: pwm_input_config_t.timer_prescaler = N gives PSC = N - 1, 0 and TIMER_COUNTER_DIR_NONE are
@@ -1113,8 +1113,12 @@ namespace test::pwm {
 
         void input_measures_the_period_and_pulse_width_of_a_generated_pwm() {
             for (const auto& [hz, duty] :
-                 std::array<std::pair<uint32_t, uint32_t>, 4>{
-                     {{1'000, 25}, {1'000, 75}, {5'000, 50}, {200, 10}}}) {
+                 std::array<std::pair<uint32_t, uint32_t>, 4>{{
+                     {1'000, 25},
+                     {1'000, 75},
+                     {5'000, 50},
+                     {200, 10},
+                 }}) {
                 lb::reset();
                 lb::generate_pwm(hz, duty);
                 const auto cfg = input_config();

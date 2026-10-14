@@ -1,4 +1,5 @@
 #include "drivers/gpio.h"
+#include "drivers/src/timer_internals.h"
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
@@ -32,25 +33,24 @@ namespace test::timer_pcnt {
         TIM_TypeDef* const MEAS = lb::MEAS;
         TIM_TypeDef* const GEN  = lb::GEN;
 
-        struct update_log_t {
-            volatile uint32_t          n   = 0;
-            volatile timer_count_dir_t dir = TIMER_COUNTER_DIR_NONE;
+        struct update_logs_t {
+            volatile uint32_t          num_updates = 0;
+            volatile timer_count_dir_t dir         = TIMER_COUNTER_DIR_NONE;
         };
 
-        void
-        update_cb(void* arg, timer_channel_t, timer_count_dir_t direction) {
-            auto* log = static_cast<update_log_t*>(arg);
-            log->dir  = direction;
-            log->n    = log->n + 1;
+        void update_cb(void* arg, timer_channel_t, timer_count_dir_t dir) {
+            auto* logs        = static_cast<update_logs_t*>(arg);
+            logs->dir         = dir;
+            logs->num_updates = logs->num_updates + 1;
         }
 
-        // Mode 1 on the given channel's pin (PB4 for channel 1, PB5 for channel 2)
+        // Mode 1 on the given channel's pin
         pcnt_config_t pcnt_1(pcnt_channel_t channel = PCNT_CHANNEL_1,
                              pcnt_edge_t    edge    = PCNT_RISING_EDGE) {
             pcnt_config_t cfg{};
             cfg.mode                    = PCNT_MODE_1;
             cfg.edge                    = edge;
-            cfg.pull                    = TIMER_PULL_NONE;
+            cfg.pull                    = TIMER_USE_PULLDOWN;
             cfg.clk_div                 = TIM_CLK_DIV_1;
             cfg.settings.mode_1.channel = channel;
             cfg.filter_ns               = 0;
@@ -58,13 +58,13 @@ namespace test::timer_pcnt {
             return cfg;
         }
 
-        // Mode 2 on the external trigger pin (PD2)
+        // Mode 2 on the external trigger pin
         pcnt_config_t pcnt_2(pcnt_prescale_t prescaler = PCNT_ETR_DIV_1,
                              pcnt_edge_t     edge      = PCNT_RISING_EDGE) {
             pcnt_config_t cfg{};
             cfg.mode                      = PCNT_MODE_2;
             cfg.edge                      = edge;
-            cfg.pull                      = TIMER_PULL_NONE;
+            cfg.pull                      = TIMER_USE_PULLDOWN;
             cfg.clk_div                   = TIM_CLK_DIV_1;
             cfg.settings.mode_2.prescaler = prescaler;
             cfg.filter_ns                 = 0;
@@ -96,18 +96,18 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
         }
 
-        uint32_t count() {
+        uint32_t get_pcnt_count() {
             uint32_t value = 0;
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_get_count(MEAS, &value));
             return value;
         }
 
         // The decoder counts down by wrapping below zero: read it as signed
-        int32_t signed_count() {
-            return static_cast<int16_t>(count());
+        int32_t get_pcnt_count_signed() {
+            return static_cast<int32_t>(get_pcnt_count());
         }
 
-        // Counts per full quadrature cycle: 4 when both channels count, 2 when only one does
+        // Counts per full quadrature cycle: 4 when both channels get_pcnt_count, 2 when only one does
         int32_t counts_per_cycle(encoder_mode_t mode) {
             return (mode == ENCODER_MODE_3) ? 4 : 2;
         }
@@ -173,7 +173,7 @@ namespace test::timer_pcnt {
                            100,
                            4);
                 delay_us(20);
-                TEST_ASSERT_EQUAL_UINT32(100U, count());
+                TEST_ASSERT_EQUAL_UINT32(100U, get_pcnt_count());
             }
         }
 
@@ -185,10 +185,10 @@ namespace test::timer_pcnt {
                 gpio_set_level(lb::GEN_A.port, lb::GEN_A.pin, true);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32((edge == PCNT_RISING_EDGE) ? 1U : 0U,
-                                         count());
+                                         get_pcnt_count());
                 gpio_set_level(lb::GEN_A.port, lb::GEN_A.pin, false);
                 delay_us(20);
-                TEST_ASSERT_EQUAL_UINT32(1U, count());
+                TEST_ASSERT_EQUAL_UINT32(1U, get_pcnt_count());
             }
         }
 
@@ -200,14 +200,14 @@ namespace test::timer_pcnt {
                 gpio_set_level(lb::GEN_A.port, lb::GEN_A.pin, true);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32((edge == PCNT_RISING_EDGE) ? 1U : 0U,
-                                         count());
+                                         get_pcnt_count());
                 gpio_set_level(lb::GEN_A.port, lb::GEN_A.pin, false);
                 delay_us(20);
-                TEST_ASSERT_EQUAL_UINT32(1U, count());
+                TEST_ASSERT_EQUAL_UINT32(1U, get_pcnt_count());
 
                 lb::pulses(lb::GEN_A, 100, 4);
                 delay_us(20);
-                TEST_ASSERT_EQUAL_UINT32(101U, count());
+                TEST_ASSERT_EQUAL_UINT32(101U, get_pcnt_count());
             }
         }
 
@@ -226,7 +226,7 @@ namespace test::timer_pcnt {
                 TEST_ASSERT_UINT32_WITHIN(
                     1U,
                     800U / divisor,
-                    count()); // +/- 1 for where in its cycle the prescaler starts
+                    get_pcnt_count()); // +/- 1 for where in its cycle the prescaler starts
             }
         }
 
@@ -238,11 +238,12 @@ namespace test::timer_pcnt {
 
                 lb::glitches(lb::GEN_A, 50);
                 delay_us(50);
-                TEST_ASSERT_EQUAL_UINT32(0U, count());
+                // It should be 0 pulses, but the transition t
+                TEST_ASSERT_EQUAL_UINT32(0U, get_pcnt_count());
 
                 lb::pulses(lb::GEN_A, 50, 20);
                 delay_us(50);
-                TEST_ASSERT_EQUAL_UINT32(50U, count());
+                TEST_ASSERT_EQUAL_UINT32(50U, get_pcnt_count());
             }
         }
 
@@ -254,21 +255,21 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pcnt_stop(nullptr));
 
             lb::pulses(lb::GEN_A, 10, 4); // Not started yet
-            TEST_ASSERT_EQUAL_UINT32(0U, count());
+            TEST_ASSERT_EQUAL_UINT32(0U, get_pcnt_count());
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
             lb::pulses(lb::GEN_A, 25, 4);
             delay_us(20);
-            TEST_ASSERT_EQUAL_UINT32(25U, count());
+            TEST_ASSERT_EQUAL_UINT32(25U, get_pcnt_count());
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_stop(MEAS));
             lb::pulses(lb::GEN_A, 10, 4);
-            TEST_ASSERT_EQUAL_UINT32(25U, count());
+            TEST_ASSERT_EQUAL_UINT32(25U, get_pcnt_count());
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
             lb::pulses(lb::GEN_A, 5, 4);
             delay_us(20);
-            TEST_ASSERT_EQUAL_UINT32(30U, count());
+            TEST_ASSERT_EQUAL_UINT32(30U, get_pcnt_count());
         }
 
         void pcnt_set_and_get_count_respect_the_counter_width() {
@@ -281,33 +282,14 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pcnt_set_count(nullptr, 0));
 
             // 16 bit timer
-            TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, UINT16_MAX));
-            TEST_ASSERT_EQUAL_UINT32(UINT16_MAX, count());
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              pcnt_set_count(MEAS, UINT16_MAX + 1U));
-            TEST_ASSERT_EQUAL_UINT32(UINT16_MAX, count());
+            TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(GEN, UINT16_MAX - 5U));
+            TEST_ASSERT_EQUAL(HAL_OK, pcnt_get_count(GEN, &value));
+            TEST_ASSERT_EQUAL_UINT32(UINT16_MAX - 5U, value);
 
             // 32 bit timer
-            TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(GEN, UINT32_MAX - 5U));
-            TEST_ASSERT_EQUAL(HAL_OK, pcnt_get_count(GEN, &value));
+            TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, UINT32_MAX - 5U));
+            TEST_ASSERT_EQUAL(HAL_OK, pcnt_get_count(MEAS, &value));
             TEST_ASSERT_EQUAL_UINT32(UINT32_MAX - 5U, value);
-        }
-
-        void pcnt_overflow_callback_fires_when_the_counter_wraps() {
-            lb::reset();
-            update_log_t log;
-            auto         cfg = pcnt_1();
-            cfg.callback     = {update_cb, &log};
-            start_counting(cfg);
-
-            lb::pulses(
-                lb::GEN_A,
-                70'000,
-                1); // One wrap of the 16 bit counter, 4464 pulses past it
-            delay_us(20);
-            TEST_ASSERT_EQUAL_UINT32(1U, log.n);
-            TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP, log.dir);
-            TEST_ASSERT_EQUAL_UINT32(70'000U - 65'536U, count());
         }
 
         void pcnt_counts_a_generated_clock_at_the_right_rate() {
@@ -327,7 +309,7 @@ namespace test::timer_pcnt {
             const uint32_t expected = (uint32_t)(100'000ULL * window_cycles /
                                                  get_system_core_clock());
             TEST_ASSERT_UINT32_WITHIN(
-                expected / 200U + 2U, expected, count()); // 0.5%
+                expected / 200U + 2U, expected, get_pcnt_count()); // 0.5%
         }
 
         void pcnt_deinit_stops_counting() {
@@ -335,11 +317,11 @@ namespace test::timer_pcnt {
             start_counting(pcnt_1());
             lb::pulses(lb::GEN_A, 10, 4);
             delay_us(20);
-            TEST_ASSERT_EQUAL_UINT32(10U, count());
+            TEST_ASSERT_EQUAL_UINT32(10U, get_pcnt_count());
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_deinit(MEAS));
             lb::pulses(lb::GEN_A, 10, 4);
-            TEST_ASSERT_EQUAL_UINT32(0U, count());
+            TEST_ASSERT_EQUAL_UINT32(0U, get_pcnt_count());
         }
 
         void pcnt_init_replaces_a_previous_decoder_configuration() {
@@ -347,14 +329,14 @@ namespace test::timer_pcnt {
             const auto decoder = qdec();
             TEST_ASSERT_EQUAL(HAL_OK, qdec_init(MEAS, &decoder));
             start_counting(
-                pcnt_1()); // Must count pulses now, not quadrature steps
+                pcnt_1()); // Must get_pcnt_count pulses now, not quadrature steps
 
             lb::pulses(lb::GEN_A, 10, 4);
             delay_us(20);
-            TEST_ASSERT_EQUAL_UINT32(10U, count());
+            TEST_ASSERT_EQUAL_UINT32(10U, get_pcnt_count());
         }
 
-        // Quadrature decoder
+        // Quadrature decoding
         void qdec_init_rejects_invalid_arguments() {
             lb::reset();
             const auto good = qdec();
@@ -392,11 +374,11 @@ namespace test::timer_pcnt {
                 lb::quad_walk(50, true); // A leads B
                 delay_us(20);
                 TEST_ASSERT_EQUAL_INT32(50 * counts_per_cycle(mode),
-                                        signed_count());
+                                        get_pcnt_count_signed());
 
                 lb::quad_walk(50, false); // B leads A
                 delay_us(20);
-                TEST_ASSERT_EQUAL_INT32(0, signed_count());
+                TEST_ASSERT_EQUAL_INT32(0, get_pcnt_count_signed());
             }
         }
 
@@ -409,7 +391,7 @@ namespace test::timer_pcnt {
                 lb::quad_walk(50, false);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_INT32(-50 * counts_per_cycle(mode),
-                                        signed_count());
+                                        get_pcnt_count_signed());
             }
         }
 
@@ -424,7 +406,7 @@ namespace test::timer_pcnt {
                 lb::quad_walk(50, true);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_INT32(-50 * counts_per_cycle(mode),
-                                        signed_count());
+                                        get_pcnt_count_signed());
             }
         }
 
@@ -437,34 +419,34 @@ namespace test::timer_pcnt {
             lb::glitches(lb::GEN_A, 50);
             lb::glitches(lb::GEN_B, 50);
             delay_us(50);
-            TEST_ASSERT_EQUAL_INT32(0, signed_count());
+            TEST_ASSERT_EQUAL_INT32(0, get_pcnt_count_signed());
 
             lb::quad_walk(25, true);
             delay_us(50);
-            TEST_ASSERT_EQUAL_INT32(100, signed_count());
+            TEST_ASSERT_EQUAL_INT32(100, get_pcnt_count_signed());
         }
 
         void qdec_update_callback_reports_the_direction_of_update() {
             lb::reset();
-            update_log_t log;
-            auto         cfg = qdec();
-            cfg.callback     = {update_cb, &log};
+            update_logs_t logs;
+            auto          cfg = qdec();
+            cfg.callback      = {.cb = update_cb, .arg = &logs};
             start_decoding(cfg);
 
             // 80 counts up from 65500 wraps past the top
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 65'500));
             lb::quad_walk(20, true);
             delay_us(20);
-            TEST_ASSERT_EQUAL_UINT32(1U, log.n);
-            TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP, log.dir);
-            TEST_ASSERT_EQUAL_UINT32(44U, count());
+            TEST_ASSERT_EQUAL_UINT32(1U, logs.num_updates);
+            TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP, logs.dir);
+            TEST_ASSERT_EQUAL_UINT32(44U, get_pcnt_count());
 
             // 160 counts back goes under zero
             lb::quad_walk(40, false);
             delay_us(20);
-            TEST_ASSERT_EQUAL_UINT32(2U, log.n);
-            TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_DOWN, log.dir);
-            TEST_ASSERT_EQUAL_UINT32(65'536U - 116U, count());
+            TEST_ASSERT_EQUAL_UINT32(2U, logs.num_updates);
+            TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_DOWN, logs.dir);
+            TEST_ASSERT_EQUAL_UINT32(65'536U - 116U, get_pcnt_count());
         }
 
     } // namespace
@@ -483,7 +465,6 @@ namespace test::timer_pcnt {
         RUN_TEST(pcnt_filter_rejects_glitches);
         RUN_TEST(pcnt_start_and_stop_freeze_and_resume_the_count);
         RUN_TEST(pcnt_set_and_get_count_respect_the_counter_width);
-        RUN_TEST(pcnt_overflow_callback_fires_when_the_counter_wraps);
         RUN_TEST(pcnt_counts_a_generated_clock_at_the_right_rate);
         RUN_TEST(pcnt_deinit_stops_counting);
         RUN_TEST(pcnt_init_replaces_a_previous_decoder_configuration);

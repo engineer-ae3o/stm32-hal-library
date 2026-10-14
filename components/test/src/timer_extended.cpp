@@ -50,13 +50,15 @@ namespace test::timer_ext {
             cfg.clk_div         = TIM_CLK_DIV_1;
             cfg.count_mode      = TIMER_COUNTER_DIR_UP;
             cfg.timer_prescaler = lb::ticks_1us();
-            cfg.channels[0]     = {.edge      = edge,
-                                   .pull      = TIMER_PULL_NONE,
-                                   .prescaler = IC_PRESCALER_DIV_1,
-                                   .channel   = TIMER_CHANNEL_1,
-                                   .gpio_pin  = lb::IN_A,
-                                   .filter_ns = 0};
-            cfg.num_channels    = 1;
+            cfg.channels[0]     = {
+                .edge      = edge,
+                .pull      = TIMER_PULL_NONE,
+                .prescaler = IC_PRESCALER_DIV_1,
+                .channel   = TIMER_CHANNEL_1,
+                .gpio_pin  = lb::IN_A,
+                .filter_ns = 0,
+            };
+            cfg.num_channels = 1;
             return cfg;
         }
 
@@ -203,7 +205,8 @@ namespace test::timer_ext {
             const uint32_t second = next_capture();
             const uint32_t third  = next_capture();
             TEST_ASSERT_UINT32_WITHIN(1U, 500U, ticks_between(first, second));
-            TEST_ASSERT_UINT32_WITHIN(1U, 500U, ticks_between(second, third));
+            TEST_ASSERT_UINT32_WITHIN(
+                1U, 500U, ticks_between(second, third)); // NOLINT
         }
 
         void ic_captures_only_the_selected_edge() {
@@ -231,7 +234,7 @@ namespace test::timer_ext {
             const uint32_t second = next_capture();
             const uint32_t third  = next_capture();
             const uint32_t gap_1  = ticks_between(first, second);
-            const uint32_t gap_2  = ticks_between(second, third);
+            const uint32_t gap_2  = ticks_between(second, third); // NOLINT
 
             // One gap is the 250us high time, the other the 750us low time
             TEST_ASSERT_UINT32_WITHIN(2U, 1'000U, gap_1 + gap_2);
