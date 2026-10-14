@@ -25,7 +25,7 @@ hal_err_t output_compare_init(TIM_TypeDef*                   handle,
 hal_err_t output_compare_deinit(TIM_TypeDef* handle);
 
 hal_err_t output_compare_start(TIM_TypeDef* handle,
-                               uint32_t     period_hz,
+                               uint32_t     frequency_hz,
                                uint32_t*    max_compare_level);
 hal_err_t output_compare_set_compare(TIM_TypeDef*    handle,
                                      timer_channel_t channel,

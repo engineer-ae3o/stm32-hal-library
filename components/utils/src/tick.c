@@ -13,8 +13,7 @@ void systick_init(void) {
     if (gnu_unlikely(first_init)) {
         LOGI("Tick",
              "Initializing the SysTick timer as the tick timer source with an "
-             "HCLK of %luMHz from "
-             "the %s",
+             "HCLK of %luMHz from the %s",
              system_core_clock / 1'000'000U,
              is_sysclk_on_hse() ? "HSE" : "HSI");
         NVIC_SetPriority(SysTick_IRQn, SysTick_NVIC_IRQ_PRIORITY);
@@ -42,8 +41,7 @@ void dwt_cnt_init(void) {
     if ((DWT->CTRL >> DWT_CTRL_NOCYCCNT_Pos) & 1) {
         LOGW("Tick",
              "The cycle counter on the data watchpoint and tracing subsystem "
-             "not supported on "
-             "given target.");
+             "not supported on given target.");
         LOGW("Tick",
              "Profiling facilities and the delay_us(...) macro will not be "
              "available.");

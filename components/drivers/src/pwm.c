@@ -186,9 +186,11 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef*                       handle,
                 (config->break_input.auto_rearm ? TIM_BDTR_AOE : 0);
 
         // Enable interrupts on a break event and register the break event callback
-        handle->DIER |= TIM_DIER_BIE;
-        TRY(timer_register_callback(
-            handle, config->break_input.callback, TIMER_IRQ_BREAK_EVENT));
+        if (config->break_input.callback.cb) {
+            TRY(timer_register_callback(
+                handle, config->break_input.callback, TIMER_IRQ_BREAK_EVENT));
+            handle->DIER |= TIM_DIER_BIE;
+        }
 
         // Configure the physical break input GPIO pin
         const board_pin_t brk_gpio = config->break_input.gpio_pin;
@@ -384,15 +386,18 @@ hal_err_t pwm_input_get_data(TIM_TypeDef* handle, pwm_input_data_t* data) {
         return HAL_ERR_INVALID_ARG;
     }
 
+    // To be called from the ISR after the capture
+    // compare interrupts for both channels have fired
+
     if (is_timer_extra_lite(handle)) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
     // Loop till we get consistent reads
     do {
-        data->pulse  = handle->CCR2;
         data->period = handle->CCR1;
-    } while (data->pulse != handle->CCR2);
+        data->pulse  = handle->CCR2;
+    } while (data->period != handle->CCR1);
 
     return HAL_OK;
 }

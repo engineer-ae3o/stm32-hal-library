@@ -204,9 +204,9 @@ hal_err_t timer_deinit(TIM_TypeDef* handle) {
 
     if (is_timer_advanced(handle)) {
         handle->RCR &= ~TIM_RCR_REP;
-        // The BDTR register cannot be cleared because the LOCK bits in it can only be written once.
-        // To clear it, make use of the time_reset(...) function since it performs a bus level reset
-        // of the given timer handle.
+        handle->BDTR &=
+            ~(TIM_BDTR_DTG | TIM_BDTR_LOCK | TIM_BDTR_OSSR | TIM_BDTR_OSSI |
+              TIM_BDTR_BKE | TIM_BDTR_BKP | TIM_BDTR_MOE | TIM_BDTR_AOE);
     }
 
     // Clear the registered callback for the current timer instance

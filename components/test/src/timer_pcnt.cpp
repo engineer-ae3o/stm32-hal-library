@@ -30,19 +30,19 @@ namespace test::timer_pcnt {
 
         constexpr const char* TAG = "PCNT_Test";
 
-        namespace lb = test::loopback;
-
-        TIM_TypeDef* const MEAS = lb::MEAS;
-        TIM_TypeDef* const GEN  = lb::GEN;
+        TIM_TypeDef* const MEAS = loopback::MEASURED;
+        TIM_TypeDef* const GEN  = loopback::GENERATOR;
 
         // Helpers
         // The loopback pin that feeds the given counter input
         const board_pin_t& stimulus_for(pcnt_channel_t channel) {
-            return (channel == PCNT_CHANNEL_1) ? lb::GEN_A : lb::GEN_B;
+            return (channel == PCNT_CHANNEL_1) ? loopback::GEN_A
+                                               : loopback::GEN_B;
         }
 
         const board_pin_t& input_for(pcnt_channel_t channel) {
-            return (channel == PCNT_CHANNEL_1) ? lb::IN_A : lb::IN_B;
+            return (channel == PCNT_CHANNEL_1) ? loopback::IN_A
+                                               : loopback::IN_B;
         }
 
         pcnt_config_t make_pcnt_mode_1(pcnt_channel_t channel,
@@ -72,7 +72,7 @@ namespace test::timer_pcnt {
             cfg.clk_div                   = TIM_CLK_DIV_1;
             cfg.settings.mode_2.prescaler = prescaler;
             cfg.filter_ns                 = filter_ns;
-            cfg.pulse_gpio                = lb::IN_ETR;
+            cfg.pulse_gpio                = loopback::IN_ETR;
             cfg.callback                  = {};
             return cfg;
         }
@@ -87,8 +87,8 @@ namespace test::timer_pcnt {
             cfg.clk_div          = TIM_CLK_DIV_1;
             cfg.invert_direction = invert;
             cfg.filter_ns        = filter_ns;
-            cfg.channel_a        = lb::IN_A;
-            cfg.channel_b        = lb::IN_B;
+            cfg.channel_a        = loopback::IN_A;
+            cfg.channel_b        = loopback::IN_B;
             cfg.callback         = callback;
             return cfg;
         }
@@ -106,8 +106,8 @@ namespace test::timer_pcnt {
 
         // Begin counting with the loopback pins sitting low (A = B = 0) and the counter at zero
         void start_counting_from_idle() {
-            lb::take_over_pin(lb::GEN_A, false);
-            lb::take_over_pin(lb::GEN_B, false);
+            loopback::take_over_pin(loopback::GEN_A, false);
+            loopback::take_over_pin(loopback::GEN_B, false);
             delay_us(20);
         }
 
@@ -136,7 +136,7 @@ namespace test::timer_pcnt {
         // TESTS
         // Pulse counter: argument validation and register programming
         void pcnt_init_rejects_invalid_arguments() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
             const auto good = make_pcnt_mode_1(PCNT_CHANNEL_1);
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pcnt_init(nullptr, &good));
@@ -170,7 +170,7 @@ namespace test::timer_pcnt {
         }
 
         void pcnt_mode_1_programs_the_slave_external_clock_mode() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
 
             struct channel_case_t {
                 pcnt_channel_t channel;
@@ -179,14 +179,18 @@ namespace test::timer_pcnt {
                 uint32_t       trigger_selection; // TI1FP1 or TI2FP2
             };
             constexpr std::array<channel_case_t, 2> channels = {{
-                {.channel           = PCNT_CHANNEL_1,
-                 .ccxs_pos          = 0,
-                 .ccxp              = TIM_CCER_CC1P,
-                 .trigger_selection = 0b101},
-                {.channel           = PCNT_CHANNEL_2,
-                 .ccxs_pos          = 8,
-                 .ccxp              = TIM_CCER_CC2P,
-                 .trigger_selection = 0b110},
+                {
+                    .channel           = PCNT_CHANNEL_1,
+                    .ccxs_pos          = 0,
+                    .ccxp              = TIM_CCER_CC1P,
+                    .trigger_selection = 0b101,
+                },
+                {
+                    .channel           = PCNT_CHANNEL_2,
+                    .ccxs_pos          = 8,
+                    .ccxp              = TIM_CCER_CC2P,
+                    .trigger_selection = 0b110,
+                },
             }};
 
             for (const auto& c : channels) {
@@ -194,14 +198,13 @@ namespace test::timer_pcnt {
                     const auto cfg = make_pcnt_mode_1(c.channel, edge);
                     TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &cfg));
 
+                    // The channel's own TIx is the input
                     TEST_ASSERT_EQUAL_UINT32(
-                        0b01U,
-                        (MEAS->CCMR1 >> c.ccxs_pos) &
-                            0b11U); // The channel's own TIx is the input
-                    TEST_ASSERT_EQUAL_UINT32(
-                        0b111U,
-                        (MEAS->SMCR & TIM_SMCR_SMS) >>
-                            TIM_SMCR_SMS_Pos); // External clock mode 1
+                        0b01U, (MEAS->CCMR1 >> c.ccxs_pos) & 0b11U);
+                    // External clock mode 1
+                    TEST_ASSERT_EQUAL_UINT32(0b111U,
+                                             (MEAS->SMCR & TIM_SMCR_SMS) >>
+                                                 TIM_SMCR_SMS_Pos);
                     TEST_ASSERT_EQUAL_UINT32(c.trigger_selection,
                                              (MEAS->SMCR & TIM_SMCR_TS) >>
                                                  TIM_SMCR_TS_Pos);
@@ -223,7 +226,7 @@ namespace test::timer_pcnt {
         }
 
         void pcnt_mode_2_programs_the_external_trigger_path() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
 
             const std::array<pcnt_prescale_t, 4> prescalers = {
                 PCNT_ETR_DIV_1, PCNT_ETR_DIV_2, PCNT_ETR_DIV_4, PCNT_ETR_DIV_8};
@@ -264,7 +267,7 @@ namespace test::timer_pcnt {
         }
 
         void pcnt_init_programs_the_clock_divider_and_the_overflow_callback() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
 
             auto cfg = make_pcnt_mode_1(
                 PCNT_CHANNEL_1, PCNT_RISING_EDGE, 0, {update_cb, nullptr});
@@ -283,7 +286,7 @@ namespace test::timer_pcnt {
         }
 
         void pcnt_init_configures_the_gpio_pin() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
 
             struct pull_case_t {
                 timer_pull_t pull;
@@ -299,16 +302,22 @@ namespace test::timer_pcnt {
                 auto mode_1 = make_pcnt_mode_1(PCNT_CHANNEL_2);
                 mode_1.pull = p.pull;
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &mode_1));
-                TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(lb::IN_B));
-                TEST_ASSERT_EQUAL_UINT32(lb::IN_B.af, lb::afr(lb::IN_B));
-                TEST_ASSERT_EQUAL_UINT32(p.pupdr, lb::pupdr(lb::IN_B));
+                TEST_ASSERT_EQUAL_UINT32(0b10U,
+                                         loopback::moder(loopback::IN_B));
+                TEST_ASSERT_EQUAL_UINT32(loopback::IN_B.af,
+                                         loopback::afr(loopback::IN_B));
+                TEST_ASSERT_EQUAL_UINT32(p.pupdr,
+                                         loopback::pupdr(loopback::IN_B));
 
                 auto mode_2 = make_pcnt_mode_2();
                 mode_2.pull = p.pull;
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &mode_2));
-                TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(lb::IN_ETR));
-                TEST_ASSERT_EQUAL_UINT32(lb::IN_ETR.af, lb::afr(lb::IN_ETR));
-                TEST_ASSERT_EQUAL_UINT32(p.pupdr, lb::pupdr(lb::IN_ETR));
+                TEST_ASSERT_EQUAL_UINT32(0b10U,
+                                         loopback::moder(loopback::IN_ETR));
+                TEST_ASSERT_EQUAL_UINT32(loopback::IN_ETR.af,
+                                         loopback::afr(loopback::IN_ETR));
+                TEST_ASSERT_EQUAL_UINT32(p.pupdr,
+                                         loopback::pupdr(loopback::IN_ETR));
             }
         }
 
@@ -316,9 +325,9 @@ namespace test::timer_pcnt {
         void pcnt_mode_1_counts_exactly_on_the_selected_edge() {
             for (const auto channel : {PCNT_CHANNEL_1, PCNT_CHANNEL_2}) {
                 for (const auto edge : {PCNT_RISING_EDGE, PCNT_FALLING_EDGE}) {
-                    lb::reset_fixture();
+                    loopback::reset_fixture();
                     const board_pin_t& stimulus = stimulus_for(channel);
-                    lb::take_over_pin(stimulus, false);
+                    loopback::take_over_pin(stimulus, false);
                     delay_us(20);
 
                     const auto cfg = make_pcnt_mode_1(channel, edge);
@@ -327,16 +336,16 @@ namespace test::timer_pcnt {
                     TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
 
                     // A single edge in each direction: only the selected one counts
-                    lb::drive(stimulus, true);
+                    gpio_set_level(stimulus.port, stimulus.pin, true);
                     delay_us(20);
                     TEST_ASSERT_EQUAL_UINT32(
                         (edge == PCNT_RISING_EDGE) ? 1U : 0U, read_count());
-                    lb::drive(stimulus, false);
+                    gpio_set_level(stimulus.port, stimulus.pin, false);
                     delay_us(20);
                     TEST_ASSERT_EQUAL_UINT32(1U, read_count());
 
                     // Then 100 full pulses: exactly one count each
-                    lb::pulses(stimulus, 100, 4, 4);
+                    loopback::pulses(stimulus, 100, 4, 4);
                     delay_us(20);
                     TEST_ASSERT_EQUAL_UINT32(101U, read_count());
                 }
@@ -356,8 +365,8 @@ namespace test::timer_pcnt {
             }};
 
             for (const auto& c : cases) {
-                lb::reset_fixture();
-                lb::take_over_pin(lb::GEN_A, false);
+                loopback::reset_fixture();
+                loopback::take_over_pin(loopback::GEN_A, false);
                 delay_us(20);
 
                 const auto cfg = make_pcnt_mode_2(c.prescaler);
@@ -365,7 +374,7 @@ namespace test::timer_pcnt {
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 0));
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
 
-                lb::pulses(lb::GEN_A, 800, 4, 4);
+                loopback::pulses(loopback::GEN_A, 800, 4, 4);
                 delay_us(20);
 
                 // The external trigger prescaler divides the pulse rate. +/- 1 for where in its cycle it starts
@@ -375,8 +384,8 @@ namespace test::timer_pcnt {
 
         void pcnt_mode_2_counts_exactly_on_the_selected_edge() {
             for (const auto edge : {PCNT_RISING_EDGE, PCNT_FALLING_EDGE}) {
-                lb::reset_fixture();
-                lb::take_over_pin(lb::GEN_A, false);
+                loopback::reset_fixture();
+                loopback::take_over_pin(loopback::GEN_A, false);
                 delay_us(20);
 
                 const auto cfg = make_pcnt_mode_2(PCNT_ETR_DIV_1, edge);
@@ -384,11 +393,12 @@ namespace test::timer_pcnt {
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 0));
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
 
-                lb::drive(lb::GEN_A, true);
+                gpio_set_level(loopback::GEN_A.port, loopback::GEN_A.pin, true);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32((edge == PCNT_RISING_EDGE) ? 1U : 0U,
                                          read_count());
-                lb::drive(lb::GEN_A, false);
+                gpio_set_level(
+                    loopback::GEN_A.port, loopback::GEN_A.pin, false);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32(1U, read_count());
             }
@@ -396,8 +406,8 @@ namespace test::timer_pcnt {
 
         void pcnt_filter_rejects_glitches_in_both_modes() {
             for (const bool use_etr : {false, true}) {
-                lb::reset_fixture();
-                lb::take_over_pin(lb::GEN_A, false);
+                loopback::reset_fixture();
+                loopback::take_over_pin(loopback::GEN_A, false);
                 delay_us(20);
 
                 const auto cfg =
@@ -409,19 +419,19 @@ namespace test::timer_pcnt {
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 0));
                 TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
 
-                lb::glitches(lb::GEN_A, 50);
+                loopback::glitches(loopback::GEN_A, 50);
                 delay_us(50);
                 TEST_ASSERT_EQUAL_UINT32(0U, read_count());
 
-                lb::pulses(lb::GEN_A, 50, 20, 20);
+                loopback::pulses(loopback::GEN_A, 50, 20, 20);
                 delay_us(50);
                 TEST_ASSERT_EQUAL_UINT32(50U, read_count());
             }
         }
 
         void pcnt_start_and_stop_freeze_and_resume_the_count() {
-            lb::reset_fixture();
-            lb::take_over_pin(lb::GEN_A, false);
+            loopback::reset_fixture();
+            loopback::take_over_pin(loopback::GEN_A, false);
             delay_us(20);
 
             const auto cfg = make_pcnt_mode_1(PCNT_CHANNEL_1);
@@ -430,29 +440,29 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pcnt_stop(nullptr));
 
             // Pulses before the counter is started are not counted
-            lb::pulses(lb::GEN_A, 10, 4, 4);
+            loopback::pulses(loopback::GEN_A, 10, 4, 4);
             TEST_ASSERT_EQUAL_UINT32(0U, read_count());
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
             TEST_ASSERT_TRUE(MEAS->CR1 & TIM_CR1_CEN);
-            lb::pulses(lb::GEN_A, 25, 4, 4);
+            loopback::pulses(loopback::GEN_A, 25, 4, 4);
             delay_us(20);
             TEST_ASSERT_EQUAL_UINT32(25U, read_count());
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_stop(MEAS));
             TEST_ASSERT_FALSE(MEAS->CR1 & TIM_CR1_CEN);
-            lb::pulses(lb::GEN_A, 10, 4, 4);
+            loopback::pulses(loopback::GEN_A, 10, 4, 4);
             TEST_ASSERT_EQUAL_UINT32(25U, read_count()); // Frozen
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
-            lb::pulses(lb::GEN_A, 5, 4, 4);
+            loopback::pulses(loopback::GEN_A, 5, 4, 4);
             delay_us(20);
             TEST_ASSERT_EQUAL_UINT32(
                 30U, read_count()); // Resumes from where it stopped
         }
 
         void pcnt_set_and_get_count_respect_the_counter_width() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
 
             uint32_t count = 0;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
@@ -477,7 +487,7 @@ namespace test::timer_pcnt {
         }
 
         void pcnt_deinit_stops_counting_and_clears_the_slave_configuration() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
             const auto cfg = make_pcnt_mode_1(
                 PCNT_CHANNEL_1, PCNT_FALLING_EDGE, 0, {update_cb, nullptr});
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &cfg));
@@ -498,7 +508,7 @@ namespace test::timer_pcnt {
         }
 
         void pcnt_and_qdec_init_overwrite_each_other() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
 
             // Mode 1 > decoder: the slave mode and trigger selection are replaced, not merged
             const auto mode_1 = make_pcnt_mode_1(PCNT_CHANNEL_2);
@@ -538,10 +548,11 @@ namespace test::timer_pcnt {
                                         uint32_t             pin_hz,
                                         uint32_t             window_ms,
                                         count_result_t*      out) {
-            TRY(lb::reset_fixture_hal());
-            TRY(lb::generator_toggle_start(TIMER_CHANNEL_1, lb::GEN_A, pin_hz));
+            TRY(loopback::reset_fixture_hal());
+            TRY(loopback::generator_toggle_start(
+                TIMER_CHANNEL_1, loopback::GEN_A, pin_hz));
             out->sysclk_hz = get_system_core_clock();
-            out->pin_hz    = lb::generator_pin_hz();
+            out->pin_hz    = loopback::generator_pin_hz();
 
             reset_update_log();
             TRY(pcnt_init(MEAS, &cfg));
@@ -553,7 +564,7 @@ namespace test::timer_pcnt {
             TRY(pcnt_stop(MEAS));
             const uint32_t t1 = DWT->CYCCNT;
 
-            out->window_us = lb::cycles_to_us32(t1 - t0, out->sysclk_hz);
+            out->window_us = loopback::cycles_to_us32(t1 - t0, out->sysclk_hz);
             out->overflows = s_update_events;
             return pcnt_get_count(MEAS, &out->count);
         }
@@ -573,29 +584,30 @@ namespace test::timer_pcnt {
                 {.cfg = make_pcnt_mode_2(PCNT_ETR_DIV_4), .divisor = 4},
             }};
 
-            std::array<std::array<count_result_t, lb::CLOCK_SWEEP.size()>,
+            std::array<std::array<count_result_t, loopback::CLOCK_SWEEP.size()>,
                        variants.size()>
                 results{};
             for (size_t v = 0; v < variants.size(); v++) {
-                for (size_t i = 0; i < lb::CLOCK_SWEEP.size(); i++) {
-                    lb::switch_clock(
-                        lb::pick_preset(lb::CLOCK_SWEEP[i], original));
+                for (size_t i = 0; i < loopback::CLOCK_SWEEP.size(); i++) {
+                    loopback::switch_clock(loopback::pick_preset(
+                        loopback::CLOCK_SWEEP[i], original));
                     results[v][i].err = count_generated_clock(
                         variants[v].cfg, 100'000, 50, &results[v][i]);
                     (void)pcnt_deinit(MEAS);
-                    lb::generator_stop();
+                    loopback::generator_stop();
                 }
             }
-            lb::switch_clock(
+            loopback::switch_clock(
                 original); // Back to the original clock before anything gets asserted
-            lb::reset_fixture();
+            loopback::reset_fixture();
 
             for (size_t v = 0; v < variants.size(); v++) {
-                for (size_t i = 0; i < lb::CLOCK_SWEEP.size(); i++) {
+                for (size_t i = 0; i < loopback::CLOCK_SWEEP.size(); i++) {
                     const auto& r = results[v][i];
                     TEST_ASSERT_EQUAL(HAL_OK, r.err);
                     TEST_ASSERT_EQUAL_UINT32(
-                        lb::preset_mhz(lb::CLOCK_SWEEP[i], original) *
+                        loopback::preset_mhz(loopback::CLOCK_SWEEP[i],
+                                             original) *
                             1'000'000U,
                         r.sysclk_hz);
                     TEST_ASSERT_EQUAL_UINT32(100'000U, r.pin_hz);
@@ -635,7 +647,7 @@ namespace test::timer_pcnt {
 
         // Quadrature decoder
         void qdec_init_rejects_invalid_arguments() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
             const auto good = make_qdec(ENCODER_MODE_3);
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, qdec_init(nullptr, &good));
@@ -660,7 +672,7 @@ namespace test::timer_pcnt {
         }
 
         void qdec_programs_the_encoder_mode_and_both_inputs() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
 
             for (const auto mode :
                  {ENCODER_MODE_1, ENCODER_MODE_2, ENCODER_MODE_3}) {
@@ -684,15 +696,19 @@ namespace test::timer_pcnt {
                 TEST_ASSERT_FALSE(MEAS->CR1 & TIM_CR1_CEN);
 
                 // Both pins are alternate function inputs
-                TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(lb::IN_A));
-                TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(lb::IN_B));
-                TEST_ASSERT_EQUAL_UINT32(lb::IN_A.af, lb::afr(lb::IN_A));
-                TEST_ASSERT_EQUAL_UINT32(lb::IN_B.af, lb::afr(lb::IN_B));
+                TEST_ASSERT_EQUAL_UINT32(0b10U,
+                                         loopback::moder(loopback::IN_A));
+                TEST_ASSERT_EQUAL_UINT32(0b10U,
+                                         loopback::moder(loopback::IN_B));
+                TEST_ASSERT_EQUAL_UINT32(loopback::IN_A.af,
+                                         loopback::afr(loopback::IN_A));
+                TEST_ASSERT_EQUAL_UINT32(loopback::IN_B.af,
+                                         loopback::afr(loopback::IN_B));
             }
         }
 
         void qdec_configures_the_pull_resistors_on_both_pins() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
 
             struct pull_case_t {
                 timer_pull_t pull;
@@ -708,8 +724,10 @@ namespace test::timer_pcnt {
                 auto cfg = make_qdec(ENCODER_MODE_3);
                 cfg.pull = p.pull;
                 TEST_ASSERT_EQUAL(HAL_OK, qdec_init(MEAS, &cfg));
-                TEST_ASSERT_EQUAL_UINT32(p.pupdr, lb::pupdr(lb::IN_A));
-                TEST_ASSERT_EQUAL_UINT32(p.pupdr, lb::pupdr(lb::IN_B));
+                TEST_ASSERT_EQUAL_UINT32(p.pupdr,
+                                         loopback::pupdr(loopback::IN_A));
+                TEST_ASSERT_EQUAL_UINT32(p.pupdr,
+                                         loopback::pupdr(loopback::IN_B));
             }
         }
 
@@ -724,7 +742,7 @@ namespace test::timer_pcnt {
             for (const auto mode :
                  {ENCODER_MODE_1, ENCODER_MODE_2, ENCODER_MODE_3}) {
                 for (const bool a_leads_b : {true, false}) {
-                    lb::reset_fixture();
+                    loopback::reset_fixture();
                     start_counting_from_idle();
 
                     const auto cfg = make_qdec(mode);
@@ -732,7 +750,7 @@ namespace test::timer_pcnt {
                     TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 0));
                     TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
 
-                    lb::quad_walk(CYCLES, a_leads_b);
+                    loopback::quad_walk(CYCLES, a_leads_b);
                     delay_us(20);
 
                     // A leading B counts up, B leading A counts down
@@ -745,7 +763,7 @@ namespace test::timer_pcnt {
         }
 
         void qdec_walking_forward_then_back_returns_to_zero() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
             start_counting_from_idle();
 
             const auto cfg = make_qdec(ENCODER_MODE_3);
@@ -753,10 +771,10 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 0));
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
 
-            lb::quad_walk(75, true);
+            loopback::quad_walk(75, true);
             delay_us(20);
             TEST_ASSERT_EQUAL_INT32(300, read_signed_count());
-            lb::quad_walk(75, false);
+            loopback::quad_walk(75, false);
             delay_us(20);
             TEST_ASSERT_EQUAL_INT32(0, read_signed_count());
         }
@@ -767,7 +785,7 @@ namespace test::timer_pcnt {
             for (const auto mode :
                  {ENCODER_MODE_1, ENCODER_MODE_2, ENCODER_MODE_3}) {
                 for (const bool a_leads_b : {true, false}) {
-                    lb::reset_fixture();
+                    loopback::reset_fixture();
                     start_counting_from_idle();
 
                     const auto cfg = make_qdec(mode, true);
@@ -775,7 +793,7 @@ namespace test::timer_pcnt {
                     TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 0));
                     TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
 
-                    lb::quad_walk(CYCLES, a_leads_b);
+                    loopback::quad_walk(CYCLES, a_leads_b);
                     delay_us(20);
 
                     // Same magnitude as without the inversion, opposite sign
@@ -788,7 +806,7 @@ namespace test::timer_pcnt {
         }
 
         void qdec_filter_rejects_glitches_on_both_channels() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
             start_counting_from_idle();
 
             const auto cfg = make_qdec(ENCODER_MODE_3, false, 500);
@@ -796,19 +814,20 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 0));
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
 
-            lb::glitches(lb::GEN_A, 50);
-            lb::glitches(lb::GEN_B, 50);
+            loopback::glitches(loopback::GEN_A, 50);
+            loopback::glitches(loopback::GEN_B, 50);
             delay_us(50);
             TEST_ASSERT_EQUAL_INT32(0, read_signed_count());
 
-            lb::quad_walk(25, true); // 4us per state is well above the filter
+            loopback::quad_walk(25,
+                                true); // 4us per state is well above the filter
             delay_us(50);
             TEST_ASSERT_EQUAL_INT32(100, read_signed_count());
         }
 
         void
         qdec_update_callback_reports_the_direction_of_overflow_and_underflow() {
-            lb::reset_fixture();
+            loopback::reset_fixture();
             start_counting_from_idle();
             reset_update_log();
 
@@ -819,14 +838,14 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
 
             // 16400 cycles forward is 65600 counts: one wrap of the 16 bit counter, ending 64 counts past zero
-            lb::quad_walk(16'400, true);
+            loopback::quad_walk(16'400, true);
             delay_us(50);
             TEST_ASSERT_EQUAL_UINT32(1U, s_update_events);
             TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP, s_update_dir[0]);
             TEST_ASSERT_EQUAL_UINT32(64U, read_count());
 
             // 100 cycles back is 400 counts: straight through zero and out the bottom
-            lb::quad_walk(100, false);
+            loopback::quad_walk(100, false);
             delay_us(50);
             TEST_ASSERT_EQUAL_UINT32(2U, s_update_events);
             TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_DOWN, s_update_dir[1]);
@@ -868,9 +887,9 @@ namespace test::timer_pcnt {
 
         // Leave the timers and clocks the way they were found
         TRY_THEN_FAIL(pcnt_deinit(MEAS));
-        lb::generator_stop();
-        TRY_THEN_FAIL(timx_clk_enable(lb::MEAS, false));
-        TRY_THEN_FAIL(timx_clk_enable(lb::GEN, false));
+        loopback::generator_stop();
+        TRY_THEN_FAIL(timx_clk_enable(loopback::MEASURED, false));
+        TRY_THEN_FAIL(timx_clk_enable(loopback::GENERATOR, false));
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the PCNT driver");

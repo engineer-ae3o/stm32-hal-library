@@ -38,7 +38,7 @@ typedef enum : uint8_t {
 
     // SPI extensions
     HAL_ERR_SPI_TXE_FAILED_TO_SET, // The TXE bit failed to set after SPI transfers were completed
-    HAL_ERR_SPI_BSY_FAILED_TO_CLEAR, // The BSY bit failed to set after SPI transfers were completed
+    HAL_ERR_SPI_BSY_FAILED_TO_CLEAR, // The BSY bit failed to clear after SPI transfers were completed
 
     // UART extension
     HAL_ERR_UART_TC_FAILED_TO_SET, // The TC bit in the ISR failed to set even after the DMA TX done irq had fired

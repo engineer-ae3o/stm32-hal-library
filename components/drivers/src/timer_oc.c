@@ -189,20 +189,20 @@ hal_err_t output_compare_deinit(TIM_TypeDef* handle) {
 }
 
 hal_err_t output_compare_start(TIM_TypeDef* handle,
-                               uint32_t     period_hz,
+                               uint32_t     frequency_hz,
                                uint32_t*    max_compare_level) {
-    if (handle == NULL || period_hz == 0 || max_compare_level == NULL) {
+    if (handle == NULL || frequency_hz == 0 || max_compare_level == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
     const uint32_t timer_freq_hz = timer_get_frequency_hz(handle);
-    if (period_hz > timer_freq_hz) {
+    if (frequency_hz > timer_freq_hz) {
         return HAL_ERR_NOT_SUPPORTED;
     }
 
     // Get the denominator as it has different meanings depending on whether its center or edge aligned Output Compare
     const uint32_t total_ticks_per_period =
-        round_div_u32(timer_freq_hz, period_hz);
+        round_div_u32(timer_freq_hz, frequency_hz);
 
     // Get the maximum width of the auto-reload register since it varies per timer
     const uint32_t max_arr = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;

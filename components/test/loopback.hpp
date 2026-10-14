@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include "drivers/gpio_types.h"
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
@@ -35,75 +36,53 @@
 // and PWM), or the CPU takes the pins over as plain GPIO outputs and bit bangs exact pulse trains and
 // quadrature sequences, so the expected counts are exact rather than statistical.
 // TIM3 (16 bit) is the instrument under test.
-//
-// NOTE: These tests assume every clock in the tree is a multiple of 1MHz, so that a prescaler of
-// (timer clock / 1MHz) gives exact 1us ticks.
+
 
 namespace test::loopback {
 
-    inline TIM_TypeDef* const GEN  = TIM5;
-    inline TIM_TypeDef* const MEAS = TIM3;
+    inline TIM_TypeDef* const GENERATOR = TIM3;
+    inline const board_pin_t  GEN_A     = BOARD_TIM3_CH1_PB4;
+    inline const board_pin_t  GEN_B     = BOARD_TIM3_CH2_PB5;
 
-    inline const board_pin_t GEN_A  = BOARD_TIM5_CH1_PA0;
-    inline const board_pin_t GEN_B  = BOARD_TIM5_CH2_PA1;
-    inline const board_pin_t IN_A   = BOARD_TIM3_CH1_PB4;
-    inline const board_pin_t IN_B   = BOARD_TIM3_CH2_PB5;
-    inline const board_pin_t IN_ETR = BOARD_TIM3_ETR_PD2;
+    inline TIM_TypeDef* const MEASURED = TIM2;
+    inline const board_pin_t  IN_A     = BOARD_TIM2_CH1_PA5;
+    inline const board_pin_t  IN_B     = BOARD_TIM2_CH2_PB3;
+    inline const board_pin_t  IN_ETR   = BOARD_TIM2_ETR_PA15;
 
     // How long each quadrature state is held. Comfortably above any filter the tests ask for
     inline constexpr uint32_t STEP_US = 4;
 
-
     // GPIO register helpers
-    inline uint32_t pin_number(const board_pin_t& pin) {
-        return std::to_underlying(pin.pin);
-    }
-
     inline uint32_t moder(const board_pin_t& pin) {
-        return (pin.port->MODER >> (pin_number(pin) * 2U)) & 0b11U;
+        return (pin.port->MODER >> (std::to_underlying(pin.pin) * 2U)) & 0b11U;
     }
 
     inline uint32_t pupdr(const board_pin_t& pin) {
-        return (pin.port->PUPDR >> (pin_number(pin) * 2U)) & 0b11U;
+        return (pin.port->PUPDR >> (std::to_underlying(pin.pin) * 2U)) & 0b11U;
     }
 
     inline uint32_t afr(const board_pin_t& pin) {
-        const uint32_t n = pin_number(pin);
+        const uint32_t n = std::to_underlying(pin.pin);
         return (n < 8U) ? ((pin.port->AFR[0] >> (n * 4U)) & 0xFU)
                         : ((pin.port->AFR[1] >> ((n - 8U) * 4U)) & 0xFU);
     }
 
-    inline void drive(const board_pin_t& pin, bool level) {
-        pin.port->BSRR = 1UL << (pin_number(pin) + (level ? 0U : 16U));
-    }
-
-    inline bool sample(const board_pin_t& pin) {
-        return ((pin.port->IDR >> pin_number(pin)) & 1U) != 0;
-    }
-
-    // Turn the pin into a plain push pull output driving the given level. The next driver init that
-    // touches the pin switches it back to its alternate function
+    // Turn the pin into a plain push pull output driving the given level. The next
+    // driver init that touches the pin switches it back to its alternate function
     inline void take_over_pin(const board_pin_t& pin, bool level) {
         TEST_ASSERT_EQUAL(HAL_OK, gpiox_clk_enable(pin.port, true));
-        const uint32_t n = pin_number(pin);
-        drive(pin, level);
-        pin.port->OTYPER &= ~(1UL << n);
-        pin.port->OSPEEDR |= (0b11UL << (n * 2U));
-        pin.port->PUPDR &= ~(0b11UL << (n * 2U));
-        pin.port->MODER =
-            (pin.port->MODER & ~(0b11UL << (n * 2U))) | (0b01UL << (n * 2U));
+        gpio_set_output(pin.port, pin.pin);
+        gpio_set_output_type(pin.port, pin.pin, GPIO_PUSH_PULL);
+        gpio_set_speed_mode(pin.port, pin.pin, GPIO_FULL_SPEED);
+        gpio_set_level(pin.port, pin.pin, level);
     }
 
     // Park the pin as an input with a pulldown, so a wire hanging off a previous test's output idles low
-    inline hal_err_t park_pin(const board_pin_t& pin) {
-        TRY(gpiox_clk_enable(pin.port, true));
-        const uint32_t n = pin_number(pin);
-        pin.port->MODER &= ~(0b11UL << (n * 2U));
-        pin.port->PUPDR =
-            (pin.port->PUPDR & ~(0b11UL << (n * 2U))) | (0b10UL << (n * 2U));
-        return HAL_OK;
+    inline void park_pin(const board_pin_t& pin) {
+        TEST_ASSERT_EQUAL(HAL_OK, gpiox_clk_enable(pin.port, true));
+        gpio_set_input(pin.port, pin.pin);
+        gpio_enable_pulldown(pin.port, pin.pin, true);
     }
-
 
     // Bit banged stimulus
     // 'count' full pulses: high for high_us, then low for low_us
@@ -112,9 +91,9 @@ namespace test::loopback {
                        uint32_t           high_us,
                        uint32_t           low_us) {
         for (uint32_t i = 0; i < count; i++) {
-            drive(pin, true);
+            gpio_set_level(pin.port, pin.pin, true);
             delay_us(high_us);
-            drive(pin, false);
+            gpio_set_level(pin.port, pin.pin, false);
             delay_us(low_us);
         }
     }
@@ -122,8 +101,8 @@ namespace test::loopback {
     // 'count' pulses as short as two back to back BSRR writes allow (tens of ns): below any filter these tests use
     inline void glitches(const board_pin_t& pin, uint32_t count) {
         for (uint32_t i = 0; i < count; i++) {
-            drive(pin, true);
-            drive(pin, false);
+            gpio_set_level(pin.port, pin.pin, true);
+            gpio_set_level(pin.port, pin.pin, false);
             delay_us(10);
         }
     }
@@ -133,10 +112,13 @@ namespace test::loopback {
     inline void quad_walk(uint32_t cycles, bool a_leads_b) {
         constexpr auto lead = std::array{true, true, false, false};
         constexpr auto lag  = std::array{false, true, true, false};
-        for (uint32_t c = 0; c < cycles; c++) {
+
+        for (uint32_t cycle = 0; cycle < cycles; cycle++) {
             for (uint32_t s = 0; s < 4; s++) {
-                drive(GEN_A, a_leads_b ? lead[s] : lag[s]);
-                drive(GEN_B, a_leads_b ? lag[s] : lead[s]);
+                gpio_set_level(
+                    GEN_A.port, GEN_A.pin, a_leads_b ? lead[s] : lag[s]);
+                gpio_set_level(
+                    GEN_B.port, GEN_B.pin, a_leads_b ? lag[s] : lead[s]);
                 delay_us(STEP_US);
             }
         }
@@ -145,12 +127,12 @@ namespace test::loopback {
     // Count the transitions seen on a pin over a window, sampling in a tight loop
     inline uint32_t count_edges(const board_pin_t& pin, uint32_t duration_us) {
         uint32_t       edges = 0;
-        bool           last  = sample(pin);
+        bool           last  = gpio_get_level(pin.port, pin.pin);
         const uint32_t t0    = DWT->CYCCNT;
         const uint32_t span =
             duration_us * (get_system_core_clock() / 1'000'000U);
         while ((DWT->CYCCNT - t0) < span) {
-            const bool now = sample(pin);
+            const bool now = gpio_get_level(pin.port, pin.pin);
             if (now != last) {
                 edges += 1;
                 last = now;
@@ -175,21 +157,21 @@ namespace test::loopback {
                                      .gpio_pin          = pin};
         cfg.num_channels          = 1;
 
-        TRY(output_compare_init(GEN, &cfg));
+        TRY(output_compare_init(GENERATOR, &cfg));
 
         // The pin toggles once per period, so the period frequency has to be twice the pin frequency
         uint32_t max_compare = 0;
-        TRY(output_compare_start(GEN, 2U * pin_hz, &max_compare));
-        return output_compare_set_compare(GEN, channel, max_compare / 2U);
+        TRY(output_compare_start(GENERATOR, 2U * pin_hz, &max_compare));
+        return output_compare_set_compare(GENERATOR, channel, max_compare / 2U);
     }
 
     // Frequency actually coming out of the generator, derived from its registers
     inline uint32_t generator_pin_hz() {
-        const uint64_t divisor =
-            (uint64_t)(GEN->PSC + 1U) * ((uint64_t)GEN->ARR + 1U) * 2U;
-        return (
-            uint32_t)(((uint64_t)timer_get_frequency_hz(GEN) + (divisor / 2U)) /
-                      divisor);
+        const uint64_t divisor = (uint64_t)(GENERATOR->PSC + 1U) *
+                                 ((uint64_t)GENERATOR->ARR + 1U) * 2U;
+        return (uint32_t)(((uint64_t)timer_get_frequency_hz(GENERATOR) +
+                           (divisor / 2U)) /
+                          divisor);
     }
 
     // A PWM wave on GEN_A. 'compare' and 'max_duty' are the duty cycle numbers the PWM driver ended up using
@@ -206,16 +188,15 @@ namespace test::loopback {
                               .gpio_pin          = GEN_A};
         cfg.num_channels   = 1;
 
-        TRY(pwm_gp_timer_init(GEN, &cfg));
-        TRY(pwm_start(GEN, pwm_hz, max_duty));
+        TRY(pwm_gp_timer_init(GENERATOR, &cfg));
+        TRY(pwm_start(GENERATOR, pwm_hz, max_duty));
         *compare = (uint32_t)((uint64_t)(*max_duty) * duty_percent / 100U);
-        return pwm_set_duty_cycle(GEN, TIMER_CHANNEL_1, *compare);
+        return pwm_set_duty_cycle(GENERATOR, TIMER_CHANNEL_1, *compare);
     }
 
     inline void generator_stop() {
-        (void)output_compare_deinit(GEN);
+        (void)output_compare_deinit(GENERATOR);
     }
-
 
     // Instrument helpers
     // Timer prescaler that makes the measurer count in exact 1us ticks
@@ -227,19 +208,17 @@ namespace test::loopback {
         return (uint32_t)((uint64_t)cycles * 1'000'000ULL / sysclk_hz);
     }
 
-
     // Fixture
     // Clocks on, both timers back to their reset state, loopback pins parked low.
     // The _hal flavor never asserts, so it is safe to use while the system clock is switched
     inline hal_err_t reset_fixture_hal() {
-        TRY(timx_clk_enable(GEN, true));
-        TRY(timx_clk_enable(MEAS, true));
-        TRY(timer_deinit(GEN));
-        TRY(timer_reset(GEN));
-        TRY(timer_deinit(MEAS));
-        TRY(timer_reset(MEAS));
-        TRY(park_pin(GEN_A));
-        TRY(park_pin(GEN_B));
+        TRY(timx_clk_enable(GENERATOR, true));
+        TRY(timer_reset(GENERATOR));
+        park_pin(GEN_A);
+        park_pin(GEN_B);
+
+        TRY(timx_clk_enable(MEASURED, true));
+        TRY(timer_reset(MEASURED));
         return HAL_OK;
     }
 
@@ -251,11 +230,9 @@ namespace test::loopback {
     template<typename predicate>
     bool wait_for(predicate pred, uint32_t timeout_ms) {
         const uint64_t t0 = ms_since_boot();
-        while (!pred() && ((ms_since_boot() - t0) < timeout_ms)) {
-        }
+        while (!pred() && ((ms_since_boot() - t0) < timeout_ms));
         return pred();
     }
-
 
     // System clock sweep. Changing the system clock moves the timer clock, and the SysTick/DWT based time
     // bases used to cross check the timers are independent of the timers' own clock arithmetic.
@@ -263,9 +240,8 @@ namespace test::loopback {
     // deliberately no RAII guard here. Measure with the non asserting _hal helpers while switched, restore the
     // clock, and only then assert on the recorded results.
     struct clock_preset_t {
-        system_clock_t
-            hse; // The preset when the board runs from the HSE family
-        system_clock_t hsi; // And from the HSI family
+        system_clock_t hse;
+        system_clock_t hsi;
         uint32_t       hse_mhz;
         uint32_t       hsi_mhz;
     };
@@ -274,22 +250,30 @@ namespace test::loopback {
     // timer doubling brings it back up (100/84MHz), while 48MHz and the direct oscillator presets (APB1 undivided)
     // get no doubling. So the sweep exercises both branches of timer_get_frequency_hz(...)
     inline constexpr std::array<clock_preset_t, 4> CLOCK_SWEEP = {{
-        {.hse     = HSE_PLL_48MHz,
-         .hsi     = HSI_PLL_48MHz,
-         .hse_mhz = 48,
-         .hsi_mhz = 48},
-        {.hse     = HSE_PLL_84MHz,
-         .hsi     = HSI_PLL_84MHz,
-         .hse_mhz = 84,
-         .hsi_mhz = 84},
-        {.hse     = HSE_PLL_100MHz,
-         .hsi     = HSI_PLL_100MHz,
-         .hse_mhz = 100,
-         .hsi_mhz = 100},
-        {.hse     = HSE_PLL_DIRECT,
-         .hsi     = HSI_PLL_DIRECT,
-         .hse_mhz = HSE_VALUE_MHz,
-         .hsi_mhz = HSI_VALUE_MHz},
+        {
+            .hse     = HSE_PLL_48MHz,
+            .hsi     = HSI_PLL_48MHz,
+            .hse_mhz = 48,
+            .hsi_mhz = 48,
+        },
+        {
+            .hse     = HSE_PLL_84MHz,
+            .hsi     = HSI_PLL_84MHz,
+            .hse_mhz = 84,
+            .hsi_mhz = 84,
+        },
+        {
+            .hse     = HSE_PLL_100MHz,
+            .hsi     = HSI_PLL_100MHz,
+            .hse_mhz = 100,
+            .hsi_mhz = 100,
+        },
+        {
+            .hse     = HSE_PLL_DIRECT,
+            .hsi     = HSI_PLL_DIRECT,
+            .hse_mhz = HSE_VALUE_MHz,
+            .hsi_mhz = HSI_VALUE_MHz,
+        },
     }};
 
     // Pick the preset from the same oscillator family the board is currently running on
