@@ -44,7 +44,7 @@ namespace test::timer_ext {
             counter->n    = counter->n + 1;
         }
 
-        // Channel 1 on PB4, 1us ticks, no filter, no callback
+        // Channel 1 on IN_A, 1us ticks, no filter, no callback
         input_capture_config_t ic_config(ic_edge_t edge = IC_EDGE_RISING) {
             input_capture_config_t cfg{};
             cfg.clk_div         = TIM_CLK_DIV_1;
@@ -82,9 +82,9 @@ namespace test::timer_ext {
             return value;
         }
 
-        // Ticks between two timestamps of the 16 bit counter
+        // Ticks between two timestamps of the (32 bit) counter. Unsigned subtraction handles the wrap
         uint32_t ticks_between(uint32_t first, uint32_t second) {
-            return (second - first) & UINT16_MAX;
+            return second - first;
         }
 
         // Input capture: init and configuration
@@ -412,6 +412,100 @@ namespace test::timer_ext {
             TEST_ASSERT_TRUE(lb::count_edges(lb::GEN_A, 3'000) >= 5U);
         }
 
+        // Counts events per timer channel, for the tests that use more than one
+        struct channel_counts_t {
+            volatile uint32_t n[4] = {}; // NOLINT
+        };
+
+        void channel_cb(void* arg, timer_channel_t channel, timer_count_dir_t) {
+            auto*          counts = static_cast<channel_counts_t*>(arg);
+            const uint32_t i      = std::to_underlying(channel);
+            if (i < 4) {
+                counts->n[i] = counts->n[i] + 1;
+            }
+        }
+
+        // Input capture: more coverage
+        void ic_channels_capture_on_their_own_pins() {
+            lb::reset();
+            channel_counts_t counts;
+            auto             cfg = ic_config();
+            cfg.callback         = {channel_cb, &counts};
+            cfg.channels[1]      = {
+                .edge      = IC_EDGE_RISING,
+                .pull      = TIMER_PULL_NONE,
+                .prescaler = IC_PRESCALER_DIV_1,
+                .channel   = TIMER_CHANNEL_2,
+                .gpio_pin  = lb::IN_B,
+                .filter_ns = 0,
+            };
+            cfg.num_channels = 2;
+            start_capture(cfg);
+
+            lb::pulses(lb::GEN_A, 10, 20);
+            delay_us(50);
+            TEST_ASSERT_EQUAL_UINT32(10U, counts.n[0]);
+            TEST_ASSERT_EQUAL_UINT32(0U, counts.n[1]);
+
+            lb::pulses(lb::GEN_B, 7, 20);
+            delay_us(50);
+            TEST_ASSERT_EQUAL_UINT32(10U, counts.n[0]);
+            TEST_ASSERT_EQUAL_UINT32(7U, counts.n[1]);
+        }
+
+        void ic_edge_selection_sets_the_events_per_pulse() {
+            for (const auto& [edge, expected] :
+                 std::array<std::pair<ic_edge_t, uint32_t>, 3>{{
+                     {IC_EDGE_RISING, 10},
+                     {IC_EDGE_FALLING, 10},
+                     {IC_EDGE_RISING_FALLING, 20},
+                 }}) {
+                lb::reset();
+                counter_t events;
+                auto      cfg = ic_config(edge);
+                cfg.callback  = {count_cb, &events};
+                start_capture(cfg);
+
+                lb::pulses(lb::GEN_A, 10, 20);
+                delay_us(50);
+                TEST_ASSERT_EQUAL_UINT32(expected, events.n);
+            }
+        }
+
+        void ic_timer_prescaler_scales_the_captured_ticks() {
+            lb::reset();
+            lb::toggle_clock(2'000); // 500us period
+
+            auto cfg = ic_config();
+            cfg.timer_prescaler =
+                static_cast<uint16_t>(10 * lb::ticks_1us()); // 10us ticks
+            start_capture(cfg);
+
+            const uint32_t first  = next_capture();
+            const uint32_t second = next_capture();
+            TEST_ASSERT_UINT32_WITHIN(1U, 50U, ticks_between(first, second));
+        }
+
+        // Output compare, toggle mode: more coverage
+        void oc_toggle_clock_has_the_requested_frequency() {
+            struct case_t {
+                uint32_t hz;
+                uint32_t window_us;
+                uint32_t expected_edges; // Two edges per period of the output
+            };
+            for (const auto& c : std::array<case_t, 2>{{
+                     {1'000, 20'000, 40},
+                     {5'000, 10'000, 100},
+                 }}) {
+                lb::reset();
+                lb::toggle_clock(c.hz);
+                TEST_ASSERT_UINT32_WITHIN(
+                    2U,
+                    c.expected_edges,
+                    lb::count_edges(lb::GEN_A, c.window_us));
+            }
+        }
+
     } // namespace
 
     void all() {
@@ -434,6 +528,10 @@ namespace test::timer_ext {
         RUN_TEST(filter_code_grows_with_the_requested_time);
         RUN_TEST(oc_compare_callback_fires_once_per_period);
         RUN_TEST(oc_pause_and_resume_channel_gate_the_output);
+        RUN_TEST(ic_channels_capture_on_their_own_pins);
+        RUN_TEST(ic_edge_selection_sets_the_events_per_pulse);
+        RUN_TEST(ic_timer_prescaler_scales_the_captured_ticks);
+        RUN_TEST(oc_toggle_clock_has_the_requested_frequency);
 
         TRY_THEN_FAIL(timx_clk_enable(lb::MEAS, false));
         TRY_THEN_FAIL(timx_clk_enable(lb::GEN, false));

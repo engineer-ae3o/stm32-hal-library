@@ -1,5 +1,4 @@
 #include "drivers/gpio.h"
-#include "drivers/src/timer_internals.h"
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
@@ -20,7 +19,7 @@
 
 
 // Pulse counter and quadrature decoder tests. Exact counts come from bit banging the loopback pins,
-// the generated clock test uses TIM5's output compare. Wiring is in test/loopback.hpp.
+// the generated clock test uses the generator timer's output compare. Wiring is in test/loopback.hpp.
 
 namespace test::timer_pcnt {
 
@@ -285,6 +284,11 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(GEN, UINT16_MAX - 5U));
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_get_count(GEN, &value));
             TEST_ASSERT_EQUAL_UINT32(UINT16_MAX - 5U, value);
+            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
+                              pcnt_set_count(GEN, UINT16_MAX + 1U));
+            TEST_ASSERT_EQUAL(HAL_OK, pcnt_get_count(GEN, &value));
+            TEST_ASSERT_EQUAL_UINT32(
+                UINT16_MAX - 5U, value); // The rejected write changed nothing
 
             // 32 bit timer
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, UINT32_MAX - 5U));
@@ -433,20 +437,97 @@ namespace test::timer_pcnt {
             cfg.callback      = {.cb = update_cb, .arg = &logs};
             start_decoding(cfg);
 
-            // 80 counts up from 65500 wraps past the top
-            TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, 65'500));
+            // 80 counts up from 40 below the top of the 32 bit counter wraps past it
+            TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, UINT32_MAX - 39U));
             lb::quad_walk(20, true);
             delay_us(20);
             TEST_ASSERT_EQUAL_UINT32(1U, logs.num_updates);
             TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP, logs.dir);
-            TEST_ASSERT_EQUAL_UINT32(44U, get_pcnt_count());
+            TEST_ASSERT_EQUAL_UINT32(40U, get_pcnt_count());
 
             // 160 counts back goes under zero
             lb::quad_walk(40, false);
             delay_us(20);
             TEST_ASSERT_EQUAL_UINT32(2U, logs.num_updates);
             TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_DOWN, logs.dir);
-            TEST_ASSERT_EQUAL_UINT32(65'536U - 116U, get_pcnt_count());
+            TEST_ASSERT_EQUAL_UINT32(UINT32_MAX - 119U, get_pcnt_count());
+        }
+
+        // Pulse counter and decoder: more coverage
+        void pcnt_overflow_callback_fires_when_the_counter_wraps() {
+            lb::reset();
+            update_logs_t logs;
+            auto          cfg = pcnt_1();
+            cfg.callback      = {.cb = update_cb, .arg = &logs};
+            start_counting(cfg);
+
+            // 100 pulses from 50 below the top of the 32 bit counter: one wrap, 50 pulses past it
+            TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, UINT32_MAX - 49U));
+            lb::pulses(lb::GEN_A, 100, 4);
+            delay_us(20);
+            TEST_ASSERT_EQUAL_UINT32(1U, logs.num_updates);
+            TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP, logs.dir);
+            TEST_ASSERT_EQUAL_UINT32(50U, get_pcnt_count());
+        }
+
+        void pcnt_mode_2_prescaler_divides_a_generated_clock() {
+            lb::reset();
+            lb::toggle_clock(100'000);
+            start_counting(pcnt_2(PCNT_ETR_DIV_4));
+
+            // The window is timed with the CPU's cycle counter, independent of the timers' clock arithmetic
+            const uint32_t t0 = DWT->CYCCNT;
+            delay_ms(50);
+            TEST_ASSERT_EQUAL(HAL_OK, pcnt_stop(MEAS));
+            const uint32_t window_cycles = DWT->CYCCNT - t0;
+
+            // A quarter of the pulses reach the counter
+            const uint32_t expected = (uint32_t)(100'000ULL * window_cycles /
+                                                 get_system_core_clock() / 4U);
+            TEST_ASSERT_UINT32_WITHIN(
+                expected / 200U + 2U, expected, get_pcnt_count()); // 0.5%
+        }
+
+        void qdec_single_channel_modes_ignore_the_other_channel() {
+            struct case_t {
+                encoder_mode_t mode;
+                board_pin_t    ignored;
+                board_pin_t    counted;
+            };
+            // Mode 1 counts channel A's edges only, mode 2 channel B's
+            for (const auto& c : std::array<case_t, 2>{{
+                     {ENCODER_MODE_1, lb::GEN_B, lb::GEN_A},
+                     {ENCODER_MODE_2, lb::GEN_A, lb::GEN_B},
+                 }}) {
+                lb::reset();
+                start_decoding(qdec(c.mode));
+
+                lb::pulses(c.ignored, 20, 5);
+                delay_us(20);
+                TEST_ASSERT_EQUAL_INT32(0, get_pcnt_count_signed());
+
+                gpio_set_level(c.counted.port, c.counted.pin, true);
+                delay_us(20);
+                TEST_ASSERT_TRUE(get_pcnt_count_signed() != 0);
+            }
+        }
+
+        void qdec_stop_freezes_the_count_and_start_resumes_it() {
+            lb::reset();
+            start_decoding(qdec());
+
+            lb::quad_walk(10, true);
+            delay_us(20);
+            TEST_ASSERT_EQUAL_INT32(40, get_pcnt_count_signed());
+
+            TEST_ASSERT_EQUAL(HAL_OK, pcnt_stop(MEAS));
+            lb::quad_walk(10, true);
+            TEST_ASSERT_EQUAL_INT32(40, get_pcnt_count_signed());
+
+            TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
+            lb::quad_walk(10, true);
+            delay_us(20);
+            TEST_ASSERT_EQUAL_INT32(80, get_pcnt_count_signed());
         }
 
     } // namespace
@@ -475,6 +556,10 @@ namespace test::timer_pcnt {
         RUN_TEST(qdec_invert_direction_reverses_the_count);
         RUN_TEST(qdec_filter_rejects_glitches);
         RUN_TEST(qdec_update_callback_reports_the_direction_of_update);
+        RUN_TEST(pcnt_overflow_callback_fires_when_the_counter_wraps);
+        RUN_TEST(pcnt_mode_2_prescaler_divides_a_generated_clock);
+        RUN_TEST(qdec_single_channel_modes_ignore_the_other_channel);
+        RUN_TEST(qdec_stop_freezes_the_count_and_start_resumes_it);
 
         TRY_THEN_FAIL(timx_clk_enable(lb::MEAS, false));
         TRY_THEN_FAIL(timx_clk_enable(lb::GEN, false));

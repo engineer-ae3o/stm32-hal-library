@@ -1000,7 +1000,7 @@ namespace test::pwm {
             counter->n    = counter->n + 1;
         }
 
-        // PB4, 1us ticks, no filter, no callback
+        // IN_A, 1us ticks, no filter, no callback
         pwm_input_config_t input_config() {
             pwm_input_config_t cfg{};
             cfg.pull            = TIMER_PULL_NONE;
@@ -1184,6 +1184,80 @@ namespace test::pwm {
                      TIM_SMCR_TS)); // A leftover reset mode would break the next user
         }
 
+        // PWM input: more coverage
+        void input_measures_a_bit_banged_signal() {
+            lb::reset();
+            const auto cfg = input_config();
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
+
+            lb::pulses(lb::GEN_A, 20, 100); // 100us high, 100us low
+            delay_us(20);
+
+            pwm_input_data_t data{};
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_get_data(lb::MEAS, &data));
+            TEST_ASSERT_UINT32_WITHIN(5U, 200U, data.period);
+            TEST_ASSERT_UINT32_WITHIN(5U, 100U, data.pulse);
+        }
+
+        void input_timer_prescaler_scales_the_results() {
+            lb::reset();
+            auto cfg = input_config();
+            cfg.timer_prescaler =
+                static_cast<uint16_t>(10 * lb::ticks_1us()); // 10us ticks
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
+
+            lb::pulses(lb::GEN_A, 20, 500); // 500us high, 500us low
+            delay_us(20);
+
+            pwm_input_data_t data{};
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_get_data(lb::MEAS, &data));
+            TEST_ASSERT_UINT32_WITHIN(1U, 100U, data.period);
+            TEST_ASSERT_UINT32_WITHIN(1U, 50U, data.pulse);
+        }
+
+        void input_measures_extreme_duty_cycles_and_frequencies() {
+            for (const auto& [hz, duty] :
+                 std::array<std::pair<uint32_t, uint32_t>, 4>{{
+                     {1'000, 1},
+                     {1'000, 99},
+                     {20'000, 50},
+                     {50, 50},
+                 }}) {
+                lb::reset();
+                lb::generate_pwm(hz, duty);
+                const auto cfg = input_config();
+                TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
+                TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
+
+                delay_ms(4'000U / hz + 2U); // A few full cycles
+
+                pwm_input_data_t data{};
+                TEST_ASSERT_EQUAL(HAL_OK, pwm_input_get_data(lb::MEAS, &data));
+                const uint32_t period = 1'000'000U / hz; // 1us ticks
+                TEST_ASSERT_UINT32_WITHIN(2U, period, data.period);
+                TEST_ASSERT_UINT32_WITHIN(2U, period * duty / 100U, data.pulse);
+            }
+        }
+
+        void input_reads_stay_consistent_while_the_signal_runs() {
+            lb::reset();
+            lb::generate_pwm(20'000, 50); // 50us period
+            const auto cfg = input_config();
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::MEAS, &cfg));
+            TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::MEAS));
+            delay_ms(5);
+
+            // Reads land at every phase of the cycle, including right on the capture edges
+            for (uint32_t i = 0; i < 2'000; i++) {
+                pwm_input_data_t data{};
+                TEST_ASSERT_EQUAL(HAL_OK, pwm_input_get_data(lb::MEAS, &data));
+                TEST_ASSERT_UINT32_WITHIN(2U, 50U, data.period);
+                TEST_ASSERT_UINT32_WITHIN(2U, 25U, data.pulse);
+            }
+        }
+
     } // namespace
 
     void all() {
@@ -1230,6 +1304,10 @@ namespace test::pwm {
         RUN_TEST(input_callback_fires_on_both_edges);
         RUN_TEST(input_init_replaces_the_output_config_of_same_timer);
         RUN_TEST(input_deinit_stops_the_timer_and_leaves_no_slave_mode);
+        RUN_TEST(input_measures_a_bit_banged_signal);
+        RUN_TEST(input_timer_prescaler_scales_the_results);
+        RUN_TEST(input_measures_extreme_duty_cycles_and_frequencies);
+        RUN_TEST(input_reads_stay_consistent_while_the_signal_runs);
 
         TRY_THEN_FAIL(timx_clk_enable(lb::MEAS, false));
         TRY_THEN_FAIL(timx_clk_enable(lb::GEN, false));
