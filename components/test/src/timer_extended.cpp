@@ -198,7 +198,7 @@ namespace test::timer_ext {
         // Input capture: measuring a signal
         void ic_measures_the_period_of_a_generated_clock() {
             lb::reset();
-            lb::toggle_clock(2'000); // 500us period
+            lb::generate_clock(2'000); // 500us period
             start_capture(ic_config());
 
             const uint32_t first  = next_capture();
@@ -281,7 +281,7 @@ namespace test::timer_ext {
 
         void ic_reports_overcapture_once() {
             lb::reset();
-            lb::toggle_clock(2'000);
+            lb::generate_clock(2'000);
             start_capture(ic_config());
             delay_ms(
                 5); // Several edges with nobody reading the capture register
@@ -398,7 +398,7 @@ namespace test::timer_ext {
 
         void oc_pause_and_resume_channel_gate_the_output() {
             lb::reset();
-            lb::toggle_clock(2'000);
+            lb::generate_clock(2'000);
             TEST_ASSERT_TRUE(lb::count_edges(lb::GEN_A, 3'000) >=
                              5U); // 6 edges in 3ms
 
@@ -474,7 +474,7 @@ namespace test::timer_ext {
 
         void ic_timer_prescaler_scales_the_captured_ticks() {
             lb::reset();
-            lb::toggle_clock(2'000); // 500us period
+            lb::generate_clock(2'000); // 500us period
 
             auto cfg = ic_config();
             cfg.timer_prescaler =
@@ -498,7 +498,7 @@ namespace test::timer_ext {
                      {5'000, 10'000, 100},
                  }}) {
                 lb::reset();
-                lb::toggle_clock(c.hz);
+                lb::generate_clock(c.hz);
                 TEST_ASSERT_UINT32_WITHIN(
                     2U,
                     c.expected_edges,

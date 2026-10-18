@@ -142,7 +142,7 @@ namespace test::loopback {
     }
 
     // Generate a clock of given frequency on channel 1 of TIM3
-    inline void toggle_clock(uint32_t frequency_hz) {
+    inline void generate_clock(uint32_t frequency_hz) {
         output_compare_config_t cfg{};
         cfg.mode        = OUTPUT_COMPARE_TOGGLE_ON_MATCH;
         cfg.count_mode  = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;

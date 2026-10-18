@@ -118,10 +118,10 @@ void assert_check(bool        cond,
 
 
 // RTT buffer for logging. Controls the output buffer parameter
-#define RTT_BUFFER_INDEX (0)
+#define RTT_BUFFER_INDEX (0U)
 
 // Buffer size of format strings
-#define FMT_STR_BUF_SIZE (192)
+#define FMT_STR_BUF_SIZE (256U)
 
 
 // Macros to help with error propagation
