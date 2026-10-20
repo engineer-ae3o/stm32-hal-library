@@ -19,9 +19,7 @@
 
 // Input capture, output compare (toggle mode) and the filter code helper.
 // Wiring and the signal sources are in test/loopback.hpp.
-//
-// ASSUMPTION: input_capture_config_t has the new 'timer_prescaler' field (PSC = timer_prescaler - 1, 0 and
-// TIMER_COUNTER_DIR_NONE are HAL_ERR_INVALID_ARG) and input_capture_get_timer_frequency(...) returns the tick rate.
+
 
 namespace test::timer_ext {
 
@@ -246,7 +244,7 @@ namespace test::timer_ext {
             lb::reset();
             counter_t events;
             auto      cfg             = ic_config();
-            cfg.callback              = {count_cb, &events};
+            cfg.callback              = {.cb = count_cb, .arg = &events};
             cfg.channels[0].filter_ns = 500;
             start_capture(cfg);
 
@@ -269,7 +267,7 @@ namespace test::timer_ext {
                 lb::reset();
                 counter_t events;
                 auto      cfg             = ic_config();
-                cfg.callback              = {count_cb, &events};
+                cfg.callback              = {.cb = count_cb, .arg = &events};
                 cfg.channels[0].prescaler = prescaler;
                 start_capture(cfg);
 
@@ -318,7 +316,7 @@ namespace test::timer_ext {
             lb::reset();
             counter_t events;
             auto      cfg = ic_config();
-            cfg.callback  = {count_cb, &events};
+            cfg.callback  = {.cb = count_cb, .arg = &events};
             start_capture(cfg);
 
             lb::pulses(lb::GEN_A, 10, 20);
@@ -379,7 +377,7 @@ namespace test::timer_ext {
                                 .channel           = TIMER_CHANNEL_1,
                                 .gpio_pin          = lb::GEN_A};
             cfg.num_channels = 1;
-            cfg.callback     = {count_cb, &events};
+            cfg.callback     = {.cb = count_cb, .arg = &events};
 
             uint32_t max = 0;
             TEST_ASSERT_EQUAL(HAL_OK, output_compare_init(GEN, &cfg));
@@ -430,7 +428,7 @@ namespace test::timer_ext {
             lb::reset();
             channel_counts_t counts;
             auto             cfg = ic_config();
-            cfg.callback         = {channel_cb, &counts};
+            cfg.callback         = {.cb = channel_cb, .arg = &counts};
             cfg.channels[1]      = {
                 .edge      = IC_EDGE_RISING,
                 .pull      = TIMER_PULL_NONE,
@@ -463,7 +461,7 @@ namespace test::timer_ext {
                 lb::reset();
                 counter_t events;
                 auto      cfg = ic_config(edge);
-                cfg.callback  = {count_cb, &events};
+                cfg.callback  = {.cb = count_cb, .arg = &events};
                 start_capture(cfg);
 
                 lb::pulses(lb::GEN_A, 10, 20);
@@ -494,8 +492,8 @@ namespace test::timer_ext {
                 uint32_t expected_edges; // Two edges per period of the output
             };
             for (const auto& c : std::array<case_t, 2>{{
-                     {1'000, 20'000, 40},
-                     {5'000, 10'000, 100},
+                     {.hz = 1'000, .window_us = 20'000, .expected_edges = 40},
+                     {.hz = 5'000, .window_us = 10'000, .expected_edges = 100},
                  }}) {
                 lb::reset();
                 lb::generate_clock(c.hz);

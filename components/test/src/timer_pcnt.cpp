@@ -8,9 +8,9 @@
 #include "test/timer_pcnt.hpp"
 #include "test/loopback.hpp"
 #include "drivers/timer.h"
+#include "utils/common.h"
 #include "utils/board.h"
 #include "utils/clock.h"
-#include "utils/common.h"
 #include "utils/tick.h"
 #include "utils/err.h"
 #include "utils/log.h"
@@ -107,7 +107,8 @@ namespace test::timer_pcnt {
         }
 
         // Counts per full quadrature cycle. Encoder mode has 4x resolution, compare to the 2x of the other modes
-        constexpr int32_t counts_per_cycle(encoder_mode_t mode) {
+        constexpr int32_t
+        counts_per_cycle(encoder_mode_t mode = ENCODER_MODE_3) {
             return (mode == ENCODER_MODE_3) ? 4 : 2;
         }
 
@@ -236,13 +237,14 @@ namespace test::timer_pcnt {
                 cfg.filter_ns = 500;
                 start_counting(cfg);
 
-                lb::glitches(lb::GEN_A, 50);
+                lb::glitches(lb::GEN_A, 100);
                 delay_us(50);
-                // It should be 0 pulses, but the transition t
-                TEST_ASSERT_EQUAL_UINT32(0U, get_pcnt_count());
+
+                // It should be 0 pulses, but the first transition would trigger an edge
+                TEST_ASSERT_UINT32_WITHIN(1, 0, get_pcnt_count());
 
                 lb::pulses(lb::GEN_A, 50, 20);
-                delay_us(50);
+                delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32(50U, get_pcnt_count());
             }
         }
@@ -436,14 +438,17 @@ namespace test::timer_pcnt {
             cfg.filter_ns = 500;
             start_decoding(cfg);
 
-            lb::glitches(lb::GEN_A, 50);
-            lb::glitches(lb::GEN_B, 50);
+            lb::glitches(lb::GEN_A, 100);
+            lb::glitches(lb::GEN_B, 100);
             delay_us(50);
-            TEST_ASSERT_EQUAL_INT32(0, get_pcnt_count_signed());
+
+            // It should be 0 pulses, but the first transition would trigger an edge
+            TEST_ASSERT_INT32_WITHIN(
+                1 * counts_per_cycle(), 0, get_pcnt_count_signed());
 
             lb::quad_walk(25, true);
             delay_us(50);
-            TEST_ASSERT_EQUAL_INT32(100, get_pcnt_count_signed());
+            TEST_ASSERT_EQUAL_UINT32(100, get_pcnt_count_signed());
         }
 
         void qdec_update_callback_reports_the_direction_of_update() {

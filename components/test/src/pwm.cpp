@@ -28,8 +28,8 @@ namespace test::pwm {
         TIM_TypeDef* const TIM_ADV   = TIM1;  // Advanced, 16-bit
         TIM_TypeDef* const TIM_GP32  = TIM2;  // General purpose, 32-bit
         TIM_TypeDef* const TIM_GP16  = TIM3;  // General purpose, 16-bit
-        TIM_TypeDef* const TIM_LITE2 = TIM9;  // Lite, 2 channels
-        TIM_TypeDef* const TIM_LITE1 = TIM10; // Lite, 1 channel
+        TIM_TypeDef* const TIM_LITE2 = TIM9;  // Lite 16-bit, 2 channels
+        TIM_TypeDef* const TIM_LITE1 = TIM10; // Lite 16-bit, 1 channel
 
         // Helpers
         inline void reset_pwm(TIM_TypeDef* handle) {
@@ -177,10 +177,12 @@ namespace test::pwm {
                                                       board_pin_t     pin,
                                                       bool invert = false,
                                                       bool idle   = false) {
-            return {.output_polarity   = invert,
-                    .output_idle_state = idle,
-                    .channel           = channel,
-                    .gpio_pin          = pin};
+            return {
+                .output_polarity   = invert,
+                .output_idle_state = idle,
+                .channel           = channel,
+                .gpio_pin          = pin,
+            };
         }
 
         // TESTS
@@ -735,8 +737,9 @@ namespace test::pwm {
         void set_duty_cycle_rejects_invalid_arguments() {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM_GP16, true));
             reset_pwm(TIM_GP16);
-            TIM_GP16->ARR =
-                999; // Edge aligned by default (CMS == 0): max duty == 1000
+
+            // Edge aligned by default (CMS == 0): max duty == 1000
+            TIM_GP16->ARR = 999;
 
             TEST_ASSERT_EQUAL(
                 HAL_ERR_INVALID_ARG,
@@ -1264,6 +1267,7 @@ namespace test::pwm {
         LOGI(TAG, "Starting the tests on the PWM driver");
         UNITY_BEGIN();
 
+        // PWM output mode tests
         RUN_TEST(timer_init_rejects_invalid_arguments);
         RUN_TEST(timer_init_rejects_too_many_channels_per_timer_class);
         RUN_TEST(timer_init_rejects_non_upcounting_mode_on_the_lite_timers);
@@ -1294,6 +1298,7 @@ namespace test::pwm {
         RUN_TEST(pause_resume_channel_toggle_output_on_non_advanced_timers);
         RUN_TEST(advanced_init_rejects_once_locked_but_accepts_after_reset);
 
+        // PWM input mode tests
         RUN_TEST(input_init_rejects_invalid_arguments);
         RUN_TEST(input_init_fails_on_a_locked_advanced_timer);
         RUN_TEST(input_functions_reject_null_arguments);
