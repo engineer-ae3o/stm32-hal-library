@@ -109,7 +109,9 @@ round_div_u64(uint64_t a, uint64_t b) {
 [[__gnu__::__noreturn__]] void
 panic(const char* function, const char* file, int line);
 
-void restart(const char* function, const char* file, int line);
+[[__gnu__::__noreturn__]] void
+restart(const char* function, const char* file, int line);
+
 void assert_check(bool        cond,
                   const char* msg,
                   const char* function,

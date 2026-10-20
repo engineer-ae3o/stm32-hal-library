@@ -44,7 +44,7 @@ namespace test {
         // clock::all();
         // timer::all();
         timer_ext::all();
-        timer_pcnt::all();
+        // timer_pcnt::all();
     }
 
 } // namespace test

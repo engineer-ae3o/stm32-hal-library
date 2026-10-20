@@ -527,11 +527,14 @@ void system_core_clock_update(void) {
     const uint32_t primask = __get_PRIMASK();
     __disable_irq();
     s_system_core_clock =
-        sysclk >> s_ahb_presc_lut[rcc_cfgr >> RCC_CFGR_HPRE_Pos];
+        sysclk >>
+        s_ahb_presc_lut[(rcc_cfgr & RCC_CFGR_HPRE) >> RCC_CFGR_HPRE_Pos];
     s_apb1_core_clock =
-        s_system_core_clock >> s_apb_presc_lut[rcc_cfgr >> RCC_CFGR_PPRE1_Pos];
+        s_system_core_clock >>
+        s_apb_presc_lut[(rcc_cfgr & RCC_CFGR_PPRE1) >> RCC_CFGR_PPRE1_Pos];
     s_apb2_core_clock =
-        s_system_core_clock >> s_apb_presc_lut[rcc_cfgr >> RCC_CFGR_PPRE2_Pos];
+        s_system_core_clock >>
+        s_apb_presc_lut[(rcc_cfgr & RCC_CFGR_PPRE2) >> RCC_CFGR_PPRE2_Pos];
     __set_PRIMASK(primask);
 
     ASSERT(s_system_core_clock <= MAX_SYSTEM_CLOCK_Hz);

@@ -31,8 +31,8 @@ namespace test::timer_pcnt {
 
         namespace lb = test::loopback;
 
-        TIM_TypeDef* const MEAS = lb::MEAS;
-        TIM_TypeDef* const GEN  = lb::GEN;
+        TIM_TypeDef* const MEAS = lb::TESTED;
+        TIM_TypeDef* const GEN  = lb::SOURCE;
 
         struct update_logs_t {
             volatile uint32_t          num_updates = 0;
@@ -55,7 +55,8 @@ namespace test::timer_pcnt {
             cfg.clk_div                 = TIM_CLK_DIV_1;
             cfg.settings.mode_1.channel = channel;
             cfg.filter_ns               = 0;
-            cfg.pulse_gpio = (channel == PCNT_CHANNEL_1) ? lb::IN_A : lb::IN_B;
+            cfg.pulse_gpio =
+                (channel == PCNT_CHANNEL_1) ? lb::INPUT_A : lb::INPUT_B;
             return cfg;
         }
 
@@ -69,7 +70,7 @@ namespace test::timer_pcnt {
             cfg.clk_div                   = TIM_CLK_DIV_1;
             cfg.settings.mode_2.prescaler = prescaler;
             cfg.filter_ns                 = 0;
-            cfg.pulse_gpio                = lb::IN_ETR;
+            cfg.pulse_gpio                = lb::INPUT_ETR;
             return cfg;
         }
 
@@ -80,8 +81,8 @@ namespace test::timer_pcnt {
             cfg.clk_div          = TIM_CLK_DIV_1;
             cfg.invert_direction = false;
             cfg.filter_ns        = 0;
-            cfg.channel_a        = lb::IN_A;
-            cfg.channel_b        = lb::IN_B;
+            cfg.channel_a        = lb::INPUT_A;
+            cfg.channel_b        = lb::INPUT_B;
             return cfg;
         }
 
@@ -151,16 +152,16 @@ namespace test::timer_pcnt {
             auto cfg = pcnt_1(PCNT_CHANNEL_2);
             cfg.pull = TIMER_USE_PULLDOWN;
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &cfg));
-            TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(lb::IN_B));
-            TEST_ASSERT_EQUAL_UINT32(lb::IN_B.af, lb::afr(lb::IN_B));
-            TEST_ASSERT_EQUAL_UINT32(0b10U, lb::pupdr(lb::IN_B));
+            TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(lb::INPUT_B));
+            TEST_ASSERT_EQUAL_UINT32(lb::INPUT_B.af, lb::afr(lb::INPUT_B));
+            TEST_ASSERT_EQUAL_UINT32(0b10U, lb::pupdr(lb::INPUT_B));
 
             cfg      = pcnt_2();
             cfg.pull = TIMER_USE_PULLUP;
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &cfg));
-            TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(lb::IN_ETR));
-            TEST_ASSERT_EQUAL_UINT32(lb::IN_ETR.af, lb::afr(lb::IN_ETR));
-            TEST_ASSERT_EQUAL_UINT32(0b01U, lb::pupdr(lb::IN_ETR));
+            TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(lb::INPUT_ETR));
+            TEST_ASSERT_EQUAL_UINT32(lb::INPUT_ETR.af, lb::afr(lb::INPUT_ETR));
+            TEST_ASSERT_EQUAL_UINT32(0b01U, lb::pupdr(lb::INPUT_ETR));
         }
 
         // TESTS
@@ -170,7 +171,8 @@ namespace test::timer_pcnt {
                 lb::reset();
                 start_counting(pcnt_1(channel));
 
-                lb::pulses((channel == PCNT_CHANNEL_1) ? lb::GEN_A : lb::GEN_B,
+                lb::pulses((channel == PCNT_CHANNEL_1) ? lb::OUTPUT_A
+                                                       : lb::OUTPUT_B,
                            100,
                            4);
                 delay_us(20);
@@ -183,11 +185,11 @@ namespace test::timer_pcnt {
                 lb::reset();
                 start_counting(pcnt_1(PCNT_CHANNEL_1, edge));
 
-                gpio_set_level(lb::GEN_A.port, lb::GEN_A.pin, true);
+                gpio_set_level(lb::OUTPUT_A.port, lb::OUTPUT_A.pin, true);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32((edge == PCNT_RISING_EDGE) ? 1U : 0U,
                                          get_pcnt_count());
-                gpio_set_level(lb::GEN_A.port, lb::GEN_A.pin, false);
+                gpio_set_level(lb::OUTPUT_A.port, lb::OUTPUT_A.pin, false);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32(1U, get_pcnt_count());
             }
@@ -198,15 +200,15 @@ namespace test::timer_pcnt {
                 lb::reset();
                 start_counting(pcnt_2(PCNT_ETR_DIV_1, edge));
 
-                gpio_set_level(lb::GEN_A.port, lb::GEN_A.pin, true);
+                gpio_set_level(lb::OUTPUT_A.port, lb::OUTPUT_A.pin, true);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32((edge == PCNT_RISING_EDGE) ? 1U : 0U,
                                          get_pcnt_count());
-                gpio_set_level(lb::GEN_A.port, lb::GEN_A.pin, false);
+                gpio_set_level(lb::OUTPUT_A.port, lb::OUTPUT_A.pin, false);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32(1U, get_pcnt_count());
 
-                lb::pulses(lb::GEN_A, 100, 4);
+                lb::pulses(lb::OUTPUT_A, 100, 4);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32(101U, get_pcnt_count());
             }
@@ -222,7 +224,7 @@ namespace test::timer_pcnt {
                 lb::reset();
                 start_counting(pcnt_2(prescaler));
 
-                lb::pulses(lb::GEN_A, 800, 4);
+                lb::pulses(lb::OUTPUT_A, 800, 4);
                 delay_us(20);
                 TEST_ASSERT_UINT32_WITHIN(
                     1U,
@@ -237,13 +239,13 @@ namespace test::timer_pcnt {
                 cfg.filter_ns = 500;
                 start_counting(cfg);
 
-                lb::glitches(lb::GEN_A, 100);
+                lb::glitches(lb::OUTPUT_A, 100);
                 delay_us(50);
 
                 // It should be 0 pulses, but the first transition would trigger an edge
                 TEST_ASSERT_UINT32_WITHIN(1, 0, get_pcnt_count());
 
-                lb::pulses(lb::GEN_A, 50, 20);
+                lb::pulses(lb::OUTPUT_A, 50, 20);
                 delay_us(20);
                 TEST_ASSERT_EQUAL_UINT32(50U, get_pcnt_count());
             }
@@ -256,20 +258,20 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pcnt_start(nullptr));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, pcnt_stop(nullptr));
 
-            lb::pulses(lb::GEN_A, 10, 4); // Not started yet
+            lb::pulses(lb::OUTPUT_A, 10, 4); // Not started yet
             TEST_ASSERT_EQUAL_UINT32(0U, get_pcnt_count());
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
-            lb::pulses(lb::GEN_A, 25, 4);
+            lb::pulses(lb::OUTPUT_A, 25, 4);
             delay_us(20);
             TEST_ASSERT_EQUAL_UINT32(25U, get_pcnt_count());
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_stop(MEAS));
-            lb::pulses(lb::GEN_A, 10, 4);
+            lb::pulses(lb::OUTPUT_A, 10, 4);
             TEST_ASSERT_EQUAL_UINT32(25U, get_pcnt_count());
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
-            lb::pulses(lb::GEN_A, 5, 4);
+            lb::pulses(lb::OUTPUT_A, 5, 4);
             delay_us(20);
             TEST_ASSERT_EQUAL_UINT32(30U, get_pcnt_count());
         }
@@ -328,12 +330,12 @@ namespace test::timer_pcnt {
         void pcnt_deinit_stops_counting() {
             lb::reset();
             start_counting(pcnt_1());
-            lb::pulses(lb::GEN_A, 10, 4);
+            lb::pulses(lb::OUTPUT_A, 10, 4);
             delay_us(20);
             TEST_ASSERT_EQUAL_UINT32(10U, get_pcnt_count());
 
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_deinit(MEAS));
-            lb::pulses(lb::GEN_A, 10, 4);
+            lb::pulses(lb::OUTPUT_A, 10, 4);
             TEST_ASSERT_EQUAL_UINT32(0U, get_pcnt_count());
         }
 
@@ -344,7 +346,7 @@ namespace test::timer_pcnt {
             start_counting(
                 pcnt_1()); // Must get_pcnt_count pulses now, not quadrature steps
 
-            lb::pulses(lb::GEN_A, 10, 4);
+            lb::pulses(lb::OUTPUT_A, 10, 4);
             delay_us(20);
             TEST_ASSERT_EQUAL_UINT32(10U, get_pcnt_count());
         }
@@ -371,7 +373,7 @@ namespace test::timer_pcnt {
             cfg.pull = TIMER_USE_PULLUP;
             TEST_ASSERT_EQUAL(HAL_OK, qdec_init(MEAS, &cfg));
 
-            for (const auto* pin : {&lb::IN_A, &lb::IN_B}) {
+            for (const auto* pin : {&lb::INPUT_A, &lb::INPUT_B}) {
                 TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(*pin));
                 TEST_ASSERT_EQUAL_UINT32(pin->af, lb::afr(*pin));
                 TEST_ASSERT_EQUAL_UINT32(0b01U, lb::pupdr(*pin));
@@ -438,8 +440,8 @@ namespace test::timer_pcnt {
             cfg.filter_ns = 500;
             start_decoding(cfg);
 
-            lb::glitches(lb::GEN_A, 100);
-            lb::glitches(lb::GEN_B, 100);
+            lb::glitches(lb::OUTPUT_A, 100);
+            lb::glitches(lb::OUTPUT_B, 100);
             delay_us(50);
 
             // It should be 0 pulses, but the first transition would trigger an edge
@@ -490,7 +492,7 @@ namespace test::timer_pcnt {
 
             // 100 pulses from 50 below the top of the 32 bit counter: one wrap, 50 pulses past it
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_set_count(MEAS, UINT32_MAX - 49U));
-            lb::pulses(lb::GEN_A, 100, 4);
+            lb::pulses(lb::OUTPUT_A, 100, 4);
             delay_us(20);
             TEST_ASSERT_EQUAL_UINT32(1U, logs.num_updates);
             TEST_ASSERT_EQUAL(TIMER_COUNTER_DIR_UP, logs.dir);
@@ -530,13 +532,13 @@ namespace test::timer_pcnt {
             for (const auto& [mode, ignored, counted] : std::array<case_t, 2>{{
                      {
                          .mode    = ENCODER_MODE_1,
-                         .ignored = lb::GEN_B,
-                         .counted = lb::GEN_A,
+                         .ignored = lb::OUTPUT_B,
+                         .counted = lb::OUTPUT_A,
                      },
                      {
                          .mode    = ENCODER_MODE_2,
-                         .ignored = lb::GEN_A,
-                         .counted = lb::GEN_B,
+                         .ignored = lb::OUTPUT_A,
+                         .counted = lb::OUTPUT_B,
                      },
                  }}) {
                 lb::reset();
@@ -608,8 +610,8 @@ namespace test::timer_pcnt {
         RUN_TEST(qdec_single_channel_modes_ignore_the_other_channel);
         RUN_TEST(qdec_stop_freezes_the_count_and_start_resumes_it);
 
-        TRY_THEN_FAIL(timx_clk_enable(lb::MEAS, false));
-        TRY_THEN_FAIL(timx_clk_enable(lb::GEN, false));
+        TRY_THEN_FAIL(timx_clk_enable(lb::TESTED, false));
+        TRY_THEN_FAIL(timx_clk_enable(lb::SOURCE, false));
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the PCNT driver");

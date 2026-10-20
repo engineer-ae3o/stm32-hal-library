@@ -123,10 +123,11 @@ typedef enum : uint8_t {
 typedef struct {
     bool buffer_compare_reload; // Buffer writes to the CCxR registers
 
-    // Only relevant for the advanced timers
-    bool
-        ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
-    bool ossi; // State of all channels when the timer is inactive
+    // These two opyions are only relevant for the advanced timers
+    // State of a channel when the timer is active, but that specific channel's output is inactive
+    bool ossr;
+    // State of all channels when the timer is inactive
+    bool ossi;
 
     output_compare_mode_t       mode;
     output_compare_count_mode_t count_mode;

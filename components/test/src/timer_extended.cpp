@@ -29,8 +29,8 @@ namespace test::timer_ext {
 
         namespace lb = test::loopback;
 
-        TIM_TypeDef* const MEAS = lb::MEAS;
-        TIM_TypeDef* const GEN  = lb::GEN;
+        TIM_TypeDef* const MEAS = lb::TESTED;
+        TIM_TypeDef* const GEN  = lb::SOURCE;
 
         // Callbacks count into whatever the test hands them, so no test shares anything with another
         struct counter_t {
@@ -53,7 +53,7 @@ namespace test::timer_ext {
                 .pull      = TIMER_PULL_NONE,
                 .prescaler = IC_PRESCALER_DIV_1,
                 .channel   = TIMER_CHANNEL_1,
-                .gpio_pin  = lb::IN_A,
+                .gpio_pin  = lb::INPUT_A,
                 .filter_ns = 0,
             };
             cfg.num_channels = 1;
@@ -168,10 +168,11 @@ namespace test::timer_ext {
             cfg.channels[0].pull = TIMER_USE_PULLUP;
             TEST_ASSERT_EQUAL(HAL_OK, input_capture_init(MEAS, &cfg));
 
-            TEST_ASSERT_EQUAL_UINT32(0b10U,
-                                     lb::moder(lb::IN_A)); // Alternate function
-            TEST_ASSERT_EQUAL_UINT32(lb::IN_A.af, lb::afr(lb::IN_A));
-            TEST_ASSERT_EQUAL_UINT32(0b01U, lb::pupdr(lb::IN_A));
+            TEST_ASSERT_EQUAL_UINT32(
+                0b10U,
+                lb::moder(lb::INPUT_A)); // Alternate function
+            TEST_ASSERT_EQUAL_UINT32(lb::INPUT_A.af, lb::afr(lb::INPUT_A));
+            TEST_ASSERT_EQUAL_UINT32(0b01U, lb::pupdr(lb::INPUT_A));
         }
 
         void ic_start_and_stop_run_and_freeze_the_counter() {
@@ -215,11 +216,13 @@ namespace test::timer_ext {
 
                 // The pin is read right after the capture, long before the next edge
                 (void)next_capture();
-                TEST_ASSERT_EQUAL(edge == IC_EDGE_RISING,
-                                  gpio_get_level(lb::IN_A.port, lb::IN_A.pin));
+                TEST_ASSERT_EQUAL(
+                    edge == IC_EDGE_RISING,
+                    gpio_get_level(lb::INPUT_A.port, lb::INPUT_A.pin));
                 (void)next_capture();
-                TEST_ASSERT_EQUAL(edge == IC_EDGE_RISING,
-                                  gpio_get_level(lb::IN_A.port, lb::IN_A.pin));
+                TEST_ASSERT_EQUAL(
+                    edge == IC_EDGE_RISING,
+                    gpio_get_level(lb::INPUT_A.port, lb::INPUT_A.pin));
             }
         }
 
@@ -248,11 +251,11 @@ namespace test::timer_ext {
             cfg.channels[0].filter_ns = 500;
             start_capture(cfg);
 
-            lb::glitches(lb::GEN_A, 50);
+            lb::glitches(lb::OUTPUT_A, 50);
             delay_us(50);
             TEST_ASSERT_EQUAL_UINT32(0U, events.n);
 
-            lb::pulses(lb::GEN_A, 50, 20);
+            lb::pulses(lb::OUTPUT_A, 50, 20);
             delay_us(50);
             TEST_ASSERT_EQUAL_UINT32(50U, events.n);
         }
@@ -271,7 +274,7 @@ namespace test::timer_ext {
                 cfg.channels[0].prescaler = prescaler;
                 start_capture(cfg);
 
-                lb::pulses(lb::GEN_A, 64, 20);
+                lb::pulses(lb::OUTPUT_A, 64, 20);
                 delay_us(50);
                 TEST_ASSERT_EQUAL_UINT32(64U / divisor, events.n);
             }
@@ -319,13 +322,13 @@ namespace test::timer_ext {
             cfg.callback  = {.cb = count_cb, .arg = &events};
             start_capture(cfg);
 
-            lb::pulses(lb::GEN_A, 10, 20);
+            lb::pulses(lb::OUTPUT_A, 10, 20);
             delay_us(50);
             TEST_ASSERT_EQUAL_UINT32(10U, events.n);
 
             TEST_ASSERT_EQUAL(HAL_OK, input_capture_deinit(MEAS));
             TEST_ASSERT_FALSE(MEAS->CR1 & TIM_CR1_CEN);
-            lb::pulses(lb::GEN_A, 10, 20);
+            lb::pulses(lb::OUTPUT_A, 10, 20);
             delay_us(50);
             TEST_ASSERT_EQUAL_UINT32(10U, events.n);
         }
@@ -375,7 +378,7 @@ namespace test::timer_ext {
             cfg.channels[0]  = {.output_polarity   = false,
                                 .output_idle_state = false,
                                 .channel           = TIMER_CHANNEL_1,
-                                .gpio_pin          = lb::GEN_A};
+                                .gpio_pin          = lb::OUTPUT_A};
             cfg.num_channels = 1;
             cfg.callback     = {.cb = count_cb, .arg = &events};
 
@@ -397,17 +400,17 @@ namespace test::timer_ext {
         void oc_pause_and_resume_channel_gate_the_output() {
             lb::reset();
             lb::generate_clock(2'000);
-            TEST_ASSERT_TRUE(lb::count_edges(lb::GEN_A, 3'000) >=
+            TEST_ASSERT_TRUE(lb::count_edges(lb::OUTPUT_A, 3'000) >=
                              5U); // 6 edges in 3ms
 
             TEST_ASSERT_EQUAL(
                 HAL_OK, output_compare_pause_channel(GEN, TIMER_CHANNEL_1));
             delay_us(5); // Let the pin settle to its disabled level
-            TEST_ASSERT_EQUAL_UINT32(0U, lb::count_edges(lb::GEN_A, 3'000));
+            TEST_ASSERT_EQUAL_UINT32(0U, lb::count_edges(lb::OUTPUT_A, 3'000));
 
             TEST_ASSERT_EQUAL(
                 HAL_OK, output_compare_resume_channel(GEN, TIMER_CHANNEL_1));
-            TEST_ASSERT_TRUE(lb::count_edges(lb::GEN_A, 3'000) >= 5U);
+            TEST_ASSERT_TRUE(lb::count_edges(lb::OUTPUT_A, 3'000) >= 5U);
         }
 
         // Counts events per timer channel, for the tests that use more than one
@@ -434,18 +437,18 @@ namespace test::timer_ext {
                 .pull      = TIMER_PULL_NONE,
                 .prescaler = IC_PRESCALER_DIV_1,
                 .channel   = TIMER_CHANNEL_2,
-                .gpio_pin  = lb::IN_B,
+                .gpio_pin  = lb::INPUT_B,
                 .filter_ns = 0,
             };
             cfg.num_channels = 2;
             start_capture(cfg);
 
-            lb::pulses(lb::GEN_A, 10, 20);
+            lb::pulses(lb::OUTPUT_A, 10, 20);
             delay_us(50);
             TEST_ASSERT_EQUAL_UINT32(10U, counts.n[0]);
             TEST_ASSERT_EQUAL_UINT32(0U, counts.n[1]);
 
-            lb::pulses(lb::GEN_B, 7, 20);
+            lb::pulses(lb::OUTPUT_B, 7, 20);
             delay_us(50);
             TEST_ASSERT_EQUAL_UINT32(10U, counts.n[0]);
             TEST_ASSERT_EQUAL_UINT32(7U, counts.n[1]);
@@ -464,7 +467,7 @@ namespace test::timer_ext {
                 cfg.callback  = {.cb = count_cb, .arg = &events};
                 start_capture(cfg);
 
-                lb::pulses(lb::GEN_A, 10, 20);
+                lb::pulses(lb::OUTPUT_A, 10, 20);
                 delay_us(50);
                 TEST_ASSERT_EQUAL_UINT32(expected, events.n);
             }
@@ -500,7 +503,7 @@ namespace test::timer_ext {
                 TEST_ASSERT_UINT32_WITHIN(
                     2U,
                     c.expected_edges,
-                    lb::count_edges(lb::GEN_A, c.window_us));
+                    lb::count_edges(lb::OUTPUT_A, c.window_us));
             }
         }
 
@@ -531,8 +534,8 @@ namespace test::timer_ext {
         RUN_TEST(ic_timer_prescaler_scales_the_captured_ticks);
         RUN_TEST(oc_toggle_clock_has_the_requested_frequency);
 
-        TRY_THEN_FAIL(timx_clk_enable(lb::MEAS, false));
-        TRY_THEN_FAIL(timx_clk_enable(lb::GEN, false));
+        TRY_THEN_FAIL(timx_clk_enable(lb::TESTED, false));
+        TRY_THEN_FAIL(timx_clk_enable(lb::SOURCE, false));
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the extended timer driver");

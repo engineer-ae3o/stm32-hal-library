@@ -26,8 +26,8 @@
 // (timer_extended.cpp, timer_pcnt.cpp and the PWM input tests in pwm.cpp).
 //
 // WIRING:
-//         GEN_A -------> IN_A and IN_ETR
-//         GEN_B -------> IN_B
+//         OUTPUT_A -------> INPUT_A and INPUT_ETR
+//         OUTPUT_B -------> INPUT_B
 //
 // TIM3 (16 bit) is the signal source. Either its output compare / PWM output drives the pins (generated clocks
 // and PWM), or the CPU takes the pins over as plain GPIO outputs and bit bangs exact pulse trains and
@@ -37,14 +37,14 @@
 
 namespace test::loopback {
 
-    inline TIM_TypeDef* const GEN   = TIM3;
-    inline const board_pin_t  GEN_A = BOARD_TIM3_CH1_PB4;
-    inline const board_pin_t  GEN_B = BOARD_TIM3_CH2_PB5;
+    inline TIM_TypeDef* const SOURCE   = TIM3;
+    inline const board_pin_t  OUTPUT_A = BOARD_TIM3_CH1_PB4;
+    inline const board_pin_t  OUTPUT_B = BOARD_TIM3_CH2_PB5;
 
-    inline TIM_TypeDef* const MEAS   = TIM2;
-    inline const board_pin_t  IN_A   = BOARD_TIM2_CH1_PA5;
-    inline const board_pin_t  IN_B   = BOARD_TIM2_CH2_PB3;
-    inline const board_pin_t  IN_ETR = BOARD_TIM2_ETR_PA15;
+    inline TIM_TypeDef* const TESTED    = TIM2;
+    inline const board_pin_t  INPUT_A   = BOARD_TIM2_CH1_PA5;
+    inline const board_pin_t  INPUT_B   = BOARD_TIM2_CH2_PB3;
+    inline const board_pin_t  INPUT_ETR = BOARD_TIM2_ETR_PA15;
 
     // Pin access
     inline uint32_t moder(const board_pin_t& pin) {
@@ -73,18 +73,19 @@ namespace test::loopback {
 
     // Fresh start for a test: both timers clocked and reset, both stimulus pins driven low
     inline void reset() {
-        for (auto* timer : {GEN, MEAS}) {
+        for (auto* timer : {SOURCE, TESTED}) {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(timer, true));
             TEST_ASSERT_EQUAL(HAL_OK, timer_deinit(timer));
             TEST_ASSERT_EQUAL(HAL_OK, timer_reset(timer));
         }
-        take_over(GEN_A, false);
-        take_over(GEN_B, false);
+        take_over(OUTPUT_A, false);
+        take_over(OUTPUT_B, false);
     }
 
     // Timer prescaler that gives the timer under test 1us ticks
     inline uint16_t ticks_1us() {
-        return static_cast<uint16_t>(timer_get_frequency_hz(MEAS) / 1'000'000U);
+        return static_cast<uint16_t>(timer_get_frequency_hz(TESTED) /
+                                     1'000'000U);
     }
 
     // Generate a given number of pulses on the given pin
@@ -116,9 +117,9 @@ namespace test::loopback {
         for (uint32_t cycle = 0; cycle < cycles; cycle++) {
             for (uint32_t s = 0; s < 4; s++) {
                 gpio_set_level(
-                    GEN_A.port, GEN_A.pin, a_leads_b ? lead[s] : lag[s]);
+                    OUTPUT_A.port, OUTPUT_A.pin, a_leads_b ? lead[s] : lag[s]);
                 gpio_set_level(
-                    GEN_B.port, GEN_B.pin, a_leads_b ? lag[s] : lead[s]);
+                    OUTPUT_B.port, OUTPUT_B.pin, a_leads_b ? lag[s] : lead[s]);
                 delay_us(5);
             }
         }
@@ -150,19 +151,20 @@ namespace test::loopback {
             .output_polarity   = false,
             .output_idle_state = false,
             .channel           = TIMER_CHANNEL_1,
-            .gpio_pin          = GEN_A,
+            .gpio_pin          = OUTPUT_A,
         };
         cfg.num_channels = 1;
 
         uint32_t max = 0;
-        TEST_ASSERT_EQUAL(HAL_OK, output_compare_init(GEN, &cfg));
+        TEST_ASSERT_EQUAL(HAL_OK, output_compare_init(SOURCE, &cfg));
         TEST_ASSERT_EQUAL(
             HAL_OK,
-            output_compare_start(GEN,
+            output_compare_start(SOURCE,
                                  2U * frequency_hz,
                                  &max)); // The output toggles once per period
         TEST_ASSERT_EQUAL(
-            HAL_OK, output_compare_set_compare(GEN, TIMER_CHANNEL_1, max / 2U));
+            HAL_OK,
+            output_compare_set_compare(SOURCE, TIMER_CHANNEL_1, max / 2U));
     }
 
     inline void generate_pwm(uint32_t hz, uint32_t duty_percent) {
@@ -173,15 +175,15 @@ namespace test::loopback {
             .output_polarity   = false,
             .output_idle_state = false,
             .channel           = TIMER_CHANNEL_1,
-            .gpio_pin          = GEN_A,
+            .gpio_pin          = OUTPUT_A,
         };
         cfg.num_channels = 1;
 
         uint32_t max = 0;
-        TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(GEN, &cfg));
-        TEST_ASSERT_EQUAL(HAL_OK, pwm_start(GEN, hz, &max));
+        TEST_ASSERT_EQUAL(HAL_OK, pwm_gp_timer_init(SOURCE, &cfg));
+        TEST_ASSERT_EQUAL(HAL_OK, pwm_start(SOURCE, hz, &max));
         TEST_ASSERT_EQUAL(HAL_OK,
-                          pwm_set_duty_cycle(GEN,
+                          pwm_set_duty_cycle(SOURCE,
                                              TIMER_CHANNEL_1,
                                              (max * duty_percent) / 100U));
     }

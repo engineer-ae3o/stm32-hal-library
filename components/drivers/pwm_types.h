@@ -11,10 +11,10 @@
 
 
 typedef enum : uint8_t {
-    PWM_MODE_1 =
-        OUTPUT_COMPARE_PWM_MODE_1, // The PWM channel is high when the timer's counter value is less than the duty cycle, but low otherwise
-    PWM_MODE_2 =
-        OUTPUT_COMPARE_PWM_MODE_2, // The PWM channel is low when the timer's counter value is less than the duty cycle, but high otherwise
+    // The PWM channel is high when the timer's counter value is less than the duty cycle, but low otherwise
+    PWM_MODE_1 = OUTPUT_COMPARE_PWM_MODE_1,
+    // The PWM channel is low when the timer's counter value is less than the duty cycle, but high otherwise
+    PWM_MODE_2 = OUTPUT_COMPARE_PWM_MODE_2,
 } pwm_mode_t;
 
 
@@ -47,15 +47,16 @@ typedef struct {
     // How the timer counts and in what direction
     output_compare_count_mode_t pwm_count_mode;
 
-    bool
-        ossr; // State of a channel when the timer is active, but that specific channel's output is inactive
-    bool ossi; // State of all channels when the timer is inactive
+    // State of a channel when the timer is active, but that specific channel's output is inactive
+    bool ossr;
+    // State of all channels when the timer is inactive
+    bool ossi;
 
-    tim_clk_div_t
-        clk_div; // The timer clock divider to use when configuring the dead time
+    // The timer clock divider to use when configuring the dead time
+    tim_clk_div_t clk_div;
 
-    pwm_write_protection_t
-        wp_level; // Write protection on the timer's registers to prevent accidental software writes
+    // Write protection on the timer's registers to prevent accidental software writes
+    pwm_write_protection_t wp_level;
     // NOTE: Once set, the timer cannot be reconfigured again till a reset (for the most part). Refer to the TRM for more details.
 
     // Complementary channels. Depends on num_channels
@@ -108,7 +109,7 @@ typedef struct {
 
 typedef struct {
     uint32_t pulse;  // Signal HIGH time
-    uint32_t period; // Signal HIGH + LOW time (1 / PWM frequency)
+    uint32_t period; // Signal HIGH + LOW time (1 / frequency)
     // Duty cycle (%) = (pulse * 100%) / period
 } pwm_input_data_t;
 

@@ -285,7 +285,12 @@ decode_fault(const fault_frame_t* frame,
 
     // Clear all set bits
     SCB->CFSR = cfsr;
+
+#if defined(DEBUG)
     halt();
+#else
+    REBOOT();
+#endif
 }
 
 // Stub the syscalls needed by newlibc

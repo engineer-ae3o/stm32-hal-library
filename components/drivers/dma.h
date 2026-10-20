@@ -55,7 +55,7 @@ void dma_set_addresses(DMA_Stream_TypeDef*  stream,
 
 
 // Helper to assist with the checking and clearing of interrupt flags and propagation of errors
-[[__gnu__::__always_inline__]] static inline hal_err_t
+[[__gnu__::__always_inline__, __maybe_unused__]] static inline hal_err_t
 dma_isr_helper(DMA_Stream_TypeDef* stream) {
     // Get the stream's DMA controller and NVIC interrupt type
     dma_stream_info_t stream_info;
