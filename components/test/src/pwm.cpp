@@ -1026,7 +1026,6 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
                               pwm_input_init(lb::TESTED, &bad));
 
-            // Timers with one channel can't do PWM input
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
                               pwm_input_init(TIM10, &good));
             TEST_ASSERT_EQUAL(HAL_ERR_NOT_SUPPORTED,
@@ -1045,7 +1044,7 @@ namespace test::pwm {
         }
 
         void input_functions_reject_null_arguments() {
-            pwm_input_data_t data{};
+            pwm_input_data_t data;
             uint32_t         hz = 0;
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
                               pwm_input_get_data(nullptr, &data));
@@ -1067,14 +1066,14 @@ namespace test::pwm {
             auto cfg            = input_config();
             cfg.timer_prescaler = 4;
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::TESTED, &cfg));
-            TEST_ASSERT_EQUAL_UINT32(3U, lb::TESTED->PSC);
+            TEST_ASSERT_EQUAL_UINT32(cfg.timer_prescaler - 1, lb::TESTED->PSC);
 
             uint32_t hz = 0;
             TEST_ASSERT_EQUAL(HAL_OK,
                               pwm_input_get_timer_frequency(lb::TESTED, &hz));
-            TEST_ASSERT_EQUAL_UINT32(clk / 4U, hz);
+            TEST_ASSERT_EQUAL_UINT32(clk / cfg.timer_prescaler, hz);
 
-            cfg = input_config(); // 1us ticks
+            cfg = input_config(); // 1us ticks (1MHz)
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::TESTED, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK,
                               pwm_input_get_timer_frequency(lb::TESTED, &hz));
@@ -1098,8 +1097,12 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::TESTED, &cfg));
 
             TEST_ASSERT_FALSE(lb::TESTED->CR1 & TIM_CR1_CEN);
+            TEST_ASSERT_EQUAL(lb::TESTED->CNT, 0U);
+
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::TESTED));
             delay_us(100);
+
+            TEST_ASSERT_TRUE(lb::TESTED->CR1 & TIM_CR1_CEN);
             TEST_ASSERT_TRUE(lb::TESTED->CNT > 0U);
 
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_stop(lb::TESTED));
@@ -1118,16 +1121,19 @@ namespace test::pwm {
                  }}) {
                 lb::reset();
                 lb::generate_pwm(hz, duty);
+
                 const auto cfg = input_config();
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::TESTED, &cfg));
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::TESTED));
 
-                delay_ms(4'000U / hz + 2U); // A few full cycles
+                // 20 cycles
+                delay_ms(round_div_u32(20 * 1000, hz));
 
-                pwm_input_data_t data{};
+                pwm_input_data_t data;
                 TEST_ASSERT_EQUAL(HAL_OK,
                                   pwm_input_get_data(lb::TESTED, &data));
                 const uint32_t period = 1'000'000U / hz; // 1us ticks
+
                 TEST_ASSERT_UINT32_WITHIN(2U, period, data.period);
                 TEST_ASSERT_UINT32_WITHIN(2U, period * duty / 100U, data.pulse);
             }
@@ -1143,16 +1149,16 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::TESTED, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::TESTED));
 
-            delay_ms(10);
             // A rising and a falling edge per 1ms cycle
+            delay_ms(10);
             TEST_ASSERT_UINT32_WITHIN(2U, 20U, events);
         }
 
         void input_init_replaces_the_output_config_of_same_timer() {
             lb::reset();
 
-            // PWM output leaves output compare mode bits in CCMR1 that overlay the input capture filter
-            // and prescaler fields. They must not survive into the input configuration
+            // PWM output leaves output compare mode bits in CCMR1 that overlay the input capture
+            // filter and prescaler fields. They must not survive into the input configuration
             pwm_gp_timer_config_t out{};
             out.pwm_mode       = PWM_MODE_1;
             out.pwm_count_mode = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
@@ -1177,41 +1183,39 @@ namespace test::pwm {
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_deinit(lb::TESTED));
             TEST_ASSERT_FALSE(lb::TESTED->CR1 & TIM_CR1_CEN);
             TEST_ASSERT_EQUAL_UINT32(
-                0U,
-                lb::TESTED->SMCR &
-                    (TIM_SMCR_SMS |
-                     TIM_SMCR_TS)); // A leftover reset mode would break the next user
+                0U, lb::TESTED->SMCR & (TIM_SMCR_SMS | TIM_SMCR_TS));
         }
 
         // PWM input: more coverage
         void input_measures_a_bit_banged_signal() {
             lb::reset();
+
             const auto cfg = input_config();
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::TESTED, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::TESTED));
 
             lb::pulses(lb::OUTPUT_A, 20, 100); // 100us high, 100us low
-            delay_us(20);
 
-            pwm_input_data_t data{};
+            pwm_input_data_t data;
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_get_data(lb::TESTED, &data));
+
             TEST_ASSERT_UINT32_WITHIN(5U, 200U, data.period);
             TEST_ASSERT_UINT32_WITHIN(5U, 100U, data.pulse);
         }
 
         void input_timer_prescaler_scales_the_results() {
             lb::reset();
-            auto cfg = input_config();
-            cfg.timer_prescaler =
-                static_cast<uint16_t>(10 * lb::ticks_1us()); // 10us ticks
+
+            auto cfg            = input_config();
+            cfg.timer_prescaler = 10 * lb::ticks_1us(); // 10us ticks
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::TESTED, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::TESTED));
 
             lb::pulses(lb::OUTPUT_A, 20, 500); // 500us high, 500us low
-            delay_us(20);
 
-            pwm_input_data_t data{};
+            pwm_input_data_t data;
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_get_data(lb::TESTED, &data));
+
             TEST_ASSERT_UINT32_WITHIN(1U, 100U, data.period);
             TEST_ASSERT_UINT32_WITHIN(1U, 50U, data.pulse);
         }
@@ -1226,16 +1230,19 @@ namespace test::pwm {
                  }}) {
                 lb::reset();
                 lb::generate_pwm(hz, duty);
+
                 const auto cfg = input_config();
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::TESTED, &cfg));
                 TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::TESTED));
 
-                delay_ms(4'000U / hz + 2U); // A few full cycles
+                // 20 cycles
+                delay_ms(round_div_u32(20 * 1000, hz));
 
-                pwm_input_data_t data{};
+                pwm_input_data_t data;
                 TEST_ASSERT_EQUAL(HAL_OK,
                                   pwm_input_get_data(lb::TESTED, &data));
                 const uint32_t period = 1'000'000U / hz; // 1us ticks
+
                 TEST_ASSERT_UINT32_WITHIN(2U, period, data.period);
                 TEST_ASSERT_UINT32_WITHIN(2U, period * duty / 100U, data.pulse);
             }
@@ -1244,14 +1251,15 @@ namespace test::pwm {
         void input_reads_stay_consistent_while_the_signal_runs() {
             lb::reset();
             lb::generate_pwm(20'000, 50); // 50us period
+
             const auto cfg = input_config();
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_init(lb::TESTED, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, pwm_input_start(lb::TESTED));
-            delay_ms(5);
+            delay_ms(1);
 
             // Reads land at every phase of the cycle, including right on the capture edges
             for (uint32_t i = 0; i < 2'000; i++) {
-                pwm_input_data_t data{};
+                pwm_input_data_t data;
                 TEST_ASSERT_EQUAL(HAL_OK,
                                   pwm_input_get_data(lb::TESTED, &data));
                 TEST_ASSERT_UINT32_WITHIN(2U, 50U, data.period);

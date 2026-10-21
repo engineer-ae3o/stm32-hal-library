@@ -60,13 +60,14 @@ typedef struct {
     // NOTE: Once set, the timer cannot be reconfigured again till a reset (for the most part). Refer to the TRM for more details.
 
     // Complementary channels. Depends on num_channels
-    bool
-        use_complementary_channels; // Whether or not to use the complementary channels
+    bool use_complementary_channels;
     struct {
-        bool
-            output_polarity; // Complementary channel output active low (when this is true)
-        bool output_idle_state; // State of the channel when MOE is disabled
-        board_pin_t gpio_pin;   // The physical complementary channel's GPIO pin
+        // Complementary channel output active low (when this is true)
+        bool output_polarity;
+        // State of the channel when MOE is disabled
+        bool output_idle_state;
+        // The physical complementary channel's GPIO pin
+        board_pin_t gpio_pin;
     } complementary_channels[MAX_TIM1_COMPLEMENTARY_CHANNELS];
 
     // Dead time insertion

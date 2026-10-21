@@ -85,37 +85,38 @@ typedef struct {
 // Output Compare types
 typedef enum : uint8_t {
     // Edge aligned Modes (CMS = 00)
-    OUTPUT_COMPARE_EDGE_LEFT_ALIGNED =
-        (0b00U << TIM_CR1_CMS_Pos) | (0b0U << TIM_CR1_DIR_Pos), // Upcounting
-    OUTPUT_COMPARE_EDGE_RIGHT_ALIGNED =
-        (0b00U << TIM_CR1_CMS_Pos) | (0b1U << TIM_CR1_DIR_Pos), // Downcounting
+    // Upcounting
+    OUTPUT_COMPARE_EDGE_LEFT_ALIGNED = (0b0U << TIM_CR1_DIR_Pos),
+    // Downcounting
+    OUTPUT_COMPARE_EDGE_RIGHT_ALIGNED = (0b1U << TIM_CR1_DIR_Pos),
+
     // Center aligned Modes (CMS != 00; DIR is controlled by the timer hardware)
-    OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1 =
-        (0b01U
-         << TIM_CR1_CMS_Pos), // Center aligned (Interrupt compare flag set only on downcount)
-    OUTPUT_COMPARE_CENTER_ALIGNED_MODE_2 =
-        (0b10U
-         << TIM_CR1_CMS_Pos), // Center aligned (Interrupt compare flag set only on upcount)
-    OUTPUT_COMPARE_CENTER_ALIGNED_MODE_3 =
-        (0b11U
-         << TIM_CR1_CMS_Pos), // Center aligned (Interrupt compare flag set both on up and downcount)
+    // Center aligned (Interrupt compare flag set only on downcount)
+    OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1 = (0b01U << TIM_CR1_CMS_Pos),
+    // Center aligned (Interrupt compare flag set only on upcount)
+    OUTPUT_COMPARE_CENTER_ALIGNED_MODE_2 = (0b10U << TIM_CR1_CMS_Pos),
+    // Center aligned (Interrupt compare flag set both on up and downcount)
+    OUTPUT_COMPARE_CENTER_ALIGNED_MODE_3 = (0b11U << TIM_CR1_CMS_Pos),
 } output_compare_count_mode_t;
 
 
 typedef enum : uint8_t {
-    OUTPUT_COMPARE_FROZEN = 0b000, // The channel is ignored on a match
-    OUTPUT_COMPARE_HIGH_ON_MATCH =
-        0b001, // The channel is forced high on a match
-    OUTPUT_COMPARE_LOW_ON_MATCH = 0b010, // The channel is forced low on a match
-    OUTPUT_COMPARE_TOGGLE_ON_MATCH = 0b011, // The channel is toggled on a match
-    OUTPUT_COMPARE_FORCE_LOW =
-        0b100, // The channel is forced low always, regardless of a match
-    OUTPUT_COMPARE_FORCE_HIGH =
-        0b101, // The channel is forced high always, regardless of a match
-    OUTPUT_COMPARE_PWM_MODE_1 =
-        0b110, // The channel is forced high when the timer's counter value is less than the compare value
-    OUTPUT_COMPARE_PWM_MODE_2 =
-        0b111, // The channel is forced low when the timer's counter value is less than the compare value
+    // The channel is ignored on a match
+    OUTPUT_COMPARE_IGNORED = 0b000,
+    // The channel is forced high on a match
+    OUTPUT_COMPARE_HIGH_ON_MATCH = 0b001,
+    // The channel is forced low on a match
+    OUTPUT_COMPARE_LOW_ON_MATCH = 0b010,
+    // The channel is toggled on a match
+    OUTPUT_COMPARE_TOGGLE_ON_MATCH = 0b011,
+    // The channel is forced low always, regardless of a match
+    OUTPUT_COMPARE_FORCE_LOW = 0b100,
+    // The channel is forced high always, regardless of a match
+    OUTPUT_COMPARE_FORCE_HIGH = 0b101,
+    // The channel is forced high when the timer's counter value is less than the compare value
+    OUTPUT_COMPARE_PWM_MODE_1 = 0b110,
+    // The channel is forced low when the timer's counter value is less than the compare value
+    OUTPUT_COMPARE_PWM_MODE_2 = 0b111,
     // NOTE: A match occurs when the timer's counter value is equal to the compare value
 } output_compare_mode_t;
 

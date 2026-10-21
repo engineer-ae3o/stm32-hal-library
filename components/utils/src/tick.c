@@ -46,6 +46,8 @@ void dwt_cnt_init(void) {
              "Profiling facilities and the delay_us(...) macro will not be "
              "available.");
         CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;
+        // Just crash for now
+        PANIC();
         return;
     }
 
