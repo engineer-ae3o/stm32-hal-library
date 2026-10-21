@@ -65,8 +65,8 @@ namespace test::pwm {
             uint32_t oisxn;
         };
 
-        channel_regs_t get_channel_regs(TIM_TypeDef*    handle,
-                                        timer_channel_t channel) {
+        inline channel_regs_t get_channel_regs(TIM_TypeDef*    handle,
+                                               timer_channel_t channel) {
             switch (channel) {
                 case TIMER_CHANNEL_1:
                     return {
@@ -128,8 +128,8 @@ namespace test::pwm {
             }
         }
 
-        volatile uint32_t* get_ccr(TIM_TypeDef*    handle,
-                                   timer_channel_t channel) {
+        inline volatile uint32_t* get_ccr(TIM_TypeDef*    handle,
+                                          timer_channel_t channel) {
             switch (channel) {
                 case TIMER_CHANNEL_1:
                     return &handle->CCR1;
@@ -147,7 +147,7 @@ namespace test::pwm {
 
         // Independent decoding of the DTG byte, from the reference manual's
         // documented encoding ranges. Returns the dead time in ticks.
-        uint32_t decode_dtg_ticks(uint8_t dtg) {
+        inline uint32_t decode_dtg_ticks(uint8_t dtg) {
             if ((dtg & 0x80U) == 0) {
                 return dtg; // Range 1: step 1
             } else if ((dtg & 0xC0U) == 0x80U) {
@@ -160,12 +160,12 @@ namespace test::pwm {
         }
 
         volatile bool s_brk_fired = false;
-        void          brk_cb(void*, timer_channel_t, timer_count_dir_t) {
+        inline void   brk_cb(void*, timer_channel_t, timer_count_dir_t) {
             s_brk_fired = true;
         }
 
         template<typename predicate>
-        bool wait_until(predicate pred) {
+        inline bool wait_until(predicate pred) {
             volatile uint32_t timeout = TIMEOUT;
             while (!pred() && timeout) {
                 timeout -= 1;

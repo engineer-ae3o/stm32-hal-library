@@ -46,8 +46,8 @@ namespace test::timer_pcnt {
         }
 
         // Mode 1 on the given channel's pin
-        pcnt_config_t pcnt_1(pcnt_channel_t channel = PCNT_CHANNEL_1,
-                             pcnt_edge_t    edge    = PCNT_RISING_EDGE) {
+        inline pcnt_config_t pcnt_1(pcnt_channel_t channel = PCNT_CHANNEL_1,
+                                    pcnt_edge_t    edge    = PCNT_RISING_EDGE) {
             pcnt_config_t cfg{};
             cfg.mode                    = PCNT_MODE_1;
             cfg.edge                    = edge;
@@ -61,8 +61,8 @@ namespace test::timer_pcnt {
         }
 
         // Mode 2 on the external trigger pin
-        pcnt_config_t pcnt_2(pcnt_prescaler_t prescaler = PCNT_ETR_DIV_1,
-                             pcnt_edge_t      edge      = PCNT_RISING_EDGE) {
+        inline pcnt_config_t pcnt_2(pcnt_prescaler_t prescaler = PCNT_ETR_DIV_1,
+                                    pcnt_edge_t      edge = PCNT_RISING_EDGE) {
             pcnt_config_t cfg{};
             cfg.mode                      = PCNT_MODE_2;
             cfg.edge                      = edge;
@@ -74,7 +74,7 @@ namespace test::timer_pcnt {
             return cfg;
         }
 
-        qdec_config_t qdec(encoder_mode_t mode = ENCODER_MODE_3) {
+        inline qdec_config_t qdec(encoder_mode_t mode = ENCODER_MODE_3) {
             qdec_config_t cfg{};
             cfg.mode             = mode;
             cfg.pull             = TIMER_USE_PULLDOWN;
@@ -86,24 +86,24 @@ namespace test::timer_pcnt {
             return cfg;
         }
 
-        void start_counting(const pcnt_config_t& cfg) {
+        inline void start_counting(const pcnt_config_t& cfg) {
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_init(MEAS, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
         }
 
-        void start_decoding(const qdec_config_t& cfg) {
+        inline void start_decoding(const qdec_config_t& cfg) {
             TEST_ASSERT_EQUAL(HAL_OK, qdec_init(MEAS, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_start(MEAS));
         }
 
-        uint32_t get_pcnt_count() {
+        inline uint32_t get_pcnt_count() {
             uint32_t value = 0;
             TEST_ASSERT_EQUAL(HAL_OK, pcnt_get_count(MEAS, &value));
             return value;
         }
 
         // The decoder counts down by wrapping below zero: read it as signed
-        int32_t get_pcnt_count_signed() {
+        inline int32_t get_pcnt_count_signed() {
             return static_cast<int32_t>(get_pcnt_count());
         }
 
@@ -113,6 +113,7 @@ namespace test::timer_pcnt {
             return (mode == ENCODER_MODE_3) ? 4 : 2;
         }
 
+        // TESTS
         // Pulse counter: init and configuration
         void pcnt_init_rejects_invalid_arguments() {
             lb::reset();
@@ -164,7 +165,6 @@ namespace test::timer_pcnt {
             TEST_ASSERT_EQUAL_UINT32(0b01U, lb::pupdr(lb::INPUT_ETR));
         }
 
-        // TESTS
         // Pulse counter: counting
         void pcnt_mode_1_counts_pulses_on_either_channel() {
             for (const auto channel : {PCNT_CHANNEL_1, PCNT_CHANNEL_2}) {
@@ -585,6 +585,7 @@ namespace test::timer_pcnt {
         LOGI(TAG, "Starting the tests on the PCNT driver");
         UNITY_BEGIN();
 
+        // Pulse counting tests
         RUN_TEST(pcnt_init_rejects_invalid_arguments);
         RUN_TEST(pcnt_init_fails_on_a_locked_advanced_timer);
         RUN_TEST(pcnt_init_configures_the_gpio_pin);
@@ -598,6 +599,10 @@ namespace test::timer_pcnt {
         RUN_TEST(pcnt_counts_a_generated_clock_at_the_right_rate);
         RUN_TEST(pcnt_deinit_stops_counting);
         RUN_TEST(pcnt_init_replaces_a_previous_decoder_configuration);
+        RUN_TEST(pcnt_overflow_callback_fires_when_the_counter_wraps);
+        RUN_TEST(pcnt_mode_2_prescaler_divides_a_generated_clock);
+
+        // Quadrature decoder tests
         RUN_TEST(qdec_init_rejects_invalid_arguments);
         RUN_TEST(qdec_init_configures_both_gpio_pins);
         RUN_TEST(qdec_counts_up_for_a_leading_and_returns_to_zero_going_back);
@@ -605,8 +610,6 @@ namespace test::timer_pcnt {
         RUN_TEST(qdec_invert_direction_reverses_the_count);
         RUN_TEST(qdec_filter_rejects_glitches);
         RUN_TEST(qdec_update_callback_reports_the_direction_of_update);
-        RUN_TEST(pcnt_overflow_callback_fires_when_the_counter_wraps);
-        RUN_TEST(pcnt_mode_2_prescaler_divides_a_generated_clock);
         RUN_TEST(qdec_single_channel_modes_ignore_the_other_channel);
         RUN_TEST(qdec_stop_freezes_the_count_and_start_resumes_it);
 

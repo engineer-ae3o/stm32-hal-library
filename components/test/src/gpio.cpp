@@ -142,8 +142,7 @@ namespace test::gpio {
             enable_all_port_clocks(false);
         }
 
-        void
-        alternate_function_selects_the_right_afr_half_and_masks_the_value() {
+        void alternate_function_selects_the_right_afr_and_masks_the_value() {
             enable_all_port_clocks(true);
             reset_port(SCRATCH_PORT);
 
@@ -393,23 +392,29 @@ namespace test::gpio {
             TEST_ASSERT_EQUAL(EXTI3_IRQn, gpio_get_nvic_irq_type(GPIO_PIN_3));
             TEST_ASSERT_EQUAL(EXTI4_IRQn, gpio_get_nvic_irq_type(GPIO_PIN_4));
 
-            for (const auto pin :
-                 {GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9}) {
+            for (const auto pin : {
+                     GPIO_PIN_5,
+                     GPIO_PIN_6,
+                     GPIO_PIN_7,
+                     GPIO_PIN_8,
+                     GPIO_PIN_9,
+                 }) {
                 TEST_ASSERT_EQUAL(EXTI9_5_IRQn, gpio_get_nvic_irq_type(pin));
             }
 
-            for (const auto pin : {GPIO_PIN_10,
-                                   GPIO_PIN_11,
-                                   GPIO_PIN_12,
-                                   GPIO_PIN_13,
-                                   GPIO_PIN_14,
-                                   GPIO_PIN_15}) {
+            for (const auto pin : {
+                     GPIO_PIN_10,
+                     GPIO_PIN_11,
+                     GPIO_PIN_12,
+                     GPIO_PIN_13,
+                     GPIO_PIN_14,
+                     GPIO_PIN_15,
+                 }) {
                 TEST_ASSERT_EQUAL(EXTI15_10_IRQn, gpio_get_nvic_irq_type(pin));
             }
         }
 
-        void
-        software_interrupt_sets_swier_and_drives_the_registered_callback() {
+        void software_interrupt_sets_swier_and_drives_the_callback() {
             enable_all_port_clocks(true);
             reset_port(SCRATCH_PORT);
 
@@ -437,7 +442,7 @@ namespace test::gpio {
             enable_all_port_clocks(false);
         }
 
-        void shared_isr_handler_dispatches_only_the_pin_that_actually_fired() {
+        void shared_isr_handler_dispatches_only_the_pin_that_fires() {
             enable_all_port_clocks(true);
             reset_port(SCRATCH_PORT);
 
@@ -516,18 +521,15 @@ namespace test::gpio {
 
         RUN_TEST(clk_enable_toggles_only_the_targeted_port);
         RUN_TEST(mode_setters_touch_only_their_own_pin);
-        RUN_TEST(
-            alternate_function_selects_the_right_afr_half_and_masks_the_value);
+        RUN_TEST(alternate_function_selects_the_right_afr_and_masks_the_value);
         RUN_TEST(pullup_and_pulldown_are_mutually_exclusive);
         RUN_TEST(output_type_and_speed_cover_every_enum_value);
         RUN_TEST(level_set_get_and_toggle_round_trip_through_the_pad);
         RUN_TEST(interrupt_config_covers_every_port_code_and_every_edge);
         RUN_TEST(clear_interrupt_fully_undoes_set_interrupt);
         RUN_TEST(nvic_irq_type_matches_the_shared_and_dedicated_exti_lines);
-        RUN_TEST(
-            software_interrupt_sets_swier_and_drives_the_registered_callback);
-        RUN_TEST(
-            shared_isr_handler_dispatches_only_the_pin_that_actually_fired);
+        RUN_TEST(software_interrupt_sets_swier_and_drives_the_callback);
+        RUN_TEST(shared_isr_handler_dispatches_only_the_pin_that_fires);
         RUN_TEST(isr_handler_is_a_no_op_when_no_pin_in_its_group_is_pending);
 
         UNITY_END();

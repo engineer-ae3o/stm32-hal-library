@@ -355,8 +355,7 @@ namespace test::adc {
             reset_to_baseline();
         }
 
-        void
-        continuous_conversion_overrun_ends_the_conversion_and_calls_back() {
+        void cont_conversion_overrun_ends_the_conversion_and_calls_back() {
             reset_to_baseline();
             adc_enable_nvic_irq(true);
 
@@ -440,7 +439,7 @@ namespace test::adc {
                  raw);
         }
 
-        void internal_channel_readings_complete_and_manage_their_own_enables() {
+        void internal_channel_readings_complete() {
             reset_to_baseline();
 
             uint16_t raw = 0;
@@ -1298,12 +1297,10 @@ namespace test::adc {
         RUN_TEST(injected_group_start_rejects_bad_trigger_polarity);
         RUN_TEST(regular_group_cont_start_rejects_reentry_while_active);
         RUN_TEST(injected_group_offsets_are_written_to_the_jofr_registers);
-        RUN_TEST(
-            continuous_conversion_overrun_ends_the_conversion_and_calls_back);
+        RUN_TEST(cont_conversion_overrun_ends_the_conversion_and_calls_back);
         RUN_TEST(temp_sensor_power_toggles_tsvrefe);
         RUN_TEST(oneshot_regular_group_completes_within_12_bit_range);
-        RUN_TEST(
-            internal_channel_readings_complete_and_manage_their_own_enables);
+        RUN_TEST(internal_channel_readings_complete);
         RUN_TEST(voltage_and_temperature_math_are_internally_consistent);
         RUN_TEST(value_right_aligned_rejects_unknown_resolution);
         RUN_TEST(regular_group_channel_sequence_registers_are_placed_correctly);

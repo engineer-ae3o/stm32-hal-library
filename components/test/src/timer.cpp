@@ -69,30 +69,46 @@ namespace test::timer {
                 uint32_t           enable_bit;
             };
             const std::array<combo_t, 8> combos = {{
-                {.handle     = TIM1,
-                 .enable_reg = &RCC->APB2ENR,
-                 .enable_bit = RCC_APB2ENR_TIM1EN},
-                {.handle     = TIM2,
-                 .enable_reg = &RCC->APB1ENR,
-                 .enable_bit = RCC_APB1ENR_TIM2EN},
-                {.handle     = TIM3,
-                 .enable_reg = &RCC->APB1ENR,
-                 .enable_bit = RCC_APB1ENR_TIM3EN},
-                {.handle     = TIM4,
-                 .enable_reg = &RCC->APB1ENR,
-                 .enable_bit = RCC_APB1ENR_TIM4EN},
-                {.handle     = TIM5,
-                 .enable_reg = &RCC->APB1ENR,
-                 .enable_bit = RCC_APB1ENR_TIM5EN},
-                {.handle     = TIM9,
-                 .enable_reg = &RCC->APB2ENR,
-                 .enable_bit = RCC_APB2ENR_TIM9EN},
-                {.handle     = TIM10,
-                 .enable_reg = &RCC->APB2ENR,
-                 .enable_bit = RCC_APB2ENR_TIM10EN},
-                {.handle     = TIM11,
-                 .enable_reg = &RCC->APB2ENR,
-                 .enable_bit = RCC_APB2ENR_TIM11EN},
+                {
+                    .handle     = TIM1,
+                    .enable_reg = &RCC->APB2ENR,
+                    .enable_bit = RCC_APB2ENR_TIM1EN,
+                },
+                {
+                    .handle     = TIM2,
+                    .enable_reg = &RCC->APB1ENR,
+                    .enable_bit = RCC_APB1ENR_TIM2EN,
+                },
+                {
+                    .handle     = TIM3,
+                    .enable_reg = &RCC->APB1ENR,
+                    .enable_bit = RCC_APB1ENR_TIM3EN,
+                },
+                {
+                    .handle     = TIM4,
+                    .enable_reg = &RCC->APB1ENR,
+                    .enable_bit = RCC_APB1ENR_TIM4EN,
+                },
+                {
+                    .handle     = TIM5,
+                    .enable_reg = &RCC->APB1ENR,
+                    .enable_bit = RCC_APB1ENR_TIM5EN,
+                },
+                {
+                    .handle     = TIM9,
+                    .enable_reg = &RCC->APB2ENR,
+                    .enable_bit = RCC_APB2ENR_TIM9EN,
+                },
+                {
+                    .handle     = TIM10,
+                    .enable_reg = &RCC->APB2ENR,
+                    .enable_bit = RCC_APB2ENR_TIM10EN,
+                },
+                {
+                    .handle     = TIM11,
+                    .enable_reg = &RCC->APB2ENR,
+                    .enable_bit = RCC_APB2ENR_TIM11EN,
+                },
             }};
 
             for (const auto& combo : combos) {
@@ -262,8 +278,7 @@ namespace test::timer {
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM1, false));
         }
 
-        void
-        deinit_on_tim10_does_not_touch_the_shared_irq_line_that_tim1_uses() {
+        void deinit_on_tim10_does_not_touch_the_shared_irq_line() {
             // TIM1 and TIM10 share one NVIC line (TIM1_UP_TIM10_IRQn).
             // Deinitializing either one must leave that line alone
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM1, true));
@@ -315,8 +330,7 @@ namespace test::timer {
             reset_to_baseline(TEST_INSTANCE);
         }
 
-        void
-        start_oneshot_rejects_a_timeout_that_overflows_the_prescaler_range() {
+        void start_oneshot_rejects_a_timeout_that_overflows_the_prescaler() {
             // TIM3 is a 16 bit timer: PSC and ARR are both capped at UINT16_MAX, so their
             // product can't come close to covering a UINT32_MAX microsecond timeout at any bus clock.
             TEST_ASSERT_EQUAL(HAL_OK, timx_clk_enable(TIM3, true));
@@ -555,12 +569,10 @@ namespace test::timer {
         RUN_TEST(deinit_clears_all_register_state);
         RUN_TEST(deinit_stops_a_timer_that_is_currently_running);
         RUN_TEST(deinit_clears_rcr_on_tim1_only);
-        RUN_TEST(
-            deinit_on_tim10_does_not_touch_the_shared_irq_line_that_tim1_uses);
+        RUN_TEST(deinit_on_tim10_does_not_touch_the_shared_irq_line);
         RUN_TEST(start_oneshot_rejects_invalid_arguments);
         RUN_TEST(start_oneshot_rejects_when_already_running);
-        RUN_TEST(
-            start_oneshot_rejects_a_timeout_that_overflows_the_prescaler_range);
+        RUN_TEST(start_oneshot_rejects_a_timeout_that_overflows_the_prescaler);
         RUN_TEST(start_oneshot_completes_stops_itself_and_invokes_the_callback);
         RUN_TEST(start_oneshot_uses_the_shared_irq_for_tim1);
         RUN_TEST(start_periodic_rejects_invalid_arguments);

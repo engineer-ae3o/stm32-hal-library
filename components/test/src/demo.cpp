@@ -53,22 +53,30 @@ namespace demo {
             // Channels
             // channels[0..num_channels) are driven, in this order. Lag is applied by position in this list.
             std::array<timer_channel_config_t, MAX_TIM1_CHANNELS> channels = {{
-                {.output_polarity   = false,
-                 .output_idle_state = false,
-                 .channel           = TIMER_CHANNEL_1,
-                 .gpio_pin          = BOARD_TIM1_CH1_PA8},
-                {.output_polarity   = false,
-                 .output_idle_state = false,
-                 .channel           = TIMER_CHANNEL_2,
-                 .gpio_pin          = BOARD_TIM1_CH2_PA9},
-                {.output_polarity   = false,
-                 .output_idle_state = false,
-                 .channel           = TIMER_CHANNEL_3,
-                 .gpio_pin          = BOARD_TIM1_CH3_PA10},
-                {.output_polarity   = false,
-                 .output_idle_state = false,
-                 .channel           = TIMER_CHANNEL_4,
-                 .gpio_pin          = BOARD_TIM1_CH4_PA11},
+                {
+                    .output_polarity   = false,
+                    .output_idle_state = false,
+                    .channel           = TIMER_CHANNEL_1,
+                    .gpio_pin          = BOARD_TIM1_CH1_PA8,
+                },
+                {
+                    .output_polarity   = false,
+                    .output_idle_state = false,
+                    .channel           = TIMER_CHANNEL_2,
+                    .gpio_pin          = BOARD_TIM1_CH2_PA9,
+                },
+                {
+                    .output_polarity   = false,
+                    .output_idle_state = false,
+                    .channel           = TIMER_CHANNEL_3,
+                    .gpio_pin          = BOARD_TIM1_CH3_PA10,
+                },
+                {
+                    .output_polarity   = false,
+                    .output_idle_state = false,
+                    .channel           = TIMER_CHANNEL_4,
+                    .gpio_pin          = BOARD_TIM1_CH4_PA11,
+                },
             }};
             size_t num_channels = MAX_TIM1_CHANNELS;
 

@@ -539,8 +539,7 @@ namespace test::i2s {
             TEST_ASSERT_EQUAL(HAL_OK, i2sx_clk_enable(TEST_INSTANCE, false));
         }
 
-        void
-        oneshot_rejects_size_that_would_overflow_the_dma_transfer_length() {
+        void oneshot_rejects_size_that_would_overflow_the_dma_transfer() {
             // At a 32-bit frame, actual_size = size * 2. Pick a size just over half of UINT16_MAX
             // so the doubled value overflows the field the driver packs it into.
             i2s_master_config_t config = DEFAULT_TX_CONFIG;
@@ -677,8 +676,7 @@ namespace test::i2s {
         RUN_TEST(receive_oneshot_completes_and_invokes_callback);
         RUN_TEST(oneshot_rejects_a_call_while_a_transfer_is_still_in_flight);
         RUN_TEST(oneshot_doubles_transfer_length_for_24_and_32_bit_frames);
-        RUN_TEST(
-            oneshot_rejects_size_that_would_overflow_the_dma_transfer_length);
+        RUN_TEST(oneshot_rejects_size_that_would_overflow_the_dma_transfer);
         RUN_TEST(dbm_start_and_stop_toggle_the_dma_stream_enable_bit);
         RUN_TEST(dbm_filled_buffer_index_alternates_across_completions);
 
