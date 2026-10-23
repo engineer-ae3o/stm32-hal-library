@@ -30,27 +30,30 @@ namespace test::timer_ext {
         namespace lb = test::loopback;
 
         TIM_TypeDef* const MEAS = lb::TESTED;
-        TIM_TypeDef* const GEN  = lb::SOURCE;
+        TIM_TypeDef* const SRC  = lb::SOURCE;
 
-        // Callbacks count into whatever the test hands them, so no test shares anything with another
-        struct counter_t {
-            volatile uint32_t n = 0;
-        };
-
+        // Helpers
         void count_cb(void* arg, timer_channel_t, timer_count_dir_t) {
-            auto* counter = static_cast<counter_t*>(arg);
-            counter->n    = counter->n + 1;
+            auto& counter = *static_cast<volatile uint32_t*>(arg);
+            counter += 1;
+        }
+
+        void channel_cb(void* arg, timer_channel_t channel, timer_count_dir_t) {
+            TEST_ASSERT_TRUE(std::to_underlying(channel) <= TIMER_CHANNEL_4);
+            auto* counter = static_cast<volatile uint32_t*>(arg);
+            counter[std::to_underlying(channel)] += 1;
         }
 
         // Channel 1 on IN_A, 1us ticks, no filter, no callback
-        input_capture_config_t ic_config(ic_edge_t edge = IC_EDGE_RISING) {
+        inline input_capture_config_t
+        ic_config(ic_edge_t edge = IC_EDGE_RISING) {
             input_capture_config_t cfg{};
             cfg.clk_div         = TIM_CLK_DIV_1;
             cfg.count_mode      = TIMER_COUNTER_DIR_UP;
             cfg.timer_prescaler = lb::ticks_1us();
             cfg.channels[0]     = {
                 .edge      = edge,
-                .pull      = TIMER_PULL_NONE,
+                .pull      = TIMER_USE_PULLDOWN,
                 .prescaler = IC_PRESCALER_DIV_1,
                 .channel   = TIMER_CHANNEL_1,
                 .gpio_pin  = lb::INPUT_A,
@@ -60,13 +63,13 @@ namespace test::timer_ext {
             return cfg;
         }
 
-        void start_capture(const input_capture_config_t& cfg) {
+        inline void start_capture(const input_capture_config_t& cfg) {
             TEST_ASSERT_EQUAL(HAL_OK, input_capture_init(MEAS, &cfg));
             TEST_ASSERT_EQUAL(HAL_OK, input_capture_start(MEAS));
         }
 
         // Wait for the next channel 1 capture (polling, no callback needed) and return its timestamp
-        uint32_t next_capture() {
+        inline uint32_t next_capture() {
             const uint64_t t0 = ms_since_boot();
             while (!(MEAS->SR & TIM_SR_CC1IF)) {
                 TEST_ASSERT_TRUE_MESSAGE(
@@ -80,12 +83,11 @@ namespace test::timer_ext {
             return value;
         }
 
-        // Ticks between two timestamps of the (32 bit) counter. Unsigned subtraction handles the wrap
-        uint32_t ticks_between(uint32_t first, uint32_t second) {
+        inline uint32_t ticks_between(uint32_t first, uint32_t second) {
             return second - first;
         }
 
-        // Input capture: init and configuration
+        // TESTS
         void ic_init_rejects_invalid_arguments() {
             lb::reset();
             const auto good = ic_config();
@@ -100,19 +102,19 @@ namespace test::timer_ext {
                 TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
                                   input_capture_init(MEAS, &cfg));
             };
-            invalid([](auto& cfg) {
+            invalid([](input_capture_config_t& cfg) {
                 cfg.num_channels = 0;
             });
-            invalid([](auto& cfg) {
-                cfg.num_channels = 5;
+            invalid([](input_capture_config_t& cfg) {
+                cfg.num_channels = MAX_TIM2_CHANNELS + 1;
             });
-            invalid([](auto& cfg) {
+            invalid([](input_capture_config_t& cfg) {
                 cfg.timer_prescaler = 0;
             });
-            invalid([](auto& cfg) {
+            invalid([](input_capture_config_t& cfg) {
                 cfg.count_mode = TIMER_COUNTER_DIR_NONE;
             });
-            invalid([](auto& cfg) {
+            invalid([](input_capture_config_t& cfg) {
                 cfg.channels[0].channel = TIMER_CHANNEL_NC;
             });
 
@@ -143,12 +145,12 @@ namespace test::timer_ext {
             auto cfg            = ic_config();
             cfg.timer_prescaler = 4;
             TEST_ASSERT_EQUAL(HAL_OK, input_capture_init(MEAS, &cfg));
-            TEST_ASSERT_EQUAL_UINT32(3U, MEAS->PSC);
+            TEST_ASSERT_EQUAL_UINT32(cfg.timer_prescaler - 1, MEAS->PSC);
 
             uint32_t hz = 0;
             TEST_ASSERT_EQUAL(HAL_OK,
                               input_capture_get_timer_frequency(MEAS, &hz));
-            TEST_ASSERT_EQUAL_UINT32(clk / 4U, hz);
+            TEST_ASSERT_EQUAL_UINT32(clk / cfg.timer_prescaler, hz);
 
             cfg = ic_config(); // 1us ticks
             TEST_ASSERT_EQUAL(HAL_OK, input_capture_init(MEAS, &cfg));
@@ -168,9 +170,7 @@ namespace test::timer_ext {
             cfg.channels[0].pull = TIMER_USE_PULLUP;
             TEST_ASSERT_EQUAL(HAL_OK, input_capture_init(MEAS, &cfg));
 
-            TEST_ASSERT_EQUAL_UINT32(
-                0b10U,
-                lb::moder(lb::INPUT_A)); // Alternate function
+            TEST_ASSERT_EQUAL_UINT32(0b10U, lb::moder(lb::INPUT_A));
             TEST_ASSERT_EQUAL_UINT32(lb::INPUT_A.af, lb::afr(lb::INPUT_A));
             TEST_ASSERT_EQUAL_UINT32(0b01U, lb::pupdr(lb::INPUT_A));
         }
@@ -245,19 +245,19 @@ namespace test::timer_ext {
 
         void ic_digital_filter_rejects_glitches() {
             lb::reset();
-            counter_t events;
-            auto      cfg             = ic_config();
+            uint32_t events           = 0;
+            auto     cfg              = ic_config();
             cfg.callback              = {.cb = count_cb, .arg = &events};
             cfg.channels[0].filter_ns = 500;
             start_capture(cfg);
 
             lb::glitches(lb::OUTPUT_A, 50);
             delay_us(50);
-            TEST_ASSERT_EQUAL_UINT32(0U, events.n);
+            TEST_ASSERT_EQUAL_UINT32(0U, events);
 
             lb::pulses(lb::OUTPUT_A, 50, 20);
             delay_us(50);
-            TEST_ASSERT_EQUAL_UINT32(50U, events.n);
+            TEST_ASSERT_EQUAL_UINT32(50U, events);
         }
 
         void ic_input_prescaler_divides_the_event_rate() {
@@ -268,15 +268,15 @@ namespace test::timer_ext {
                      {IC_PRESCALER_DIV_8, 8},
                  }}) {
                 lb::reset();
-                counter_t events;
-                auto      cfg             = ic_config();
+                uint32_t events           = 0;
+                auto     cfg              = ic_config();
                 cfg.callback              = {.cb = count_cb, .arg = &events};
                 cfg.channels[0].prescaler = prescaler;
                 start_capture(cfg);
 
                 lb::pulses(lb::OUTPUT_A, 64, 20);
                 delay_us(50);
-                TEST_ASSERT_EQUAL_UINT32(64U / divisor, events.n);
+                TEST_ASSERT_EQUAL_UINT32(64U / divisor, events);
             }
         }
 
@@ -284,8 +284,9 @@ namespace test::timer_ext {
             lb::reset();
             lb::generate_clock(2'000);
             start_capture(ic_config());
-            delay_ms(
-                5); // Several edges with nobody reading the capture register
+
+            // Several edges with nobody reading the capture register
+            delay_ms(5);
 
             uint32_t value = 0;
             TEST_ASSERT_EQUAL(
@@ -317,26 +318,27 @@ namespace test::timer_ext {
 
         void ic_deinit_stops_the_events() {
             lb::reset();
-            counter_t events;
-            auto      cfg = ic_config();
-            cfg.callback  = {.cb = count_cb, .arg = &events};
+            uint32_t events = 0;
+            auto     cfg    = ic_config();
+            cfg.callback    = {.cb = count_cb, .arg = &events};
             start_capture(cfg);
 
             lb::pulses(lb::OUTPUT_A, 10, 20);
             delay_us(50);
-            TEST_ASSERT_EQUAL_UINT32(10U, events.n);
+            TEST_ASSERT_EQUAL_UINT32(10U, events);
 
             TEST_ASSERT_EQUAL(HAL_OK, input_capture_deinit(MEAS));
             TEST_ASSERT_FALSE(MEAS->CR1 & TIM_CR1_CEN);
             lb::pulses(lb::OUTPUT_A, 10, 20);
             delay_us(50);
-            TEST_ASSERT_EQUAL_UINT32(10U, events.n);
+            TEST_ASSERT_EQUAL_UINT32(10U, events);
         }
 
         // Filter code helper (shared by input capture, the counters and PWM input)
         void filter_code_grows_with_the_requested_time() {
             lb::reset();
-            uint32_t none = 0xFF, small = 0, large = 0;
+
+            uint32_t none = 0, small = 0, large = 0;
             TEST_ASSERT_EQUAL(
                 HAL_OK,
                 timer_filter_ns_to_ic_code(MEAS, TIM_CLK_DIV_1, 0, &none));
@@ -346,8 +348,8 @@ namespace test::timer_ext {
             TEST_ASSERT_EQUAL(
                 HAL_OK,
                 timer_filter_ns_to_ic_code(MEAS, TIM_CLK_DIV_1, 1'000, &large));
-            TEST_ASSERT_EQUAL_UINT32(
-                0U, none); // No filter requested, none programmed
+
+            TEST_ASSERT_EQUAL_UINT32(0U, none);
             TEST_ASSERT_TRUE(small > 0U);
             TEST_ASSERT_TRUE(large > small);
 
@@ -370,69 +372,67 @@ namespace test::timer_ext {
         // Output compare, toggle mode (the PWM modes are covered by the PWM tests)
         void oc_compare_callback_fires_once_per_period() {
             lb::reset();
-            counter_t events;
+            uint32_t events = 0;
 
             output_compare_config_t cfg{};
-            cfg.mode         = OUTPUT_COMPARE_TOGGLE_ON_MATCH;
-            cfg.count_mode   = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
-            cfg.channels[0]  = {.output_polarity   = false,
-                                .output_idle_state = false,
-                                .channel           = TIMER_CHANNEL_1,
-                                .gpio_pin          = lb::OUTPUT_A};
+            cfg.mode        = OUTPUT_COMPARE_TOGGLE_ON_MATCH;
+            cfg.count_mode  = OUTPUT_COMPARE_EDGE_LEFT_ALIGNED;
+            cfg.channels[0] = {
+                .output_polarity   = false,
+                .output_idle_state = false,
+                .channel           = TIMER_CHANNEL_1,
+                .gpio_pin          = lb::OUTPUT_A,
+            };
             cfg.num_channels = 1;
             cfg.callback     = {.cb = count_cb, .arg = &events};
 
             uint32_t max = 0;
-            TEST_ASSERT_EQUAL(HAL_OK, output_compare_init(GEN, &cfg));
-            TEST_ASSERT_EQUAL(HAL_OK, output_compare_start(GEN, 1'000, &max));
+            TEST_ASSERT_EQUAL(HAL_OK, output_compare_init(SRC, &cfg));
+            TEST_ASSERT_EQUAL(HAL_OK, output_compare_start(SRC, 1'000, &max));
             TEST_ASSERT_EQUAL(
                 HAL_OK,
-                output_compare_set_compare(GEN, TIMER_CHANNEL_1, max / 2U));
+                output_compare_set_compare(SRC, TIMER_CHANNEL_1, max / 2U));
 
             delay_ms(100);
             TEST_ASSERT_UINT32_WITHIN(
                 3U,
                 100U,
-                events
-                    .n); // One compare match per period, 1000 periods per second
+                events); // One compare match per period, 1000 periods per second
         }
 
         void oc_pause_and_resume_channel_gate_the_output() {
             lb::reset();
-            lb::generate_clock(2'000);
-            TEST_ASSERT_TRUE(lb::count_edges(lb::OUTPUT_A, 3'000) >=
-                             5U); // 6 edges in 3ms
+
+            constexpr uint32_t frequency_hz = 2'000;
+            constexpr uint32_t duration_us  = 3'000;
+            constexpr uint32_t edges = (frequency_hz * duration_us) / 1'000'000;
+            lb::generate_clock(frequency_hz);
+
+            // 6 edges in 3ms
+            TEST_ASSERT_TRUE(lb::count_edges(lb::OUTPUT_A, duration_us) >=
+                             edges);
 
             TEST_ASSERT_EQUAL(
-                HAL_OK, output_compare_pause_channel(GEN, TIMER_CHANNEL_1));
-            delay_us(5); // Let the pin settle to its disabled level
-            TEST_ASSERT_EQUAL_UINT32(0U, lb::count_edges(lb::OUTPUT_A, 3'000));
+                HAL_OK, output_compare_pause_channel(SRC, TIMER_CHANNEL_1));
+            delay_us(1); // Let the pin settle to its disabled level
+            TEST_ASSERT_EQUAL_UINT32(
+                0U, lb::count_edges(lb::OUTPUT_A, duration_us));
 
             TEST_ASSERT_EQUAL(
-                HAL_OK, output_compare_resume_channel(GEN, TIMER_CHANNEL_1));
-            TEST_ASSERT_TRUE(lb::count_edges(lb::OUTPUT_A, 3'000) >= 5U);
-        }
+                HAL_OK, output_compare_resume_channel(SRC, TIMER_CHANNEL_1));
+            TEST_ASSERT_TRUE(lb::count_edges(lb::OUTPUT_A, duration_us) >=
+                             edges);
 
-        // Counts events per timer channel, for the tests that use more than one
-        struct channel_counts_t {
-            volatile uint32_t n[4] = {}; // NOLINT
-        };
-
-        void channel_cb(void* arg, timer_channel_t channel, timer_count_dir_t) {
-            auto*          counts = static_cast<channel_counts_t*>(arg);
-            const uint32_t i      = std::to_underlying(channel);
-            if (i < 4) {
-                counts->n[i] = counts->n[i] + 1;
-            }
+            lb::reset();
         }
 
         // Input capture: more coverage
         void ic_channels_capture_on_their_own_pins() {
             lb::reset();
-            channel_counts_t counts;
-            auto             cfg = ic_config();
-            cfg.callback         = {.cb = channel_cb, .arg = &counts};
-            cfg.channels[1]      = {
+            std::array<uint32_t, 4> counts{};
+            auto                    cfg = ic_config();
+            cfg.callback    = {.cb = channel_cb, .arg = counts.data()};
+            cfg.channels[1] = {
                 .edge      = IC_EDGE_RISING,
                 .pull      = TIMER_PULL_NONE,
                 .prescaler = IC_PRESCALER_DIV_1,
@@ -445,13 +445,13 @@ namespace test::timer_ext {
 
             lb::pulses(lb::OUTPUT_A, 10, 20);
             delay_us(50);
-            TEST_ASSERT_EQUAL_UINT32(10U, counts.n[0]);
-            TEST_ASSERT_EQUAL_UINT32(0U, counts.n[1]);
+            TEST_ASSERT_EQUAL_UINT32(10U, counts[0]);
+            TEST_ASSERT_EQUAL_UINT32(0U, counts[1]);
 
             lb::pulses(lb::OUTPUT_B, 7, 20);
             delay_us(50);
-            TEST_ASSERT_EQUAL_UINT32(10U, counts.n[0]);
-            TEST_ASSERT_EQUAL_UINT32(7U, counts.n[1]);
+            TEST_ASSERT_EQUAL_UINT32(10U, counts[0]);
+            TEST_ASSERT_EQUAL_UINT32(7U, counts[1]);
         }
 
         void ic_edge_selection_sets_the_events_per_pulse() {
@@ -462,14 +462,14 @@ namespace test::timer_ext {
                      {IC_EDGE_RISING_FALLING, 20},
                  }}) {
                 lb::reset();
-                counter_t events;
-                auto      cfg = ic_config(edge);
-                cfg.callback  = {.cb = count_cb, .arg = &events};
+                uint32_t events = 0;
+                auto     cfg    = ic_config(edge);
+                cfg.callback    = {.cb = count_cb, .arg = &events};
                 start_capture(cfg);
 
                 lb::pulses(lb::OUTPUT_A, 10, 20);
                 delay_us(50);
-                TEST_ASSERT_EQUAL_UINT32(expected, events.n);
+                TEST_ASSERT_EQUAL_UINT32(expected, events);
             }
         }
 
@@ -477,9 +477,8 @@ namespace test::timer_ext {
             lb::reset();
             lb::generate_clock(2'000); // 500us period
 
-            auto cfg = ic_config();
-            cfg.timer_prescaler =
-                static_cast<uint16_t>(10 * lb::ticks_1us()); // 10us ticks
+            auto cfg            = ic_config();
+            cfg.timer_prescaler = 10 * lb::ticks_1us(); // 10us ticks
             start_capture(cfg);
 
             const uint32_t first  = next_capture();

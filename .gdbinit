@@ -16,8 +16,9 @@ continue
 monitor rtt setup 0x20000000 0x20000 "SEGGER RTT"
 monitor rtt start
 monitor rtt server start 9090 0
+continue
 
-define reflash
+define flash
     delete
     file build/tests-debug/f411-hal.elf
     monitor reset halt

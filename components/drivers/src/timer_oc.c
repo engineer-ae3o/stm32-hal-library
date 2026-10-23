@@ -201,7 +201,7 @@ hal_err_t output_compare_start(TIM_TypeDef* handle,
     }
 
     // Get the denominator as it has different meanings depending on whether its center or edge aligned Output Compare
-    const uint32_t total_ticks_per_period =
+    const uint32_t ticks_per_period =
         round_div_u32(timer_freq_hz, frequency_hz);
 
     // Get the maximum width of the auto-reload register since it varies per timer
@@ -217,16 +217,15 @@ hal_err_t output_compare_start(TIM_TypeDef* handle,
     if (handle->CR1 & TIM_CR1_CMS) {
         // Center aligned Output Compare
         // The denominator is equal to 2 * (PSC + 1) * ARR, so we divide by (2 * ARR), where ARR is max_arr
-        psc_plus_1 = ceil_div_u64(total_ticks_per_period, 2ULL * max_arr);
+        psc_plus_1 = ceil_div_u64(ticks_per_period, 2ULL * max_arr);
         // Then divide by 2 * (PSC + 1), where (PSC + 1) is the just gotten psc_plus_1
-        arr_plus_1 =
-            round_div_u64(total_ticks_per_period, 2ULL * psc_plus_1) + 1;
+        arr_plus_1 = round_div_u64(ticks_per_period, 2ULL * psc_plus_1) + 1;
     } else {
         // Edge aligned Output Compare
         // The denominator is equal to (PSC + 1) * (ARR + 1), so we divide by (ARR + 1), where (ARR + 1) is max_arr_plus_1
-        psc_plus_1 = ceil_div_u64(total_ticks_per_period, max_arr_plus_1);
+        psc_plus_1 = ceil_div_u64(ticks_per_period, max_arr_plus_1);
         // Then divide by (PSC + 1), where (PSC + 1) is the just gotten psc_plus_1
-        arr_plus_1 = round_div_u64(total_ticks_per_period, psc_plus_1);
+        arr_plus_1 = round_div_u64(ticks_per_period, psc_plus_1);
     }
 
     // Bounds check the prescaler and reload values
