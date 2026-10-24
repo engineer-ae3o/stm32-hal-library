@@ -70,13 +70,27 @@ The 96 MHz and 48 MHz presets give exactly 48 MHz for USB. There are also audio 
 #include "utils/clock.h"
 #include "utils/tick.h"
 
-system_core_clock_config(HSE_PLL_100MHz);   // 100 MHz from the crystal
+// Already done at boot by system_init() (HSE_PLL_100MHz). Only call these to change it.
+system_core_clock_config(HSE_PLL_48MHz);    // switch to 48 MHz for USB
 audio_pll_clock_config(AUDIO_PLL_76_8MHz);  // only if you use I2S
-systick_init();                             // call again after any clock change
-dwt_cnt_init();                             // cycle counter, used for profiling
+
+uint32_t sysclk = get_system_core_clock();  // Hz
+uint32_t apb1   = get_apb1_core_clock();
+uint32_t apb2   = get_apb2_core_clock();
 
 delay_ms(100);
 ```
+
+**What a preset does.** Each one sets everything that has to change together, so you can't end up with a half-valid setup:
+
+- Flash wait states and the voltage regulator scale for that speed
+- The PLL (always divided down to a 1 MHz input) and the AHB, APB1 and APB2 prescalers
+- Safe switching: it moves to the HSI while the PLL is being reconfigured
+- The unused oscillator is switched off to save power, and the Clock Security System is turned on whenever the HSE is in use
+- The audio PLL is restored afterwards, so changing the system clock doesn't kill I2S
+- The tracked clock values and the SysTick reload are updated automatically, so `delay_ms()` and `ms_since_boot()` stay correct after a switch
+
+**Safety checks.** The PLL ranges are checked at compile time (`_Static_assert`) and again at run time. If the crystal or PLL fails to start, the clock falls back to the HSI and logs an error, so the board keeps running.
 
 ### Logging over RTT
 
@@ -137,13 +151,73 @@ pwm_start(TIM3, 1000, &max_duty);
 pwm_set_duty_cycle(TIM3, TIMER_CHANNEL_1, max_duty / 2);
 ```
 
-**ADC** (one-shot read of PA0, after the ADC is clocked, powered and configured):
+**ADC.** Reading a channel takes a few setup steps first. They only need to be done once:
 
 ```c
-uint16_t raw = 0;
-adc_configure_channel(ADC_CHANNEL_0);               // PA0
+#include "drivers/adc.h"
+
+// 1. Clock the ADC peripheral and choose the ADC clock (APB2 / prescaler)
+adcx_clk_enable(ADC1, true);
+adc_clk_configure(ADC_CLK_PRESCALER_4);   // keep ADCCLK within the datasheet limit
+
+// 2. Put the pin into analog mode (PA0 is ADC_CHANNEL_0)
+adc_configure_channel(ADC_CHANNEL_0);
+
+// 3. Alignment, resolution and sample time. This also powers the ADC on
+adc_config_t cfg = {
+    .alignment       = ADC_RIGHT_ALIGN,
+    .resolution      = ADC_RES_12_BITS,
+    .sampling_cycles = ADC_SAMPLE_84_CYCLES,
+};
+adc_configure(ADC1, &cfg);
+
+// 4. Read it: raw counts, then volts
+uint16_t raw   = 0;
+float    volts = 0;
 adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_0, &raw);
+adc_get_value_right_aligned(ADC1, raw, ADC_RES_12_BITS, &volts);
 ```
+
+Things worth knowing:
+
+- **Sample time** applies to all the external channels (higher means more accurate on high-impedance sources, but slower). The internal channels always use 480 cycles, because they need a long sampling time.
+- **Volts are measured against the real supply.** `adc_get_value_right_aligned()` measures VDDA from the internal reference each time it runs, so it stays accurate even if your 3.3 V rail isn't exactly 3.3 V. The cost is an extra conversion per call.
+- **Internal channels:** `adc_get_temp_celsius()`, `adc_get_vdda()`, `adc_get_v_bat()`, `adc_get_temperature()` and `adc_get_v_ref_internal()` need only the setup above. The driver powers the sensor itself. The temperature and VDDA functions switch to 12 bit for the reading, since the factory calibration was done at 12 bit, then restore your resolution.
+- **Everything times out** instead of hanging: a stuck conversion returns `HAL_ERR_TIMEOUT`.
+
+**Continuous sampling with DMA** (several channels, double buffered, no CPU work between samples):
+
+```c
+static uint16_t buf0[256], buf1[256];
+const adc_channel_t seq[] = {ADC_CHANNEL_0, ADC_CHANNEL_1};
+
+adc_configure_channel(ADC_CHANNEL_0);
+adc_configure_channel(ADC_CHANNEL_1);
+adc_enable_nvic_irq(true);
+
+adc_continuous_config_t cont = {
+    .channels         = {.sequence = seq, .num_of_channels = 2},
+    .trigger          = ADC_RG_TRIGGER_SOFTWARE,   // or a timer or EXTI trigger
+    .trigger_polarity = ADC_POLARITY_NONE,         // needed for hardware triggers
+    .buffer_0         = buf0,
+    .buffer_1         = buf1,
+    .buffer_size      = 256,
+    .priority         = DMA_PRIORITY_LOW,
+    .circular_mode    = DMA_MODE_DOUBLE_BUFFERS,   // or DMA_MODE_CIRCULAR, DMA_MODE_ONESHOT
+    .callbacks = {
+        .on_buffer_full = on_buffer_full,          // (void* arg, uint8_t filled_buffer_idx)
+        .on_data_overrun = on_overrun,
+        .user = NULL,
+    },
+};
+adc_regular_group_cont_start_conv(ADC1, &cont);
+// ...
+adc_regular_group_cont_end_conv(ADC1);
+```
+
+With more than one channel, the samples arrive interleaved in sequence order. The callbacks tell you which buffer just filled. DMA errors and overruns end the conversion, and you restart it by calling `adc_regular_group_cont_start_conv()` again. Starting while a conversion is already running returns `HAL_ERR_INVALID_STATE`.
+
+The **injected group** (`adc_injected_group_start_conv()`) works the same way: up to four channels, a trigger source, optional per-channel offsets, and a completion callback. Read the results with `adc_injected_group_get_result()`. The **analog watchdog** (`adc_analog_wdg_start()`) calls you back when a reading leaves a min/max window.
 
 **I2C** (I2C2 at 100 kHz, talking to an AHT20 sensor):
 
@@ -208,6 +282,75 @@ Pin definitions cover UART1, 2 and 6, I2C1 to 3, SPI1 to 5, I2S2 to 5 and timers
 - I2C: the bus rise times and the minimum APB1 clock for 100 kHz and 400 kHz
 
 The clock code, for example, builds its PLL settings from `HSE_VALUE_MHz` and checks them at compile time. If your board has a different crystal, change that one number. The file is guarded by `#if defined(STM32F411xE)` and fails with an `#error` for any other chip, so it is also where you would add another target.
+
+## What runs before `main`
+
+The startup file (`stm32f411_startup.s`) handles the reset. In order, it:
+
+1. Sets up the stack pointer
+2. Copies `.data` from flash to RAM and zeroes `.bss`
+3. Calls `system_init()` (below)
+4. Initializes the heap which runs as a constructor function (`[[__gnu__::__constructor__(101)]]`)
+5. Runs C++ static constructors
+6. Calls `main()`
+
+**`system_init()`** (in `utils/src/syscalls.c`) gets the chip ready, so `main` starts in a known, fast state:
+
+- Turns on the instruction and data caches and the prefetch buffer
+- Turns on the FPU
+- Makes division by zero a fault
+- Enables the MemManage, bus fault and usage fault exceptions
+- Starts RTT logging, SysTick and the DWT cycle counter
+- Sets the system clock to **100 MHz from the HSE** and disables the audio PLL
+- Logs the resulting clock speeds
+
+So your application doesn't need to set up the clocks. It starts at 100 MHz and can switch if it needs to. If you don't provide a `main()`, a weak stub logs an error and halts.
+
+By default, the application has a heap size of 32kB. Set to 0 (in utils/common.h) to disable the heap). 
+
+**Interrupt vectors.** Every exception and interrupt has a weak default handler, so you only define the ones you use. Any unhandled interrupt lands in a default handler that masks interrupts and sleeps.
+
+### Tick and delays
+
+SysTick runs at 1 kHz (from HCLK/8) at the highest interrupt priority.
+
+| Function | What it does |
+|---|---|
+| `ms_since_boot()` | Milliseconds since boot, as a 64-bit value, safe to read from anywhere |
+| `delay_ms(ms)` | Busy-wait delay based on the tick |
+| `delay_us(us)` | Busy-wait delay based on the DWT cycle counter |
+| `prof_start()` / `prof_end()` | Cycle counting helpers for profiling |
+
+A clock change re-programs SysTick automatically, so these stay accurate.
+
+### Fault handling
+
+The four CPU fault handlers (HardFault, MemManage, BusFault and UsageFault) all lead to one decoder, `decode_fault()`. A short assembly stub works out whether the fault happened on the main or process stack, and tells the decoder which fault it was. That matters because a HardFault can be a real one or one escalated from a disabled handler.
+
+The decoder reads the fault status registers and logs the **specific cause**, not a raw hex dump. Examples: "Precise data bus error: the PC is the faulting instruction", "Division by zero", "Coprocessor access fault (FPU used without CPACR enabling it)" and "Possible stack overflow into a guarded region". When the hardware recorded the bad address, it prints that too (`MMFAR` or `BFAR`). It then prints the stacked registers (R0 to R3, R12, LR, PC, PSR), `EXC_RETURN` and `CFSR`.
+
+After logging, it clears the fault flags, then **halts at a breakpoint in debug builds** and **reboots in release builds**.
+
+To find the line that crashed, take the logged `PC` and run:
+
+```
+arm-none-eabi-addr2line -e build/tests-debug/f411-hal.elf 0x<PC>
+```
+
+`decode_fault()` is weak, so an application can replace it with its own recovery logic.
+
+**NMI and the Clock Security System.** The NMI handler deals with the clock monitor. If the crystal fails while running, the hardware switches the system to the HSI by itself. The handler then reconfigures the PLL to the HSI equivalent of whatever preset was active (for example, `HSE_PLL_100MHz` becomes `HSI_PLL_100MHz`), so the board keeps running at the same speed.
+
+### Syscalls, `printf` and the heap
+
+`syscalls.c` provides the stubs that newlib needs so `printf` and friends work on bare metal:
+
+- **Output goes to RTT.** `_write()` and the `printf` library's `putchar_()` both write to the RTT buffer, so `printf` shows up in the same console as `LOGI`.
+- **No newlib heap.** `_sbrk()` always fails, so plain `malloc` is deliberately unavailable. Use `lib_malloc` and friends from `utils/heap.h` (o1heap).
+- **Everything else is a stub.** `_read`, `_close`, `_lseek`, `_fstat`, `_isatty`, `_kill` and `_getpid` just report an error. `_exit()` logs the exit code and panics.
+- **All of them are weak**, so your application can override any of them.
+
+`utils/common.h` also gives you `ASSERT(cond)`, `PANIC()`, `REBOOT()` and `halt()` (which stops at a breakpoint in debug builds).
 
 ## Tests
 
@@ -342,7 +485,7 @@ Needs:
 - STM32F411 Black Pill
 - An ST-Link (or compatible) debug probe and OpenOCD
 - Arm GNU Toolchain (`arm-none-eabi-gcc`, developed with 16.1)
-- CMake 4.0 or newer, plus Ninja or Make (the CMakePresets.json file assumes Ninja)
+- CMake 4.0 or newer, plus Ninja or Make
 
 | Preset | What it builds |
 |---|---|
@@ -394,3 +537,7 @@ scripts/gdb.sh    Build, flash, GDB and RTT console in one command
 test_main.cpp     Entry point for the test firmware
 stm32f411_startup.s, stm32f411_linker.ld
 ```
+
+## License
+
+MIT. See `LICENSE`.
