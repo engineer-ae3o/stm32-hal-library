@@ -1,15 +1,15 @@
 # STM32F411 HAL
 
-A hardware abstraction library for the STM32F411, written from scratch in C. No ST HAL and no CubeMX. It talks to the chip's registers directly, using only the CMSIS headers.
+A hardware abstraction library for the STM32F411, written from scratch in C. It uses the chip's registers directly, using only the CMSIS headers.
 
-I built it for the STM32F411 Black Pill, so I have a set of drivers I trust for future projects. It is under active development, so APIs can change.
+I built it for the STM32F411 Black Pill, so I have a set of drivers I plan to use in future projects.
 
 ## Why this exists
 
-- **Small and readable.** Each peripheral has one header and one source file. You can read a driver in one sitting.
+- **Small and readable.** Most peripherals have one header and one source file. You can read a driver in one sitting.
 - **Tested on real hardware.** The tests run on the board, not on a PC. They check register values, error handling and real signals.
-- **Strict builds.** The code compiles with `-Werror` and a long list of extra warnings. CI also checks formatting and runs static analysis.
-- **Measured, not guessed.** The heap and the logging system have written profiling reports in `profile_results/`.
+- **Strict builds.** The code compiles with a long list of extra warnings. CI also checks formatting and runs static analysis.
+- **Measured.** The heap and the logging system have written profiling reports in `profile_results/`.
 
 ## Example
 
@@ -23,8 +23,8 @@ uart_config_t cfg = {
     .rx_pin        = BOARD_UART1_RX_PA10,
 };
 
-uart_init(USART1, &cfg);
-uart_transmit_poll(USART1, data, size);
+TRY(uart_init(USART1, &cfg));
+TRY(uart_transmit_poll(USART1, data, size));
 ```
 
 Every function returns a `hal_err_t`. `HAL_OK` means success. Anything else says what went wrong, for example `HAL_ERR_INVALID_ARG` or `HAL_ERR_TIMEOUT`. Bad arguments are rejected before any register is touched.
@@ -53,7 +53,7 @@ The `tests-debug` and `tests-release` presets are different. They build the test
 | CRC | Hardware CRC, fed by the CPU or by DMA |
 | IWDG | Watchdog setup and reload |
 
-**Not supported yet:** UART polling receive, I2C and SPI slave mode, USB, SDIO, RTC and CAN.
+**Not supported yet:** UART polling receive and idle line, I2C and SPI slave mode, I2S slave mode and full duplex, USB, SDIO, RTC and the WWDG.
 
 ### Clock setup
 
@@ -90,17 +90,24 @@ delay_ms(100);
 - The audio PLL is restored afterwards, so changing the system clock doesn't kill I2S
 - The tracked clock values and the SysTick reload are updated automatically, so `delay_ms()` and `ms_since_boot()` stay correct after a switch
 
-**Safety checks.** The PLL ranges are checked at compile time (`_Static_assert`) and again at run time. If the crystal or PLL fails to start, the clock falls back to the HSI and logs an error, so the board keeps running.
+**Safety checks.** The PLL ranges are checked at compile time and again at run time. If the crystal or PLL fails to start, the clock falls back to the HSI and logs an error, so the board keeps running.
 
 ### Logging over RTT
 
-Logs go out through SEGGER RTT, so you need no UART pin. There are three levels (`LOGI`, `LOGW`, `LOGE`), color coded in the terminal. Set `LOG_LEVEL` to `LOG_LEVEL_NONE` to compile them all out.
+Logs go out through RTT, so you need no UART pin. There are three levels (`LOGI`, `LOGW`, `LOGE`), color coded in the terminal. Set `LOG_LEVEL` to `LOG_LEVEL_NONE` to compile them all out, or any other appropriate level to minimize log output.
 
 ```c
 #include "utils/log.h"
 
 LOGI("Main", "Started. Temp: %.1f, count: %d", temp, count);
 LOGE("Main", "Sensor failed with error %d", err);
+```
+
+### Error Propagation macros
+
+```c
+TRY*(...) // macros for error propagation for functions that return hal_err_t
+          // Read utils/common.h for the full list of available macros
 ```
 
 ### DMA memory copy
@@ -110,10 +117,11 @@ LOGE("Main", "Sensor failed with error %d", err);
 ```c
 #include "utils/memcpy.h"
 
-volatile memcpy_state_t done = DMA_MEMCPY_NOT_DONE;
+volatile memcpy_state_t done;
+TRY(dma_memcpy(dest, src, len, &done));
 
-dma_memcpy(dest, src, len, &done);
 // ... do other work ...
+
 if (dma_memcpy_wait_for_flag(&done, 1000) == DMA_MEMCPY_DONE) {
     // copy finished
 }
@@ -121,7 +129,7 @@ if (dma_memcpy_wait_for_flag(&done, 1000) == DMA_MEMCPY_DONE) {
 
 ### Heap
 
-`lib_malloc`, `lib_calloc`, `lib_realloc` and `lib_free` wrap the o1heap allocator. `get_heap_stats` and `print_heap_stats` report peak use and out-of-memory counts.
+`lib_malloc`, `lib_calloc`, `lib_realloc` and `lib_free` wrap the o1heap allocator. `get_heap_stats` and `print_heap_stats` report peak use and out-of-memory counts. Same semantics as malloc and friends from the C standard library.
 
 ### More code samples
 
@@ -131,7 +139,7 @@ if (dma_memcpy_wait_for_flag(&done, 1000) == DMA_MEMCPY_DONE) {
 #include "drivers/pwm.h"
 #include "drivers/timer.h"
 
-timx_clk_enable(TIM3, true);
+TRY(timx_clk_enable(TIM3, true));
 
 pwm_gp_timer_config_t pwm = {
     .pwm_mode       = PWM_MODE_1,
@@ -146,9 +154,9 @@ pwm_gp_timer_config_t pwm = {
 };
 
 uint32_t max_duty = 0;
-pwm_gp_timer_init(TIM3, &pwm);
-pwm_start(TIM3, 1000, &max_duty);
-pwm_set_duty_cycle(TIM3, TIMER_CHANNEL_1, max_duty / 2);
+TRY(pwm_gp_timer_init(TIM3, &pwm));
+TRY(pwm_start(TIM3, 1000, &max_duty));
+TRY(pwm_set_duty_cycle(TIM3, TIMER_CHANNEL_1, max_duty / 2));
 ```
 
 **ADC.** Reading a channel takes a few setup steps first. They only need to be done once:
@@ -157,8 +165,8 @@ pwm_set_duty_cycle(TIM3, TIMER_CHANNEL_1, max_duty / 2);
 #include "drivers/adc.h"
 
 // 1. Clock the ADC peripheral and choose the ADC clock (APB2 / prescaler)
-adcx_clk_enable(ADC1, true);
-adc_clk_configure(ADC_CLK_PRESCALER_4);   // keep ADCCLK within the datasheet limit
+TRY(adcx_clk_enable(ADC1, true));
+adc_clk_configure(ADC_CLK_PRESCALER_4);   // keep ADCCLK within the datasheet limit (36MHz max ADCCLK)
 
 // 2. Put the pin into analog mode (PA0 is ADC_CHANNEL_0)
 adc_configure_channel(ADC_CHANNEL_0);
@@ -169,13 +177,13 @@ adc_config_t cfg = {
     .resolution      = ADC_RES_12_BITS,
     .sampling_cycles = ADC_SAMPLE_84_CYCLES,
 };
-adc_configure(ADC1, &cfg);
+TRY(adc_configure(ADC1, &cfg));
 
 // 4. Read it: raw counts, then volts
 uint16_t raw   = 0;
 float    volts = 0;
-adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_0, &raw);
-adc_get_value_right_aligned(ADC1, raw, ADC_RES_12_BITS, &volts);
+TRY(adc_regular_group_get_oneshot(ADC1, ADC_CHANNEL_0, &raw));
+TRY(adc_get_value_right_aligned(ADC1, raw, ADC_RES_12_BITS, &volts));
 ```
 
 Things worth knowing:
@@ -210,9 +218,9 @@ adc_continuous_config_t cont = {
         .user = NULL,
     },
 };
-adc_regular_group_cont_start_conv(ADC1, &cont);
-// ...
-adc_regular_group_cont_end_conv(ADC1);
+TRY(adc_regular_group_cont_start_conv(ADC1, &cont));
+// Do other work ...
+TRY(adc_regular_group_cont_end_conv(ADC1));
 ```
 
 With more than one channel, the samples arrive interleaved in sequence order. The callbacks tell you which buffer just filled. DMA errors and overruns end the conversion, and you restart it by calling `adc_regular_group_cont_start_conv()` again. Starting while a conversion is already running returns `HAL_ERR_INVALID_STATE`.
@@ -230,14 +238,14 @@ i2c_master_config_t cfg = {
     .scl_pin        = BOARD_I2C2_SCL_PB10,
 };
 
-i2cx_clk_enable(I2C2, true);
-i2c_master_init(I2C2, &cfg);
+TRY(i2cx_clk_enable(I2C2, true));
+TRY(i2c_master_init(I2C2, &cfg));
 
 const uint8_t measure[] = {0xAC, 0x33, 0x00};   // AHT20 "start measurement"
 uint8_t       data[7];
-i2c_master_transmit(I2C2, 0x38, measure, sizeof(measure));
-delay_ms(80);
-i2c_master_receive(I2C2, 0x38, data, sizeof(data));
+TRY(i2c_master_transmit(I2C2, 0x38, measure, sizeof(measure)));
+delay_ms(80); // Polling delay. Used as a sample
+TRY(i2c_master_receive(I2C2, 0x38, data, sizeof(data)));
 ```
 
 Check the headers in `components/drivers/` for the full list of config fields and options.
@@ -501,17 +509,17 @@ cmake --build --preset release
 
 The library is built as C23 and the tests as C++23.
 
-### Third-party code
+### Third-party libraries
 
 Third-party code lives in `components/third-party/` and is part of the repository:
 
 | Folder | What it is |
 |---|---|
-| `CMSIS` | Arm and ST device headers |
-| `Unity` | Test framework |
-| `RTT` | SEGGER RTT, for logging |
-| `o1heap` | The heap allocator |
-| `printf` | Embedded `printf` ([mpaland/printf](https://github.com/mpaland/printf)) |
+| `CMSIS` | Arm and ST device headers ([CMSIS Headers](https://github.com/STMicroelectronics/cmsis-device-f4)) |
+| `Unity` | Test framework ([Unity](https://github.com/throwtheswitch/unity)) |
+| `RTT` | SEGGER RTT, for logging ([SEGGER RTT](https://github.com/SEGGERMicro/RTT)) |
+| `o1heap` | The heap allocator ([o1heap](https://github.com/pavel-kirienko/o1heap)) |
+| `printf` | Embedded `printf` ([printf](https://github.com/mpaland/printf)) |
 
 ## Code checks
 
