@@ -53,7 +53,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_cmplx_mag_fast_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_fast_q15(const q15_t* pSrc,
+                            q15_t*       pDst,
+                            uint32_t     numSamples) {
 
     int32_t   blockSize = numSamples; /* loop counters */
     uint32_t  blkCnt;                 /* loop counters */
@@ -66,7 +68,8 @@ void arm_cmplx_mag_fast_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSamples)
     while (blkCnt > 0U) {
         vecSrc = vld2q(pSrc);
         pSrc += 16;
-        sum = vqaddq(vmulhq(vecSrc.val[0], vecSrc.val[0]), vmulhq(vecSrc.val[1], vecSrc.val[1]));
+        sum = vqaddq(vmulhq(vecSrc.val[0], vecSrc.val[0]),
+                     vmulhq(vecSrc.val[1], vecSrc.val[1]));
 
         sum = vshrq(sum, 1);
 
@@ -101,7 +104,9 @@ void arm_cmplx_mag_fast_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSamples)
 }
 
 #else
-void arm_cmplx_mag_fast_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_fast_q15(const q15_t* pSrc,
+                            q15_t*       pDst,
+                            uint32_t     numSamples) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_DSP)

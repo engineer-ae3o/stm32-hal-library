@@ -99,8 +99,8 @@ void arm_absmin_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
 #else
 #if defined(ARM_MATH_DSP)
 void arm_absmin_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
-    q7_t     cur_absmin, out; /* Temporary variables to store the output value. */
-    uint32_t blkCnt;          /* Loop counter */
+    q7_t cur_absmin, out; /* Temporary variables to store the output value. */
+    uint32_t blkCnt;      /* Loop counter */
 
 
     /* Load first input value that act as reference value for comparision */
@@ -110,27 +110,36 @@ void arm_absmin_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
     /* Loop unrolling: Compute 4 outputs at a time */
     blkCnt = (blockSize - 1U) >> 2U;
 
-    while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
+    while (
+        blkCnt >
+        0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q7_t)__QSUB8(0, cur_absmin); /* compare for the extrema value */
-        if (cur_absmin < out) {                                                    /* Update the extrema value and it's index */
+        cur_absmin =
+            (cur_absmin > 0)
+                ? cur_absmin
+                : (q7_t)__QSUB8(0,
+                                cur_absmin); /* compare for the extrema value */
+        if (cur_absmin < out) { /* Update the extrema value and it's index */
             out = cur_absmin;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q7_t)__QSUB8(0, cur_absmin);
+        cur_absmin =
+            (cur_absmin > 0) ? cur_absmin : (q7_t)__QSUB8(0, cur_absmin);
         if (cur_absmin < out) {
             out = cur_absmin;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q7_t)__QSUB8(0, cur_absmin);
+        cur_absmin =
+            (cur_absmin > 0) ? cur_absmin : (q7_t)__QSUB8(0, cur_absmin);
         if (cur_absmin < out) {
             out = cur_absmin;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q7_t)__QSUB8(0, cur_absmin);
+        cur_absmin =
+            (cur_absmin > 0) ? cur_absmin : (q7_t)__QSUB8(0, cur_absmin);
         if (cur_absmin < out) {
             out = cur_absmin;
         }
@@ -146,7 +155,8 @@ void arm_absmin_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
 
     while (blkCnt > 0U) {
         cur_absmin = *pSrc++;
-        cur_absmin = (cur_absmin > 0) ? cur_absmin : (q7_t)__QSUB8(0, cur_absmin);
+        cur_absmin =
+            (cur_absmin > 0) ? cur_absmin : (q7_t)__QSUB8(0, cur_absmin);
         if (cur_absmin < out) {
             out = cur_absmin;
         }
@@ -173,7 +183,8 @@ void arm_absmin_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
 
     while (blkCnt > 0U) {
         /* Initialize minVal to the next consecutive values one by one */
-        minVal = (*pSrc > 0) ? *pSrc : ((*pSrc == (q7_t)0x80) ? (q7_t)0x7f : -*pSrc);
+        minVal =
+            (*pSrc > 0) ? *pSrc : ((*pSrc == (q7_t)0x80) ? (q7_t)0x7f : -*pSrc);
         pSrc++;
 
         /* compare for the minimum value */

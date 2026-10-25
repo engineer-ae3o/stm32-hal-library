@@ -32,10 +32,18 @@ typedef enum : uint8_t {
 } i2s_mode_t;
 
 typedef enum : uint8_t {
-    I2S_DATA_16_BITS_FRAME_16_BITS = (0b00U << SPI_I2SCFGR_DATLEN_Pos) | (0b0U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b00, CHLEN = 0b0
-    I2S_DATA_16_BITS_FRAME_32_BITS = (0b00U << SPI_I2SCFGR_DATLEN_Pos) | (0b1U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b00, CHLEN = 0b1
-    I2S_DATA_24_BITS_FRAME_32_BITS = (0b01U << SPI_I2SCFGR_DATLEN_Pos) | (0b1U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b01, CHLEN = 0b1
-    I2S_DATA_32_BITS_FRAME_32_BITS = (0b10U << SPI_I2SCFGR_DATLEN_Pos) | (0b1U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b10, CHLEN = 0b1
+    I2S_DATA_16_BITS_FRAME_16_BITS =
+        (0b00U << SPI_I2SCFGR_DATLEN_Pos) |
+        (0b0U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b00, CHLEN = 0b0
+    I2S_DATA_16_BITS_FRAME_32_BITS =
+        (0b00U << SPI_I2SCFGR_DATLEN_Pos) |
+        (0b1U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b00, CHLEN = 0b1
+    I2S_DATA_24_BITS_FRAME_32_BITS =
+        (0b01U << SPI_I2SCFGR_DATLEN_Pos) |
+        (0b1U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b01, CHLEN = 0b1
+    I2S_DATA_32_BITS_FRAME_32_BITS =
+        (0b10U << SPI_I2SCFGR_DATLEN_Pos) |
+        (0b1U << SPI_I2SCFGR_CHLEN_Pos), // DATLEN = 0b10, CHLEN = 0b1
 } i2s_frame_t;
 
 typedef enum : uint8_t {
@@ -72,19 +80,33 @@ typedef struct {
 
 // General API
 hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable);
-hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config);
+hal_err_t i2s_master_init(I2S_TypeDef*               handle,
+                          const i2s_master_config_t* config);
 hal_err_t i2s_master_deinit(I2S_TypeDef* handle);
 hal_err_t i2s_master_dma_init(I2S_TypeDef* handle, dma_priority_t priority);
 hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle);
 
 // DMA backed oneshot transfers API.
-hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* data, uint16_t size, dma_done_cb_t callback, void* arg);
-hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* data, uint16_t size, dma_done_cb_t callback, void* arg);
+hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef*  handle,
+                                      const void*   data,
+                                      uint16_t      size,
+                                      dma_done_cb_t callback,
+                                      void*         arg);
+hal_err_t i2s_master_receive_oneshot(I2S_TypeDef*  handle,
+                                     void*         data,
+                                     uint16_t      size,
+                                     dma_done_cb_t callback,
+                                     void*         arg);
 
 // Double buffering API.
 // NOTE: These APIs are mutually exclusive with the DMA oneshot functions
 // NOTE: Only data reception is supported. Determine which buffer is free with i2s_master_dbm_get_filled_buffer()
-hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uint16_t size, dma_done_cb_t callback, void* arg);
+hal_err_t i2s_master_dbm_init(I2S_TypeDef*  handle,
+                              void*         buf_0,
+                              void*         buf_1,
+                              uint16_t      size,
+                              dma_done_cb_t callback,
+                              void*         arg);
 hal_err_t i2s_master_dbm_deinit(I2S_TypeDef* handle);
 
 // When start is called, the DMA starts filling buffer A, and then the isr is fired on completion, then starts filling B
@@ -94,7 +116,8 @@ hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle);
 
 // Returns 0 (out parameter) if the first buffer is filled and the DMA controller has started filling the second buffer
 // Returns 1 (out parameter) if the second buffer is filled and the DMA controller has started filling the first buffer again
-hal_err_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle, uint8_t* buffer_idx);
+hal_err_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle,
+                                           uint8_t*     buffer_idx);
 
 
 #ifdef __cplusplus

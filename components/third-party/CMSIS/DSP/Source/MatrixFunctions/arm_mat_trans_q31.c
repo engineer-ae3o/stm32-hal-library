@@ -49,7 +49,8 @@
 
 #include "arm_helium_utils.h"
 
-arm_status arm_mat_trans_q31(const arm_matrix_instance_q31* pSrc, arm_matrix_instance_q31* pDst) {
+arm_status arm_mat_trans_q31(const arm_matrix_instance_q31* pSrc,
+                             arm_matrix_instance_q31*       pDst) {
     arm_status status; /* status of matrix transpose */
 #ifdef ARM_MATH_MATRIX_CHECK
 
@@ -64,17 +65,23 @@ arm_status arm_mat_trans_q31(const arm_matrix_instance_q31* pSrc, arm_matrix_ins
     {
         if (pDst->numRows == pDst->numCols) {
             if (pDst->numCols == 2) {
-                return arm_mat_trans_32bit_2x2_mve((uint32_t*)pSrc->pData, (uint32_t*)pDst->pData);
+                return arm_mat_trans_32bit_2x2_mve((uint32_t*)pSrc->pData,
+                                                   (uint32_t*)pDst->pData);
             }
             if (pDst->numCols == 3) {
-                return arm_mat_trans_32bit_3x3_mve((uint32_t*)pSrc->pData, (uint32_t*)pDst->pData);
+                return arm_mat_trans_32bit_3x3_mve((uint32_t*)pSrc->pData,
+                                                   (uint32_t*)pDst->pData);
             }
             if (pDst->numCols == 4) {
-                return arm_mat_trans_32bit_4x4_mve((uint32_t*)pSrc->pData, (uint32_t*)pDst->pData);
+                return arm_mat_trans_32bit_4x4_mve((uint32_t*)pSrc->pData,
+                                                   (uint32_t*)pDst->pData);
             }
         }
 
-        arm_mat_trans_32bit_generic_mve(pSrc->numRows, pSrc->numCols, (uint32_t*)pSrc->pData, (uint32_t*)pDst->pData);
+        arm_mat_trans_32bit_generic_mve(pSrc->numRows,
+                                        pSrc->numCols,
+                                        (uint32_t*)pSrc->pData,
+                                        (uint32_t*)pDst->pData);
         /* Set status as ARM_MATH_SUCCESS */
         status = ARM_MATH_SUCCESS;
 
@@ -86,12 +93,13 @@ arm_status arm_mat_trans_q31(const arm_matrix_instance_q31* pSrc, arm_matrix_ins
     return (status);
 }
 #else
-arm_status arm_mat_trans_q31(const arm_matrix_instance_q31* pSrc, arm_matrix_instance_q31* pDst) {
-    q31_t*     pIn  = pSrc->pData;       /* input data matrix pointer */
-    q31_t*     pOut = pDst->pData;       /* output data matrix pointer */
-    q31_t*     px;                       /* Temporary output data matrix pointer */
-    uint16_t   nRows = pSrc->numRows;    /* number of rows */
-    uint16_t   nCols = pSrc->numCols;    /* number of columns */
+arm_status arm_mat_trans_q31(const arm_matrix_instance_q31* pSrc,
+                             arm_matrix_instance_q31*       pDst) {
+    q31_t*     pIn  = pSrc->pData;    /* input data matrix pointer */
+    q31_t*     pOut = pDst->pData;    /* output data matrix pointer */
+    q31_t*     px;                    /* Temporary output data matrix pointer */
+    uint16_t   nRows = pSrc->numRows; /* number of rows */
+    uint16_t   nCols = pSrc->numCols; /* number of columns */
     uint32_t   col, row = nRows, i = 0U; /* Loop counters */
     arm_status status;                   /* status of matrix transpose */
 

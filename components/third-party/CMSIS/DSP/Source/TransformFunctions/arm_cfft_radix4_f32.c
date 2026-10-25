@@ -28,11 +28,21 @@
 
 #include "dsp/transform_functions.h"
 
-extern void arm_bitreversal_f32(float32_t* pSrc, uint16_t fftSize, uint16_t bitRevFactor, const uint16_t* pBitRevTab);
+extern void arm_bitreversal_f32(float32_t*      pSrc,
+                                uint16_t        fftSize,
+                                uint16_t        bitRevFactor,
+                                const uint16_t* pBitRevTab);
 
-void arm_radix4_butterfly_f32(float32_t* pSrc, uint16_t fftLen, const float32_t* pCoef, uint16_t twidCoefModifier);
+void arm_radix4_butterfly_f32(float32_t*       pSrc,
+                              uint16_t         fftLen,
+                              const float32_t* pCoef,
+                              uint16_t         twidCoefModifier);
 
-void arm_radix4_butterfly_inverse_f32(float32_t* pSrc, uint16_t fftLen, const float32_t* pCoef, uint16_t twidCoefModifier, float32_t onebyfftLen);
+void arm_radix4_butterfly_inverse_f32(float32_t*       pSrc,
+                                      uint16_t         fftLen,
+                                      const float32_t* pCoef,
+                                      uint16_t         twidCoefModifier,
+                                      float32_t        onebyfftLen);
 
 
 /**
@@ -53,13 +63,16 @@ void arm_radix4_butterfly_inverse_f32(float32_t* pSrc, uint16_t fftLen, const fl
   @return        none
  */
 
-void arm_cfft_radix4_f32(const arm_cfft_radix4_instance_f32* S, float32_t* pSrc) {
+void arm_cfft_radix4_f32(const arm_cfft_radix4_instance_f32* S,
+                         float32_t*                          pSrc) {
     if (S->ifftFlag == 1U) {
         /*  Complex IFFT radix-4  */
-        arm_radix4_butterfly_inverse_f32(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier, S->onebyfftLen);
+        arm_radix4_butterfly_inverse_f32(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier, S->onebyfftLen);
     } else {
         /*  Complex FFT radix-4  */
-        arm_radix4_butterfly_f32(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
+        arm_radix4_butterfly_f32(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
     }
 
     if (S->bitReverseFlag == 1U) {
@@ -85,7 +98,10 @@ void arm_cfft_radix4_f32(const arm_cfft_radix4_instance_f32* S, float32_t* pSrc)
   return        none
  */
 
-void arm_radix4_butterfly_f32(float32_t* pSrc, uint16_t fftLen, const float32_t* pCoef, uint16_t twidCoefModifier) {
+void arm_radix4_butterfly_f32(float32_t*       pSrc,
+                              uint16_t         fftLen,
+                              const float32_t* pCoef,
+                              uint16_t         twidCoefModifier) {
     float32_t co1, co2, co3, si1, si2, si3;
     uint32_t  ia1, ia2, ia3;
     uint32_t  i0, i1, i2, i3;
@@ -93,8 +109,9 @@ void arm_radix4_butterfly_f32(float32_t* pSrc, uint16_t fftLen, const float32_t*
 
 #if defined(ARM_MATH_LOOPUNROLL)
 
-    float32_t  xaIn, yaIn, xbIn, ybIn, xcIn, ycIn, xdIn, ydIn;
-    float32_t  Xaplusc, Xbplusd, Yaplusc, Ybplusd, Xaminusc, Xbminusd, Yaminusc, Ybminusd;
+    float32_t xaIn, yaIn, xbIn, ybIn, xcIn, ycIn, xdIn, ydIn;
+    float32_t Xaplusc, Xbplusd, Yaplusc, Ybplusd, Xaminusc, Xbminusd, Yaminusc,
+        Ybminusd;
     float32_t  Xb12C_out, Yb12C_out, Xc12C_out, Yc12C_out, Xd12C_out, Yd12C_out;
     float32_t  Xb12_out, Yb12_out, Xc12_out, Yc12_out, Xd12_out, Yd12_out;
     float32_t* ptr1;
@@ -568,7 +585,11 @@ void arm_radix4_butterfly_f32(float32_t* pSrc, uint16_t fftLen, const float32_t*
   return        none
  */
 
-void arm_radix4_butterfly_inverse_f32(float32_t* pSrc, uint16_t fftLen, const float32_t* pCoef, uint16_t twidCoefModifier, float32_t onebyfftLen) {
+void arm_radix4_butterfly_inverse_f32(float32_t*       pSrc,
+                                      uint16_t         fftLen,
+                                      const float32_t* pCoef,
+                                      uint16_t         twidCoefModifier,
+                                      float32_t        onebyfftLen) {
     float32_t co1, co2, co3, si1, si2, si3;
     uint32_t  ia1, ia2, ia3;
     uint32_t  i0, i1, i2, i3;
@@ -576,8 +597,9 @@ void arm_radix4_butterfly_inverse_f32(float32_t* pSrc, uint16_t fftLen, const fl
 
 #if defined(ARM_MATH_LOOPUNROLL)
 
-    float32_t  xaIn, yaIn, xbIn, ybIn, xcIn, ycIn, xdIn, ydIn;
-    float32_t  Xaplusc, Xbplusd, Yaplusc, Ybplusd, Xaminusc, Xbminusd, Yaminusc, Ybminusd;
+    float32_t xaIn, yaIn, xbIn, ybIn, xcIn, ycIn, xdIn, ydIn;
+    float32_t Xaplusc, Xbplusd, Yaplusc, Ybplusd, Xaminusc, Xbminusd, Yaminusc,
+        Ybminusd;
     float32_t  Xb12C_out, Yb12C_out, Xc12C_out, Yc12C_out, Xd12C_out, Yd12C_out;
     float32_t  Xb12_out, Yb12_out, Xc12_out, Yc12_out, Xd12_out, Yd12_out;
     float32_t* ptr1;

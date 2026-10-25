@@ -36,7 +36,8 @@ osThreadId osThreadCreate(const osThreadDef_t* thread_def, void* argument) {
     if (thread_def == NULL) {
         return (osThreadId)NULL;
     }
-    return osThreadNew((osThreadFunc_t)thread_def->pthread, argument, &thread_def->attr);
+    return osThreadNew(
+        (osThreadFunc_t)thread_def->pthread, argument, &thread_def->attr);
 }
 
 
@@ -100,12 +101,15 @@ osEvent osSignalWait(int32_t signals, uint32_t millisec) {
 
 
 // Timer
-osTimerId osTimerCreate(const osTimerDef_t* timer_def, os_timer_type type, void* argument) {
+osTimerId osTimerCreate(const osTimerDef_t* timer_def,
+                        os_timer_type       type,
+                        void*               argument) {
 
     if (timer_def == NULL) {
         return (osTimerId)NULL;
     }
-    return osTimerNew((osTimerFunc_t)timer_def->ptimer, type, argument, &timer_def->attr);
+    return osTimerNew(
+        (osTimerFunc_t)timer_def->ptimer, type, argument, &timer_def->attr);
 }
 
 
@@ -123,7 +127,8 @@ osMutexId osMutexCreate(const osMutexDef_t* mutex_def) {
 
 #if (defined(osFeature_Semaphore) && (osFeature_Semaphore != 0U))
 
-osSemaphoreId osSemaphoreCreate(const osSemaphoreDef_t* semaphore_def, int32_t count) {
+osSemaphoreId osSemaphoreCreate(const osSemaphoreDef_t* semaphore_def,
+                                int32_t                 count) {
 
     if (semaphore_def == NULL) {
         return (osSemaphoreId)NULL;
@@ -161,7 +166,8 @@ osPoolId osPoolCreate(const osPoolDef_t* pool_def) {
     if (pool_def == NULL) {
         return (osPoolId)NULL;
     }
-    return ((osPoolId)(osMemoryPoolNew(pool_def->pool_sz, pool_def->item_sz, &pool_def->attr)));
+    return ((osPoolId)(osMemoryPoolNew(
+        pool_def->pool_sz, pool_def->item_sz, &pool_def->attr)));
 }
 
 void* osPoolAlloc(osPoolId pool_id) {
@@ -194,13 +200,15 @@ osStatus osPoolFree(osPoolId pool_id, void* block) {
 
 #if (defined(osFeature_MessageQ) && (osFeature_MessageQ != 0))
 
-osMessageQId osMessageCreate(const osMessageQDef_t* queue_def, osThreadId thread_id) {
+osMessageQId osMessageCreate(const osMessageQDef_t* queue_def,
+                             osThreadId             thread_id) {
     (void)thread_id;
 
     if (queue_def == NULL) {
         return (osMessageQId)NULL;
     }
-    return ((osMessageQId)(osMessageQueueNew(queue_def->queue_sz, sizeof(uint32_t), &queue_def->attr)));
+    return ((osMessageQId)(osMessageQueueNew(
+        queue_def->queue_sz, sizeof(uint32_t), &queue_def->attr)));
 }
 
 osStatus osMessagePut(osMessageQId queue_id, uint32_t info, uint32_t millisec) {
@@ -212,7 +220,8 @@ osEvent osMessageGet(osMessageQId queue_id, uint32_t millisec) {
     osEvent    event;
     uint32_t   message;
 
-    status = osMessageQueueGet((osMessageQueueId_t)queue_id, &message, NULL, millisec);
+    status = osMessageQueueGet(
+        (osMessageQueueId_t)queue_id, &message, NULL, millisec);
     switch (status) {
         case osOK:
             event.status  = osEventMessage;
@@ -256,9 +265,12 @@ osMailQId osMailCreate(const osMailQDef_t* queue_def, osThreadId thread_id) {
         return (osMailQId)NULL;
     }
 
-    ptr->mp_id = osMemoryPoolNew(queue_def->queue_sz, queue_def->item_sz, &queue_def->mp_attr);
-    ptr->mq_id = osMessageQueueNew(queue_def->queue_sz, sizeof(void*), &queue_def->mq_attr);
-    if ((ptr->mp_id == (osMemoryPoolId_t)NULL) || (ptr->mq_id == (osMessageQueueId_t)NULL)) {
+    ptr->mp_id = osMemoryPoolNew(
+        queue_def->queue_sz, queue_def->item_sz, &queue_def->mp_attr);
+    ptr->mq_id = osMessageQueueNew(
+        queue_def->queue_sz, sizeof(void*), &queue_def->mq_attr);
+    if ((ptr->mp_id == (osMemoryPoolId_t)NULL) ||
+        (ptr->mq_id == (osMessageQueueId_t)NULL)) {
         if (ptr->mp_id != (osMemoryPoolId_t)NULL) {
             osMemoryPoolDelete(ptr->mp_id);
         }

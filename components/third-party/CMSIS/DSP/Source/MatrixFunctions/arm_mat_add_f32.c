@@ -60,7 +60,9 @@
  */
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
-arm_status arm_mat_add_f32(const arm_matrix_instance_f32* pSrcA, const arm_matrix_instance_f32* pSrcB, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_add_f32(const arm_matrix_instance_f32* pSrcA,
+                           const arm_matrix_instance_f32* pSrcB,
+                           arm_matrix_instance_f32*       pDst) {
     arm_status       status;
     uint32_t         numSamples; /* total number of elements in the matrix  */
     float32_t *      pDataA, *pDataB, *pDataDst;
@@ -77,7 +79,9 @@ arm_status arm_mat_add_f32(const arm_matrix_instance_f32* pSrcA, const arm_matri
 
 #ifdef ARM_MATH_MATRIX_CHECK
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) || (pSrcA->numRows != pDst->numRows) ||
+    if ((pSrcA->numRows != pSrcB->numRows) ||
+        (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) ||
         (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
@@ -129,7 +133,9 @@ So no blocking is used for taking into account cache effects.
 For big matrix, there exist better libraries for Neon.
 
 */
-arm_status arm_mat_add_f32(const arm_matrix_instance_f32* pSrcA, const arm_matrix_instance_f32* pSrcB, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_add_f32(const arm_matrix_instance_f32* pSrcA,
+                           const arm_matrix_instance_f32* pSrcB,
+                           arm_matrix_instance_f32*       pDst) {
     float32_t* pIn1 = pSrcA->pData; /* input data matrix pointer A  */
     float32_t* pIn2 = pSrcB->pData; /* input data matrix pointer B  */
     float32_t* pOut = pDst->pData;  /* output data matrix pointer   */
@@ -141,7 +147,9 @@ arm_status arm_mat_add_f32(const arm_matrix_instance_f32* pSrcA, const arm_matri
 
 #ifdef ARM_MATH_MATRIX_CHECK
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) || (pSrcA->numRows != pDst->numRows) ||
+    if ((pSrcA->numRows != pSrcB->numRows) ||
+        (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) ||
         (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
@@ -196,7 +204,9 @@ arm_status arm_mat_add_f32(const arm_matrix_instance_f32* pSrcA, const arm_matri
     return (status);
 }
 #else
-arm_status arm_mat_add_f32(const arm_matrix_instance_f32* pSrcA, const arm_matrix_instance_f32* pSrcB, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_add_f32(const arm_matrix_instance_f32* pSrcA,
+                           const arm_matrix_instance_f32* pSrcB,
+                           arm_matrix_instance_f32*       pDst) {
     float32_t* pInA = pSrcA->pData; /* input data matrix pointer A */
     float32_t* pInB = pSrcB->pData; /* input data matrix pointer B */
     float32_t* pOut = pDst->pData;  /* output data matrix pointer */
@@ -208,7 +218,9 @@ arm_status arm_mat_add_f32(const arm_matrix_instance_f32* pSrcA, const arm_matri
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numRows != pSrcB->numRows) || (pSrcA->numCols != pSrcB->numCols) || (pSrcA->numRows != pDst->numRows) ||
+    if ((pSrcA->numRows != pSrcB->numRows) ||
+        (pSrcA->numCols != pSrcB->numCols) ||
+        (pSrcA->numRows != pDst->numRows) ||
         (pSrcA->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;

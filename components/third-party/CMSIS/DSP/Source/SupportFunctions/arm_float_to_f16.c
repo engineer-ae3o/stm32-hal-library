@@ -49,13 +49,18 @@
 
  */
 
-#if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) && defined(__CMSIS_GCC_H)
-#pragma GCC warning "Scalar version of arm_float_to_f16 built. Helium version has build issues with gcc."
+#if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) &&       \
+    defined(__CMSIS_GCC_H)
+#pragma GCC warning                                                            \
+    "Scalar version of arm_float_to_f16 built. Helium version has build issues with gcc."
 #endif
 
-#if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) && !defined(__CMSIS_GCC_H)
+#if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE) &&       \
+    !defined(__CMSIS_GCC_H)
 
-void arm_float_to_f16(const float32_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+void arm_float_to_f16(const float32_t* pSrc,
+                      float16_t*       pDst,
+                      uint32_t         blockSize) {
     int32_t          blkCnt; /* loop counters */
     float32x4x2_t    tmp;
     float16x8_t      vecDst;
@@ -94,7 +99,9 @@ void arm_float_to_f16(const float32_t* pSrc, float16_t* pDst, uint32_t blockSize
 
 #else
 
-void arm_float_to_f16(const float32_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+void arm_float_to_f16(const float32_t* pSrc,
+                      float16_t*       pDst,
+                      uint32_t         blockSize) {
     const float32_t* pIn = pSrc; /* Src pointer */
     uint32_t         blkCnt;     /* loop counter */
 

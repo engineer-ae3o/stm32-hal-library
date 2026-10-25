@@ -52,7 +52,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_svm_linear_predict_f16(const arm_svm_linear_instance_f16* S, const float16_t* in, int32_t* pResult) {
+void arm_svm_linear_predict_f16(const arm_svm_linear_instance_f16* S,
+                                const float16_t*                   in,
+                                int32_t*                           pResult) {
     /* inlined Matrix x Vector function interleaved with dot prod */
     uint32_t         numRows  = S->nbOfSupportVectors;
     uint32_t         numCols  = S->vectorDimension;
@@ -277,7 +279,9 @@ void arm_svm_linear_predict_f16(const arm_svm_linear_instance_f16* S, const floa
 }
 
 #else
-void arm_svm_linear_predict_f16(const arm_svm_linear_instance_f16* S, const float16_t* in, int32_t* pResult) {
+void arm_svm_linear_predict_f16(const arm_svm_linear_instance_f16* S,
+                                const float16_t*                   in,
+                                int32_t*                           pResult) {
     _Float16         sum = S->intercept;
     _Float16         dot = 0;
     uint32_t         i, j;

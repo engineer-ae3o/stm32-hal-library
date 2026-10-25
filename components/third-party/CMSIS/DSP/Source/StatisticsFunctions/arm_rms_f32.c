@@ -59,7 +59,9 @@
  */
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_rms_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_rms_f32(const float32_t* pSrc,
+                 uint32_t         blockSize,
+                 float32_t*       pResult) {
     float32_t pow = 0.0f;
 
     arm_power_f32(pSrc, blockSize, &pow);
@@ -69,7 +71,9 @@ void arm_rms_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) 
 }
 #else
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_rms_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_rms_f32(const float32_t* pSrc,
+                 uint32_t         blockSize,
+                 float32_t*       pResult) {
     float32_t sum = 0.0f; /* accumulator */
     float32_t in;         /* Temporary variable to store input value */
     uint32_t  blkCnt;     /* loop counter */
@@ -114,7 +118,9 @@ void arm_rms_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) 
     arm_sqrt_f32(sum / (float32_t)blockSize, pResult);
 }
 #else
-void arm_rms_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_rms_f32(const float32_t* pSrc,
+                 uint32_t         blockSize,
+                 float32_t*       pResult) {
     uint32_t  blkCnt;     /* Loop counter */
     float32_t sum = 0.0f; /* Temporary result storage */
     float32_t in;         /* Temporary variable to store input value */

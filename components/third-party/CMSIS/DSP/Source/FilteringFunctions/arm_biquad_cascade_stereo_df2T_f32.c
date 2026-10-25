@@ -45,25 +45,27 @@
   @param[in]     blockSize number of samples to process
   @return        none
  */
-#if (defined(ARM_MATH_MVEF) && defined(ARM_MATH_HELIUM_EXPERIMENTAL)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_MVEF) && defined(ARM_MATH_HELIUM_EXPERIMENTAL)) &&       \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include "arm_helium_utils.h"
 
-void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_instance_f32* S,
-                                        const float32_t*                                   pSrc,
-                                        float32_t*                                         pDst,
-                                        uint32_t                                           blockSize) {
-    const float32_t* pIn     = pSrc;               /*  source pointer            */
-    float32_t*       pOut    = pDst;               /*  destination pointer       */
-    float32_t*       pState  = S->pState;          /*  State pointer             */
-    const float32_t* pCoeffs = S->pCoeffs;         /*  coefficient pointer       */
-    float32_t        b0, b1, b2, a1, a2;           /*  Filter coefficients       */
-    uint32_t         sample, stage = S->numStages; /*  loop counters           */
-    float32_t        scratch[6];
-    uint32x4_t       loadIdxVec;
-    f32x4_t          aCoeffs, bCoeffs;
-    f32x4_t          stateVec0, stateVec1;
-    f32x4_t          inVec;
-    uint32_t         startIdx = 0;
+void arm_biquad_cascade_stereo_df2T_f32(
+    const arm_biquad_cascade_stereo_df2T_instance_f32* S,
+    const float32_t*                                   pSrc,
+    float32_t*                                         pDst,
+    uint32_t                                           blockSize) {
+    const float32_t* pIn     = pSrc;         /*  source pointer            */
+    float32_t*       pOut    = pDst;         /*  destination pointer       */
+    float32_t*       pState  = S->pState;    /*  State pointer             */
+    const float32_t* pCoeffs = S->pCoeffs;   /*  coefficient pointer       */
+    float32_t        b0, b1, b2, a1, a2;     /*  Filter coefficients       */
+    uint32_t   sample, stage = S->numStages; /*  loop counters           */
+    float32_t  scratch[6];
+    uint32x4_t loadIdxVec;
+    f32x4_t    aCoeffs, bCoeffs;
+    f32x4_t    stateVec0, stateVec1;
+    f32x4_t    inVec;
+    uint32_t   startIdx = 0;
 
     /*
      * {0, 1, 0, 1} generator
@@ -121,11 +123,13 @@ void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_ins
             /*
              * load {d1a, d1b, d1a, d1b}
              */
-            stateVec0 = (f32x4_t)vldrwq_gather_shifted_offset((uint32_t const*)scratch, loadIdxVec);
+            stateVec0 = (f32x4_t)vldrwq_gather_shifted_offset(
+                (uint32_t const*)scratch, loadIdxVec);
             /*
              * load {in0 in1 in0 in1}
              */
-            inVec = (f32x4_t)vldrwq_gather_shifted_offset((uint32_t const*)pIn, loadIdxVec);
+            inVec = (f32x4_t)vldrwq_gather_shifted_offset((uint32_t const*)pIn,
+                                                          loadIdxVec);
 
             stateVec0 = vfmaq(stateVec0, inVec, b0);
             *pOut++   = vgetq_lane(stateVec0, 0);
@@ -175,10 +179,11 @@ void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_ins
 
 #else
 
-void arm_biquad_cascade_stereo_df2T_f32(const arm_biquad_cascade_stereo_df2T_instance_f32* S,
-                                        const float32_t*                                   pSrc,
-                                        float32_t*                                         pDst,
-                                        uint32_t                                           blockSize) {
+void arm_biquad_cascade_stereo_df2T_f32(
+    const arm_biquad_cascade_stereo_df2T_instance_f32* S,
+    const float32_t*                                   pSrc,
+    float32_t*                                         pDst,
+    uint32_t                                           blockSize) {
     const float32_t* pIn     = pSrc;               /* Source pointer */
     float32_t*       pOut    = pDst;               /* Destination pointer */
     float32_t*       pState  = S->pState;          /* State pointer */

@@ -51,7 +51,10 @@
  */
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_cmplx_mult_cmplx_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mult_cmplx_q31(const q31_t* pSrcA,
+                              const q31_t* pSrcB,
+                              q31_t*       pDst,
+                              uint32_t     numSamples) {
     int32_t blkCnt;
     q31x4_t vecSrcA, vecSrcB;
     q31x4_t vecSrcC, vecSrcD;
@@ -159,7 +162,10 @@ void arm_cmplx_mult_cmplx_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDs
     }
 }
 #else
-void arm_cmplx_mult_cmplx_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mult_cmplx_q31(const q31_t* pSrcA,
+                              const q31_t* pSrcB,
+                              q31_t*       pDst,
+                              uint32_t     numSamples) {
     uint32_t blkCnt;     /* Loop counter */
     q31_t    a, b, c, d; /* Temporary variables */
 

@@ -46,15 +46,19 @@
   @return        none
  */
 
-void arm_fir_f64(const arm_fir_instance_f64* S, const float64_t* pSrc, float64_t* pDst, uint32_t blockSize) {
+void arm_fir_f64(const arm_fir_instance_f64* S,
+                 const float64_t*            pSrc,
+                 float64_t*                  pDst,
+                 uint32_t                    blockSize) {
     float64_t*       pState  = S->pState;  /* State pointer */
     const float64_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    float64_t*       pStateCurnt;          /* Points to the current sample of the state */
-    float64_t*       px;                   /* Temporary pointer for state buffer */
-    const float64_t* pb;                   /* Temporary pointer for coefficient buffer */
-    float64_t        acc0;                 /* Accumulator */
-    uint32_t         numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t         i, tapCnt, blkCnt;    /* Loop counters */
+    float64_t* pStateCurnt; /* Points to the current sample of the state */
+    float64_t* px;          /* Temporary pointer for state buffer */
+    const float64_t* pb;    /* Temporary pointer for coefficient buffer */
+    float64_t        acc0;  /* Accumulator */
+    uint32_t         numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t i, tapCnt, blkCnt; /* Loop counters */
 
     /* S->pState points to state array which contains previous frame (numTaps - 1) samples */
     /* pStateCurnt points to the location where the new input data should be written */

@@ -62,9 +62,9 @@ void arm_var_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult) {
     uint32_t blkCnt; /* loop counters */
     q31x4_t  vecSrc;
     q63_t    sumOfSquares = 0LL;
-    q63_t    meanOfSquares, squareOfMean; /* square of mean and mean of square */
-    q63_t    sum = 0LL;
-    q31_t    in;
+    q63_t meanOfSquares, squareOfMean; /* square of mean and mean of square */
+    q63_t sum = 0LL;
+    q31_t in;
 
     if (blockSize <= 1U) {
         *pResult = 0;
@@ -120,11 +120,11 @@ void arm_var_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult) {
 }
 #else
 void arm_var_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult) {
-    uint32_t blkCnt;                      /* Loop counter */
-    q63_t    sum = 0;                     /* Temporary result storage */
-    q63_t    meanOfSquares, squareOfMean; /* Square of mean and mean of square */
-    q63_t    sumOfSquares = 0;            /* Sum of squares */
-    q31_t    in;                          /* Temporary variable to store input value */
+    uint32_t blkCnt;                   /* Loop counter */
+    q63_t    sum = 0;                  /* Temporary result storage */
+    q63_t meanOfSquares, squareOfMean; /* Square of mean and mean of square */
+    q63_t sumOfSquares = 0;            /* Sum of squares */
+    q31_t in; /* Temporary variable to store input value */
 
     if (blockSize <= 1U) {
         *pResult = 0;

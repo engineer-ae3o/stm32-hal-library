@@ -52,7 +52,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-float32_t arm_chebyshev_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_chebyshev_distance_f32(const float32_t* pA,
+                                     const float32_t* pB,
+                                     uint32_t         blockSize) {
     uint32_t  blkCnt; /* loop counters */
     f32x4_t   vecA, vecB;
     f32x4_t   vecDiff  = vdupq_n_f32(0.0);
@@ -102,7 +104,9 @@ float32_t arm_chebyshev_distance_f32(const float32_t* pA, const float32_t* pB, u
 
 #include "NEMath.h"
 
-float32_t arm_chebyshev_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_chebyshev_distance_f32(const float32_t* pA,
+                                     const float32_t* pB,
+                                     uint32_t         blockSize) {
     float32_t   diff = 0.0f, maxVal = 0.0f, tmpA, tmpB;
     uint32_t    blkCnt;
     float32x4_t a, b, diffV, maxValV;
@@ -170,7 +174,9 @@ float32_t arm_chebyshev_distance_f32(const float32_t* pA, const float32_t* pB, u
 }
 
 #else
-float32_t arm_chebyshev_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_chebyshev_distance_f32(const float32_t* pA,
+                                     const float32_t* pB,
+                                     uint32_t         blockSize) {
     float32_t diff = 0.0f, maxVal, tmpA, tmpB;
 
     tmpA   = *pA++;

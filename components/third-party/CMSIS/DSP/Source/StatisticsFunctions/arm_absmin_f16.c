@@ -31,7 +31,8 @@
 #if defined(ARM_FLOAT16_SUPPORTED)
 
 
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) &&                      \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include <limits.h>
 #endif
 
@@ -57,7 +58,10 @@
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "arm_helium_utils.h"
-void arm_absmin_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, uint32_t* pIndex) {
+void arm_absmin_f16(const float16_t* pSrc,
+                    uint32_t         blockSize,
+                    float16_t*       pResult,
+                    uint32_t*        pIndex) {
     uint16_t         blkCnt; /* loop counters */
     f16x8_t          vecSrc;
     float16_t const* pSrcVec;
@@ -133,44 +137,60 @@ void arm_absmin_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResul
 
 #else
 #if defined(ARM_MATH_LOOPUNROLL)
-void arm_absmin_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, uint32_t* pIndex) {
-    float16_t cur_absmin, out;  /* Temporary variables to store the output value. */
-    uint32_t  blkCnt, outIndex; /* Loop counter */
-    uint32_t  index;            /* index of maximum value */
+void arm_absmin_f16(const float16_t* pSrc,
+                    uint32_t         blockSize,
+                    float16_t*       pResult,
+                    uint32_t*        pIndex) {
+    float16_t cur_absmin,
+        out; /* Temporary variables to store the output value. */
+    uint32_t blkCnt, outIndex; /* Loop counter */
+    uint32_t index;            /* index of maximum value */
 
     /* Initialize index value to zero. */
-    outIndex = 0U; /* Load first input value that act as reference value for comparision */
-    out      = *pSrc++;
-    out      = ((_Float16)out > 0.0f16) ? out : -(_Float16)out; /* Initialize index of extrema value. */
-    index    = 0U;
+    outIndex =
+        0U; /* Load first input value that act as reference value for comparision */
+    out   = *pSrc++;
+    out   = ((_Float16)out > 0.0f16)
+                ? out
+                : -(_Float16)out; /* Initialize index of extrema value. */
+    index = 0U;
 
     /* Loop unrolling: Compute 4 outputs at a time */
     blkCnt = (blockSize - 1U) >> 2U;
 
-    while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
+    while (
+        blkCnt >
+        0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin; /* compare for the extrema value */
-        if ((_Float16)cur_absmin < (_Float16)out) {                                        /* Update the extrema value and it's index */
+        cur_absmin =
+            ((_Float16)cur_absmin > 0.0f16)
+                ? cur_absmin
+                : -(_Float16)cur_absmin; /* compare for the extrema value */
+        if ((_Float16)cur_absmin <
+            (_Float16)out) { /* Update the extrema value and it's index */
             out      = cur_absmin;
             outIndex = index + 1U;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin;
+        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin
+                                                     : -(_Float16)cur_absmin;
         if ((_Float16)cur_absmin < (_Float16)out) {
             out      = cur_absmin;
             outIndex = index + 2U;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin;
+        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin
+                                                     : -(_Float16)cur_absmin;
         if ((_Float16)cur_absmin < (_Float16)out) {
             out      = cur_absmin;
             outIndex = index + 3U;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin;
+        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin
+                                                     : -(_Float16)cur_absmin;
         if ((_Float16)cur_absmin < (_Float16)out) {
             out      = cur_absmin;
             outIndex = index + 4U;
@@ -188,7 +208,8 @@ void arm_absmin_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResul
 
     while (blkCnt > 0U) {
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin;
+        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin
+                                                     : -(_Float16)cur_absmin;
         if ((_Float16)cur_absmin < (_Float16)out) {
             out      = cur_absmin;
             outIndex = blockSize - blkCnt;
@@ -203,8 +224,11 @@ void arm_absmin_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResul
     *pIndex  = outIndex;
 }
 #else
-void arm_absmin_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult, uint32_t* pIndex) {
-    float16_t minVal, out;      /* Temporary variables to store the output value. */
+void arm_absmin_f16(const float16_t* pSrc,
+                    uint32_t         blockSize,
+                    float16_t*       pResult,
+                    uint32_t*        pIndex) {
+    float16_t minVal, out; /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* Loop counter */
 
     /* Initialise index value to zero. */

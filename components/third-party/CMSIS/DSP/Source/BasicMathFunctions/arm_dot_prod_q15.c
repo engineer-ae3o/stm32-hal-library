@@ -56,7 +56,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_dot_prod_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t blockSize, q63_t* result) {
+void arm_dot_prod_q15(const q15_t* pSrcA,
+                      const q15_t* pSrcB,
+                      uint32_t     blockSize,
+                      q63_t*       result) {
     uint32_t blkCnt; /* loop counters */
     q15x8_t  vecA;
     q15x8_t  vecB;
@@ -97,7 +100,10 @@ void arm_dot_prod_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t blockSize
 }
 
 #else
-void arm_dot_prod_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t blockSize, q63_t* result) {
+void arm_dot_prod_q15(const q15_t* pSrcA,
+                      const q15_t* pSrcB,
+                      uint32_t     blockSize,
+                      q63_t*       result) {
     uint32_t blkCnt;  /* Loop counter */
     q63_t    sum = 0; /* Temporary return variable */
 

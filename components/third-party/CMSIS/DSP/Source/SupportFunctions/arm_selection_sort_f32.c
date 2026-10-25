@@ -56,7 +56,10 @@
    *               function, a memcpy of the source vector is performed.
    */
 
-void arm_selection_sort_f32(const arm_sort_instance_f32* S, float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_selection_sort_f32(const arm_sort_instance_f32* S,
+                            float32_t*                   pSrc,
+                            float32_t*                   pDst,
+                            uint32_t                     blockSize) {
     uint32_t  i, j, k;
     uint8_t   dir = S->dir;
     float32_t temp;

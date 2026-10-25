@@ -396,16 +396,20 @@ uint32_t UART_Configure(const uint8_t* request, uint8_t* response) {
     int32_t  result;
 
     if (UartTransport != DAP_UART_TRANSPORT_DAP_COMMAND) {
-        status   = DAP_UART_CFG_ERROR_DATA_BITS | DAP_UART_CFG_ERROR_PARITY | DAP_UART_CFG_ERROR_STOP_BITS;
+        status   = DAP_UART_CFG_ERROR_DATA_BITS | DAP_UART_CFG_ERROR_PARITY |
+                   DAP_UART_CFG_ERROR_STOP_BITS;
         baudrate = 0U; // baudrate error
     } else {
 
         status  = 0U;
         control = *request;
         baudrate =
-            (uint32_t)(*(request + 1) << 0) | (uint32_t)(*(request + 2) << 8) | (uint32_t)(*(request + 3) << 16) | (uint32_t)(*(request + 4) << 24);
+            (uint32_t)(*(request + 1) << 0) | (uint32_t)(*(request + 2) << 8) |
+            (uint32_t)(*(request + 3) << 16) | (uint32_t)(*(request + 4) << 24);
 
-        result = pUSART->Control(control | ARM_USART_MODE_ASYNCHRONOUS | ARM_USART_FLOW_CONTROL_NONE, baudrate);
+        result = pUSART->Control(control | ARM_USART_MODE_ASYNCHRONOUS |
+                                     ARM_USART_FLOW_CONTROL_NONE,
+                                 baudrate);
         if (result == ARM_DRIVER_OK) {
             UartConfigured = 1U;
         } else {
@@ -425,7 +429,9 @@ uint32_t UART_Configure(const uint8_t* request, uint8_t* response) {
                     status = DAP_UART_CFG_ERROR_STOP_BITS;
                     break;
                 default:
-                    status   = DAP_UART_CFG_ERROR_DATA_BITS | DAP_UART_CFG_ERROR_PARITY | DAP_UART_CFG_ERROR_STOP_BITS;
+                    status   = DAP_UART_CFG_ERROR_DATA_BITS |
+                               DAP_UART_CFG_ERROR_PARITY |
+                               DAP_UART_CFG_ERROR_STOP_BITS;
                     baudrate = 0U;
                     break;
             }
@@ -508,7 +514,8 @@ uint32_t UART_Status(uint8_t* response) {
     uint32_t cnt;
     uint8_t  status;
 
-    if ((UartTransport != DAP_UART_TRANSPORT_DAP_COMMAND) || (UartConfigured == 0U)) {
+    if ((UartTransport != DAP_UART_TRANSPORT_DAP_COMMAND) ||
+        (UartConfigured == 0U)) {
         rx_cnt = 0U;
         tx_cnt = 0U;
         status = 0U;
@@ -519,8 +526,8 @@ uint32_t UART_Status(uint8_t* response) {
         if (rx_cnt > (DAP_UART_RX_BUFFER_SIZE - (UART_RX_BLOCK_SIZE * 2))) {
             // Overflow
             UartErrorRxDataLost = 1U;
-            rx_cnt              = (DAP_UART_RX_BUFFER_SIZE - (UART_RX_BLOCK_SIZE * 2));
-            UartRxIndexO        = UartRxIndexI - rx_cnt;
+            rx_cnt       = (DAP_UART_RX_BUFFER_SIZE - (UART_RX_BLOCK_SIZE * 2));
+            UartRxIndexO = UartRxIndexI - rx_cnt;
         }
 
         tx_cnt = UartTxIndexI - UartTxIndexO;
@@ -566,7 +573,8 @@ uint32_t UART_Transfer(const uint8_t* request, uint8_t* response) {
     } else {
 
         // RX Data
-        rx_cnt = ((uint32_t)(*(request + 0) << 0) | (uint32_t)(*(request + 1) << 8));
+        rx_cnt =
+            ((uint32_t)(*(request + 0) << 0) | (uint32_t)(*(request + 1) << 8));
 
         if (rx_cnt > (DAP_PACKET_SIZE - 6U)) {
             rx_cnt = (DAP_PACKET_SIZE - 6U);
@@ -576,8 +584,8 @@ uint32_t UART_Transfer(const uint8_t* request, uint8_t* response) {
         if (rx_num > (DAP_UART_RX_BUFFER_SIZE - (UART_RX_BLOCK_SIZE * 2))) {
             // Overflow
             UartErrorRxDataLost = 1U;
-            rx_num              = (DAP_UART_RX_BUFFER_SIZE - (UART_RX_BLOCK_SIZE * 2));
-            UartRxIndexO        = UartRxIndexI - rx_num;
+            rx_num       = (DAP_UART_RX_BUFFER_SIZE - (UART_RX_BLOCK_SIZE * 2));
+            UartRxIndexO = UartRxIndexI - rx_num;
         }
         if (rx_cnt > rx_num) {
             rx_cnt = rx_num;
@@ -595,7 +603,8 @@ uint32_t UART_Transfer(const uint8_t* request, uint8_t* response) {
         UartRxIndexO += rx_cnt;
 
         // TX Data
-        tx_cnt  = ((uint32_t)(*(request + 2) << 0) | (uint32_t)(*(request + 3) << 8));
+        tx_cnt =
+            ((uint32_t)(*(request + 2) << 0) | (uint32_t)(*(request + 3) << 8));
         tx_data = (request + 4);
 
         if (tx_cnt > (DAP_PACKET_SIZE - 5U)) {

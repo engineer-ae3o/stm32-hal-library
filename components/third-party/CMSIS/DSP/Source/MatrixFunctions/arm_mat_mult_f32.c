@@ -64,9 +64,10 @@
 #define MATRIX_DIM3 3
 #define MATRIX_DIM4 4
 
-__STATIC_INLINE arm_status arm_mat_mult_f32_2x2_mve(const arm_matrix_instance_f32* pSrcA,
-                                                    const arm_matrix_instance_f32* pSrcB,
-                                                    arm_matrix_instance_f32*       pDst) {
+__STATIC_INLINE arm_status
+arm_mat_mult_f32_2x2_mve(const arm_matrix_instance_f32* pSrcA,
+                         const arm_matrix_instance_f32* pSrcB,
+                         arm_matrix_instance_f32*       pDst) {
     /* {a00, a00, a10, a10} */
     static const uint32_t offsetA0[4] = {0, 0, 2, 2};
     /* {b00, b01, b00, b01} */
@@ -82,16 +83,20 @@ __STATIC_INLINE arm_status arm_mat_mult_f32_2x2_mve(const arm_matrix_instance_f3
     vecOffsA = vldrwq_u32((uint32_t const*)offsetA0);
     vecOffsB = vldrwq_u32((uint32_t const*)offsetB0);
 
-    vecInA = vldrwq_gather_shifted_offset((float32_t const*)pSrcA->pData, vecOffsA);
-    vecInB = vldrwq_gather_shifted_offset((float32_t const*)pSrcB->pData, vecOffsB);
+    vecInA =
+        vldrwq_gather_shifted_offset((float32_t const*)pSrcA->pData, vecOffsA);
+    vecInB =
+        vldrwq_gather_shifted_offset((float32_t const*)pSrcB->pData, vecOffsB);
 
     vecDst = vmulq(vecInA, vecInB);
 
     vecOffsA = vldrwq_u32((uint32_t const*)offsetA1);
     vecOffsB = vldrwq_u32((uint32_t const*)offsetB1);
 
-    vecInA = vldrwq_gather_shifted_offset((float32_t const*)pSrcA->pData, vecOffsA);
-    vecInB = vldrwq_gather_shifted_offset((float32_t const*)pSrcB->pData, vecOffsB);
+    vecInA =
+        vldrwq_gather_shifted_offset((float32_t const*)pSrcA->pData, vecOffsA);
+    vecInB =
+        vldrwq_gather_shifted_offset((float32_t const*)pSrcB->pData, vecOffsB);
 
     vecDst = vfmaq(vecDst, vecInA, vecInB);
 
@@ -113,9 +118,10 @@ __STATIC_INLINE arm_status arm_mat_mult_f32_2x2_mve(const arm_matrix_instance_f3
  *        {a10 b00 + a11 b10 + a12 b20, a10 b01 + a11 b11 + a12 b21, a10 b02 + a11 b12 + a12 b22},
  *        {a20 b00 + a21 b10 + a22 b20, a20 b01 + a21 b11 + a22 b21, a20 b02 + a21 b12 + a22 b22}}
  */
-__STATIC_INLINE arm_status arm_mat_mult_f32_3x3_mve(const arm_matrix_instance_f32* pSrcA,
-                                                    const arm_matrix_instance_f32* pSrcB,
-                                                    arm_matrix_instance_f32*       pDst) {
+__STATIC_INLINE arm_status
+arm_mat_mult_f32_3x3_mve(const arm_matrix_instance_f32* pSrcA,
+                         const arm_matrix_instance_f32* pSrcB,
+                         arm_matrix_instance_f32*       pDst) {
     float32_t*       pInB = pSrcB->pData; /* input data matrix pointer B */
     float32_t*       pInA = pSrcA->pData; /* input data matrix pointer A  */
     float32_t*       pOut = pDst->pData;  /* output data matrix pointer */
@@ -173,9 +179,10 @@ __STATIC_INLINE arm_status arm_mat_mult_f32_3x3_mve(const arm_matrix_instance_f3
 }
 
 
-__STATIC_INLINE arm_status arm_mat_mult_f32_4x4_mve(const arm_matrix_instance_f32* pSrcA,
-                                                    const arm_matrix_instance_f32* pSrcB,
-                                                    arm_matrix_instance_f32*       pDst) {
+__STATIC_INLINE arm_status
+arm_mat_mult_f32_4x4_mve(const arm_matrix_instance_f32* pSrcA,
+                         const arm_matrix_instance_f32* pSrcB,
+                         arm_matrix_instance_f32*       pDst) {
     float32_t const* pSrBVec;
     float32_t*       pInB = pSrcB->pData; /* input data matrix pointer B */
     float32_t*       pInA = pSrcA->pData; /* input data matrix pointer A  */
@@ -253,21 +260,25 @@ __STATIC_INLINE arm_status arm_mat_mult_f32_4x4_mve(const arm_matrix_instance_f3
  * @return          The function returns either
  * <code>ARM_MATH_SIZE_MISMATCH</code> or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
  */
-arm_status arm_mat_mult_f32(const arm_matrix_instance_f32* pSrcA, const arm_matrix_instance_f32* pSrcB, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_mult_f32(const arm_matrix_instance_f32* pSrcA,
+                            const arm_matrix_instance_f32* pSrcB,
+                            arm_matrix_instance_f32*       pDst) {
     float32_t* pInB     = pSrcB->pData;   /* input data matrix pointer B */
     float32_t* pInA     = pSrcA->pData;   /* input data matrix pointer A  */
     float32_t* pOut     = pDst->pData;    /* output data matrix pointer */
     int        numRowsA = pSrcA->numRows; /* number of rows of input matrix A */
-    int        numColsB = pSrcB->numCols; /* number of columns of input matrix B */
-    int        numColsA = pSrcA->numCols; /* number of columns of input matrix A */
-    uint32_t   blkCnt;                    /* loop counters */
+    int numColsB = pSrcB->numCols; /* number of columns of input matrix B */
+    int numColsA = pSrcA->numCols; /* number of columns of input matrix A */
+    uint32_t   blkCnt;             /* loop counters */
     uint32_t   i;
     arm_status status;
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -495,20 +506,24 @@ arm_status arm_mat_mult_f32(const arm_matrix_instance_f32* pSrcA, const arm_matr
  * @return          The function returns either
  * <code>ARM_MATH_SIZE_MISMATCH</code> or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
  */
-arm_status arm_mat_mult_f32(const arm_matrix_instance_f32* pSrcA, const arm_matrix_instance_f32* pSrcB, arm_matrix_instance_f32* pDst) {
-    float32_t* pIn1 = pSrcA->pData;       /* input data matrix pointer A */
-    float32_t* pIn2 = pSrcB->pData;       /* input data matrix pointer B */
-    float32_t* pInA = pSrcA->pData;       /* input data matrix pointer A  */
-    float32_t* pOut = pDst->pData;        /* output data matrix pointer */
-    float32_t* px;                        /* Temporary output data matrix pointer */
-    float32_t  sum;                       /* Accumulator */
+arm_status arm_mat_mult_f32(const arm_matrix_instance_f32* pSrcA,
+                            const arm_matrix_instance_f32* pSrcB,
+                            arm_matrix_instance_f32*       pDst) {
+    float32_t* pIn1 = pSrcA->pData; /* input data matrix pointer A */
+    float32_t* pIn2 = pSrcB->pData; /* input data matrix pointer B */
+    float32_t* pInA = pSrcA->pData; /* input data matrix pointer A  */
+    float32_t* pOut = pDst->pData;  /* output data matrix pointer */
+    float32_t* px;                  /* Temporary output data matrix pointer */
+    float32_t  sum;                 /* Accumulator */
     uint16_t   numRowsA = pSrcA->numRows; /* number of rows of input matrix A */
-    uint16_t   numColsB = pSrcB->numCols; /* number of columns of input matrix B */
-    uint16_t   numColsA = pSrcA->numCols; /* number of columns of input matrix A */
+    uint16_t   numColsB =
+        pSrcB->numCols; /* number of columns of input matrix B */
+    uint16_t numColsA =
+        pSrcA->numCols; /* number of columns of input matrix A */
 
 
-    uint16_t   col, i = 0U, j, row = numRowsA, rowCnt, colCnt; /* loop counters */
-    arm_status status;                                         /* status of matrix multiplication */
+    uint16_t col, i = 0U, j, row = numRowsA, rowCnt, colCnt; /* loop counters */
+    arm_status status; /* status of matrix multiplication */
 
     float32x4_t a0V, a1V, a2V, a3V, a4V, a5V, a6V, a7V;
     float32x4_t acc0, acc1, acc2, acc3, acc4, acc5, acc6, acc7, temp;
@@ -521,13 +536,16 @@ arm_status arm_mat_mult_f32(const arm_matrix_instance_f32* pSrcA, const arm_matr
     float32_t*  pIn1G = pSrcA->pData;
     float32_t*  pIn1H = pSrcA->pData;
 
-    float32_t *pxB, *pxC, *pxD, *pxE, *pxF, *pxG, *pxH; /* Temporary output data matrix pointer */
-    float32_t  sum0, sum1, sum2, sum3, sum4, sum5, sum6, sum7;
+    float32_t *pxB, *pxC, *pxD, *pxE, *pxF, *pxG,
+        *pxH; /* Temporary output data matrix pointer */
+    float32_t sum0, sum1, sum2, sum3, sum4, sum5, sum6, sum7;
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -745,7 +763,8 @@ arm_status arm_mat_mult_f32(const arm_matrix_instance_f32* pSrcA, const arm_matr
                 /* Matrix multiplication   */
                 while (colCnt > 0U) {
                     /* c(m,n) = a(1,1)*b(1,1) + a(1,2)*b(2,1) + ... + a(m,p)*b(p,n) */
-                    a0V = vld1q_f32(pIn1); // load & separate real/imag pSrcA (de-interleave 2)
+                    a0V = vld1q_f32(
+                        pIn1); // load & separate real/imag pSrcA (de-interleave 2)
                     pIn1 += 4;
 
                     temp = vsetq_lane_f32(*pIn2, temp, 0);
@@ -815,24 +834,30 @@ arm_status arm_mat_mult_f32(const arm_matrix_instance_f32* pSrcA, const arm_matr
  * @return          The function returns either
  * <code>ARM_MATH_SIZE_MISMATCH</code> or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
  */
-arm_status arm_mat_mult_f32(const arm_matrix_instance_f32* pSrcA, const arm_matrix_instance_f32* pSrcB, arm_matrix_instance_f32* pDst) {
-    float32_t* pIn1 = pSrcA->pData;                 /* Input data matrix pointer A */
-    float32_t* pIn2 = pSrcB->pData;                 /* Input data matrix pointer B */
-    float32_t* pInA = pSrcA->pData;                 /* Input data matrix pointer A */
-    float32_t* pInB = pSrcB->pData;                 /* Input data matrix pointer B */
-    float32_t* pOut = pDst->pData;                  /* Output data matrix pointer */
-    float32_t* px;                                  /* Temporary output data matrix pointer */
-    float32_t  sum;                                 /* Accumulator */
-    uint16_t   numRowsA = pSrcA->numRows;           /* Number of rows of input matrix A */
-    uint16_t   numColsB = pSrcB->numCols;           /* Number of columns of input matrix B */
-    uint16_t   numColsA = pSrcA->numCols;           /* Number of columns of input matrix A */
+arm_status arm_mat_mult_f32(const arm_matrix_instance_f32* pSrcA,
+                            const arm_matrix_instance_f32* pSrcB,
+                            arm_matrix_instance_f32*       pDst) {
+    float32_t* pIn1 = pSrcA->pData; /* Input data matrix pointer A */
+    float32_t* pIn2 = pSrcB->pData; /* Input data matrix pointer B */
+    float32_t* pInA = pSrcA->pData; /* Input data matrix pointer A */
+    float32_t* pInB = pSrcB->pData; /* Input data matrix pointer B */
+    float32_t* pOut = pDst->pData;  /* Output data matrix pointer */
+    float32_t* px;                  /* Temporary output data matrix pointer */
+    float32_t  sum;                 /* Accumulator */
+    uint16_t   numRowsA = pSrcA->numRows; /* Number of rows of input matrix A */
+    uint16_t   numColsB =
+        pSrcB->numCols; /* Number of columns of input matrix B */
+    uint16_t numColsA =
+        pSrcA->numCols; /* Number of columns of input matrix A */
     uint32_t   col, i = 0U, row = numRowsA, colCnt; /* Loop counters */
-    arm_status status;                              /* Status of matrix multiplication */
+    arm_status status; /* Status of matrix multiplication */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

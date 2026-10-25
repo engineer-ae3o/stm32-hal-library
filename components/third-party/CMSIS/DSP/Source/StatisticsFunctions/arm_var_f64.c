@@ -44,7 +44,9 @@
   @param[out]    pResult    variance value returned here
   @return        none
  */
-void arm_var_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult) {
+void arm_var_f64(const float64_t* pSrc,
+                 uint32_t         blockSize,
+                 float64_t*       pResult) {
     uint32_t         blkCnt;    /* Loop counter */
     float64_t        sum  = 0.; /* Temporary result storage */
     float64_t        fSum = 0.;

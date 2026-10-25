@@ -55,7 +55,10 @@
   @return        none
  */
 
-void arm_mat_init_f32(arm_matrix_instance_f32* S, uint16_t nRows, uint16_t nColumns, float32_t* pData) {
+void arm_mat_init_f32(arm_matrix_instance_f32* S,
+                      uint16_t                 nRows,
+                      uint16_t                 nColumns,
+                      float32_t*               pData) {
     /* Assign Number of Rows */
     S->numRows = nRows;
 

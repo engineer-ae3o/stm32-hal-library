@@ -63,25 +63,31 @@
                    which uses 64-bit accumulation to provide higher precision.
  */
 
-arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA, const arm_matrix_instance_q31* pSrcB, arm_matrix_instance_q31* pDst) {
-    q31_t*     pInA = pSrcA->pData; /* Input data matrix pointer A */
-    q31_t*     pInB = pSrcB->pData; /* Input data matrix pointer B */
-    q31_t*     pInA2;
-    q31_t*     px; /* Temporary output data matrix pointer */
-    q31_t*     px2;
-    q31_t      sum1, sum2, sum3, sum4; /* Accumulator */
-    q31_t      inA1, inA2, inB1, inB2;
-    uint16_t   numRowsA = pSrcA->numRows;              /* Number of rows of input matrix A */
-    uint16_t   numColsB = pSrcB->numCols;              /* Number of columns of input matrix B */
-    uint16_t   numColsA = pSrcA->numCols;              /* Number of columns of input matrix A */
+arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA,
+                                 const arm_matrix_instance_q31* pSrcB,
+                                 arm_matrix_instance_q31*       pDst) {
+    q31_t*   pInA = pSrcA->pData; /* Input data matrix pointer A */
+    q31_t*   pInB = pSrcB->pData; /* Input data matrix pointer B */
+    q31_t*   pInA2;
+    q31_t*   px; /* Temporary output data matrix pointer */
+    q31_t*   px2;
+    q31_t    sum1, sum2, sum3, sum4; /* Accumulator */
+    q31_t    inA1, inA2, inB1, inB2;
+    uint16_t numRowsA = pSrcA->numRows; /* Number of rows of input matrix A */
+    uint16_t numColsB =
+        pSrcB->numCols; /* Number of columns of input matrix B */
+    uint16_t numColsA =
+        pSrcA->numCols; /* Number of columns of input matrix A */
     uint32_t   col, i = 0U, j, row = numRowsA, colCnt; /* Loop counters */
-    arm_status status;                                 /* Status of matrix multiplication */
+    arm_status status; /* Status of matrix multiplication */
 
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -138,10 +144,18 @@ arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA, const arm
                     sum3 = __SMMLA(inA2, inB1, sum3);
                     sum4 = __SMMLA(inA2, inB2, sum4);
 #else
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)inA1 * inB1)) >> 32);
-                    sum2 = (q31_t)((((q63_t)sum2 << 32) + ((q63_t)inA1 * inB2)) >> 32);
-                    sum3 = (q31_t)((((q63_t)sum3 << 32) + ((q63_t)inA2 * inB1)) >> 32);
-                    sum4 = (q31_t)((((q63_t)sum4 << 32) + ((q63_t)inA2 * inB2)) >> 32);
+                    sum1 =
+                        (q31_t)((((q63_t)sum1 << 32) + ((q63_t)inA1 * inB1)) >>
+                                32);
+                    sum2 =
+                        (q31_t)((((q63_t)sum2 << 32) + ((q63_t)inA1 * inB2)) >>
+                                32);
+                    sum3 =
+                        (q31_t)((((q63_t)sum3 << 32) + ((q63_t)inA2 * inB1)) >>
+                                32);
+                    sum4 =
+                        (q31_t)((((q63_t)sum4 << 32) + ((q63_t)inA2 * inB2)) >>
+                                32);
 #endif
 
                     /* Decrement loop counter */
@@ -199,28 +213,36 @@ arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA, const arm
 #if defined(ARM_MATH_DSP)
                     sum1 = __SMMLA(*pInA++, *pInB, sum1);
 #else
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)*pInA++ * *pInB)) >> 32);
+                    sum1 = (q31_t)((((q63_t)sum1 << 32) +
+                                    ((q63_t)*pInA++ * *pInB)) >>
+                                   32);
 #endif
                     pInB += numColsB;
 
 #if defined(ARM_MATH_DSP)
                     sum1 = __SMMLA(*pInA++, *pInB, sum1);
 #else
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)*pInA++ * *pInB)) >> 32);
+                    sum1 = (q31_t)((((q63_t)sum1 << 32) +
+                                    ((q63_t)*pInA++ * *pInB)) >>
+                                   32);
 #endif
                     pInB += numColsB;
 
 #if defined(ARM_MATH_DSP)
                     sum1 = __SMMLA(*pInA++, *pInB, sum1);
 #else
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)*pInA++ * *pInB)) >> 32);
+                    sum1 = (q31_t)((((q63_t)sum1 << 32) +
+                                    ((q63_t)*pInA++ * *pInB)) >>
+                                   32);
 #endif
                     pInB += numColsB;
 
 #if defined(ARM_MATH_DSP)
                     sum1 = __SMMLA(*pInA++, *pInB, sum1);
 #else
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)*pInA++ * *pInB)) >> 32);
+                    sum1 = (q31_t)((((q63_t)sum1 << 32) +
+                                    ((q63_t)*pInA++ * *pInB)) >>
+                                   32);
 #endif
                     pInB += numColsB;
 
@@ -242,7 +264,9 @@ arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA, const arm
 #if defined(ARM_MATH_DSP)
                     sum1 = __SMMLA(*pInA++, *pInB, sum1);
 #else
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)*pInA++ * *pInB)) >> 32);
+                    sum1 = (q31_t)((((q63_t)sum1 << 32) +
+                                    ((q63_t)*pInA++ * *pInB)) >>
+                                   32);
 #endif
                     pInB += numColsB;
 
@@ -294,8 +318,12 @@ arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA, const arm
                     sum1 = __SMMLA(inA1, inB1, sum1);
                     sum1 = __SMMLA(inA2, inB2, sum1);
 #else
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)inA1 * inB1)) >> 32);
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)inA2 * inB2)) >> 32);
+                    sum1 =
+                        (q31_t)((((q63_t)sum1 << 32) + ((q63_t)inA1 * inB1)) >>
+                                32);
+                    sum1 =
+                        (q31_t)((((q63_t)sum1 << 32) + ((q63_t)inA2 * inB2)) >>
+                                32);
 #endif
 
                     inA1 = *pInA++;
@@ -308,8 +336,12 @@ arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA, const arm
                     sum1 = __SMMLA(inA1, inB1, sum1);
                     sum1 = __SMMLA(inA2, inB2, sum1);
 #else
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)inA1 * inB1)) >> 32);
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)inA2 * inB2)) >> 32);
+                    sum1 =
+                        (q31_t)((((q63_t)sum1 << 32) + ((q63_t)inA1 * inB1)) >>
+                                32);
+                    sum1 =
+                        (q31_t)((((q63_t)sum1 << 32) + ((q63_t)inA2 * inB2)) >>
+                                32);
 #endif
 
                     /* Decrement loop counter */
@@ -330,7 +362,9 @@ arm_status arm_mat_mult_fast_q31(const arm_matrix_instance_q31* pSrcA, const arm
 #if defined(ARM_MATH_DSP)
                     sum1 = __SMMLA(*pInA++, *pInB, sum1);
 #else
-                    sum1 = (q31_t)((((q63_t)sum1 << 32) + ((q63_t)*pInA++ * *pInB)) >> 32);
+                    sum1 = (q31_t)((((q63_t)sum1 << 32) +
+                                    ((q63_t)*pInA++ * *pInB)) >>
+                                   32);
 #endif
                     pInB += numColsB;
 

@@ -77,8 +77,13 @@
                    - \ref ARM_MATH_ARGUMENT_ERROR : requested subset is not in the range [0 srcALen+srcBLen-2]
  */
 
-arm_status arm_conv_partial_f32(
-    const float32_t* pSrcA, uint32_t srcALen, const float32_t* pSrcB, uint32_t srcBLen, float32_t* pDst, uint32_t firstIndex, uint32_t numPoints) {
+arm_status arm_conv_partial_f32(const float32_t* pSrcA,
+                                uint32_t         srcALen,
+                                const float32_t* pSrcB,
+                                uint32_t         srcBLen,
+                                float32_t*       pDst,
+                                uint32_t         firstIndex,
+                                uint32_t         numPoints) {
 #if defined(ARM_MATH_DSP)
     const float32_t* pIn1 = pSrcA;  /* InputA pointer */
     const float32_t* pIn2 = pSrcB;  /* InputB pointer */
@@ -89,7 +94,7 @@ arm_status arm_conv_partial_f32(
     float32_t        sum;           /* Accumulator */
     uint32_t         j, k, count, blkCnt, check;
     int32_t          blockSize1, blockSize2, blockSize3; /* Loop counters */
-    arm_status       status;                             /* Status of Partial convolution */
+    arm_status       status; /* Status of Partial convolution */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     float32_t acc0, acc1, acc2, acc3; /* Accumulator */
@@ -126,11 +131,19 @@ arm_status arm_conv_partial_f32(
         /* Conditions to check which loopCounter holds
      * the first and last indices of the output samples to be calculated. */
         check      = firstIndex + numPoints;
-        blockSize3 = ((int32_t)check > (int32_t)srcALen) ? (int32_t)check - (int32_t)srcALen : 0;
-        blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1) ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen : blockSize3;
+        blockSize3 = ((int32_t)check > (int32_t)srcALen)
+                         ? (int32_t)check - (int32_t)srcALen
+                         : 0;
+        blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1)
+                         ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen
+                         : blockSize3;
         blockSize1 = ((int32_t)srcBLen - 1) - (int32_t)firstIndex;
-        blockSize1 = (blockSize1 > 0) ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints) : 0;
-        blockSize2 = ((int32_t)check - blockSize3) - (blockSize1 + (int32_t)firstIndex);
+        blockSize1 =
+            (blockSize1 > 0)
+                ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints)
+                : 0;
+        blockSize2 =
+            ((int32_t)check - blockSize3) - (blockSize1 + (int32_t)firstIndex);
         blockSize2 = (blockSize2 > 0) ? blockSize2 : 0;
 
         /* conv(x,y) at n = x[n] * y[0] + x[n-1] * y[1] + x[n-2] * y[2] + ...+ x[n-N+1] * y[N -1] */

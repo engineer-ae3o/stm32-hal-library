@@ -98,8 +98,8 @@ void arm_absmax_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
 #else
 #if defined(ARM_MATH_DSP)
 void arm_absmax_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
-    q7_t     cur_absmax, out; /* Temporary variables to store the output value. */
-    uint32_t blkCnt;          /* Loop counter */
+    q7_t cur_absmax, out; /* Temporary variables to store the output value. */
+    uint32_t blkCnt;      /* Loop counter */
 
 
     /* Load first input value that act as reference value for comparision */
@@ -110,27 +110,36 @@ void arm_absmax_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
     /* Loop unrolling: Compute 4 outputs at a time */
     blkCnt = (blockSize - 1U) >> 2U;
 
-    while (blkCnt > 0U) { /* Initialize cur_absmax to next consecutive values one by one */
+    while (
+        blkCnt >
+        0U) { /* Initialize cur_absmax to next consecutive values one by one */
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q7_t)__QSUB8(0, cur_absmax); /* compare for the extrema value */
-        if (cur_absmax > out) {                                                    /* Update the extrema value and it's index */
+        cur_absmax =
+            (cur_absmax > 0)
+                ? cur_absmax
+                : (q7_t)__QSUB8(0,
+                                cur_absmax); /* compare for the extrema value */
+        if (cur_absmax > out) { /* Update the extrema value and it's index */
             out = cur_absmax;
         }
 
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q7_t)__QSUB8(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q7_t)__QSUB8(0, cur_absmax);
         if (cur_absmax > out) {
             out = cur_absmax;
         }
 
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q7_t)__QSUB8(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q7_t)__QSUB8(0, cur_absmax);
         if (cur_absmax > out) {
             out = cur_absmax;
         }
 
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q7_t)__QSUB8(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q7_t)__QSUB8(0, cur_absmax);
         if (cur_absmax > out) {
             out = cur_absmax;
         }
@@ -146,7 +155,8 @@ void arm_absmax_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
 
     while (blkCnt > 0U) {
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q7_t)__QSUB8(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q7_t)__QSUB8(0, cur_absmax);
         if (cur_absmax > out) {
             out = cur_absmax;
         }
@@ -173,7 +183,8 @@ void arm_absmax_no_idx_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult) {
 
     while (blkCnt > 0U) {
         /* Initialize maxVal to the next consecutive values one by one */
-        maxVal = (*pSrc > 0) ? *pSrc : ((*pSrc == (q7_t)0x80) ? (q7_t)0x7f : -*pSrc);
+        maxVal =
+            (*pSrc > 0) ? *pSrc : ((*pSrc == (q7_t)0x80) ? (q7_t)0x7f : -*pSrc);
         pSrc++;
 
         /* compare for the maximum value */

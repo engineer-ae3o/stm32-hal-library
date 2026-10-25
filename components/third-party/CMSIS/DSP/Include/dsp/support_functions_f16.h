@@ -78,7 +78,9 @@ void arm_q15_to_f16(const q15_t* pSrc, float16_t* pDst, uint32_t blockSize);
    * @param[out] pDst       points to the f16 output vector
    * @param[in]  blockSize  length of the input vector
    */
-void arm_float_to_f16(const float32_t* pSrc, float16_t* pDst, uint32_t blockSize);
+void arm_float_to_f16(const float32_t* pSrc,
+                      float16_t*       pDst,
+                      uint32_t         blockSize);
 
 /**
    * @brief Converts the elements of the floating-point vector to Q31 vector.
@@ -86,7 +88,9 @@ void arm_float_to_f16(const float32_t* pSrc, float16_t* pDst, uint32_t blockSize
    * @param[out] pDst       points to the f32 output vector
    * @param[in]  blockSize  length of the input vector
    */
-void arm_f16_to_float(const float16_t* pSrc, float32_t* pDst, uint32_t blockSize);
+void arm_f16_to_float(const float16_t* pSrc,
+                      float32_t*       pDst,
+                      uint32_t         blockSize);
 
 /**
  * @brief Weighted sum
@@ -98,7 +102,9 @@ void arm_f16_to_float(const float16_t* pSrc, float32_t* pDst, uint32_t blockSize
  * @return Weighted sum
  *
  */
-float16_t arm_weighted_sum_f16(const float16_t* in, const float16_t* weigths, uint32_t blockSize);
+float16_t arm_weighted_sum_f16(const float16_t* in,
+                               const float16_t* weigths,
+                               uint32_t         blockSize);
 
 /**
  * @brief Barycenter
@@ -112,7 +118,11 @@ float16_t arm_weighted_sum_f16(const float16_t* in, const float16_t* weigths, ui
  * @return       None
  *
  */
-void arm_barycenter_f16(const float16_t* in, const float16_t* weights, float16_t* out, uint32_t nbVectors, uint32_t vecDim);
+void arm_barycenter_f16(const float16_t* in,
+                        const float16_t* weights,
+                        float16_t*       out,
+                        uint32_t         nbVectors,
+                        uint32_t         vecDim);
 
 
 /**

@@ -54,7 +54,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_shift_q15(const q15_t* pSrc, int8_t shiftBits, q15_t* pDst, uint32_t blockSize) {
+void arm_shift_q15(const q15_t* pSrc,
+                   int8_t       shiftBits,
+                   q15_t*       pDst,
+                   uint32_t     blockSize) {
     uint32_t blkCnt; /* loop counters */
     q15x8_t  vecSrc;
     q15x8_t  vecDst;
@@ -92,7 +95,10 @@ void arm_shift_q15(const q15_t* pSrc, int8_t shiftBits, q15_t* pDst, uint32_t bl
 }
 
 #else
-void arm_shift_q15(const q15_t* pSrc, int8_t shiftBits, q15_t* pDst, uint32_t blockSize) {
+void arm_shift_q15(const q15_t* pSrc,
+                   int8_t       shiftBits,
+                   q15_t*       pDst,
+                   uint32_t     blockSize) {
     uint32_t blkCnt;                    /* Loop counter */
     uint8_t  sign = (shiftBits & 0x80); /* Sign of shiftBits */
 
@@ -117,9 +123,15 @@ void arm_shift_q15(const q15_t* pSrc, int8_t shiftBits, q15_t* pDst, uint32_t bl
 
             /* Shift the inputs and then store the results in the destination buffer. */
 #ifndef ARM_MATH_BIG_ENDIAN
-            write_q15x2_ia(&pDst, __PKHBT(__SSAT(((q31_t)in1 << shiftBits), 16), __SSAT(((q31_t)in2 << shiftBits), 16), 16));
+            write_q15x2_ia(&pDst,
+                           __PKHBT(__SSAT(((q31_t)in1 << shiftBits), 16),
+                                   __SSAT(((q31_t)in2 << shiftBits), 16),
+                                   16));
 #else
-            write_q15x2_ia(&pDst, __PKHBT(__SSAT(((q31_t)in2 << shiftBits), 16), __SSAT(((q31_t)in1 << shiftBits), 16), 16));
+            write_q15x2_ia(&pDst,
+                           __PKHBT(__SSAT(((q31_t)in2 << shiftBits), 16),
+                                   __SSAT(((q31_t)in1 << shiftBits), 16),
+                                   16));
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
             /* read 2 samples from source */
@@ -127,9 +139,15 @@ void arm_shift_q15(const q15_t* pSrc, int8_t shiftBits, q15_t* pDst, uint32_t bl
             in2 = *pSrc++;
 
 #ifndef ARM_MATH_BIG_ENDIAN
-            write_q15x2_ia(&pDst, __PKHBT(__SSAT(((q31_t)in1 << shiftBits), 16), __SSAT(((q31_t)in2 << shiftBits), 16), 16));
+            write_q15x2_ia(&pDst,
+                           __PKHBT(__SSAT(((q31_t)in1 << shiftBits), 16),
+                                   __SSAT(((q31_t)in2 << shiftBits), 16),
+                                   16));
 #else
-            write_q15x2_ia(&pDst, __PKHBT(__SSAT(((q31_t)in2 << shiftBits), 16), __SSAT(((q31_t)in1 << shiftBits), 16), 16));
+            write_q15x2_ia(&pDst,
+                           __PKHBT(__SSAT(((q31_t)in2 << shiftBits), 16),
+                                   __SSAT(((q31_t)in1 << shiftBits), 16),
+                                   16));
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
 #else
@@ -153,9 +171,11 @@ void arm_shift_q15(const q15_t* pSrc, int8_t shiftBits, q15_t* pDst, uint32_t bl
 
             /* Shift the inputs and then store the results in the destination buffer. */
 #ifndef ARM_MATH_BIG_ENDIAN
-            write_q15x2_ia(&pDst, __PKHBT((in1 >> -shiftBits), (in2 >> -shiftBits), 16));
+            write_q15x2_ia(
+                &pDst, __PKHBT((in1 >> -shiftBits), (in2 >> -shiftBits), 16));
 #else
-            write_q15x2_ia(&pDst, __PKHBT((in2 >> -shiftBits), (in1 >> -shiftBits), 16));
+            write_q15x2_ia(
+                &pDst, __PKHBT((in2 >> -shiftBits), (in1 >> -shiftBits), 16));
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
             /* read 2 samples from source */
@@ -163,9 +183,11 @@ void arm_shift_q15(const q15_t* pSrc, int8_t shiftBits, q15_t* pDst, uint32_t bl
             in2 = *pSrc++;
 
 #ifndef ARM_MATH_BIG_ENDIAN
-            write_q15x2_ia(&pDst, __PKHBT((in1 >> -shiftBits), (in2 >> -shiftBits), 16));
+            write_q15x2_ia(
+                &pDst, __PKHBT((in1 >> -shiftBits), (in2 >> -shiftBits), 16));
 #else
-            write_q15x2_ia(&pDst, __PKHBT((in2 >> -shiftBits), (in1 >> -shiftBits), 16));
+            write_q15x2_ia(
+                &pDst, __PKHBT((in2 >> -shiftBits), (in1 >> -shiftBits), 16));
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
 #else

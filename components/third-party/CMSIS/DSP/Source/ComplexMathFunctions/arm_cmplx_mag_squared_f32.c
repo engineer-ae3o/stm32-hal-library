@@ -71,7 +71,9 @@
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mag_squared_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_squared_f32(const float32_t* pSrc,
+                               float32_t*       pDst,
+                               uint32_t         numSamples) {
     int32_t   blockSize = numSamples; /* loop counters */
     uint32_t  blkCnt;                 /* loop counters */
     f32x4x2_t vecSrc;
@@ -112,7 +114,9 @@ void arm_cmplx_mag_squared_f32(const float32_t* pSrc, float32_t* pDst, uint32_t 
 }
 
 #else
-void arm_cmplx_mag_squared_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_squared_f32(const float32_t* pSrc,
+                               float32_t*       pDst,
+                               uint32_t         numSamples) {
     uint32_t  blkCnt;     /* Loop counter */
     float32_t real, imag; /* Temporary input variables */
 

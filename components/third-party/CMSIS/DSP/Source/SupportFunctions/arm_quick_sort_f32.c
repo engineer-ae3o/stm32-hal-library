@@ -28,7 +28,10 @@
 
 #include "arm_sorting.h"
 
-static uint32_t arm_quick_sort_partition_f32(float32_t* pSrc, int32_t first, int32_t last, uint8_t dir) {
+static uint32_t arm_quick_sort_partition_f32(float32_t* pSrc,
+                                             int32_t    first,
+                                             int32_t    last,
+                                             uint8_t    dir) {
     /* This function will be called */
     int32_t   i, j, pivot_index;
     float32_t pivot;
@@ -90,7 +93,10 @@ static uint32_t arm_quick_sort_partition_f32(float32_t* pSrc, int32_t first, int
     return j;
 }
 
-static void arm_quick_sort_core_f32(float32_t* pSrc, int32_t first, int32_t last, uint8_t dir) {
+static void arm_quick_sort_core_f32(float32_t* pSrc,
+                                    int32_t    first,
+                                    int32_t    last,
+                                    uint8_t    dir) {
     /* If the array [first ... last] has more than one element */
     if (first < last) {
         int32_t pivot;
@@ -142,7 +148,10 @@ static void arm_quick_sort_core_f32(float32_t* pSrc, int32_t first, int32_t last
    *                function, a memcpy of the source vector is performed.
    */
 
-void arm_quick_sort_f32(const arm_sort_instance_f32* S, float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_quick_sort_f32(const arm_sort_instance_f32* S,
+                        float32_t*                   pSrc,
+                        float32_t*                   pDst,
+                        uint32_t                     blockSize) {
     float32_t* pA;
 
     /* Out-of-place */

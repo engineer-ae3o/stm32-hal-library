@@ -59,16 +59,21 @@
                    Use function \ref arm_fir_decimate_init_q31() to initialize the filter structure.
  */
 
-void arm_fir_decimate_fast_q31(const arm_fir_decimate_instance_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
-    q31_t*       pState  = S->pState;                                /* State pointer */
-    const q31_t* pCoeffs = S->pCoeffs;                               /* Coefficient pointer */
-    q31_t*       pStateCur;                                          /* Points to the current sample of the state */
-    q31_t*       px0;                                                /* Temporary pointer for state buffer */
-    const q31_t* pb;                                                 /* Temporary pointer for coefficient buffer */
-    q31_t        x0, c0;                                             /* Temporary variables to hold state and coefficient values */
-    q63_t        acc0;                                               /* Accumulator */
-    uint32_t     numTaps = S->numTaps;                               /* Number of filter coefficients in the filter */
-    uint32_t     i, tapCnt, blkCnt, outBlockSize = blockSize / S->M; /* Loop counters */
+void arm_fir_decimate_fast_q31(const arm_fir_decimate_instance_q31* S,
+                               const q31_t*                         pSrc,
+                               q31_t*                               pDst,
+                               uint32_t                             blockSize) {
+    q31_t*       pState  = S->pState;  /* State pointer */
+    const q31_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    q31_t*       pStateCur; /* Points to the current sample of the state */
+    q31_t*       px0;       /* Temporary pointer for state buffer */
+    const q31_t* pb;        /* Temporary pointer for coefficient buffer */
+    q31_t x0, c0; /* Temporary variables to hold state and coefficient values */
+    q63_t acc0;   /* Accumulator */
+    uint32_t numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t i, tapCnt, blkCnt,
+        outBlockSize = blockSize / S->M; /* Loop counters */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q31_t *px1, *px2, *px3;

@@ -40,7 +40,9 @@
  * @{
  */
 
-void arm_nn_accumulate_q7_to_q15(q15_t* pDst, const q7_t* pSrc, uint32_t length) {
+void arm_nn_accumulate_q7_to_q15(q15_t*      pDst,
+                                 const q7_t* pSrc,
+                                 uint32_t    length) {
     q15_t*      pCnt  = pDst;
     const q7_t* pV    = pSrc;
     int32_t     count = length;

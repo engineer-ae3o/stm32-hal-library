@@ -45,7 +45,9 @@
   @param[out]    pResult    maximum value returned here
   @return        none
  */
-void arm_max_no_idx_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult) {
+void arm_max_no_idx_f64(const float64_t* pSrc,
+                        uint32_t         blockSize,
+                        float64_t*       pResult) {
     float64_t maxValue = F64_MIN;
     float64_t newVal;
 

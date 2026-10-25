@@ -75,7 +75,9 @@
 #include "arm_helium_utils.h"
 
 
-void arm_cmplx_mag_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_f16(const float16_t* pSrc,
+                       float16_t*       pDst,
+                       uint32_t         numSamples) {
     int32_t   blockSize = numSamples; /* loop counters */
     uint32_t  blkCnt;                 /* loop counters */
     f16x8x2_t vecSrc;
@@ -97,8 +99,9 @@ void arm_cmplx_mag_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSampl
          */
 
         /* compute initial value */
-        newtonStartVec = vdupq_n_s16(INVSQRT_MAGIC_F16) - vshrq((q15x8_t)sum, 1);
-        sumHalf        = sum * 0.5f;
+        newtonStartVec =
+            vdupq_n_s16(INVSQRT_MAGIC_F16) - vshrq((q15x8_t)sum, 1);
+        sumHalf = sum * 0.5f;
         /*
          * compute 3 x iterations
          *
@@ -112,7 +115,8 @@ void arm_cmplx_mag_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSampl
         /*
          * set negative values to 0
          */
-        invSqrt = vdupq_m(invSqrt, (float16_t)0.0f, vcmpltq(invSqrt, (float16_t)0.0f));
+        invSqrt = vdupq_m(
+            invSqrt, (float16_t)0.0f, vcmpltq(invSqrt, (float16_t)0.0f));
         /*
          * sqrt(x) = x * invSqrt(x)
          */
@@ -142,8 +146,9 @@ void arm_cmplx_mag_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSampl
          */
 
         /* compute initial value */
-        newtonStartVec = vdupq_n_s16(INVSQRT_MAGIC_F16) - vshrq((q15x8_t)sum, 1);
-        sumHalf        = vmulq(sum, (float16_t)0.5);
+        newtonStartVec =
+            vdupq_n_s16(INVSQRT_MAGIC_F16) - vshrq((q15x8_t)sum, 1);
+        sumHalf = vmulq(sum, (float16_t)0.5);
         /*
          * compute 2 x iterations
          */
@@ -152,7 +157,8 @@ void arm_cmplx_mag_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSampl
         /*
          * set negative values to 0
          */
-        invSqrt = vdupq_m(invSqrt, (float16_t)0.0, vcmpltq(invSqrt, (float16_t)0.0));
+        invSqrt =
+            vdupq_m(invSqrt, (float16_t)0.0, vcmpltq(invSqrt, (float16_t)0.0));
         /*
          * sqrt(x) = x * invSqrt(x)
          */
@@ -162,7 +168,9 @@ void arm_cmplx_mag_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSampl
 }
 
 #else
-void arm_cmplx_mag_f16(const float16_t* pSrc, float16_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_f16(const float16_t* pSrc,
+                       float16_t*       pDst,
+                       uint32_t         numSamples) {
     uint32_t blkCnt;     /* loop counter */
     _Float16 real, imag; /* Temporary variables to hold input values */
 

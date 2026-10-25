@@ -54,7 +54,10 @@
   @return        none
  */
 
-void arm_xor_u16(const uint16_t* pSrcA, const uint16_t* pSrcB, uint16_t* pDst, uint32_t blockSize) {
+void arm_xor_u16(const uint16_t* pSrcA,
+                 const uint16_t* pSrcB,
+                 uint16_t*       pDst,
+                 uint32_t        blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)

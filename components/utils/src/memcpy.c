@@ -19,8 +19,12 @@ static volatile memcpy_state_t* s_dma_done_flag = NULL;
 
 
 // Public API
-hal_err_t dma_memcpy(void* dest, const void* src, uint16_t len, volatile memcpy_state_t* dma_done_flag) {
-    if (dest == NULL || src == NULL || len == 0 || dma_done_flag == NULL || dest == src) {
+hal_err_t dma_memcpy(void*                    dest,
+                     const void*              src,
+                     uint16_t                 len,
+                     volatile memcpy_state_t* dma_done_flag) {
+    if (dest == NULL || src == NULL || len == 0 || dma_done_flag == NULL ||
+        dest == src) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -66,7 +70,8 @@ hal_err_t dma_memcpy(void* dest, const void* src, uint16_t len, volatile memcpy_
     return dma_enable_stream(s_memcpy_dma_map.stream);
 }
 
-hal_err_t dma_memcpy_cb(void* dest, const void* src, uint16_t len, dma_done_cb_t cb, void* arg) {
+hal_err_t dma_memcpy_cb(
+    void* dest, const void* src, uint16_t len, dma_done_cb_t cb, void* arg) {
     if (dest == NULL || src == NULL || len == 0 || cb == NULL || dest == src) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -113,7 +118,8 @@ hal_err_t dma_memcpy_cb(void* dest, const void* src, uint16_t len, dma_done_cb_t
     return dma_enable_stream(s_memcpy_dma_map.stream);
 }
 
-memcpy_state_t dma_memcpy_wait_for_flag(volatile memcpy_state_t* dma_done_flag, uint32_t timeout) {
+memcpy_state_t dma_memcpy_wait_for_flag(volatile memcpy_state_t* dma_done_flag,
+                                        uint32_t                 timeout) {
     for (uint32_t i = 0; i < timeout; i++) {
         if (*dma_done_flag != DMA_MEMCPY_NOT_DONE) {
             return *dma_done_flag;

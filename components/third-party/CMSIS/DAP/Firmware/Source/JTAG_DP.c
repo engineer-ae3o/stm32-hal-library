@@ -36,32 +36,32 @@
 #define PIN_TMS_SET PIN_SWDIO_TMS_SET
 #define PIN_TMS_CLR PIN_SWDIO_TMS_CLR
 
-#define JTAG_CYCLE_TCK()                                                                                                                             \
-    PIN_TCK_CLR();                                                                                                                                   \
-    PIN_DELAY();                                                                                                                                     \
-    PIN_TCK_SET();                                                                                                                                   \
+#define JTAG_CYCLE_TCK()                                                       \
+    PIN_TCK_CLR();                                                             \
+    PIN_DELAY();                                                               \
+    PIN_TCK_SET();                                                             \
     PIN_DELAY()
 
-#define JTAG_CYCLE_TDI(tdi)                                                                                                                          \
-    PIN_TDI_OUT(tdi);                                                                                                                                \
-    PIN_TCK_CLR();                                                                                                                                   \
-    PIN_DELAY();                                                                                                                                     \
-    PIN_TCK_SET();                                                                                                                                   \
+#define JTAG_CYCLE_TDI(tdi)                                                    \
+    PIN_TDI_OUT(tdi);                                                          \
+    PIN_TCK_CLR();                                                             \
+    PIN_DELAY();                                                               \
+    PIN_TCK_SET();                                                             \
     PIN_DELAY()
 
-#define JTAG_CYCLE_TDO(tdo)                                                                                                                          \
-    PIN_TCK_CLR();                                                                                                                                   \
-    PIN_DELAY();                                                                                                                                     \
-    tdo = PIN_TDO_IN();                                                                                                                              \
-    PIN_TCK_SET();                                                                                                                                   \
+#define JTAG_CYCLE_TDO(tdo)                                                    \
+    PIN_TCK_CLR();                                                             \
+    PIN_DELAY();                                                               \
+    tdo = PIN_TDO_IN();                                                        \
+    PIN_TCK_SET();                                                             \
     PIN_DELAY()
 
-#define JTAG_CYCLE_TDIO(tdi, tdo)                                                                                                                    \
-    PIN_TDI_OUT(tdi);                                                                                                                                \
-    PIN_TCK_CLR();                                                                                                                                   \
-    PIN_DELAY();                                                                                                                                     \
-    tdo = PIN_TDO_IN();                                                                                                                              \
-    PIN_TCK_SET();                                                                                                                                   \
+#define JTAG_CYCLE_TDIO(tdi, tdo)                                              \
+    PIN_TDI_OUT(tdi);                                                          \
+    PIN_TCK_CLR();                                                             \
+    PIN_DELAY();                                                               \
+    tdo = PIN_TDO_IN();                                                        \
+    PIN_TCK_SET();                                                             \
     PIN_DELAY()
 
 #define PIN_DELAY() PIN_DELAY_SLOW(DAP_Data.clock_delay)
@@ -112,43 +112,45 @@ void JTAG_Sequence(uint32_t info, const uint8_t* tdi, uint8_t* tdo) {
 // JTAG Set IR
 //   ir:     IR value
 //   return: none
-#define JTAG_IR_Function(speed) /**/                                                                                                                 \
-    static void JTAG_IR_##speed(uint32_t ir) {                                                                                                       \
-        uint32_t n;                                                                                                                                  \
-                                                                                                                                                     \
-        PIN_TMS_SET();                                                                                                                               \
-        JTAG_CYCLE_TCK(); /* Select-DR-Scan */                                                                                                       \
-        JTAG_CYCLE_TCK(); /* Select-IR-Scan */                                                                                                       \
-        PIN_TMS_CLR();                                                                                                                               \
-        JTAG_CYCLE_TCK(); /* Capture-IR */                                                                                                           \
-        JTAG_CYCLE_TCK(); /* Shift-IR */                                                                                                             \
-                                                                                                                                                     \
-        PIN_TDI_OUT(1U);                                                                                                                             \
-        for (n = DAP_Data.jtag_dev.ir_before[DAP_Data.jtag_dev.index]; n; n--) {                                                                     \
-            JTAG_CYCLE_TCK(); /* Bypass before data */                                                                                               \
-        }                                                                                                                                            \
-        for (n = DAP_Data.jtag_dev.ir_length[DAP_Data.jtag_dev.index] - 1U; n; n--) {                                                                \
-            JTAG_CYCLE_TDI(ir); /* Set IR bits (except last) */                                                                                      \
-            ir >>= 1;                                                                                                                                \
-        }                                                                                                                                            \
-        n = DAP_Data.jtag_dev.ir_after[DAP_Data.jtag_dev.index];                                                                                     \
-        if (n) {                                                                                                                                     \
-            JTAG_CYCLE_TDI(ir); /* Set last IR bit */                                                                                                \
-            PIN_TDI_OUT(1U);                                                                                                                         \
-            for (--n; n; n--) {                                                                                                                      \
-                JTAG_CYCLE_TCK(); /* Bypass after data */                                                                                            \
-            }                                                                                                                                        \
-            PIN_TMS_SET();                                                                                                                           \
-            JTAG_CYCLE_TCK(); /* Bypass & Exit1-IR */                                                                                                \
-        } else {                                                                                                                                     \
-            PIN_TMS_SET();                                                                                                                           \
-            JTAG_CYCLE_TDI(ir); /* Set last IR bit & Exit1-IR */                                                                                     \
-        }                                                                                                                                            \
-                                                                                                                                                     \
-        JTAG_CYCLE_TCK(); /* Update-IR */                                                                                                            \
-        PIN_TMS_CLR();                                                                                                                               \
-        JTAG_CYCLE_TCK(); /* Idle */                                                                                                                 \
-        PIN_TDI_OUT(1U);                                                                                                                             \
+#define JTAG_IR_Function(speed) /**/                                           \
+    static void JTAG_IR_##speed(uint32_t ir) {                                 \
+        uint32_t n;                                                            \
+                                                                               \
+        PIN_TMS_SET();                                                         \
+        JTAG_CYCLE_TCK(); /* Select-DR-Scan */                                 \
+        JTAG_CYCLE_TCK(); /* Select-IR-Scan */                                 \
+        PIN_TMS_CLR();                                                         \
+        JTAG_CYCLE_TCK(); /* Capture-IR */                                     \
+        JTAG_CYCLE_TCK(); /* Shift-IR */                                       \
+                                                                               \
+        PIN_TDI_OUT(1U);                                                       \
+        for (n = DAP_Data.jtag_dev.ir_before[DAP_Data.jtag_dev.index]; n;      \
+             n--) {                                                            \
+            JTAG_CYCLE_TCK(); /* Bypass before data */                         \
+        }                                                                      \
+        for (n = DAP_Data.jtag_dev.ir_length[DAP_Data.jtag_dev.index] - 1U; n; \
+             n--) {                                                            \
+            JTAG_CYCLE_TDI(ir); /* Set IR bits (except last) */                \
+            ir >>= 1;                                                          \
+        }                                                                      \
+        n = DAP_Data.jtag_dev.ir_after[DAP_Data.jtag_dev.index];               \
+        if (n) {                                                               \
+            JTAG_CYCLE_TDI(ir); /* Set last IR bit */                          \
+            PIN_TDI_OUT(1U);                                                   \
+            for (--n; n; n--) {                                                \
+                JTAG_CYCLE_TCK(); /* Bypass after data */                      \
+            }                                                                  \
+            PIN_TMS_SET();                                                     \
+            JTAG_CYCLE_TCK(); /* Bypass & Exit1-IR */                          \
+        } else {                                                               \
+            PIN_TMS_SET();                                                     \
+            JTAG_CYCLE_TDI(ir); /* Set last IR bit & Exit1-IR */               \
+        }                                                                      \
+                                                                               \
+        JTAG_CYCLE_TCK(); /* Update-IR */                                      \
+        PIN_TMS_CLR();                                                         \
+        JTAG_CYCLE_TCK(); /* Idle */                                           \
+        PIN_TDI_OUT(1U);                                                       \
     }
 
 
@@ -156,100 +158,100 @@ void JTAG_Sequence(uint32_t info, const uint8_t* tdi, uint8_t* tdo) {
 //   request: A[3:2] RnW APnDP
 //   data:    DATA[31:0]
 //   return:  ACK[2:0]
-#define JTAG_TransferFunction(speed) /**/                                                                                                            \
-    static uint8_t JTAG_Transfer##speed(uint32_t request, uint32_t* data) {                                                                          \
-        uint32_t ack;                                                                                                                                \
-        uint32_t bit;                                                                                                                                \
-        uint32_t val;                                                                                                                                \
-        uint32_t n;                                                                                                                                  \
-                                                                                                                                                     \
-        PIN_TMS_SET();                                                                                                                               \
-        JTAG_CYCLE_TCK(); /* Select-DR-Scan */                                                                                                       \
-        PIN_TMS_CLR();                                                                                                                               \
-        JTAG_CYCLE_TCK(); /* Capture-DR */                                                                                                           \
-        JTAG_CYCLE_TCK(); /* Shift-DR */                                                                                                             \
-                                                                                                                                                     \
-        for (n = DAP_Data.jtag_dev.index; n; n--) {                                                                                                  \
-            JTAG_CYCLE_TCK(); /* Bypass before data */                                                                                               \
-        }                                                                                                                                            \
-                                                                                                                                                     \
-        JTAG_CYCLE_TDIO(request >> 1, bit); /* Set RnW, Get ACK.0 */                                                                                 \
-        ack = bit << 1;                                                                                                                              \
-        JTAG_CYCLE_TDIO(request >> 2, bit); /* Set A2,  Get ACK.1 */                                                                                 \
-        ack |= bit << 0;                                                                                                                             \
-        JTAG_CYCLE_TDIO(request >> 3, bit); /* Set A3,  Get ACK.2 */                                                                                 \
-        ack |= bit << 2;                                                                                                                             \
-                                                                                                                                                     \
-        if (ack != DAP_TRANSFER_OK) {                                                                                                                \
-            /* Exit on error */                                                                                                                      \
-            PIN_TMS_SET();                                                                                                                           \
-            JTAG_CYCLE_TCK(); /* Exit1-DR */                                                                                                         \
-            goto exit;                                                                                                                               \
-        }                                                                                                                                            \
-                                                                                                                                                     \
-        if (request & DAP_TRANSFER_RnW) {                                                                                                            \
-            /* Read Transfer */                                                                                                                      \
-            val = 0U;                                                                                                                                \
-            for (n = 31U; n; n--) {                                                                                                                  \
-                JTAG_CYCLE_TDO(bit); /* Get D0..D30 */                                                                                               \
-                val |= bit << 31;                                                                                                                    \
-                val >>= 1;                                                                                                                           \
-            }                                                                                                                                        \
-            n = DAP_Data.jtag_dev.count - DAP_Data.jtag_dev.index - 1U;                                                                              \
-            if (n) {                                                                                                                                 \
-                JTAG_CYCLE_TDO(bit); /* Get D31 */                                                                                                   \
-                for (--n; n; n--) {                                                                                                                  \
-                    JTAG_CYCLE_TCK(); /* Bypass after data */                                                                                        \
-                }                                                                                                                                    \
-                PIN_TMS_SET();                                                                                                                       \
-                JTAG_CYCLE_TCK(); /* Bypass & Exit1-DR */                                                                                            \
-            } else {                                                                                                                                 \
-                PIN_TMS_SET();                                                                                                                       \
-                JTAG_CYCLE_TDO(bit); /* Get D31 & Exit1-DR */                                                                                        \
-            }                                                                                                                                        \
-            val |= bit << 31;                                                                                                                        \
-            if (data) {                                                                                                                              \
-                *data = val;                                                                                                                         \
-            }                                                                                                                                        \
-        } else {                                                                                                                                     \
-            /* Write Transfer */                                                                                                                     \
-            val = *data;                                                                                                                             \
-            for (n = 31U; n; n--) {                                                                                                                  \
-                JTAG_CYCLE_TDI(val); /* Set D0..D30 */                                                                                               \
-                val >>= 1;                                                                                                                           \
-            }                                                                                                                                        \
-            n = DAP_Data.jtag_dev.count - DAP_Data.jtag_dev.index - 1U;                                                                              \
-            if (n) {                                                                                                                                 \
-                JTAG_CYCLE_TDI(val); /* Set D31 */                                                                                                   \
-                for (--n; n; n--) {                                                                                                                  \
-                    JTAG_CYCLE_TCK(); /* Bypass after data */                                                                                        \
-                }                                                                                                                                    \
-                PIN_TMS_SET();                                                                                                                       \
-                JTAG_CYCLE_TCK(); /* Bypass & Exit1-DR */                                                                                            \
-            } else {                                                                                                                                 \
-                PIN_TMS_SET();                                                                                                                       \
-                JTAG_CYCLE_TDI(val); /* Set D31 & Exit1-DR */                                                                                        \
-            }                                                                                                                                        \
-        }                                                                                                                                            \
-                                                                                                                                                     \
-    exit:                                                                                                                                            \
-        JTAG_CYCLE_TCK(); /* Update-DR */                                                                                                            \
-        PIN_TMS_CLR();                                                                                                                               \
-        JTAG_CYCLE_TCK(); /* Idle */                                                                                                                 \
-        PIN_TDI_OUT(1U);                                                                                                                             \
-                                                                                                                                                     \
-        /* Capture Timestamp */                                                                                                                      \
-        if (request & DAP_TRANSFER_TIMESTAMP) {                                                                                                      \
-            DAP_Data.timestamp = TIMESTAMP_GET();                                                                                                    \
-        }                                                                                                                                            \
-                                                                                                                                                     \
-        /* Idle cycles */                                                                                                                            \
-        n = DAP_Data.transfer.idle_cycles;                                                                                                           \
-        while (n--) {                                                                                                                                \
-            JTAG_CYCLE_TCK(); /* Idle */                                                                                                             \
-        }                                                                                                                                            \
-                                                                                                                                                     \
-        return ((uint8_t)ack);                                                                                                                       \
+#define JTAG_TransferFunction(speed) /**/                                      \
+    static uint8_t JTAG_Transfer##speed(uint32_t request, uint32_t* data) {    \
+        uint32_t ack;                                                          \
+        uint32_t bit;                                                          \
+        uint32_t val;                                                          \
+        uint32_t n;                                                            \
+                                                                               \
+        PIN_TMS_SET();                                                         \
+        JTAG_CYCLE_TCK(); /* Select-DR-Scan */                                 \
+        PIN_TMS_CLR();                                                         \
+        JTAG_CYCLE_TCK(); /* Capture-DR */                                     \
+        JTAG_CYCLE_TCK(); /* Shift-DR */                                       \
+                                                                               \
+        for (n = DAP_Data.jtag_dev.index; n; n--) {                            \
+            JTAG_CYCLE_TCK(); /* Bypass before data */                         \
+        }                                                                      \
+                                                                               \
+        JTAG_CYCLE_TDIO(request >> 1, bit); /* Set RnW, Get ACK.0 */           \
+        ack = bit << 1;                                                        \
+        JTAG_CYCLE_TDIO(request >> 2, bit); /* Set A2,  Get ACK.1 */           \
+        ack |= bit << 0;                                                       \
+        JTAG_CYCLE_TDIO(request >> 3, bit); /* Set A3,  Get ACK.2 */           \
+        ack |= bit << 2;                                                       \
+                                                                               \
+        if (ack != DAP_TRANSFER_OK) {                                          \
+            /* Exit on error */                                                \
+            PIN_TMS_SET();                                                     \
+            JTAG_CYCLE_TCK(); /* Exit1-DR */                                   \
+            goto exit;                                                         \
+        }                                                                      \
+                                                                               \
+        if (request & DAP_TRANSFER_RnW) {                                      \
+            /* Read Transfer */                                                \
+            val = 0U;                                                          \
+            for (n = 31U; n; n--) {                                            \
+                JTAG_CYCLE_TDO(bit); /* Get D0..D30 */                         \
+                val |= bit << 31;                                              \
+                val >>= 1;                                                     \
+            }                                                                  \
+            n = DAP_Data.jtag_dev.count - DAP_Data.jtag_dev.index - 1U;        \
+            if (n) {                                                           \
+                JTAG_CYCLE_TDO(bit); /* Get D31 */                             \
+                for (--n; n; n--) {                                            \
+                    JTAG_CYCLE_TCK(); /* Bypass after data */                  \
+                }                                                              \
+                PIN_TMS_SET();                                                 \
+                JTAG_CYCLE_TCK(); /* Bypass & Exit1-DR */                      \
+            } else {                                                           \
+                PIN_TMS_SET();                                                 \
+                JTAG_CYCLE_TDO(bit); /* Get D31 & Exit1-DR */                  \
+            }                                                                  \
+            val |= bit << 31;                                                  \
+            if (data) {                                                        \
+                *data = val;                                                   \
+            }                                                                  \
+        } else {                                                               \
+            /* Write Transfer */                                               \
+            val = *data;                                                       \
+            for (n = 31U; n; n--) {                                            \
+                JTAG_CYCLE_TDI(val); /* Set D0..D30 */                         \
+                val >>= 1;                                                     \
+            }                                                                  \
+            n = DAP_Data.jtag_dev.count - DAP_Data.jtag_dev.index - 1U;        \
+            if (n) {                                                           \
+                JTAG_CYCLE_TDI(val); /* Set D31 */                             \
+                for (--n; n; n--) {                                            \
+                    JTAG_CYCLE_TCK(); /* Bypass after data */                  \
+                }                                                              \
+                PIN_TMS_SET();                                                 \
+                JTAG_CYCLE_TCK(); /* Bypass & Exit1-DR */                      \
+            } else {                                                           \
+                PIN_TMS_SET();                                                 \
+                JTAG_CYCLE_TDI(val); /* Set D31 & Exit1-DR */                  \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
+    exit:                                                                      \
+        JTAG_CYCLE_TCK(); /* Update-DR */                                      \
+        PIN_TMS_CLR();                                                         \
+        JTAG_CYCLE_TCK(); /* Idle */                                           \
+        PIN_TDI_OUT(1U);                                                       \
+                                                                               \
+        /* Capture Timestamp */                                                \
+        if (request & DAP_TRANSFER_TIMESTAMP) {                                \
+            DAP_Data.timestamp = TIMESTAMP_GET();                              \
+        }                                                                      \
+                                                                               \
+        /* Idle cycles */                                                      \
+        n = DAP_Data.transfer.idle_cycles;                                     \
+        while (n--) {                                                          \
+            JTAG_CYCLE_TCK(); /* Idle */                                       \
+        }                                                                      \
+                                                                               \
+        return ((uint8_t)ack);                                                 \
     }
 
 

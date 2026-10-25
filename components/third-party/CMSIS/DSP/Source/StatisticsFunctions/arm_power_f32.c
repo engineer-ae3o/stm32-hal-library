@@ -65,7 +65,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_power_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_power_f32(const float32_t* pSrc,
+                   uint32_t         blockSize,
+                   float32_t*       pResult) {
     uint32_t  blkCnt; /* loop counters */
     f32x4_t   vecSrc;
     f32x4_t   sumVec = vdupq_n_f32(0.0f);
@@ -105,7 +107,9 @@ void arm_power_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult
 }
 #else
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_power_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_power_f32(const float32_t* pSrc,
+                   uint32_t         blockSize,
+                   float32_t*       pResult) {
     float32_t sum = 0.0f; /* accumulator */
     float32_t in;         /* Temporary variable to store input value */
     uint32_t  blkCnt;     /* loop counter */
@@ -149,7 +153,9 @@ void arm_power_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult
     *pResult = sum;
 }
 #else
-void arm_power_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_power_f32(const float32_t* pSrc,
+                   uint32_t         blockSize,
+                   float32_t*       pResult) {
     uint32_t  blkCnt;     /* Loop counter */
     float32_t sum = 0.0f; /* Temporary result storage */
     float32_t in;         /* Temporary variable to store input value */

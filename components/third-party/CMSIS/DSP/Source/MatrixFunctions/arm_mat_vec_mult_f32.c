@@ -56,7 +56,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_mat_vec_mult_f32(const arm_matrix_instance_f32* pSrcMat, const float32_t* pSrcVec, float32_t* pDstVec) {
+void arm_mat_vec_mult_f32(const arm_matrix_instance_f32* pSrcMat,
+                          const float32_t*               pSrcVec,
+                          float32_t*                     pDstVec) {
     uint32_t         numRows = pSrcMat->numRows;
     uint32_t         numCols = pSrcMat->numCols;
     const float32_t* pSrcA   = pSrcMat->pData;
@@ -274,16 +276,18 @@ void arm_mat_vec_mult_f32(const arm_matrix_instance_f32* pSrcMat, const float32_
 }
 #else
 
-void arm_mat_vec_mult_f32(const arm_matrix_instance_f32* pSrcMat, const float32_t* pVec, float32_t* pDst) {
+void arm_mat_vec_mult_f32(const arm_matrix_instance_f32* pSrcMat,
+                          const float32_t*               pVec,
+                          float32_t*                     pDst) {
     uint32_t         numRows = pSrcMat->numRows;
     uint32_t         numCols = pSrcMat->numCols;
     const float32_t* pSrcA   = pSrcMat->pData;
-    const float32_t* pInA1;          /* input data matrix pointer A of Q31 type */
-    const float32_t* pInA2;          /* input data matrix pointer A of Q31 type */
-    const float32_t* pInA3;          /* input data matrix pointer A of Q31 type */
-    const float32_t* pInA4;          /* input data matrix pointer A of Q31 type */
-    const float32_t* pInVec;         /* input data matrix pointer B of Q31 type */
-    float32_t*       px;             /* Temporary output data matrix pointer */
+    const float32_t* pInA1;  /* input data matrix pointer A of Q31 type */
+    const float32_t* pInA2;  /* input data matrix pointer A of Q31 type */
+    const float32_t* pInA3;  /* input data matrix pointer A of Q31 type */
+    const float32_t* pInA4;  /* input data matrix pointer A of Q31 type */
+    const float32_t* pInVec; /* input data matrix pointer B of Q31 type */
+    float32_t*       px;     /* Temporary output data matrix pointer */
     uint16_t         i, row, colCnt; /* loop counters */
     float32_t        matData, matData2, vecData, vecData2;
 

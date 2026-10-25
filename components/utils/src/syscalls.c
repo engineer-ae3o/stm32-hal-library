@@ -30,7 +30,8 @@ void system_init(void) {
     SCB->CCR |= (SCB_CCR_DIV_0_TRP_Msk);
 
     // Enable the MemManage, bus fault, and usage fault exceptions.
-    SCB->SHCSR |= (SCB_SHCSR_MEMFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk | SCB_SHCSR_USGFAULTENA_Msk);
+    SCB->SHCSR |= (SCB_SHCSR_MEMFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk |
+                   SCB_SHCSR_USGFAULTENA_Msk);
 
     // Initialize the logging interface (SEGGER RTT), the debug trace counter and the SysTick counter
     SEGGER_RTT_Init();
@@ -41,9 +42,12 @@ void system_init(void) {
     system_core_clock_config(HSE_PLL_100MHz);
     audio_pll_clock_config(AUDIO_PLL_DISABLE);
 
-    LOGI("System_Init", "------------------- FPU, PLL and system clock setup complete -------------------");
     LOGI("System_Init",
-         "System Clock: %luMHz, APB1 Bus Clock: %luMHz, APB2 Bus Clock: %luMHz from the %s",
+         "------------------- FPU, PLL and system clock setup complete "
+         "-------------------");
+    LOGI("System_Init",
+         "System Clock: %luMHz, APB1 Bus Clock: %luMHz, APB2 Bus Clock: %luMHz "
+         "from the %s",
          (get_system_core_clock() / 1'000'000U),
          (get_apb1_core_clock() / 1'000'000U),
          (get_apb2_core_clock() / 1'000'000U),
@@ -52,7 +56,9 @@ void system_init(void) {
 
 // Provide a weak main function
 [[__gnu__::__noreturn__, __gnu__::__weak__]] int main(void) {
-    LOGE("Main", "Application failed to provide a main function. Using the weak stub instead");
+    LOGE("Main",
+         "Application failed to provide a main function. Using the weak stub "
+         "instead");
     halt();
 }
 
@@ -80,16 +86,16 @@ typedef enum {
     FAULT_TYPE_USAGE,
 } fault_type_t;
 
-#define DEFINE_FAULT_TRAMPOLINE(handler_name, fault_id)                                                                                              \
-    [[__gnu__::__naked__]] void handler_name(void) {                                                                                                 \
-        __asm volatile("tst lr, #4\n"                                                                                                                \
-                       "ite eq\n"                                                                                                                    \
-                       "mrseq r0, msp\n"                                                                                                             \
-                       "mrsne r0, psp\n"                                                                                                             \
-                       "mov r1, lr\n"                                                                                                                \
-                       "movs r2, %0\n"                                                                                                               \
-                       "b decode_fault\n" ::"i"(fault_id)                                                                                            \
-                       : "r0", "r1", "r2");                                                                                                          \
+#define DEFINE_FAULT_TRAMPOLINE(handler_name, fault_id)                        \
+    [[__gnu__::__naked__]] void handler_name(void) {                           \
+        __asm volatile("tst lr, #4\n"                                          \
+                       "ite eq\n"                                              \
+                       "mrseq r0, msp\n"                                       \
+                       "mrsne r0, psp\n"                                       \
+                       "mov r1, lr\n"                                          \
+                       "movs r2, %0\n"                                         \
+                       "b decode_fault\n" ::"i"(fault_id)                      \
+                       : "r0", "r1", "r2");                                    \
     }
 
 DEFINE_FAULT_TRAMPOLINE(HardFault_Handler, FAULT_TYPE_HARD)
@@ -116,7 +122,10 @@ void NMI_Handler(void) {
             PANIC();
         }
 
-        LOGI(TAG, "Clock Security System fault: HSE failure. Reconfiguring to use the HSI as the PLL clock source");
+        LOGI(TAG,
+             "Clock Security System fault: HSE failure. Reconfiguring to use "
+             "the HSI as the PLL "
+             "clock source");
 
         // Reconfigure the main PLL back to whatever value it was on, but its HSI equivalent
         const system_clock_t system_clock = get_system_core_clock_type();
@@ -147,7 +156,10 @@ void NMI_Handler(void) {
                 break;
         }
 
-        LOGI(TAG, "Resuming normal operation with the HSI with a system clock of %luMHz", get_system_core_clock() / 1'000'000U);
+        LOGI(TAG,
+             "Resuming normal operation with the HSI with a system clock of "
+             "%luMHz",
+             get_system_core_clock() / 1'000'000U);
     }
 }
 
@@ -156,7 +168,9 @@ void NMI_Handler(void) {
 // bit by bit rather than a raw hex dump. Weak so a specific application can override
 // with its own recovery logic if it ever needs to.
 [[__gnu__::__noreturn__, __gnu__::__weak__, __gnu__::__used__]] void
-decode_fault(const fault_frame_t* frame, uint32_t exc_return, fault_type_t fault_type) {
+decode_fault(const fault_frame_t* frame,
+             uint32_t             exc_return,
+             fault_type_t         fault_type) {
     const uint32_t cfsr = SCB->CFSR;
 
     switch (fault_type) {
@@ -183,13 +197,18 @@ decode_fault(const fault_frame_t* frame, uint32_t exc_return, fault_type_t fault
                 LOGE("MemFault", "Data access violation");
             }
             if (cfsr & SCB_CFSR_MUNSTKERR_Msk) {
-                LOGE("MemFault", "MPU violation on exception return (unstacking)");
+                LOGE("MemFault",
+                     "MPU violation on exception return (unstacking)");
             }
             if (cfsr & SCB_CFSR_MSTKERR_Msk) {
-                LOGE("MemFault", "MPU violation on exception entry (stacking). Possible stack overflow into a guarded region");
+                LOGE("MemFault",
+                     "MPU violation on exception entry (stacking). Possible "
+                     "stack overflow into a "
+                     "guarded region");
             }
             if (cfsr & SCB_CFSR_MLSPERR_Msk) {
-                LOGE("MemFault", "MPU violation during lazy FP state preservation");
+                LOGE("MemFault",
+                     "MPU violation during lazy FP state preservation");
             }
             if (cfsr & SCB_CFSR_MMARVALID_Msk) {
                 LOGE("MemFault", "MMFAR: 0x%X", (unsigned int)SCB->MMFAR);
@@ -203,10 +222,13 @@ decode_fault(const fault_frame_t* frame, uint32_t exc_return, fault_type_t fault
                 LOGE("BusFault", "Instruction bus error");
             }
             if (cfsr & SCB_CFSR_PRECISERR_Msk) {
-                LOGE("BusFault", "Precise data bus error: The PC is the faulting instruction");
+                LOGE("BusFault",
+                     "Precise data bus error: The PC is the faulting "
+                     "instruction");
             }
             if (cfsr & SCB_CFSR_IMPRECISERR_Msk) {
-                LOGE("BusFault", "Imprecise data bus error: The PC is not reliable");
+                LOGE("BusFault",
+                     "Imprecise data bus error: The PC is not reliable");
             }
             if (cfsr & SCB_CFSR_UNSTKERR_Msk) {
                 LOGE("BusFault", "Bus error on exception return (unstacking)");
@@ -229,13 +251,17 @@ decode_fault(const fault_frame_t* frame, uint32_t exc_return, fault_type_t fault
                 LOGE("UsageFault", "Undefined instruction");
             }
             if (cfsr & SCB_CFSR_INVSTATE_Msk) {
-                LOGE("UsageFault", "Invalid EPSR state (bad Thumb bit / IT block)");
+                LOGE("UsageFault",
+                     "Invalid EPSR state (bad Thumb bit / IT block)");
             }
             if (cfsr & SCB_CFSR_INVPC_Msk) {
-                LOGE("UsageFault", "Invalid PC load / corrupt exception return");
+                LOGE("UsageFault",
+                     "Invalid PC load / corrupt exception return");
             }
             if (cfsr & SCB_CFSR_NOCP_Msk) {
-                LOGE("UsageFault", "Coprocessor access fault (FPU used without CPACR enabling it)");
+                LOGE("UsageFault",
+                     "Coprocessor access fault (FPU used without CPACR "
+                     "enabling it)");
             }
             if (cfsr & SCB_CFSR_UNALIGNED_Msk) {
                 LOGE("UsageFault", "Unaligned access trap");
@@ -259,7 +285,12 @@ decode_fault(const fault_frame_t* frame, uint32_t exc_return, fault_type_t fault
 
     // Clear all set bits
     SCB->CFSR = cfsr;
+
+#if defined(DEBUG)
     halt();
+#else
+    REBOOT();
+#endif
 }
 
 // Stub the syscalls needed by newlibc

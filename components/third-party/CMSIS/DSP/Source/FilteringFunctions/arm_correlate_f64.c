@@ -47,7 +47,11 @@
   @return        none
  */
 
-void arm_correlate_f64(const float64_t* pSrcA, uint32_t srcALen, const float64_t* pSrcB, uint32_t srcBLen, float64_t* pDst) {
+void arm_correlate_f64(const float64_t* pSrcA,
+                       uint32_t         srcALen,
+                       const float64_t* pSrcB,
+                       uint32_t         srcBLen,
+                       float64_t*       pDst) {
     const float64_t* pIn1;        /* InputA pointer */
     const float64_t* pIn2;        /* InputB pointer */
     float64_t*       pOut = pDst; /* Output pointer */
@@ -58,7 +62,7 @@ void arm_correlate_f64(const float64_t* pSrcA, uint32_t srcALen, const float64_t
     uint32_t         blockSize1, blockSize2, blockSize3; /* Loop counters */
     uint32_t         j, k, count, blkCnt;                /* Loop counters */
     uint32_t         outBlockSize;                       /* Loop counter */
-    int32_t          inc = 1;                            /* Destination address modifier */
+    int32_t          inc = 1; /* Destination address modifier */
 
     /* The algorithm implementation is based on the lengths of the inputs. */
     /* srcB is always made to slide across srcA. */

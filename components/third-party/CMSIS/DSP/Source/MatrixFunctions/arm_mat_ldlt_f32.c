@@ -33,31 +33,31 @@
 
 
 /// @private
-#define SWAP_ROWS_F32(A, i, j)                                                                                                                       \
-    {                                                                                                                                                \
-        int cnt = n;                                                                                                                                 \
-                                                                                                                                                     \
-        for (int w = 0; w < n; w += 4) {                                                                                                             \
-            f32x4_t      tmpa, tmpb;                                                                                                                 \
-            mve_pred16_t p0 = vctp32q(cnt);                                                                                                          \
-                                                                                                                                                     \
-            tmpa = vldrwq_z_f32(&A[i * n + w], p0);                                                                                                  \
-            tmpb = vldrwq_z_f32(&A[j * n + w], p0);                                                                                                  \
-                                                                                                                                                     \
-            vstrwq_p(&A[i * n + w], tmpb, p0);                                                                                                       \
-            vstrwq_p(&A[j * n + w], tmpa, p0);                                                                                                       \
-                                                                                                                                                     \
-            cnt -= 4;                                                                                                                                \
-        }                                                                                                                                            \
+#define SWAP_ROWS_F32(A, i, j)                                                 \
+    {                                                                          \
+        int cnt = n;                                                           \
+                                                                               \
+        for (int w = 0; w < n; w += 4) {                                       \
+            f32x4_t      tmpa, tmpb;                                           \
+            mve_pred16_t p0 = vctp32q(cnt);                                    \
+                                                                               \
+            tmpa = vldrwq_z_f32(&A[i * n + w], p0);                            \
+            tmpb = vldrwq_z_f32(&A[j * n + w], p0);                            \
+                                                                               \
+            vstrwq_p(&A[i * n + w], tmpb, p0);                                 \
+            vstrwq_p(&A[j * n + w], tmpa, p0);                                 \
+                                                                               \
+            cnt -= 4;                                                          \
+        }                                                                      \
     }
 
 /// @private
-#define SWAP_COLS_F32(A, i, j)                                                                                                                       \
-    for (int w = 0; w < n; w++) {                                                                                                                    \
-        float32_t tmp;                                                                                                                               \
-        tmp          = A[w * n + i];                                                                                                                 \
-        A[w * n + i] = A[w * n + j];                                                                                                                 \
-        A[w * n + j] = tmp;                                                                                                                          \
+#define SWAP_COLS_F32(A, i, j)                                                 \
+    for (int w = 0; w < n; w++) {                                              \
+        float32_t tmp;                                                         \
+        tmp          = A[w * n + i];                                           \
+        A[w * n + i] = A[w * n + j];                                           \
+        A[w * n + j] = tmp;                                                    \
     }
 
 /**
@@ -83,7 +83,10 @@
    * @par
    *  Computes the LDL^t decomposition of a matrix A such that P A P^t = L D L^t.
    */
-arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pl, arm_matrix_instance_f32* pd, uint16_t* pp) {
+arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc,
+                            arm_matrix_instance_f32*       pl,
+                            arm_matrix_instance_f32*       pd,
+                            uint16_t*                      pp) {
 
     arm_status status; /* status of matrix inverse */
 
@@ -91,7 +94,8 @@ arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_inst
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pl->numRows != pl->numCols) || (pd->numRows != pd->numCols) || (pl->numRows != pd->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pl->numRows != pl->numCols) ||
+        (pd->numRows != pd->numCols) || (pl->numRows != pd->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -182,7 +186,8 @@ arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_inst
                     //pA[w*n+x] = pA[w*n+x] - pA[w*n+k] * (pA[x*n+k] * invA);
 
 
-                    vecX = vldrwq_gather_shifted_offset_z_f32(&pA[x * n + k], (uint32x4_t)vecOffs, p0);
+                    vecX = vldrwq_gather_shifted_offset_z_f32(
+                        &pA[x * n + k], (uint32x4_t)vecOffs, p0);
                     vecX = vmulq_m_n_f32(vuninitializedq_f32(), vecX, invA, p0);
 
 
@@ -223,7 +228,8 @@ arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_inst
 
                     vecA = vldrwq_z_f32(&pA[w * n + x], p0);
 
-                    vecX = vldrwq_gather_shifted_offset_z_f32(&pA[x * n + k], (uint32x4_t)vecOffs, p0);
+                    vecX = vldrwq_gather_shifted_offset_z_f32(
+                        &pA[x * n + k], (uint32x4_t)vecOffs, p0);
                     vecX = vmulq_m_n_f32(vuninitializedq_f32(), vecX, invA, p0);
 
                     vecA = vfmsq_m(vecA, vecW, vecX, p0);
@@ -287,21 +293,21 @@ arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_inst
 #else
 
 /// @private
-#define SWAP_ROWS_F32(A, i, j)                                                                                                                       \
-    for (w = 0; w < n; w++) {                                                                                                                        \
-        float32_t tmp;                                                                                                                               \
-        tmp          = A[i * n + w];                                                                                                                 \
-        A[i * n + w] = A[j * n + w];                                                                                                                 \
-        A[j * n + w] = tmp;                                                                                                                          \
+#define SWAP_ROWS_F32(A, i, j)                                                 \
+    for (w = 0; w < n; w++) {                                                  \
+        float32_t tmp;                                                         \
+        tmp          = A[i * n + w];                                           \
+        A[i * n + w] = A[j * n + w];                                           \
+        A[j * n + w] = tmp;                                                    \
     }
 
 /// @private
-#define SWAP_COLS_F32(A, i, j)                                                                                                                       \
-    for (w = 0; w < n; w++) {                                                                                                                        \
-        float32_t tmp;                                                                                                                               \
-        tmp          = A[w * n + i];                                                                                                                 \
-        A[w * n + i] = A[w * n + j];                                                                                                                 \
-        A[w * n + j] = tmp;                                                                                                                          \
+#define SWAP_COLS_F32(A, i, j)                                                 \
+    for (w = 0; w < n; w++) {                                                  \
+        float32_t tmp;                                                         \
+        tmp          = A[w * n + i];                                           \
+        A[w * n + i] = A[w * n + j];                                           \
+        A[w * n + j] = tmp;                                                    \
     }
 
 /**
@@ -327,7 +333,10 @@ arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_inst
    * @par
    *  Computes the LDL^t decomposition of a matrix A such that P A P^t = L D L^t.
    */
-arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pl, arm_matrix_instance_f32* pd, uint16_t* pp) {
+arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc,
+                            arm_matrix_instance_f32*       pl,
+                            arm_matrix_instance_f32*       pd,
+                            uint16_t*                      pp) {
 
     arm_status status; /* status of matrix inverse */
 
@@ -335,7 +344,8 @@ arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_inst
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pl->numRows != pl->numCols) || (pd->numRows != pd->numCols) || (pl->numRows != pd->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pl->numRows != pl->numCols) ||
+        (pd->numRows != pd->numCols) || (pl->numRows != pd->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -393,7 +403,8 @@ arm_status arm_mat_ldlt_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_inst
             for (w = k + 1; w < n; w++) {
                 int x;
                 for (x = k + 1; x < n; x++) {
-                    pA[w * n + x] = pA[w * n + x] - pA[w * n + k] * pA[x * n + k] / a;
+                    pA[w * n + x] =
+                        pA[w * n + x] - pA[w * n + k] * pA[x * n + k] / a;
                 }
             }
 

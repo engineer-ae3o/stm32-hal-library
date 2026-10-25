@@ -50,7 +50,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_min_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult, uint32_t* pIndex) {
+void arm_min_q15(const q15_t* pSrc,
+                 uint32_t     blockSize,
+                 q15_t*       pResult,
+                 uint32_t*    pIndex) {
 
     int32_t      blkCnt; /* loop counters */
     q15x8_t      extremValVec = vdupq_n_s16(Q15_MAX);
@@ -93,8 +96,11 @@ void arm_min_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult, uint32_t
     *pResult = minValue;
 }
 #else
-void arm_min_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult, uint32_t* pIndex) {
-    q15_t    minVal, out;      /* Temporary variables to store the output value. */
+void arm_min_q15(const q15_t* pSrc,
+                 uint32_t     blockSize,
+                 q15_t*       pResult,
+                 uint32_t*    pIndex) {
+    q15_t    minVal, out; /* Temporary variables to store the output value. */
     uint32_t blkCnt, outIndex; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL)

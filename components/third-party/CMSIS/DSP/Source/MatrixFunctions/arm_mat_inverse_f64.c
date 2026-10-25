@@ -48,25 +48,28 @@
                    - \ref ARM_MATH_SINGULAR      : Input matrix is found to be singular (non-invertible)
  */
 
-arm_status arm_mat_inverse_f64(const arm_matrix_instance_f64* pSrc, arm_matrix_instance_f64* pDst) {
-    float64_t* pIn  = pSrc->pData;                               /* input data matrix pointer */
-    float64_t* pOut = pDst->pData;                               /* output data matrix pointer */
-    float64_t *pInT1, *pInT2;                                    /* Temporary input data matrix pointer */
-    float64_t *pOutT1, *pOutT2;                                  /* Temporary output data matrix pointer */
-    float64_t *pPivotRowIn, *pPRT_in, *pPivotRowDst, *pPRT_pDst; /* Temporary input and output data matrix pointer */
-    uint32_t   numRows = pSrc->numRows;                          /* Number of rows in the matrix  */
-    uint32_t   numCols = pSrc->numCols;                          /* Number of Cols in the matrix  */
+arm_status arm_mat_inverse_f64(const arm_matrix_instance_f64* pSrc,
+                               arm_matrix_instance_f64*       pDst) {
+    float64_t* pIn  = pSrc->pData; /* input data matrix pointer */
+    float64_t* pOut = pDst->pData; /* output data matrix pointer */
+    float64_t *pInT1, *pInT2;      /* Temporary input data matrix pointer */
+    float64_t *pOutT1, *pOutT2;    /* Temporary output data matrix pointer */
+    float64_t *pPivotRowIn, *pPRT_in, *pPivotRowDst,
+        *pPRT_pDst; /* Temporary input and output data matrix pointer */
+    uint32_t numRows = pSrc->numRows; /* Number of rows in the matrix  */
+    uint32_t numCols = pSrc->numCols; /* Number of Cols in the matrix  */
 
 #if defined(ARM_MATH_DSP)
 
-    float64_t  Xchg, in = 0.0, in1;                    /* Temporary input values  */
+    float64_t  Xchg, in = 0.0, in1; /* Temporary input values  */
     uint32_t   i, rowCnt, flag = 0U, j, loopCnt, k, l; /* loop counters */
-    arm_status status;                                 /* status of matrix inverse */
+    arm_status status; /* status of matrix inverse */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -340,14 +343,15 @@ arm_status arm_mat_inverse_f64(const arm_matrix_instance_f64* pSrc, arm_matrix_i
 
 #else
 
-    float64_t  Xchg, in = 0.0;                      /* Temporary input values  */
+    float64_t  Xchg, in = 0.0; /* Temporary input values  */
     uint32_t   i, rowCnt, flag = 0U, j, loopCnt, l; /* loop counters */
-    arm_status status;                              /* status of matrix inverse */
+    arm_status status; /* status of matrix inverse */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

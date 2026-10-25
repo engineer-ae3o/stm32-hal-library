@@ -49,7 +49,9 @@
 
 #include "arm_helium_utils.h"
 
-void arm_mat_vec_mult_q15(const arm_matrix_instance_q15* pSrcMat, const q15_t* pSrcVec, q15_t* pDstVec) {
+void arm_mat_vec_mult_q15(const arm_matrix_instance_q15* pSrcMat,
+                          const q15_t*                   pSrcVec,
+                          q15_t*                         pDstVec) {
     const q15_t* pMatSrc = pSrcMat->pData;
     const q15_t *pMat0, *pMat1;
     uint32_t     numRows = pSrcMat->numRows;
@@ -252,7 +254,9 @@ void arm_mat_vec_mult_q15(const arm_matrix_instance_q15* pSrcMat, const q15_t* p
 }
 
 #else
-void arm_mat_vec_mult_q15(const arm_matrix_instance_q15* pSrcMat, const q15_t* pVec, q15_t* pDst) {
+void arm_mat_vec_mult_q15(const arm_matrix_instance_q15* pSrcMat,
+                          const q15_t*                   pVec,
+                          q15_t*                         pDst) {
     uint32_t     numRows = pSrcMat->numRows;
     uint32_t     numCols = pSrcMat->numCols;
     const q15_t* pSrcA   = pSrcMat->pData;

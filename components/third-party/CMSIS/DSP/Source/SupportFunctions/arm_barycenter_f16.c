@@ -64,7 +64,11 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_barycenter_f16(const float16_t* in, const float16_t* weights, float16_t* out, uint32_t nbVectors, uint32_t vecDim) {
+void arm_barycenter_f16(const float16_t* in,
+                        const float16_t* weights,
+                        float16_t*       out,
+                        uint32_t         nbVectors,
+                        uint32_t         vecDim) {
     const float16_t *pIn, *pW;
     const float16_t *pIn1, *pIn2, *pIn3, *pIn4;
     float16_t*       pOut;
@@ -196,7 +200,11 @@ void arm_barycenter_f16(const float16_t* in, const float16_t* weights, float16_t
     }
 }
 #else
-void arm_barycenter_f16(const float16_t* in, const float16_t* weights, float16_t* out, uint32_t nbVectors, uint32_t vecDim) {
+void arm_barycenter_f16(const float16_t* in,
+                        const float16_t* weights,
+                        float16_t*       out,
+                        uint32_t         nbVectors,
+                        uint32_t         vecDim) {
 
     const float16_t *pIn, *pW;
     float16_t*       pOut;

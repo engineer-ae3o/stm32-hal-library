@@ -63,19 +63,25 @@
                    the updation of filter cofficients are saturted.
  */
 
-void arm_lms_q31(const arm_lms_instance_q31* S, const q31_t* pSrc, q31_t* pRef, q31_t* pOut, q31_t* pErr, uint32_t blockSize) {
+void arm_lms_q31(const arm_lms_instance_q31* S,
+                 const q31_t*                pSrc,
+                 q31_t*                      pRef,
+                 q31_t*                      pOut,
+                 q31_t*                      pErr,
+                 uint32_t                    blockSize) {
     q31_t*   pState  = S->pState;  /* State pointer */
     q31_t*   pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q31_t*   pStateCurnt;          /* Points to the current sample of the state */
-    q31_t *  px, *pb;              /* Temporary pointers for state and coefficient buffers */
-    q31_t    mu      = S->mu;      /* Adaptive factor */
-    uint32_t numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t tapCnt, blkCnt;       /* Loop counters */
-    q63_t    acc;                  /* Accumulator */
-    q31_t    e = 0;                /* Error of data sample */
-    q31_t    alpha;                /* Intermediate constant for taps update */
-    q31_t    coef;                 /* Temporary variable for coef */
-    q31_t    acc_l, acc_h;         /* Temporary input */
+    q31_t*   pStateCurnt; /* Points to the current sample of the state */
+    q31_t *  px, *pb; /* Temporary pointers for state and coefficient buffers */
+    q31_t    mu = S->mu; /* Adaptive factor */
+    uint32_t numTaps =
+        S->numTaps;          /* Number of filter coefficients in the filter */
+    uint32_t tapCnt, blkCnt; /* Loop counters */
+    q63_t    acc;            /* Accumulator */
+    q31_t    e = 0;          /* Error of data sample */
+    q31_t    alpha;          /* Intermediate constant for taps update */
+    q31_t    coef;           /* Temporary variable for coef */
+    q31_t    acc_l, acc_h;   /* Temporary input */
     uint32_t uShift = ((uint32_t)S->postShift + 1U);
     uint32_t lShift = 32U - uShift; /*  Shift to be applied to the output */
 

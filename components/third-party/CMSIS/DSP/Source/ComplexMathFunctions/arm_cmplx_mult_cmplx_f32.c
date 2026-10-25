@@ -70,7 +70,10 @@
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mult_cmplx_f32(const float32_t* pSrcA, const float32_t* pSrcB, float32_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mult_cmplx_f32(const float32_t* pSrcA,
+                              const float32_t* pSrcB,
+                              float32_t*       pDst,
+                              uint32_t         numSamples) {
     int32_t blkCnt;
     f32x4_t vecSrcA, vecSrcB;
     f32x4_t vecSrcC, vecSrcD;
@@ -172,9 +175,13 @@ void arm_cmplx_mult_cmplx_f32(const float32_t* pSrcA, const float32_t* pSrcB, fl
 }
 
 #else
-void arm_cmplx_mult_cmplx_f32(const float32_t* pSrcA, const float32_t* pSrcB, float32_t* pDst, uint32_t numSamples) {
-    uint32_t  blkCnt;     /* Loop counter */
-    float32_t a, b, c, d; /* Temporary variables to store real and imaginary values */
+void arm_cmplx_mult_cmplx_f32(const float32_t* pSrcA,
+                              const float32_t* pSrcB,
+                              float32_t*       pDst,
+                              uint32_t         numSamples) {
+    uint32_t  blkCnt; /* Loop counter */
+    float32_t a, b, c,
+        d; /* Temporary variables to store real and imaginary values */
 
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
     float32x4x2_t va, vb;
@@ -184,7 +191,8 @@ void arm_cmplx_mult_cmplx_f32(const float32_t* pSrcA, const float32_t* pSrcB, fl
     blkCnt = numSamples >> 2U;
 
     while (blkCnt > 0U) {
-        va = vld2q_f32(pSrcA); // load & separate real/imag pSrcA (de-interleave 2)
+        va = vld2q_f32(
+            pSrcA); // load & separate real/imag pSrcA (de-interleave 2)
         vb = vld2q_f32(pSrcB); // load & separate real/imag pSrcB
 
         /* Increment pointers */

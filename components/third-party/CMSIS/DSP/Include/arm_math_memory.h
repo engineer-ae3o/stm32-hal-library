@@ -145,7 +145,8 @@ __STATIC_FORCEINLINE q31_t read_q7x4(q7_t const* pQ7) {
 #ifdef __ARM_FEATURE_UNALIGNED
     memcpy(&val, pQ7, 4);
 #else
-    val = ((pQ7[3] & 0x0FF) << 24) | ((pQ7[2] & 0x0FF) << 16) | ((pQ7[1] & 0x0FF) << 8) | (pQ7[0] & 0x0FF);
+    val = ((pQ7[3] & 0x0FF) << 24) | ((pQ7[2] & 0x0FF) << 16) |
+          ((pQ7[1] & 0x0FF) << 8) | (pQ7[0] & 0x0FF);
 #endif
     return (val);
 }

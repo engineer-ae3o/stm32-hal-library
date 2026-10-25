@@ -51,7 +51,10 @@
  */
 
 
-float32_t arm_logsumexp_dot_prod_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t blockSize, float32_t* pTmpBuffer) {
+float32_t arm_logsumexp_dot_prod_f32(const float32_t* pSrcA,
+                                     const float32_t* pSrcB,
+                                     uint32_t         blockSize,
+                                     float32_t*       pTmpBuffer) {
     float32_t result;
     arm_add_f32((float32_t*)pSrcA, (float32_t*)pSrcB, pTmpBuffer, blockSize);
 

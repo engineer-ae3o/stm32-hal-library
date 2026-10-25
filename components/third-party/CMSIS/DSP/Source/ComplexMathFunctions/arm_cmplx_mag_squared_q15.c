@@ -50,7 +50,9 @@
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mag_squared_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_squared_q15(const q15_t* pSrc,
+                               q15_t*       pDst,
+                               uint32_t     numSamples) {
     int32_t   blockSize = numSamples; /* loop counters */
     uint32_t  blkCnt;                 /* loop counters */
     q31_t     in;
@@ -99,7 +101,9 @@ void arm_cmplx_mag_squared_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSampl
 }
 
 #else
-void arm_cmplx_mag_squared_q15(const q15_t* pSrc, q15_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_squared_q15(const q15_t* pSrc,
+                               q15_t*       pDst,
+                               uint32_t     numSamples) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_DSP)

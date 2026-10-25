@@ -48,17 +48,18 @@
  *
  */
 
-arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ctx,
-                                     const cmsis_nn_dw_conv_params*           dw_conv_params,
-                                     const cmsis_nn_per_channel_quant_params* quant_params,
-                                     const cmsis_nn_dims*                     input_dims,
-                                     const q7_t*                              input,
-                                     const cmsis_nn_dims*                     filter_dims,
-                                     const q7_t*                              kernel,
-                                     const cmsis_nn_dims*                     bias_dims,
-                                     const int32_t*                           bias,
-                                     const cmsis_nn_dims*                     output_dims,
-                                     q7_t*                                    output) {
+arm_status
+arm_depthwise_conv_s8_opt(const cmsis_nn_context*        ctx,
+                          const cmsis_nn_dw_conv_params* dw_conv_params,
+                          const cmsis_nn_per_channel_quant_params* quant_params,
+                          const cmsis_nn_dims*                     input_dims,
+                          const q7_t*                              input,
+                          const cmsis_nn_dims*                     filter_dims,
+                          const q7_t*                              kernel,
+                          const cmsis_nn_dims*                     bias_dims,
+                          const int32_t*                           bias,
+                          const cmsis_nn_dims*                     output_dims,
+                          q7_t*                                    output) {
 
     const int32_t input_ch  = input_dims->c;
     const int32_t output_ch = output_dims->c;
@@ -68,7 +69,8 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
         return ARM_MATH_SIZE_MISMATCH;
     }
 
-    if (ctx->buf == NULL && arm_depthwise_conv_s8_opt_get_buffer_size(input_dims, filter_dims) > 0) {
+    if (ctx->buf == NULL && arm_depthwise_conv_s8_opt_get_buffer_size(
+                                input_dims, filter_dims) > 0) {
         return ARM_MATH_ARGUMENT_ERROR;
     }
 #ifdef ARM_MATH_DSP
@@ -100,15 +102,25 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
     const int32_t kernel_size  = kernel_x * kernel_y;
 
     /* This part implements the im2col function */
-    for (int i_out_y = 0, base_idx_y = -pad_y; i_out_y < output_y; base_idx_y += stride_y, i_out_y++) {
-        for (int i_out_x = 0, base_idx_x = -pad_x; i_out_x < output_x; base_idx_x += stride_x, i_out_x++) {
-            for (int i_ker_y = base_idx_y; i_ker_y < base_idx_y + kernel_y; i_ker_y++) {
-                for (int i_ker_x = base_idx_x; i_ker_x < base_idx_x + kernel_x; i_ker_x++) {
-                    if (i_ker_y < 0 || i_ker_y >= input_y || i_ker_x < 0 || i_ker_x >= input_x) {
-                        arm_memset_q7(lhs_buffer, (int8_t)-input_offset, (uint32_t)input_ch);
+    for (int i_out_y = 0, base_idx_y = -pad_y; i_out_y < output_y;
+         base_idx_y += stride_y, i_out_y++) {
+        for (int i_out_x = 0, base_idx_x = -pad_x; i_out_x < output_x;
+             base_idx_x += stride_x, i_out_x++) {
+            for (int i_ker_y = base_idx_y; i_ker_y < base_idx_y + kernel_y;
+                 i_ker_y++) {
+                for (int i_ker_x = base_idx_x; i_ker_x < base_idx_x + kernel_x;
+                     i_ker_x++) {
+                    if (i_ker_y < 0 || i_ker_y >= input_y || i_ker_x < 0 ||
+                        i_ker_x >= input_x) {
+                        arm_memset_q7(lhs_buffer,
+                                      (int8_t)-input_offset,
+                                      (uint32_t)input_ch);
                         padded = 1;
                     } else {
-                        arm_memcpy_q7(lhs_buffer, input + (i_ker_y * input_x + i_ker_x) * input_ch, (uint32_t)input_ch);
+                        arm_memcpy_q7(lhs_buffer,
+                                      input + (i_ker_y * input_x + i_ker_x) *
+                                                  input_ch,
+                                      (uint32_t)input_ch);
                     }
                     lhs_buffer += input_ch;
                 }
@@ -131,18 +143,19 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
                                                         bias,
                                                         out);
                 } else {
-                    out    = arm_nn_depthwise_conv_nt_t_padded_s8(lhs_buffer,
-                                                                  kernel,
-                                                                  input_offset,
-                                                                  input_ch,
-                                                                  output_shift,
-                                                                  output_mult,
-                                                                  output_offset,
-                                                                  output_activation_min,
-                                                                  output_activation_max,
-                                                                  kernel_size,
-                                                                  bias,
-                                                                  out);
+                    out = arm_nn_depthwise_conv_nt_t_padded_s8(
+                        lhs_buffer,
+                        kernel,
+                        input_offset,
+                        input_ch,
+                        output_shift,
+                        output_mult,
+                        output_offset,
+                        output_activation_min,
+                        output_activation_max,
+                        kernel_size,
+                        bias,
+                        out);
                     padded = 0;
                 }
                 buffer_count = 0;
@@ -157,8 +170,10 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
         int32_t loop_count = (input_ch + 3) / 4;
 
         int32_t num_ch_to_process = input_ch;
-        for (int i_loop_cnt = 0, offset = 0; i_loop_cnt < loop_count; num_ch_to_process -= 4, offset += 4, i_loop_cnt++) {
-            const int8_t* col_0 = lhs_buffer + (kernel_size * input_ch * i_buf) + offset;
+        for (int i_loop_cnt = 0, offset = 0; i_loop_cnt < loop_count;
+             num_ch_to_process -= 4, offset += 4, i_loop_cnt++) {
+            const int8_t* col_0 =
+                lhs_buffer + (kernel_size * input_ch * i_buf) + offset;
             const int8_t* row_0 = kernel + offset;
             int32x4_t     out_0 = vldrwq_s32(&bias[offset]);
 
@@ -176,10 +191,10 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
             const int32x4_t mult  = vldrwq_s32(&output_mult[offset]);
             const int32x4_t shift = vldrwq_s32(&output_shift[offset]);
 
-            out_0          = arm_requantize_mve_32x4(out_0, mult, shift);
-            out_0          = vaddq_n_s32(out_0, output_offset);
-            out_0          = vmaxq_s32(out_0, vdupq_n_s32(output_activation_min));
-            out_0          = vminq_s32(out_0, vdupq_n_s32(output_activation_max));
+            out_0 = arm_requantize_mve_32x4(out_0, mult, shift);
+            out_0 = vaddq_n_s32(out_0, output_offset);
+            out_0 = vmaxq_s32(out_0, vdupq_n_s32(output_activation_min));
+            out_0 = vminq_s32(out_0, vdupq_n_s32(output_activation_max));
             mve_pred16_t p = vctp32q((uint32_t)num_ch_to_process);
             vstrbq_p_s32(out, out_0, p);
 
@@ -216,7 +231,9 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
 
             int32_t index = 0;
             if (ker_y_start != 0) {
-                memset(&col_buffer[index], 0, (kernel_x * input_ch) * ker_y_start * sizeof(q15_t));
+                memset(&col_buffer[index],
+                       0,
+                       (kernel_x * input_ch) * ker_y_start * sizeof(q15_t));
                 index += (kernel_x * input_ch) * ker_y_start;
             }
 
@@ -228,7 +245,11 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
                     if (idx_x < 0 || idx_x >= input_x) {
                         memset(&col_buffer[index], 0, input_ch * sizeof(q15_t));
                     } else {
-                        arm_q7_to_q15_with_offset((q7_t*)input + (idx_y * input_x + idx_x) * input_ch, &col_buffer[index], input_ch, input_offset);
+                        arm_q7_to_q15_with_offset(
+                            (q7_t*)input + (idx_y * input_x + idx_x) * input_ch,
+                            &col_buffer[index],
+                            input_ch,
+                            input_offset);
                     }
                     index += input_ch;
                 }
@@ -236,7 +257,9 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
 
             const int diff = kernel_y - ker_y_end;
             if (diff != 0) {
-                memset(&col_buffer[index], 0, (kernel_x * input_ch) * diff * sizeof(q15_t));
+                memset(&col_buffer[index],
+                       0,
+                       (kernel_x * input_ch) * diff * sizeof(q15_t));
             }
 
             row_count    = output_ch / 4;
@@ -315,18 +338,21 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
                 sum       = MIN(sum, output_activation_max);
                 *output++ = (q7_t)sum;
 
-                sum_2 = arm_nn_requantize(sum_2, *output_mult++, *output_shift++);
+                sum_2 =
+                    arm_nn_requantize(sum_2, *output_mult++, *output_shift++);
                 sum_2 += output_offset;
                 sum_2     = MAX(sum_2, output_activation_min);
                 sum_2     = MIN(sum_2, output_activation_max);
                 *output++ = (q7_t)sum_2;
-                sum_3     = arm_nn_requantize(sum_3, *output_mult++, *output_shift++);
+                sum_3 =
+                    arm_nn_requantize(sum_3, *output_mult++, *output_shift++);
                 sum_3 += output_offset;
                 sum_3     = MAX(sum_3, output_activation_min);
                 sum_3     = MIN(sum_3, output_activation_max);
                 *output++ = (q7_t)sum_3;
 
-                sum_4 = arm_nn_requantize(sum_4, *output_mult++, *output_shift++);
+                sum_4 =
+                    arm_nn_requantize(sum_4, *output_mult++, *output_shift++);
                 sum_4 += output_offset;
                 sum_4     = MAX(sum_4, output_activation_min);
                 sum_4     = MIN(sum_4, output_activation_max);
@@ -362,17 +388,31 @@ arm_status arm_depthwise_conv_s8_opt(const cmsis_nn_context*                  ct
 #endif
 #else
     /* Run the following code as reference implementation for Cortex-M0 and Cortex-M3 */
-    return arm_depthwise_conv_s8(ctx, dw_conv_params, quant_params, input_dims, input, filter_dims, kernel, bias_dims, bias, output_dims, output);
+    return arm_depthwise_conv_s8(ctx,
+                                 dw_conv_params,
+                                 quant_params,
+                                 input_dims,
+                                 input,
+                                 filter_dims,
+                                 kernel,
+                                 bias_dims,
+                                 bias,
+                                 output_dims,
+                                 output);
 #endif /* ARM_MATH_MVEI | ARM_MATH_DSP */
 
     /* Return to application */
     return ARM_MATH_SUCCESS;
 }
 
-int32_t arm_depthwise_conv_s8_opt_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims) {
+int32_t
+arm_depthwise_conv_s8_opt_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                          const cmsis_nn_dims* filter_dims) {
 #if defined(ARM_MATH_MVEI)
     /* The + 4 accounts for out of bounds read of the lhs buffers in the *_nt_t_* functions.  */
-    return (2 * input_dims->c * filter_dims->w * filter_dims->h) * (int32_t)sizeof(int16_t) + 4;
+    return (2 * input_dims->c * filter_dims->w * filter_dims->h) *
+               (int32_t)sizeof(int16_t) +
+           4;
 #elif defined(ARM_MATH_DSP)
     return (input_dims->c * filter_dims->w * filter_dims->h) * sizeof(int16_t);
 #else

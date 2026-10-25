@@ -56,7 +56,13 @@
                    The 18.14 result is then truncated to 18.7 format by discarding the low 7 bits and then saturated to 1.7 format.
  */
 
-void arm_conv_opt_q7(const q7_t* pSrcA, uint32_t srcALen, const q7_t* pSrcB, uint32_t srcBLen, q7_t* pDst, q15_t* pScratch1, q15_t* pScratch2) {
+void arm_conv_opt_q7(const q7_t* pSrcA,
+                     uint32_t    srcALen,
+                     const q7_t* pSrcB,
+                     uint32_t    srcBLen,
+                     q7_t*       pDst,
+                     q15_t*      pScratch1,
+                     q15_t*      pScratch2) {
     q15_t*      pScr1 = pScratch1;      /* Temporary pointer for scratch */
     q15_t*      pScr2 = pScratch2;      /* Temporary pointer for scratch */
     q15_t       x4;                     /* Temporary input variable */

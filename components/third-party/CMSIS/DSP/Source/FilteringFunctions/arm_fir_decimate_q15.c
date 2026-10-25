@@ -61,13 +61,19 @@
 
 #include "arm_helium_utils.h"
 
-void arm_fir_decimate_q15(const arm_fir_decimate_instance_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
-    q15_t*       pState  = S->pState;                                /* State pointer */
-    const q15_t* pCoeffs = S->pCoeffs;                               /* Coefficient pointer */
-    q15_t*       pStateCurnt;                                        /* Points to the current sample of the state */
-    const q15_t *px, *pb;                                            /* Temporary pointers for state and coefficient buffers */
-    uint32_t     numTaps = S->numTaps;                               /* Number of filter coefficients in the filter */
-    uint32_t     i, tapCnt, blkCnt, outBlockSize = blockSize / S->M; /* Loop counters */
+void arm_fir_decimate_q15(const arm_fir_decimate_instance_q15* S,
+                          const q15_t*                         pSrc,
+                          q15_t*                               pDst,
+                          uint32_t                             blockSize) {
+    q15_t*       pState  = S->pState;  /* State pointer */
+    const q15_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    q15_t*       pStateCurnt; /* Points to the current sample of the state */
+    const q15_t *px,
+        *pb; /* Temporary pointers for state and coefficient buffers */
+    uint32_t numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t i, tapCnt, blkCnt,
+        outBlockSize = blockSize / S->M; /* Loop counters */
     uint32_t     blkCntN4;
     const q15_t *px0, *px1, *px2, *px3;
     q63_t        acc0v, acc1v, acc2v, acc3v;
@@ -302,19 +308,24 @@ void arm_fir_decimate_q15(const arm_fir_decimate_instance_q15* S, const q15_t* p
 #else
 #if defined(ARM_MATH_DSP)
 
-void arm_fir_decimate_q15(const arm_fir_decimate_instance_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+void arm_fir_decimate_q15(const arm_fir_decimate_instance_q15* S,
+                          const q15_t*                         pSrc,
+                          q15_t*                               pDst,
+                          uint32_t                             blockSize) {
     q15_t*       pState  = S->pState;  /* State pointer */
     const q15_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q15_t*       pStateCur;            /* Points to the current sample of the state */
-    q15_t*       px;                   /* Temporary pointer for state buffer */
-    const q15_t* pb;                   /* Temporary pointer for coefficient buffer */
-    q31_t        x0, x1, c0;           /* Temporary variables to hold state and coefficient values */
-    q63_t        sum0;                 /* Accumulators */
-    q63_t        acc0, acc1;
-    q15_t *      px0, *px1;
-    uint32_t     blkCntN3;
-    uint32_t     numTaps = S->numTaps;                               /* Number of taps */
-    uint32_t     i, blkCnt, tapCnt, outBlockSize = blockSize / S->M; /* Loop counters */
+    q15_t*       pStateCur; /* Points to the current sample of the state */
+    q15_t*       px;        /* Temporary pointer for state buffer */
+    const q15_t* pb;        /* Temporary pointer for coefficient buffer */
+    q31_t        x0, x1,
+        c0; /* Temporary variables to hold state and coefficient values */
+    q63_t    sum0; /* Accumulators */
+    q63_t    acc0, acc1;
+    q15_t *  px0, *px1;
+    uint32_t blkCntN3;
+    uint32_t numTaps = S->numTaps; /* Number of taps */
+    uint32_t i, blkCnt, tapCnt,
+        outBlockSize = blockSize / S->M; /* Loop counters */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q31_t c1; /* Temporary variables to hold state and coefficient values */
@@ -531,19 +542,24 @@ void arm_fir_decimate_q15(const arm_fir_decimate_instance_q15* S, const q15_t* p
 
 #else /* #if defined (ARM_MATH_DSP) */
 
-void arm_fir_decimate_q15(const arm_fir_decimate_instance_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
+void arm_fir_decimate_q15(const arm_fir_decimate_instance_q15* S,
+                          const q15_t*                         pSrc,
+                          q15_t*                               pDst,
+                          uint32_t                             blockSize) {
     q15_t*       pState  = S->pState;  /* State pointer */
     const q15_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q15_t*       pStateCur;            /* Points to the current sample of the state */
-    q15_t*       px;                   /* Temporary pointer for state buffer */
-    const q15_t* pb;                   /* Temporary pointer for coefficient buffer */
-    q15_t        x0, x1, c0;           /* Temporary variables to hold state and coefficient values */
-    q63_t        sum0;                 /* Accumulators */
-    q63_t        acc0, acc1;
-    q15_t *      px0, *px1;
-    uint32_t     blkCntN3;
-    uint32_t     numTaps = S->numTaps;                               /* Number of taps */
-    uint32_t     i, blkCnt, tapCnt, outBlockSize = blockSize / S->M; /* Loop counters */
+    q15_t*       pStateCur; /* Points to the current sample of the state */
+    q15_t*       px;        /* Temporary pointer for state buffer */
+    const q15_t* pb;        /* Temporary pointer for coefficient buffer */
+    q15_t        x0, x1,
+        c0; /* Temporary variables to hold state and coefficient values */
+    q63_t    sum0; /* Accumulators */
+    q63_t    acc0, acc1;
+    q15_t *  px0, *px1;
+    uint32_t blkCntN3;
+    uint32_t numTaps = S->numTaps; /* Number of taps */
+    uint32_t i, blkCnt, tapCnt,
+        outBlockSize = blockSize / S->M; /* Loop counters */
 
 
     /* S->pState buffer contains previous frame (numTaps - 1) samples */

@@ -61,7 +61,8 @@ This information includes:
 /// require 2 processor cycles for a I/O Port Write operation.  If the Debug Unit uses
 /// a Cortex-M0+ processor with high-speed peripheral I/O only 1 processor cycle might be
 /// required.
-#define IO_PORT_WRITE_CYCLES 2U ///< I/O Cycles: 2=default, 1=Cortex-M0+ fast I/0.
+#define IO_PORT_WRITE_CYCLES                                                   \
+    2U ///< I/O Cycles: 2=default, 1=Cortex-M0+ fast I/0.
 
 /// Indicate that Serial Wire Debug (SWD) communication mode is available at the Debug Access Port.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.
@@ -82,7 +83,8 @@ This information includes:
 /// Default communication speed on the Debug Access Port for SWD and JTAG mode.
 /// Used to initialize the default SWD/JTAG clock frequency.
 /// The command \ref DAP_SWJ_Clock can be used to overwrite this default setting.
-#define DAP_DEFAULT_SWJ_CLOCK 1000000U ///< Default SWD/JTAG clock frequency in Hz.
+#define DAP_DEFAULT_SWJ_CLOCK                                                  \
+    1000000U ///< Default SWD/JTAG clock frequency in Hz.
 
 /// Maximum Package Size for Command and Response data.
 /// This configuration settings is used to optimize the communication performance with the
@@ -117,7 +119,8 @@ This information includes:
 #define SWO_STREAM 0 ///< SWO Streaming Trace: 1 = available, 0 = not available.
 
 /// Clock frequency of the Test Domain Timer. Timer value is returned with \ref TIMESTAMP_GET.
-#define TIMESTAMP_CLOCK 100000000U ///< Timestamp clock in Hz (0 = timestamps not supported).
+#define TIMESTAMP_CLOCK                                                        \
+    100000000U ///< Timestamp clock in Hz (0 = timestamps not supported).
 
 /// Indicate that UART Communication Port is available.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.
@@ -127,14 +130,17 @@ This information includes:
 #define DAP_UART_DRIVER 1 ///< USART Driver instance number (Driver_USART#).
 
 /// UART Receive Buffer Size.
-#define DAP_UART_RX_BUFFER_SIZE 1024U ///< Uart Receive Buffer Size in bytes (must be 2^n).
+#define DAP_UART_RX_BUFFER_SIZE                                                \
+    1024U ///< Uart Receive Buffer Size in bytes (must be 2^n).
 
 /// UART Transmit Buffer Size.
-#define DAP_UART_TX_BUFFER_SIZE 1024U ///< Uart Transmit Buffer Size in bytes (must be 2^n).
+#define DAP_UART_TX_BUFFER_SIZE                                                \
+    1024U ///< Uart Transmit Buffer Size in bytes (must be 2^n).
 
 /// Indicate that UART Communication via USB COM Port is available.
 /// This information is returned by the command \ref DAP_Info as part of <b>Capabilities</b>.
-#define DAP_UART_USB_COM_PORT 1 ///< USB COM Port:  1 = available, 0 = not available.
+#define DAP_UART_USB_COM_PORT                                                  \
+    1 ///< USB COM Port:  1 = available, 0 = not available.
 
 /// Debug Unit is connected to fixed Target Device.
 /// The Debug Unit may be part of an evaluation board and always connected to a fixed

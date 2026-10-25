@@ -1,5 +1,5 @@
 #include "stm32f411xe.h"
-#include "drivers/spi_internals.h"
+#include "drivers/src/spi_internals.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
 #include "utils/clock.h"
@@ -11,7 +11,8 @@
 
 
 // Helper
-[[__gnu__::__always_inline__]] static inline uint8_t get_index(const I2S_TypeDef* handle) {
+[[__gnu__::__always_inline__]] static inline uint8_t
+get_index(const I2S_TypeDef* handle) {
     if (handle == I2S1) {
         return 0U;
     } else if (handle == I2S2) {
@@ -65,7 +66,8 @@ hal_err_t i2sx_clk_enable(I2S_TypeDef* handle, bool enable) {
     return HAL_OK;
 }
 
-hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config) {
+hal_err_t i2s_master_init(I2S_TypeDef*               handle,
+                          const i2s_master_config_t* config) {
     if (handle == NULL || config == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -93,11 +95,12 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     if (config->use_mck) {
         multiplier = 256;
     } else {
-        multiplier = (config->frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 32 : 64;
+        multiplier =
+            (config->frame == I2S_DATA_16_BITS_FRAME_16_BITS) ? 32 : 64;
     }
 
     const uint32_t denominator = config->frequency * multiplier;
-    const uint32_t divisor     = (audio_clock + (denominator / 2)) / denominator;
+    const uint32_t divisor = (audio_clock + (denominator / 2)) / denominator;
 
     const uint32_t i2sdiv = divisor >> 1;
     const uint32_t odd    = divisor & 1;
@@ -114,13 +117,21 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
 
     // Apply the prescalers
     handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
-    handle->I2SPR |= (uint32_t)(i2sdiv << SPI_I2SPR_I2SDIV_Pos) | (uint32_t)(odd << SPI_I2SPR_ODD_Pos) | ((config->use_mck) ? SPI_I2SPR_MCKOE : 0);
+    handle->I2SPR |= (uint32_t)(i2sdiv << SPI_I2SPR_I2SDIV_Pos) |
+                     (uint32_t)(odd << SPI_I2SPR_ODD_Pos) |
+                     ((config->use_mck) ? SPI_I2SPR_MCKOE : 0);
 
-    handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_PCMSYNC);
-    handle->I2SCFGR |= (((uint32_t)config->direction << SPI_I2SCFGR_I2SCFG_Pos) | // Direction: TX or RX in master mode
-                        ((uint32_t)config->mode << SPI_I2SCFGR_I2SSTD_Pos) |      // I2S mode: Philips, left or right justified
-                        (uint32_t)config->frame |                                 // Already encodes data frame size and channel length
-                        ((uint32_t)config->ckpol ? SPI_I2SCFGR_CKPOL : 0));       // Clock polarity
+    handle->I2SCFGR &=
+        ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN |
+          SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_PCMSYNC);
+    handle->I2SCFGR |=
+        (((uint32_t)config->direction
+          << SPI_I2SCFGR_I2SCFG_Pos) | // Direction: TX or RX in master mode
+         ((uint32_t)config->mode
+          << SPI_I2SCFGR_I2SSTD_Pos) | // I2S mode: Philips, left or right justified
+         (uint32_t)config
+             ->frame | // Already encodes data frame size and channel length
+         ((uint32_t)config->ckpol ? SPI_I2SCFGR_CKPOL : 0)); // Clock polarity
 
     // Disable SPI DMA requests by default
     DISABLE_SPI_DMA();
@@ -128,29 +139,41 @@ hal_err_t i2s_master_init(I2S_TypeDef* handle, const i2s_master_config_t* config
     // Configure the GPIO pins
     if (config->use_mck) {
         TRY(gpiox_clk_enable(config->mclk_pin.port, true));
-        gpio_set_alternate_function(config->mclk_pin.port, config->mclk_pin.pin, config->mclk_pin.af);
-        gpio_enable_pullups(config->mclk_pin.port, config->mclk_pin.pin, true);
-        gpio_set_speed_mode(config->mclk_pin.port, config->mclk_pin.pin, GPIO_FULL_SPEED);
-        gpio_set_output_type(config->mclk_pin.port, config->mclk_pin.pin, GPIO_PUSH_PULL);
+        gpio_set_alternate_function(
+            config->mclk_pin.port, config->mclk_pin.pin, config->mclk_pin.af);
+        gpio_enable_pullup(config->mclk_pin.port, config->mclk_pin.pin, true);
+        gpio_set_speed_mode(
+            config->mclk_pin.port, config->mclk_pin.pin, GPIO_FULL_SPEED);
+        gpio_set_output_type(
+            config->mclk_pin.port, config->mclk_pin.pin, GPIO_PUSH_PULL);
     }
 
     TRY(gpiox_clk_enable(config->sclk_pin.port, true));
-    gpio_set_alternate_function(config->sclk_pin.port, config->sclk_pin.pin, config->sclk_pin.af);
-    gpio_enable_pullups(config->sclk_pin.port, config->sclk_pin.pin, true);
-    gpio_set_speed_mode(config->sclk_pin.port, config->sclk_pin.pin, GPIO_FULL_SPEED);
-    gpio_set_output_type(config->sclk_pin.port, config->sclk_pin.pin, GPIO_PUSH_PULL);
+    gpio_set_alternate_function(
+        config->sclk_pin.port, config->sclk_pin.pin, config->sclk_pin.af);
+    gpio_enable_pullup(config->sclk_pin.port, config->sclk_pin.pin, true);
+    gpio_set_speed_mode(
+        config->sclk_pin.port, config->sclk_pin.pin, GPIO_FULL_SPEED);
+    gpio_set_output_type(
+        config->sclk_pin.port, config->sclk_pin.pin, GPIO_PUSH_PULL);
 
     TRY(gpiox_clk_enable(config->ws_pin.port, true));
-    gpio_set_alternate_function(config->ws_pin.port, config->ws_pin.pin, config->ws_pin.af);
-    gpio_enable_pullups(config->ws_pin.port, config->ws_pin.pin, true);
-    gpio_set_speed_mode(config->ws_pin.port, config->ws_pin.pin, GPIO_FULL_SPEED);
-    gpio_set_output_type(config->ws_pin.port, config->ws_pin.pin, GPIO_PUSH_PULL);
+    gpio_set_alternate_function(
+        config->ws_pin.port, config->ws_pin.pin, config->ws_pin.af);
+    gpio_enable_pullup(config->ws_pin.port, config->ws_pin.pin, true);
+    gpio_set_speed_mode(
+        config->ws_pin.port, config->ws_pin.pin, GPIO_FULL_SPEED);
+    gpio_set_output_type(
+        config->ws_pin.port, config->ws_pin.pin, GPIO_PUSH_PULL);
 
     TRY(gpiox_clk_enable(config->sd_pin.port, true));
-    gpio_set_alternate_function(config->sd_pin.port, config->sd_pin.pin, config->sd_pin.af);
-    gpio_enable_pullups(config->sd_pin.port, config->sd_pin.pin, true);
-    gpio_set_speed_mode(config->sd_pin.port, config->sd_pin.pin, GPIO_FULL_SPEED);
-    gpio_set_output_type(config->sd_pin.port, config->sd_pin.pin, GPIO_PUSH_PULL);
+    gpio_set_alternate_function(
+        config->sd_pin.port, config->sd_pin.pin, config->sd_pin.af);
+    gpio_enable_pullup(config->sd_pin.port, config->sd_pin.pin, true);
+    gpio_set_speed_mode(
+        config->sd_pin.port, config->sd_pin.pin, GPIO_FULL_SPEED);
+    gpio_set_output_type(
+        config->sd_pin.port, config->sd_pin.pin, GPIO_PUSH_PULL);
 
     return HAL_OK;
 }
@@ -162,7 +185,9 @@ hal_err_t i2s_master_deinit(I2S_TypeDef* handle) {
 
     DISABLE_I2S();
 
-    handle->I2SCFGR &= ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN | SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_PCMSYNC);
+    handle->I2SCFGR &=
+        ~(SPI_I2SCFGR_I2SCFG | SPI_I2SCFGR_CKPOL | SPI_I2SCFGR_CHLEN |
+          SPI_I2SCFGR_I2SSTD | SPI_I2SCFGR_DATLEN | SPI_I2SCFGR_PCMSYNC);
     handle->I2SPR &= ~(SPI_I2SPR_I2SDIV | SPI_I2SPR_ODD | SPI_I2SPR_MCKOE);
 
     return HAL_OK;
@@ -289,7 +314,11 @@ hal_err_t i2s_master_dma_deinit(I2S_TypeDef* handle) {
 
 
 // DMA oneshot transfers API
-hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* data, uint16_t size, dma_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef*  handle,
+                                      const void*   data,
+                                      uint16_t      size,
+                                      dma_done_cb_t callback,
+                                      void*         arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
@@ -307,7 +336,8 @@ hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* data, uin
     // If for some reason, the CIRC and/or DBM bits are set, this means that i2s_master_dbm_init(...)
     // was called without a call to i2s_master_dbm_deinit(...) which would clean up its state. Also
     // check to see if the DMA is currently enabled and ongoing in a transaction or SPI mode is selected.
-    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN) || !(handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
+    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN) ||
+        !(handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
         return HAL_ERR_INVALID_STATE;
     }
 
@@ -315,7 +345,8 @@ hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* data, uin
     // Note that if the DATLEN bits are 0b00, that means 16 bit
     // data; 0b01 for 24 and 0b10 for 32. So a non zero value
     // from the DATLEN bits implies a transfer greater than 16 bits
-    const uint32_t actual_size = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (size * 2) : size;
+    const uint32_t actual_size =
+        (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (size * 2) : size;
     if (actual_size > UINT16_MAX) {
         return HAL_ERR_INVALID_SIZE;
     }
@@ -335,7 +366,11 @@ hal_err_t i2s_master_transmit_oneshot(I2S_TypeDef* handle, const void* data, uin
     return HAL_OK;
 }
 
-hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* data, uint16_t size, dma_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_receive_oneshot(I2S_TypeDef*  handle,
+                                     void*         data,
+                                     uint16_t      size,
+                                     dma_done_cb_t callback,
+                                     void*         arg) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU || data == NULL || size == 0) {
         return HAL_ERR_INVALID_ARG;
@@ -353,12 +388,14 @@ hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* data, uint16_t s
     // If for some reason, the CIRC and/or DBM bits are set, this means that i2s_master_dbm_init(...)
     // was called without a call to i2s_master_dbm_deinit(...) which would clean up its state. Also
     // check to see if the DMA is currently enabled and ongoing in a transaction or SPI mode is selected.
-    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN) || !(handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
+    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN) ||
+        !(handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
         return HAL_ERR_INVALID_STATE;
     }
 
     // Reason for this is above in i2s_master_transmit(...)
-    const uint32_t actual_size = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (size * 2) : size;
+    const uint32_t actual_size =
+        (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (size * 2) : size;
     if (actual_size > UINT16_MAX) {
         return HAL_ERR_INVALID_SIZE;
     }
@@ -380,9 +417,15 @@ hal_err_t i2s_master_receive_oneshot(I2S_TypeDef* handle, void* data, uint16_t s
 
 
 // Double buffering API
-hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uint16_t size, dma_done_cb_t callback, void* arg) {
+hal_err_t i2s_master_dbm_init(I2S_TypeDef*  handle,
+                              void*         buf_0,
+                              void*         buf_1,
+                              uint16_t      size,
+                              dma_done_cb_t callback,
+                              void*         arg) {
     const uint8_t idx = get_index(handle);
-    if (idx == 0xFFU || buf_0 == NULL || buf_1 == NULL || size == 0 || callback == NULL) {
+    if (idx == 0xFFU || buf_0 == NULL || buf_1 == NULL || size == 0 ||
+        callback == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -395,12 +438,14 @@ hal_err_t i2s_master_dbm_init(I2S_TypeDef* handle, void* buf_0, void* buf_1, uin
         return HAL_ERR_NOT_SUPPORTED;
     }
 
-    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN) || !(handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
+    if (stream->CR & (DMA_SxCR_CIRC | DMA_SxCR_DBM | DMA_SxCR_EN) ||
+        !(handle->I2SCFGR & SPI_I2SCFGR_I2SMOD)) {
         return HAL_ERR_INVALID_STATE;
     }
 
     // Get the transfer size from the DATLEN bit
-    const uint32_t actual_size = (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (size * 2) : size;
+    const uint32_t actual_size =
+        (handle->I2SCFGR & SPI_I2SCFGR_DATLEN) ? (size * 2) : size;
     if (actual_size > UINT16_MAX) {
         return HAL_ERR_INVALID_SIZE;
     }
@@ -484,7 +529,8 @@ hal_err_t i2s_master_dbm_stop(I2S_TypeDef* handle) {
     return HAL_OK;
 }
 
-hal_err_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle, uint8_t* buffer_idx) {
+hal_err_t i2s_master_dbm_get_filled_buffer(I2S_TypeDef* handle,
+                                           uint8_t*     buffer_idx) {
     const uint8_t idx = get_index(handle);
     if (idx == 0xFFU || buffer_idx == NULL) {
         return HAL_ERR_INVALID_ARG;

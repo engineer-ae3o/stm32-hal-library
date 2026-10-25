@@ -63,11 +63,11 @@ void arm_std_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
 }
 #else
 void arm_std_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
-    uint32_t blkCnt;                      /* Loop counter */
-    q31_t    sum = 0;                     /* Accumulator */
-    q31_t    meanOfSquares, squareOfMean; /* Square of mean and mean of square */
-    q63_t    sumOfSquares = 0;            /* Sum of squares */
-    q15_t    in;                          /* Temporary variable to store input value */
+    uint32_t blkCnt;                   /* Loop counter */
+    q31_t    sum = 0;                  /* Accumulator */
+    q31_t meanOfSquares, squareOfMean; /* Square of mean and mean of square */
+    q63_t sumOfSquares = 0;            /* Sum of squares */
+    q15_t in; /* Temporary variable to store input value */
 
 #if defined(ARM_MATH_LOOPUNROLL) && defined(ARM_MATH_DSP)
     q31_t in32; /* Temporary variable to store input value */
@@ -149,7 +149,8 @@ void arm_std_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
     meanOfSquares = (q31_t)(sumOfSquares / (q63_t)(blockSize - 1U));
 
     /* Compute square of mean */
-    squareOfMean = (q31_t)((q63_t)sum * sum / (q63_t)(blockSize * (blockSize - 1U)));
+    squareOfMean =
+        (q31_t)((q63_t)sum * sum / (q63_t)(blockSize * (blockSize - 1U)));
 
     /* mean of squares minus the square of mean. */
     /* Compute standard deviation and store result in destination */

@@ -66,24 +66,24 @@ arm_status arm_conv_partial_opt_q15(const q15_t* pSrcA,
                                     q15_t*       pScratch1,
                                     q15_t*       pScratch2) {
 
-    q15_t*       pOut  = pDst;      /* Output pointer */
-    q15_t*       pScr1 = pScratch1; /* Temporary pointer for scratch1 */
-    q15_t*       pScr2 = pScratch2; /* Temporary pointer for scratch1 */
-    q63_t        acc0;              /* Accumulator */
-    q31_t        x1;                /* Temporary variables to hold state and coefficient values */
-    q31_t        y1;                /* State variables */
-    const q15_t* pIn1;              /* InputA pointer */
-    const q15_t* pIn2;              /* InputB pointer */
-    const q15_t* px;                /* Intermediate inputA pointer */
-    q15_t*       py;                /* Intermediate inputB pointer */
-    uint32_t     j, k, blkCnt;      /* Loop counter */
-    uint32_t     tapCnt;            /* Loop count */
-    arm_status   status;            /* Status variable */
+    q15_t* pOut  = pDst;      /* Output pointer */
+    q15_t* pScr1 = pScratch1; /* Temporary pointer for scratch1 */
+    q15_t* pScr2 = pScratch2; /* Temporary pointer for scratch1 */
+    q63_t  acc0;              /* Accumulator */
+    q31_t  x1; /* Temporary variables to hold state and coefficient values */
+    q31_t  y1; /* State variables */
+    const q15_t* pIn1;         /* InputA pointer */
+    const q15_t* pIn2;         /* InputB pointer */
+    const q15_t* px;           /* Intermediate inputA pointer */
+    q15_t*       py;           /* Intermediate inputB pointer */
+    uint32_t     j, k, blkCnt; /* Loop counter */
+    uint32_t     tapCnt;       /* Loop count */
+    arm_status   status;       /* Status variable */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q63_t acc1, acc2, acc3; /* Accumulator */
-    q31_t x2, x3;           /* Temporary variables to hold state and coefficient values */
-    q31_t y2;               /* State variables */
+    q31_t x2, x3; /* Temporary variables to hold state and coefficient values */
+    q31_t y2;     /* State variables */
 #endif
 
     /* Check for range of output samples to be calculated */
@@ -287,11 +287,23 @@ arm_status arm_conv_partial_opt_q15(const q15_t* pSrcA,
 
             /* Store the results in the accumulators in the destination buffer. */
 #ifndef ARM_MATH_BIG_ENDIAN
-            write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc0 >> 15), 16), __SSAT((acc1 >> 15), 16), 16));
-            write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc2 >> 15), 16), __SSAT((acc3 >> 15), 16), 16));
+            write_q15x2_ia(&pOut,
+                           __PKHBT(__SSAT((acc0 >> 15), 16),
+                                   __SSAT((acc1 >> 15), 16),
+                                   16));
+            write_q15x2_ia(&pOut,
+                           __PKHBT(__SSAT((acc2 >> 15), 16),
+                                   __SSAT((acc3 >> 15), 16),
+                                   16));
 #else
-            write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc1 >> 15), 16), __SSAT((acc0 >> 15), 16), 16));
-            write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc3 >> 15), 16), __SSAT((acc2 >> 15), 16), 16));
+            write_q15x2_ia(&pOut,
+                           __PKHBT(__SSAT((acc1 >> 15), 16),
+                                   __SSAT((acc0 >> 15), 16),
+                                   16));
+            write_q15x2_ia(&pOut,
+                           __PKHBT(__SSAT((acc3 >> 15), 16),
+                                   __SSAT((acc2 >> 15), 16),
+                                   16));
 #endif /* #ifndef  ARM_MATH_BIG_ENDIAN */
 
             /* Initialization of inputB pointer */

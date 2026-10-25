@@ -26,7 +26,9 @@ namespace profile {
             for (uint32_t i = 0; auto& sample : log_time_samples) {
                 prof_start();
                 LOGI(TAG,
-                     "Typical log. Lets also do this: %.3f,%d,%d. Even more stuff. Add a format string as well. %s long enough. Iteration: %lu",
+                     "Typical log. Lets also do this: %.3f,%d,%d. Even more "
+                     "stuff. Add a format "
+                     "string as well. %s long enough. Iteration: %lu",
                      3.0,
                      4,
                      5,
@@ -42,28 +44,58 @@ namespace profile {
                 delay_us(1'000'000U / LOG_FREQ_HZ);
             }
 
-            const uint64_t total_cycles   = std::accumulate(log_time_samples.begin(), log_time_samples.end(), 0ULL);
-            const uint32_t average_cycles = static_cast<uint32_t>(total_cycles / log_time_samples.size());
+            const uint64_t total_cycles = std::accumulate(
+                log_time_samples.begin(), log_time_samples.end(), 0ULL);
+            const uint32_t average_cycles =
+                static_cast<uint32_t>(total_cycles / log_time_samples.size());
 
             // Total time for all rounds
             LOGI(TAG, "Total time taken: %llu cycles", total_cycles);
-            LOGI(TAG, "Total time taken: %llu.%03llums", cycles_to_ms(total_cycles), cycles_to_ms_frac(total_cycles));
-            LOGI(TAG, "Total time taken: %llu.%03llus", cycles_to_ss(total_cycles), cycles_to_ss_frac(total_cycles));
+            LOGI(TAG,
+                 "Total time taken: %llu.%03llums",
+                 cycles_to_ms(total_cycles),
+                 cycles_to_ms_frac(total_cycles));
+            LOGI(TAG,
+                 "Total time taken: %llu.%03llus",
+                 cycles_to_ss(total_cycles),
+                 cycles_to_ss_frac(total_cycles));
 
             // Average logging time
             LOGI(TAG, "Average logging time: %lu cycles", average_cycles);
-            LOGI(TAG, "Average logging time: %llu.%03lluus", cycles_to_us(average_cycles), cycles_to_us_frac(average_cycles));
-            LOGI(TAG, "Average logging time: %llu.%03llums", cycles_to_ms(average_cycles), cycles_to_ms_frac(average_cycles));
+            LOGI(TAG,
+                 "Average logging time: %llu.%03lluus",
+                 cycles_to_us(average_cycles),
+                 cycles_to_us_frac(average_cycles));
+            LOGI(TAG,
+                 "Average logging time: %llu.%03llums",
+                 cycles_to_ms(average_cycles),
+                 cycles_to_ms_frac(average_cycles));
 
             // Shortest log time
-            LOGI(TAG, "Shortest time for logging: %lu cycles", shortest_time_cycles);
-            LOGI(TAG, "Shortest time for logging: %llu.%03lluus", cycles_to_us(shortest_time_cycles), cycles_to_us_frac(shortest_time_cycles));
-            LOGI(TAG, "Shortest time for logging: %llu.%03llums", cycles_to_ms(shortest_time_cycles), cycles_to_ms_frac(shortest_time_cycles));
+            LOGI(TAG,
+                 "Shortest time for logging: %lu cycles",
+                 shortest_time_cycles);
+            LOGI(TAG,
+                 "Shortest time for logging: %llu.%03lluus",
+                 cycles_to_us(shortest_time_cycles),
+                 cycles_to_us_frac(shortest_time_cycles));
+            LOGI(TAG,
+                 "Shortest time for logging: %llu.%03llums",
+                 cycles_to_ms(shortest_time_cycles),
+                 cycles_to_ms_frac(shortest_time_cycles));
 
             // Longest log time
-            LOGI(TAG, "Longest time for logging: %lu cycles", longest_time_cycles);
-            LOGI(TAG, "Longest time for logging: %llu.%03lluus", cycles_to_us(longest_time_cycles), cycles_to_us_frac(longest_time_cycles));
-            LOGI(TAG, "Longest time for logging: %llu.%03llums", cycles_to_ms(longest_time_cycles), cycles_to_ms_frac(longest_time_cycles));
+            LOGI(TAG,
+                 "Longest time for logging: %lu cycles",
+                 longest_time_cycles);
+            LOGI(TAG,
+                 "Longest time for logging: %llu.%03lluus",
+                 cycles_to_us(longest_time_cycles),
+                 cycles_to_us_frac(longest_time_cycles));
+            LOGI(TAG,
+                 "Longest time for logging: %llu.%03llums",
+                 cycles_to_ms(longest_time_cycles),
+                 cycles_to_ms_frac(longest_time_cycles));
         }
 
         void o1heap_malloc() {
@@ -76,14 +108,17 @@ namespace profile {
             alignas(O1HEAP_ALIGNMENT) std::array<uint8_t, ARENA_SIZE> arena{};
 
             constexpr uint32_t SAMPLE_SIZE = 1'000;
-            constexpr uint32_t POOL_SIZE   = 64; // Outstanding allocations kept live during the test
+            constexpr uint32_t POOL_SIZE =
+                64; // Outstanding allocations kept live during the test
 
             constexpr size_t MIN_ALLOC = 8;
             constexpr size_t MAX_ALLOC = 512;
 
             O1HeapInstance* heap = o1heapInit(arena.data(), ARENA_SIZE);
             if (heap == nullptr) {
-                LOGI(TAG, "Heap initialization failed, arena not aligned or too small");
+                LOGI(TAG,
+                     "Heap initialization failed, arena not aligned or too "
+                     "small");
                 ASSERT(false);
             }
 
@@ -145,44 +180,96 @@ namespace profile {
                 alloc_max = std::max(alloc_max, alloc_samples[i]);
             }
 
-            const uint64_t alloc_total = std::accumulate(alloc_samples.begin(), alloc_samples.end(), 0ULL);
-            const uint64_t free_total  = std::accumulate(free_samples.begin(), free_samples.end(), 0ULL);
-            const uint32_t alloc_avg   = static_cast<uint32_t>(alloc_total / alloc_samples.size());
-            const uint32_t free_avg    = static_cast<uint32_t>(free_total / free_samples.size());
+            const uint64_t alloc_total = std::accumulate(
+                alloc_samples.begin(), alloc_samples.end(), 0ULL);
+            const uint64_t free_total =
+                std::accumulate(free_samples.begin(), free_samples.end(), 0ULL);
+            const uint32_t alloc_avg =
+                static_cast<uint32_t>(alloc_total / alloc_samples.size());
+            const uint32_t free_avg =
+                static_cast<uint32_t>(free_total / free_samples.size());
 
             // Allocations
             LOGI(TAG, "[Alloc] Total time taken: %llu cycles", alloc_total);
-            LOGI(TAG, "[Alloc] Total time taken: %llu.%03llums", cycles_to_ms(alloc_total), cycles_to_ms_frac(alloc_total));
-            LOGI(TAG, "[Alloc] Total time taken: %llu.%03llus", cycles_to_ss(alloc_total), cycles_to_ss_frac(alloc_total));
+            LOGI(TAG,
+                 "[Alloc] Total time taken: %llu.%03llums",
+                 cycles_to_ms(alloc_total),
+                 cycles_to_ms_frac(alloc_total));
+            LOGI(TAG,
+                 "[Alloc] Total time taken: %llu.%03llus",
+                 cycles_to_ss(alloc_total),
+                 cycles_to_ss_frac(alloc_total));
 
             LOGI(TAG, "[Alloc] Average time: %lu cycles", alloc_avg);
-            LOGI(TAG, "[Alloc] Average time: %llu.%03lluus", cycles_to_us(alloc_avg), cycles_to_us_frac(alloc_avg));
-            LOGI(TAG, "[Alloc] Average time: %llu.%03llums", cycles_to_ms(alloc_avg), cycles_to_ms_frac(alloc_avg));
+            LOGI(TAG,
+                 "[Alloc] Average time: %llu.%03lluus",
+                 cycles_to_us(alloc_avg),
+                 cycles_to_us_frac(alloc_avg));
+            LOGI(TAG,
+                 "[Alloc] Average time: %llu.%03llums",
+                 cycles_to_ms(alloc_avg),
+                 cycles_to_ms_frac(alloc_avg));
 
             LOGI(TAG, "[Alloc] Shortest time: %lu cycles", alloc_min);
-            LOGI(TAG, "[Alloc] Shortest time: %llu.%03lluus", cycles_to_us(alloc_min), cycles_to_us_frac(alloc_min));
-            LOGI(TAG, "[Alloc] Shortest time: %llu.%03llums", cycles_to_ms(alloc_min), cycles_to_ms_frac(alloc_min));
+            LOGI(TAG,
+                 "[Alloc] Shortest time: %llu.%03lluus",
+                 cycles_to_us(alloc_min),
+                 cycles_to_us_frac(alloc_min));
+            LOGI(TAG,
+                 "[Alloc] Shortest time: %llu.%03llums",
+                 cycles_to_ms(alloc_min),
+                 cycles_to_ms_frac(alloc_min));
 
             LOGI(TAG, "[Alloc] Longest (WCET) time: %lu cycles", alloc_max);
-            LOGI(TAG, "[Alloc] Longest (WCET) time: %llu.%03lluus", cycles_to_us(alloc_max), cycles_to_us_frac(alloc_max));
-            LOGI(TAG, "[Alloc] Longest (WCET) time: %llu.%03llums", cycles_to_ms(alloc_max), cycles_to_ms_frac(alloc_max));
+            LOGI(TAG,
+                 "[Alloc] Longest (WCET) time: %llu.%03lluus",
+                 cycles_to_us(alloc_max),
+                 cycles_to_us_frac(alloc_max));
+            LOGI(TAG,
+                 "[Alloc] Longest (WCET) time: %llu.%03llums",
+                 cycles_to_ms(alloc_max),
+                 cycles_to_ms_frac(alloc_max));
 
             // Freeing memory
             LOGI(TAG, "[Free] Total time taken: %llu cycles", free_total);
-            LOGI(TAG, "[Free] Total time taken: %llu.%03llums", cycles_to_ms(free_total), cycles_to_ms_frac(free_total));
-            LOGI(TAG, "[Free] Total time taken: %llu.%03llus", cycles_to_ss(free_total), cycles_to_ss_frac(free_total));
+            LOGI(TAG,
+                 "[Free] Total time taken: %llu.%03llums",
+                 cycles_to_ms(free_total),
+                 cycles_to_ms_frac(free_total));
+            LOGI(TAG,
+                 "[Free] Total time taken: %llu.%03llus",
+                 cycles_to_ss(free_total),
+                 cycles_to_ss_frac(free_total));
 
             LOGI(TAG, "[Free] Average time: %lu cycles", free_avg);
-            LOGI(TAG, "[Free] Average time: %llu.%03lluus", cycles_to_us(free_avg), cycles_to_us_frac(free_avg));
-            LOGI(TAG, "[Free] Average time: %llu.%03llums", cycles_to_ms(free_avg), cycles_to_ms_frac(free_avg));
+            LOGI(TAG,
+                 "[Free] Average time: %llu.%03lluus",
+                 cycles_to_us(free_avg),
+                 cycles_to_us_frac(free_avg));
+            LOGI(TAG,
+                 "[Free] Average time: %llu.%03llums",
+                 cycles_to_ms(free_avg),
+                 cycles_to_ms_frac(free_avg));
 
             LOGI(TAG, "[Free] Shortest time: %lu cycles", free_min);
-            LOGI(TAG, "[Free] Shortest time: %llu.%03lluus", cycles_to_us(free_min), cycles_to_us_frac(free_min));
-            LOGI(TAG, "[Free] Shortest time: %llu.%03llums", cycles_to_ms(free_min), cycles_to_ms_frac(free_min));
+            LOGI(TAG,
+                 "[Free] Shortest time: %llu.%03lluus",
+                 cycles_to_us(free_min),
+                 cycles_to_us_frac(free_min));
+            LOGI(TAG,
+                 "[Free] Shortest time: %llu.%03llums",
+                 cycles_to_ms(free_min),
+                 cycles_to_ms_frac(free_min));
 
             LOGI(TAG, "[Free] Longest (WCET) time: %lu cycles", free_max);
-            LOGI(TAG, "[Free] Longest (WCET) time: %llu.%03lluus", cycles_to_us(free_max), cycles_to_us_frac(free_max));
-            LOGI(TAG, "[Free] Longest (WCET) time: %llu.%03llums", cycles_to_ms(free_max), cycles_to_ms_frac(free_max));
+            LOGI(TAG,
+                 "[Free] Longest (WCET) time: %llu.%03lluus",
+                 cycles_to_us(free_max),
+                 cycles_to_us_frac(free_max));
+            LOGI(TAG,
+                 "[Free] Longest (WCET) time: %llu.%03llums",
+                 cycles_to_ms(free_max),
+                 cycles_to_ms_frac(free_max));
 
             // Clean up the remaining live allocations from the start
             for (auto* ptr : pool) {

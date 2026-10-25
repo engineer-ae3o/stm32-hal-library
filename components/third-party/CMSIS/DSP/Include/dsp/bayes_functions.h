@@ -74,10 +74,11 @@ typedef struct {
  */
 
 
-uint32_t arm_gaussian_naive_bayes_predict_f32(const arm_gaussian_naive_bayes_instance_f32* S,
-                                              const float32_t*                             in,
-                                              float32_t*                                   pOutputProbabilities,
-                                              float32_t*                                   pBufferB);
+uint32_t arm_gaussian_naive_bayes_predict_f32(
+    const arm_gaussian_naive_bayes_instance_f32* S,
+    const float32_t*                             in,
+    float32_t*                                   pOutputProbabilities,
+    float32_t*                                   pBufferB);
 
 
 #ifdef __cplusplus

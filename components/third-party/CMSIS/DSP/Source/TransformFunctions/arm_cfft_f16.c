@@ -86,7 +86,9 @@ static float16_t arm_inverse_fft_length_f16(uint16_t fftLen) {
 }
 
 
-static void _arm_radix4_butterfly_f16_mve(const arm_cfft_instance_f16* S, float16_t* pSrc, uint32_t fftLen) {
+static void _arm_radix4_butterfly_f16_mve(const arm_cfft_instance_f16* S,
+                                          float16_t*                   pSrc,
+                                          uint32_t                     fftLen) {
     f16x8_t              vecTmp0, vecTmp1;
     f16x8_t              vecSum0, vecDiff0, vecSum1, vecDiff1;
     f16x8_t              vecA, vecB, vecC, vecD;
@@ -103,10 +105,16 @@ static void _arm_radix4_butterfly_f16_mve(const arm_cfft_instance_f16* S, float1
     n1 = n2;
     n2 >>= 2u;
     for (int k = fftLen / 4u; k > 1; k >>= 2) {
-        float16_t const* p_rearranged_twiddle_tab_stride1 = &S->rearranged_twiddle_stride1[S->rearranged_twiddle_tab_stride1_arr[stage]];
-        float16_t const* p_rearranged_twiddle_tab_stride2 = &S->rearranged_twiddle_stride2[S->rearranged_twiddle_tab_stride2_arr[stage]];
-        float16_t const* p_rearranged_twiddle_tab_stride3 = &S->rearranged_twiddle_stride3[S->rearranged_twiddle_tab_stride3_arr[stage]];
-        float16_t*       pBase                            = pSrc;
+        float16_t const* p_rearranged_twiddle_tab_stride1 =
+            &S->rearranged_twiddle_stride1
+                 [S->rearranged_twiddle_tab_stride1_arr[stage]];
+        float16_t const* p_rearranged_twiddle_tab_stride2 =
+            &S->rearranged_twiddle_stride2
+                 [S->rearranged_twiddle_tab_stride2_arr[stage]];
+        float16_t const* p_rearranged_twiddle_tab_stride3 =
+            &S->rearranged_twiddle_stride3
+                 [S->rearranged_twiddle_tab_stride3_arr[stage]];
+        float16_t* pBase = pSrc;
         for (int i = 0; i < iter; i++) {
             float16_t*       inA = pBase;
             float16_t*       inB = inA + n2 * CMPLX_DIM;
@@ -236,7 +244,9 @@ static void _arm_radix4_butterfly_f16_mve(const arm_cfft_instance_f16* S, float1
      */
 }
 
-static void arm_cfft_radix4by2_f16_mve(const arm_cfft_instance_f16* S, float16_t* pSrc, uint32_t fftLen) {
+static void arm_cfft_radix4by2_f16_mve(const arm_cfft_instance_f16* S,
+                                       float16_t*                   pSrc,
+                                       uint32_t                     fftLen) {
     float16_t const* pCoefVec;
     float16_t const* pCoef = S->pTwiddle;
     float16_t *      pIn0, *pIn1;
@@ -278,7 +288,11 @@ static void arm_cfft_radix4by2_f16_mve(const arm_cfft_instance_f16* S, float16_t
     pIn0 = pSrc;
 }
 
-static void _arm_radix4_butterfly_inverse_f16_mve(const arm_cfft_instance_f16* S, float16_t* pSrc, uint32_t fftLen, float16_t onebyfftLen) {
+static void
+_arm_radix4_butterfly_inverse_f16_mve(const arm_cfft_instance_f16* S,
+                                      float16_t*                   pSrc,
+                                      uint32_t                     fftLen,
+                                      float16_t onebyfftLen) {
     f16x8_t              vecTmp0, vecTmp1;
     f16x8_t              vecSum0, vecDiff0, vecSum1, vecDiff1;
     f16x8_t              vecA, vecB, vecC, vecD;
@@ -295,9 +309,15 @@ static void _arm_radix4_butterfly_inverse_f16_mve(const arm_cfft_instance_f16* S
     n1 = n2;
     n2 >>= 2u;
     for (int k = fftLen / 4; k > 1; k >>= 2) {
-        float16_t const* p_rearranged_twiddle_tab_stride1 = &S->rearranged_twiddle_stride1[S->rearranged_twiddle_tab_stride1_arr[stage]];
-        float16_t const* p_rearranged_twiddle_tab_stride2 = &S->rearranged_twiddle_stride2[S->rearranged_twiddle_tab_stride2_arr[stage]];
-        float16_t const* p_rearranged_twiddle_tab_stride3 = &S->rearranged_twiddle_stride3[S->rearranged_twiddle_tab_stride3_arr[stage]];
+        float16_t const* p_rearranged_twiddle_tab_stride1 =
+            &S->rearranged_twiddle_stride1
+                 [S->rearranged_twiddle_tab_stride1_arr[stage]];
+        float16_t const* p_rearranged_twiddle_tab_stride2 =
+            &S->rearranged_twiddle_stride2
+                 [S->rearranged_twiddle_tab_stride2_arr[stage]];
+        float16_t const* p_rearranged_twiddle_tab_stride3 =
+            &S->rearranged_twiddle_stride3
+                 [S->rearranged_twiddle_tab_stride3_arr[stage]];
 
         float16_t* pBase = pSrc;
         for (int i = 0; i < iter; i++) {
@@ -433,7 +453,9 @@ static void _arm_radix4_butterfly_inverse_f16_mve(const arm_cfft_instance_f16* S
      */
 }
 
-static void arm_cfft_radix4by2_inverse_f16_mve(const arm_cfft_instance_f16* S, float16_t* pSrc, uint32_t fftLen) {
+static void arm_cfft_radix4by2_inverse_f16_mve(const arm_cfft_instance_f16* S,
+                                               float16_t* pSrc,
+                                               uint32_t   fftLen) {
     float16_t const* pCoefVec;
     float16_t const* pCoef = S->pTwiddle;
     float16_t *      pIn0, *pIn1;
@@ -494,7 +516,10 @@ static void arm_cfft_radix4by2_inverse_f16_mve(const arm_cfft_instance_f16* S, f
  */
 
 
-void arm_cfft_f16(const arm_cfft_instance_f16* S, float16_t* pSrc, uint8_t ifftFlag, uint8_t bitReverseFlag) {
+void arm_cfft_f16(const arm_cfft_instance_f16* S,
+                  float16_t*                   pSrc,
+                  uint8_t                      ifftFlag,
+                  uint8_t                      bitReverseFlag) {
     uint32_t fftLen = S->fftLen;
 
     if (ifftFlag == 1U) {
@@ -505,7 +530,8 @@ void arm_cfft_f16(const arm_cfft_instance_f16* S, float16_t* pSrc, uint8_t ifftF
             case 256:
             case 1024:
             case 4096:
-                _arm_radix4_butterfly_inverse_f16_mve(S, pSrc, fftLen, arm_inverse_fft_length_f16(S->fftLen));
+                _arm_radix4_butterfly_inverse_f16_mve(
+                    S, pSrc, fftLen, arm_inverse_fft_length_f16(S->fftLen));
                 break;
 
             case 32:
@@ -537,7 +563,8 @@ void arm_cfft_f16(const arm_cfft_instance_f16* S, float16_t* pSrc, uint8_t ifftF
 
     if (bitReverseFlag) {
 
-        arm_bitreversal_16_inpl_mve((uint16_t*)pSrc, S->bitRevLength, S->pBitRevTable);
+        arm_bitreversal_16_inpl_mve(
+            (uint16_t*)pSrc, S->bitRevLength, S->pBitRevTable);
     }
 }
 
@@ -545,12 +572,19 @@ void arm_cfft_f16(const arm_cfft_instance_f16* S, float16_t* pSrc, uint8_t ifftF
 
 #if defined(ARM_FLOAT16_SUPPORTED)
 
-extern void arm_bitreversal_16(uint16_t* pSrc, const uint16_t bitRevLen, const uint16_t* pBitRevTable);
+extern void arm_bitreversal_16(uint16_t*       pSrc,
+                               const uint16_t  bitRevLen,
+                               const uint16_t* pBitRevTable);
 
 
-extern void arm_cfft_radix4by2_f16(float16_t* pSrc, uint32_t fftLen, const float16_t* pCoef);
+extern void arm_cfft_radix4by2_f16(float16_t*       pSrc,
+                                   uint32_t         fftLen,
+                                   const float16_t* pCoef);
 
-extern void arm_radix4_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const float16_t* pCoef, uint16_t twidCoefModifier);
+extern void arm_radix4_butterfly_f16(float16_t*       pSrc,
+                                     uint16_t         fftLen,
+                                     const float16_t* pCoef,
+                                     uint16_t         twidCoefModifier);
 
 /**
   @ingroup groupTransforms
@@ -730,7 +764,10 @@ extern void arm_radix4_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const flo
   @return        none
  */
 
-void arm_cfft_f16(const arm_cfft_instance_f16* S, float16_t* p1, uint8_t ifftFlag, uint8_t bitReverseFlag) {
+void arm_cfft_f16(const arm_cfft_instance_f16* S,
+                  float16_t*                   p1,
+                  uint8_t                      ifftFlag,
+                  uint8_t                      bitReverseFlag) {
     uint32_t  L = S->fftLen, l;
     float16_t invL, *pSrc;
 
@@ -762,7 +799,8 @@ void arm_cfft_f16(const arm_cfft_instance_f16* S, float16_t* p1, uint8_t ifftFla
     }
 
     if (bitReverseFlag) {
-        arm_bitreversal_16((uint16_t*)p1, S->bitRevLength, (uint16_t*)S->pBitRevTable);
+        arm_bitreversal_16(
+            (uint16_t*)p1, S->bitRevLength, (uint16_t*)S->pBitRevTable);
     }
 
     if (ifftFlag == 1U) {

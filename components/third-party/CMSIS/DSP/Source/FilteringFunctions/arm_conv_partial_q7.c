@@ -54,27 +54,33 @@
                    Refer to \ref arm_conv_partial_opt_q7() for a faster implementation of this function.
  */
 
-arm_status
-arm_conv_partial_q7(const q7_t* pSrcA, uint32_t srcALen, const q7_t* pSrcB, uint32_t srcBLen, q7_t* pDst, uint32_t firstIndex, uint32_t numPoints) {
+arm_status arm_conv_partial_q7(const q7_t* pSrcA,
+                               uint32_t    srcALen,
+                               const q7_t* pSrcB,
+                               uint32_t    srcBLen,
+                               q7_t*       pDst,
+                               uint32_t    firstIndex,
+                               uint32_t    numPoints) {
 
 #if defined(ARM_MATH_DSP)
 
-    const q7_t* pIn1;                               /* InputA pointer */
-    const q7_t* pIn2;                               /* InputB pointer */
-    q7_t*       pOut = pDst;                        /* Output pointer */
-    const q7_t* px;                                 /* Intermediate inputA pointer */
-    const q7_t* py;                                 /* Intermediate inputB pointer */
-    const q7_t *pSrc1, *pSrc2;                      /* Intermediate pointers */
-    q31_t       sum;                                /* Accumulator */
-    uint32_t    j, k, count, blkCnt, check;         /* Loop counters */
+    const q7_t* pIn1;                       /* InputA pointer */
+    const q7_t* pIn2;                       /* InputB pointer */
+    q7_t*       pOut = pDst;                /* Output pointer */
+    const q7_t* px;                         /* Intermediate inputA pointer */
+    const q7_t* py;                         /* Intermediate inputB pointer */
+    const q7_t *pSrc1, *pSrc2;              /* Intermediate pointers */
+    q31_t       sum;                        /* Accumulator */
+    uint32_t    j, k, count, blkCnt, check; /* Loop counters */
     int32_t     blockSize1, blockSize2, blockSize3; /* Loop counters */
-    arm_status  status;                             /* Status of Partial convolution */
+    arm_status  status; /* Status of Partial convolution */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q31_t acc0, acc1, acc2, acc3; /* Accumulator */
     q31_t input1, input2;         /* Temporary input variables */
     q15_t in1, in2;               /* Temporary input variables */
-    q7_t  x0, x1, x2, x3, c0, c1; /* Temporary variables to hold state and coefficient values */
+    q7_t  x0, x1, x2, x3, c0,
+        c1; /* Temporary variables to hold state and coefficient values */
 #endif
 
     /* Check for range of output samples to be calculated */
@@ -107,11 +113,19 @@ arm_conv_partial_q7(const q7_t* pSrcA, uint32_t srcALen, const q7_t* pSrcB, uint
         /* Conditions to check which loopCounter holds
      * the first and last indices of the output samples to be calculated. */
         check      = firstIndex + numPoints;
-        blockSize3 = ((int32_t)check > (int32_t)srcALen) ? (int32_t)check - (int32_t)srcALen : 0;
-        blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1) ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen : blockSize3;
+        blockSize3 = ((int32_t)check > (int32_t)srcALen)
+                         ? (int32_t)check - (int32_t)srcALen
+                         : 0;
+        blockSize3 = ((int32_t)firstIndex > (int32_t)srcALen - 1)
+                         ? blockSize3 - (int32_t)firstIndex + (int32_t)srcALen
+                         : blockSize3;
         blockSize1 = ((int32_t)srcBLen - 1) - (int32_t)firstIndex;
-        blockSize1 = (blockSize1 > 0) ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints) : 0;
-        blockSize2 = (int32_t)check - ((blockSize3 + blockSize1) + (int32_t)firstIndex);
+        blockSize1 =
+            (blockSize1 > 0)
+                ? ((check > (srcBLen - 1U)) ? blockSize1 : (int32_t)numPoints)
+                : 0;
+        blockSize2 =
+            (int32_t)check - ((blockSize3 + blockSize1) + (int32_t)firstIndex);
         blockSize2 = (blockSize2 > 0) ? blockSize2 : 0;
 
         /* conv(x,y) at n = x[n] * y[0] + x[n-1] * y[1] + x[n-2] * y[2] + ...+ x[n-N+1] * y[N -1] */

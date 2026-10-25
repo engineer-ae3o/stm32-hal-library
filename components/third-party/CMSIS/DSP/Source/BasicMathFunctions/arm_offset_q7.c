@@ -53,7 +53,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_offset_q7(const q7_t* pSrc, q7_t offset, q7_t* pDst, uint32_t blockSize) {
+void arm_offset_q7(const q7_t* pSrc,
+                   q7_t        offset,
+                   q7_t*       pDst,
+                   uint32_t    blockSize) {
     uint32_t blkCnt; /* loop counters */
     q7x16_t  vecSrc;
 
@@ -88,7 +91,10 @@ void arm_offset_q7(const q7_t* pSrc, q7_t offset, q7_t* pDst, uint32_t blockSize
 }
 
 #else
-void arm_offset_q7(const q7_t* pSrc, q7_t offset, q7_t* pDst, uint32_t blockSize) {
+void arm_offset_q7(const q7_t* pSrc,
+                   q7_t        offset,
+                   q7_t*       pDst,
+                   uint32_t    blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL)

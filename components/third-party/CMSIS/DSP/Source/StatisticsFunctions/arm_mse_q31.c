@@ -47,7 +47,10 @@
   @return        none
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_mse_q31(const q31_t* pSrcA, const q31_t* pSrcB, uint32_t blockSize, q31_t* pResult) {
+void arm_mse_q31(const q31_t* pSrcA,
+                 const q31_t* pSrcB,
+                 uint32_t     blockSize,
+                 q31_t*       pResult) {
     uint32_t blkCnt; /* loop counters */
     q31x4_t  vecSrcA, vecSrcB;
     q63_t    sum = 0LL;
@@ -94,7 +97,10 @@ void arm_mse_q31(const q31_t* pSrcA, const q31_t* pSrcB, uint32_t blockSize, q31
     *pResult = (q31_t)((sum / blockSize) >> 21);
 }
 #else
-void arm_mse_q31(const q31_t* pSrcA, const q31_t* pSrcB, uint32_t blockSize, q31_t* pResult) {
+void arm_mse_q31(const q31_t* pSrcA,
+                 const q31_t* pSrcB,
+                 uint32_t     blockSize,
+                 q31_t*       pResult) {
     uint32_t blkCnt;  /* Loop counter */
     q63_t    sum = 0; /* Temporary result storage */
 

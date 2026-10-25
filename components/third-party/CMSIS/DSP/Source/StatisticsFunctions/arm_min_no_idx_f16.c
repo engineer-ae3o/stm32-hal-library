@@ -30,7 +30,8 @@
 
 #if defined(ARM_FLOAT16_SUPPORTED)
 
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) &&                      \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include <limits.h>
 #endif
 
@@ -54,7 +55,9 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_min_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_min_no_idx_f16(const float16_t* pSrc,
+                        uint32_t         blockSize,
+                        float16_t*       pResult) {
     f16x8_t   vecSrc;
     f16x8_t   curExtremValVec = vdupq_n_f16(F16_MAX);
     float16_t minValue        = F16_MAX;
@@ -102,7 +105,9 @@ void arm_min_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pR
 
 #else
 
-void arm_min_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_min_no_idx_f16(const float16_t* pSrc,
+                        uint32_t         blockSize,
+                        float16_t*       pResult) {
     float16_t minValue = F16_MAX;
     float16_t newVal;
 

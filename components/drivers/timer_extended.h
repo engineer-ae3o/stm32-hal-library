@@ -1,0 +1,63 @@
+#ifndef TIMER_EXTENDED_H_
+#define TIMER_EXTENDED_H_
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#include "stm32f411xe.h"
+#include "drivers/timer_types.h"
+#include "utils/err.h"
+
+#include <stdint.h>
+
+
+// The extended timer module: Implements output compare and input capture.
+// To enable or disable the timer clock, make use of timx_clk_enable(...) in timer.h
+// NOTE: The different modes and their API are mutually exclusive
+
+
+// Output Compare
+hal_err_t output_compare_init(TIM_TypeDef*                   handle,
+                              const output_compare_config_t* config);
+hal_err_t output_compare_deinit(TIM_TypeDef* handle);
+
+hal_err_t output_compare_start(TIM_TypeDef* handle,
+                               uint32_t     frequency_hz,
+                               uint32_t*    max_compare_level);
+hal_err_t output_compare_set_compare(TIM_TypeDef*    handle,
+                                     timer_channel_t channel,
+                                     uint32_t        compare_level);
+
+hal_err_t output_compare_pause_channel(TIM_TypeDef*    handle,
+                                       timer_channel_t channel);
+hal_err_t output_compare_resume_channel(TIM_TypeDef*    handle,
+                                        timer_channel_t channel);
+
+hal_err_t output_compare_freeze_timer(TIM_TypeDef* handle);
+hal_err_t output_compare_unfreeze_timer(TIM_TypeDef* handle);
+
+
+// Input Capture
+hal_err_t input_capture_init(TIM_TypeDef*                  handle,
+                             const input_capture_config_t* config);
+hal_err_t input_capture_deinit(TIM_TypeDef* handle);
+
+hal_err_t input_capture_start(TIM_TypeDef* handle);
+hal_err_t input_capture_stop(TIM_TypeDef* handle);
+
+hal_err_t input_capture_get_timer_frequency(TIM_TypeDef* handle,
+                                            uint32_t*    frequency_hz);
+hal_err_t input_capture_get_sample(TIM_TypeDef*    handle,
+                                   timer_channel_t channel,
+                                   uint32_t*       result);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif // TIMER_EXTENDED_H_

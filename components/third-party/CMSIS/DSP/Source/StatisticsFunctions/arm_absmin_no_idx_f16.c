@@ -31,7 +31,8 @@
 #if defined(ARM_FLOAT16_SUPPORTED)
 
 
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) &&                      \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include <limits.h>
 #endif
 
@@ -56,7 +57,9 @@
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "arm_helium_utils.h"
-void arm_absmin_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_absmin_no_idx_f16(const float16_t* pSrc,
+                           uint32_t         blockSize,
+                           float16_t*       pResult) {
     int32_t          blkCnt; /* loop counters */
     f16x8_t          vecSrc;
     float16_t const* pSrcVec;
@@ -103,9 +106,12 @@ void arm_absmin_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t*
 
 #else
 #if defined(ARM_MATH_LOOPUNROLL)
-void arm_absmin_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
-    float16_t cur_absmin, out; /* Temporary variables to store the output value. */
-    uint32_t  blkCnt;          /* Loop counter */
+void arm_absmin_no_idx_f16(const float16_t* pSrc,
+                           uint32_t         blockSize,
+                           float16_t*       pResult) {
+    float16_t cur_absmin,
+        out;         /* Temporary variables to store the output value. */
+    uint32_t blkCnt; /* Loop counter */
 
 
     /* Load first input value that act as reference value for comparision */
@@ -116,27 +122,36 @@ void arm_absmin_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t*
     /* Loop unrolling: Compute 4 outputs at a time */
     blkCnt = (blockSize - 1U) >> 2U;
 
-    while (blkCnt > 0U) { /* Initialize cur_absmin to next consecutive values one by one */
+    while (
+        blkCnt >
+        0U) { /* Initialize cur_absmin to next consecutive values one by one */
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin; /* compare for the extrema value */
-        if ((_Float16)cur_absmin < (_Float16)out) {                                        /* Update the extrema value and it's index */
+        cur_absmin =
+            ((_Float16)cur_absmin > 0.0f16)
+                ? cur_absmin
+                : -(_Float16)cur_absmin; /* compare for the extrema value */
+        if ((_Float16)cur_absmin <
+            (_Float16)out) { /* Update the extrema value and it's index */
             out = cur_absmin;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin;
+        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin
+                                                     : -(_Float16)cur_absmin;
         if ((_Float16)cur_absmin < (_Float16)out) {
             out = cur_absmin;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin;
+        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin
+                                                     : -(_Float16)cur_absmin;
         if ((_Float16)cur_absmin < (_Float16)out) {
             out = cur_absmin;
         }
 
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin;
+        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin
+                                                     : -(_Float16)cur_absmin;
         if ((_Float16)cur_absmin < (_Float16)out) {
             out = cur_absmin;
         }
@@ -152,7 +167,8 @@ void arm_absmin_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t*
 
     while (blkCnt > 0U) {
         cur_absmin = *pSrc++;
-        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin : -(_Float16)cur_absmin;
+        cur_absmin = ((_Float16)cur_absmin > 0.0f16) ? cur_absmin
+                                                     : -(_Float16)cur_absmin;
         if ((_Float16)cur_absmin < (_Float16)out) {
             out = cur_absmin;
         }
@@ -165,7 +181,9 @@ void arm_absmin_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t*
     *pResult = out;
 }
 #else
-void arm_absmin_no_idx_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_absmin_no_idx_f16(const float16_t* pSrc,
+                           uint32_t         blockSize,
+                           float16_t*       pResult) {
     float16_t minVal, out; /* Temporary variables to store the output value. */
     uint32_t  blkCnt;      /* Loop counter */
 

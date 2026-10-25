@@ -76,7 +76,10 @@
                    The source buffer is modified by this function.
 
  */
-void arm_mfcc_f16(const arm_mfcc_instance_f16* S, float16_t* pSrc, float16_t* pDst, float16_t* pTmp) {
+void arm_mfcc_f16(const arm_mfcc_instance_f16* S,
+                  float16_t*                   pSrc,
+                  float16_t*                   pDst,
+                  float16_t*                   pTmp) {
     float16_t               maxValue;
     uint32_t                index;
     uint32_t                i;
@@ -120,7 +123,8 @@ void arm_mfcc_f16(const arm_mfcc_instance_f16* S, float16_t* pSrc, float16_t* pD
 
     /* Apply MEL filters */
     for (i = 0; i < S->nbMelFilters; i++) {
-        arm_dot_prod_f16(pSrc + S->filterPos[i], coefs, S->filterLengths[i], &result);
+        arm_dot_prod_f16(
+            pSrc + S->filterPos[i], coefs, S->filterLengths[i], &result);
 
         coefs += S->filterLengths[i];
 

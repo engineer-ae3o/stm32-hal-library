@@ -64,7 +64,10 @@
 #include "arm_helium_utils.h"
 
 
-void arm_dot_prod_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize, float16_t* result) {
+void arm_dot_prod_f16(const float16_t* pSrcA,
+                      const float16_t* pSrcB,
+                      uint32_t         blockSize,
+                      float16_t*       result) {
     f16x8_t   vecA, vecB;
     f16x8_t   vecSum;
     uint32_t  blkCnt;
@@ -111,7 +114,10 @@ void arm_dot_prod_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t b
 
 #else
 #if defined(ARM_FLOAT16_SUPPORTED)
-void arm_dot_prod_f16(const float16_t* pSrcA, const float16_t* pSrcB, uint32_t blockSize, float16_t* result) {
+void arm_dot_prod_f16(const float16_t* pSrcA,
+                      const float16_t* pSrcB,
+                      uint32_t         blockSize,
+                      float16_t*       result) {
     uint32_t blkCnt;     /* Loop counter */
     _Float16 sum = 0.0f; /* Temporary return variable */
 

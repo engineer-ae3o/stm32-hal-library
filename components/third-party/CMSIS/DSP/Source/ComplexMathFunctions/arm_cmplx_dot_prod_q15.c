@@ -55,7 +55,11 @@
  */
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_cmplx_dot_prod_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t numSamples, q31_t* realResult, q31_t* imagResult) {
+void arm_cmplx_dot_prod_q15(const q15_t* pSrcA,
+                            const q15_t* pSrcB,
+                            uint32_t     numSamples,
+                            q31_t*       realResult,
+                            q31_t*       imagResult) {
     int32_t blkCnt;
     q63_t   accReal = 0LL;
     q63_t   accImag = 0LL;
@@ -149,7 +153,11 @@ void arm_cmplx_dot_prod_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t num
     *imagResult = asrl(accImag, (14 - 8));
 }
 #else
-void arm_cmplx_dot_prod_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t numSamples, q31_t* realResult, q31_t* imagResult) {
+void arm_cmplx_dot_prod_q15(const q15_t* pSrcA,
+                            const q15_t* pSrcB,
+                            uint32_t     numSamples,
+                            q31_t*       realResult,
+                            q31_t*       imagResult) {
     uint32_t blkCnt;                     /* Loop counter */
     q63_t    real_sum = 0, imag_sum = 0; /* Temporary result variables */
     q15_t    a0, b0, c0, d0;

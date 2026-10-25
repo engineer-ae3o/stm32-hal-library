@@ -56,10 +56,11 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math_f16.h"
 
-uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_instance_f16* S,
-                                              const float16_t*                             in,
-                                              float16_t*                                   pOutputProbabilities,
-                                              float16_t*                                   pBufferB) {
+uint32_t arm_gaussian_naive_bayes_predict_f16(
+    const arm_gaussian_naive_bayes_instance_f16* S,
+    const float16_t*                             in,
+    float16_t*                                   pOutputProbabilities,
+    float16_t*                                   pBufferB) {
     uint32_t         nbClass;
     const float16_t* pTheta = S->theta;
     const float16_t* pSigma = S->sigma;
@@ -73,7 +74,8 @@ uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_ins
     float16_t*       logclassPriors = pBufferB;
     float16_t*       pLogPrior      = logclassPriors;
 
-    arm_vlog_f16((float16_t*)S->classPriors, logclassPriors, S->numberOfClasses);
+    arm_vlog_f16(
+        (float16_t*)S->classPriors, logclassPriors, S->numberOfClasses);
 
     pTheta = S->theta;
     pSigma = S->sigma;
@@ -89,7 +91,8 @@ uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_ins
             f16x8_t vinvSigma, vtmp;
 
             vsigma = vaddq_n_f16(vld1q(pSigma), S->epsilon);
-            vacc1  = vaddq(vacc1, vlogq_f16(vmulq_n_f16(vsigma, 2.0f16 * (_Float16)PI)));
+            vacc1  = vaddq(
+                vacc1, vlogq_f16(vmulq_n_f16(vsigma, 2.0f16 * (_Float16)PI)));
 
             vinvSigma = vrecip_medprec_f16(vsigma);
 
@@ -111,7 +114,11 @@ uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_ins
             f16x8_t      vinvSigma, vtmp;
 
             vsigma = vaddq_n_f16(vld1q(pSigma), S->epsilon);
-            vacc1  = vaddq_m_f16(vacc1, vacc1, vlogq_f16(vmulq_n_f16(vsigma, 2.0f16 * (_Float16)PI)), p0);
+            vacc1  = vaddq_m_f16(
+                vacc1,
+                vacc1,
+                vlogq_f16(vmulq_n_f16(vsigma, 2.0f16 * (_Float16)PI)),
+                p0);
 
             vinvSigma = vrecip_medprec_f16(vsigma);
 
@@ -139,10 +146,11 @@ uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_ins
 
 #else
 
-uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_instance_f16* S,
-                                              const float16_t*                             in,
-                                              float16_t*                                   pOutputProbabilities,
-                                              float16_t*                                   pBufferB) {
+uint32_t arm_gaussian_naive_bayes_predict_f16(
+    const arm_gaussian_naive_bayes_instance_f16* S,
+    const float16_t*                             in,
+    float16_t*                                   pOutputProbabilities,
+    float16_t*                                   pBufferB) {
     uint32_t         nbClass;
     uint32_t         nbDim;
     const float16_t* pPrior = S->classPriors;
@@ -171,7 +179,8 @@ uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_ins
         for (nbDim = 0; nbDim < S->vectorDimension; nbDim++) {
             sigma = (_Float16)*pSigma + (_Float16)S->epsilon;
             acc1 += (_Float16)logf(2.0f * PI * (float32_t)sigma);
-            acc2 += ((_Float16)*pIn - (_Float16)*pTheta) * ((_Float16)*pIn - (_Float16)*pTheta) / (_Float16)sigma;
+            acc2 += ((_Float16)*pIn - (_Float16)*pTheta) *
+                    ((_Float16)*pIn - (_Float16)*pTheta) / (_Float16)sigma;
 
             pIn++;
             pTheta++;

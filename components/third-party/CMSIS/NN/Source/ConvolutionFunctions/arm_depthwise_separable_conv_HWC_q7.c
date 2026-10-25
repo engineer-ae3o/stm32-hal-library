@@ -115,15 +115,23 @@ arm_status arm_depthwise_separable_conv_HWC_q7(const q7_t*    Im_in,
     for (i_out_y = 0; i_out_y < dim_im_out; i_out_y++) {
         for (i_out_x = 0; i_out_x < dim_im_out; i_out_x++) {
             /* we first do im2col here */
-            for (i_ker_y = i_out_y * stride - padding; i_ker_y < i_out_y * stride - padding + dim_kernel; i_ker_y++) {
-                for (i_ker_x = i_out_x * stride - padding; i_ker_x < i_out_x * stride - padding + dim_kernel; i_ker_x++) {
-                    if (i_ker_y < 0 || i_ker_y >= dim_im_in || i_ker_x < 0 || i_ker_x >= dim_im_in) {
+            for (i_ker_y = i_out_y * stride - padding;
+                 i_ker_y < i_out_y * stride - padding + dim_kernel;
+                 i_ker_y++) {
+                for (i_ker_x = i_out_x * stride - padding;
+                     i_ker_x < i_out_x * stride - padding + dim_kernel;
+                     i_ker_x++) {
+                    if (i_ker_y < 0 || i_ker_y >= dim_im_in || i_ker_x < 0 ||
+                        i_ker_x >= dim_im_in) {
                         /* arm_fill_q7(0, pBuffer, ch_im_in); */
                         memset(pBuffer, 0, ch_im_in);
                     } else {
                         /* arm_copy_q7((q7_t *) Im_in + (i_ker_y * dim_im_in + i_ker_x) * ch_im_in, pBuffer, ch_im_in);
                          */
-                        memcpy(pBuffer, (q7_t*)Im_in + (i_ker_y * dim_im_in + i_ker_x) * ch_im_in, ch_im_in);
+                        memcpy(pBuffer,
+                               (q7_t*)Im_in +
+                                   (i_ker_y * dim_im_in + i_ker_x) * ch_im_in,
+                               ch_im_in);
                     }
                     pBuffer += ch_im_in;
                 }
@@ -135,10 +143,14 @@ arm_status arm_depthwise_separable_conv_HWC_q7(const q7_t*    Im_in,
             pBias     = bias;
 
             while (rowCnt) {
-                q31_t sum  = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
-                q31_t sum2 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
-                q31_t sum3 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
-                q31_t sum4 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+                q31_t sum =
+                    ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+                q31_t sum2 =
+                    ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+                q31_t sum3 =
+                    ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+                q31_t sum4 =
+                    ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
 
                 uint16_t    colCnt = (dim_kernel * dim_kernel) >> 1;
                 q7_t*       pB     = colBuffer + row_shift;
@@ -251,7 +263,12 @@ arm_status arm_depthwise_separable_conv_HWC_q7(const q7_t*    Im_in,
                              "smlad %[sum4], r4, r5, %[sum4]\n"
                              "subs %[colCnt], #1\n"
                              "bne COL_LOOP_%=\n"
-                             : [sum] "+r"(sum), [sum2] "+r"(sum2), [sum3] "+r"(sum3), [sum4] "+r"(sum4), [pB] "+r"(pB), [pA] "+r"(pA)
+                             : [sum] "+r"(sum),
+                               [sum2] "+r"(sum2),
+                               [sum3] "+r"(sum3),
+                               [sum4] "+r"(sum4),
+                               [pB] "+r"(pB),
+                               [pA] "+r"(pA)
                              : [colCnt] "r"(colCnt), [ch_im_in] "r"(ch_im_in)
                              : "r0", "r1", "r2", "r3", "r4", "r5");
 #else
@@ -290,7 +307,12 @@ arm_status arm_depthwise_separable_conv_HWC_q7(const q7_t*    Im_in,
                              "smlad %[sum3], r4, r5, %[sum3]\n"
                              "subs %[colCnt], #1\n"
                              "bne COL_LOOP_%=\n"
-                             : [sum] "+r"(sum), [sum2] "+r"(sum2), [sum3] "+r"(sum3), [sum4] "+r"(sum4), [pB] "+r"(pB), [pA] "+r"(pA)
+                             : [sum] "+r"(sum),
+                               [sum2] "+r"(sum2),
+                               [sum3] "+r"(sum3),
+                               [sum4] "+r"(sum4),
+                               [pB] "+r"(pB),
+                               [pA] "+r"(pA)
                              : [colCnt] "r"(colCnt), [ch_im_in] "r"(ch_im_in)
                              : "r0", "r1", "r2", "r3", "r4", "r5");
 
@@ -322,10 +344,11 @@ arm_status arm_depthwise_separable_conv_HWC_q7(const q7_t*    Im_in,
 
             rowCnt = ch_im_out & 0x3;
             while (rowCnt) {
-                q7_t*       pB     = colBuffer + row_shift;
-                const q7_t* pA     = wt + row_shift;
-                q31_t       sum    = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
-                uint16_t    colCnt = (dim_kernel * dim_kernel);
+                q7_t*       pB = colBuffer + row_shift;
+                const q7_t* pA = wt + row_shift;
+                q31_t       sum =
+                    ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+                uint16_t colCnt = (dim_kernel * dim_kernel);
 
                 row_shift += 1;
 
@@ -362,18 +385,25 @@ arm_status arm_depthwise_separable_conv_HWC_q7(const q7_t*    Im_in,
         for (i_out_x = 0; i_out_x < dim_im_out; i_out_x++) {
             for (i_ch_out = 0; i_ch_out < ch_im_out; i_ch_out++) {
                 // for each output
-                conv_out = ((q31_t)(bias[i_ch_out]) << bias_shift) + NN_ROUND(out_shift);
+                conv_out = ((q31_t)(bias[i_ch_out]) << bias_shift) +
+                           NN_ROUND(out_shift);
                 for (i_ker_y = 0; i_ker_y < dim_kernel; i_ker_y++) {
                     for (i_ker_x = 0; i_ker_x < dim_kernel; i_ker_x++) {
                         int in_row = stride * i_out_y + i_ker_y - padding;
                         int in_col = stride * i_out_x + i_ker_x - padding;
-                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in && in_col < dim_im_in) {
-                            conv_out += Im_in[(in_row * dim_im_in + in_col) * ch_im_in + i_ch_out] *
-                                        wt[(i_ker_y * dim_kernel + i_ker_x) * ch_im_out + i_ch_out];
+                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in &&
+                            in_col < dim_im_in) {
+                            conv_out +=
+                                Im_in[(in_row * dim_im_in + in_col) * ch_im_in +
+                                      i_ch_out] *
+                                wt[(i_ker_y * dim_kernel + i_ker_x) *
+                                       ch_im_out +
+                                   i_ch_out];
                         }
                     }
                 }
-                Im_out[(i_out_y * dim_im_out + i_out_x) * ch_im_out + i_ch_out] = (q7_t)__SSAT((conv_out >> out_shift), 8);
+                Im_out[(i_out_y * dim_im_out + i_out_x) * ch_im_out +
+                       i_ch_out] = (q7_t)__SSAT((conv_out >> out_shift), 8);
             }
         }
     }

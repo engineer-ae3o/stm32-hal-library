@@ -63,7 +63,9 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_rms_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_rms_f16(const float16_t* pSrc,
+                 uint32_t         blockSize,
+                 float16_t*       pResult) {
     float16_t pow = 0.0f;
 
     arm_power_f16(pSrc, blockSize, &pow);
@@ -73,7 +75,9 @@ void arm_rms_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) 
 }
 #else
 
-void arm_rms_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_rms_f16(const float16_t* pSrc,
+                 uint32_t         blockSize,
+                 float16_t*       pResult) {
     uint32_t blkCnt;       /* Loop counter */
     _Float16 sum = 0.0f16; /* Temporary result storage */
     _Float16 in;           /* Temporary variable to store input value */

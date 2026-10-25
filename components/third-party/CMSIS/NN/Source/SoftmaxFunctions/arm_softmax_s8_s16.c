@@ -47,7 +47,8 @@ void arm_softmax_s8_s16(const int8_t* input,
                         const int32_t shift,
                         const int32_t diff_min,
                         int16_t*      output) {
-    arm_nn_softmax_common_s8(input, num_rows, row_size, mult, shift, diff_min, true, (void*)output);
+    arm_nn_softmax_common_s8(
+        input, num_rows, row_size, mult, shift, diff_min, true, (void*)output);
 }
 /**
  * @} end of Softmax group

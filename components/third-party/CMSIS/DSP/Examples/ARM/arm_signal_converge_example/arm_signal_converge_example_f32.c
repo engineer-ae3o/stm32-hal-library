@@ -189,10 +189,19 @@ int32_t main(void) {
     float32_t  minValue;
 
     /* Initialize the LMSNorm data structure */
-    arm_lms_norm_init_f32(&lmsNorm_instance, NUMTAPS, lmsNormCoeff_f32, lmsStateF32, MU, BLOCKSIZE);
+    arm_lms_norm_init_f32(&lmsNorm_instance,
+                          NUMTAPS,
+                          lmsNormCoeff_f32,
+                          lmsStateF32,
+                          MU,
+                          BLOCKSIZE);
 
     /* Initialize the FIR data structure */
-    arm_fir_init_f32(&LPF_instance, NUMTAPS, (float32_t*)FIRCoeff_f32, firStateF32, BLOCKSIZE);
+    arm_fir_init_f32(&LPF_instance,
+                     NUMTAPS,
+                     (float32_t*)FIRCoeff_f32,
+                     firStateF32,
+                     BLOCKSIZE);
 
     /* ----------------------------------------------------------------------
   * Loop over the frames of data and execute each of the processing
@@ -208,12 +217,13 @@ int32_t main(void) {
 
         /* Execute the LMS Norm processing function*/
 
-        arm_lms_norm_f32(&lmsNorm_instance, /* LMSNorm instance */
-                         wire1,             /* Input signal */
-                         wire2,             /* Reference Signal */
-                         wire3,             /* Converged Signal */
-                         err_signal,        /* Error Signal, this will become small as the signal converges */
-                         BLOCKSIZE);        /* BlockSize */
+        arm_lms_norm_f32(
+            &lmsNorm_instance, /* LMSNorm instance */
+            wire1,             /* Input signal */
+            wire2,             /* Reference Signal */
+            wire3,             /* Converged Signal */
+            err_signal, /* Error Signal, this will become small as the signal converges */
+            BLOCKSIZE); /* BlockSize */
 
         /* apply overall gain */
         arm_scale_f32(wire3, 5, wire3, BLOCKSIZE); /* in-place buffer */
@@ -236,12 +246,14 @@ int32_t main(void) {
   * Test whether the filter coefficients have converged.
   * ------------------------------------------------------------------- */
 
-    arm_sub_f32((float32_t*)FIRCoeff_f32, lmsNormCoeff_f32, lmsNormCoeff_f32, NUMTAPS);
+    arm_sub_f32(
+        (float32_t*)FIRCoeff_f32, lmsNormCoeff_f32, lmsNormCoeff_f32, NUMTAPS);
 
     arm_abs_f32(lmsNormCoeff_f32, lmsNormCoeff_f32, NUMTAPS);
     arm_min_f32(lmsNormCoeff_f32, NUMTAPS, &minValue, &index);
 
-    status = (minValue > DELTA_COEFF) ? ARM_MATH_TEST_FAILURE : ARM_MATH_SUCCESS;
+    status =
+        (minValue > DELTA_COEFF) ? ARM_MATH_TEST_FAILURE : ARM_MATH_SUCCESS;
 
     if (status != ARM_MATH_SUCCESS) {
 #if defined(SEMIHOSTING)

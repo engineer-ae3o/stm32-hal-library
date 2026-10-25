@@ -107,24 +107,36 @@
   @return        none
  */
 
-void arm_fir_sparse_f32(arm_fir_sparse_instance_f32* S, const float32_t* pSrc, float32_t* pDst, float32_t* pScratchIn, uint32_t blockSize) {
-    float32_t*       pState  = S->pState;                 /* State pointer */
-    const float32_t* pCoeffs = S->pCoeffs;                /* Coefficient pointer */
-    float32_t*       px;                                  /* Scratch buffer pointer */
-    float32_t*       py = pState;                         /* Temporary pointers for state buffer */
-    float32_t*       pb = pScratchIn;                     /* Temporary pointers for scratch buffer */
-    float32_t*       pOut;                                /* Destination pointer */
-    int32_t*         pTapDelay = S->pTapDelay;            /* Pointer to the array containing offset of the non-zero tap values. */
-    uint32_t         delaySize = S->maxDelay + blockSize; /* state length */
-    uint16_t         numTaps   = S->numTaps;              /* Number of filter coefficients in the filter  */
-    int32_t          readIndex;                           /* Read index of the state buffer */
-    uint32_t         tapCnt, blkCnt;                      /* loop counters */
-    float32_t        coeff = *pCoeffs++;                  /* Read the first coefficient value */
+void arm_fir_sparse_f32(arm_fir_sparse_instance_f32* S,
+                        const float32_t*             pSrc,
+                        float32_t*                   pDst,
+                        float32_t*                   pScratchIn,
+                        uint32_t                     blockSize) {
+    float32_t*       pState  = S->pState;  /* State pointer */
+    const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float32_t*       px;                   /* Scratch buffer pointer */
+    float32_t*       py = pState; /* Temporary pointers for state buffer */
+    float32_t* pb = pScratchIn;   /* Temporary pointers for scratch buffer */
+    float32_t* pOut;              /* Destination pointer */
+    int32_t*   pTapDelay =
+        S->pTapDelay; /* Pointer to the array containing offset of the non-zero tap values. */
+    uint32_t delaySize = S->maxDelay + blockSize; /* state length */
+    uint16_t numTaps =
+        S->numTaps;           /* Number of filter coefficients in the filter  */
+    int32_t   readIndex;      /* Read index of the state buffer */
+    uint32_t  tapCnt, blkCnt; /* loop counters */
+    float32_t coeff = *pCoeffs++; /* Read the first coefficient value */
 
 
     /* BlockSize of Input samples are copied into the state buffer */
     /* StateIndex points to the starting position to write in the state buffer */
-    arm_circularWrite_f32((int32_t*)py, delaySize, &S->stateIndex, 1, (int32_t*)pSrc, 1, blockSize);
+    arm_circularWrite_f32((int32_t*)py,
+                          delaySize,
+                          &S->stateIndex,
+                          1,
+                          (int32_t*)pSrc,
+                          1,
+                          blockSize);
 
     /* Read Index, from where the state buffer should be read, is calculated. */
     readIndex = (int32_t)(S->stateIndex - blockSize) - *pTapDelay++;
@@ -138,7 +150,15 @@ void arm_fir_sparse_f32(arm_fir_sparse_instance_f32* S, const float32_t* pSrc, f
     py = pState;
 
     /* blockSize samples are read from the state buffer */
-    arm_circularRead_f32((int32_t*)py, delaySize, &readIndex, 1, (int32_t*)pb, (int32_t*)pb, blockSize, 1, blockSize);
+    arm_circularRead_f32((int32_t*)py,
+                         delaySize,
+                         &readIndex,
+                         1,
+                         (int32_t*)pb,
+                         (int32_t*)pb,
+                         blockSize,
+                         1,
+                         blockSize);
 
     /* Working pointer for the scratch buffer of state values */
     px = pb;
@@ -204,7 +224,15 @@ void arm_fir_sparse_f32(arm_fir_sparse_instance_f32* S, const float32_t* pSrc, f
         py = pState;
 
         /* blockSize samples are read from the state buffer */
-        arm_circularRead_f32((int32_t*)py, delaySize, &readIndex, 1, (int32_t*)pb, (int32_t*)pb, blockSize, 1, blockSize);
+        arm_circularRead_f32((int32_t*)py,
+                             delaySize,
+                             &readIndex,
+                             1,
+                             (int32_t*)pb,
+                             (int32_t*)pb,
+                             blockSize,
+                             1,
+                             blockSize);
 
         /* Working pointer for the scratch buffer of state values */
         px = pb;
@@ -272,7 +300,15 @@ void arm_fir_sparse_f32(arm_fir_sparse_instance_f32* S, const float32_t* pSrc, f
     py = pState;
 
     /* blockSize samples are read from the state buffer */
-    arm_circularRead_f32((int32_t*)py, delaySize, &readIndex, 1, (int32_t*)pb, (int32_t*)pb, blockSize, 1, blockSize);
+    arm_circularRead_f32((int32_t*)py,
+                         delaySize,
+                         &readIndex,
+                         1,
+                         (int32_t*)pb,
+                         (int32_t*)pb,
+                         blockSize,
+                         1,
+                         blockSize);
 
     /* Working pointer for the scratch buffer of state values */
     px = pb;

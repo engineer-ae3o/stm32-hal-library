@@ -64,7 +64,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_offset_f32(const float32_t* pSrc, float32_t offset, float32_t* pDst, uint32_t blockSize) {
+void arm_offset_f32(const float32_t* pSrc,
+                    float32_t        offset,
+                    float32_t*       pDst,
+                    uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
     f32x4_t vec1;
@@ -99,7 +102,10 @@ void arm_offset_f32(const float32_t* pSrc, float32_t offset, float32_t* pDst, ui
 }
 
 #else
-void arm_offset_f32(const float32_t* pSrc, float32_t offset, float32_t* pDst, uint32_t blockSize) {
+void arm_offset_f32(const float32_t* pSrc,
+                    float32_t        offset,
+                    float32_t*       pDst,
+                    uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_NEON_EXPERIMENTAL) && !defined(ARM_MATH_AUTOVECTORIZE)

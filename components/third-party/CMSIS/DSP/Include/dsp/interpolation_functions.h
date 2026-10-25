@@ -130,7 +130,10 @@ typedef struct {
    * @param[out] pDst       points to the block of output data.
    * @param[in]  blockSize  number of samples of output data.
    */
-void arm_spline_f32(arm_spline_instance_f32* S, const float32_t* xq, float32_t* pDst, uint32_t blockSize);
+void arm_spline_f32(arm_spline_instance_f32* S,
+                    const float32_t*         xq,
+                    float32_t*               pDst,
+                    uint32_t                 blockSize);
 
 /**
    * @brief Initialization function for the floating-point cubic spline interpolation.
@@ -142,8 +145,13 @@ void arm_spline_f32(arm_spline_instance_f32* S, const float32_t* xq, float32_t* 
    * @param[in]     coeffs   coefficients array for b, c, and d
    * @param[in]     tempBuffer   buffer array for internal computations
    */
-void arm_spline_init_f32(
-    arm_spline_instance_f32* S, arm_spline_type type, const float32_t* x, const float32_t* y, uint32_t n, float32_t* coeffs, float32_t* tempBuffer);
+void arm_spline_init_f32(arm_spline_instance_f32* S,
+                         arm_spline_type          type,
+                         const float32_t*         x,
+                         const float32_t*         y,
+                         uint32_t                 n,
+                         float32_t*               coeffs,
+                         float32_t*               tempBuffer);
 
 
 /**
@@ -231,7 +239,9 @@ q7_t arm_linear_interp_q7(const q7_t* pYData, q31_t x, uint32_t nValues);
   * @param[in]     Y  interpolation coordinate.
   * @return out interpolated value.
   */
-float32_t arm_bilinear_interp_f32(const arm_bilinear_interp_instance_f32* S, float32_t X, float32_t Y);
+float32_t arm_bilinear_interp_f32(const arm_bilinear_interp_instance_f32* S,
+                                  float32_t                               X,
+                                  float32_t                               Y);
 
 /**
   * @brief  Q31 bilinear interpolation.
@@ -240,7 +250,9 @@ float32_t arm_bilinear_interp_f32(const arm_bilinear_interp_instance_f32* S, flo
   * @param[in]     Y  interpolation coordinate in 12.20 format.
   * @return out interpolated value.
   */
-q31_t arm_bilinear_interp_q31(arm_bilinear_interp_instance_q31* S, q31_t X, q31_t Y);
+q31_t arm_bilinear_interp_q31(arm_bilinear_interp_instance_q31* S,
+                              q31_t                             X,
+                              q31_t                             Y);
 
 
 /**
@@ -250,7 +262,9 @@ q31_t arm_bilinear_interp_q31(arm_bilinear_interp_instance_q31* S, q31_t X, q31_
   * @param[in]     Y  interpolation coordinate in 12.20 format.
   * @return out interpolated value.
   */
-q15_t arm_bilinear_interp_q15(arm_bilinear_interp_instance_q15* S, q31_t X, q31_t Y);
+q15_t arm_bilinear_interp_q15(arm_bilinear_interp_instance_q15* S,
+                              q31_t                             X,
+                              q31_t                             Y);
 
 /**
   * @brief  Q7 bilinear interpolation.
@@ -259,7 +273,9 @@ q15_t arm_bilinear_interp_q15(arm_bilinear_interp_instance_q15* S, q31_t X, q31_
   * @param[in]     Y  interpolation coordinate in 12.20 format.
   * @return out interpolated value.
   */
-q7_t arm_bilinear_interp_q7(arm_bilinear_interp_instance_q7* S, q31_t X, q31_t Y);
+q7_t arm_bilinear_interp_q7(arm_bilinear_interp_instance_q7* S,
+                            q31_t                            X,
+                            q31_t                            Y);
 /**
    * @} end of BilinearInterpolate group
    */

@@ -102,16 +102,24 @@ arm_status arm_convolve_HWC_q15_basic(const q15_t*   Im_in,
     /* This part implements the im2col function */
     for (i_out_y = 0; i_out_y < dim_im_out; i_out_y++) {
         for (i_out_x = 0; i_out_x < dim_im_out; i_out_x++) {
-            for (i_ker_y = i_out_y * stride - padding; i_ker_y < i_out_y * stride - padding + dim_kernel; i_ker_y++) {
-                for (i_ker_x = i_out_x * stride - padding; i_ker_x < i_out_x * stride - padding + dim_kernel; i_ker_x++) {
-                    if (i_ker_y < 0 || i_ker_y >= dim_im_in || i_ker_x < 0 || i_ker_x >= dim_im_in) {
+            for (i_ker_y = i_out_y * stride - padding;
+                 i_ker_y < i_out_y * stride - padding + dim_kernel;
+                 i_ker_y++) {
+                for (i_ker_x = i_out_x * stride - padding;
+                     i_ker_x < i_out_x * stride - padding + dim_kernel;
+                     i_ker_x++) {
+                    if (i_ker_y < 0 || i_ker_y >= dim_im_in || i_ker_x < 0 ||
+                        i_ker_x >= dim_im_in) {
                         /* Filling 0 for out-of-bound paddings */
                         /* arm_fill_q15(0, pBuffer, ch_im_in); */
                         memset(pBuffer, 0, sizeof(q15_t) * ch_im_in);
                     } else {
                         /* arm_copy_q15((q15_t *) Im_in + (i_ker_y * dim_im_in + i_ker_x) * ch_im_in, pBuffer,
                          * ch_im_in); */
-                        memcpy(pBuffer, (q15_t*)Im_in + (i_ker_y * dim_im_in + i_ker_x) * ch_im_in, sizeof(q15_t) * ch_im_in);
+                        memcpy(pBuffer,
+                               (q15_t*)Im_in +
+                                   (i_ker_y * dim_im_in + i_ker_x) * ch_im_in,
+                               sizeof(q15_t) * ch_im_in);
                     }
                     pBuffer += ch_im_in;
                 }
@@ -119,7 +127,8 @@ arm_status arm_convolve_HWC_q15_basic(const q15_t*   Im_in,
 
             pA = wt;
             for (i = 0; i < ch_im_out; i++) {
-                q31_t        sum    = ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
+                q31_t sum =
+                    ((q31_t)bias[i] << bias_shift) + NN_ROUND(out_shift);
                 const q15_t* pB     = im_buffer;
                 uint16_t     colCnt = ch_im_in * dim_kernel * dim_kernel >> 2;
                 while (colCnt) {
@@ -165,15 +174,21 @@ arm_status arm_convolve_HWC_q15_basic(const q15_t*   Im_in,
                     for (n = 0; n < dim_kernel; n++) {
                         in_row = stride * j + m - padding;
                         in_col = stride * k + n - padding;
-                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in && in_col < dim_im_in) {
+                        if (in_row >= 0 && in_col >= 0 && in_row < dim_im_in &&
+                            in_col < dim_im_in) {
                             for (l = 0; l < ch_im_in; l++) {
-                                conv_out += Im_in[(in_row * dim_im_in + in_col) * ch_im_in + l] *
-                                            wt[i * ch_im_in * dim_kernel * dim_kernel + (m * dim_kernel + n) * ch_im_in + l];
+                                conv_out +=
+                                    Im_in[(in_row * dim_im_in + in_col) *
+                                              ch_im_in +
+                                          l] *
+                                    wt[i * ch_im_in * dim_kernel * dim_kernel +
+                                       (m * dim_kernel + n) * ch_im_in + l];
                             }
                         }
                     }
                 }
-                Im_out[i + (j * dim_im_out + k) * ch_im_out] = (q15_t)__SSAT((conv_out >> out_shift), 16);
+                Im_out[i + (j * dim_im_out + k) * ch_im_out] =
+                    (q15_t)__SSAT((conv_out >> out_shift), 16);
             }
         }
     }

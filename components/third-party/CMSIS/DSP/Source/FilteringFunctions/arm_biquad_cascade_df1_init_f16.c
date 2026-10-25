@@ -75,7 +75,10 @@
  */
 
 
-void arm_biquad_cascade_df1_init_f16(arm_biquad_casd_df1_inst_f16* S, uint8_t numStages, const float16_t* pCoeffs, float16_t* pState) {
+void arm_biquad_cascade_df1_init_f16(arm_biquad_casd_df1_inst_f16* S,
+                                     uint8_t                       numStages,
+                                     const float16_t*              pCoeffs,
+                                     float16_t*                    pState) {
     /* Assign filter stages */
     S->numStages = numStages;
 
@@ -97,24 +100,123 @@ The computation of the coefficients is done in float32 otherwise the
 resulting filter is too different from the expected one.
 
 */
-static void generateCoefsFastBiquadF16(float16_t b0, float16_t b1, float16_t b2, float16_t a1, float16_t a2, arm_biquad_mod_coef_f16* newCoef) {
-    float32_t coeffs[8][12] = {{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, (float32_t)b0, (float32_t)b1, (float32_t)b2, (float32_t)a1, (float32_t)a2},
-                               {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, (float32_t)b0, (float32_t)b1, (float32_t)b2, 0.0f, (float32_t)a2, 0.0f},
-                               {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, (float32_t)b0, (float32_t)b1, (float32_t)b2, 0.0f, 0.0f, 0.0f, 0.0f},
-                               {0.0f, 0.0f, 0.0f, 0.0f, (float32_t)b0, (float32_t)b1, (float32_t)b2, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
-                               {0.0f, 0.0f, 0.0f, (float32_t)b0, (float32_t)b1, (float32_t)b2, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
-                               {0.0f, 0.0f, (float32_t)b0, (float32_t)b1, (float32_t)b2, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
-                               {0.0f, (float32_t)b0, (float32_t)b1, (float32_t)b2, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
-                               {(float32_t)b0, (float32_t)b1, (float32_t)b2, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}};
+static void generateCoefsFastBiquadF16(float16_t                b0,
+                                       float16_t                b1,
+                                       float16_t                b2,
+                                       float16_t                a1,
+                                       float16_t                a2,
+                                       arm_biquad_mod_coef_f16* newCoef) {
+    float32_t coeffs[8][12] = {{0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                (float32_t)b0,
+                                (float32_t)b1,
+                                (float32_t)b2,
+                                (float32_t)a1,
+                                (float32_t)a2},
+                               {0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                (float32_t)b0,
+                                (float32_t)b1,
+                                (float32_t)b2,
+                                0.0f,
+                                (float32_t)a2,
+                                0.0f},
+                               {0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                (float32_t)b0,
+                                (float32_t)b1,
+                                (float32_t)b2,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f},
+                               {0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                (float32_t)b0,
+                                (float32_t)b1,
+                                (float32_t)b2,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f},
+                               {0.0f,
+                                0.0f,
+                                0.0f,
+                                (float32_t)b0,
+                                (float32_t)b1,
+                                (float32_t)b2,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f},
+                               {0.0f,
+                                0.0f,
+                                (float32_t)b0,
+                                (float32_t)b1,
+                                (float32_t)b2,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f},
+                               {0.0f,
+                                (float32_t)b0,
+                                (float32_t)b1,
+                                (float32_t)b2,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f},
+                               {(float32_t)b0,
+                                (float32_t)b1,
+                                (float32_t)b2,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f,
+                                0.0f}};
 
     for (int i = 0; i < 12; i++) {
         coeffs[1][i] += ((float32_t)a1 * coeffs[0][i]);
-        coeffs[2][i] += ((float32_t)a1 * coeffs[1][i]) + ((float32_t)a2 * coeffs[0][i]);
-        coeffs[3][i] += ((float32_t)a1 * coeffs[2][i]) + ((float32_t)a2 * coeffs[1][i]);
-        coeffs[4][i] += ((float32_t)a1 * coeffs[3][i]) + ((float32_t)a2 * coeffs[2][i]);
-        coeffs[5][i] += ((float32_t)a1 * coeffs[4][i]) + ((float32_t)a2 * coeffs[3][i]);
-        coeffs[6][i] += ((float32_t)a1 * coeffs[5][i]) + ((float32_t)a2 * coeffs[4][i]);
-        coeffs[7][i] += ((float32_t)a1 * coeffs[6][i]) + ((float32_t)a2 * coeffs[5][i]);
+        coeffs[2][i] +=
+            ((float32_t)a1 * coeffs[1][i]) + ((float32_t)a2 * coeffs[0][i]);
+        coeffs[3][i] +=
+            ((float32_t)a1 * coeffs[2][i]) + ((float32_t)a2 * coeffs[1][i]);
+        coeffs[4][i] +=
+            ((float32_t)a1 * coeffs[3][i]) + ((float32_t)a2 * coeffs[2][i]);
+        coeffs[5][i] +=
+            ((float32_t)a1 * coeffs[4][i]) + ((float32_t)a2 * coeffs[3][i]);
+        coeffs[6][i] +=
+            ((float32_t)a1 * coeffs[5][i]) + ((float32_t)a2 * coeffs[4][i]);
+        coeffs[7][i] +=
+            ((float32_t)a1 * coeffs[6][i]) + ((float32_t)a2 * coeffs[5][i]);
 
         /*
          * transpose
@@ -130,13 +232,22 @@ static void generateCoefsFastBiquadF16(float16_t b0, float16_t b1, float16_t b2,
     }
 }
 
-void arm_biquad_cascade_df1_mve_init_f16(
-    arm_biquad_casd_df1_inst_f16* S, uint8_t numStages, const float16_t* pCoeffs, arm_biquad_mod_coef_f16* pCoeffsMod, float16_t* pState) {
-    arm_biquad_cascade_df1_init_f16(S, numStages, (float16_t*)pCoeffsMod, pState);
+void arm_biquad_cascade_df1_mve_init_f16(arm_biquad_casd_df1_inst_f16* S,
+                                         uint8_t                  numStages,
+                                         const float16_t*         pCoeffs,
+                                         arm_biquad_mod_coef_f16* pCoeffsMod,
+                                         float16_t*               pState) {
+    arm_biquad_cascade_df1_init_f16(
+        S, numStages, (float16_t*)pCoeffsMod, pState);
 
     /* Generate SIMD friendly modified coefs */
     for (int i = 0; i < numStages; i++) {
-        generateCoefsFastBiquadF16(pCoeffs[0], pCoeffs[1], pCoeffs[2], pCoeffs[3], pCoeffs[4], pCoeffsMod);
+        generateCoefsFastBiquadF16(pCoeffs[0],
+                                   pCoeffs[1],
+                                   pCoeffs[2],
+                                   pCoeffs[3],
+                                   pCoeffs[4],
+                                   pCoeffsMod);
         pCoeffs += 5;
         pCoeffsMod++;
     }

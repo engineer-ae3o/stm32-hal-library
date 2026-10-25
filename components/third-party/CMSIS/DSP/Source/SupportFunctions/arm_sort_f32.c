@@ -47,7 +47,10 @@
  * @param[in]  blockSize  number of samples to process.
  */
 
-void arm_sort_f32(const arm_sort_instance_f32* S, float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
+void arm_sort_f32(const arm_sort_instance_f32* S,
+                  float32_t*                   pSrc,
+                  float32_t*                   pDst,
+                  uint32_t                     blockSize) {
     switch (S->alg) {
         case ARM_SORT_BITONIC:
             arm_bitonic_sort_f32(S, pSrc, pDst, blockSize);

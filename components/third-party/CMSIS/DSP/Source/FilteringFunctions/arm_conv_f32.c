@@ -100,7 +100,11 @@
 #include "arm_vec_filtering.h"
 
 
-void arm_conv_f32(const float32_t* pSrcA, uint32_t srcALen, const float32_t* pSrcB, uint32_t srcBLen, float32_t* pDst) {
+void arm_conv_f32(const float32_t* pSrcA,
+                  uint32_t         srcALen,
+                  const float32_t* pSrcB,
+                  uint32_t         srcBLen,
+                  float32_t*       pDst) {
     const float32_t* pIn1 = pSrcA; /* inputA pointer               */
     const float32_t* pIn2 = pSrcB; /* inputB pointer               */
     /*
@@ -230,17 +234,21 @@ void arm_conv_f32(const float32_t* pSrcA, uint32_t srcALen, const float32_t* pSr
     }
 }
 #else
-void arm_conv_f32(const float32_t* pSrcA, uint32_t srcALen, const float32_t* pSrcB, uint32_t srcBLen, float32_t* pDst) {
+void arm_conv_f32(const float32_t* pSrcA,
+                  uint32_t         srcALen,
+                  const float32_t* pSrcB,
+                  uint32_t         srcBLen,
+                  float32_t*       pDst) {
 
 #if defined(ARM_MATH_DSP)
 
-    const float32_t* pIn1;                               /* InputA pointer */
-    const float32_t* pIn2;                               /* InputB pointer */
-    float32_t*       pOut = pDst;                        /* Output pointer */
-    const float32_t* px;                                 /* Intermediate inputA pointer */
-    const float32_t* py;                                 /* Intermediate inputB pointer */
-    const float32_t *pSrc1, *pSrc2;                      /* Intermediate pointers */
-    float32_t        sum;                                /* Accumulators */
+    const float32_t* pIn1;          /* InputA pointer */
+    const float32_t* pIn2;          /* InputB pointer */
+    float32_t*       pOut = pDst;   /* Output pointer */
+    const float32_t* px;            /* Intermediate inputA pointer */
+    const float32_t* py;            /* Intermediate inputB pointer */
+    const float32_t *pSrc1, *pSrc2; /* Intermediate pointers */
+    float32_t        sum;           /* Accumulators */
     uint32_t         blockSize1, blockSize2, blockSize3; /* Loop counters */
     uint32_t         j, k, count, blkCnt;                /* Loop counters */
 
@@ -248,7 +256,8 @@ void arm_conv_f32(const float32_t* pSrcA, uint32_t srcALen, const float32_t* pSr
 #if defined(ARM_MATH_LOOPUNROLL) || defined(ARM_MATH_NEON)
     float32_t acc0, acc1, acc2, acc3, c0; /* Accumulators */
 #if !defined(ARM_MATH_NEON)
-    float32_t x0, x1, x2, x3; /* Temporary variables to hold state and coefficient values */
+    float32_t x0, x1, x2,
+        x3; /* Temporary variables to hold state and coefficient values */
 #endif
 #endif
 

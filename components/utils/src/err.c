@@ -1,5 +1,4 @@
 #include "utils/common.h"
-#include <assert.h>
 #include "utils/err.h"
 
 
@@ -26,6 +25,7 @@ static const char* s_err_code_lut[] = {
     [HAL_ERR_DMA_TE]                  = "HAL_ERR_DMA_TE",
     [HAL_ERR_DMA_DME]                 = "HAL_ERR_DMA_DME",
     [HAL_ERR_DMA_FE]                  = "HAL_ERR_DMA_FE",
+    [HAL_ERR_TIM_OVER_CAPTURE]        = "HAL_ERR_TIM_OVER_CAPTURE",
 };
 
 static_assert(HAL_SENTINEL_COUNT == ARRAY_SIZE(s_err_code_lut));

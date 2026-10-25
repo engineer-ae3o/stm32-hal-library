@@ -57,7 +57,10 @@
   to the saturated negative or positive value.
  */
 
-arm_status arm_divide_q31(q31_t numerator, q31_t denominator, q31_t* quotient, int16_t* shift) {
+arm_status arm_divide_q31(q31_t    numerator,
+                          q31_t    denominator,
+                          q31_t*   quotient,
+                          int16_t* shift) {
     int16_t sign = 0;
     q63_t   temp;
     int16_t shiftForNormalizing;

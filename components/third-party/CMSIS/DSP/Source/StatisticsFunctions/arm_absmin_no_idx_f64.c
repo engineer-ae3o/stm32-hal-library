@@ -44,7 +44,9 @@
   @param[out]    pResult    minimum value returned here
   @return        none
  */
-void arm_absmin_no_idx_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult) {
+void arm_absmin_no_idx_f64(const float64_t* pSrc,
+                           uint32_t         blockSize,
+                           float64_t*       pResult) {
     float64_t minVal, out; /* Temporary variables to store the output value. */
     uint32_t  blkCnt;      /* Loop counter */
 

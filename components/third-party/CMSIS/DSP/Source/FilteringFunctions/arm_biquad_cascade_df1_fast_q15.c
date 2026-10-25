@@ -57,17 +57,20 @@
                    Use the function \ref arm_biquad_cascade_df1_init_q15() to initialize the filter structure.
  */
 
-void arm_biquad_cascade_df1_fast_q15(const arm_biquad_casd_df1_inst_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
-    const q15_t* pIn     = pSrc;                       /* Source pointer */
-    q15_t*       pOut    = pDst;                       /* Destination pointer */
-    q15_t*       pState  = S->pState;                  /* State pointer */
-    const q15_t* pCoeffs = S->pCoeffs;                 /* Coefficient pointer */
-    q31_t        acc;                                  /* Accumulator */
-    q31_t        in;                                   /* Temporary variable to hold input value */
-    q31_t        out;                                  /* Temporary variable to hold output value */
-    q31_t        b0;                                   /* Temporary variable to hold bo value */
-    q31_t        b1, a1;                               /* Filter coefficients */
-    q31_t        state_in, state_out;                  /* Filter state variables */
+void arm_biquad_cascade_df1_fast_q15(const arm_biquad_casd_df1_inst_q15* S,
+                                     const q15_t*                        pSrc,
+                                     q15_t*                              pDst,
+                                     uint32_t blockSize) {
+    const q15_t* pIn     = pSrc;       /* Source pointer */
+    q15_t*       pOut    = pDst;       /* Destination pointer */
+    q15_t*       pState  = S->pState;  /* State pointer */
+    const q15_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    q31_t        acc;                  /* Accumulator */
+    q31_t        in;     /* Temporary variable to hold input value */
+    q31_t        out;    /* Temporary variable to hold output value */
+    q31_t        b0;     /* Temporary variable to hold bo value */
+    q31_t        b1, a1; /* Filter coefficients */
+    q31_t        state_in, state_out; /* Filter state variables */
     int32_t      shift = (int32_t)(15 - S->postShift); /* Post shift */
     uint32_t     sample, stage = S->numStages;         /* Loop counters */
 

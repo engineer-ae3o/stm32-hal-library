@@ -49,7 +49,10 @@
 
 #include "arm_helium_utils.h"
 
-static void arm_small_blk_max_q7(const q7_t* pSrc, uint16_t blockSize, q7_t* pResult, uint32_t* pIndex) {
+static void arm_small_blk_max_q7(const q7_t* pSrc,
+                                 uint16_t    blockSize,
+                                 q7_t*       pResult,
+                                 uint32_t*   pIndex) {
     int32_t      blkCnt; /* loop counters */
     q7x16_t      extremValVec = vdupq_n_s8(Q7_MIN);
     q7_t         maxValue     = Q7_MIN;
@@ -92,7 +95,10 @@ static void arm_small_blk_max_q7(const q7_t* pSrc, uint16_t blockSize, q7_t* pRe
     *pResult = maxValue;
 }
 
-void arm_max_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult, uint32_t* pIndex) {
+void arm_max_q7(const q7_t* pSrc,
+                uint32_t    blockSize,
+                q7_t*       pResult,
+                uint32_t*   pIndex) {
     int32_t        totalSize  = blockSize;
     const uint16_t sub_blk_sz = UINT8_MAX + 1;
 
@@ -136,8 +142,11 @@ void arm_max_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult, uint32_t* p
     }
 }
 #else
-void arm_max_q7(const q7_t* pSrc, uint32_t blockSize, q7_t* pResult, uint32_t* pIndex) {
-    q7_t     maxVal, out;      /* Temporary variables to store the output value. */
+void arm_max_q7(const q7_t* pSrc,
+                uint32_t    blockSize,
+                q7_t*       pResult,
+                uint32_t*   pIndex) {
+    q7_t     maxVal, out; /* Temporary variables to store the output value. */
     uint32_t blkCnt, outIndex; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL)

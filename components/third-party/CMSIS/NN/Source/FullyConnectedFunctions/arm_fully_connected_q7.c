@@ -88,8 +88,8 @@ arm_status arm_fully_connected_q7(const q7_t*    pV,
     arm_q7_to_q15_reordered_no_shift(pV, vec_buffer, dim_vec);
 
     while (rowCnt) {
-        q31_t    sum    = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
-        q31_t    sum2   = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+        q31_t    sum  = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+        q31_t    sum2 = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
         uint16_t colCnt = dim_vec >> 2;
 
         pA  = vec_buffer;
@@ -135,7 +135,7 @@ arm_status arm_fully_connected_q7(const q7_t*    pV,
 
     while (rowCnt) {
         uint16_t colCnt = dim_vec >> 2;
-        q31_t    sum    = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
+        q31_t    sum = ((q31_t)(*pBias++) << bias_shift) + NN_ROUND(out_shift);
 
         pA = vec_buffer;
 

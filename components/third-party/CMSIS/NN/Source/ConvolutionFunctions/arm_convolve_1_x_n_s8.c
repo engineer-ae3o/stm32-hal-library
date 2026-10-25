@@ -47,17 +47,18 @@
  *
  */
 
-arm_status arm_convolve_1_x_n_s8(const cmsis_nn_context*                  ctx,
-                                 const cmsis_nn_conv_params*              conv_params,
-                                 const cmsis_nn_per_channel_quant_params* quant_params,
-                                 const cmsis_nn_dims*                     input_dims,
-                                 const q7_t*                              input_data,
-                                 const cmsis_nn_dims*                     filter_dims,
-                                 const q7_t*                              filter_data,
-                                 const cmsis_nn_dims*                     bias_dims,
-                                 const int32_t*                           bias_data,
-                                 const cmsis_nn_dims*                     output_dims,
-                                 q7_t*                                    output_data) {
+arm_status
+arm_convolve_1_x_n_s8(const cmsis_nn_context*                  ctx,
+                      const cmsis_nn_conv_params*              conv_params,
+                      const cmsis_nn_per_channel_quant_params* quant_params,
+                      const cmsis_nn_dims*                     input_dims,
+                      const q7_t*                              input_data,
+                      const cmsis_nn_dims*                     filter_dims,
+                      const q7_t*                              filter_data,
+                      const cmsis_nn_dims*                     bias_dims,
+                      const int32_t*                           bias_data,
+                      const cmsis_nn_dims*                     output_dims,
+                      q7_t*                                    output_data) {
     (void)bias_dims;
     arm_status status = ARM_MATH_SUCCESS;
     if (output_dims->w % 4 != 0) {
@@ -92,7 +93,7 @@ arm_status arm_convolve_1_x_n_s8(const cmsis_nn_context*                  ctx,
             const int32_t est_input_x_idx = stride_x * (i_out_x + i) - pad_x;
             input_begin_idx[i]            = MAX(0, est_input_x_idx);
             ker_begin_idx[i]              = MAX(0, -est_input_x_idx);
-            ker_end_idx[i]                = MIN(kernel_x, input_x - est_input_x_idx);
+            ker_end_idx[i] = MIN(kernel_x, input_x - est_input_x_idx);
         }
 
         if ((ker_begin_idx[0] != 0) || (ker_end_idx[3] != kernel_x)) {
@@ -102,28 +103,36 @@ arm_status arm_convolve_1_x_n_s8(const cmsis_nn_context*                  ctx,
                 {
                     int32_t sum_row[4];
 
-                    (void)arm_nn_mat_mul_core_1x_s8((ker_end_idx[0] - ker_begin_idx[0]) * input_ch,
-                                                    input_data + input_begin_idx[0] * input_ch,
-                                                    filter_data + (input_ch * kernel_x * i_out_ch) + (ker_begin_idx[0] * input_ch),
-                                                    &sum_row[0],
-                                                    &acc[0]);
-                    (void)arm_nn_mat_mul_core_1x_s8((ker_end_idx[1] - ker_begin_idx[1]) * input_ch,
-                                                    input_data + input_begin_idx[1] * input_ch,
-                                                    filter_data + (input_ch * kernel_x * i_out_ch) + (ker_begin_idx[1] * input_ch),
-                                                    &sum_row[1],
-                                                    &acc[1]);
+                    (void)arm_nn_mat_mul_core_1x_s8(
+                        (ker_end_idx[0] - ker_begin_idx[0]) * input_ch,
+                        input_data + input_begin_idx[0] * input_ch,
+                        filter_data + (input_ch * kernel_x * i_out_ch) +
+                            (ker_begin_idx[0] * input_ch),
+                        &sum_row[0],
+                        &acc[0]);
+                    (void)arm_nn_mat_mul_core_1x_s8(
+                        (ker_end_idx[1] - ker_begin_idx[1]) * input_ch,
+                        input_data + input_begin_idx[1] * input_ch,
+                        filter_data + (input_ch * kernel_x * i_out_ch) +
+                            (ker_begin_idx[1] * input_ch),
+                        &sum_row[1],
+                        &acc[1]);
 
-                    (void)arm_nn_mat_mul_core_1x_s8((ker_end_idx[2] - ker_begin_idx[2]) * input_ch,
-                                                    input_data + input_begin_idx[2] * input_ch,
-                                                    filter_data + (input_ch * kernel_x * i_out_ch) + (ker_begin_idx[2] * input_ch),
-                                                    &sum_row[2],
-                                                    &acc[2]);
+                    (void)arm_nn_mat_mul_core_1x_s8(
+                        (ker_end_idx[2] - ker_begin_idx[2]) * input_ch,
+                        input_data + input_begin_idx[2] * input_ch,
+                        filter_data + (input_ch * kernel_x * i_out_ch) +
+                            (ker_begin_idx[2] * input_ch),
+                        &sum_row[2],
+                        &acc[2]);
 
-                    (void)arm_nn_mat_mul_core_1x_s8((ker_end_idx[3] - ker_begin_idx[3]) * input_ch,
-                                                    input_data + input_begin_idx[3] * input_ch,
-                                                    filter_data + (input_ch * kernel_x * i_out_ch) + (ker_begin_idx[3] * input_ch),
-                                                    &sum_row[3],
-                                                    &acc[3]);
+                    (void)arm_nn_mat_mul_core_1x_s8(
+                        (ker_end_idx[3] - ker_begin_idx[3]) * input_ch,
+                        input_data + input_begin_idx[3] * input_ch,
+                        filter_data + (input_ch * kernel_x * i_out_ch) +
+                            (ker_begin_idx[3] * input_ch),
+                        &sum_row[3],
+                        &acc[3]);
 
                     s_offset = vldrwq_s32(sum_row);
                 }
@@ -133,33 +142,45 @@ arm_status arm_convolve_1_x_n_s8(const cmsis_nn_context*                  ctx,
                 if (bias_data) {
                     res = vaddq_n_s32(res, bias_data[i_out_ch]);
                 }
-                res = arm_requantize_mve(res, output_mult[i_out_ch], output_shift[i_out_ch]);
+                res = arm_requantize_mve(
+                    res, output_mult[i_out_ch], output_shift[i_out_ch]);
                 res = vaddq_n_s32(res, out_offset);
 
                 res = vmaxq_s32(res, vdupq_n_s32(out_activation_min));
                 res = vminq_s32(res, vdupq_n_s32(out_activation_max));
 
-                const uint32x4_t scatter_offset = {0, output_ch, output_ch * 2, output_ch * 3};
+                const uint32x4_t scatter_offset = {
+                    0, output_ch, output_ch * 2, output_ch * 3};
                 vstrbq_scatter_offset_s32(output_data, scatter_offset, res);
                 output_data++;
             }
             output_data += (3 * output_ch);
         } else {
-            output_data = arm_nn_mat_mul_core_4x_s8(kernel_x * input_ch,
-                                                    stride_x * input_ch,
-                                                    input_data + input_begin_idx[0] * input_ch,
-                                                    filter_data,
-                                                    output_ch,
-                                                    conv_params,
-                                                    quant_params,
-                                                    bias_data,
-                                                    output_data);
+            output_data = arm_nn_mat_mul_core_4x_s8(
+                kernel_x * input_ch,
+                stride_x * input_ch,
+                input_data + input_begin_idx[0] * input_ch,
+                filter_data,
+                output_ch,
+                conv_params,
+                quant_params,
+                bias_data,
+                output_data);
         }
     }
 
 #else
-    status = arm_convolve_s8(
-        ctx, conv_params, quant_params, input_dims, input_data, filter_dims, filter_data, bias_dims, bias_data, output_dims, output_data);
+    status = arm_convolve_s8(ctx,
+                             conv_params,
+                             quant_params,
+                             input_dims,
+                             input_data,
+                             filter_dims,
+                             filter_data,
+                             bias_dims,
+                             bias_data,
+                             output_dims,
+                             output_data);
 #endif
 
 out:
@@ -167,9 +188,12 @@ out:
     return status;
 }
 
-int32_t arm_convolve_1_x_n_s8_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims) {
+int32_t
+arm_convolve_1_x_n_s8_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                      const cmsis_nn_dims* filter_dims) {
 #if !defined(ARM_MATH_MVEI)
-    return (2 * input_dims->c * filter_dims->w * filter_dims->h) * sizeof(int16_t);
+    return (2 * input_dims->c * filter_dims->w * filter_dims->h) *
+           sizeof(int16_t);
 #else
     (void)input_dims;
     (void)filter_dims;

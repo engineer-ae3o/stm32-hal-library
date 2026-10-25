@@ -163,16 +163,23 @@
   @return        none
  */
 #if defined(ARM_MATH_NEON)
-void arm_lms_f32(const arm_lms_instance_f32* S, const float32_t* pSrc, float32_t* pRef, float32_t* pOut, float32_t* pErr, uint32_t blockSize) {
+void arm_lms_f32(const arm_lms_instance_f32* S,
+                 const float32_t*            pSrc,
+                 float32_t*                  pRef,
+                 float32_t*                  pOut,
+                 float32_t*                  pErr,
+                 uint32_t                    blockSize) {
     float32_t* pState  = S->pState;  /* State pointer */
     float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    float32_t* pStateCurnt;          /* Points to the current sample of the state */
-    float32_t *px, *pb;              /* Temporary pointers for state and coefficient buffers */
-    float32_t  mu      = S->mu;      /* Adaptive factor */
-    uint32_t   numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t   tapCnt, blkCnt;       /* Loop counters */
-    float32_t  sum, e, d;            /* accumulator, error, reference data sample */
-    float32_t  w = 0.0f;             /* weight factor */
+    float32_t* pStateCurnt; /* Points to the current sample of the state */
+    float32_t *px,
+        *pb; /* Temporary pointers for state and coefficient buffers */
+    float32_t mu = S->mu; /* Adaptive factor */
+    uint32_t  numTaps =
+        S->numTaps;           /* Number of filter coefficients in the filter */
+    uint32_t  tapCnt, blkCnt; /* Loop counters */
+    float32_t sum, e, d;      /* accumulator, error, reference data sample */
+    float32_t w = 0.0f;       /* weight factor */
 
     float32x4_t tempV, sumV, xV, bV;
     float32x2_t tempV2;
@@ -319,16 +326,23 @@ void arm_lms_f32(const arm_lms_instance_f32* S, const float32_t* pSrc, float32_t
     }
 }
 #else
-void arm_lms_f32(const arm_lms_instance_f32* S, const float32_t* pSrc, float32_t* pRef, float32_t* pOut, float32_t* pErr, uint32_t blockSize) {
+void arm_lms_f32(const arm_lms_instance_f32* S,
+                 const float32_t*            pSrc,
+                 float32_t*                  pRef,
+                 float32_t*                  pOut,
+                 float32_t*                  pErr,
+                 uint32_t                    blockSize) {
     float32_t* pState  = S->pState;  /* State pointer */
     float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    float32_t* pStateCurnt;          /* Points to the current sample of the state */
-    float32_t *px, *pb;              /* Temporary pointers for state and coefficient buffers */
-    float32_t  mu = S->mu;           /* Adaptive factor */
-    float32_t  acc, e;               /* Accumulator, error */
-    float32_t  w;                    /* Weight factor */
-    uint32_t   numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t   tapCnt, blkCnt;       /* Loop counters */
+    float32_t* pStateCurnt; /* Points to the current sample of the state */
+    float32_t *px,
+        *pb; /* Temporary pointers for state and coefficient buffers */
+    float32_t mu = S->mu; /* Adaptive factor */
+    float32_t acc, e;     /* Accumulator, error */
+    float32_t w;          /* Weight factor */
+    uint32_t  numTaps =
+        S->numTaps;          /* Number of filter coefficients in the filter */
+    uint32_t tapCnt, blkCnt; /* Loop counters */
 
     /* Initializations of error,  difference, Coefficient update */
     e = 0.0f;

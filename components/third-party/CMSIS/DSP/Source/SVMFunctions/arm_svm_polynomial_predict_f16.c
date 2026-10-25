@@ -73,7 +73,9 @@ __STATIC_INLINE float16_t arm_exponent_f16(float16_t x, int32_t nb) {
  * @return none.
  *
  */
-void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S, const float16_t* in, int32_t* pResult) {
+void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S,
+                                    const float16_t*                       in,
+                                    int32_t* pResult) {
     /* inlined Matrix x Vector function interleaved with dot prod */
     uint32_t         numRows  = S->nbOfSupportVectors;
     uint32_t         numCols  = S->vectorDimension;
@@ -171,7 +173,12 @@ void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S, co
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc2), vtmp, 2);
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc3), vtmp, 3);
 
-        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef), arm_vec_exponent_f16(vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree), vctp16q(4));
+        vSum = vfmaq_m_f16(
+            vSum,
+            vld1q(pDualCoef),
+            arm_vec_exponent_f16(
+                vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree),
+            vctp16q(4));
 
         pDualCoef += 4;
 
@@ -244,7 +251,12 @@ void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S, co
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc1), vtmp, 1);
 
-        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef), arm_vec_exponent_f16(vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree), vctp16q(2));
+        vSum = vfmaq_m_f16(
+            vSum,
+            vld1q(pDualCoef),
+            arm_vec_exponent_f16(
+                vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree),
+            vctp16q(2));
 
         pDualCoef += 2;
         pSrcA += numCols * 2;
@@ -300,7 +312,12 @@ void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S, co
          */
         f16x8_t vtmp = vuninitializedq_f16();
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
-        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef), arm_vec_exponent_f16(vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree), vctp16q(1));
+        vSum         = vfmaq_m_f16(
+            vSum,
+            vld1q(pDualCoef),
+            arm_vec_exponent_f16(
+                vaddq_n_f16(vmulq_n_f16(vtmp, S->gamma), S->coef0), S->degree),
+            vctp16q(1));
     }
     sum += (_Float16)vecAddAcrossF16Mve(vSum);
 
@@ -319,7 +336,9 @@ void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S, co
  * @return none.
  *
  */
-void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S, const float16_t* in, int32_t* pResult) {
+void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S,
+                                    const float16_t*                       in,
+                                    int32_t* pResult) {
     _Float16         sum = S->intercept;
     _Float16         dot = 0;
     uint32_t         i, j;
@@ -330,7 +349,10 @@ void arm_svm_polynomial_predict_f16(const arm_svm_polynomial_instance_f16* S, co
         for (j = 0; j < S->vectorDimension; j++) {
             dot = (_Float16)dot + (_Float16)in[j] * (_Float16)*pSupport++;
         }
-        sum += (_Float16)S->dualCoefficients[i] * (_Float16)arm_exponent_f16((_Float16)S->gamma * (_Float16)dot + (_Float16)S->coef0, S->degree);
+        sum += (_Float16)S->dualCoefficients[i] *
+               (_Float16)arm_exponent_f16((_Float16)S->gamma * (_Float16)dot +
+                                              (_Float16)S->coef0,
+                                          S->degree);
     }
 
     *pResult = S->classes[STEP(sum)];

@@ -58,7 +58,8 @@
 
 #include "arm_helium_utils.h"
 
-arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc,
+                             arm_matrix_instance_f32*       pDst) {
     arm_status status; /* status of matrix transpose  */
 
 #ifdef ARM_MATH_MATRIX_CHECK
@@ -72,17 +73,23 @@ arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_ins
     {
         if (pDst->numRows == pDst->numCols) {
             if (pDst->numCols == 2) {
-                return arm_mat_trans_32bit_2x2_mve((uint32_t*)pSrc->pData, (uint32_t*)pDst->pData);
+                return arm_mat_trans_32bit_2x2_mve((uint32_t*)pSrc->pData,
+                                                   (uint32_t*)pDst->pData);
             }
             if (pDst->numCols == 3) {
-                return arm_mat_trans_32bit_3x3_mve((uint32_t*)pSrc->pData, (uint32_t*)pDst->pData);
+                return arm_mat_trans_32bit_3x3_mve((uint32_t*)pSrc->pData,
+                                                   (uint32_t*)pDst->pData);
             }
             if (pDst->numCols == 4) {
-                return arm_mat_trans_32bit_4x4_mve((uint32_t*)pSrc->pData, (uint32_t*)pDst->pData);
+                return arm_mat_trans_32bit_4x4_mve((uint32_t*)pSrc->pData,
+                                                   (uint32_t*)pDst->pData);
             }
         }
 
-        arm_mat_trans_32bit_generic_mve(pSrc->numRows, pSrc->numCols, (uint32_t*)pSrc->pData, (uint32_t*)pDst->pData);
+        arm_mat_trans_32bit_generic_mve(pSrc->numRows,
+                                        pSrc->numCols,
+                                        (uint32_t*)pSrc->pData,
+                                        (uint32_t*)pDst->pData);
         /* Set status as ARM_MATH_SUCCESS */
         status = ARM_MATH_SUCCESS;
     }
@@ -94,15 +101,16 @@ arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_ins
 #else
 #if defined(ARM_MATH_NEON)
 
-arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
-    float32_t* pIn  = pSrc->pData;       /* input data matrix pointer */
-    float32_t* pOut = pDst->pData;       /* output data matrix pointer */
-    float32_t* px;                       /* Temporary output data matrix pointer */
+arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc,
+                             arm_matrix_instance_f32*       pDst) {
+    float32_t* pIn  = pSrc->pData; /* input data matrix pointer */
+    float32_t* pOut = pDst->pData; /* output data matrix pointer */
+    float32_t* px;                 /* Temporary output data matrix pointer */
     uint16_t   nRows    = pSrc->numRows; /* number of rows */
     uint16_t   nColumns = pSrc->numCols; /* number of columns */
 
     uint16_t   blkCnt, rowCnt, i = 0U, row = nRows; /* loop counters */
-    arm_status status;                              /* status of matrix transpose  */
+    arm_status status; /* status of matrix transpose  */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
@@ -211,12 +219,13 @@ arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_ins
     return (status);
 }
 #else
-arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
-    float32_t* pIn  = pSrc->pData;       /* input data matrix pointer */
-    float32_t* pOut = pDst->pData;       /* output data matrix pointer */
-    float32_t* px;                       /* Temporary output data matrix pointer */
-    uint16_t   nRows = pSrc->numRows;    /* number of rows */
-    uint16_t   nCols = pSrc->numCols;    /* number of columns */
+arm_status arm_mat_trans_f32(const arm_matrix_instance_f32* pSrc,
+                             arm_matrix_instance_f32*       pDst) {
+    float32_t* pIn  = pSrc->pData;    /* input data matrix pointer */
+    float32_t* pOut = pDst->pData;    /* output data matrix pointer */
+    float32_t* px;                    /* Temporary output data matrix pointer */
+    uint16_t   nRows = pSrc->numRows; /* number of rows */
+    uint16_t   nCols = pSrc->numCols; /* number of columns */
     uint32_t   col, row = nRows, i = 0U; /* Loop counters */
     arm_status status;                   /* status of matrix transpose */
 

@@ -13,7 +13,7 @@ hal_err_t iwdg_start(iwdg_prescaler_t prescaler, uint32_t timeout_ms) {
     // Find the new clock speed
     const uint32_t new_clk_speed_hz = LSI_VALUE_Hz / (1U << (prescaler + 2));
 
-    if (timeout_ms > ((IWDG_RLR_RL_Msk * 1000U) / new_clk_speed_hz)) {
+    if (timeout_ms > ((IWDG_RLR_RL * 1000U) / new_clk_speed_hz)) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -32,8 +32,8 @@ hal_err_t iwdg_start(iwdg_prescaler_t prescaler, uint32_t timeout_ms) {
     }
 
     // Set the prescaler and reload value
-    IWDG->PR  = prescaler & IWDG_PR_PR_Msk;
-    IWDG->RLR = actual_reload_val & IWDG_RLR_RL_Msk;
+    IWDG->PR  = prescaler & IWDG_PR_PR;
+    IWDG->RLR = actual_reload_val & IWDG_RLR_RL;
 
     // Wait until the PVU and RVU bits read 0 before we can safely proceed
     timeout = TIMEOUT;

@@ -61,7 +61,10 @@
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 #include "arm_helium_utils.h"
 
-void arm_sub_f16(const float16_t* pSrcA, const float16_t* pSrcB, float16_t* pDst, uint32_t blockSize) {
+void arm_sub_f16(const float16_t* pSrcA,
+                 const float16_t* pSrcB,
+                 float16_t*       pDst,
+                 uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
     f16x8_t vec1;
@@ -103,7 +106,10 @@ void arm_sub_f16(const float16_t* pSrcA, const float16_t* pSrcB, float16_t* pDst
 
 #else
 #if defined(ARM_FLOAT16_SUPPORTED)
-void arm_sub_f16(const float16_t* pSrcA, const float16_t* pSrcB, float16_t* pDst, uint32_t blockSize) {
+void arm_sub_f16(const float16_t* pSrcA,
+                 const float16_t* pSrcB,
+                 float16_t*       pDst,
+                 uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
 #if defined(ARM_MATH_LOOPUNROLL) && !defined(ARM_MATH_AUTOVECTORIZE)

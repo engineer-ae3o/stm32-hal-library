@@ -47,7 +47,8 @@ extern "C" {
 
 
 // Not to be used directly
-[[__gnu__::__format__(printf, 3, 4)]] void log_fmt(const char* esc_code, const char* tag, const char* fmt, ...);
+[[__gnu__::__format__(printf, 3, 4)]] void
+log_fmt(const char* esc_code, const char* tag, const char* fmt, ...);
 
 
 #define ESC_TEXT_GREEN "\x1B[92m I "

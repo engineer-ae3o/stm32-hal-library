@@ -52,12 +52,15 @@
                    These are multiplied to yield a 2.30 intermediate result and this is shifted with saturation to 1.15 format.
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc, q15_t scaleFract, int32_t shift, arm_matrix_instance_q15* pDst) {
+arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc,
+                             q15_t                          scaleFract,
+                             int32_t                        shift,
+                             arm_matrix_instance_q15*       pDst) {
     arm_status   status;             /* Status of matrix scaling */
     q15_t*       pIn  = pSrc->pData; /* input data matrix pointer */
     q15_t*       pOut = pDst->pData; /* output data matrix pointer */
-    uint32_t     numSamples;         /* total number of elements in the matrix */
-    uint32_t     blkCnt;             /* loop counters */
+    uint32_t     numSamples; /* total number of elements in the matrix */
+    uint32_t     blkCnt;     /* loop counters */
     q15x8_t      vecIn, vecOut;
     q15_t const* pInVec;
     int32_t      totShift = shift + 1; /* shift to apply after scaling */
@@ -123,7 +126,10 @@ arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc, q15_t scaleFra
 }
 
 #else
-arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc, q15_t scaleFract, int32_t shift, arm_matrix_instance_q15* pDst) {
+arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc,
+                             q15_t                          scaleFract,
+                             int32_t                        shift,
+                             arm_matrix_instance_q15*       pDst) {
     q15_t*     pIn  = pSrc->pData;  /* Input data matrix pointer */
     q15_t*     pOut = pDst->pData;  /* Output data matrix pointer */
     uint32_t   numSamples;          /* Total number of elements in the matrix */
@@ -188,10 +194,14 @@ arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc, q15_t scaleFra
             write_q15x2_ia(&pOut, __PKHBT(in4, in3, 16));
 
 #else
-            *pOut++ = (q15_t)(__SSAT(((q31_t)(*pIn++) * scaleFract) >> kShift, 16));
-            *pOut++ = (q15_t)(__SSAT(((q31_t)(*pIn++) * scaleFract) >> kShift, 16));
-            *pOut++ = (q15_t)(__SSAT(((q31_t)(*pIn++) * scaleFract) >> kShift, 16));
-            *pOut++ = (q15_t)(__SSAT(((q31_t)(*pIn++) * scaleFract) >> kShift, 16));
+            *pOut++ =
+                (q15_t)(__SSAT(((q31_t)(*pIn++) * scaleFract) >> kShift, 16));
+            *pOut++ =
+                (q15_t)(__SSAT(((q31_t)(*pIn++) * scaleFract) >> kShift, 16));
+            *pOut++ =
+                (q15_t)(__SSAT(((q31_t)(*pIn++) * scaleFract) >> kShift, 16));
+            *pOut++ =
+                (q15_t)(__SSAT(((q31_t)(*pIn++) * scaleFract) >> kShift, 16));
 #endif
 
             /* Decrement loop counter */
@@ -212,7 +222,8 @@ arm_status arm_mat_scale_q15(const arm_matrix_instance_q15* pSrc, q15_t scaleFra
             /* C(m,n) = A(m,n) * k */
 
             /* Scale, saturate and store result in destination buffer. */
-            *pOut++ = (q15_t)(__SSAT(((q31_t)(*pIn++) * scaleFract) >> kShift, 16));
+            *pOut++ =
+                (q15_t)(__SSAT(((q31_t)(*pIn++) * scaleFract) >> kShift, 16));
 
             /* Decrement loop counter */
             blkCnt--;

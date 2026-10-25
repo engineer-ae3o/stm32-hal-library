@@ -28,11 +28,20 @@
 
 #include "dsp/transform_functions.h"
 
-void arm_radix2_butterfly_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, uint16_t twidCoefModifier);
+void arm_radix2_butterfly_q15(q15_t*       pSrc,
+                              uint32_t     fftLen,
+                              const q15_t* pCoef,
+                              uint16_t     twidCoefModifier);
 
-void arm_radix2_butterfly_inverse_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, uint16_t twidCoefModifier);
+void arm_radix2_butterfly_inverse_q15(q15_t*       pSrc,
+                                      uint32_t     fftLen,
+                                      const q15_t* pCoef,
+                                      uint16_t     twidCoefModifier);
 
-void arm_bitreversal_q15(q15_t* pSrc, uint32_t fftLen, uint16_t bitRevFactor, const uint16_t* pBitRevTab);
+void arm_bitreversal_q15(q15_t*          pSrc,
+                         uint32_t        fftLen,
+                         uint16_t        bitRevFactor,
+                         const uint16_t* pBitRevTab);
 
 /**
   @ingroup groupTransforms
@@ -54,9 +63,11 @@ void arm_bitreversal_q15(q15_t* pSrc, uint32_t fftLen, uint16_t bitRevFactor, co
 void arm_cfft_radix2_q15(const arm_cfft_radix2_instance_q15* S, q15_t* pSrc) {
 
     if (S->ifftFlag == 1U) {
-        arm_radix2_butterfly_inverse_q15(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
+        arm_radix2_butterfly_inverse_q15(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
     } else {
-        arm_radix2_butterfly_q15(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
+        arm_radix2_butterfly_q15(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
     }
 
     arm_bitreversal_q15(pSrc, S->fftLen, S->bitRevFactor, S->pBitRevTable);
@@ -66,7 +77,10 @@ void arm_cfft_radix2_q15(const arm_cfft_radix2_instance_q15* S, q15_t* pSrc) {
   @} end of ComplexFFT group
  */
 
-void arm_radix2_butterfly_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, uint16_t twidCoefModifier) {
+void arm_radix2_butterfly_q15(q15_t*       pSrc,
+                              uint32_t     fftLen,
+                              const q15_t* pCoef,
+                              uint16_t     twidCoefModifier) {
 #if defined(ARM_MATH_DSP)
 
     uint32_t i, j, k, l;
@@ -110,7 +124,8 @@ void arm_radix2_butterfly_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, 
         out2 = __SMUAD(coeff, R);
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
-        write_q15x2(pSrc + (2U * l), (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
+        write_q15x2(pSrc + (2U * l),
+                    (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
 
         coeff = read_q15x2((q15_t*)pCoef + (ia * 2U));
 
@@ -141,7 +156,8 @@ void arm_radix2_butterfly_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, 
         out2 = __SMUAD(coeff, R);
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
-        write_q15x2(pSrc + (2U * l), (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
+        write_q15x2(pSrc + (2U * l),
+                    (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
 
     } /* groups loop end */
 
@@ -179,7 +195,8 @@ void arm_radix2_butterfly_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, 
                 out2 = __SMUAD(coeff, R);
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
-                write_q15x2(pSrc + (2U * l), (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
+                write_q15x2(pSrc + (2U * l),
+                            (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
 
                 i += n1;
 
@@ -201,7 +218,8 @@ void arm_radix2_butterfly_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, 
                 out2 = __SMUAD(coeff, R);
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
-                write_q15x2(pSrc + (2U * l), (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
+                write_q15x2(pSrc + (2U * l),
+                            (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
 
             } /* butterfly loop end */
 
@@ -274,12 +292,15 @@ void arm_radix2_butterfly_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, 
             xt          = (pSrc[2 * i] >> 1U) - (pSrc[2 * l] >> 1U);
             pSrc[2 * i] = ((pSrc[2 * i] >> 1U) + (pSrc[2 * l] >> 1U)) >> 1U;
 
-            yt              = (pSrc[2 * i + 1] >> 1U) - (pSrc[2 * l + 1] >> 1U);
-            pSrc[2 * i + 1] = ((pSrc[2 * l + 1] >> 1U) + (pSrc[2 * i + 1] >> 1U)) >> 1U;
+            yt = (pSrc[2 * i + 1] >> 1U) - (pSrc[2 * l + 1] >> 1U);
+            pSrc[2 * i + 1] =
+                ((pSrc[2 * l + 1] >> 1U) + (pSrc[2 * i + 1] >> 1U)) >> 1U;
 
-            pSrc[2 * l] = (((int16_t)(((q31_t)xt * cosVal) >> 16)) + ((int16_t)(((q31_t)yt * sinVal) >> 16)));
+            pSrc[2 * l] = (((int16_t)(((q31_t)xt * cosVal) >> 16)) +
+                           ((int16_t)(((q31_t)yt * sinVal) >> 16)));
 
-            pSrc[2U * l + 1] = (((int16_t)(((q31_t)yt * cosVal) >> 16)) - ((int16_t)(((q31_t)xt * sinVal) >> 16)));
+            pSrc[2U * l + 1] = (((int16_t)(((q31_t)yt * cosVal) >> 16)) -
+                                ((int16_t)(((q31_t)xt * sinVal) >> 16)));
 
         } /* butterfly loop end */
 
@@ -308,9 +329,11 @@ void arm_radix2_butterfly_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, 
                 yt              = pSrc[2 * i + 1] - pSrc[2 * l + 1];
                 pSrc[2 * i + 1] = (pSrc[2 * l + 1] + pSrc[2 * i + 1]) >> 1U;
 
-                pSrc[2 * l] = (((int16_t)(((q31_t)xt * cosVal) >> 16)) + ((int16_t)(((q31_t)yt * sinVal) >> 16)));
+                pSrc[2 * l] = (((int16_t)(((q31_t)xt * cosVal) >> 16)) +
+                               ((int16_t)(((q31_t)yt * sinVal) >> 16)));
 
-                pSrc[2U * l + 1] = (((int16_t)(((q31_t)yt * cosVal) >> 16)) - ((int16_t)(((q31_t)xt * sinVal) >> 16)));
+                pSrc[2U * l + 1] = (((int16_t)(((q31_t)yt * cosVal) >> 16)) -
+                                    ((int16_t)(((q31_t)xt * sinVal) >> 16)));
 
             } /* butterfly loop end */
 
@@ -353,7 +376,10 @@ void arm_radix2_butterfly_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, 
 }
 
 
-void arm_radix2_butterfly_inverse_q15(q15_t* pSrc, uint32_t fftLen, const q15_t* pCoef, uint16_t twidCoefModifier) {
+void arm_radix2_butterfly_inverse_q15(q15_t*       pSrc,
+                                      uint32_t     fftLen,
+                                      const q15_t* pCoef,
+                                      uint16_t     twidCoefModifier) {
 #if defined(ARM_MATH_DSP)
 
     uint32_t i, j, k, l;
@@ -397,7 +423,8 @@ void arm_radix2_butterfly_inverse_q15(q15_t* pSrc, uint32_t fftLen, const q15_t*
         out2 = __SMUSD(__QSUB(0, coeff), R);
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
-        write_q15x2(pSrc + (2 * l), (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
+        write_q15x2(pSrc + (2 * l),
+                    (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
 
         coeff = read_q15x2((q15_t*)pCoef + (ia * 2U));
 
@@ -427,7 +454,8 @@ void arm_radix2_butterfly_inverse_q15(q15_t* pSrc, uint32_t fftLen, const q15_t*
         out2 = __SMUSD(__QSUB(0, coeff), R);
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
-        write_q15x2(pSrc + (2 * l), (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
+        write_q15x2(pSrc + (2 * l),
+                    (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
 
     } /* groups loop end */
 
@@ -465,7 +493,8 @@ void arm_radix2_butterfly_inverse_q15(q15_t* pSrc, uint32_t fftLen, const q15_t*
                 out2 = __SMUSD(__QSUB(0, coeff), R);
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
-                write_q15x2(pSrc + (2 * l), (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
+                write_q15x2(pSrc + (2 * l),
+                            (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
 
                 i += n1;
 
@@ -487,7 +516,8 @@ void arm_radix2_butterfly_inverse_q15(q15_t* pSrc, uint32_t fftLen, const q15_t*
                 out2 = __SMUSD(__QSUB(0, coeff), R);
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
-                write_q15x2(pSrc + (2 * l), (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
+                write_q15x2(pSrc + (2 * l),
+                            (q31_t)((out2) & 0xFFFF0000) | (out1 & 0x0000FFFF));
 
             } /* butterfly loop end */
 
@@ -551,12 +581,15 @@ void arm_radix2_butterfly_inverse_q15(q15_t* pSrc, uint32_t fftLen, const q15_t*
             xt          = (pSrc[2 * i] >> 1U) - (pSrc[2 * l] >> 1U);
             pSrc[2 * i] = ((pSrc[2 * i] >> 1U) + (pSrc[2 * l] >> 1U)) >> 1U;
 
-            yt              = (pSrc[2 * i + 1] >> 1U) - (pSrc[2 * l + 1] >> 1U);
-            pSrc[2 * i + 1] = ((pSrc[2 * l + 1] >> 1U) + (pSrc[2 * i + 1] >> 1U)) >> 1U;
+            yt = (pSrc[2 * i + 1] >> 1U) - (pSrc[2 * l + 1] >> 1U);
+            pSrc[2 * i + 1] =
+                ((pSrc[2 * l + 1] >> 1U) + (pSrc[2 * i + 1] >> 1U)) >> 1U;
 
-            pSrc[2 * l] = (((int16_t)(((q31_t)xt * cosVal) >> 16)) - ((int16_t)(((q31_t)yt * sinVal) >> 16)));
+            pSrc[2 * l] = (((int16_t)(((q31_t)xt * cosVal) >> 16)) -
+                           ((int16_t)(((q31_t)yt * sinVal) >> 16)));
 
-            pSrc[2 * l + 1] = (((int16_t)(((q31_t)yt * cosVal) >> 16)) + ((int16_t)(((q31_t)xt * sinVal) >> 16)));
+            pSrc[2 * l + 1] = (((int16_t)(((q31_t)yt * cosVal) >> 16)) +
+                               ((int16_t)(((q31_t)xt * sinVal) >> 16)));
 
         } /* butterfly loop end */
 
@@ -585,9 +618,11 @@ void arm_radix2_butterfly_inverse_q15(q15_t* pSrc, uint32_t fftLen, const q15_t*
                 yt              = pSrc[2 * i + 1] - pSrc[2 * l + 1];
                 pSrc[2 * i + 1] = (pSrc[2 * l + 1] + pSrc[2 * i + 1]) >> 1U;
 
-                pSrc[2 * l] = (((int16_t)(((q31_t)xt * cosVal) >> 16)) - ((int16_t)(((q31_t)yt * sinVal) >> 16)));
+                pSrc[2 * l] = (((int16_t)(((q31_t)xt * cosVal) >> 16)) -
+                               ((int16_t)(((q31_t)yt * sinVal) >> 16)));
 
-                pSrc[2 * l + 1] = (((int16_t)(((q31_t)yt * cosVal) >> 16)) + ((int16_t)(((q31_t)xt * sinVal) >> 16)));
+                pSrc[2 * l + 1] = (((int16_t)(((q31_t)yt * cosVal) >> 16)) +
+                                   ((int16_t)(((q31_t)xt * sinVal) >> 16)));
 
             } /* butterfly loop end */
 

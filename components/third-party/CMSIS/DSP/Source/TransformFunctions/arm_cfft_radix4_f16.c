@@ -30,14 +30,26 @@
 
 #if defined(ARM_FLOAT16_SUPPORTED)
 
-extern void arm_bitreversal_f16(float16_t* pSrc, uint16_t fftSize, uint16_t bitRevFactor, const uint16_t* pBitRevTab);
+extern void arm_bitreversal_f16(float16_t*      pSrc,
+                                uint16_t        fftSize,
+                                uint16_t        bitRevFactor,
+                                const uint16_t* pBitRevTab);
 
-void arm_radix4_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const float16_t* pCoef, uint16_t twidCoefModifier);
+void arm_radix4_butterfly_f16(float16_t*       pSrc,
+                              uint16_t         fftLen,
+                              const float16_t* pCoef,
+                              uint16_t         twidCoefModifier);
 
-void arm_radix4_butterfly_inverse_f16(float16_t* pSrc, uint16_t fftLen, const float16_t* pCoef, uint16_t twidCoefModifier, float16_t onebyfftLen);
+void arm_radix4_butterfly_inverse_f16(float16_t*       pSrc,
+                                      uint16_t         fftLen,
+                                      const float16_t* pCoef,
+                                      uint16_t         twidCoefModifier,
+                                      float16_t        onebyfftLen);
 
 
-void arm_cfft_radix4by2_f16(float16_t* pSrc, uint32_t fftLen, const float16_t* pCoef);
+void arm_cfft_radix4by2_f16(float16_t*       pSrc,
+                            uint32_t         fftLen,
+                            const float16_t* pCoef);
 
 
 /**
@@ -58,7 +70,9 @@ void arm_cfft_radix4by2_f16(float16_t* pSrc, uint32_t fftLen, const float16_t* p
 * @return none.
 */
 
-void arm_cfft_radix4by2_f16(float16_t* pSrc, uint32_t fftLen, const float16_t* pCoef) {
+void arm_cfft_radix4by2_f16(float16_t*       pSrc,
+                            uint32_t         fftLen,
+                            const float16_t* pCoef) {
     uint32_t  i, l;
     uint32_t  n2, ia;
     float16_t xt, yt, cosVal, sinVal;
@@ -107,13 +121,16 @@ void arm_cfft_radix4by2_f16(float16_t* pSrc, uint32_t fftLen, const float16_t* p
   @return        none
  */
 
-void arm_cfft_radix4_f16(const arm_cfft_radix4_instance_f16* S, float16_t* pSrc) {
+void arm_cfft_radix4_f16(const arm_cfft_radix4_instance_f16* S,
+                         float16_t*                          pSrc) {
     if (S->ifftFlag == 1U) {
         /*  Complex IFFT radix-4  */
-        arm_radix4_butterfly_inverse_f16(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier, S->onebyfftLen);
+        arm_radix4_butterfly_inverse_f16(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier, S->onebyfftLen);
     } else {
         /*  Complex FFT radix-4  */
-        arm_radix4_butterfly_f16(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
+        arm_radix4_butterfly_f16(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
     }
 
     if (S->bitReverseFlag == 1U) {
@@ -139,7 +156,10 @@ void arm_cfft_radix4_f16(const arm_cfft_radix4_instance_f16* S, float16_t* pSrc)
 * @return none.
 */
 
-void arm_radix4_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const float16_t* pCoef, uint16_t twidCoefModifier) {
+void arm_radix4_butterfly_f16(float16_t*       pSrc,
+                              uint16_t         fftLen,
+                              const float16_t* pCoef,
+                              uint16_t         twidCoefModifier) {
 
     float16_t co1, co2, co3, si1, si2, si3;
     uint32_t  ia1, ia2, ia3;
@@ -150,8 +170,9 @@ void arm_radix4_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const float16_t*
 
     /* Run the below code for Cortex-M4 and Cortex-M3 */
 
-    float16_t  xaIn, yaIn, xbIn, ybIn, xcIn, ycIn, xdIn, ydIn;
-    float16_t  Xaplusc, Xbplusd, Yaplusc, Ybplusd, Xaminusc, Xbminusd, Yaminusc, Ybminusd;
+    float16_t xaIn, yaIn, xbIn, ybIn, xcIn, ycIn, xdIn, ydIn;
+    float16_t Xaplusc, Xbplusd, Yaplusc, Ybplusd, Xaminusc, Xbminusd, Yaminusc,
+        Ybminusd;
     float16_t  Xb12C_out, Yb12C_out, Xc12C_out, Yc12C_out, Xd12C_out, Yd12C_out;
     float16_t  Xb12_out, Yb12_out, Xc12_out, Yc12_out, Xd12_out, Yd12_out;
     float16_t* ptr1;
@@ -548,10 +569,12 @@ void arm_radix4_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const float16_t*
                 r2 = (_Float16)pSrc[(2U * i0)] - (_Float16)pSrc[(2U * i2)];
 
                 /* ya + yc */
-                s1 = (_Float16)pSrc[(2U * i0) + 1U] + (_Float16)pSrc[(2U * i2) + 1U];
+                s1 = (_Float16)pSrc[(2U * i0) + 1U] +
+                     (_Float16)pSrc[(2U * i2) + 1U];
 
                 /* ya - yc */
-                s2 = (_Float16)pSrc[(2U * i0) + 1U] - (_Float16)pSrc[(2U * i2) + 1U];
+                s2 = (_Float16)pSrc[(2U * i0) + 1U] -
+                     (_Float16)pSrc[(2U * i2) + 1U];
 
                 /* xb + xd */
                 t1 = (_Float16)pSrc[2U * i1] + (_Float16)pSrc[2U * i3];
@@ -563,7 +586,8 @@ void arm_radix4_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const float16_t*
                 r1 = (_Float16)r1 - (_Float16)t1;
 
                 /* yb + yd */
-                t2 = (_Float16)pSrc[(2U * i1) + 1U] + (_Float16)pSrc[(2U * i3) + 1U];
+                t2 = (_Float16)pSrc[(2U * i1) + 1U] +
+                     (_Float16)pSrc[(2U * i3) + 1U];
 
                 /* ya' = ya + yb + yc + yd */
                 pSrc[(2U * i0) + 1U] = (_Float16)s1 + (_Float16)t2;
@@ -572,16 +596,19 @@ void arm_radix4_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const float16_t*
                 s1 = (_Float16)s1 - (_Float16)t2;
 
                 /* (yb - yd) */
-                t1 = (_Float16)pSrc[(2U * i1) + 1U] - (_Float16)pSrc[(2U * i3) + 1U];
+                t1 = (_Float16)pSrc[(2U * i1) + 1U] -
+                     (_Float16)pSrc[(2U * i3) + 1U];
 
                 /* (xb - xd) */
                 t2 = (_Float16)pSrc[2U * i1] - (_Float16)pSrc[2U * i3];
 
                 /* xc' = (xa-xb+xc-xd)co2 + (ya-yb+yc-yd)(si2) */
-                pSrc[2U * i1] = ((_Float16)r1 * (_Float16)co2) + ((_Float16)s1 * (_Float16)si2);
+                pSrc[2U * i1] = ((_Float16)r1 * (_Float16)co2) +
+                                ((_Float16)s1 * (_Float16)si2);
 
                 /* yc' = (ya-yb+yc-yd)co2 - (xa-xb+xc-xd)(si2) */
-                pSrc[(2U * i1) + 1U] = ((_Float16)s1 * (_Float16)co2) - ((_Float16)r1 * (_Float16)si2);
+                pSrc[(2U * i1) + 1U] = ((_Float16)s1 * (_Float16)co2) -
+                                       ((_Float16)r1 * (_Float16)si2);
 
                 /* (xa - xc) + (yb - yd) */
                 r1 = (_Float16)r2 + (_Float16)t1;
@@ -596,16 +623,20 @@ void arm_radix4_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const float16_t*
                 s2 = (_Float16)s2 + (_Float16)t2;
 
                 /* xb' = (xa+yb-xc-yd)co1 + (ya-xb-yc+xd)(si1) */
-                pSrc[2U * i2] = ((_Float16)r1 * (_Float16)co1) + ((_Float16)s1 * (_Float16)si1);
+                pSrc[2U * i2] = ((_Float16)r1 * (_Float16)co1) +
+                                ((_Float16)s1 * (_Float16)si1);
 
                 /* yb' = (ya-xb-yc+xd)co1 - (xa+yb-xc-yd)(si1) */
-                pSrc[(2U * i2) + 1U] = ((_Float16)s1 * (_Float16)co1) - ((_Float16)r1 * (_Float16)si1);
+                pSrc[(2U * i2) + 1U] = ((_Float16)s1 * (_Float16)co1) -
+                                       ((_Float16)r1 * (_Float16)si1);
 
                 /* xd' = (xa-yb-xc+yd)co3 + (ya+xb-yc-xd)(si3) */
-                pSrc[2U * i3] = ((_Float16)r2 * (_Float16)co3) + ((_Float16)s2 * (_Float16)si3);
+                pSrc[2U * i3] = ((_Float16)r2 * (_Float16)co3) +
+                                ((_Float16)s2 * (_Float16)si3);
 
                 /* yd' = (ya+xb-yc-xd)co3 - (xa-yb-xc+yd)(si3) */
-                pSrc[(2U * i3) + 1U] = ((_Float16)s2 * (_Float16)co3) - ((_Float16)r2 * (_Float16)si3);
+                pSrc[(2U * i3) + 1U] = ((_Float16)s2 * (_Float16)co3) -
+                                       ((_Float16)r2 * (_Float16)si3);
 
                 i0 += n1;
             } while (i0 < fftLen);
@@ -627,7 +658,11 @@ void arm_radix4_butterfly_f16(float16_t* pSrc, uint16_t fftLen, const float16_t*
 * @return none.
 */
 
-void arm_radix4_butterfly_inverse_f16(float16_t* pSrc, uint16_t fftLen, const float16_t* pCoef, uint16_t twidCoefModifier, float16_t onebyfftLen) {
+void arm_radix4_butterfly_inverse_f16(float16_t*       pSrc,
+                                      uint16_t         fftLen,
+                                      const float16_t* pCoef,
+                                      uint16_t         twidCoefModifier,
+                                      float16_t        onebyfftLen) {
     float16_t co1, co2, co3, si1, si2, si3;
     uint32_t  ia1, ia2, ia3;
     uint32_t  i0, i1, i2, i3;
@@ -635,8 +670,9 @@ void arm_radix4_butterfly_inverse_f16(float16_t* pSrc, uint16_t fftLen, const fl
 
 #if defined(ARM_MATH_DSP)
 
-    float16_t  xaIn, yaIn, xbIn, ybIn, xcIn, ycIn, xdIn, ydIn;
-    float16_t  Xaplusc, Xbplusd, Yaplusc, Ybplusd, Xaminusc, Xbminusd, Yaminusc, Ybminusd;
+    float16_t xaIn, yaIn, xbIn, ybIn, xcIn, ycIn, xdIn, ydIn;
+    float16_t Xaplusc, Xbplusd, Yaplusc, Ybplusd, Xaminusc, Xbminusd, Yaminusc,
+        Ybminusd;
     float16_t  Xb12C_out, Yb12C_out, Xc12C_out, Yc12C_out, Xd12C_out, Yd12C_out;
     float16_t  Xb12_out, Yb12_out, Xc12_out, Yc12_out, Xd12_out, Yd12_out;
     float16_t* ptr1;
@@ -1058,10 +1094,12 @@ void arm_radix4_butterfly_inverse_f16(float16_t* pSrc, uint16_t fftLen, const fl
                 r2 = (_Float16)pSrc[(2U * i0)] - (_Float16)pSrc[(2U * i2)];
 
                 /* ya + yc */
-                s1 = (_Float16)pSrc[(2U * i0) + 1U] + (_Float16)pSrc[(2U * i2) + 1U];
+                s1 = (_Float16)pSrc[(2U * i0) + 1U] +
+                     (_Float16)pSrc[(2U * i2) + 1U];
 
                 /* ya - yc */
-                s2 = (_Float16)pSrc[(2U * i0) + 1U] - (_Float16)pSrc[(2U * i2) + 1U];
+                s2 = (_Float16)pSrc[(2U * i0) + 1U] -
+                     (_Float16)pSrc[(2U * i2) + 1U];
 
                 /* xb + xd */
                 t1 = (_Float16)pSrc[2U * i1] + (_Float16)pSrc[2U * i3];
@@ -1073,7 +1111,8 @@ void arm_radix4_butterfly_inverse_f16(float16_t* pSrc, uint16_t fftLen, const fl
                 r1 = (_Float16)r1 - (_Float16)t1;
 
                 /* yb + yd */
-                t2 = (_Float16)pSrc[(2U * i1) + 1U] + (_Float16)pSrc[(2U * i3) + 1U];
+                t2 = (_Float16)pSrc[(2U * i1) + 1U] +
+                     (_Float16)pSrc[(2U * i3) + 1U];
 
                 /* ya' = ya + yb + yc + yd */
                 pSrc[(2U * i0) + 1U] = (_Float16)s1 + (_Float16)t2;
@@ -1082,16 +1121,19 @@ void arm_radix4_butterfly_inverse_f16(float16_t* pSrc, uint16_t fftLen, const fl
                 s1 = (_Float16)s1 - (_Float16)t2;
 
                 /* (yb - yd) */
-                t1 = (_Float16)pSrc[(2U * i1) + 1U] - (_Float16)pSrc[(2U * i3) + 1U];
+                t1 = (_Float16)pSrc[(2U * i1) + 1U] -
+                     (_Float16)pSrc[(2U * i3) + 1U];
 
                 /* (xb - xd) */
                 t2 = (_Float16)pSrc[2U * i1] - (_Float16)pSrc[2U * i3];
 
                 /* xc' = (xa-xb+xc-xd)co2 - (ya-yb+yc-yd)(si2) */
-                pSrc[2U * i1] = ((_Float16)r1 * (_Float16)co2) - ((_Float16)s1 * (_Float16)si2);
+                pSrc[2U * i1] = ((_Float16)r1 * (_Float16)co2) -
+                                ((_Float16)s1 * (_Float16)si2);
 
                 /* yc' = (ya-yb+yc-yd)co2 + (xa-xb+xc-xd)(si2) */
-                pSrc[(2U * i1) + 1U] = ((_Float16)s1 * (_Float16)co2) + ((_Float16)r1 * (_Float16)si2);
+                pSrc[(2U * i1) + 1U] = ((_Float16)s1 * (_Float16)co2) +
+                                       ((_Float16)r1 * (_Float16)si2);
 
                 /* (xa - xc) - (yb - yd) */
                 r1 = (_Float16)r2 - (_Float16)t1;
@@ -1106,16 +1148,20 @@ void arm_radix4_butterfly_inverse_f16(float16_t* pSrc, uint16_t fftLen, const fl
                 s2 = (_Float16)s2 - (_Float16)t2;
 
                 /* xb' = (xa+yb-xc-yd)co1 - (ya-xb-yc+xd)(si1) */
-                pSrc[2U * i2] = ((_Float16)r1 * (_Float16)co1) - ((_Float16)s1 * (_Float16)si1);
+                pSrc[2U * i2] = ((_Float16)r1 * (_Float16)co1) -
+                                ((_Float16)s1 * (_Float16)si1);
 
                 /* yb' = (ya-xb-yc+xd)co1 + (xa+yb-xc-yd)(si1) */
-                pSrc[(2U * i2) + 1U] = ((_Float16)s1 * (_Float16)co1) + ((_Float16)r1 * (_Float16)si1);
+                pSrc[(2U * i2) + 1U] = ((_Float16)s1 * (_Float16)co1) +
+                                       ((_Float16)r1 * (_Float16)si1);
 
                 /* xd' = (xa-yb-xc+yd)co3 - (ya+xb-yc-xd)(si3) */
-                pSrc[2U * i3] = ((_Float16)r2 * (_Float16)co3) - ((_Float16)s2 * (_Float16)si3);
+                pSrc[2U * i3] = ((_Float16)r2 * (_Float16)co3) -
+                                ((_Float16)s2 * (_Float16)si3);
 
                 /* yd' = (ya+xb-yc-xd)co3 + (xa-yb-xc+yd)(si3) */
-                pSrc[(2U * i3) + 1U] = ((_Float16)s2 * (_Float16)co3) + ((_Float16)r2 * (_Float16)si3);
+                pSrc[(2U * i3) + 1U] = ((_Float16)s2 * (_Float16)co3) +
+                                       ((_Float16)r2 * (_Float16)si3);
 
                 i0 += n1;
             } while (i0 < fftLen);
@@ -1161,7 +1207,8 @@ void arm_radix4_butterfly_inverse_f16(float16_t* pSrc, uint16_t fftLen, const fl
         t2 = (_Float16)pSrc[(2U * i1) + 1U] + (_Float16)pSrc[(2U * i3) + 1U];
 
         /* ya' = ya + yb + yc + yd */
-        pSrc[(2U * i0) + 1U] = ((_Float16)s1 + (_Float16)t2) * (_Float16)onebyfftLen;
+        pSrc[(2U * i0) + 1U] =
+            ((_Float16)s1 + (_Float16)t2) * (_Float16)onebyfftLen;
 
         /* (ya + yc) - (yb + yd) */
         s1 = (_Float16)s1 - (_Float16)t2;

@@ -44,7 +44,9 @@
   @param[out]    pResult    standard deviation value returned here
   @return        none
  */
-void arm_std_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult) {
+void arm_std_f64(const float64_t* pSrc,
+                 uint32_t         blockSize,
+                 float64_t*       pResult) {
     float64_t var;
     arm_var_f64(pSrc, blockSize, &var);
     *pResult = sqrt(var);

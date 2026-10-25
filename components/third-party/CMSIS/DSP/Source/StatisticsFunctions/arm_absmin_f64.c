@@ -45,8 +45,11 @@
   @param[out]    pIndex     index of minimum value returned here
   @return        none
  */
-void arm_absmin_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult, uint32_t* pIndex) {
-    float64_t minVal, out;      /* Temporary variables to store the output value. */
+void arm_absmin_f64(const float64_t* pSrc,
+                    uint32_t         blockSize,
+                    float64_t*       pResult,
+                    uint32_t*        pIndex) {
+    float64_t minVal, out; /* Temporary variables to store the output value. */
     uint32_t  blkCnt, outIndex; /* Loop counter */
 
     /* Initialise index value to zero. */

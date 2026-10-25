@@ -35,7 +35,8 @@ typedef struct {
 static gpio_irq_ctx_t s_gpio_irq_ctx[ARRAY_SIZE(s_exti_irq_lut)] = {};
 
 // Helper
-[[__gnu__::__always_inline__]] static inline void gpio_isr_helper(gpio_pin_t pin) {
+[[__gnu__::__always_inline__]] static inline void
+gpio_isr_helper(gpio_pin_t pin) {
     if (EXTI->PR & (1UL << pin)) {
         EXTI->PR = (1UL << pin);
         if (s_gpio_irq_ctx[pin].callback) {
@@ -88,7 +89,8 @@ hal_err_t gpiox_clk_enable(GPIO_TypeDef* port, bool enable) {
 
 void gpio_set_output(GPIO_TypeDef* port, gpio_pin_t pin) {
     if (port) {
-        port->MODER = (port->MODER & ~(0b11UL << (pin * 2))) | (0b1UL << (pin * 2));
+        port->MODER =
+            (port->MODER & ~(0b11UL << (pin * 2))) | (0b1UL << (pin * 2));
     }
 }
 
@@ -104,10 +106,13 @@ void gpio_set_analog(GPIO_TypeDef* port, gpio_pin_t pin) {
     }
 }
 
-void gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t af) {
+void gpio_set_alternate_function(GPIO_TypeDef* port,
+                                 gpio_pin_t    pin,
+                                 uint8_t       af) {
     if (port) {
         // Set the MODER for alternate mode
-        port->MODER = (port->MODER & ~(0b11UL << (pin * 2))) | (0b10UL << (pin * 2));
+        port->MODER =
+            (port->MODER & ~(0b11UL << (pin * 2))) | (0b10UL << (pin * 2));
 
         // Set the specified alternate function
         if (pin <= GPIO_PIN_7) {
@@ -120,41 +125,49 @@ void gpio_set_alternate_function(GPIO_TypeDef* port, gpio_pin_t pin, uint8_t af)
     }
 }
 
-void gpio_enable_pullups(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
+void gpio_enable_pullup(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
     if (port) {
         if (enable) {
-            port->PUPDR = (port->PUPDR & ~(0b11UL << (pin * 2))) | (0b1UL << (pin * 2));
+            port->PUPDR =
+                (port->PUPDR & ~(0b11UL << (pin * 2))) | (0b1UL << (pin * 2));
         } else {
             port->PUPDR &= ~(0b11UL << (pin * 2));
         }
     }
 }
 
-void gpio_enable_pulldowns(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
+void gpio_enable_pulldown(GPIO_TypeDef* port, gpio_pin_t pin, bool enable) {
     if (port) {
         if (enable) {
-            port->PUPDR = (port->PUPDR & ~(0b11UL << (pin * 2))) | (0b10UL << (pin * 2));
+            port->PUPDR =
+                (port->PUPDR & ~(0b11UL << (pin * 2))) | (0b10UL << (pin * 2));
         } else {
             port->PUPDR &= ~(0b11UL << (pin * 2));
         }
     }
 }
 
-void gpio_set_output_type(GPIO_TypeDef* port, gpio_pin_t pin, gpio_output_type_t type) {
+void gpio_set_output_type(GPIO_TypeDef*      port,
+                          gpio_pin_t         pin,
+                          gpio_output_type_t type) {
     if (port) {
         port->OTYPER = (port->OTYPER & ~(1UL << pin)) | ((uint32_t)type << pin);
     }
 }
 
-void gpio_set_speed_mode(GPIO_TypeDef* port, gpio_pin_t pin, gpio_speed_mode_t mode) {
+void gpio_set_speed_mode(GPIO_TypeDef*     port,
+                         gpio_pin_t        pin,
+                         gpio_speed_mode_t mode) {
     if (port) {
-        port->OSPEEDR = (port->OSPEEDR & ~(0b11UL << (pin * 2))) | ((uint32_t)mode << (pin * 2));
+        port->OSPEEDR = (port->OSPEEDR & ~(0b11UL << (pin * 2))) |
+                        ((uint32_t)mode << (pin * 2));
     }
 }
 
 void gpio_set_level(GPIO_TypeDef* port, gpio_pin_t pin, bool level) {
     if (port) {
-        level ? (port->BSRR = (0b1UL << pin)) : (port->BSRR = (0b1UL << (pin + 16)));
+        level ? (port->BSRR = (0b1UL << pin))
+              : (port->BSRR = (0b1UL << (pin + 16)));
     }
 }
 
@@ -172,7 +185,11 @@ bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin) {
     return false;
 }
 
-hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigger_t edge, gpio_exti_cb_t callback, void* arg) {
+hal_err_t gpio_set_interrupt(GPIO_TypeDef*       port,
+                             gpio_pin_t          pin,
+                             gpio_edge_trigger_t edge,
+                             gpio_exti_cb_t      callback,
+                             void*               arg) {
     // Extract rising and falling bits from edge variable
     const bool rising  = (uint8_t)edge & 0x1U;
     const bool falling = ((uint8_t)edge >> 0b1U) & 0x1U;
@@ -207,7 +224,8 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef* port, gpio_pin_t pin, gpio_edge_trigg
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
     // Set external interrupt configuration register
-    SYSCFG->EXTICR[reg_idx] = (SYSCFG->EXTICR[reg_idx] & ~(0xFUL << bit_pos)) | (uint32_t)(port_code << bit_pos);
+    SYSCFG->EXTICR[reg_idx] = (SYSCFG->EXTICR[reg_idx] & ~(0xFUL << bit_pos)) |
+                              (uint32_t)(port_code << bit_pos);
 
     // Clear interrupt edge registers
     EXTI->RTSR &= ~(0b1UL << pin);

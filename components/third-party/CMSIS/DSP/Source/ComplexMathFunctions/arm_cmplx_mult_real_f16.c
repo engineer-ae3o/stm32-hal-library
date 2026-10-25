@@ -73,14 +73,17 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mult_real_f16(const float16_t* pSrcCmplx, const float16_t* pSrcReal, float16_t* pCmplxDst, uint32_t numSamples) {
+void arm_cmplx_mult_real_f16(const float16_t* pSrcCmplx,
+                             const float16_t* pSrcReal,
+                             float16_t*       pCmplxDst,
+                             uint32_t         numSamples) {
     static const uint16_t stride_cmplx_x_real_16[8] = {0, 0, 1, 1, 2, 2, 3, 3};
-    uint32_t              blockSizeC                = numSamples * CMPLX_DIM; /* loop counters */
-    uint32_t              blkCnt;
-    f16x8_t               rVec;
-    f16x8_t               cmplxVec;
-    f16x8_t               dstVec;
-    uint16x8_t            strideVec;
+    uint32_t   blockSizeC = numSamples * CMPLX_DIM; /* loop counters */
+    uint32_t   blkCnt;
+    f16x8_t    rVec;
+    f16x8_t    cmplxVec;
+    f16x8_t    dstVec;
+    uint16x8_t strideVec;
 
 
     /* stride vector for pairs of real generation */
@@ -112,7 +115,10 @@ void arm_cmplx_mult_real_f16(const float16_t* pSrcCmplx, const float16_t* pSrcRe
 }
 
 #else
-void arm_cmplx_mult_real_f16(const float16_t* pSrcCmplx, const float16_t* pSrcReal, float16_t* pCmplxDst, uint32_t numSamples) {
+void arm_cmplx_mult_real_f16(const float16_t* pSrcCmplx,
+                             const float16_t* pSrcReal,
+                             float16_t*       pCmplxDst,
+                             uint32_t         numSamples) {
     uint32_t  blkCnt; /* Loop counter */
     float16_t in;     /* Temporary variable */
 

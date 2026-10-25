@@ -1,0 +1,187 @@
+#ifndef TIMER_TYPES_H_
+#define TIMER_TYPES_H_
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#include "stm32f411xe.h"
+#include "utils/board.h"
+
+#include <stdint.h>
+#include <stddef.h>
+
+
+// TIM1 channels
+#define MAX_TIM1_CHANNELS (4U)
+#define MAX_TIM1_COMPLEMENTARY_CHANNELS (3U)
+
+// General purpose timers channels
+#define MAX_TIM2_CHANNELS (4U)
+#define MAX_TIM3_CHANNELS (4U)
+#define MAX_TIM4_CHANNELS (4U)
+#define MAX_TIM5_CHANNELS (4U)
+
+// Lite timers channels
+#define MAX_TIM9_CHANNELS (2U)
+#define MAX_TIM10_CHANNELS (1U)
+#define MAX_TIM11_CHANNELS (1U)
+
+
+// General timer types
+typedef enum : uint8_t {
+    TIMER_COUNTER_DIR_UP   = (0b0 << TIM_CR1_DIR_Pos),
+    TIMER_COUNTER_DIR_DOWN = (0b1 << TIM_CR1_DIR_Pos),
+    TIMER_COUNTER_DIR_NONE = 0xFFU, // Sentinel value
+} timer_count_dir_t;
+
+
+typedef enum : uint8_t {
+    TIMER_CHANNEL_1  = 0,
+    TIMER_CHANNEL_2  = 1,
+    TIMER_CHANNEL_3  = 2,
+    TIMER_CHANNEL_4  = 3,
+    TIMER_CHANNEL_NC = 0xFF, // Sentinel value
+} timer_channel_t;
+
+
+typedef enum : uint8_t {
+    TIMER_PULL_NONE = 0,
+    TIMER_USE_PULLUP,
+    TIMER_USE_PULLDOWN,
+} timer_pull_t;
+
+
+typedef enum : uint8_t {
+    TIM_CLK_DIV_1 = 0b00,
+    TIM_CLK_DIV_2 = 0b01,
+    TIM_CLK_DIV_4 = 0b10,
+} tim_clk_div_t;
+
+
+// The channel parameter only has meaning when the interrupt is a capture compare interrupt
+// The direction parameter only has meaning when the interrupt is an update event
+typedef struct {
+    void (*cb)(void* arg, timer_channel_t channel, timer_count_dir_t direction);
+    void* arg;
+} timer_cb_t;
+
+
+typedef struct {
+    // Timer output is active HIGH when this is false, active LOW otherwise
+    bool output_polarity;
+
+    // State of the gpio pin when its channel is disabled (only relevant for the advanced timers)
+    bool output_idle_state;
+
+    // The actual channel
+    timer_channel_t channel;
+    board_pin_t     gpio_pin;
+} timer_channel_config_t;
+
+
+// Output Compare types
+typedef enum : uint8_t {
+    // Edge aligned Modes (CMS = 00)
+    // Upcounting
+    OUTPUT_COMPARE_EDGE_LEFT_ALIGNED = (0b0U << TIM_CR1_DIR_Pos),
+    // Downcounting
+    OUTPUT_COMPARE_EDGE_RIGHT_ALIGNED = (0b1U << TIM_CR1_DIR_Pos),
+
+    // Center aligned Modes (CMS != 00; DIR is controlled by the timer hardware)
+    // Center aligned (Interrupt compare flag set only on downcount)
+    OUTPUT_COMPARE_CENTER_ALIGNED_MODE_1 = (0b01U << TIM_CR1_CMS_Pos),
+    // Center aligned (Interrupt compare flag set only on upcount)
+    OUTPUT_COMPARE_CENTER_ALIGNED_MODE_2 = (0b10U << TIM_CR1_CMS_Pos),
+    // Center aligned (Interrupt compare flag set both on up and downcount)
+    OUTPUT_COMPARE_CENTER_ALIGNED_MODE_3 = (0b11U << TIM_CR1_CMS_Pos),
+} output_compare_count_mode_t;
+
+
+typedef enum : uint8_t {
+    // The channel is ignored on a match
+    OUTPUT_COMPARE_IGNORED = 0b000,
+    // The channel is forced high on a match
+    OUTPUT_COMPARE_HIGH_ON_MATCH = 0b001,
+    // The channel is forced low on a match
+    OUTPUT_COMPARE_LOW_ON_MATCH = 0b010,
+    // The channel is toggled on a match
+    OUTPUT_COMPARE_TOGGLE_ON_MATCH = 0b011,
+    // The channel is forced low always, regardless of a match
+    OUTPUT_COMPARE_FORCE_LOW = 0b100,
+    // The channel is forced high always, regardless of a match
+    OUTPUT_COMPARE_FORCE_HIGH = 0b101,
+    // The channel is forced high when the timer's counter value is less than the compare value
+    OUTPUT_COMPARE_PWM_MODE_1 = 0b110,
+    // The channel is forced low when the timer's counter value is less than the compare value
+    OUTPUT_COMPARE_PWM_MODE_2 = 0b111,
+    // NOTE: A match occurs when the timer's counter value is equal to the compare value
+} output_compare_mode_t;
+
+
+typedef struct {
+    bool buffer_compare_reload; // Buffer writes to the CCxR registers
+
+    // These two opyions are only relevant for the advanced timers
+    // State of a channel when the timer is active, but that specific channel's output is inactive
+    bool ossr;
+    // State of all channels when the timer is inactive
+    bool ossi;
+
+    output_compare_mode_t       mode;
+    output_compare_count_mode_t count_mode;
+
+    timer_channel_config_t channels[MAX_TIM2_CHANNELS];
+    size_t                 num_channels;
+
+    timer_cb_t callback;
+} output_compare_config_t;
+
+
+// Input Capture types
+typedef enum : uint8_t {
+    IC_PRESCALER_DIV_1 = 0b00,
+    IC_PRESCALER_DIV_2 = 0b01,
+    IC_PRESCALER_DIV_4 = 0b10,
+    IC_PRESCALER_DIV_8 = 0b11,
+} ic_prescaler_t;
+
+
+typedef enum : uint8_t {
+    IC_EDGE_RISING = 0,
+    IC_EDGE_FALLING,
+    IC_EDGE_RISING_FALLING,
+} ic_edge_t;
+
+
+typedef struct {
+    ic_edge_t       edge;
+    timer_pull_t    pull;
+    ic_prescaler_t  prescaler;
+    timer_channel_t channel;
+    board_pin_t     gpio_pin;
+    uint32_t        filter_ns;
+} ic_channel_config_t;
+
+
+typedef struct {
+    tim_clk_div_t     clk_div;
+    timer_count_dir_t count_mode;
+
+    uint16_t timer_prescaler;
+
+    ic_channel_config_t channels[MAX_TIM2_CHANNELS];
+    size_t              num_channels;
+
+    timer_cb_t callback;
+} input_capture_config_t;
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif // TIMER_TYPES_H_

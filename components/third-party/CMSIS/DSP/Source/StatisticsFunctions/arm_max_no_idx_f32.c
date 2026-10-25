@@ -27,7 +27,8 @@
  */
 
 #include "dsp/statistics_functions.h"
-#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) && !defined(ARM_MATH_AUTOVECTORIZE)
+#if (defined(ARM_MATH_NEON) || defined(ARM_MATH_MVEF)) &&                      \
+    !defined(ARM_MATH_AUTOVECTORIZE)
 #include <limits.h>
 #endif
 
@@ -51,7 +52,9 @@
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_max_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_max_no_idx_f32(const float32_t* pSrc,
+                        uint32_t         blockSize,
+                        float32_t*       pResult) {
     f32x4_t   vecSrc;
     f32x4_t   curExtremValVec = vdupq_n_f32(F32_MIN);
     float32_t maxValue        = F32_MIN;
@@ -99,7 +102,9 @@ void arm_max_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pR
 
 #else
 
-void arm_max_no_idx_f32(const float32_t* pSrc, uint32_t blockSize, float32_t* pResult) {
+void arm_max_no_idx_f32(const float32_t* pSrc,
+                        uint32_t         blockSize,
+                        float32_t*       pResult) {
     float32_t maxValue = F32_MIN;
     float32_t newVal;
 

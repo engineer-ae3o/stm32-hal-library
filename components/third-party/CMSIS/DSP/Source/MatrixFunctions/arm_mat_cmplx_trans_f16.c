@@ -53,15 +53,22 @@
 
 #include "arm_helium_utils.h"
 
-arm_status arm_mat_cmplx_trans_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_instance_f16* pDst) {
-    return arm_mat_cmplx_trans_16bit(pSrc->numRows, pSrc->numCols, (uint16_t*)pSrc->pData, pDst->numRows, pDst->numCols, (uint16_t*)pDst->pData);
+arm_status arm_mat_cmplx_trans_f16(const arm_matrix_instance_f16* pSrc,
+                                   arm_matrix_instance_f16*       pDst) {
+    return arm_mat_cmplx_trans_16bit(pSrc->numRows,
+                                     pSrc->numCols,
+                                     (uint16_t*)pSrc->pData,
+                                     pDst->numRows,
+                                     pDst->numCols,
+                                     (uint16_t*)pDst->pData);
 }
 
 #else
-arm_status arm_mat_cmplx_trans_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_instance_f16* pDst) {
-    float16_t* pIn  = pSrc->pData;       /* input data matrix pointer */
-    float16_t* pOut = pDst->pData;       /* output data matrix pointer */
-    float16_t* px;                       /* Temporary output data matrix pointer */
+arm_status arm_mat_cmplx_trans_f16(const arm_matrix_instance_f16* pSrc,
+                                   arm_matrix_instance_f16*       pDst) {
+    float16_t* pIn  = pSrc->pData; /* input data matrix pointer */
+    float16_t* pOut = pDst->pData; /* output data matrix pointer */
+    float16_t* px;                 /* Temporary output data matrix pointer */
     uint16_t   nRows    = pSrc->numRows; /* number of rows */
     uint16_t   nColumns = pSrc->numCols; /* number of columns */
     uint16_t   col, i = 0U, row = nRows; /* loop counters */

@@ -63,7 +63,8 @@ q7_t* arm_nn_depthwise_conv_nt_t_padded_s8(const q7_t*          lhs,
     const int32_t* bias              = output_bias;
     uint32_t       num_ch_to_process = num_ch;
 
-    for (int i_loop_cnt = 0, offset = 0; i_loop_cnt < loop_count; num_ch_to_process -= 4, out += 4, offset += 4, i_loop_cnt++) {
+    for (int i_loop_cnt = 0, offset = 0; i_loop_cnt < loop_count;
+         num_ch_to_process -= 4, out += 4, offset += 4, i_loop_cnt++) {
         int32x4_t out_0 = vldrwq_s32(bias);
         int32x4_t out_1 = out_0;
         int32x4_t out_2 = out_0;

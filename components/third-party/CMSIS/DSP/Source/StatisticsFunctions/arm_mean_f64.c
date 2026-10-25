@@ -45,7 +45,9 @@
   @param[out]    pResult    mean value returned here.
   @return        none
  */
-void arm_mean_f64(const float64_t* pSrc, uint32_t blockSize, float64_t* pResult) {
+void arm_mean_f64(const float64_t* pSrc,
+                  uint32_t         blockSize,
+                  float64_t*       pResult) {
     uint32_t  blkCnt;   /* Loop counter */
     float64_t sum = 0.; /* Temporary result storage */
 

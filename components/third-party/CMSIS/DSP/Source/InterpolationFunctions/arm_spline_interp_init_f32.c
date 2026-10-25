@@ -62,8 +62,13 @@
  *
  */
 
-void arm_spline_init_f32(
-    arm_spline_instance_f32* S, arm_spline_type type, const float32_t* x, const float32_t* y, uint32_t n, float32_t* coeffs, float32_t* tempBuffer) {
+void arm_spline_init_f32(arm_spline_instance_f32* S,
+                         arm_spline_type          type,
+                         const float32_t*         x,
+                         const float32_t*         y,
+                         uint32_t                 n,
+                         float32_t*               coeffs,
+                         float32_t*               tempBuffer) {
     /*** COEFFICIENTS COMPUTATION ***/
     /* Type (boundary conditions):
         - Natural spline          ( S1''(x1) = 0 ; Sn''(xn) = 0 )
@@ -74,8 +79,9 @@ void arm_spline_init_f32(
     float32_t* c = coeffs + (n - 1);
     float32_t* d = coeffs + (2 * (n - 1));
 
-    float32_t* u = tempBuffer;           /* (n-1)-long scratch buffer for u elements */
-    float32_t* z = tempBuffer + (n - 1); /* n-long scratch buffer for z elements */
+    float32_t* u = tempBuffer; /* (n-1)-long scratch buffer for u elements */
+    float32_t* z =
+        tempBuffer + (n - 1); /* n-long scratch buffer for z elements */
 
     float32_t hi, hm1; /* h(i) and h(i-1) */
     float32_t Bi;      /* B(i), i-th element of matrix B=LZ */

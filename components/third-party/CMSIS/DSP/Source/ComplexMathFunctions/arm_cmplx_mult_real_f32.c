@@ -71,7 +71,10 @@
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mult_real_f32(const float32_t* pSrcCmplx, const float32_t* pSrcReal, float32_t* pCmplxDst, uint32_t numSamples) {
+void arm_cmplx_mult_real_f32(const float32_t* pSrcCmplx,
+                             const float32_t* pSrcReal,
+                             float32_t*       pCmplxDst,
+                             uint32_t         numSamples) {
     static const uint32_t stride_cmplx_x_real_32[4] = {0, 0, 1, 1};
 
     uint32_t   blockSizeC = numSamples * CMPLX_DIM; /* loop counters */
@@ -116,7 +119,10 @@ void arm_cmplx_mult_real_f32(const float32_t* pSrcCmplx, const float32_t* pSrcRe
 }
 
 #else
-void arm_cmplx_mult_real_f32(const float32_t* pSrcCmplx, const float32_t* pSrcReal, float32_t* pCmplxDst, uint32_t numSamples) {
+void arm_cmplx_mult_real_f32(const float32_t* pSrcCmplx,
+                             const float32_t* pSrcReal,
+                             float32_t*       pCmplxDst,
+                             uint32_t         numSamples) {
     uint32_t  blkCnt; /* Loop counter */
     float32_t in;     /* Temporary variable */
 
@@ -128,8 +134,9 @@ void arm_cmplx_mult_real_f32(const float32_t* pSrcCmplx, const float32_t* pSrcRe
     blkCnt = numSamples >> 2U;
 
     while (blkCnt > 0U) {
-        ab = vld2q_f32(pSrcCmplx); // load & separate real/imag pSrcA (de-interleave 2)
-        r  = vld1q_f32(pSrcReal);  // load & separate real/imag pSrcB
+        ab = vld2q_f32(
+            pSrcCmplx); // load & separate real/imag pSrcA (de-interleave 2)
+        r = vld1q_f32(pSrcReal); // load & separate real/imag pSrcB
 
         /* Increment pointers */
         pSrcCmplx += 8;

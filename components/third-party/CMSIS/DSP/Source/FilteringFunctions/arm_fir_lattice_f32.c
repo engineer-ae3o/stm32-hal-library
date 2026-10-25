@@ -118,19 +118,25 @@
   @return        none
  */
 
-void arm_fir_lattice_f32(const arm_fir_lattice_instance_f32* S, const float32_t* pSrc, float32_t* pDst, uint32_t blockSize) {
-    float32_t*       pState  = S->pState;            /* State pointer */
-    const float32_t* pCoeffs = S->pCoeffs;           /* Coefficient pointer */
-    float32_t*       px;                             /* Temporary state pointer */
-    const float32_t* pk;                             /* Temporary coefficient pointer */
-    uint32_t         numStages = S->numStages;       /* Number of stages in the filter */
-    uint32_t         blkCnt, stageCnt;               /* Loop counters */
-    float32_t        fcurr0, fnext0, gnext0, gcurr0; /* Temporary variables */
+void arm_fir_lattice_f32(const arm_fir_lattice_instance_f32* S,
+                         const float32_t*                    pSrc,
+                         float32_t*                          pDst,
+                         uint32_t                            blockSize) {
+    float32_t*       pState  = S->pState;  /* State pointer */
+    const float32_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
+    float32_t*       px;                   /* Temporary state pointer */
+    const float32_t* pk;                   /* Temporary coefficient pointer */
+    uint32_t  numStages = S->numStages;    /* Number of stages in the filter */
+    uint32_t  blkCnt, stageCnt;            /* Loop counters */
+    float32_t fcurr0, fnext0, gnext0, gcurr0; /* Temporary variables */
 
 #if defined(ARM_MATH_LOOPUNROLL)
-    float32_t fcurr1, fnext1, gnext1; /* Temporary variables for second sample in loop unrolling */
-    float32_t fcurr2, fnext2, gnext2; /* Temporary variables for third sample in loop unrolling */
-    float32_t fcurr3, fnext3, gnext3; /* Temporary variables for fourth sample in loop unrolling */
+    float32_t fcurr1, fnext1,
+        gnext1; /* Temporary variables for second sample in loop unrolling */
+    float32_t fcurr2, fnext2,
+        gnext2; /* Temporary variables for third sample in loop unrolling */
+    float32_t fcurr3, fnext3,
+        gnext3; /* Temporary variables for fourth sample in loop unrolling */
 #endif
 
     gcurr0 = 0.0f;

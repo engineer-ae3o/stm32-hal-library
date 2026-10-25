@@ -60,17 +60,22 @@
                    Refer to \ref arm_conv_q15() for a slower implementation of this function which uses 64-bit accumulation to avoid wrap around distortion.
  */
 
-void arm_conv_fast_q15(const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst) {
-    const q15_t* pIn1;                               /* InputA pointer */
-    const q15_t* pIn2;                               /* InputB pointer */
-    q15_t*       pOut = pDst;                        /* Output pointer */
-    q31_t        sum, acc0, acc1, acc2, acc3;        /* Accumulators */
-    const q15_t* px;                                 /* Intermediate inputA pointer */
-    const q15_t* py;                                 /* Intermediate inputB pointer */
-    const q15_t *pSrc1, *pSrc2;                      /* Intermediate pointers */
-    q31_t        x0, x1, x2, x3, c0;                 /* Temporary variables to hold state and coefficient values */
-    uint32_t     blockSize1, blockSize2, blockSize3; /* Loop counters */
-    uint32_t     j, k, count, blkCnt;                /* Loop counters */
+void arm_conv_fast_q15(const q15_t* pSrcA,
+                       uint32_t     srcALen,
+                       const q15_t* pSrcB,
+                       uint32_t     srcBLen,
+                       q15_t*       pDst) {
+    const q15_t* pIn1;                        /* InputA pointer */
+    const q15_t* pIn2;                        /* InputB pointer */
+    q15_t*       pOut = pDst;                 /* Output pointer */
+    q31_t        sum, acc0, acc1, acc2, acc3; /* Accumulators */
+    const q15_t* px;                          /* Intermediate inputA pointer */
+    const q15_t* py;                          /* Intermediate inputB pointer */
+    const q15_t *pSrc1, *pSrc2;               /* Intermediate pointers */
+    q31_t        x0, x1, x2, x3,
+        c0; /* Temporary variables to hold state and coefficient values */
+    uint32_t blockSize1, blockSize2, blockSize3; /* Loop counters */
+    uint32_t j, k, count, blkCnt;                /* Loop counters */
 
     /* The algorithm implementation is based on the lengths of the inputs. */
     /* srcB is always made to slide across srcA. */
@@ -187,9 +192,11 @@ void arm_conv_fast_q15(const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB,
         while (k > 0U) {
             /* Perform the multiply-accumulates */
             /* x[0], x[1] are multiplied with y[srcBLen - 1], y[srcBLen - 2] respectively */
-            sum = __SMLADX(read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
+            sum = __SMLADX(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
             /* x[2], x[3] are multiplied with y[srcBLen - 3], y[srcBLen - 4] respectively */
-            sum = __SMLADX(read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
+            sum = __SMLADX(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
 
             /* Decrement loop counter */
             k--;
@@ -554,10 +561,12 @@ void arm_conv_fast_q15(const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB,
         while (k > 0U) {
             /* x[srcALen - srcBLen + 1], x[srcALen - srcBLen + 2] are multiplied
        * with y[srcBLen - 1], y[srcBLen - 2] respectively */
-            sum = __SMLADX(read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
+            sum = __SMLADX(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
             /* x[srcALen - srcBLen + 3], x[srcALen - srcBLen + 4] are multiplied
        * with y[srcBLen - 3], y[srcBLen - 4] respectively */
-            sum = __SMLADX(read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
+            sum = __SMLADX(
+                read_q15x2_ia((q15_t**)&px), read_q15x2_da((q15_t**)&py), sum);
 
             /* Decrement loop counter */
             k--;

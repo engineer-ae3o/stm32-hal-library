@@ -20,9 +20,14 @@ typedef enum : uint8_t {
     DMA_MEMCPY_TIMEOUT,
 } memcpy_state_t;
 
-hal_err_t      dma_memcpy(void* dest, const void* src, uint16_t len, volatile memcpy_state_t* dma_done_flag);
-hal_err_t      dma_memcpy_cb(void* dest, const void* src, uint16_t len, dma_done_cb_t cb, void* arg);
-memcpy_state_t dma_memcpy_wait_for_flag(volatile memcpy_state_t* dma_done_flag, uint32_t timeout);
+hal_err_t dma_memcpy(void*                    dest,
+                     const void*              src,
+                     uint16_t                 len,
+                     volatile memcpy_state_t* dma_done_flag);
+hal_err_t dma_memcpy_cb(
+    void* dest, const void* src, uint16_t len, dma_done_cb_t cb, void* arg);
+memcpy_state_t dma_memcpy_wait_for_flag(volatile memcpy_state_t* dma_done_flag,
+                                        uint32_t                 timeout);
 dma_map_t      dma_memcpy_get_stream_info(void);
 
 

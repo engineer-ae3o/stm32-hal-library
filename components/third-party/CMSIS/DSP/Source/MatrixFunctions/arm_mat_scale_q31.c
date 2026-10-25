@@ -52,11 +52,14 @@
                    These are multiplied to yield a 2.62 intermediate result which is shifted with saturation to 1.31 format.
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-arm_status arm_mat_scale_q31(const arm_matrix_instance_q31* pSrc, q31_t scaleFract, int32_t shift, arm_matrix_instance_q31* pDst) {
+arm_status arm_mat_scale_q31(const arm_matrix_instance_q31* pSrc,
+                             q31_t                          scaleFract,
+                             int32_t                        shift,
+                             arm_matrix_instance_q31*       pDst) {
     q31_t*       pIn  = pSrc->pData; /* input data matrix pointer */
     q31_t*       pOut = pDst->pData; /* output data matrix pointer */
-    uint32_t     numSamples;         /* total number of elements in the matrix */
-    uint32_t     blkCnt;             /* loop counters */
+    uint32_t     numSamples; /* total number of elements in the matrix */
+    uint32_t     blkCnt;     /* loop counters */
     q31x4_t      vecIn, vecOut;
     q31_t const* pInVec;
     int32_t      totShift = shift + 1; /* shift to apply after scaling */
@@ -119,7 +122,10 @@ arm_status arm_mat_scale_q31(const arm_matrix_instance_q31* pSrc, q31_t scaleFra
 }
 
 #else
-arm_status arm_mat_scale_q31(const arm_matrix_instance_q31* pSrc, q31_t scaleFract, int32_t shift, arm_matrix_instance_q31* pDst) {
+arm_status arm_mat_scale_q31(const arm_matrix_instance_q31* pSrc,
+                             q31_t                          scaleFract,
+                             int32_t                        shift,
+                             arm_matrix_instance_q31*       pDst) {
     q31_t*     pIn  = pSrc->pData; /* Input data matrix pointer */
     q31_t*     pOut = pDst->pData; /* Output data matrix pointer */
     uint32_t   numSamples;         /* Total number of elements in the matrix */
@@ -151,10 +157,11 @@ arm_status arm_mat_scale_q31(const arm_matrix_instance_q31* pSrc, q31_t scaleFra
             /* C(m,n) = A(m,n) * k */
 
             /* Scale, saturate and store result in destination buffer. */
-            in  = *pIn++;                         /* read four inputs from source */
-            in  = ((q63_t)in * scaleFract) >> 32; /* multiply input with scaler value */
-            out = in << kShift;                   /* apply shifting */
-            if (in != (out >> kShift)) {          /* saturate the results. */
+            in  = *pIn++; /* read four inputs from source */
+            in  = ((q63_t)in * scaleFract) >>
+                  32;                    /* multiply input with scaler value */
+            out = in << kShift;          /* apply shifting */
+            if (in != (out >> kShift)) { /* saturate the results. */
                 out = 0x7FFFFFFF ^ (in >> 31);
             }
             *pOut++ = out; /* Store result destination */

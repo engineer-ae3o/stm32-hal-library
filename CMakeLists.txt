@@ -33,7 +33,7 @@ set(EXE_MAP_NAME "${EXE_NAME}.map")
 
 # Build flags for the different build modes
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g3 -ggdb -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "-Os -flto -DNDEBUG")
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
@@ -50,7 +50,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fno-exceptions -fno-rtti")
 
 
 # Set linker flags
-set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/stm32411_linker.ld")
+set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/stm32f411_linker.ld")
 set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,-Map=${EXE_MAP_NAME} -Wl,--cref \
                             -Wl,--gc-sections --specs=nano.specs")
 

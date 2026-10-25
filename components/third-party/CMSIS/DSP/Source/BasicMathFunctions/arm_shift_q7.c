@@ -56,7 +56,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_shift_q7(const q7_t* pSrc, int8_t shiftBits, q7_t* pDst, uint32_t blockSize) {
+void arm_shift_q7(const q7_t* pSrc,
+                  int8_t      shiftBits,
+                  q7_t*       pDst,
+                  uint32_t    blockSize) {
     uint32_t blkCnt; /* loop counters */
     q7x16_t  vecSrc;
     q7x16_t  vecDst;
@@ -94,7 +97,10 @@ void arm_shift_q7(const q7_t* pSrc, int8_t shiftBits, q7_t* pDst, uint32_t block
 }
 
 #else
-void arm_shift_q7(const q7_t* pSrc, int8_t shiftBits, q7_t* pDst, uint32_t blockSize) {
+void arm_shift_q7(const q7_t* pSrc,
+                  int8_t      shiftBits,
+                  q7_t*       pDst,
+                  uint32_t    blockSize) {
     uint32_t blkCnt;                    /* Loop counter */
     uint8_t  sign = (shiftBits & 0x80); /* Sign of shiftBits */
 
@@ -147,7 +153,11 @@ void arm_shift_q7(const q7_t* pSrc, int8_t shiftBits, q7_t* pDst, uint32_t block
             in4 = *pSrc++;
 
             /* Pack and store result in destination buffer (in single write) */
-            write_q7x4_ia(&pDst, __PACKq7((in1 >> -shiftBits), (in2 >> -shiftBits), (in3 >> -shiftBits), (in4 >> -shiftBits)));
+            write_q7x4_ia(&pDst,
+                          __PACKq7((in1 >> -shiftBits),
+                                   (in2 >> -shiftBits),
+                                   (in3 >> -shiftBits),
+                                   (in4 >> -shiftBits)));
 #else
             *pDst++ = (*pSrc++ >> -shiftBits);
             *pDst++ = (*pSrc++ >> -shiftBits);

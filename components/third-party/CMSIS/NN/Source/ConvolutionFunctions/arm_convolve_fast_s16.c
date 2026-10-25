@@ -48,23 +48,25 @@
  *
  */
 
-arm_status arm_convolve_fast_s16(const cmsis_nn_context*                  ctx,
-                                 const cmsis_nn_conv_params*              conv_params,
-                                 const cmsis_nn_per_channel_quant_params* quant_params,
-                                 const cmsis_nn_dims*                     input_dims,
-                                 const q15_t*                             input_data,
-                                 const cmsis_nn_dims*                     filter_dims,
-                                 const q7_t*                              filter_data,
-                                 const cmsis_nn_dims*                     bias_dims,
-                                 const int64_t*                           bias_data,
-                                 const cmsis_nn_dims*                     output_dims,
-                                 q15_t*                                   output_data) {
+arm_status
+arm_convolve_fast_s16(const cmsis_nn_context*                  ctx,
+                      const cmsis_nn_conv_params*              conv_params,
+                      const cmsis_nn_per_channel_quant_params* quant_params,
+                      const cmsis_nn_dims*                     input_dims,
+                      const q15_t*                             input_data,
+                      const cmsis_nn_dims*                     filter_dims,
+                      const q7_t*                              filter_data,
+                      const cmsis_nn_dims*                     bias_dims,
+                      const int64_t*                           bias_data,
+                      const cmsis_nn_dims*                     output_dims,
+                      q15_t*                                   output_data) {
     (void)bias_dims;
     if (filter_dims->w * filter_dims->h * input_dims->c >= 512) {
         return ARM_MATH_SIZE_MISMATCH;
     }
 
-    if (ctx->buf == NULL && arm_convolve_s8_get_buffer_size(input_dims, filter_dims) > 0) {
+    if (ctx->buf == NULL &&
+        arm_convolve_s8_get_buffer_size(input_dims, filter_dims) > 0) {
         return ARM_MATH_ARGUMENT_ERROR;
     }
     q15_t* buffer_a = (q15_t*)ctx->buf;
@@ -97,31 +99,43 @@ arm_status arm_convolve_fast_s16(const cmsis_nn_context*                  ctx,
         /* This part implements the im2col function */
         for (int32_t i_out_y = 0; i_out_y < output_y; i_out_y++) {
             for (int32_t i_out_x = 0; i_out_x < output_x; i_out_x++) {
-                for (int32_t i_ker_y = i_out_y * stride_y - pad_y; i_ker_y < i_out_y * stride_y - pad_y + kernel_y; i_ker_y++) {
-                    for (int32_t i_ker_x = i_out_x * stride_x - pad_x; i_ker_x < i_out_x * stride_x - pad_x + kernel_x; i_ker_x++) {
-                        if (i_ker_y < 0 || i_ker_y >= input_y || i_ker_x < 0 || i_ker_x >= input_x) {
+                for (int32_t i_ker_y = i_out_y * stride_y - pad_y;
+                     i_ker_y < i_out_y * stride_y - pad_y + kernel_y;
+                     i_ker_y++) {
+                    for (int32_t i_ker_x = i_out_x * stride_x - pad_x;
+                         i_ker_x < i_out_x * stride_x - pad_x + kernel_x;
+                         i_ker_x++) {
+                        if (i_ker_y < 0 || i_ker_y >= input_y || i_ker_x < 0 ||
+                            i_ker_x >= input_x) {
                             /* Filling 0 for out-of-bound paddings */
-                            arm_memset_q7((q7_t*)two_column_buf, 0, sizeof(q15_t) * input_ch);
+                            arm_memset_q7((q7_t*)two_column_buf,
+                                          0,
+                                          sizeof(q15_t) * input_ch);
                         } else {
-                            arm_memcpy_q7((q7_t*)two_column_buf,
-                                          (const q7_t*)(input_data + (i_ker_y * input_x + i_ker_x) * input_ch),
-                                          input_ch * sizeof(q15_t));
+                            arm_memcpy_q7(
+                                (q7_t*)two_column_buf,
+                                (const q7_t*)(input_data +
+                                              (i_ker_y * input_x + i_ker_x) *
+                                                  input_ch),
+                                input_ch * sizeof(q15_t));
                         }
                         two_column_buf += input_ch;
                     }
                 }
                 /* Computation is filed for every 2 columns */
-                if (two_column_buf == buffer_a + 2 * input_ch * kernel_y * kernel_x) {
-                    out = arm_nn_mat_mult_kernel_s16(filter_data,
-                                                     buffer_a,
-                                                     output_ch,
-                                                     output_shift,
-                                                     output_mult,
-                                                     out_activation_min,
-                                                     out_activation_max,
-                                                     (input_ch * kernel_y * kernel_x),
-                                                     bias_data,
-                                                     out);
+                if (two_column_buf ==
+                    buffer_a + 2 * input_ch * kernel_y * kernel_x) {
+                    out = arm_nn_mat_mult_kernel_s16(
+                        filter_data,
+                        buffer_a,
+                        output_ch,
+                        output_shift,
+                        output_mult,
+                        out_activation_min,
+                        out_activation_max,
+                        (input_ch * kernel_y * kernel_x),
+                        bias_data,
+                        out);
 
                     /* Counter reset */
                     two_column_buf = buffer_a;
@@ -166,11 +180,14 @@ arm_status arm_convolve_fast_s16(const cmsis_nn_context*                  ctx,
                     col_count--;
                 }
                 if (bias_data) {
-                    q31_t reduced_multiplier = REDUCE_MULTIPLIER(output_mult[i]);
-                    q63_t acc_64             = sum + bias_data[i];
-                    sum                      = arm_nn_requantize_s64(acc_64, reduced_multiplier, output_shift[i]);
+                    q31_t reduced_multiplier =
+                        REDUCE_MULTIPLIER(output_mult[i]);
+                    q63_t acc_64 = sum + bias_data[i];
+                    sum          = arm_nn_requantize_s64(
+                        acc_64, reduced_multiplier, output_shift[i]);
                 } else {
-                    sum = arm_nn_requantize(sum, output_mult[i], output_shift[i]);
+                    sum =
+                        arm_nn_requantize(sum, output_mult[i], output_shift[i]);
                 }
                 sum    = MAX(sum, out_activation_min);
                 sum    = MIN(sum, out_activation_max);
@@ -204,9 +221,12 @@ arm_status arm_convolve_fast_s16(const cmsis_nn_context*                  ctx,
     return ARM_MATH_SUCCESS;
 }
 
-int32_t arm_convolve_fast_s16_get_buffer_size(const cmsis_nn_dims* input_dims, const cmsis_nn_dims* filter_dims) {
+int32_t
+arm_convolve_fast_s16_get_buffer_size(const cmsis_nn_dims* input_dims,
+                                      const cmsis_nn_dims* filter_dims) {
 #if defined(ARM_MATH_DSP) && !defined(ARM_MATH_MVEI)
-    return (2 * input_dims->c * filter_dims->w * filter_dims->h) * (int32_t)sizeof(int16_t);
+    return (2 * input_dims->c * filter_dims->w * filter_dims->h) *
+           (int32_t)sizeof(int16_t);
 #else
     (void)input_dims;
     (void)filter_dims;

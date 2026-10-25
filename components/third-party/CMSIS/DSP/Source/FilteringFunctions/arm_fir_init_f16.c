@@ -74,7 +74,11 @@
 
  */
 
-void arm_fir_init_f16(arm_fir_instance_f16* S, uint16_t numTaps, const float16_t* pCoeffs, float16_t* pState, uint32_t blockSize) {
+void arm_fir_init_f16(arm_fir_instance_f16* S,
+                      uint16_t              numTaps,
+                      const float16_t*      pCoeffs,
+                      float16_t*            pState,
+                      uint32_t              blockSize) {
     /* Assign filter taps */
     S->numTaps = numTaps;
 
@@ -83,7 +87,10 @@ void arm_fir_init_f16(arm_fir_instance_f16* S, uint16_t numTaps, const float16_t
 
     /* Clear state buffer. The size is always (blockSize + numTaps - 1) */
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
-    memset(pState, 0, (numTaps + (blockSize - 1U) + ROUND_UP(blockSize, 8)) * sizeof(float16_t));
+    memset(pState,
+           0,
+           (numTaps + (blockSize - 1U) + ROUND_UP(blockSize, 8)) *
+               sizeof(float16_t));
 #else
     memset(pState, 0, (numTaps + (blockSize - 1U)) * sizeof(float16_t));
 #endif

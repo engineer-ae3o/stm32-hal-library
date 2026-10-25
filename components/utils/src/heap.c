@@ -15,10 +15,11 @@ static size_t          s_num_of_allocations = 0;
 static const char* TAG = "O1heap";
 
 // The heap should be initialized and created before main runs. Only one heap is needed
-[[__gnu__::__constructor__]] static void heap_init() {
+[[__gnu__::__constructor__(101)]] static void heap_init() {
     LOGI(TAG, "Initializing the heap");
 
-    static alignas(O1HEAP_ALIGNMENT) uint8_t s_heap_buffer[HEAP_SIZE_BYTES + O1HEAP_ALIGNMENT] = {};
+    static alignas(O1HEAP_ALIGNMENT)
+        uint8_t s_heap_buffer[HEAP_SIZE_BYTES + O1HEAP_ALIGNMENT] = {};
 
     s_heap_handle = o1heapInit(s_heap_buffer, sizeof(s_heap_buffer));
     if (s_heap_handle == NULL) {
@@ -26,7 +27,9 @@ static const char* TAG = "O1heap";
         PANIC();
     }
 
-    LOGI(TAG, "Heap initialized with a size of %zukB", sizeof(s_heap_buffer) / 1024);
+    LOGI(TAG,
+         "Heap initialized with a size of %zukB",
+         sizeof(s_heap_buffer) / 1024);
 }
 
 // Public API
@@ -42,7 +45,8 @@ void* lib_malloc(size_t size) {
 }
 
 void* lib_calloc(size_t nmemb, size_t size) {
-    if (size == 0 || size >= HEAP_SIZE_BYTES || nmemb == 0 || nmemb >= HEAP_SIZE_BYTES) {
+    if (size == 0 || size >= HEAP_SIZE_BYTES || nmemb == 0 ||
+        nmemb >= HEAP_SIZE_BYTES) {
         return NULL;
     }
     void* ptr = o1heapAllocate(s_heap_handle, nmemb * size);
@@ -80,13 +84,14 @@ bool check_heap_state(void) {
 
 void get_heap_stats(heap_info_t* info) {
     if (info) {
-        const O1HeapDiagnostics diagnostics = o1heapGetDiagnostics(s_heap_handle);
-        info->max_capacity                  = diagnostics.capacity;
-        info->allocated_size                = diagnostics.allocated;
-        info->peak_allocated_size           = diagnostics.peak_allocated;
-        info->peak_request_size             = diagnostics.peak_request_size;
-        info->out_of_mem_count              = (size_t)diagnostics.oom_count;
-        info->num_of_allocations            = s_num_of_allocations;
+        const O1HeapDiagnostics diagnostics =
+            o1heapGetDiagnostics(s_heap_handle);
+        info->max_capacity        = diagnostics.capacity;
+        info->allocated_size      = diagnostics.allocated;
+        info->peak_allocated_size = diagnostics.peak_allocated;
+        info->peak_request_size   = diagnostics.peak_request_size;
+        info->out_of_mem_count    = (size_t)diagnostics.oom_count;
+        info->num_of_allocations  = s_num_of_allocations;
     }
 }
 
@@ -95,8 +100,14 @@ void print_heap_stats(void) {
     get_heap_stats(&info);
     LOGI(TAG, "Max heap capacity: %zubytes", info.max_capacity);
     LOGI(TAG, "Size of heap used: %zubytes", info.allocated_size);
-    LOGI(TAG, "Highest size allocated since boot: %zubytes", info.peak_allocated_size);
-    LOGI(TAG, "Largest requested size from heap: %zubytes", info.peak_request_size);
-    LOGI(TAG, "Number of failed allocation requests: %zu", info.out_of_mem_count);
+    LOGI(TAG,
+         "Highest size allocated since boot: %zubytes",
+         info.peak_allocated_size);
+    LOGI(TAG,
+         "Largest requested size from heap: %zubytes",
+         info.peak_request_size);
+    LOGI(TAG,
+         "Number of failed allocation requests: %zu",
+         info.out_of_mem_count);
     LOGI(TAG, "Number of allocations: %zu", info.num_of_allocations);
 }

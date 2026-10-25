@@ -52,9 +52,10 @@
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-__STATIC_FORCEINLINE arm_status arm_mat_mult_f16_2x2_mve(const arm_matrix_instance_f16* pSrcA,
-                                                         const arm_matrix_instance_f16* pSrcB,
-                                                         arm_matrix_instance_f16*       pDst) {
+__STATIC_FORCEINLINE arm_status
+arm_mat_mult_f16_2x2_mve(const arm_matrix_instance_f16* pSrcA,
+                         const arm_matrix_instance_f16* pSrcB,
+                         arm_matrix_instance_f16*       pDst) {
     static const uint16_t offsetA[8] = {0, 0, 2, 2, 0, 0, 2, 2};
     /* offsetB allows to read and duplicate 1 row of B */
     static const uint16_t offsetB[8] = {0, 1, 0, 1, 0, 1, 0, 1};
@@ -70,11 +71,13 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_2x2_mve(const arm_matrix_instan
     /*
      * load {a00 a00 a10 a10 x x x x }
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      * load {b00 b01 b00 b01 x x x x }
      */
-    vecInB = vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
+    vecInB =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
     /*
      *  { a00 b00       a00 b01
      *    a10 b00       a10 b01
@@ -89,7 +92,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_2x2_mve(const arm_matrix_instan
     /*
      * load {a01 a01 a11 a11 x x x x}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      * move to next B row
      */
@@ -97,7 +101,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_2x2_mve(const arm_matrix_instan
     /*
      * load {b10, b11, b10, b11, x x x x }
      */
-    vecInB = vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
+    vecInB =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
     /*
      *  { a00 b00 + a01 b10   a00 b01 + a01 b11
      *    a10 b00 + a11 b10     a10 b01 + a11 b11
@@ -117,9 +122,10 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_2x2_mve(const arm_matrix_instan
 }
 
 
-__STATIC_FORCEINLINE arm_status arm_mat_mult_f16_3x3_mve(const arm_matrix_instance_f16* pSrcA,
-                                                         const arm_matrix_instance_f16* pSrcB,
-                                                         arm_matrix_instance_f16*       pDst) {
+__STATIC_FORCEINLINE arm_status
+arm_mat_mult_f16_3x3_mve(const arm_matrix_instance_f16* pSrcA,
+                         const arm_matrix_instance_f16* pSrcB,
+                         arm_matrix_instance_f16*       pDst) {
     static const uint16_t offsetA[8] = {0, 0, 0, 3, 3, 3, 6, 6};
     /* offsetB allows to read and duplicate 1 row of B */
     static const uint16_t offsetB[8] = {0, 1, 2, 0, 1, 2, 0, 1};
@@ -136,11 +142,13 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_3x3_mve(const arm_matrix_instan
     /*
      * load {a00 a00 a00 a10 a10 a10 a20 a20}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      * load {b00 b01 b02 b00 b01 b02 b00 b01}
      */
-    vecInB = vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
+    vecInB =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
     /*
      *  { a00 b00       a00 b01     a00 b02
      *    a10 b00       a10 b01     a10 b02
@@ -155,7 +163,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_3x3_mve(const arm_matrix_instan
     /*
      * load {a01 a01 a01 a11 a11 a11 a21 a21}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      * move to next B row
      */
@@ -163,7 +172,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_3x3_mve(const arm_matrix_instan
     /*
      * load {b10, b11, b12, b10, b11, b12, b10, b11}
      */
-    vecInB = vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
+    vecInB =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
     /*
      *  { a00 b00 + a01 b10   a00 b01 + a01 b11     a00 b02 + a01 b12
      *    a10 b00 + a11 b10     a10 b01 + a11 b11     a10 b02 + a11 b12
@@ -177,7 +187,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_3x3_mve(const arm_matrix_instan
     /*
      * load {a02 a02 a02 a12 a12 a12 a22 a22}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      * move to next B row
      */
@@ -185,7 +196,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_3x3_mve(const arm_matrix_instan
     /*
      * load {b20, b21, b22, b20, b21, b22, b20, b21}
      */
-    vecInB = vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
+    vecInB =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
     /*
      *  {a00 b00 + a01 b10 + a02 b20  a00 b01 + a01 b11 + a02 b21     a00 b02 + a01 b12 + a02 b22},
      *   a10 b00 + a11 b10 + a12 b20    a10 b01 + a11 b11 + a12 b21     a10 b02 + a11 b12 + a12 b22},
@@ -204,15 +216,17 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_3x3_mve(const arm_matrix_instan
      */
     _Float16* pA = (_Float16*)pSrcA->pData;
     _Float16* pB = (_Float16*)pSrcB->pData;
-    *pOut        = pA[2 * 3] * pB[2] + pA[2 * 3 + 1] * pB[3 + 2] + pA[2 * 3 + 2] * pB[2 * 3 + 2];
+    *pOut        = pA[2 * 3] * pB[2] + pA[2 * 3 + 1] * pB[3 + 2] +
+                   pA[2 * 3 + 2] * pB[2 * 3 + 2];
 
     return (ARM_MATH_SUCCESS);
 }
 
 
-__STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instance_f16* pSrcA,
-                                                         const arm_matrix_instance_f16* pSrcB,
-                                                         arm_matrix_instance_f16*       pDst) {
+__STATIC_FORCEINLINE arm_status
+arm_mat_mult_f16_4x4_mve(const arm_matrix_instance_f16* pSrcA,
+                         const arm_matrix_instance_f16* pSrcB,
+                         arm_matrix_instance_f16*       pDst) {
     /* offsetA allows to read and duplicate 2 successive column elements of A */
     static const uint16_t offsetA[8] = {0, 0, 0, 0, 4, 4, 4, 4};
     /* offsetB allows to read and duplicate 1 row of B */
@@ -230,11 +244,13 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {a00 a00 a00 a00 a10 a10 a10 a10}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      * load {b00 b01 b02 b03 b00 b01 b02 b03}
      */
-    vecInB = vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
+    vecInB =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
     /*
      *  { a00 b00       a00 b01     a00 b02     a00 b03
      *    a10 b00       a10 b01     a10 b02     a10 b03 }
@@ -247,7 +263,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {a20 a20 a20 a20 a30 a30 a30 a30}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      *  { a20 b00       a20 b01     a20 b02     a20 b03
      *    a30 b00       a30 b01     a30 b02 +   a31 b12 }
@@ -260,7 +277,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {a01 a01 a01 a01 a11 a11 a11 a11}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      * move to next B row
      */
@@ -268,7 +286,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {b10, b11, b12, b13, b10, b11, b12, b13}
      */
-    vecInB = vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
+    vecInB =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
     /*
      *  { a00 b00 + a01 b10         a00 b01 + a01 b11       a00 b02 + a01 b12       a00 b03 + a01 b13
      *    a10 b00 + a11 b10         a10 b01 + a11 b11       a10 b02 + a11 b12       a10 b03 + a11 b13 }
@@ -281,7 +300,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {a21 a21 a21 a21 a31 a31 a31 a31}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      *  {a20 b00 + a21 b10      a20 b01 + a21 b11       a20 b02 + a21 b12       a20 b03 + a21 b13
      *   a30 b00 + a31 b10      a30 b01 + a31 b11       a30 b02 + a31 b12       a30 b03 + a31 b13 }
@@ -295,7 +315,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {a02 a02 a02 a02 a12 a12 a12 a12}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      * move to next B row
      */
@@ -303,7 +324,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {b20, b21, b22, b23, b20, b21, b22, b23}
      */
-    vecInB = vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
+    vecInB =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
     /*
      *  { a00 b00 + a01 b10 + a02 b20    a00 b01 + a01 b11 + a02 b21    a00 b02 + a01 b12 + a02 b22   a00 b03 + a01 b13 + a02 b23
      *    a10 b00 + a11 b10 + a12 b20    a10 b01 + a11 b11 + a12 b21    a10 b02 + a11 b12 + a12 b22   a10 b03 + a11 b13 + a12 b23 }
@@ -317,7 +339,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {a22 a22 a22 a22 a32 a32 a32 a32}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      *  {a20 b00 + a21 b10 + a22 b20   a20 b01 + a21 b11 + a22 b21  a20 b02 + a21 b12 + a22 b22    a20 b03 + a21 b13 + a22 b23
      *   a30 b00 + a31 b10 + a32 b20   a30 b01 + a31 b11 + a32 b21  a30 b02 + a31 b12 + a32 b22    a30 b03 + a31 b13 + a32 b23 }
@@ -331,7 +354,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {a03 a03 a03 a03 a13 a13 a13 a13}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      * move to next B row
      */
@@ -339,7 +363,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {b30, b31, b32, b33, b30, b31, b32, b33}
      */
-    vecInB = vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
+    vecInB =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcB->pData, vecOffsB);
     /*
      * { a00 b00 +...+ a03 b30,    a00 b01 +...+ a03 b31,   a00 b02 +...+ a03 b32,   a00 b03 +...+ a03 b33
      *   a10 b00 +...+ a13 b30,    a10 b01 +...+ a13 b31,   a10 b02 +...+ a13 b32,   a10 b03 +...+ a13 b33 }
@@ -352,7 +377,8 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
     /*
      * load {a23 a23 a23 a23 a33 a33 a33 a33}
      */
-    vecInA = vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
+    vecInA =
+        vldrhq_gather_shifted_offset((float16_t const*)pSrcA->pData, vecOffsA);
     /*
      *  {a20 b00 +...+ a23 b30,   a20 b01 +...+ a23 b31,   a20 b02 +...+ a23 b32,   a20 b03 +...+ a23 b33
      *   a30 b00 +...+ a33 b30,   a30 b01 +...+ a33 b31,   a30 b02 +...+ a33 b32,   a30 b03 +...+ a33 b33 }
@@ -370,21 +396,25 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_f16_4x4_mve(const arm_matrix_instan
 }
 
 
-arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matrix_instance_f16* pSrcB, arm_matrix_instance_f16* pDst) {
+arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA,
+                            const arm_matrix_instance_f16* pSrcB,
+                            arm_matrix_instance_f16*       pDst) {
     float16_t* pInB     = pSrcB->pData;   /* input data matrix pointer B */
     float16_t* pInA     = pSrcA->pData;   /* input data matrix pointer A  */
     float16_t* pOut     = pDst->pData;    /* output data matrix pointer */
     int        numRowsA = pSrcA->numRows; /* number of rows of input matrix A */
-    int        numColsB = pSrcB->numCols; /* number of columns of input matrix B */
-    int        numColsA = pSrcA->numCols; /* number of columns of input matrix A */
-    uint32_t   blkCnt;                    /* loop counters */
-    int        i;
+    int numColsB = pSrcB->numCols; /* number of columns of input matrix B */
+    int numColsA = pSrcA->numCols; /* number of columns of input matrix A */
+    uint32_t blkCnt;               /* loop counters */
+    int      i;
 
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         return (ARM_MATH_SIZE_MISMATCH);
     } else
@@ -598,24 +628,30 @@ arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matr
 #else
 
 
-arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matrix_instance_f16* pSrcB, arm_matrix_instance_f16* pDst) {
-    float16_t* pIn1 = pSrcA->pData;                 /* Input data matrix pointer A */
-    float16_t* pIn2 = pSrcB->pData;                 /* Input data matrix pointer B */
-    float16_t* pInA = pSrcA->pData;                 /* Input data matrix pointer A */
-    float16_t* pInB = pSrcB->pData;                 /* Input data matrix pointer B */
-    float16_t* pOut = pDst->pData;                  /* Output data matrix pointer */
-    float16_t* px;                                  /* Temporary output data matrix pointer */
-    _Float16   sum;                                 /* Accumulator */
-    uint16_t   numRowsA = pSrcA->numRows;           /* Number of rows of input matrix A */
-    uint16_t   numColsB = pSrcB->numCols;           /* Number of columns of input matrix B */
-    uint16_t   numColsA = pSrcA->numCols;           /* Number of columns of input matrix A */
+arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA,
+                            const arm_matrix_instance_f16* pSrcB,
+                            arm_matrix_instance_f16*       pDst) {
+    float16_t* pIn1 = pSrcA->pData; /* Input data matrix pointer A */
+    float16_t* pIn2 = pSrcB->pData; /* Input data matrix pointer B */
+    float16_t* pInA = pSrcA->pData; /* Input data matrix pointer A */
+    float16_t* pInB = pSrcB->pData; /* Input data matrix pointer B */
+    float16_t* pOut = pDst->pData;  /* Output data matrix pointer */
+    float16_t* px;                  /* Temporary output data matrix pointer */
+    _Float16   sum;                 /* Accumulator */
+    uint16_t   numRowsA = pSrcA->numRows; /* Number of rows of input matrix A */
+    uint16_t   numColsB =
+        pSrcB->numCols; /* Number of columns of input matrix B */
+    uint16_t numColsA =
+        pSrcA->numCols; /* Number of columns of input matrix A */
     uint32_t   col, i = 0U, row = numRowsA, colCnt; /* Loop counters */
-    arm_status status;                              /* Status of matrix multiplication */
+    arm_status status; /* Status of matrix multiplication */
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

@@ -47,7 +47,10 @@
   @return        none
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-void arm_mse_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t blockSize, q15_t* pResult) {
+void arm_mse_q15(const q15_t* pSrcA,
+                 const q15_t* pSrcB,
+                 uint32_t     blockSize,
+                 q15_t*       pResult) {
     uint32_t blkCnt; /* loop counters */
     q15x8_t  vecSrcA, vecSrcB;
     q63_t    sum = 0LL;
@@ -92,7 +95,10 @@ void arm_mse_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t blockSize, q15
     *pResult = (q15_t)__SSAT((q31_t)(sum / blockSize) >> 13, 16);
 }
 #else
-void arm_mse_q15(const q15_t* pSrcA, const q15_t* pSrcB, uint32_t blockSize, q15_t* pResult) {
+void arm_mse_q15(const q15_t* pSrcA,
+                 const q15_t* pSrcB,
+                 uint32_t     blockSize,
+                 q15_t*       pResult) {
     uint32_t blkCnt;   /* Loop counter */
     q63_t    sum = 0;  /* Temporary result storage */
     q15_t    inA, inB; /* Temporary variable to store input value */

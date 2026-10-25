@@ -53,7 +53,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_mult_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t blockSize) {
+void arm_mult_q31(const q31_t* pSrcA,
+                  const q31_t* pSrcB,
+                  q31_t*       pDst,
+                  uint32_t     blockSize) {
     uint32_t blkCnt; /* loop counters */
     q31x4_t  vecA, vecB;
 
@@ -91,7 +94,10 @@ void arm_mult_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t 
 }
 
 #else
-void arm_mult_q31(const q31_t* pSrcA, const q31_t* pSrcB, q31_t* pDst, uint32_t blockSize) {
+void arm_mult_q31(const q31_t* pSrcA,
+                  const q31_t* pSrcB,
+                  q31_t*       pDst,
+                  uint32_t     blockSize) {
     uint32_t blkCnt; /* Loop counter */
     q31_t    out;    /* Temporary output variable */
 

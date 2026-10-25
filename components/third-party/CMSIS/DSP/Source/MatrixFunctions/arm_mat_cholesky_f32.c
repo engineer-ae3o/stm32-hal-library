@@ -65,7 +65,8 @@
 
 #include "arm_helium_utils.h"
 
-arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc,
+                                arm_matrix_instance_f32*       pDst) {
 
     arm_status status; /* status of matrix inverse */
 
@@ -73,7 +74,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -173,7 +175,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
 #else
 #if defined(ARM_MATH_NEON) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc,
+                                arm_matrix_instance_f32*       pDst) {
 
     arm_status status; /* status of matrix inverse */
 
@@ -181,7 +184,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -242,10 +246,14 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
                 }
 
 #if defined(__aarch64__)
-                sum0 = vpadds_f32(vpadd_f32(vget_low_f32(acc0), vget_high_f32(acc0)));
-                sum1 = vpadds_f32(vpadd_f32(vget_low_f32(acc1), vget_high_f32(acc1)));
-                sum2 = vpadds_f32(vpadd_f32(vget_low_f32(acc2), vget_high_f32(acc2)));
-                sum3 = vpadds_f32(vpadd_f32(vget_low_f32(acc3), vget_high_f32(acc3)));
+                sum0 = vpadds_f32(
+                    vpadd_f32(vget_low_f32(acc0), vget_high_f32(acc0)));
+                sum1 = vpadds_f32(
+                    vpadd_f32(vget_low_f32(acc1), vget_high_f32(acc1)));
+                sum2 = vpadds_f32(
+                    vpadd_f32(vget_low_f32(acc2), vget_high_f32(acc2)));
+                sum3 = vpadds_f32(
+                    vpadd_f32(vget_low_f32(acc3), vget_high_f32(acc3)));
 
 #else
                 tmp  = vpadd_f32(vget_low_f32(acc0), vget_high_f32(acc0));
@@ -297,7 +305,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
                 }
 
 #if defined(__aarch64__)
-                sum = vpadds_f32(vpadd_f32(vget_low_f32(acc), vget_high_f32(acc)));
+                sum = vpadds_f32(
+                    vpadd_f32(vget_low_f32(acc), vget_high_f32(acc)));
 #else
                 tmp = vpadd_f32(vget_low_f32(acc), vget_high_f32(acc));
                 sum = vget_lane_f32(tmp, 0) + vget_lane_f32(tmp, 1);
@@ -334,7 +343,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
 }
 
 #else
-arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_instance_f32* pDst) {
+arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc,
+                                arm_matrix_instance_f32*       pDst) {
 
     arm_status status; /* status of matrix inverse */
 
@@ -342,7 +352,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) || (pSrc->numRows != pDst->numRows)) {
+    if ((pSrc->numRows != pSrc->numCols) || (pDst->numRows != pDst->numCols) ||
+        (pSrc->numRows != pDst->numRows)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -364,7 +375,8 @@ arm_status arm_mat_cholesky_f32(const arm_matrix_instance_f32* pSrc, arm_matrix_
                 pG[j * n + i] = pA[j * n + i];
 
                 for (k = 0; k < i; k++) {
-                    pG[j * n + i] = pG[j * n + i] - pG[i * n + k] * pG[j * n + k];
+                    pG[j * n + i] =
+                        pG[j * n + i] - pG[i * n + k] * pG[j * n + k];
                 }
             }
 

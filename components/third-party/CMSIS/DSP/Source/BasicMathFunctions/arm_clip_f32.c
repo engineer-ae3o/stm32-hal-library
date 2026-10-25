@@ -60,7 +60,11 @@
 
 #include "arm_helium_utils.h"
 
-void arm_clip_f32(const float32_t* pSrc, float32_t* pDst, float32_t low, float32_t high, uint32_t numSamples) {
+void arm_clip_f32(const float32_t* pSrc,
+                  float32_t*       pDst,
+                  float32_t        low,
+                  float32_t        high,
+                  uint32_t         numSamples) {
     uint32_t blkCnt;
     f32x4_t  curVec0, curVec1;
     f32x4_t  vecLow, vecHigh;
@@ -112,7 +116,11 @@ void arm_clip_f32(const float32_t* pSrc, float32_t* pDst, float32_t low, float32
 }
 
 #else
-void arm_clip_f32(const float32_t* pSrc, float32_t* pDst, float32_t low, float32_t high, uint32_t numSamples) {
+void arm_clip_f32(const float32_t* pSrc,
+                  float32_t*       pDst,
+                  float32_t        low,
+                  float32_t        high,
+                  uint32_t         numSamples) {
     uint32_t i;
     for (i = 0; i < numSamples; i++) {
         if (pSrc[i] > high) {

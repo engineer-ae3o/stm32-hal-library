@@ -81,7 +81,10 @@
  */
 
 
-arm_status arm_mfcc_q31(const arm_mfcc_instance_q31* S, q31_t* pSrc, q31_t* pDst, q31_t* pTmp) {
+arm_status arm_mfcc_q31(const arm_mfcc_instance_q31* S,
+                        q31_t*                       pSrc,
+                        q31_t*                       pDst,
+                        q31_t*                       pTmp) {
     q31_t                   m;
     uint32_t                index;
     uint32_t                fftShift = 0;
@@ -147,7 +150,10 @@ arm_status arm_mfcc_q31(const arm_mfcc_instance_q31* S, q31_t* pSrc, q31_t* pDst
     /* Apply MEL filters */
     coefsPos = 0;
     for (i = 0; i < S->nbMelFilters; i++) {
-        arm_dot_prod_q31(pSrc + S->filterPos[i], &(S->filterCoefs[coefsPos]), S->filterLengths[i], &result);
+        arm_dot_prod_q31(pSrc + S->filterPos[i],
+                         &(S->filterCoefs[coefsPos]),
+                         S->filterLengths[i],
+                         &result);
 
         coefsPos += S->filterLengths[i];
 

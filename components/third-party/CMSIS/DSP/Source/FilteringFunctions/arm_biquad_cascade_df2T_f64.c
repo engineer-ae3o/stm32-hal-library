@@ -134,7 +134,10 @@
  */
 
 
-void arm_biquad_cascade_df2T_f64(const arm_biquad_cascade_df2T_instance_f64* S, const float64_t* pSrc, float64_t* pDst, uint32_t blockSize) {
+void arm_biquad_cascade_df2T_f64(const arm_biquad_cascade_df2T_instance_f64* S,
+                                 const float64_t* pSrc,
+                                 float64_t*       pDst,
+                                 uint32_t         blockSize) {
 
     const float64_t* pIn     = pSrc;               /* Source pointer */
     float64_t*       pOut    = pDst;               /* Destination pointer */

@@ -46,9 +46,13 @@
   @return        none
  */
 
-void arm_cmplx_mult_cmplx_f64(const float64_t* pSrcA, const float64_t* pSrcB, float64_t* pDst, uint32_t numSamples) {
-    uint32_t  blkCnt;     /* Loop counter */
-    float64_t a, b, c, d; /* Temporary variables to store real and imaginary values */
+void arm_cmplx_mult_cmplx_f64(const float64_t* pSrcA,
+                              const float64_t* pSrcB,
+                              float64_t*       pDst,
+                              uint32_t         numSamples) {
+    uint32_t  blkCnt; /* Loop counter */
+    float64_t a, b, c,
+        d; /* Temporary variables to store real and imaginary values */
 
     /* Initialize blkCnt with number of samples */
     blkCnt = numSamples;

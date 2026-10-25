@@ -76,7 +76,8 @@
    * @return y processed output sample.
    *
    */
-float32_t arm_linear_interp_f32(arm_linear_interp_instance_f32* S, float32_t x) {
+float32_t arm_linear_interp_f32(arm_linear_interp_instance_f32* S,
+                                float32_t                       x) {
     float32_t  y;
     float32_t  x0, x1;                 /* Nearest input values */
     float32_t  y0, y1;                 /* Nearest output values */

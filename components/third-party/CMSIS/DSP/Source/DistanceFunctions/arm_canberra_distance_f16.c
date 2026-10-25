@@ -70,7 +70,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math_f16.h"
 
-float16_t arm_canberra_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+float16_t arm_canberra_distance_f16(const float16_t* pA,
+                                    const float16_t* pB,
+                                    uint32_t         blockSize) {
     _Float16 accum = 0.0f16;
     uint32_t blkCnt;
     f16x8_t  a, b, c, accumV;
@@ -140,7 +142,9 @@ float16_t arm_canberra_distance_f16(const float16_t* pA, const float16_t* pB, ui
 
 
 #else
-float16_t arm_canberra_distance_f16(const float16_t* pA, const float16_t* pB, uint32_t blockSize) {
+float16_t arm_canberra_distance_f16(const float16_t* pA,
+                                    const float16_t* pB,
+                                    uint32_t         blockSize) {
     _Float16 accum = 0.0f, tmpA, tmpB, diff, sum;
 
     while (blockSize > 0) {
@@ -148,7 +152,8 @@ float16_t arm_canberra_distance_f16(const float16_t* pA, const float16_t* pB, ui
         tmpB = *pB++;
 
         diff = fabsf((float32_t)((_Float16)tmpA - (_Float16)tmpB));
-        sum  = (_Float16)fabsf((float32_t)tmpA) + (_Float16)fabsf((float32_t)tmpB);
+        sum =
+            (_Float16)fabsf((float32_t)tmpA) + (_Float16)fabsf((float32_t)tmpB);
         if (((_Float16)tmpA != 0.0f16) || ((_Float16)tmpB != 0.0f16)) {
             accum += ((_Float16)diff / (_Float16)sum);
         }

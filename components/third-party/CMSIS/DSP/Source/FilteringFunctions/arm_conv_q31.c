@@ -63,7 +63,11 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_filtering.h"
 
-void arm_conv_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
+void arm_conv_q31(const q31_t* pSrcA,
+                  uint32_t     srcALen,
+                  const q31_t* pSrcB,
+                  uint32_t     srcBLen,
+                  q31_t*       pDst) {
     const q31_t* pIn1 = pSrcA; /* inputA pointer               */
     const q31_t* pIn2 = pSrcB; /* inputB pointer               */
     /*
@@ -141,7 +145,8 @@ void arm_conv_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint
          * size is fixed for all accumulators
          * X pointer is incrementing for successive accumulators
          */
-        MVE_INTR_CONV_QUAD_INC_X_FIXED_SIZE_Q31(acc0, acc1, acc2, acc3, pX, pY, count);
+        MVE_INTR_CONV_QUAD_INC_X_FIXED_SIZE_Q31(
+            acc0, acc1, acc2, acc3, pX, pY, count);
         *pDst++ = (q31_t)acc0;
         *pDst++ = (q31_t)acc1;
         *pDst++ = (q31_t)acc2;
@@ -208,24 +213,29 @@ void arm_conv_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint
 }
 
 #else
-void arm_conv_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
+void arm_conv_q31(const q31_t* pSrcA,
+                  uint32_t     srcALen,
+                  const q31_t* pSrcB,
+                  uint32_t     srcBLen,
+                  q31_t*       pDst) {
 
 #if (1)
     //#if !defined(ARM_MATH_CM0_FAMILY)
 
-    const q31_t* pIn1;                               /* InputA pointer */
-    const q31_t* pIn2;                               /* InputB pointer */
-    q31_t*       pOut = pDst;                        /* Output pointer */
-    const q31_t* px;                                 /* Intermediate inputA pointer */
-    const q31_t* py;                                 /* Intermediate inputB pointer */
-    const q31_t *pSrc1, *pSrc2;                      /* Intermediate pointers */
-    q63_t        sum;                                /* Accumulators */
+    const q31_t* pIn1;          /* InputA pointer */
+    const q31_t* pIn2;          /* InputB pointer */
+    q31_t*       pOut = pDst;   /* Output pointer */
+    const q31_t* px;            /* Intermediate inputA pointer */
+    const q31_t* py;            /* Intermediate inputB pointer */
+    const q31_t *pSrc1, *pSrc2; /* Intermediate pointers */
+    q63_t        sum;           /* Accumulators */
     uint32_t     blockSize1, blockSize2, blockSize3; /* Loop counters */
     uint32_t     j, k, count, blkCnt;                /* Loop counters */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q63_t acc0, acc1, acc2; /* Accumulators */
-    q31_t x0, x1, x2, c0;   /* Temporary variables to hold state and coefficient values */
+    q31_t x0, x1, x2,
+        c0; /* Temporary variables to hold state and coefficient values */
 #endif
 
     /* The algorithm implementation is based on the lengths of the inputs. */

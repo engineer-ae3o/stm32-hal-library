@@ -28,11 +28,21 @@
 
 #include "dsp/transform_functions.h"
 
-void arm_radix2_butterfly_f32(float32_t* pSrc, uint32_t fftLen, const float32_t* pCoef, uint16_t twidCoefModifier);
+void arm_radix2_butterfly_f32(float32_t*       pSrc,
+                              uint32_t         fftLen,
+                              const float32_t* pCoef,
+                              uint16_t         twidCoefModifier);
 
-void arm_radix2_butterfly_inverse_f32(float32_t* pSrc, uint32_t fftLen, const float32_t* pCoef, uint16_t twidCoefModifier, float32_t onebyfftLen);
+void arm_radix2_butterfly_inverse_f32(float32_t*       pSrc,
+                                      uint32_t         fftLen,
+                                      const float32_t* pCoef,
+                                      uint16_t         twidCoefModifier,
+                                      float32_t        onebyfftLen);
 
-extern void arm_bitreversal_f32(float32_t* pSrc, uint16_t fftSize, uint16_t bitRevFactor, const uint16_t* pBitRevTab);
+extern void arm_bitreversal_f32(float32_t*      pSrc,
+                                uint16_t        fftSize,
+                                uint16_t        bitRevFactor,
+                                const uint16_t* pBitRevTab);
 
 /**
   @ingroup groupTransforms
@@ -51,14 +61,17 @@ extern void arm_bitreversal_f32(float32_t* pSrc, uint16_t fftSize, uint16_t bitR
   @return        none
  */
 
-void arm_cfft_radix2_f32(const arm_cfft_radix2_instance_f32* S, float32_t* pSrc) {
+void arm_cfft_radix2_f32(const arm_cfft_radix2_instance_f32* S,
+                         float32_t*                          pSrc) {
 
     if (S->ifftFlag == 1U) {
         /* Complex IFFT radix-2 */
-        arm_radix2_butterfly_inverse_f32(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier, S->onebyfftLen);
+        arm_radix2_butterfly_inverse_f32(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier, S->onebyfftLen);
     } else {
         /* Complex FFT radix-2 */
-        arm_radix2_butterfly_f32(pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
+        arm_radix2_butterfly_f32(
+            pSrc, S->fftLen, S->pTwiddle, S->twidCoefModifier);
     }
 
     if (S->bitReverseFlag == 1U) {
@@ -86,7 +99,10 @@ void arm_cfft_radix2_f32(const arm_cfft_radix2_instance_f32* S, float32_t* pSrc)
   return        none
  */
 
-void arm_radix2_butterfly_f32(float32_t* pSrc, uint32_t fftLen, const float32_t* pCoef, uint16_t twidCoefModifier) {
+void arm_radix2_butterfly_f32(float32_t*       pSrc,
+                              uint32_t         fftLen,
+                              const float32_t* pCoef,
+                              uint16_t         twidCoefModifier) {
 
     uint32_t  i, j, k, l;
     uint32_t  n1, n2, ia;
@@ -240,7 +256,11 @@ void arm_radix2_butterfly_f32(float32_t* pSrc, uint32_t fftLen, const float32_t*
 }
 
 
-void arm_radix2_butterfly_inverse_f32(float32_t* pSrc, uint32_t fftLen, const float32_t* pCoef, uint16_t twidCoefModifier, float32_t onebyfftLen) {
+void arm_radix2_butterfly_inverse_f32(float32_t*       pSrc,
+                                      uint32_t         fftLen,
+                                      const float32_t* pCoef,
+                                      uint16_t         twidCoefModifier,
+                                      float32_t        onebyfftLen) {
 
     uint32_t  i, j, k, l;
     uint32_t  n1, n2, ia;

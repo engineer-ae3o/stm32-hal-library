@@ -62,8 +62,13 @@
                    Refer to \ref arm_conv_q15() for a slower implementation of this function which uses 64-bit accumulation to avoid wrap around distortion.
  */
 
-void arm_conv_fast_opt_q15(
-    const q15_t* pSrcA, uint32_t srcALen, const q15_t* pSrcB, uint32_t srcBLen, q15_t* pDst, q15_t* pScratch1, q15_t* pScratch2) {
+void arm_conv_fast_opt_q15(const q15_t* pSrcA,
+                           uint32_t     srcALen,
+                           const q15_t* pSrcB,
+                           uint32_t     srcBLen,
+                           q15_t*       pDst,
+                           q15_t*       pScratch1,
+                           q15_t*       pScratch2) {
     q31_t        acc0;              /* Accumulators */
     const q15_t* pIn1;              /* InputA pointer */
     const q15_t* pIn2;              /* InputB pointer */
@@ -77,8 +82,9 @@ void arm_conv_fast_opt_q15(
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q31_t acc1, acc2, acc3; /* Accumulators */
-    q31_t x1, x2, x3;       /* Temporary variables to hold state and coefficient values */
-    q31_t y1, y2;           /* State variables */
+    q31_t x1, x2,
+        x3;       /* Temporary variables to hold state and coefficient values */
+    q31_t y1, y2; /* State variables */
 #endif
 
 
@@ -274,11 +280,19 @@ void arm_conv_fast_opt_q15(
 
         /* Store the results in the accumulators in the destination buffer. */
 #ifndef ARM_MATH_BIG_ENDIAN
-        write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc0 >> 15), 16), __SSAT((acc1 >> 15), 16), 16));
-        write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc2 >> 15), 16), __SSAT((acc3 >> 15), 16), 16));
+        write_q15x2_ia(
+            &pOut,
+            __PKHBT(__SSAT((acc0 >> 15), 16), __SSAT((acc1 >> 15), 16), 16));
+        write_q15x2_ia(
+            &pOut,
+            __PKHBT(__SSAT((acc2 >> 15), 16), __SSAT((acc3 >> 15), 16), 16));
 #else
-        write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc1 >> 15), 16), __SSAT((acc0 >> 15), 16), 16));
-        write_q15x2_ia(&pOut, __PKHBT(__SSAT((acc3 >> 15), 16), __SSAT((acc2 >> 15), 16), 16));
+        write_q15x2_ia(
+            &pOut,
+            __PKHBT(__SSAT((acc1 >> 15), 16), __SSAT((acc0 >> 15), 16), 16));
+        write_q15x2_ia(
+            &pOut,
+            __PKHBT(__SSAT((acc3 >> 15), 16), __SSAT((acc2 >> 15), 16), 16));
 #endif /* #ifndef ARM_MATH_BIG_ENDIAN */
 
         /* Initialization of inputB pointer */

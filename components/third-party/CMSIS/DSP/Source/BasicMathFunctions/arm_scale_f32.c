@@ -77,7 +77,10 @@
 
 #include "arm_helium_utils.h"
 
-void arm_scale_f32(const float32_t* pSrc, float32_t scale, float32_t* pDst, uint32_t blockSize) {
+void arm_scale_f32(const float32_t* pSrc,
+                   float32_t        scale,
+                   float32_t*       pDst,
+                   uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
 
     f32x4_t vec1;
@@ -113,7 +116,10 @@ void arm_scale_f32(const float32_t* pSrc, float32_t scale, float32_t* pDst, uint
 }
 
 #else
-void arm_scale_f32(const float32_t* pSrc, float32_t scale, float32_t* pDst, uint32_t blockSize) {
+void arm_scale_f32(const float32_t* pSrc,
+                   float32_t        scale,
+                   float32_t*       pDst,
+                   uint32_t         blockSize) {
     uint32_t blkCnt; /* Loop counter */
 #if defined(ARM_MATH_NEON_EXPERIMENTAL)
     f32x4_t vec1;

@@ -69,7 +69,8 @@ __PACKED_STRUCT T_UINT16_WRITE {
     uint16_t v;
 };
 #pragma clang diagnostic pop
-#define __UNALIGNED_UINT16_WRITE(addr, val) (void)((((struct T_UINT16_WRITE*)(void*)(addr))->v) = (val))
+#define __UNALIGNED_UINT16_WRITE(addr, val)                                    \
+    (void)((((struct T_UINT16_WRITE*)(void*)(addr))->v) = (val))
 #endif
 #ifndef __UNALIGNED_UINT16_READ
 #pragma clang diagnostic push
@@ -79,7 +80,8 @@ __PACKED_STRUCT T_UINT16_READ {
     uint16_t v;
 };
 #pragma clang diagnostic pop
-#define __UNALIGNED_UINT16_READ(addr) (((const struct T_UINT16_READ*)(const void*)(addr))->v)
+#define __UNALIGNED_UINT16_READ(addr)                                          \
+    (((const struct T_UINT16_READ*)(const void*)(addr))->v)
 #endif
 #ifndef __UNALIGNED_UINT32_WRITE
 #pragma clang diagnostic push
@@ -89,7 +91,8 @@ __PACKED_STRUCT T_UINT32_WRITE {
     uint32_t v;
 };
 #pragma clang diagnostic pop
-#define __UNALIGNED_UINT32_WRITE(addr, val) (void)((((struct T_UINT32_WRITE*)(void*)(addr))->v) = (val))
+#define __UNALIGNED_UINT32_WRITE(addr, val)                                    \
+    (void)((((struct T_UINT32_WRITE*)(void*)(addr))->v) = (val))
 #endif
 #ifndef __UNALIGNED_UINT32_READ
 #pragma clang diagnostic push
@@ -98,7 +101,8 @@ __PACKED_STRUCT T_UINT32_READ {
     uint32_t v;
 };
 #pragma clang diagnostic pop
-#define __UNALIGNED_UINT32_READ(addr) (((const struct T_UINT32_READ*)(const void*)(addr))->v)
+#define __UNALIGNED_UINT32_READ(addr)                                          \
+    (((const struct T_UINT32_READ*)(const void*)(addr))->v)
 #endif
 #ifndef __ALIGNED
 #define __ALIGNED(x) __attribute__((aligned(x)))
@@ -352,14 +356,19 @@ __STATIC_FORCEINLINE int32_t __QSUB(int32_t op1, int32_t op2) {
     return (result);
 }
 
-#define __PKHBT(ARG1, ARG2, ARG3) (((((uint32_t)(ARG1))) & 0x0000FFFFUL) | ((((uint32_t)(ARG2)) << (ARG3)) & 0xFFFF0000UL))
+#define __PKHBT(ARG1, ARG2, ARG3)                                              \
+    (((((uint32_t)(ARG1))) & 0x0000FFFFUL) |                                   \
+     ((((uint32_t)(ARG2)) << (ARG3)) & 0xFFFF0000UL))
 
-#define __PKHTB(ARG1, ARG2, ARG3) (((((uint32_t)(ARG1))) & 0xFFFF0000UL) | ((((uint32_t)(ARG2)) >> (ARG3)) & 0x0000FFFFUL))
+#define __PKHTB(ARG1, ARG2, ARG3)                                              \
+    (((((uint32_t)(ARG1))) & 0xFFFF0000UL) |                                   \
+     ((((uint32_t)(ARG2)) >> (ARG3)) & 0x0000FFFFUL))
 
 __STATIC_FORCEINLINE int32_t __SMMLA(int32_t op1, int32_t op2, int32_t op3) {
     int32_t result;
 
-    __ASM volatile("smmla %0, %1, %2, %3" : "=r"(result) : "r"(op1), "r"(op2), "r"(op3));
+    __ASM volatile(
+        "smmla %0, %1, %2, %3" : "=r"(result) : "r"(op1), "r"(op2), "r"(op3));
     return (result);
 }
 
@@ -516,10 +525,19 @@ __STATIC_FORCEINLINE void __set_FPEXC(uint32_t fpexc) {
  * Include common core functions to access Coprocessor 15 registers
  */
 
-#define __get_CP(cp, op1, Rt, CRn, CRm, op2) __ASM volatile("MRC p" #cp ", " #op1 ", %0, c" #CRn ", c" #CRm ", " #op2 : "=r"(Rt) : : "memory")
-#define __set_CP(cp, op1, Rt, CRn, CRm, op2) __ASM volatile("MCR p" #cp ", " #op1 ", %0, c" #CRn ", c" #CRm ", " #op2 : : "r"(Rt) : "memory")
-#define __get_CP64(cp, op1, Rt, CRm) __ASM volatile("MRRC p" #cp ", " #op1 ", %Q0, %R0, c" #CRm : "=r"(Rt) : : "memory")
-#define __set_CP64(cp, op1, Rt, CRm) __ASM volatile("MCRR p" #cp ", " #op1 ", %Q0, %R0, c" #CRm : : "r"(Rt) : "memory")
+#define __get_CP(cp, op1, Rt, CRn, CRm, op2)                                   \
+    __ASM volatile("MRC p" #cp ", " #op1 ", %0, c" #CRn ", c" #CRm             \
+                   ", " #op2 : "=r"(Rt) : : "memory")
+#define __set_CP(cp, op1, Rt, CRn, CRm, op2)                                   \
+    __ASM volatile("MCR p" #cp ", " #op1 ", %0, c" #CRn ", c" #CRm             \
+                   ", " #op2 : : "r"(Rt) : "memor"                             \
+                                           "y")
+#define __get_CP64(cp, op1, Rt, CRm)                                           \
+    __ASM volatile("MRRC p" #cp ", " #op1                                      \
+                   ", %Q0, %R0, c" #CRm : "=r"(Rt) : : "memory")
+#define __set_CP64(cp, op1, Rt, CRm)                                           \
+    __ASM volatile("MCRR p" #cp ", " #op1                                      \
+                   ", %Q0, %R0, c" #CRm : : "r"(Rt) : "memory")
 
 #include "cmsis_cp15.h"
 

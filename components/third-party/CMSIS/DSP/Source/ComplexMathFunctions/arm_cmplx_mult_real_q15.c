@@ -51,15 +51,18 @@
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx, const q15_t* pSrcReal, q15_t* pCmplxDst, uint32_t numSamples) {
+void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx,
+                             const q15_t* pSrcReal,
+                             q15_t*       pCmplxDst,
+                             uint32_t     numSamples) {
     static const uint16_t stride_cmplx_x_real_16[8] = {0, 0, 1, 1, 2, 2, 3, 3};
     q15x8_t               rVec;
     q15x8_t               cmplxVec;
     q15x8_t               dstVec;
     uint16x8_t            strideVec;
-    uint32_t              blockSizeC = numSamples * CMPLX_DIM; /* loop counters */
-    uint32_t              blkCnt;
-    q15_t                 in;
+    uint32_t blockSizeC = numSamples * CMPLX_DIM; /* loop counters */
+    uint32_t blkCnt;
+    q15_t    in;
 
     /*
   * stride vector for pairs of real generation
@@ -96,7 +99,10 @@ void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx, const q15_t* pSrcReal, q15_
     }
 }
 #else
-void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx, const q15_t* pSrcReal, q15_t* pCmplxDst, uint32_t numSamples) {
+void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx,
+                             const q15_t* pSrcReal,
+                             q15_t*       pCmplxDst,
+                             uint32_t     numSamples) {
     uint32_t blkCnt; /* Loop counter */
     q15_t    in;     /* Temporary variable */
 
@@ -106,7 +112,8 @@ void arm_cmplx_mult_real_q15(const q15_t* pSrcCmplx, const q15_t* pSrcReal, q15_
     q31_t inA1, inA2;             /* Temporary variables to hold input data */
     q31_t inB1;                   /* Temporary variables to hold input data */
     q15_t out1, out2, out3, out4; /* Temporary variables to hold output data */
-    q31_t mul1, mul2, mul3, mul4; /* Temporary variables to hold intermediate data */
+    q31_t mul1, mul2, mul3,
+        mul4; /* Temporary variables to hold intermediate data */
 #endif
 
     /* Loop unrolling: Compute 4 outputs at a time */

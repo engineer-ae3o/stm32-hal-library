@@ -78,7 +78,9 @@
 #include "arm_helium_utils.h"
 
 
-void arm_cmplx_mag_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_f32(const float32_t* pSrc,
+                       float32_t*       pDst,
+                       uint32_t         numSamples) {
     int32_t   blockSize = numSamples; /* loop counters */
     uint32_t  blkCnt;                 /* loop counters */
     f32x4x2_t vecSrc;
@@ -101,8 +103,9 @@ void arm_cmplx_mag_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSampl
          */
 
         /* compute initial value */
-        newtonStartVec = vdupq_n_s32(INVSQRT_MAGIC_F32) - vshrq((q31x4_t)sum, 1);
-        sumHalf        = sum * 0.5f;
+        newtonStartVec =
+            vdupq_n_s32(INVSQRT_MAGIC_F32) - vshrq((q31x4_t)sum, 1);
+        sumHalf = sum * 0.5f;
         /*
          * compute 3 x iterations
          *
@@ -147,7 +150,9 @@ void arm_cmplx_mag_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSampl
 }
 
 #else
-void arm_cmplx_mag_f32(const float32_t* pSrc, float32_t* pDst, uint32_t numSamples) {
+void arm_cmplx_mag_f32(const float32_t* pSrc,
+                       float32_t*       pDst,
+                       uint32_t         numSamples) {
     uint32_t  blkCnt;     /* loop counter */
     float32_t real, imag; /* Temporary variables to hold input values */
 

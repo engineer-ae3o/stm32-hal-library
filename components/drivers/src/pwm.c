@@ -1,7 +1,8 @@
 #include "stm32f411xe.h"
-#include "drivers/timer_internals.h"
+#include "drivers/src/timer_internals.h"
+#include "drivers/timer_extended.h"
+#include "drivers/timer_types.h"
 #include "drivers/pwm_types.h"
-#include "drivers/timer.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
 #include "utils/board.h"
@@ -12,26 +13,7 @@
 
 
 // Helper
-[[__gnu__::__always_inline__]] static inline uint32_t get_max_duty_cycle(TIM_TypeDef* handle) {
-    if (handle->CR1 & TIM_CR1_CMS) {
-        // Center aligned PWM
-        return handle->ARR;
-    } else {
-        // Edge aligned PWM
-        // Doing it like this introduces an off by one error at the edge, but it only happens
-        // when the timer is 32 bits and and ARR happens to hold its maximum value. I do
-        // it like this because using uint64_t would be much slower for a case that will almost
-        // never occur in any real usage. The maximum duty cycle is ARR + 1, hence the off
-        // by one at the boundary of 32 bits. The off by one error is a non factor regardless.
-        if (gnu_unlikely(handle->ARR == (is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX))) {
-            return handle->ARR;
-        } else {
-            return handle->ARR + 1;
-        }
-    }
-}
-
-static hal_err_t config_pwm_pin(board_pin_t gpio) {
+static inline hal_err_t config_pwm_pin(board_pin_t gpio) {
     TRY(gpiox_clk_enable(gpio.port, true));
     gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
     gpio_set_speed_mode(gpio.port, gpio.pin, GPIO_FULL_SPEED);
@@ -40,9 +22,11 @@ static hal_err_t config_pwm_pin(board_pin_t gpio) {
 }
 
 
-// Public API
-hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_config_t* config) {
-    if (handle == NULL || config == NULL || config->num_channels == 0 || config->num_channels > MAX_TIM1_CHANNELS) {
+// PWM output mode
+hal_err_t pwm_advanced_timer_init(TIM_TypeDef*                       handle,
+                                  const pwm_advanced_timer_config_t* config) {
+    if (handle == NULL || config == NULL || config->num_channels == 0 ||
+        config->num_channels > MAX_TIM1_CHANNELS) {
         return HAL_ERR_INVALID_ARG;
     }
 
@@ -60,7 +44,9 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     // Configure the dead time
     // Get the timer's input frequency from its bus and calculate the target tick rate
     const uint32_t timer_freq_hz = timer_get_frequency_hz(handle);
-    const uint32_t target        = (uint32_t)ceil_div_u64((uint64_t)config->dead_time_ns * timer_freq_hz, (1 << config->clk_div) * 1000000000ULL);
+    const uint32_t target =
+        (uint32_t)ceil_div_u64((uint64_t)config->dead_time_ns * timer_freq_hz,
+                               (1 << config->clk_div) * 1000000000ULL);
 
     // Get the actual value for the dead time generator
     uint8_t dtg = 0;
@@ -83,55 +69,91 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         return HAL_ERR_NOT_SUPPORTED;
     }
 
+    // Clear all residual state
+    TRY(pwm_deinit(handle));
+
     // Set the output compare PWM mode characteristics
     uint32_t ccmr1 = handle->CCMR1;
     uint32_t ccmr2 = handle->CCMR2;
     uint32_t ccer  = handle->CCER;
-    uint32_t bdtr  = handle->BDTR;
     uint32_t cr2   = handle->CR2;
 
-    // Configure the main and compementary PWM channels
+    // Configure the main and compementary PWM channels and zero out the capture compare registers
     for (size_t i = 0; i < config->num_channels; i++) {
-        const pwm_channel_t channel = config->channels[i].channel;
+        const timer_channel_t channel = config->channels[i].channel;
         switch (channel) {
-            case PWM_CHANNEL_1:
-                ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
+            case TIMER_CHANNEL_1:
+                ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE |
+                         (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
                 // Main channel
-                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC1E | TIM_CCER_CC1P) : (TIM_CCER_CC1E);
+                ccer |= config->channels[i].output_polarity
+                            ? (TIM_CCER_CC1E | TIM_CCER_CC1P)
+                            : (TIM_CCER_CC1E);
                 cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS1 : 0;
                 // Complementary channel
                 if (config->use_complementary_channels) {
-                    ccer |= config->complementary_channels[channel].invert_output ? (TIM_CCER_CC1NE | TIM_CCER_CC1NP) : (TIM_CCER_CC1NE);
-                    cr2 |= config->complementary_channels[channel].output_idle_state ? TIM_CR2_OIS1N : 0;
+                    ccer |=
+                        config->complementary_channels[channel].output_polarity
+                            ? (TIM_CCER_CC1NE | TIM_CCER_CC1NP)
+                            : (TIM_CCER_CC1NE);
+                    cr2 |= config->complementary_channels[channel]
+                                   .output_idle_state
+                               ? TIM_CR2_OIS1N
+                               : 0;
                 }
+                handle->CCR1 = 0;
                 break;
-            case PWM_CHANNEL_2:
-                ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
+            case TIMER_CHANNEL_2:
+                ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE |
+                         (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
                 // Main channel
-                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC2E | TIM_CCER_CC2P) : (TIM_CCER_CC2E);
+                ccer |= config->channels[i].output_polarity
+                            ? (TIM_CCER_CC2E | TIM_CCER_CC2P)
+                            : (TIM_CCER_CC2E);
                 cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS2 : 0;
                 // Complementary channel
                 if (config->use_complementary_channels) {
-                    ccer |= config->complementary_channels[channel].invert_output ? (TIM_CCER_CC2NE | TIM_CCER_CC2NP) : (TIM_CCER_CC2NE);
-                    cr2 |= config->complementary_channels[channel].output_idle_state ? TIM_CR2_OIS2N : 0;
+                    ccer |=
+                        config->complementary_channels[channel].output_polarity
+                            ? (TIM_CCER_CC2NE | TIM_CCER_CC2NP)
+                            : (TIM_CCER_CC2NE);
+                    cr2 |= config->complementary_channels[channel]
+                                   .output_idle_state
+                               ? TIM_CR2_OIS2N
+                               : 0;
                 }
+                handle->CCR2 = 0;
                 break;
-            case PWM_CHANNEL_3:
-                ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
+            case TIMER_CHANNEL_3:
+                ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE |
+                         (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
                 // Main channel
-                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC3E | TIM_CCER_CC3P) : (TIM_CCER_CC3E);
+                ccer |= config->channels[i].output_polarity
+                            ? (TIM_CCER_CC3E | TIM_CCER_CC3P)
+                            : (TIM_CCER_CC3E);
                 cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS3 : 0;
                 // Complementary channel
                 if (config->use_complementary_channels) {
-                    ccer |= config->complementary_channels[channel].invert_output ? (TIM_CCER_CC3NE | TIM_CCER_CC3NP) : (TIM_CCER_CC3NE);
-                    cr2 |= config->complementary_channels[channel].output_idle_state ? TIM_CR2_OIS3N : 0;
+                    ccer |=
+                        config->complementary_channels[channel].output_polarity
+                            ? (TIM_CCER_CC3NE | TIM_CCER_CC3NP)
+                            : (TIM_CCER_CC3NE);
+                    cr2 |= config->complementary_channels[channel]
+                                   .output_idle_state
+                               ? TIM_CR2_OIS3N
+                               : 0;
                 }
+                handle->CCR3 = 0;
                 break;
-            case PWM_CHANNEL_4:
-                ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
+            case TIMER_CHANNEL_4:
+                ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE |
+                         (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
                 // Main channel
-                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
+                ccer |= config->channels[i].output_polarity
+                            ? (TIM_CCER_CC4E | TIM_CCER_CC4P)
+                            : (TIM_CCER_CC4E);
                 cr2 |= config->channels[i].output_idle_state ? TIM_CR2_OIS4 : 0;
+                handle->CCR4 = 0;
                 // PWM channel 3 has no corresponding complementary channel
                 break;
             default:
@@ -141,24 +163,33 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         // Configure the physical GPIO pin for PWM alternate function on the main channel
         TRY(config_pwm_pin(config->channels[i].gpio_pin));
 
-        if (config->use_complementary_channels && (channel != PWM_CHANNEL_4)) {
+        if (config->use_complementary_channels &&
+            (channel != TIMER_CHANNEL_4)) {
             // Configure the physical GPIO pin for PWM alternate function on the complementary channel
-            TRY(config_pwm_pin(config->complementary_channels[channel].gpio_pin));
+            TRY(config_pwm_pin(
+                config->complementary_channels[channel].gpio_pin));
         }
     }
 
     // Configure the run and idle off-state selection of the channels and the write protection level
-    bdtr |= (config->ossi ? TIM_BDTR_OSSI : 0) | (config->ossr ? TIM_BDTR_OSSR : 0) | (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos) |
-            (uint32_t)(dtg << TIM_BDTR_DTG_Pos);
+    uint32_t bdtr = (config->ossi ? TIM_BDTR_OSSI : 0) |
+                    (config->ossr ? TIM_BDTR_OSSR : 0) |
+                    (uint32_t)(config->wp_level << TIM_BDTR_LOCK_Pos) |
+                    (uint32_t)(dtg << TIM_BDTR_DTG_Pos);
 
     // Configure the break input
     if (config->break_input.use_break_input) {
         // Enable the break input, set the polarity and auto re-arm status
-        bdtr |= TIM_BDTR_BKE | (config->break_input.active_low ? 0 : TIM_BDTR_BKP) | (config->break_input.auto_rearm ? TIM_BDTR_AOE : 0);
+        bdtr |= TIM_BDTR_BKE |
+                (config->break_input.active_low ? 0 : TIM_BDTR_BKP) |
+                (config->break_input.auto_rearm ? TIM_BDTR_AOE : 0);
 
         // Enable interrupts on a break event and register the break event callback
-        handle->DIER |= TIM_DIER_BIE;
-        TRY(timer_register_callback(handle, config->break_input.callback, config->break_input.user, BREAK_EVENT));
+        if (config->break_input.callback.cb) {
+            TRY(timer_register_callback(
+                handle, config->break_input.callback, TIMER_IRQ_BREAK_EVENT));
+            handle->DIER |= TIM_DIER_BIE;
+        }
 
         // Configure the physical break input GPIO pin
         const board_pin_t brk_gpio = config->break_input.gpio_pin;
@@ -166,9 +197,9 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
         gpio_set_alternate_function(brk_gpio.port, brk_gpio.pin, brk_gpio.af);
         gpio_set_speed_mode(brk_gpio.port, brk_gpio.pin, GPIO_FULL_SPEED);
         if (config->break_input.active_low) {
-            gpio_enable_pullups(brk_gpio.port, brk_gpio.pin, true);
+            gpio_enable_pullup(brk_gpio.port, brk_gpio.pin, true);
         } else {
-            gpio_enable_pulldowns(brk_gpio.port, brk_gpio.pin, true);
+            gpio_enable_pulldown(brk_gpio.port, brk_gpio.pin, true);
         }
     }
 
@@ -180,7 +211,9 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
 
     // Set the timer's counting mode, and enable auto-reload register buffering,
     // interrupts only on update events and set the repition counter.
-    handle->CR1 |= (config->pwm_count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) | TIM_CR1_ARPE | TIM_CR1_URS);
+    handle->CR1 |= (config->pwm_count_mode |
+                    (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) |
+                    TIM_CR1_ARPE | TIM_CR1_URS);
     handle->RCR = config->repetition_cnt;
 
     // Configre the BDTR last, since the write protection could lock us out from modifying any of the other registers
@@ -189,242 +222,186 @@ hal_err_t pwm_advanced_timer_init(TIM_TypeDef* handle, const pwm_advanced_timer_
     return HAL_OK;
 }
 
-hal_err_t pwm_gp_timer_init(TIM_TypeDef* handle, const pwm_gp_timer_config_t* config) {
-    if (handle == NULL || config == NULL || config->num_channels == 0) {
+hal_err_t pwm_gp_timer_init(TIM_TypeDef*                 handle,
+                            const pwm_gp_timer_config_t* config) {
+    if (handle == NULL || config == NULL) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    const output_compare_config_t pwm_cfg = {
+        .buffer_compare_reload = true,
+        .mode                  = (output_compare_mode_t)config->pwm_mode,
+        .count_mode            = config->pwm_count_mode,
+        .channels =
+            {
+                config->channels[0],
+                config->channels[1],
+                config->channels[2],
+                config->channels[3],
+            },
+        .num_channels = config->num_channels,
+        .callback     = {},
+    };
+    return output_compare_init(handle, &pwm_cfg);
+}
+
+hal_err_t pwm_deinit(TIM_TypeDef* handle) {
+    return output_compare_deinit(handle);
+}
+
+hal_err_t pwm_start(TIM_TypeDef* handle,
+                    uint32_t     frequency_hz,
+                    uint32_t*    max_duty_cycle) {
+    return output_compare_start(handle, frequency_hz, max_duty_cycle);
+}
+
+hal_err_t pwm_set_duty_cycle(TIM_TypeDef*    handle,
+                             timer_channel_t channel,
+                             uint32_t        duty_cycle) {
+    return output_compare_set_compare(handle, channel, duty_cycle);
+}
+
+hal_err_t pwm_freeze_timer(TIM_TypeDef* handle) {
+    return output_compare_freeze_timer(handle);
+}
+
+hal_err_t pwm_unfreeze_timer(TIM_TypeDef* handle) {
+    return output_compare_unfreeze_timer(handle);
+}
+
+hal_err_t pwm_pause_channel(TIM_TypeDef* handle, timer_channel_t channel) {
+    return output_compare_pause_channel(handle, channel);
+}
+
+hal_err_t pwm_resume_channel(TIM_TypeDef* handle, timer_channel_t channel) {
+    return output_compare_resume_channel(handle, channel);
+}
+
+hal_err_t pwm_pause_complementary_channel(TIM_TypeDef*    handle,
+                                          timer_channel_t channel) {
+    if (!is_timer_advanced(handle) || channel > TIMER_CHANNEL_3) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    handle->CCER &= ~(1UL << ((channel * 4) + 2));
+    return HAL_OK;
+}
+
+hal_err_t pwm_resume_complementary_channel(TIM_TypeDef*    handle,
+                                           timer_channel_t channel) {
+    if (!is_timer_advanced(handle) || channel > TIMER_CHANNEL_3) {
+        return HAL_ERR_INVALID_ARG;
+    }
+    handle->CCER |= (1UL << ((channel * 4) + 2));
+    return HAL_OK;
+}
+
+
+// PWM input mode
+hal_err_t pwm_input_init(TIM_TypeDef*              handle,
+                         const pwm_input_config_t* config) {
+    if (handle == NULL || config == NULL || config->timer_prescaler == 0 ||
+        config->count_mode > TIMER_COUNTER_DIR_DOWN) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // TIM9-TIM11 only support upcounting edge aligned upcounting
-    // TIM1-TIM5 all have 4 main PWM channels, TIM9 has 2 and TIM10-TIM11 have 1 each
-    if (((handle == TIM9 || handle == TIM10 || handle == TIM11) && (config->pwm_count_mode != PWM_EDGE_ALIGNED_UPCOUNTING)) ||
-        ((handle == TIM1 || handle == TIM2 || handle == TIM3 || handle == TIM4 || handle == TIM5) && (config->num_channels > MAX_TIM1_CHANNELS)) ||
-        ((handle == TIM9) && (config->num_channels > MAX_TIM9_CHANNELS)) ||
-        ((handle == TIM10 || handle == TIM11) && (config->num_channels > MAX_TIM10_CHANNELS))) {
-        return HAL_ERR_INVALID_ARG;
+    if (is_timer_extra_lite(handle)) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
 
-    // Refer to pwm_advanced_timer_init(...) for the explanation for this
+    // Refer to pwm_advanced_timer_init(...) (drivers/pwm.c) for the explanation for this
     if (is_timer_advanced(handle) && (handle->BDTR & TIM_BDTR_LOCK)) {
         return HAL_ERR_INVALID_STATE;
     }
 
-    // Set the output compare PWM mode characteristics
-    uint32_t ccmr1 = handle->CCMR1;
-    uint32_t ccmr2 = handle->CCMR2;
-    uint32_t ccer  = handle->CCER;
+    // Clear all residual state
+    TRY(pwm_input_deinit(handle));
 
-    for (size_t i = 0; i < config->num_channels; i++) {
-        // Configure the channel in the CCMRx register
-        switch (config->channels[i].channel) {
-            case PWM_CHANNEL_1:
-                ccmr1 |= (0b00U << TIM_CCMR1_CC1S_Pos) | TIM_CCMR1_OC1PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC1M_Pos);
-                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC1E | TIM_CCER_CC1P) : (TIM_CCER_CC1E);
-                break;
-            case PWM_CHANNEL_2:
-                ccmr1 |= (0b00U << TIM_CCMR1_CC2S_Pos) | TIM_CCMR1_OC2PE | (uint32_t)(config->pwm_mode << TIM_CCMR1_OC2M_Pos);
-                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC2E | TIM_CCER_CC2P) : (TIM_CCER_CC2E);
-                break;
-            case PWM_CHANNEL_3:
-                ccmr2 |= (0b00U << TIM_CCMR2_CC3S_Pos) | TIM_CCMR2_OC3PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC3M_Pos);
-                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC3E | TIM_CCER_CC3P) : (TIM_CCER_CC3E);
-                break;
-            case PWM_CHANNEL_4:
-                ccmr2 |= (0b00U << TIM_CCMR2_CC4S_Pos) | TIM_CCMR2_OC4PE | (uint32_t)(config->pwm_mode << TIM_CCMR2_OC4M_Pos);
-                ccer |= config->channels[i].invert_output ? (TIM_CCER_CC4E | TIM_CCER_CC4P) : (TIM_CCER_CC4E);
-                break;
-            default:
-                return HAL_ERR_INVALID_ARG;
-        }
+    // Calculate the digital filter code
+    uint32_t filter_code = 0;
+    TRY(timer_filter_ns_to_ic_code(
+        handle, config->clk_div, config->filter_ns, &filter_code));
 
-        // Configure the physical GPIO pin for PWM alternate function on the main channel
-        TRY(config_pwm_pin(config->channels[i].gpio_pin));
+    // Configure the first input capture channel to get the rising edges and the second
+    // input capture channel to get the falling edges from the first physical channel
+    handle->CCMR1 |=
+        (0b01U << TIM_CCMR1_CC1S_Pos) | (filter_code << TIM_CCMR1_IC1F_Pos) |
+        (uint32_t)(IC_PRESCALER_DIV_1 << TIM_CCMR1_IC1PSC_Pos) |
+        (0b10U << TIM_CCMR1_CC2S_Pos) | (filter_code << TIM_CCMR1_IC2F_Pos) |
+        (uint32_t)(IC_PRESCALER_DIV_1 << TIM_CCMR1_IC2PSC_Pos);
+    handle->CCER |= (TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC2P);
+
+    // COnfigure the slave controller to reset mode, and feed the trigger from the first input capture channel
+    handle->SMCR |= (0b100U << TIM_SMCR_SMS_Pos) | (0b101U << TIM_SMCR_TS_Pos);
+
+    if (config->callback.cb != NULL) {
+        TRY(timer_register_callback(
+            handle, config->callback, TIMER_IRQ_CAPTURE_COMPARE));
+        handle->DIER |= TIM_DIER_CC1IE | TIM_DIER_CC2IE;
     }
 
-    // Final writeback
-    handle->CCMR1 = ccmr1;
-    handle->CCMR2 = ccmr2;
-    handle->CCER  = ccer;
+    // Since the counter should be free running, the maximum reload value is used
+    handle->ARR = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
+    handle->PSC = config->timer_prescaler - 1;
 
-    // Set the timer's counting mode, and enable auto-reload register buffering and interrupts only on update events
-    handle->CR1 |= (config->pwm_count_mode | TIM_CR1_ARPE | TIM_CR1_URS);
+    // Set the timer's counting mode, apply the clock divider, and enable auto-reload register buffering
+    handle->CR1 |=
+        (config->count_mode | (uint32_t)(config->clk_div << TIM_CR1_CKD_Pos) |
+         TIM_CR1_ARPE);
 
-    return HAL_OK;
-}
-
-hal_err_t pwm_deinit(TIM_TypeDef* handle) {
-    TRY(timer_deinit(handle));
-    return HAL_OK;
-}
-
-hal_err_t pwm_start(TIM_TypeDef* handle, uint32_t frequency_hz, uint32_t* max_duty_cycle) {
-    if (handle == NULL || frequency_hz == 0 || max_duty_cycle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    const uint32_t timer_freq_hz = timer_get_frequency_hz(handle);
-    if (frequency_hz > timer_freq_hz) {
-        return HAL_ERR_NOT_SUPPORTED;
-    }
-
-    // Get the denominator as it has different meanings depending on whether its center or edge aligned PWM
-    const uint32_t total_ticks_per_period = ((2 * timer_freq_hz) + frequency_hz) / (2 * frequency_hz);
-
-    // Get the maximum width of the auto-reload register since it varies per timer
-    const uint32_t max_arr        = is_timer_32_bits(handle) ? UINT32_MAX : UINT16_MAX;
-    const uint64_t max_arr_plus_1 = (uint64_t)max_arr + 1;
-
-    // Compute suitable auto-reload and prescaler values
-    uint64_t psc_plus_1 = 0;
-    uint64_t arr_plus_1 = 0;
-
-    // Ceiling division is used to get the minimum PSC value possible
-    // Then a plain rounding integer division is used to find the leftover
-    if (handle->CR1 & TIM_CR1_CMS) {
-        // Center aligned PWM
-        // The denominator is equal to 2 * (PSC + 1) * ARR, so we divide by (2 * ARR), where ARR is max_arr
-        psc_plus_1 = ceil_div_u64(total_ticks_per_period, 2ULL * max_arr);
-        // Then divide by 2 * (PSC + 1), where (PSC + 1) is the just gotten psc_plus_1
-        arr_plus_1 = round_div_u64(total_ticks_per_period, 2ULL * psc_plus_1) + 1;
-    } else {
-        // Edge aligned PWM
-        // The denominator is equal to (PSC + 1) * (ARR + 1), so we divide by (ARR + 1), where (ARR + 1) is max_arr_plus_1
-        psc_plus_1 = ceil_div_u64(total_ticks_per_period, max_arr_plus_1);
-        // Then divide by (PSC + 1), where (PSC + 1) is the just gotten psc_plus_1
-        arr_plus_1 = round_div_u64(total_ticks_per_period, psc_plus_1);
-    }
-
-    // Bounds check the prescaler and reload values
-    if ((psc_plus_1 > (UINT16_MAX + 1)) || (arr_plus_1 > max_arr_plus_1)) {
-        return HAL_ERR_NOT_SUPPORTED; // Frequency too low for timer clock
-    }
-
-    // Freeze the timer's output before writing to any of its registers
-    TRY(pwm_freeze_timer(handle));
-
-    // Set the actual reload and prescaler values
-    handle->ARR = (uint32_t)(arr_plus_1 - 1);
-    handle->PSC = (uint32_t)(psc_plus_1 - 1);
-
-    // Set all channels' duty cycles to 0 since starting afresh with a new frequency
-    handle->CCR1 = 0;
-    handle->CCR2 = 0;
-    handle->CCR3 = 0;
-    handle->CCR4 = 0;
-
-    // Generate an update event after modifying the auto reload and prescaler registers
+    // Generate an update event so the timer's internal registers start afresh, and clear the update status flag
     handle->EGR = TIM_EGR_UG;
     handle->SR  = ~TIM_SR_UIF;
 
-    // Enable the timer's output
-    TRY(pwm_unfreeze_timer(handle));
+    // Configure the input PWM pin
+    const board_pin_t gpio = config->gpio_pin;
+    TRY(gpiox_clk_enable(gpio.port, true));
+    gpio_set_alternate_function(gpio.port, gpio.pin, gpio.af);
+    gpio_set_speed_mode(gpio.port, gpio.pin, GPIO_FULL_SPEED);
 
-    // Derive the maximum duty cycle from the auto-reload register
-    *max_duty_cycle = get_max_duty_cycle(handle);
-
-    return HAL_OK;
-}
-
-hal_err_t pwm_set_duty_cycle(TIM_TypeDef* handle, pwm_channel_t channel, uint32_t duty_cycle) {
-    if (handle == NULL || duty_cycle > get_max_duty_cycle(handle)) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    switch (channel) {
-        case PWM_CHANNEL_1:
-            handle->CCR1 = duty_cycle;
-            break;
-        case PWM_CHANNEL_2:
-            handle->CCR2 = duty_cycle;
-            break;
-        case PWM_CHANNEL_3:
-            handle->CCR3 = duty_cycle;
-            break;
-        case PWM_CHANNEL_4:
-            handle->CCR4 = duty_cycle;
-            break;
-        default:
-            return HAL_ERR_INVALID_ARG;
+    if (config->pull == TIMER_USE_PULLUP) {
+        gpio_enable_pullup(gpio.port, gpio.pin, true);
+    } else if (config->pull == TIMER_USE_PULLDOWN) {
+        gpio_enable_pulldown(gpio.port, gpio.pin, true);
+    } else {
+        gpio_enable_pullup(gpio.port, gpio.pin, false);
     }
 
     return HAL_OK;
 }
 
-hal_err_t pwm_freeze_timer(TIM_TypeDef* handle) {
-    if (handle == NULL) {
+hal_err_t pwm_input_deinit(TIM_TypeDef* handle) {
+    return pwm_deinit(handle);
+}
+
+hal_err_t pwm_input_start(TIM_TypeDef* handle) {
+    return timer_start_counter(handle);
+}
+
+hal_err_t pwm_input_stop(TIM_TypeDef* handle) {
+    return timer_stop_counter(handle);
+}
+
+hal_err_t pwm_input_get_data(TIM_TypeDef* handle, pwm_input_data_t* data) {
+    if (handle == NULL || data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Freeze the counter and disable the timer's main output
-    if (is_timer_advanced(handle)) {
-        handle->BDTR &= ~TIM_BDTR_MOE;
+    // To be called from the ISR after the capture
+    // compare interrupts for both channels have fired
+
+    if (is_timer_extra_lite(handle)) {
+        return HAL_ERR_NOT_SUPPORTED;
     }
-    handle->CR1 &= ~TIM_CR1_CEN;
+
+    // Loop till we get consistent reads
+    do {
+        data->period = handle->CCR1;
+        data->pulse  = handle->CCR2;
+    } while (data->period != handle->CCR1);
 
     return HAL_OK;
 }
 
-hal_err_t pwm_unfreeze_timer(TIM_TypeDef* handle) {
-    if (handle == NULL) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    // Unfreeze the counter and enable the timer's main output
-    if (is_timer_advanced(handle)) {
-        handle->BDTR |= TIM_BDTR_MOE;
-    }
-    handle->CR1 |= TIM_CR1_CEN;
-
-    return HAL_OK;
-}
-
-hal_err_t pwm_pause_channel(TIM_TypeDef* handle, pwm_channel_t channel) {
-    if (handle == NULL || channel > PWM_CHANNEL_4) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    // Disable the channel's output
-    switch (channel) {
-        case PWM_CHANNEL_1:
-            handle->CCER &= ~(is_timer_advanced(handle) ? (TIM_CCER_CC1E | TIM_CCER_CC1NE) : TIM_CCER_CC1E);
-            break;
-        case PWM_CHANNEL_2:
-            handle->CCER &= ~(is_timer_advanced(handle) ? (TIM_CCER_CC2E | TIM_CCER_CC2NE) : TIM_CCER_CC2E);
-            break;
-        case PWM_CHANNEL_3:
-            handle->CCER &= ~(is_timer_advanced(handle) ? (TIM_CCER_CC3E | TIM_CCER_CC3NE) : TIM_CCER_CC3E);
-            break;
-        case PWM_CHANNEL_4:
-            handle->CCER &= ~TIM_CCER_CC4E;
-            break;
-        default:
-            return HAL_ERR_INVALID_ARG;
-    }
-
-    return HAL_OK;
-}
-
-hal_err_t pwm_resume_channel(TIM_TypeDef* handle, pwm_channel_t channel) {
-    if (handle == NULL || channel > PWM_CHANNEL_4) {
-        return HAL_ERR_INVALID_ARG;
-    }
-
-    // Enable the channel's output
-    switch (channel) {
-        case PWM_CHANNEL_1:
-            handle->CCER |= (is_timer_advanced(handle) ? (TIM_CCER_CC1E | TIM_CCER_CC1NE) : TIM_CCER_CC1E);
-            break;
-        case PWM_CHANNEL_2:
-            handle->CCER |= (is_timer_advanced(handle) ? (TIM_CCER_CC2E | TIM_CCER_CC2NE) : TIM_CCER_CC2E);
-            break;
-        case PWM_CHANNEL_3:
-            handle->CCER |= (is_timer_advanced(handle) ? (TIM_CCER_CC3E | TIM_CCER_CC3NE) : TIM_CCER_CC3E);
-            break;
-        case PWM_CHANNEL_4:
-            handle->CCER |= TIM_CCER_CC4E;
-            break;
-        default:
-            return HAL_ERR_INVALID_ARG;
-    }
-
-    return HAL_OK;
+hal_err_t pwm_input_get_timer_frequency(TIM_TypeDef* handle,
+                                        uint32_t*    frequency_hz) {
+    return input_capture_get_timer_frequency(handle, frequency_hz);
 }

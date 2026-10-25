@@ -71,7 +71,11 @@
   
  */
 
-void arm_fir_init_q31(arm_fir_instance_q31* S, uint16_t numTaps, const q31_t* pCoeffs, q31_t* pState, uint32_t blockSize) {
+void arm_fir_init_q31(arm_fir_instance_q31* S,
+                      uint16_t              numTaps,
+                      const q31_t*          pCoeffs,
+                      q31_t*                pState,
+                      uint32_t              blockSize) {
     /* Assign filter taps */
     S->numTaps = numTaps;
 
@@ -80,7 +84,10 @@ void arm_fir_init_q31(arm_fir_instance_q31* S, uint16_t numTaps, const q31_t* pC
 
 /* Clear state buffer. The size is always (blockSize + numTaps - 1) */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-    memset(pState, 0, (numTaps + (blockSize - 1U) + 2 * ROUND_UP(blockSize, 4)) * sizeof(q31_t));
+    memset(pState,
+           0,
+           (numTaps + (blockSize - 1U) + 2 * ROUND_UP(blockSize, 4)) *
+               sizeof(q31_t));
 #else
     memset(pState, 0, (numTaps + (blockSize - 1U)) * sizeof(q31_t));
 #endif

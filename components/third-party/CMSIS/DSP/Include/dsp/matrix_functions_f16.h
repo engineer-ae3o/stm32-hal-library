@@ -57,7 +57,9 @@ typedef struct {
    * @return     The function returns either
    * <code>ARM_MATH_SIZE_MISMATCH</code> or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_add_f16(const arm_matrix_instance_f16* pSrcA, const arm_matrix_instance_f16* pSrcB, arm_matrix_instance_f16* pDst);
+arm_status arm_mat_add_f16(const arm_matrix_instance_f16* pSrcA,
+                           const arm_matrix_instance_f16* pSrcB,
+                           arm_matrix_instance_f16*       pDst);
 
 /**
    * @brief Floating-point, complex, matrix multiplication.
@@ -67,7 +69,9 @@ arm_status arm_mat_add_f16(const arm_matrix_instance_f16* pSrcA, const arm_matri
    * @return     The function returns either
    * <code>ARM_MATH_SIZE_MISMATCH</code> or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_cmplx_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matrix_instance_f16* pSrcB, arm_matrix_instance_f16* pDst);
+arm_status arm_mat_cmplx_mult_f16(const arm_matrix_instance_f16* pSrcA,
+                                  const arm_matrix_instance_f16* pSrcB,
+                                  arm_matrix_instance_f16*       pDst);
 
 /**
    * @brief Floating-point matrix transpose.
@@ -76,7 +80,8 @@ arm_status arm_mat_cmplx_mult_f16(const arm_matrix_instance_f16* pSrcA, const ar
    * @return    The function returns either  <code>ARM_MATH_SIZE_MISMATCH</code>
    * or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_trans_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_instance_f16* pDst);
+arm_status arm_mat_trans_f16(const arm_matrix_instance_f16* pSrc,
+                             arm_matrix_instance_f16*       pDst);
 
 /**
    * @brief Floating-point complex matrix transpose.
@@ -85,7 +90,8 @@ arm_status arm_mat_trans_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_ins
    * @return    The function returns either  <code>ARM_MATH_SIZE_MISMATCH</code>
    * or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_cmplx_trans_f16(const arm_matrix_instance_f16* pSrc, arm_matrix_instance_f16* pDst);
+arm_status arm_mat_cmplx_trans_f16(const arm_matrix_instance_f16* pSrc,
+                                   arm_matrix_instance_f16*       pDst);
 
 /**
    * @brief Floating-point matrix multiplication
@@ -95,14 +101,18 @@ arm_status arm_mat_cmplx_trans_f16(const arm_matrix_instance_f16* pSrc, arm_matr
    * @return     The function returns either
    * <code>ARM_MATH_SIZE_MISMATCH</code> or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA, const arm_matrix_instance_f16* pSrcB, arm_matrix_instance_f16* pDst);
+arm_status arm_mat_mult_f16(const arm_matrix_instance_f16* pSrcA,
+                            const arm_matrix_instance_f16* pSrcB,
+                            arm_matrix_instance_f16*       pDst);
 /**
    * @brief Floating-point matrix and vector multiplication
    * @param[in]  pSrcMat  points to the input matrix structure
    * @param[in]  pVec     points to vector
    * @param[out] pDst     points to output vector
    */
-void arm_mat_vec_mult_f16(const arm_matrix_instance_f16* pSrcMat, const float16_t* pVec, float16_t* pDst);
+void arm_mat_vec_mult_f16(const arm_matrix_instance_f16* pSrcMat,
+                          const float16_t*               pVec,
+                          float16_t*                     pDst);
 
 /**
    * @brief Floating-point matrix subtraction
@@ -112,7 +122,9 @@ void arm_mat_vec_mult_f16(const arm_matrix_instance_f16* pSrcMat, const float16_
    * @return     The function returns either
    * <code>ARM_MATH_SIZE_MISMATCH</code> or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_sub_f16(const arm_matrix_instance_f16* pSrcA, const arm_matrix_instance_f16* pSrcB, arm_matrix_instance_f16* pDst);
+arm_status arm_mat_sub_f16(const arm_matrix_instance_f16* pSrcA,
+                           const arm_matrix_instance_f16* pSrcB,
+                           arm_matrix_instance_f16*       pDst);
 
 /**
    * @brief Floating-point matrix scaling.
@@ -122,7 +134,9 @@ arm_status arm_mat_sub_f16(const arm_matrix_instance_f16* pSrcA, const arm_matri
    * @return     The function returns either
    * <code>ARM_MATH_SIZE_MISMATCH</code> or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
-arm_status arm_mat_scale_f16(const arm_matrix_instance_f16* pSrc, float16_t scale, arm_matrix_instance_f16* pDst);
+arm_status arm_mat_scale_f16(const arm_matrix_instance_f16* pSrc,
+                             float16_t                      scale,
+                             arm_matrix_instance_f16*       pDst);
 
 /**
    * @brief  Floating-point matrix initialization.
@@ -131,7 +145,10 @@ arm_status arm_mat_scale_f16(const arm_matrix_instance_f16* pSrc, float16_t scal
    * @param[in]     nColumns  number of columns in the matrix.
    * @param[in]     pData     points to the matrix data array.
    */
-void arm_mat_init_f16(arm_matrix_instance_f16* S, uint16_t nRows, uint16_t nColumns, float16_t* pData);
+void arm_mat_init_f16(arm_matrix_instance_f16* S,
+                      uint16_t                 nRows,
+                      uint16_t                 nColumns,
+                      float16_t*               pData);
 
 
 /**
@@ -141,7 +158,8 @@ void arm_mat_init_f16(arm_matrix_instance_f16* S, uint16_t nRows, uint16_t nColu
    * @return The function returns ARM_MATH_SIZE_MISMATCH, if the dimensions do not match.
    * If the input matrix is singular (does not have an inverse), then the algorithm terminates and returns error status ARM_MATH_SINGULAR.
    */
-arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* src, arm_matrix_instance_f16* dst);
+arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* src,
+                               arm_matrix_instance_f16*       dst);
 
 
 /**
@@ -153,7 +171,8 @@ arm_status arm_mat_inverse_f16(const arm_matrix_instance_f16* src, arm_matrix_in
    * If the matrix is ill conditioned or only semi-definite, then it is better using the LDL^t decomposition.
    * The decomposition is returning a lower triangular matrix.
    */
-arm_status arm_mat_cholesky_f16(const arm_matrix_instance_f16* src, arm_matrix_instance_f16* dst);
+arm_status arm_mat_cholesky_f16(const arm_matrix_instance_f16* src,
+                                arm_matrix_instance_f16*       dst);
 
 /**
    * @brief Solve UT . X = A where UT is an upper triangular matrix
@@ -162,7 +181,9 @@ arm_status arm_mat_cholesky_f16(const arm_matrix_instance_f16* src, arm_matrix_i
    * @param[out] dst The solution X of UT . X = A
    * @return The function returns ARM_MATH_SINGULAR, if the system can't be solved.
   */
-arm_status arm_mat_solve_upper_triangular_f16(const arm_matrix_instance_f16* ut, const arm_matrix_instance_f16* a, arm_matrix_instance_f16* dst);
+arm_status arm_mat_solve_upper_triangular_f16(const arm_matrix_instance_f16* ut,
+                                              const arm_matrix_instance_f16* a,
+                                              arm_matrix_instance_f16* dst);
 
 /**
    * @brief Solve LT . X = A where LT is a lower triangular matrix
@@ -171,7 +192,9 @@ arm_status arm_mat_solve_upper_triangular_f16(const arm_matrix_instance_f16* ut,
    * @param[out] dst The solution X of LT . X = A
    * @return The function returns ARM_MATH_SINGULAR, if the system can't be solved.
    */
-arm_status arm_mat_solve_lower_triangular_f16(const arm_matrix_instance_f16* lt, const arm_matrix_instance_f16* a, arm_matrix_instance_f16* dst);
+arm_status arm_mat_solve_lower_triangular_f16(const arm_matrix_instance_f16* lt,
+                                              const arm_matrix_instance_f16* a,
+                                              arm_matrix_instance_f16* dst);
 
 
 #endif /*defined(ARM_FLOAT16_SUPPORTED)*/

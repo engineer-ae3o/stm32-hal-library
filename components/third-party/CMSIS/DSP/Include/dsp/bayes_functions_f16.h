@@ -65,10 +65,11 @@ typedef struct {
  */
 
 
-uint32_t arm_gaussian_naive_bayes_predict_f16(const arm_gaussian_naive_bayes_instance_f16* S,
-                                              const float16_t*                             in,
-                                              float16_t*                                   pOutputProbabilities,
-                                              float16_t*                                   pBufferB);
+uint32_t arm_gaussian_naive_bayes_predict_f16(
+    const arm_gaussian_naive_bayes_instance_f16* S,
+    const float16_t*                             in,
+    float16_t*                                   pOutputProbabilities,
+    float16_t*                                   pBufferB);
 
 #endif /*defined(ARM_FLOAT16_SUPPORTED)*/
 #ifdef __cplusplus

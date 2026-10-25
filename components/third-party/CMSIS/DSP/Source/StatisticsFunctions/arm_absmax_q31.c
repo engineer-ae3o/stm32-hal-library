@@ -49,7 +49,10 @@
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "arm_helium_utils.h"
-void arm_absmax_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult, uint32_t* pIndex) {
+void arm_absmax_q31(const q31_t* pSrc,
+                    uint32_t     blockSize,
+                    q31_t*       pResult,
+                    uint32_t*    pIndex) {
     int32_t      blkCnt; /* loop counters */
     q31x4_t      extremValVec = vdupq_n_s32(Q31_ABSMIN);
     q31_t        maxValue     = Q31_ABSMIN;
@@ -95,44 +98,59 @@ void arm_absmax_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult, uint3
 }
 #else
 #if defined(ARM_MATH_DSP)
-void arm_absmax_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult, uint32_t* pIndex) {
-    q31_t    cur_absmax, out;  /* Temporary variables to store the output value. */
+void arm_absmax_q31(const q31_t* pSrc,
+                    uint32_t     blockSize,
+                    q31_t*       pResult,
+                    uint32_t*    pIndex) {
+    q31_t cur_absmax, out; /* Temporary variables to store the output value. */
     uint32_t blkCnt, outIndex; /* Loop counter */
     uint32_t index;            /* index of maximum value */
 
     /* Initialize index value to zero. */
-    outIndex = 0U; /* Load first input value that act as reference value for comparision */
-    out      = *pSrc++;
-    out      = (out > 0) ? out : (q31_t)__QSUB(0, out); /* Initialize index of extrema value. */
-    index    = 0U;
+    outIndex =
+        0U; /* Load first input value that act as reference value for comparision */
+    out = *pSrc++;
+    out = (out > 0)
+              ? out
+              : (q31_t)__QSUB(0, out); /* Initialize index of extrema value. */
+    index = 0U;
 
     /* Loop unrolling: Compute 4 outputs at a time */
     blkCnt = (blockSize - 1U) >> 2U;
 
-    while (blkCnt > 0U) { /* Initialize cur_absmax to next consecutive values one by one */
+    while (
+        blkCnt >
+        0U) { /* Initialize cur_absmax to next consecutive values one by one */
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q31_t)__QSUB(0, cur_absmax); /* compare for the extrema value */
-        if (cur_absmax > out) {                                                    /* Update the extrema value and it's index */
+        cur_absmax =
+            (cur_absmax > 0)
+                ? cur_absmax
+                : (q31_t)__QSUB(0,
+                                cur_absmax); /* compare for the extrema value */
+        if (cur_absmax > out) { /* Update the extrema value and it's index */
             out      = cur_absmax;
             outIndex = index + 1U;
         }
 
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q31_t)__QSUB(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q31_t)__QSUB(0, cur_absmax);
         if (cur_absmax > out) {
             out      = cur_absmax;
             outIndex = index + 2U;
         }
 
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q31_t)__QSUB(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q31_t)__QSUB(0, cur_absmax);
         if (cur_absmax > out) {
             out      = cur_absmax;
             outIndex = index + 3U;
         }
 
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q31_t)__QSUB(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q31_t)__QSUB(0, cur_absmax);
         if (cur_absmax > out) {
             out      = cur_absmax;
             outIndex = index + 4U;
@@ -150,7 +168,8 @@ void arm_absmax_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult, uint3
 
     while (blkCnt > 0U) {
         cur_absmax = *pSrc++;
-        cur_absmax = (cur_absmax > 0) ? cur_absmax : (q31_t)__QSUB(0, cur_absmax);
+        cur_absmax =
+            (cur_absmax > 0) ? cur_absmax : (q31_t)__QSUB(0, cur_absmax);
         if (cur_absmax > out) {
             out      = cur_absmax;
             outIndex = blockSize - blkCnt;
@@ -165,8 +184,11 @@ void arm_absmax_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult, uint3
     *pIndex  = outIndex;
 }
 #else
-void arm_absmax_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult, uint32_t* pIndex) {
-    q31_t    maxVal, out;      /* Temporary variables to store the output value. */
+void arm_absmax_q31(const q31_t* pSrc,
+                    uint32_t     blockSize,
+                    q31_t*       pResult,
+                    uint32_t*    pIndex) {
+    q31_t    maxVal, out; /* Temporary variables to store the output value. */
     uint32_t blkCnt, outIndex; /* Loop counter */
 
 
@@ -181,7 +203,8 @@ void arm_absmax_q31(const q31_t* pSrc, uint32_t blockSize, q31_t* pResult, uint3
 
     while (blkCnt > 0U) {
         /* Initialize maxVal to the next consecutive values one by one */
-        maxVal = (*pSrc > 0) ? *pSrc : ((*pSrc == INT32_MIN) ? INT32_MAX : -*pSrc);
+        maxVal =
+            (*pSrc > 0) ? *pSrc : ((*pSrc == INT32_MIN) ? INT32_MAX : -*pSrc);
         pSrc++;
 
         /* compare for the maximum value */

@@ -29,15 +29,18 @@
 #include "dsp/transform_functions.h"
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
-void stage_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut) {
-    int32_t          k;                        /* Loop Counter */
-    float32_t        twR, twI;                 /* RFFT Twiddle coefficients */
-    const float32_t* pCoeff = S->pTwiddleRFFT; /* Points to RFFT Twiddle factors */
-    float32_t*       pA     = p;               /* increasing pointer */
-    float32_t*       pB     = p;               /* decreasing pointer */
-    float32_t        xAR, xAI, xBR, xBI;       /* temporary variables */
-    float32_t        t1a, t1b;                 /* temporary variables */
-    float32_t        p0, p1, p2, p3;           /* temporary variables */
+void stage_rfft_f32(const arm_rfft_fast_instance_f32* S,
+                    float32_t*                        p,
+                    float32_t*                        pOut) {
+    int32_t          k;        /* Loop Counter */
+    float32_t        twR, twI; /* RFFT Twiddle coefficients */
+    const float32_t* pCoeff =
+        S->pTwiddleRFFT;           /* Points to RFFT Twiddle factors */
+    float32_t* pA = p;             /* increasing pointer */
+    float32_t* pB = p;             /* decreasing pointer */
+    float32_t  xAR, xAI, xBR, xBI; /* temporary variables */
+    float32_t  t1a, t1b;           /* temporary variables */
+    float32_t  p0, p1, p2, p3;     /* temporary variables */
 
     float32x4x2_t tw, xA, xB;
     float32x4x2_t tmp1, tmp2, res;
@@ -182,14 +185,17 @@ void stage_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t
 }
 
 /* Prepares data for inverse cfft */
-void merge_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut) {
-    int32_t          k;                        /* Loop Counter */
-    float32_t        twR, twI;                 /* RFFT Twiddle coefficients */
-    const float32_t* pCoeff = S->pTwiddleRFFT; /* Points to RFFT Twiddle factors */
-    float32_t*       pA     = p;               /* increasing pointer */
-    float32_t*       pB     = p;               /* decreasing pointer */
-    float32_t        xAR, xAI, xBR, xBI;       /* temporary variables */
-    float32_t        t1a, t1b, r, s, t, u;     /* temporary variables */
+void merge_rfft_f32(const arm_rfft_fast_instance_f32* S,
+                    float32_t*                        p,
+                    float32_t*                        pOut) {
+    int32_t          k;        /* Loop Counter */
+    float32_t        twR, twI; /* RFFT Twiddle coefficients */
+    const float32_t* pCoeff =
+        S->pTwiddleRFFT;             /* Points to RFFT Twiddle factors */
+    float32_t* pA = p;               /* increasing pointer */
+    float32_t* pB = p;               /* decreasing pointer */
+    float32_t  xAR, xAI, xBR, xBI;   /* temporary variables */
+    float32_t  t1a, t1b, r, s, t, u; /* temporary variables */
 
     float32x4x2_t tw, xA, xB;
     float32x4x2_t tmp1, tmp2, res;
@@ -294,15 +300,18 @@ void merge_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t
     }
 }
 #else
-void stage_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut) {
-    int32_t          k;                        /* Loop Counter */
-    float32_t        twR, twI;                 /* RFFT Twiddle coefficients */
-    const float32_t* pCoeff = S->pTwiddleRFFT; /* Points to RFFT Twiddle factors */
-    float32_t*       pA     = p;               /* increasing pointer */
-    float32_t*       pB     = p;               /* decreasing pointer */
-    float32_t        xAR, xAI, xBR, xBI;       /* temporary variables */
-    float32_t        t1a, t1b;                 /* temporary variables */
-    float32_t        p0, p1, p2, p3;           /* temporary variables */
+void stage_rfft_f32(const arm_rfft_fast_instance_f32* S,
+                    float32_t*                        p,
+                    float32_t*                        pOut) {
+    int32_t          k;        /* Loop Counter */
+    float32_t        twR, twI; /* RFFT Twiddle coefficients */
+    const float32_t* pCoeff =
+        S->pTwiddleRFFT;           /* Points to RFFT Twiddle factors */
+    float32_t* pA = p;             /* increasing pointer */
+    float32_t* pB = p;             /* decreasing pointer */
+    float32_t  xAR, xAI, xBR, xBI; /* temporary variables */
+    float32_t  t1a, t1b;           /* temporary variables */
+    float32_t  p0, p1, p2, p3;     /* temporary variables */
 
 
     k = (S->Sint).fftLen - 1;
@@ -378,14 +387,17 @@ void stage_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t
 }
 
 /* Prepares data for inverse cfft */
-void merge_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut) {
-    int32_t          k;                        /* Loop Counter */
-    float32_t        twR, twI;                 /* RFFT Twiddle coefficients */
-    const float32_t* pCoeff = S->pTwiddleRFFT; /* Points to RFFT Twiddle factors */
-    float32_t*       pA     = p;               /* increasing pointer */
-    float32_t*       pB     = p;               /* decreasing pointer */
-    float32_t        xAR, xAI, xBR, xBI;       /* temporary variables */
-    float32_t        t1a, t1b, r, s, t, u;     /* temporary variables */
+void merge_rfft_f32(const arm_rfft_fast_instance_f32* S,
+                    float32_t*                        p,
+                    float32_t*                        pOut) {
+    int32_t          k;        /* Loop Counter */
+    float32_t        twR, twI; /* RFFT Twiddle coefficients */
+    const float32_t* pCoeff =
+        S->pTwiddleRFFT;             /* Points to RFFT Twiddle factors */
+    float32_t* pA = p;               /* increasing pointer */
+    float32_t* pB = p;               /* decreasing pointer */
+    float32_t  xAR, xAI, xBR, xBI;   /* temporary variables */
+    float32_t  t1a, t1b, r, s, t, u; /* temporary variables */
 
     k = (S->Sint).fftLen - 1;
 
@@ -548,7 +560,10 @@ void merge_rfft_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t
   @return        none
 */
 
-void arm_rfft_fast_f32(const arm_rfft_fast_instance_f32* S, float32_t* p, float32_t* pOut, uint8_t ifftFlag) {
+void arm_rfft_fast_f32(const arm_rfft_fast_instance_f32* S,
+                       float32_t*                        p,
+                       float32_t*                        pOut,
+                       uint8_t                           ifftFlag) {
     const arm_cfft_instance_f32* Sint = &(S->Sint);
 
     /* Calculation of Real FFT */

@@ -59,9 +59,9 @@ void arm_var_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
     uint32_t blkCnt; /* loop counters */
     q15x8_t  vecSrc;
     q63_t    sumOfSquares = 0LL;
-    q63_t    meanOfSquares, squareOfMean; /* square of mean and mean of square */
-    q63_t    sum = 0LL;
-    q15_t    in;
+    q63_t meanOfSquares, squareOfMean; /* square of mean and mean of square */
+    q63_t sum = 0LL;
+    q15_t in;
 
     if (blockSize <= 1U) {
         *pResult = 0;
@@ -108,18 +108,19 @@ void arm_var_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
     meanOfSquares = arm_div_q63_to_q31(sumOfSquares, (blockSize - 1U));
 
     /* Compute square of mean */
-    squareOfMean = arm_div_q63_to_q31((q63_t)sum * sum, (q31_t)(blockSize * (blockSize - 1U)));
+    squareOfMean = arm_div_q63_to_q31((q63_t)sum * sum,
+                                      (q31_t)(blockSize * (blockSize - 1U)));
 
     /* mean of the squares minus the square of the mean. */
     *pResult = (meanOfSquares - squareOfMean) >> 15;
 }
 #else
 void arm_var_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
-    uint32_t blkCnt;                      /* Loop counter */
-    q31_t    sum = 0;                     /* Accumulator */
-    q31_t    meanOfSquares, squareOfMean; /* Square of mean and mean of square */
-    q63_t    sumOfSquares = 0;            /* Sum of squares */
-    q15_t    in;                          /* Temporary variable to store input value */
+    uint32_t blkCnt;                   /* Loop counter */
+    q31_t    sum = 0;                  /* Accumulator */
+    q31_t meanOfSquares, squareOfMean; /* Square of mean and mean of square */
+    q63_t sumOfSquares = 0;            /* Sum of squares */
+    q15_t in; /* Temporary variable to store input value */
 
 #if defined(ARM_MATH_LOOPUNROLL) && defined(ARM_MATH_DSP)
     q31_t in32; /* Temporary variable to store input value */
@@ -205,7 +206,8 @@ void arm_var_q15(const q15_t* pSrc, uint32_t blockSize, q15_t* pResult) {
     meanOfSquares = (q31_t)(sumOfSquares / (q63_t)(blockSize - 1U));
 
     /* Compute square of mean */
-    squareOfMean = (q31_t)((q63_t)sum * sum / (q63_t)(blockSize * (blockSize - 1U)));
+    squareOfMean =
+        (q31_t)((q63_t)sum * sum / (q63_t)(blockSize * (blockSize - 1U)));
 
     /* mean of squares minus the square of mean. */
     *pResult = (meanOfSquares - squareOfMean) >> 15U;

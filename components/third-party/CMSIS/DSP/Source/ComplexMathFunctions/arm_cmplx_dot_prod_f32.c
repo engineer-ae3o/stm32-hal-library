@@ -76,7 +76,11 @@
 
 #if defined(ARM_MATH_MVEF) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-void arm_cmplx_dot_prod_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t numSamples, float32_t* realResult, float32_t* imagResult) {
+void arm_cmplx_dot_prod_f32(const float32_t* pSrcA,
+                            const float32_t* pSrcB,
+                            uint32_t         numSamples,
+                            float32_t*       realResult,
+                            float32_t*       imagResult) {
     int32_t   blkCnt;
     float32_t real_sum, imag_sum;
     f32x4_t   vecSrcA, vecSrcB;
@@ -173,7 +177,11 @@ void arm_cmplx_dot_prod_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint
 }
 
 #else
-void arm_cmplx_dot_prod_f32(const float32_t* pSrcA, const float32_t* pSrcB, uint32_t numSamples, float32_t* realResult, float32_t* imagResult) {
+void arm_cmplx_dot_prod_f32(const float32_t* pSrcA,
+                            const float32_t* pSrcB,
+                            uint32_t         numSamples,
+                            float32_t*       realResult,
+                            float32_t*       imagResult) {
     uint32_t  blkCnt;                           /* Loop counter */
     float32_t real_sum = 0.0f, imag_sum = 0.0f; /* Temporary result variables */
     float32_t a0, b0, c0, d0;

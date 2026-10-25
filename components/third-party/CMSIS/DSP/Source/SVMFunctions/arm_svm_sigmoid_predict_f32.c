@@ -50,7 +50,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S,
+                                 const float32_t*                    in,
+                                 int32_t*                            pResult) {
     /* inlined Matrix x Vector function interleaved with dot prod */
     uint32_t         numRows  = S->nbOfSupportVectors;
     uint32_t         numCols  = S->vectorDimension;
@@ -148,7 +150,10 @@ void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S, const fl
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc2), vtmp, 2);
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc3), vtmp, 3);
 
-        vSum = vfmaq_f32(vSum, vld1q(pDualCoef), vtanhq_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0)));
+        vSum = vfmaq_f32(
+            vSum,
+            vld1q(pDualCoef),
+            vtanhq_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0)));
 
         pDualCoef += 4;
 
@@ -221,7 +226,11 @@ void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S, const fl
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc0), vtmp, 0);
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc1), vtmp, 1);
 
-        vSum = vfmaq_m_f32(vSum, vld1q(pDualCoef), vtanhq_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0)), vctp32q(2));
+        vSum = vfmaq_m_f32(
+            vSum,
+            vld1q(pDualCoef),
+            vtanhq_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0)),
+            vctp32q(2));
 
         pSrcA += numCols * 2;
         row -= 2;
@@ -277,7 +286,11 @@ void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S, const fl
         f32x4_t vtmp = vuninitializedq_f32();
         vtmp         = vsetq_lane(vecAddAcrossF32Mve(acc0), vtmp, 0);
 
-        vSum = vfmaq_m_f32(vSum, vld1q(pDualCoef), vtanhq_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0)), vctp32q(1));
+        vSum = vfmaq_m_f32(
+            vSum,
+            vld1q(pDualCoef),
+            vtanhq_f32(vaddq_n_f32(vmulq_n_f32(vtmp, S->gamma), S->coef0)),
+            vctp32q(1));
     }
     sum += vecAddAcrossF32Mve(vSum);
 
@@ -288,7 +301,9 @@ void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S, const fl
 #if defined(ARM_MATH_NEON)
 #include "NEMath.h"
 
-void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S,
+                                 const float32_t*                    in,
+                                 int32_t*                            pResult) {
     float32_t sum = S->intercept;
 
     float32_t   dot;
@@ -351,24 +366,32 @@ void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S, const fl
             blkCnt--;
         }
         accum2 = vpadd_f32(vget_low_f32(accuma), vget_high_f32(accuma));
-        dotV   = vsetq_lane_f32(vget_lane_f32(accum2, 0) + vget_lane_f32(accum2, 1), dotV, 0);
+        dotV   = vsetq_lane_f32(
+            vget_lane_f32(accum2, 0) + vget_lane_f32(accum2, 1), dotV, 0);
 
         accum2 = vpadd_f32(vget_low_f32(accumb), vget_high_f32(accumb));
-        dotV   = vsetq_lane_f32(vget_lane_f32(accum2, 0) + vget_lane_f32(accum2, 1), dotV, 1);
+        dotV   = vsetq_lane_f32(
+            vget_lane_f32(accum2, 0) + vget_lane_f32(accum2, 1), dotV, 1);
 
         accum2 = vpadd_f32(vget_low_f32(accumc), vget_high_f32(accumc));
-        dotV   = vsetq_lane_f32(vget_lane_f32(accum2, 0) + vget_lane_f32(accum2, 1), dotV, 2);
+        dotV   = vsetq_lane_f32(
+            vget_lane_f32(accum2, 0) + vget_lane_f32(accum2, 1), dotV, 2);
 
         accum2 = vpadd_f32(vget_low_f32(accumd), vget_high_f32(accumd));
-        dotV   = vsetq_lane_f32(vget_lane_f32(accum2, 0) + vget_lane_f32(accum2, 1), dotV, 3);
+        dotV   = vsetq_lane_f32(
+            vget_lane_f32(accum2, 0) + vget_lane_f32(accum2, 1), dotV, 3);
 
 
         blkCnt = S->vectorDimension & 3;
         while (blkCnt > 0U) {
-            dotV = vsetq_lane_f32(vgetq_lane_f32(dotV, 0) + *pIn * *pSupporta++, dotV, 0);
-            dotV = vsetq_lane_f32(vgetq_lane_f32(dotV, 1) + *pIn * *pSupportb++, dotV, 1);
-            dotV = vsetq_lane_f32(vgetq_lane_f32(dotV, 2) + *pIn * *pSupportc++, dotV, 2);
-            dotV = vsetq_lane_f32(vgetq_lane_f32(dotV, 3) + *pIn * *pSupportd++, dotV, 3);
+            dotV = vsetq_lane_f32(
+                vgetq_lane_f32(dotV, 0) + *pIn * *pSupporta++, dotV, 0);
+            dotV = vsetq_lane_f32(
+                vgetq_lane_f32(dotV, 1) + *pIn * *pSupportb++, dotV, 1);
+            dotV = vsetq_lane_f32(
+                vgetq_lane_f32(dotV, 2) + *pIn * *pSupportc++, dotV, 2);
+            dotV = vsetq_lane_f32(
+                vgetq_lane_f32(dotV, 3) + *pIn * *pSupportd++, dotV, 3);
 
             pIn++;
 
@@ -434,7 +457,9 @@ void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S, const fl
     *pResult = S->classes[STEP(sum)];
 }
 #else
-void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S, const float32_t* in, int32_t* pResult) {
+void arm_svm_sigmoid_predict_f32(const arm_svm_sigmoid_instance_f32* S,
+                                 const float32_t*                    in,
+                                 int32_t*                            pResult) {
     float32_t        sum = S->intercept;
     float32_t        dot = 0;
     uint32_t         i, j;

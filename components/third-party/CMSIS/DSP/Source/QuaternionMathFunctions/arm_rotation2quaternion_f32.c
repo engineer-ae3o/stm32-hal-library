@@ -73,7 +73,9 @@
 #define R21 vgetq_lane(q2, 3)
 #define R22 ro22
 
-void arm_rotation2quaternion_f32(const float32_t* pInputRotations, float32_t* pOutputQuaternions, uint32_t nbQuaternions) {
+void arm_rotation2quaternion_f32(const float32_t* pInputRotations,
+                                 float32_t*       pOutputQuaternions,
+                                 uint32_t         nbQuaternions) {
     float32_t ro22, trace;
     f32x4_t   q1, q2, q;
 
@@ -150,7 +152,9 @@ void arm_rotation2quaternion_f32(const float32_t* pInputRotations, float32_t* pO
 }
 
 #else
-void arm_rotation2quaternion_f32(const float32_t* pInputRotations, float32_t* pOutputQuaternions, uint32_t nbQuaternions) {
+void arm_rotation2quaternion_f32(const float32_t* pInputRotations,
+                                 float32_t*       pOutputQuaternions,
+                                 uint32_t         nbQuaternions) {
     uint32_t nb;
     for (nb = 0; nb < nbQuaternions; nb++) {
         const float32_t* r = &pInputRotations[nb * 9];
@@ -170,21 +174,24 @@ void arm_rotation2quaternion_f32(const float32_t* pInputRotations, float32_t* pO
             q[2]    = (RI(0, 2) - RI(2, 0)) * s;
             q[3]    = (RI(1, 0) - RI(0, 1)) * s;
         } else if ((RI(0, 0) > RI(1, 1)) && (RI(0, 0) > RI(2, 2))) {
-            doubler = sqrtf(1.0f + RI(0, 0) - RI(1, 1) - RI(2, 2)) * 2.0f; // invs=4*qx
+            doubler = sqrtf(1.0f + RI(0, 0) - RI(1, 1) - RI(2, 2)) *
+                      2.0f; // invs=4*qx
             s       = 1.0f / doubler;
             q[0]    = (RI(2, 1) - RI(1, 2)) * s;
             q[1]    = 0.25f * doubler;
             q[2]    = (RI(0, 1) + RI(1, 0)) * s;
             q[3]    = (RI(0, 2) + RI(2, 0)) * s;
         } else if (RI(1, 1) > RI(2, 2)) {
-            doubler = sqrtf(1.0f + RI(1, 1) - RI(0, 0) - RI(2, 2)) * 2.0f; // invs=4*qy
+            doubler = sqrtf(1.0f + RI(1, 1) - RI(0, 0) - RI(2, 2)) *
+                      2.0f; // invs=4*qy
             s       = 1.0f / doubler;
             q[0]    = (RI(0, 2) - RI(2, 0)) * s;
             q[1]    = (RI(0, 1) + RI(1, 0)) * s;
             q[2]    = 0.25f * doubler;
             q[3]    = (RI(1, 2) + RI(2, 1)) * s;
         } else {
-            doubler = sqrtf(1.0f + RI(2, 2) - RI(0, 0) - RI(1, 1)) * 2.0f; // invs=4*qz
+            doubler = sqrtf(1.0f + RI(2, 2) - RI(0, 0) - RI(1, 1)) *
+                      2.0f; // invs=4*qz
             s       = 1.0f / doubler;
             q[0]    = (RI(1, 0) - RI(0, 1)) * s;
             q[1]    = (RI(0, 2) + RI(2, 0)) * s;

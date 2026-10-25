@@ -34,7 +34,9 @@
 
 #include "arm_vec_math_f16.h"
 
-void arm_vinverse_f16(const float16_t* pSrc, float16_t* pDst, uint32_t blockSize) {
+void arm_vinverse_f16(const float16_t* pSrc,
+                      float16_t*       pDst,
+                      uint32_t         blockSize) {
     uint32_t blkCnt;
 
 #if defined(ARM_MATH_MVE_FLOAT16) && !defined(ARM_MATH_AUTOVECTORIZE)

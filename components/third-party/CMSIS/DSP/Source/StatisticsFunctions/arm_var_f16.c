@@ -54,7 +54,9 @@
 #include "arm_helium_utils.h"
 
 
-void arm_var_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_var_f16(const float16_t* pSrc,
+                 uint32_t         blockSize,
+                 float16_t*       pResult) {
     int32_t   blkCnt; /* loop counters */
     f16x8_t   vecSrc;
     f16x8_t   sumVec = vdupq_n_f16(0.0f16);
@@ -84,11 +86,14 @@ void arm_var_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) 
     } while (blkCnt > 0);
 
     /* Variance */
-    *pResult = (_Float16)vecAddAcrossF16Mve(sumVec) / (_Float16)(blockSize - 1.0f16);
+    *pResult =
+        (_Float16)vecAddAcrossF16Mve(sumVec) / (_Float16)(blockSize - 1.0f16);
 }
 #else
 
-void arm_var_f16(const float16_t* pSrc, uint32_t blockSize, float16_t* pResult) {
+void arm_var_f16(const float16_t* pSrc,
+                 uint32_t         blockSize,
+                 float16_t*       pResult) {
     uint32_t         blkCnt;      /* Loop counter */
     _Float16         sum  = 0.0f; /* Temporary result storage */
     _Float16         fSum = 0.0f;

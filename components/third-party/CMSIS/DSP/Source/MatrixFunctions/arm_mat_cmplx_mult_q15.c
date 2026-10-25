@@ -59,28 +59,41 @@
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-#define MVE_ASRL_SAT16(acc, shift) ((sqrshrl_sat48(acc, -(32 - shift)) >> 32) & 0xffffffff)
+#define MVE_ASRL_SAT16(acc, shift)                                             \
+    ((sqrshrl_sat48(acc, -(32 - shift)) >> 32) & 0xffffffff)
 
-arm_status
-arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_instance_q15* pSrcB, arm_matrix_instance_q15* pDst, q15_t* pScratch) {
-    q15_t const* pInA = (q15_t const*)pSrcA->pData; /* input data matrix pointer A of Q15 type */
-    q15_t const* pInB = (q15_t const*)pSrcB->pData; /* input data matrix pointer B of Q15 type */
+arm_status arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA,
+                                  const arm_matrix_instance_q15* pSrcB,
+                                  arm_matrix_instance_q15*       pDst,
+                                  q15_t*                         pScratch) {
+    q15_t const* pInA =
+        (q15_t const*)
+            pSrcA->pData; /* input data matrix pointer A of Q15 type */
+    q15_t const* pInB =
+        (q15_t const*)
+            pSrcB->pData; /* input data matrix pointer B of Q15 type */
     q15_t const* pInB2;
-    q15_t*       px;                             /* Temporary output data matrix pointer */
-    uint32_t     numRowsA = pSrcA->numRows;      /* number of rows of input matrix A    */
-    uint32_t     numColsB = pSrcB->numCols;      /* number of columns of input matrix B */
-    uint32_t     numColsA = pSrcA->numCols;      /* number of columns of input matrix A */
-    uint32_t     numRowsB = pSrcB->numRows;      /* number of rows of input matrix A    */
-    uint32_t     col, i = 0u, j, row = numRowsB; /* loop counters */
-    uint32_t     blkCnt;                         /* loop counters */
-    uint16x8_t   vecOffs, vecColBOffs;
-    arm_status   status; /* Status of matrix multiplication */
+    q15_t*       px; /* Temporary output data matrix pointer */
+    uint32_t     numRowsA =
+        pSrcA->numRows; /* number of rows of input matrix A    */
+    uint32_t numColsB =
+        pSrcB->numCols; /* number of columns of input matrix B */
+    uint32_t numColsA =
+        pSrcA->numCols; /* number of columns of input matrix A */
+    uint32_t numRowsB =
+        pSrcB->numRows; /* number of rows of input matrix A    */
+    uint32_t   col, i = 0u, j, row = numRowsB; /* loop counters */
+    uint32_t   blkCnt;                         /* loop counters */
+    uint16x8_t vecOffs, vecColBOffs;
+    arm_status status; /* Status of matrix multiplication */
     (void)pScratch;
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -166,7 +179,8 @@ arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_in
                     /*
                  * move Matrix B read offsets, 4 rows down
                  */
-                    vecOffs = vaddq_n_u16(vecOffs, (uint16_t)(numColsB * 4 * CMPLX_DIM));
+                    vecOffs = vaddq_n_u16(vecOffs,
+                                          (uint16_t)(numColsB * 4 * CMPLX_DIM));
 
                     acc2 = vmlsldavaq_s16(acc2, vecA, vecB2);
                     acc3 = vmlaldavaxq_s16(acc3, vecA, vecB2);
@@ -180,7 +194,7 @@ arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_in
                 blkCnt = (numColsA * CMPLX_DIM) & 7;
                 if (blkCnt > 0U) {
                     mve_pred16_t p0 = vctp16q(blkCnt);
-                    vecB            = vldrhq_gather_shifted_offset(pInB, vecOffs);
+                    vecB = vldrhq_gather_shifted_offset(pInB, vecOffs);
 
                     vecA = vldrhq_z_s16(pSrcAVec, p0);
 
@@ -191,7 +205,8 @@ arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_in
                     /*
                  * move Matrix B read offsets, 4 rows down
                  */
-                    vecOffs = vaddq_n_u16(vecOffs, (uint16_t)(numColsB * 4 * CMPLX_DIM));
+                    vecOffs = vaddq_n_u16(vecOffs,
+                                          (uint16_t)(numColsB * 4 * CMPLX_DIM));
 
                     acc2 = vmlsldavaq_s16(acc2, vecA, vecB2);
                     acc3 = vmlaldavaxq_s16(acc3, vecA, vecB2);
@@ -253,7 +268,8 @@ arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_in
                     /*
                  * move Matrix B read offsets, 4 rows down
                  */
-                    vecOffs = vaddq_n_u16(vecOffs, (uint16_t)(numColsB * 4 * CMPLX_DIM));
+                    vecOffs = vaddq_n_u16(vecOffs,
+                                          (uint16_t)(numColsB * 4 * CMPLX_DIM));
 
                     blkCnt--;
                 }
@@ -264,8 +280,8 @@ arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_in
                 blkCnt = (numColsA * CMPLX_DIM) & 7;
                 if (blkCnt > 0U) {
                     mve_pred16_t p0 = vctp16q(blkCnt);
-                    vecB            = vldrhq_gather_shifted_offset(pInB, vecOffs);
-                    vecA            = vldrhq_z_s16(pSrcAVec, p0);
+                    vecB = vldrhq_gather_shifted_offset(pInB, vecOffs);
+                    vecA = vldrhq_z_s16(pSrcAVec, p0);
 
                     acc0 = vmlsldavaq_s16(acc0, vecA, vecB);
                     acc1 = vmlaldavaxq_s16(acc1, vecA, vecB);
@@ -293,19 +309,23 @@ arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_in
     return (status);
 }
 #else
-arm_status
-arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_instance_q15* pSrcB, arm_matrix_instance_q15* pDst, q15_t* pScratch) {
-    q15_t*     pSrcBT = pScratch;                   /* input data matrix pointer for transpose */
-    q15_t*     pInA   = pSrcA->pData;               /* input data matrix pointer A of Q15 type */
-    q15_t*     pInB   = pSrcB->pData;               /* input data matrix pointer B of Q15 type */
-    q15_t*     px;                                  /* Temporary output data matrix pointer */
-    uint16_t   numRowsA = pSrcA->numRows;           /* number of rows of input matrix A */
-    uint16_t   numColsB = pSrcB->numCols;           /* number of columns of input matrix B */
-    uint16_t   numColsA = pSrcA->numCols;           /* number of columns of input matrix A */
-    uint16_t   numRowsB = pSrcB->numRows;           /* number of rows of input matrix A */
-    q63_t      sumReal, sumImag;                    /* accumulator */
+arm_status arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA,
+                                  const arm_matrix_instance_q15* pSrcB,
+                                  arm_matrix_instance_q15*       pDst,
+                                  q15_t*                         pScratch) {
+    q15_t*   pSrcBT = pScratch;   /* input data matrix pointer for transpose */
+    q15_t*   pInA = pSrcA->pData; /* input data matrix pointer A of Q15 type */
+    q15_t*   pInB = pSrcB->pData; /* input data matrix pointer B of Q15 type */
+    q15_t*   px;                  /* Temporary output data matrix pointer */
+    uint16_t numRowsA = pSrcA->numRows; /* number of rows of input matrix A */
+    uint16_t numColsB =
+        pSrcB->numCols; /* number of columns of input matrix B */
+    uint16_t numColsA =
+        pSrcA->numCols; /* number of columns of input matrix A */
+    uint16_t   numRowsB = pSrcB->numRows; /* number of rows of input matrix A */
+    q63_t      sumReal, sumImag;          /* accumulator */
     uint32_t   col, i = 0U, row = numRowsB, colCnt; /* Loop counters */
-    arm_status status;                              /* Status of matrix multiplication */
+    arm_status status; /* Status of matrix multiplication */
 
 #if defined(ARM_MATH_DSP)
     q31_t prod1, prod2;
@@ -317,7 +337,9 @@ arm_mat_cmplx_mult_q15(const arm_matrix_instance_q15* pSrcA, const arm_matrix_in
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

@@ -143,7 +143,10 @@
  * @param[in]  blockSize  number of samples of output data.
  */
 
-void arm_spline_f32(arm_spline_instance_f32* S, const float32_t* xq, float32_t* pDst, uint32_t blockSize) {
+void arm_spline_f32(arm_spline_instance_f32* S,
+                    const float32_t*         xq,
+                    float32_t*               pDst,
+                    uint32_t                 blockSize) {
     const float32_t* x = S->x;
     const float32_t* y = S->y;
     int32_t          n = S->n_x;
@@ -213,7 +216,9 @@ void arm_spline_f32(arm_spline_instance_f32* S, const float32_t* xq, float32_t* 
         while (*pXq <= x[i + 1] && blkCnt > 0) {
             x_sc = *pXq++;
 
-            *pDst = y[i] + b[i] * (x_sc - x[i]) + c[i] * (x_sc - x[i]) * (x_sc - x[i]) + d[i] * (x_sc - x[i]) * (x_sc - x[i]) * (x_sc - x[i]);
+            *pDst = y[i] + b[i] * (x_sc - x[i]) +
+                    c[i] * (x_sc - x[i]) * (x_sc - x[i]) +
+                    d[i] * (x_sc - x[i]) * (x_sc - x[i]) * (x_sc - x[i]);
 
             pDst++;
             blkCnt--;
@@ -261,8 +266,10 @@ void arm_spline_f32(arm_spline_instance_f32* S, const float32_t* xq, float32_t* 
     while (blkCnt2 > 0) {
         x_sc = *pXq++;
 
-        *pDst = y[i - 1] + b[i - 1] * (x_sc - x[i - 1]) + c[i - 1] * (x_sc - x[i - 1]) * (x_sc - x[i - 1]) +
-                d[i - 1] * (x_sc - x[i - 1]) * (x_sc - x[i - 1]) * (x_sc - x[i - 1]);
+        *pDst = y[i - 1] + b[i - 1] * (x_sc - x[i - 1]) +
+                c[i - 1] * (x_sc - x[i - 1]) * (x_sc - x[i - 1]) +
+                d[i - 1] * (x_sc - x[i - 1]) * (x_sc - x[i - 1]) *
+                    (x_sc - x[i - 1]);
 
         pDst++;
         blkCnt2--;

@@ -69,21 +69,26 @@ arm_gaussian_naive_bayes_instance_f32 S;
 #define NB_OF_CLASSES 3
 #define VECTOR_DIMENSION 2
 
-const float32_t theta[NB_OF_CLASSES * VECTOR_DIMENSION] = {1.4539529436590528f,
-                                                           0.8722776016801852f,
-                                                           -1.5267934452462473f,
-                                                           0.903204577814203f,
-                                                           -0.15338006360932258f,
-                                                           -2.9997913665803964f}; /**< Mean values for the Gaussians */
+const float32_t theta[NB_OF_CLASSES * VECTOR_DIMENSION] = {
+    1.4539529436590528f,
+    0.8722776016801852f,
+    -1.5267934452462473f,
+    0.903204577814203f,
+    -0.15338006360932258f,
+    -2.9997913665803964f}; /**< Mean values for the Gaussians */
 
-const float32_t sigma[NB_OF_CLASSES * VECTOR_DIMENSION] = {1.0063470889514925f,
-                                                           0.9038018246524426f,
-                                                           1.0224479953244736f,
-                                                           0.7768764290432544f,
-                                                           1.1217662403241206f,
-                                                           1.2303890106020325f}; /**< Variances for the Gaussians */
+const float32_t sigma[NB_OF_CLASSES * VECTOR_DIMENSION] = {
+    1.0063470889514925f,
+    0.9038018246524426f,
+    1.0224479953244736f,
+    0.7768764290432544f,
+    1.1217662403241206f,
+    1.2303890106020325f}; /**< Variances for the Gaussians */
 
-const float32_t classPriors[NB_OF_CLASSES] = {0.3333333333333333f, 0.3333333333333333f, 0.3333333333333333f}; /**< Class prior probabilities */
+const float32_t classPriors[NB_OF_CLASSES] = {
+    0.3333333333333333f,
+    0.3333333333333333f,
+    0.3333333333333333f}; /**< Class prior probabilities */
 
 int32_t main(void) {
     /* Array of input data */

@@ -50,7 +50,11 @@
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
 #include "arm_helium_utils.h"
-void arm_clip_q15(const q15_t* pSrc, q15_t* pDst, q15_t low, q15_t high, uint32_t numSamples) {
+void arm_clip_q15(const q15_t* pSrc,
+                  q15_t*       pDst,
+                  q15_t        low,
+                  q15_t        high,
+                  uint32_t     numSamples) {
     uint32_t blkCnt;
     q15x8_t  curVec0, curVec1;
     q15x8_t  vecLow, vecHigh;
@@ -102,7 +106,11 @@ void arm_clip_q15(const q15_t* pSrc, q15_t* pDst, q15_t low, q15_t high, uint32_
 }
 
 #else
-void arm_clip_q15(const q15_t* pSrc, q15_t* pDst, q15_t low, q15_t high, uint32_t numSamples) {
+void arm_clip_q15(const q15_t* pSrc,
+                  q15_t*       pDst,
+                  q15_t        low,
+                  q15_t        high,
+                  uint32_t     numSamples) {
     uint32_t i;
     for (i = 0; i < numSamples; i++) {
         if (pSrc[i] > high) {

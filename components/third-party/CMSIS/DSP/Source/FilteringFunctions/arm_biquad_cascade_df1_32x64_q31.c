@@ -176,21 +176,26 @@
 
 #include "arm_helium_utils.h"
 
-static void arm_biquad_cas_df1_32x64_q31_scalar(const arm_biquad_cas_df1_32x64_ins_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
-    const q31_t* pIn     = pSrc;                    /* input pointer initialization */
-    q31_t*       pOut    = pDst;                    /* output pointer initialization */
-    q63_t*       pState  = S->pState;               /* state pointer initialization */
-    const q31_t* pCoeffs = S->pCoeffs;              /* coeff pointer initialization */
-    q63_t        acc;                               /* accumulator */
-    q31_t        Xn1, Xn2;                          /* Input Filter state variables */
-    q63_t        Yn1, Yn2;                          /* Output Filter state variables */
-    q31_t        b0, b1, b2, a1, a2;                /* Filter coefficients */
-    q31_t        Xn;                                /* temporary input */
-    int32_t      shift = (int32_t)S->postShift + 1; /* Shift to be applied to the output */
-    uint32_t     sample, stage = S->numStages;      /* loop counters */
-    q31_t        acc_l, acc_h;                      /* temporary output */
-    uint32_t     uShift = ((uint32_t)S->postShift + 1U);
-    uint32_t     lShift = 32U - uShift; /* Shift to be applied to the output */
+static void
+arm_biquad_cas_df1_32x64_q31_scalar(const arm_biquad_cas_df1_32x64_ins_q31* S,
+                                    const q31_t* pSrc,
+                                    q31_t*       pDst,
+                                    uint32_t     blockSize) {
+    const q31_t* pIn     = pSrc;       /* input pointer initialization */
+    q31_t*       pOut    = pDst;       /* output pointer initialization */
+    q63_t*       pState  = S->pState;  /* state pointer initialization */
+    const q31_t* pCoeffs = S->pCoeffs; /* coeff pointer initialization */
+    q63_t        acc;                  /* accumulator */
+    q31_t        Xn1, Xn2;             /* Input Filter state variables */
+    q63_t        Yn1, Yn2;             /* Output Filter state variables */
+    q31_t        b0, b1, b2, a1, a2;   /* Filter coefficients */
+    q31_t        Xn;                   /* temporary input */
+    int32_t      shift =
+        (int32_t)S->postShift + 1; /* Shift to be applied to the output */
+    uint32_t sample, stage = S->numStages; /* loop counters */
+    q31_t    acc_l, acc_h;                 /* temporary output */
+    uint32_t uShift = ((uint32_t)S->postShift + 1U);
+    uint32_t lShift = 32U - uShift; /* Shift to be applied to the output */
 
     do {
         /* Reading the coefficients */
@@ -274,18 +279,23 @@ static void arm_biquad_cas_df1_32x64_q31_scalar(const arm_biquad_cas_df1_32x64_i
     } while (--stage);
 }
 
-void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
-    const q31_t* pIn     = pSrc;                    /*  input pointer initialization  */
-    q31_t*       pOut    = pDst;                    /*  output pointer initialization */
-    q63_t*       pState  = S->pState;               /*  state pointer initialization  */
-    const q31_t* pCoeffs = S->pCoeffs;              /*  coeff pointer initialization  */
-    q31_t        Xn1, Xn2;                          /*  Input Filter state variables        */
-    q63_t        Yn1, Yn2;                          /*  Output Filter state variables        */
-    q31_t        b0, b1, b2, a1, a2;                /*  Filter coefficients           */
-    int32_t      shift = (int32_t)S->postShift + 1; /*  Shift to be applied to the output */
-    uint32_t     sample, stage = S->numStages;      /*  loop counters                     */
-    q31x4_t      vecCoef, vecIn;
-    q63_t        acc;
+void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S,
+                                  const q31_t*                            pSrc,
+                                  q31_t*                                  pDst,
+                                  uint32_t blockSize) {
+    const q31_t* pIn     = pSrc;       /*  input pointer initialization  */
+    q31_t*       pOut    = pDst;       /*  output pointer initialization */
+    q63_t*       pState  = S->pState;  /*  state pointer initialization  */
+    const q31_t* pCoeffs = S->pCoeffs; /*  coeff pointer initialization  */
+    q31_t        Xn1, Xn2;           /*  Input Filter state variables        */
+    q63_t        Yn1, Yn2;           /*  Output Filter state variables        */
+    q31_t        b0, b1, b2, a1, a2; /*  Filter coefficients           */
+    int32_t      shift =
+        (int32_t)S->postShift + 1; /*  Shift to be applied to the output */
+    uint32_t sample,
+        stage = S->numStages; /*  loop counters                     */
+    q31x4_t vecCoef, vecIn;
+    q63_t   acc;
 
     if (blockSize <= 3) {
         arm_biquad_cas_df1_32x64_q31_scalar(S, pSrc, pDst, blockSize);
@@ -494,21 +504,25 @@ void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S, con
     }
 }
 #else
-void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S, const q31_t* pSrc, q31_t* pDst, uint32_t blockSize) {
-    const q31_t* pIn     = pSrc;                    /* input pointer initialization */
-    q31_t*       pOut    = pDst;                    /* output pointer initialization */
-    q63_t*       pState  = S->pState;               /* state pointer initialization */
-    const q31_t* pCoeffs = S->pCoeffs;              /* coeff pointer initialization */
-    q63_t        acc;                               /* accumulator */
-    q31_t        Xn1, Xn2;                          /* Input Filter state variables */
-    q63_t        Yn1, Yn2;                          /* Output Filter state variables */
-    q31_t        b0, b1, b2, a1, a2;                /* Filter coefficients */
-    q31_t        Xn;                                /* temporary input */
-    int32_t      shift = (int32_t)S->postShift + 1; /* Shift to be applied to the output */
-    uint32_t     sample, stage = S->numStages;      /* loop counters */
-    q31_t        acc_l, acc_h;                      /* temporary output */
-    uint32_t     uShift = ((uint32_t)S->postShift + 1U);
-    uint32_t     lShift = 32U - uShift; /* Shift to be applied to the output */
+void arm_biquad_cas_df1_32x64_q31(const arm_biquad_cas_df1_32x64_ins_q31* S,
+                                  const q31_t*                            pSrc,
+                                  q31_t*                                  pDst,
+                                  uint32_t blockSize) {
+    const q31_t* pIn     = pSrc;       /* input pointer initialization */
+    q31_t*       pOut    = pDst;       /* output pointer initialization */
+    q63_t*       pState  = S->pState;  /* state pointer initialization */
+    const q31_t* pCoeffs = S->pCoeffs; /* coeff pointer initialization */
+    q63_t        acc;                  /* accumulator */
+    q31_t        Xn1, Xn2;             /* Input Filter state variables */
+    q63_t        Yn1, Yn2;             /* Output Filter state variables */
+    q31_t        b0, b1, b2, a1, a2;   /* Filter coefficients */
+    q31_t        Xn;                   /* temporary input */
+    int32_t      shift =
+        (int32_t)S->postShift + 1; /* Shift to be applied to the output */
+    uint32_t sample, stage = S->numStages; /* loop counters */
+    q31_t    acc_l, acc_h;                 /* temporary output */
+    uint32_t uShift = ((uint32_t)S->postShift + 1U);
+    uint32_t lShift = 32U - uShift; /* Shift to be applied to the output */
 
     do {
         /* Reading the coefficients */

@@ -56,89 +56,94 @@
 
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 
-#define FIR_Q7_CORE(pOutput, nbAcc, nbVecTaps, pSample, vecCoeffs)                                                                                   \
-    for (int j = 0; j < nbAcc; j++) {                                                                                                                \
-        const q7_t* pSmp = &pSample[j];                                                                                                              \
-        q31_t       acc[4];                                                                                                                          \
-                                                                                                                                                     \
-        acc[j] = 0;                                                                                                                                  \
-        for (int i = 0; i < nbVecTaps; i++) {                                                                                                        \
-            vecIn0 = vld1q(pSmp + 16 * i);                                                                                                           \
-            acc[j] = vmladavaq(acc[j], vecIn0, vecCoeffs[i]);                                                                                        \
-        }                                                                                                                                            \
-        *pOutput++ = (q7_t)__SSAT((acc[j] >> 7U), 8);                                                                                                \
+#define FIR_Q7_CORE(pOutput, nbAcc, nbVecTaps, pSample, vecCoeffs)             \
+    for (int j = 0; j < nbAcc; j++) {                                          \
+        const q7_t* pSmp = &pSample[j];                                        \
+        q31_t       acc[4];                                                    \
+                                                                               \
+        acc[j] = 0;                                                            \
+        for (int i = 0; i < nbVecTaps; i++) {                                  \
+            vecIn0 = vld1q(pSmp + 16 * i);                                     \
+            acc[j] = vmladavaq(acc[j], vecIn0, vecCoeffs[i]);                  \
+        }                                                                      \
+        *pOutput++ = (q7_t)__SSAT((acc[j] >> 7U), 8);                          \
     }
 
-#define FIR_Q7_MAIN_CORE()                                                                                                                           \
-    {                                                                                                                                                \
-        q7_t*       pState  = S->pState;  /* State pointer */                                                                                        \
-        const q7_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */                                                                                  \
-        q7_t*       pStateCur;            /* Points to the current sample of the state */                                                            \
-        const q7_t* pSamples;             /* Temporary pointer to the sample buffer */                                                               \
-        q7_t*       pOutput;              /* Temporary pointer to the output buffer */                                                               \
-        const q7_t* pTempSrc;             /* Temporary pointer to the source data */                                                                 \
-        q7_t*       pTempDest;            /* Temporary pointer to the destination buffer */                                                          \
-        uint32_t    numTaps = S->numTaps; /* Number of filter coefficients in the filter */                                                          \
-        int32_t     blkCnt;                                                                                                                          \
-        q7x16_t     vecIn0;                                                                                                                          \
-                                                                                                                                                     \
+#define FIR_Q7_MAIN_CORE()                                                                        \
+    {                                                                                             \
+        q7_t*       pState  = S->pState;  /* State pointer */                                     \
+        const q7_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */                               \
+        q7_t*       pStateCur; /* Points to the current sample of the state */                    \
+        const q7_t* pSamples;  /* Temporary pointer to the sample buffer */                       \
+        q7_t*       pOutput;   /* Temporary pointer to the output buffer */                       \
+        const q7_t* pTempSrc;  /* Temporary pointer to the source data */                         \
+        q7_t*       pTempDest; /* Temporary pointer to the destination buffer */                  \
+        uint32_t    numTaps =                                                                     \
+            S->numTaps; /* Number of filter coefficients in the filter */                         \
+        int32_t blkCnt;                                                                           \
+        q7x16_t vecIn0;                                                                           \
+                                                                                                  \
         /*                                                                                      \
      * load coefs                                                                           \
-     */                                                    \
-        q7x16_t vecCoeffs[NBVECTAPS];                                                                                                                \
-                                                                                                                                                     \
-        for (int i = 0; i < NBVECTAPS; i++) vecCoeffs[i] = vldrbq_s8(pCoeffs + 16 * i);                                                              \
-                                                                                                                                                     \
+     */ \
+        q7x16_t vecCoeffs[NBVECTAPS];                                                             \
+                                                                                                  \
+        for (int i = 0; i < NBVECTAPS; i++)                                                       \
+            vecCoeffs[i] = vldrbq_s8(pCoeffs + 16 * i);                                           \
+                                                                                                  \
         /*                                                                                      \
      * pState points to state array which contains previous frame (numTaps - 1) samples     \
      * pStateCur points to the location where the new input data should be written          \
-     */                                                    \
-        pStateCur = &(pState[(numTaps - 1u)]);                                                                                                       \
-        pTempSrc  = pSrc;                                                                                                                            \
-        pSamples  = pState;                                                                                                                          \
-        pOutput   = pDst;                                                                                                                            \
-                                                                                                                                                     \
-        blkCnt = blockSize >> 2;                                                                                                                     \
-        while (blkCnt > 0) {                                                                                                                         \
+     */ \
+        pStateCur = &(pState[(numTaps - 1u)]);                                                    \
+        pTempSrc  = pSrc;                                                                         \
+        pSamples  = pState;                                                                       \
+        pOutput   = pDst;                                                                         \
+                                                                                                  \
+        blkCnt = blockSize >> 2;                                                                  \
+        while (blkCnt > 0) {                                                                      \
             /*                                                                                  \
          * Save 4 input samples in the history buffer                                       \
-         */                                                    \
-            vstrbq_s32(pStateCur, vldrbq_s32(pTempSrc));                                                                                             \
-            pStateCur += 4;                                                                                                                          \
-            pTempSrc += 4;                                                                                                                           \
-                                                                                                                                                     \
-            FIR_Q7_CORE(pOutput, 4, NBVECTAPS, pSamples, vecCoeffs);                                                                                 \
-            pSamples += 4;                                                                                                                           \
-                                                                                                                                                     \
-            blkCnt--;                                                                                                                                \
-        }                                                                                                                                            \
-                                                                                                                                                     \
-        /* tail */                                                                                                                                   \
-        int32_t residual = blockSize & 3;                                                                                                            \
-                                                                                                                                                     \
-        for (int i = 0; i < residual; i++) *pStateCur++ = *pTempSrc++;                                                                               \
-                                                                                                                                                     \
-        FIR_Q7_CORE(pOutput, residual, NBVECTAPS, pSamples, vecCoeffs);                                                                              \
-                                                                                                                                                     \
-                                                                                                                                                     \
+         */ \
+            vstrbq_s32(pStateCur, vldrbq_s32(pTempSrc));                                          \
+            pStateCur += 4;                                                                       \
+            pTempSrc += 4;                                                                        \
+                                                                                                  \
+            FIR_Q7_CORE(pOutput, 4, NBVECTAPS, pSamples, vecCoeffs);                              \
+            pSamples += 4;                                                                        \
+                                                                                                  \
+            blkCnt--;                                                                             \
+        }                                                                                         \
+                                                                                                  \
+        /* tail */                                                                                \
+        int32_t residual = blockSize & 3;                                                         \
+                                                                                                  \
+        for (int i = 0; i < residual; i++) *pStateCur++ = *pTempSrc++;                            \
+                                                                                                  \
+        FIR_Q7_CORE(pOutput, residual, NBVECTAPS, pSamples, vecCoeffs);                           \
+                                                                                                  \
+                                                                                                  \
         /*                                                                                      \
      * Copy the samples back into the history buffer start                                  \
-     */                                                    \
-        pTempSrc  = &pState[blockSize];                                                                                                              \
-        pTempDest = pState;                                                                                                                          \
-        blkCnt    = numTaps - 1;                                                                                                                     \
-        do {                                                                                                                                         \
-            mve_pred16_t p = vctp8q(blkCnt);                                                                                                         \
-                                                                                                                                                     \
-            vstrbq_p_s8(pTempDest, vldrbq_z_s8(pTempSrc, p), p);                                                                                     \
-            pTempSrc += 16;                                                                                                                          \
-            pTempDest += 16;                                                                                                                         \
-            blkCnt -= 16;                                                                                                                            \
-        } while (blkCnt > 0);                                                                                                                        \
+     */ \
+        pTempSrc  = &pState[blockSize];                                                           \
+        pTempDest = pState;                                                                       \
+        blkCnt    = numTaps - 1;                                                                  \
+        do {                                                                                      \
+            mve_pred16_t p = vctp8q(blkCnt);                                                      \
+                                                                                                  \
+            vstrbq_p_s8(pTempDest, vldrbq_z_s8(pTempSrc, p), p);                                  \
+            pTempSrc += 16;                                                                       \
+            pTempDest += 16;                                                                      \
+            blkCnt -= 16;                                                                         \
+        } while (blkCnt > 0);                                                                     \
     }
 
 
-static void arm_fir_q7_49_64_mve(const arm_fir_instance_q7* S, const q7_t* __restrict pSrc, q7_t* __restrict pDst, uint32_t blockSize) {
+static void arm_fir_q7_49_64_mve(const arm_fir_instance_q7* S,
+                                 const q7_t* __restrict pSrc,
+                                 q7_t* __restrict pDst,
+                                 uint32_t blockSize) {
 #define NBTAPS 64
 #define NBVECTAPS (NBTAPS / 16)
     FIR_Q7_MAIN_CORE();
@@ -147,7 +152,10 @@ static void arm_fir_q7_49_64_mve(const arm_fir_instance_q7* S, const q7_t* __res
 }
 
 
-void arm_fir_q7_33_48_mve(const arm_fir_instance_q7* S, const q7_t* __restrict pSrc, q7_t* __restrict pDst, uint32_t blockSize) {
+void arm_fir_q7_33_48_mve(const arm_fir_instance_q7* S,
+                          const q7_t* __restrict pSrc,
+                          q7_t* __restrict pDst,
+                          uint32_t blockSize) {
 #define NBTAPS 48
 #define NBVECTAPS (NBTAPS / 16)
     FIR_Q7_MAIN_CORE();
@@ -155,7 +163,10 @@ void arm_fir_q7_33_48_mve(const arm_fir_instance_q7* S, const q7_t* __restrict p
 #undef NBTAPS
 }
 
-static void arm_fir_q7_17_32_mve(const arm_fir_instance_q7* S, const q7_t* __restrict pSrc, q7_t* __restrict pDst, uint32_t blockSize) {
+static void arm_fir_q7_17_32_mve(const arm_fir_instance_q7* S,
+                                 const q7_t* __restrict pSrc,
+                                 q7_t* __restrict pDst,
+                                 uint32_t blockSize) {
 #define NBTAPS 32
 #define NBVECTAPS (NBTAPS / 16)
     FIR_Q7_MAIN_CORE();
@@ -164,7 +175,10 @@ static void arm_fir_q7_17_32_mve(const arm_fir_instance_q7* S, const q7_t* __res
 }
 
 
-void arm_fir_q7_1_16_mve(const arm_fir_instance_q7* S, const q7_t* __restrict pSrc, q7_t* __restrict pDst, uint32_t blockSize) {
+void arm_fir_q7_1_16_mve(const arm_fir_instance_q7* S,
+                         const q7_t* __restrict pSrc,
+                         q7_t* __restrict pDst,
+                         uint32_t blockSize) {
 #define NBTAPS 16
 #define NBVECTAPS (NBTAPS / 16)
     FIR_Q7_MAIN_CORE();
@@ -172,20 +186,24 @@ void arm_fir_q7_1_16_mve(const arm_fir_instance_q7* S, const q7_t* __restrict pS
 #undef NBTAPS
 }
 
-void arm_fir_q7(const arm_fir_instance_q7* S, const q7_t* pSrc, q7_t* pDst, uint32_t blockSize) {
+void arm_fir_q7(const arm_fir_instance_q7* S,
+                const q7_t*                pSrc,
+                q7_t*                      pDst,
+                uint32_t                   blockSize) {
     q7_t*       pState  = S->pState;  /* State pointer */
     const q7_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q7_t*       pStateCur;            /* Points to the current sample of the state */
-    const q7_t* pSamples;             /* Temporary pointer to the sample buffer */
-    q7_t*       pOutput;              /* Temporary pointer to the output buffer */
-    const q7_t* pTempSrc;             /* Temporary pointer to the source data */
-    q7_t*       pTempDest;            /* Temporary pointer to the destination buffer */
-    uint32_t    numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t    blkCnt;
-    q7x16_t     vecIn0;
-    uint32_t    tapsBlkCnt = (numTaps + 15) / 16;
-    q31_t       acc0, acc1, acc2, acc3;
-    q7x16_t     vecCoeffs;
+    q7_t*       pStateCur; /* Points to the current sample of the state */
+    const q7_t* pSamples;  /* Temporary pointer to the sample buffer */
+    q7_t*       pOutput;   /* Temporary pointer to the output buffer */
+    const q7_t* pTempSrc;  /* Temporary pointer to the source data */
+    q7_t*       pTempDest; /* Temporary pointer to the destination buffer */
+    uint32_t    numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t blkCnt;
+    q7x16_t  vecIn0;
+    uint32_t tapsBlkCnt = (numTaps + 15) / 16;
+    q31_t    acc0, acc1, acc2, acc3;
+    q7x16_t  vecCoeffs;
 
     if (numTaps <= 16) {
         /*
@@ -403,15 +421,19 @@ void arm_fir_q7(const arm_fir_instance_q7* S, const q7_t* pSrc, q7_t* pDst, uint
     }
 }
 #else
-void arm_fir_q7(const arm_fir_instance_q7* S, const q7_t* pSrc, q7_t* pDst, uint32_t blockSize) {
+void arm_fir_q7(const arm_fir_instance_q7* S,
+                const q7_t*                pSrc,
+                q7_t*                      pDst,
+                uint32_t                   blockSize) {
     q7_t*       pState  = S->pState;  /* State pointer */
     const q7_t* pCoeffs = S->pCoeffs; /* Coefficient pointer */
-    q7_t*       pStateCurnt;          /* Points to the current sample of the state */
-    q7_t*       px;                   /* Temporary pointer for state buffer */
-    const q7_t* pb;                   /* Temporary pointer for coefficient buffer */
-    q31_t       acc0;                 /* Accumulators */
-    uint32_t    numTaps = S->numTaps; /* Number of filter coefficients in the filter */
-    uint32_t    i, tapCnt, blkCnt;    /* Loop counters */
+    q7_t*       pStateCurnt; /* Points to the current sample of the state */
+    q7_t*       px;          /* Temporary pointer for state buffer */
+    const q7_t* pb;          /* Temporary pointer for coefficient buffer */
+    q31_t       acc0;        /* Accumulators */
+    uint32_t    numTaps =
+        S->numTaps; /* Number of filter coefficients in the filter */
+    uint32_t i, tapCnt, blkCnt; /* Loop counters */
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q31_t acc1, acc2, acc3;   /* Accumulators */

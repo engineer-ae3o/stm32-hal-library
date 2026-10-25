@@ -62,9 +62,14 @@
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
 #include "arm_helium_utils.h"
 #include "arm_vec_filtering.h"
-void arm_correlate_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
-    const q31_t* pIn1 = pSrcA;                  /* inputA pointer               */
-    const q31_t* pIn2 = pSrcB + (srcBLen - 1U); /* inputB pointer               */
+void arm_correlate_q31(const q31_t* pSrcA,
+                       uint32_t     srcALen,
+                       const q31_t* pSrcB,
+                       uint32_t     srcBLen,
+                       q31_t*       pDst) {
+    const q31_t* pIn1 = pSrcA; /* inputA pointer               */
+    const q31_t* pIn2 =
+        pSrcB + (srcBLen - 1U); /* inputB pointer               */
     /*
      * Loop to perform MAC operations according to correlation equation
      */
@@ -162,7 +167,8 @@ void arm_correlate_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB,
         /* compute 4 accumulators per loop */
         /* size is fixed for all accumulators */
         /* X pointer is incrementing for successive accumulators */
-        MVE_INTR_CORR_QUAD_INC_X_FIXED_SIZE_Q31(acc0, acc1, acc2, acc3, pX, pY, srcBLen);
+        MVE_INTR_CORR_QUAD_INC_X_FIXED_SIZE_Q31(
+            acc0, acc1, acc2, acc3, pX, pY, srcBLen);
 
         *pDst = (q31_t)acc0;
         pDst += incr;
@@ -238,18 +244,22 @@ void arm_correlate_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB,
     }
 }
 #else
-void arm_correlate_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB, uint32_t srcBLen, q31_t* pDst) {
+void arm_correlate_q31(const q31_t* pSrcA,
+                       uint32_t     srcALen,
+                       const q31_t* pSrcB,
+                       uint32_t     srcBLen,
+                       q31_t*       pDst) {
 
 #if (1)
     //#if !defined(ARM_MATH_CM0_FAMILY)
 
-    const q31_t* pIn1;                               /* InputA pointer */
-    const q31_t* pIn2;                               /* InputB pointer */
-    q31_t*       pOut = pDst;                        /* Output pointer */
-    const q31_t* px;                                 /* Intermediate inputA pointer */
-    const q31_t* py;                                 /* Intermediate inputB pointer */
-    const q31_t* pSrc1;                              /* Intermediate pointers */
-    q63_t        sum;                                /* Accumulators */
+    const q31_t* pIn1;        /* InputA pointer */
+    const q31_t* pIn2;        /* InputB pointer */
+    q31_t*       pOut = pDst; /* Output pointer */
+    const q31_t* px;          /* Intermediate inputA pointer */
+    const q31_t* py;          /* Intermediate inputB pointer */
+    const q31_t* pSrc1;       /* Intermediate pointers */
+    q63_t        sum;         /* Accumulators */
     uint32_t     blockSize1, blockSize2, blockSize3; /* Loop counters */
     uint32_t     j, k, count, blkCnt;                /* Loop counters */
     uint32_t     outBlockSize;
@@ -257,7 +267,8 @@ void arm_correlate_q31(const q31_t* pSrcA, uint32_t srcALen, const q31_t* pSrcB,
 
 #if defined(ARM_MATH_LOOPUNROLL)
     q63_t acc0, acc1, acc2; /* Accumulators */
-    q31_t x0, x1, x2, c0;   /* Temporary variables for holding input and coefficient values */
+    q31_t x0, x1, x2,
+        c0; /* Temporary variables for holding input and coefficient values */
 #endif
 
     /* The algorithm implementation is based on the lengths of the inputs. */

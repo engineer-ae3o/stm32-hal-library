@@ -54,7 +54,9 @@
 
 #include "arm_helium_utils.h"
 
-arm_status arm_mat_solve_upper_triangular_f16(const arm_matrix_instance_f16* ut, const arm_matrix_instance_f16* a, arm_matrix_instance_f16* dst) {
+arm_status arm_mat_solve_upper_triangular_f16(const arm_matrix_instance_f16* ut,
+                                              const arm_matrix_instance_f16* a,
+                                              arm_matrix_instance_f16* dst) {
     arm_status status; /* status of matrix inverse */
 
 
@@ -134,7 +136,9 @@ arm_status arm_mat_solve_upper_triangular_f16(const arm_matrix_instance_f16* ut,
 }
 
 #else
-arm_status arm_mat_solve_upper_triangular_f16(const arm_matrix_instance_f16* ut, const arm_matrix_instance_f16* a, arm_matrix_instance_f16* dst) {
+arm_status arm_mat_solve_upper_triangular_f16(const arm_matrix_instance_f16* ut,
+                                              const arm_matrix_instance_f16* a,
+                                              arm_matrix_instance_f16* dst) {
     arm_status status; /* status of matrix inverse */
 
 

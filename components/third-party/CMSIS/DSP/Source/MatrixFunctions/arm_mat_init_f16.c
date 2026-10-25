@@ -50,7 +50,10 @@
   @return        none
  */
 
-void arm_mat_init_f16(arm_matrix_instance_f16* S, uint16_t nRows, uint16_t nColumns, float16_t* pData) {
+void arm_mat_init_f16(arm_matrix_instance_f16* S,
+                      uint16_t                 nRows,
+                      uint16_t                 nColumns,
+                      float16_t*               pData) {
     /* Assign Number of Rows */
     S->numRows = nRows;
 

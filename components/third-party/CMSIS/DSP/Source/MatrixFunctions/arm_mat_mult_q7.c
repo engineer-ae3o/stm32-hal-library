@@ -56,19 +56,21 @@
  *
  */
 #if defined(ARM_MATH_MVEI) && !defined(ARM_MATH_AUTOVECTORIZE)
-__STATIC_FORCEINLINE arm_status arm_mat_mult_q7_2x2_mve(const arm_matrix_instance_q7* pSrcA,
-                                                        const arm_matrix_instance_q7* pSrcB,
-                                                        arm_matrix_instance_q7*       pDst) {
+__STATIC_FORCEINLINE arm_status
+arm_mat_mult_q7_2x2_mve(const arm_matrix_instance_q7* pSrcA,
+                        const arm_matrix_instance_q7* pSrcB,
+                        arm_matrix_instance_q7*       pDst) {
     const uint32_t MATRIX_DIM = 2;
-    q7_t const*    pInB       = (q7_t const*)pSrcB->pData; /* input data matrix pointer B */
-    q7_t*          pInA       = pSrcA->pData;              /* input data matrix pointer A */
-    q7_t*          pOut       = pDst->pData;               /* output data matrix pointer */
-    uint8x16_t     vecColBOffs;
-    q7_t*          pInA0 = pInA;
-    q7_t*          pInA1 = pInA0 + MATRIX_DIM;
-    q31_t          acc0, acc1;
-    q7x16_t        vecB, vecA0, vecA1;
-    mve_pred16_t   p0 = vctp8q(MATRIX_DIM);
+    q7_t const*    pInB =
+        (q7_t const*)pSrcB->pData;    /* input data matrix pointer B */
+    q7_t*        pInA = pSrcA->pData; /* input data matrix pointer A */
+    q7_t*        pOut = pDst->pData;  /* output data matrix pointer */
+    uint8x16_t   vecColBOffs;
+    q7_t*        pInA0 = pInA;
+    q7_t*        pInA1 = pInA0 + MATRIX_DIM;
+    q31_t        acc0, acc1;
+    q7x16_t      vecB, vecA0, vecA1;
+    mve_pred16_t p0 = vctp8q(MATRIX_DIM);
 
     vecColBOffs = vidupq_u8((uint32_t)0, 2); /* MATRIX_DIM */
 
@@ -103,20 +105,22 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_q7_2x2_mve(const arm_matrix_instanc
 }
 
 
-__STATIC_FORCEINLINE arm_status arm_mat_mult_q7_3x3_mve(const arm_matrix_instance_q7* pSrcA,
-                                                        const arm_matrix_instance_q7* pSrcB,
-                                                        arm_matrix_instance_q7*       pDst) {
+__STATIC_FORCEINLINE arm_status
+arm_mat_mult_q7_3x3_mve(const arm_matrix_instance_q7* pSrcA,
+                        const arm_matrix_instance_q7* pSrcB,
+                        arm_matrix_instance_q7*       pDst) {
     const uint8_t MATRIX_DIM = 3;
-    q7_t const*   pInB       = (q7_t const*)pSrcB->pData; /* input data matrix pointer B */
-    q7_t*         pInA       = pSrcA->pData;              /* input data matrix pointer A */
-    q7_t*         pOut       = pDst->pData;               /* output data matrix pointer */
-    uint8x16_t    vecColBOffs;
-    q7_t*         pInA0 = pInA;
-    q7_t*         pInA1 = pInA0 + MATRIX_DIM;
-    q7_t*         pInA2 = pInA1 + MATRIX_DIM;
-    q31_t         acc0, acc1, acc2;
-    q7x16_t       vecB, vecA0, vecA1, vecA2;
-    mve_pred16_t  p0 = vctp8q(MATRIX_DIM);
+    q7_t const*   pInB =
+        (q7_t const*)pSrcB->pData;    /* input data matrix pointer B */
+    q7_t*        pInA = pSrcA->pData; /* input data matrix pointer A */
+    q7_t*        pOut = pDst->pData;  /* output data matrix pointer */
+    uint8x16_t   vecColBOffs;
+    q7_t*        pInA0 = pInA;
+    q7_t*        pInA1 = pInA0 + MATRIX_DIM;
+    q7_t*        pInA2 = pInA1 + MATRIX_DIM;
+    q31_t        acc0, acc1, acc2;
+    q7x16_t      vecB, vecA0, vecA1, vecA2;
+    mve_pred16_t p0 = vctp8q(MATRIX_DIM);
 
     vecColBOffs = vidupq_u8((uint32_t)0, 1);
     vecColBOffs = vecColBOffs * MATRIX_DIM;
@@ -171,21 +175,23 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_q7_3x3_mve(const arm_matrix_instanc
 }
 
 
-__STATIC_FORCEINLINE arm_status arm_mat_mult_q7_4x4_mve(const arm_matrix_instance_q7* pSrcA,
-                                                        const arm_matrix_instance_q7* pSrcB,
-                                                        arm_matrix_instance_q7*       pDst) {
+__STATIC_FORCEINLINE arm_status
+arm_mat_mult_q7_4x4_mve(const arm_matrix_instance_q7* pSrcA,
+                        const arm_matrix_instance_q7* pSrcB,
+                        arm_matrix_instance_q7*       pDst) {
     const uint32_t MATRIX_DIM = 4;
-    q7_t const*    pInB       = (q7_t const*)pSrcB->pData; /* input data matrix pointer B */
-    q7_t*          pInA       = pSrcA->pData;              /* input data matrix pointer A */
-    q7_t*          pOut       = pDst->pData;               /* output data matrix pointer */
-    uint8x16_t     vecColBOffs;
-    q7_t*          pInA0 = pInA;
-    q7_t*          pInA1 = pInA0 + MATRIX_DIM;
-    q7_t*          pInA2 = pInA1 + MATRIX_DIM;
-    q7_t*          pInA3 = pInA2 + MATRIX_DIM;
-    q31_t          acc0, acc1, acc2, acc3;
-    q7x16_t        vecB, vecA0, vecA1, vecA2, vecA3;
-    mve_pred16_t   p0 = vctp8q(MATRIX_DIM);
+    q7_t const*    pInB =
+        (q7_t const*)pSrcB->pData;    /* input data matrix pointer B */
+    q7_t*        pInA = pSrcA->pData; /* input data matrix pointer A */
+    q7_t*        pOut = pDst->pData;  /* output data matrix pointer */
+    uint8x16_t   vecColBOffs;
+    q7_t*        pInA0 = pInA;
+    q7_t*        pInA1 = pInA0 + MATRIX_DIM;
+    q7_t*        pInA2 = pInA1 + MATRIX_DIM;
+    q7_t*        pInA3 = pInA2 + MATRIX_DIM;
+    q31_t        acc0, acc1, acc2, acc3;
+    q7x16_t      vecB, vecA0, vecA1, vecA2, vecA3;
+    mve_pred16_t p0 = vctp8q(MATRIX_DIM);
 
     vecColBOffs = vidupq_u8((uint32_t)0, 4);
 
@@ -261,28 +267,37 @@ __STATIC_FORCEINLINE arm_status arm_mat_mult_q7_4x4_mve(const arm_matrix_instanc
     return (ARM_MATH_SUCCESS);
 }
 
-arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA, const arm_matrix_instance_q7* pSrcB, arm_matrix_instance_q7* pDst, q7_t* pState) {
-    q7_t*                  pInA = pSrcA->pData; /* input data matrix pointer A of Q7 type */
-    q7_t*                  pInB = pSrcB->pData; /* input data matrix pointer B of Q7 type */
-    q7_t*                  pInA2;
-    q7_t*                  pInB2;
-    q7_t*                  px;                             /* Temporary output data matrix pointer */
-    q7_t*                  px2;                            /* Temporary output data matrix pointer */
-    uint32_t               numRowsA = pSrcA->numRows;      /* number of rows of input matrix A    */
-    uint32_t               numColsB = pSrcB->numCols;      /* number of columns of input matrix B */
-    uint32_t               numColsA = pSrcA->numCols;      /* number of columns of input matrix A */
-    uint32_t               numRowsB = pSrcB->numRows;      /* number of rows of input matrix A    */
-    uint32_t               col, i = 0u, j, row = numRowsB; /* loop counters */
-    q7_t*                  pSrcBT = pState;                /* input data matrix pointer for transpose */
-    uint32_t               blkCnt;                         /* loop counters */
-    arm_status             status;                         /* status of matrix multiplication */
+arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA,
+                           const arm_matrix_instance_q7* pSrcB,
+                           arm_matrix_instance_q7*       pDst,
+                           q7_t*                         pState) {
+    q7_t*    pInA = pSrcA->pData; /* input data matrix pointer A of Q7 type */
+    q7_t*    pInB = pSrcB->pData; /* input data matrix pointer B of Q7 type */
+    q7_t*    pInA2;
+    q7_t*    pInB2;
+    q7_t*    px;  /* Temporary output data matrix pointer */
+    q7_t*    px2; /* Temporary output data matrix pointer */
+    uint32_t numRowsA =
+        pSrcA->numRows; /* number of rows of input matrix A    */
+    uint32_t numColsB =
+        pSrcB->numCols; /* number of columns of input matrix B */
+    uint32_t numColsA =
+        pSrcA->numCols; /* number of columns of input matrix A */
+    uint32_t numRowsB =
+        pSrcB->numRows; /* number of rows of input matrix A    */
+    uint32_t   col, i = 0u, j, row = numRowsB; /* loop counters */
+    q7_t*      pSrcBT = pState; /* input data matrix pointer for transpose */
+    uint32_t   blkCnt;          /* loop counters */
+    arm_status status;          /* status of matrix multiplication */
     arm_matrix_instance_q7 BT;
 
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else
@@ -549,26 +564,34 @@ arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA, const arm_matrix
     return (status);
 }
 #else
-arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA, const arm_matrix_instance_q7* pSrcB, arm_matrix_instance_q7* pDst, q7_t* pState) {
-    q31_t      sum;                                 /* accumulator */
-    q7_t*      pIn1 = pSrcA->pData;                 /* input data matrix pointer A */
-    q7_t*      pIn2 = pSrcB->pData;                 /* input data matrix pointer B */
-    q7_t*      pInA = pSrcA->pData;                 /* input data matrix pointer A of Q7 type */
-    q7_t*      pInB = pSrcB->pData;                 /* input data matrix pointer B of Q7 type */
-    q7_t*      pOut = pDst->pData;                  /* output data matrix pointer */
-    q7_t*      px;                                  /* Temporary output data matrix pointer */
-    uint16_t   numColsB = pSrcB->numCols;           /* number of columns of input matrix B */
-    uint16_t   numColsA = pSrcA->numCols;           /* number of columns of input matrix A */
-    uint16_t   numRowsA = pSrcA->numRows;           /* number of rows of input matrix A    */
+arm_status arm_mat_mult_q7(const arm_matrix_instance_q7* pSrcA,
+                           const arm_matrix_instance_q7* pSrcB,
+                           arm_matrix_instance_q7*       pDst,
+                           q7_t*                         pState) {
+    q31_t    sum;                 /* accumulator */
+    q7_t*    pIn1 = pSrcA->pData; /* input data matrix pointer A */
+    q7_t*    pIn2 = pSrcB->pData; /* input data matrix pointer B */
+    q7_t*    pInA = pSrcA->pData; /* input data matrix pointer A of Q7 type */
+    q7_t*    pInB = pSrcB->pData; /* input data matrix pointer B of Q7 type */
+    q7_t*    pOut = pDst->pData;  /* output data matrix pointer */
+    q7_t*    px;                  /* Temporary output data matrix pointer */
+    uint16_t numColsB =
+        pSrcB->numCols; /* number of columns of input matrix B */
+    uint16_t numColsA =
+        pSrcA->numCols; /* number of columns of input matrix A */
+    uint16_t numRowsA =
+        pSrcA->numRows; /* number of rows of input matrix A    */
     uint16_t   col, i = 0U, row = numRowsA, colCnt; /* loop counters */
-    arm_status status;                              /* status of matrix multiplication */
+    arm_status status; /* status of matrix multiplication */
 
     (void)pState;
 
 #ifdef ARM_MATH_MATRIX_CHECK
 
     /* Check for matrix mismatch condition */
-    if ((pSrcA->numCols != pSrcB->numRows) || (pSrcA->numRows != pDst->numRows) || (pSrcB->numCols != pDst->numCols)) {
+    if ((pSrcA->numCols != pSrcB->numRows) ||
+        (pSrcA->numRows != pDst->numRows) ||
+        (pSrcB->numCols != pDst->numCols)) {
         /* Set status as ARM_MATH_SIZE_MISMATCH */
         status = ARM_MATH_SIZE_MISMATCH;
     } else

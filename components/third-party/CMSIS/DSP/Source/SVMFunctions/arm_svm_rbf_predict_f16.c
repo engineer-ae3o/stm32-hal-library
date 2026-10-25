@@ -54,7 +54,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math_f16.h"
 
-void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S, const float16_t* in, int32_t* pResult) {
+void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S,
+                             const float16_t*                in,
+                             int32_t*                        pResult) {
     /* inlined Matrix x Vector function interleaved with dot prod */
     uint32_t         numRows  = S->nbOfSupportVectors;
     uint32_t         numCols  = S->vectorDimension;
@@ -165,7 +167,10 @@ void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S, const float16_t*
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc2), vtmp, 2);
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc3), vtmp, 3);
 
-        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef), vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)), vctp16q(4));
+        vSum = vfmaq_m_f16(vSum,
+                           vld1q(pDualCoef),
+                           vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)),
+                           vctp16q(4));
         pDualCoef += 4;
         pSrcA += numCols * 4;
         /*
@@ -242,7 +247,10 @@ void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S, const float16_t*
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc1), vtmp, 1);
 
-        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef), vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)), vctp16q(2));
+        vSum = vfmaq_m_f16(vSum,
+                           vld1q(pDualCoef),
+                           vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)),
+                           vctp16q(2));
         pDualCoef += 2;
 
         pSrcA += numCols * 2;
@@ -301,7 +309,10 @@ void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S, const float16_t*
         f16x8_t vtmp = vuninitializedq_f16();
         vtmp         = vsetq_lane(vecAddAcrossF16Mve(acc0), vtmp, 0);
 
-        vSum = vfmaq_m_f16(vSum, vld1q(pDualCoef), vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)), vctp16q(1));
+        vSum = vfmaq_m_f16(vSum,
+                           vld1q(pDualCoef),
+                           vexpq_f16(vmulq_n_f16(vtmp, -(_Float16)S->gamma)),
+                           vctp16q(1));
     }
 
 
@@ -310,7 +321,9 @@ void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S, const float16_t*
 }
 
 #else
-void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S, const float16_t* in, int32_t* pResult) {
+void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S,
+                             const float16_t*                in,
+                             int32_t*                        pResult) {
     _Float16         sum = S->intercept;
     _Float16         dot = 00.f16;
     uint32_t         i, j;
@@ -322,7 +335,8 @@ void arm_svm_rbf_predict_f16(const arm_svm_rbf_instance_f16* S, const float16_t*
             dot = dot + SQ((_Float16)in[j] - (_Float16)*pSupport);
             pSupport++;
         }
-        sum += (_Float16)S->dualCoefficients[i] * (_Float16)expf((float32_t)(-(_Float16)S->gamma * (_Float16)dot));
+        sum += (_Float16)S->dualCoefficients[i] *
+               (_Float16)expf((float32_t)(-(_Float16)S->gamma * (_Float16)dot));
     }
     *pResult = S->classes[STEP(sum)];
 }

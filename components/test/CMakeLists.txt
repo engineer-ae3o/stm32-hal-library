@@ -19,7 +19,8 @@ set(SRCS
     src/clock.cpp
     src/runner.cpp
     src/profile.cpp
-    src/timer_ext.cpp
+    src/timer_pcnt.cpp
+    src/timer_extended.cpp
 )
 
 set(INC

@@ -46,22 +46,28 @@
   @return        none
  */
 
-void arm_fir_lattice_q15(const arm_fir_lattice_instance_q15* S, const q15_t* pSrc, q15_t* pDst, uint32_t blockSize) {
-    q15_t*       pState  = S->pState;            /* State pointer */
-    const q15_t* pCoeffs = S->pCoeffs;           /* Coefficient pointer */
-    q15_t*       px;                             /* Temporary state pointer */
-    const q15_t* pk;                             /* Temporary coefficient pointer */
-    uint32_t     numStages = S->numStages;       /* Number of stages in the filter */
-    uint32_t     blkCnt, stageCnt;               /* Loop counters */
+void arm_fir_lattice_q15(const arm_fir_lattice_instance_q15* S,
+                         const q15_t*                        pSrc,
+                         q15_t*                              pDst,
+                         uint32_t                            blockSize) {
+    q15_t*       pState  = S->pState;      /* State pointer */
+    const q15_t* pCoeffs = S->pCoeffs;     /* Coefficient pointer */
+    q15_t*       px;                       /* Temporary state pointer */
+    const q15_t* pk;                       /* Temporary coefficient pointer */
+    uint32_t     numStages = S->numStages; /* Number of stages in the filter */
+    uint32_t     blkCnt, stageCnt;         /* Loop counters */
     q31_t        fcurr0, fnext0, gnext0, gcurr0; /* Temporary variables */
 
 #if (1)
     //#if !defined(ARM_MATH_CM0_FAMILY)
 
 #if defined(ARM_MATH_LOOPUNROLL)
-    q31_t fcurr1, fnext1, gnext1; /* Temporary variables for second sample in loop unrolling */
-    q31_t fcurr2, fnext2, gnext2; /* Temporary variables for third sample in loop unrolling */
-    q31_t fcurr3, fnext3, gnext3; /* Temporary variables for fourth sample in loop unrolling */
+    q31_t fcurr1, fnext1,
+        gnext1; /* Temporary variables for second sample in loop unrolling */
+    q31_t fcurr2, fnext2,
+        gnext2; /* Temporary variables for third sample in loop unrolling */
+    q31_t fcurr3, fnext3,
+        gnext3; /* Temporary variables for fourth sample in loop unrolling */
 #endif
 
     gcurr0 = 0;

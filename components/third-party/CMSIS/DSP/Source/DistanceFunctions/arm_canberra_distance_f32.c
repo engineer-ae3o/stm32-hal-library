@@ -57,7 +57,9 @@
 #include "arm_helium_utils.h"
 #include "arm_vec_math.h"
 
-float32_t arm_canberra_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_canberra_distance_f32(const float32_t* pA,
+                                    const float32_t* pB,
+                                    uint32_t         blockSize) {
     float32_t accum = 0.0f;
     uint32_t  blkCnt;
     f32x4_t   a, b, c, accumV;
@@ -130,7 +132,9 @@ float32_t arm_canberra_distance_f32(const float32_t* pA, const float32_t* pB, ui
 
 #include "NEMath.h"
 
-float32_t arm_canberra_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_canberra_distance_f32(const float32_t* pA,
+                                    const float32_t* pB,
+                                    uint32_t         blockSize) {
     float32_t   accum = 0.0f, tmpA, tmpB, diff, sum;
     uint32_t    blkCnt;
     float32x4_t a, b, c, accumV;
@@ -161,8 +165,9 @@ float32_t arm_canberra_distance_f32(const float32_t* pA, const float32_t* pB, ui
          * Force result of a division by 0 to 0. It the behavior of the
          * sklearn canberra function.
          */
-        a      = vreinterpretq_f32_s32(vbicq_s32(vreinterpretq_s32_f32(a), vreinterpretq_s32_u32(isZeroV)));
-        c      = vmulq_f32(c, a);
+        a = vreinterpretq_f32_s32(vbicq_s32(vreinterpretq_s32_f32(a),
+                                            vreinterpretq_s32_u32(isZeroV)));
+        c = vmulq_f32(c, a);
         accumV = vaddq_f32(accumV, c);
 
         pA += 4;
@@ -189,7 +194,9 @@ float32_t arm_canberra_distance_f32(const float32_t* pA, const float32_t* pB, ui
 }
 
 #else
-float32_t arm_canberra_distance_f32(const float32_t* pA, const float32_t* pB, uint32_t blockSize) {
+float32_t arm_canberra_distance_f32(const float32_t* pA,
+                                    const float32_t* pB,
+                                    uint32_t         blockSize) {
     float32_t accum = 0.0f, tmpA, tmpB, diff, sum;
 
     while (blockSize > 0) {
