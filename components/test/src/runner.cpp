@@ -30,21 +30,21 @@ namespace test {
 
     void runner() {
         // Test runners for all components
-        // adc::all();
-        // dma::all();
-        // i2c::all();
-        // pwm::all();
-        // crc::all();
-        // spi::all();
-        // i2s::all();
-        // iwdg::all();
-        // heap::all();
-        // uart::all();
-        // gpio::all();
-        // clock::all();
-        // timer::all();
+        adc::all();
+        dma::all();
+        i2c::all();
+        pwm::all();
+        crc::all();
+        spi::all();
+        i2s::all();
+        iwdg::all();
+        heap::all();
+        uart::all();
+        gpio::all();
+        clock::all();
+        timer::all();
         timer_ext::all();
-        // timer_pcnt::all();
+        timer_pcnt::all();
     }
 
 } // namespace test

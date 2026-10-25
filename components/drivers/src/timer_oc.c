@@ -158,9 +158,9 @@ hal_err_t output_compare_init(TIM_TypeDef*                   handle,
     }
 
     // Final writeback
-    handle->CCER |= ccer;
     handle->DIER |= dier;
     handle->CCMR1 |= ccmr1;
+    handle->CCER |= ccer;
 
     if (!timer_lite) {
         // The lite timers do not have a CCMR2 register

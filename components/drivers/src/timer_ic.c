@@ -61,6 +61,10 @@ hal_err_t input_capture_init(TIM_TypeDef*                  handle,
                     ccer |= TIM_CCER_CC1P | TIM_CCER_CC1NP | TIM_CCER_CC1E;
                 } else if (channel.edge == IC_EDGE_FALLING) {
                     ccer |= TIM_CCER_CC1P | TIM_CCER_CC1E;
+                } else if (channel.edge == IC_EDGE_RISING) {
+                    ccer |= TIM_CCER_CC1E;
+                } else {
+                    return HAL_ERR_INVALID_ARG;
                 }
                 break;
             }
@@ -76,6 +80,10 @@ hal_err_t input_capture_init(TIM_TypeDef*                  handle,
                     ccer |= TIM_CCER_CC2P | TIM_CCER_CC2NP | TIM_CCER_CC2E;
                 } else if (channel.edge == IC_EDGE_FALLING) {
                     ccer |= TIM_CCER_CC2P | TIM_CCER_CC2E;
+                } else if (channel.edge == IC_EDGE_RISING) {
+                    ccer |= TIM_CCER_CC2E;
+                } else {
+                    return HAL_ERR_INVALID_ARG;
                 }
                 break;
             }
@@ -91,6 +99,10 @@ hal_err_t input_capture_init(TIM_TypeDef*                  handle,
                     ccer |= TIM_CCER_CC3P | TIM_CCER_CC3NP | TIM_CCER_CC3E;
                 } else if (channel.edge == IC_EDGE_FALLING) {
                     ccer |= TIM_CCER_CC3P | TIM_CCER_CC3E;
+                } else if (channel.edge == IC_EDGE_RISING) {
+                    ccer |= TIM_CCER_CC3E;
+                } else {
+                    return HAL_ERR_INVALID_ARG;
                 }
                 break;
             }
@@ -106,6 +118,10 @@ hal_err_t input_capture_init(TIM_TypeDef*                  handle,
                     ccer |= TIM_CCER_CC4P | TIM_CCER_CC4NP | TIM_CCER_CC4E;
                 } else if (channel.edge == IC_EDGE_FALLING) {
                     ccer |= TIM_CCER_CC4P | TIM_CCER_CC4E;
+                } else if (channel.edge == IC_EDGE_RISING) {
+                    ccer |= TIM_CCER_CC4E;
+                } else {
+                    return HAL_ERR_INVALID_ARG;
                 }
                 break;
             }
@@ -134,9 +150,9 @@ hal_err_t input_capture_init(TIM_TypeDef*                  handle,
     }
 
     // Final writeback
-    handle->CCER |= ccer;
     handle->DIER |= dier;
     handle->CCMR1 |= ccmr1;
+    handle->CCER |= ccer;
 
     if (!timer_lite) {
         // The lite timers do not have a CCMR2 register
