@@ -48,7 +48,7 @@ typedef enum : uint8_t {
 typedef struct {
     GPIO_TypeDef* port;
     gpio_pin_t    pin;
-} gpio_pin_ctx_t;
+} gpio_ctx_t;
 
 
 #endif // GPIO_TYPES_H_

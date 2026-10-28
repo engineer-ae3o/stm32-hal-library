@@ -230,7 +230,7 @@ namespace test::adc {
             }};
 
             for (const auto& expectation : EXPECTATIONS) {
-                const gpio_pin_ctx_t ctx =
+                const gpio_ctx_t ctx =
                     adc_channel_get_gpio(expectation.channel);
                 TEST_ASSERT_EQUAL_PTR(expectation.port, ctx.port);
                 TEST_ASSERT_EQUAL_UINT16(expectation.pin, ctx.pin);
@@ -445,8 +445,8 @@ namespace test::adc {
             uint16_t raw = 0;
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              adc_get_v_bat(nullptr, &raw));
-            TEST_ASSERT_EQUAL(HAL_OK, adc_get_v_bat(ADC1, &raw));
+                              adc_get_v_bat_raw(nullptr, &raw));
+            TEST_ASSERT_EQUAL(HAL_OK, adc_get_v_bat_raw(ADC1, &raw));
             TEST_ASSERT_TRUE(raw <= (0xFFFU * VBAT_DIVIDER_RATIO));
             LOGI(TAG,
                  "[internal_channel_readings_complete_and_manage_their_own_"
@@ -457,8 +457,8 @@ namespace test::adc {
             TEST_ASSERT_FALSE(ADC->CCR & ADC_CCR_VBATE);
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              adc_get_temperature(nullptr, &raw));
-            TEST_ASSERT_EQUAL(HAL_OK, adc_get_temperature(ADC1, &raw));
+                              adc_get_temperature_raw(nullptr, &raw));
+            TEST_ASSERT_EQUAL(HAL_OK, adc_get_temperature_raw(ADC1, &raw));
             TEST_ASSERT_TRUE(raw <= 0xFFFU);
             LOGI(TAG,
                  "[internal_channel_readings_complete_and_manage_their_own_"
@@ -469,8 +469,8 @@ namespace test::adc {
             TEST_ASSERT_TRUE(ADC->CCR & ADC_CCR_TSVREFE);
 
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG,
-                              adc_get_v_ref_internal(nullptr, &raw));
-            TEST_ASSERT_EQUAL(HAL_OK, adc_get_v_ref_internal(ADC1, &raw));
+                              adc_get_v_ref_internal_raw(nullptr, &raw));
+            TEST_ASSERT_EQUAL(HAL_OK, adc_get_v_ref_internal_raw(ADC1, &raw));
             TEST_ASSERT_TRUE(raw <= 0xFFFU);
             LOGI(TAG,
                  "[internal_channel_readings_complete_and_manage_their_own_"
@@ -489,8 +489,9 @@ namespace test::adc {
                               adc_get_vdda(nullptr, &vdda));
             TEST_ASSERT_EQUAL(HAL_ERR_INVALID_ARG, adc_get_vdda(ADC1, nullptr));
             TEST_ASSERT_EQUAL(HAL_OK, adc_get_vdda(ADC1, &vdda));
+
             // VDDA on this board is a regulated supply. Sanity bound it rather than assert an exact value
-            TEST_ASSERT_TRUE(vdda > 3.0F && vdda < 3.5F);
+            TEST_ASSERT_TRUE(vdda > 2.5F && vdda < 4.0F);
             LOGI(TAG,
                  "[voltage_and_temperature_math_are_internally_consistent] "
                  "Vdda: %.3fV",

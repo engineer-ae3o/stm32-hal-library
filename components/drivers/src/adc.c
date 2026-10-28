@@ -28,7 +28,7 @@ static const dma_map_t s_adc_dma_map[] = {
 #endif
 };
 
-static const gpio_pin_ctx_t s_adc_channels[] = {
+static const gpio_ctx_t s_adc_channels[] = {
     [ADC_CHANNEL_0]  = {.port = GPIOA, .pin = GPIO_PIN_0},
     [ADC_CHANNEL_1]  = {.port = GPIOA, .pin = GPIO_PIN_1},
     [ADC_CHANNEL_2]  = {.port = GPIOA, .pin = GPIO_PIN_2},
@@ -443,7 +443,7 @@ void adc_clk_configure(adc_prescaler_t clk_prescaler) {
                ((uint32_t)clk_prescaler << ADC_CCR_ADCPRE_Pos);
 }
 
-gpio_pin_ctx_t adc_channel_get_gpio(adc_channel_t channel) {
+gpio_ctx_t adc_channel_get_gpio(adc_channel_t channel) {
     return s_adc_channels[channel];
 }
 
@@ -821,7 +821,7 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle,
 #define ADC_CHANNEL_VREF (17U) // V_refint
 #define ADC_CHANNEL_VBAT (18U) // V_bat
 
-hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data) {
+hal_err_t adc_get_v_bat_raw(ADC_TypeDef* handle, uint16_t* raw_data) {
     if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -847,7 +847,7 @@ hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data) {
     return HAL_OK;
 }
 
-hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data) {
+hal_err_t adc_get_temperature_raw(ADC_TypeDef* handle, uint16_t* raw_data) {
     if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -868,7 +868,7 @@ hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data) {
     return HAL_OK;
 }
 
-hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_data) {
+hal_err_t adc_get_v_ref_internal_raw(ADC_TypeDef* handle, uint16_t* raw_data) {
     if (handle == NULL || raw_data == NULL) {
         return HAL_ERR_INVALID_ARG;
     }
@@ -904,7 +904,7 @@ hal_err_t adc_get_vdda(ADC_TypeDef* handle, float* vdda) {
         (handle->CR1 & ~ADC_CR1_RES) | (ADC_RES_12_BITS << ADC_CR1_RES_Pos);
 
     uint16_t raw_vref = 0;
-    TRY(adc_get_v_ref_internal(handle, &raw_vref));
+    TRY(adc_get_v_ref_internal_raw(handle, &raw_vref));
 
     // Get the V_refint calibraion value. It is stored at a specific address in memory
     // It is the value of V_ref_int measured at V_dda = 3.3V and 30C
@@ -933,11 +933,11 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
 
     // Get the raw V_ref_int
     uint16_t v_ref_int = 0;
-    TRY(adc_get_v_ref_internal(handle, &v_ref_int));
+    TRY(adc_get_v_ref_internal_raw(handle, &v_ref_int));
 
     // Read the raw ADC temperature sensor data
     uint16_t raw_temp = 0;
-    TRY(adc_get_temperature(handle, &raw_temp));
+    TRY(adc_get_temperature_raw(handle, &raw_temp));
 
     // Normalize the raw temperature sensor data
     const float normalized =
@@ -954,7 +954,7 @@ hal_err_t adc_get_temp_celsius(ADC_TypeDef* handle, float* temp_celsius) {
          (normalized - (float)temp_cal_30c)) +
         30.0F;
 
-    // Reapply the old resolution so as not to interfere with any user settings
+    // Reapply the old resolution so as not to interfere with any caller applied settings
     handle->CR1 = (handle->CR1 & ~ADC_CR1_RES) |
                   (uint32_t)(resolution_before << ADC_CR1_RES_Pos);
 

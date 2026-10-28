@@ -18,15 +18,15 @@ namespace test::i2c {
 
         constexpr const char* TAG = "I2C_Test";
 
-        I2C_TypeDef* const TEST_PORT         = I2C2;
+        I2C_TypeDef* const TEST_PORT         = I2C3;
         constexpr uint8_t  AHT20_I2C_ADDRESS = 0x38;
 
         const i2c_master_config_t PORT_CONFIG = {
             .use_pullups    = true,
             .frequency      = I2C_FREQ_100kHz,
             .digital_filter = I2C_DIGITAL_FILTER_0,
-            .sda_pin        = BOARD_I2C2_SDA_PB3,
-            .scl_pin        = BOARD_I2C2_SCL_PB10,
+            .sda_pin        = BOARD_I2C3_SDA_PB8,
+            .scl_pin        = BOARD_I2C3_SCL_PA8,
         };
 
         // TESTS

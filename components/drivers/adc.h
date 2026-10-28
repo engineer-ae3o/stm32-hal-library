@@ -26,7 +26,7 @@ void adc_configure_channel(adc_channel_t channel);
 void adc_enable_nvic_irq(bool enable);
 void adc_power_on_temp_sensor(bool on);
 
-gpio_pin_ctx_t adc_channel_get_gpio(adc_channel_t channel);
+gpio_ctx_t adc_channel_get_gpio(adc_channel_t channel);
 
 
 // For use with the external channels
@@ -54,9 +54,9 @@ hal_err_t adc_injected_group_get_result(ADC_TypeDef* handle,
 // Only oneshot and conversion with the regular group are supported.
 // These only return the raw ADC values. Pair with adc_get_value_right_aligned(...)
 // (if you use ADC_RIGHT_ALIGN) to get the actual voltages read by the ADC.
-hal_err_t adc_get_v_bat(ADC_TypeDef* handle, uint16_t* raw_data);
-hal_err_t adc_get_temperature(ADC_TypeDef* handle, uint16_t* raw_data);
-hal_err_t adc_get_v_ref_internal(ADC_TypeDef* handle, uint16_t* raw_data);
+hal_err_t adc_get_v_bat_raw(ADC_TypeDef* handle, uint16_t* raw_data);
+hal_err_t adc_get_temperature_raw(ADC_TypeDef* handle, uint16_t* raw_data);
+hal_err_t adc_get_v_ref_internal_raw(ADC_TypeDef* handle, uint16_t* raw_data);
 
 
 // Get the actual voltage readings from the ADC

@@ -220,25 +220,25 @@ With more than one channel, the samples arrive interleaved in sequence order. Th
 
 The **injected group** (`adc_injected_group_start_conv()`) works the same way: up to four channels, a trigger source, optional per-channel offsets, and a completion callback. Read the results with `adc_injected_group_get_result()`. The **analog watchdog** (`adc_analog_wdg_start()`) calls you back when a reading leaves a min/max window.
 
-**I2C** (I2C2 at 100 kHz, talking to an AHT20 sensor):
+**I2C** (I2C3 at 100 kHz, talking to an AHT20 sensor):
 
 ```c
 i2c_master_config_t cfg = {
     .use_pullups    = true,
     .frequency      = I2C_FREQ_100kHz,
     .digital_filter = I2C_DIGITAL_FILTER_0,
-    .sda_pin        = BOARD_I2C2_SDA_PB3,
-    .scl_pin        = BOARD_I2C2_SCL_PB10,
+    .sda_pin        = BOARD_I2C3_SDA_PB8,
+    .scl_pin        = BOARD_I2C3_SCL_PA8,
 };
 
-TRY(i2cx_clk_enable(I2C2, true));
-TRY(i2c_master_init(I2C2, &cfg));
+TRY(i2cx_clk_enable(I2C3, true));
+TRY(i2c_master_init(I2C3, &cfg));
 
 const uint8_t measure[] = {0xAC, 0x33, 0x00};   // AHT20 "start measurement"
 uint8_t       data[7];
-TRY(i2c_master_transmit(I2C2, 0x38, measure, sizeof(measure)));
+TRY(i2c_master_transmit(I2C3, 0x38, measure, sizeof(measure)));
 delay_ms(80); // Polling delay. Used as a sample
-TRY(i2c_master_receive(I2C2, 0x38, data, sizeof(data)));
+TRY(i2c_master_receive(I2C3, 0x38, data, sizeof(data)));
 ```
 
 Check the headers in `components/drivers/` for the full list of config fields and options.
@@ -427,7 +427,7 @@ Some tests need jumper wires or a sensor. Others need nothing at all.
 |---|---|
 | UART (USART1) | PA9 (TX) to PA10 (RX) |
 | SPI (SPI2) | PB15 (MOSI) to PB14 (MISO). PB10 is the clock and needs no connection |
-| I2C (I2C2) | AHT20 sensor: SDA on PB3, SCL on PB10, address `0x38`. The MCU's internal pull-ups are used |
+| I2C (I2C3) | AHT20 sensor: SDA on PB8, SCL on PA8, address `0x38`. The MCU's internal pull-ups are used |
 | Timer loopback | See below |
 
 **Timer loopback (TIM3 drives TIM2):**
@@ -440,8 +440,6 @@ TIM3, a 16-bit timer, is the signal source. TIM2, a 32-bit timer, is the one bei
 | PB5 (CH2) | PB3 (CH2) |
 
 Sometimes TIM3 generates a real clock or PWM signal. Other times the CPU takes over PB4 and PB5 as plain GPIO outputs and bit-bangs exact pulse trains and quadrature sequences, so the expected counts are exact, not approximate. The input capture, output compare, pulse counter, quadrature decoder and PWM input tests all use this loopback.
-
-**Heads up:** PB10 is used by both SPI2 (clock) and I2C2 (SCL), and PB3 is used by both I2C2 (SDA) and the timer loopback (TIM2 CH2). Rewire between those tests.
 
 **Tests that need no wiring:** ADC, I2S, DMA, CRC, GPIO, IWDG, clock, heap, the timer basics and the core PWM output tests. They check registers, internal channels and on-chip behavior. For PWM output you can probe the pin with a scope if you want to see the signal, but nothing needs to be connected.
 
