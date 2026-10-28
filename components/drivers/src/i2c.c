@@ -14,11 +14,11 @@ static inline hal_err_t send_stop(I2C_TypeDef* handle);
 static inline hal_err_t check_error_flags(I2C_TypeDef* handle,
                                           bool         send_stop_on_error);
 
-static hal_err_t tx_trans(I2C_TypeDef*   handle,
-                          uint8_t        address,
-                          const uint8_t* data,
-                          size_t         size);
-static hal_err_t
+static inline hal_err_t tx_trans(I2C_TypeDef*   handle,
+                                 uint8_t        address,
+                                 const uint8_t* data,
+                                 size_t         size);
+static inline hal_err_t
 rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
 
 

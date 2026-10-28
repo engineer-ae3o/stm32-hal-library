@@ -120,6 +120,14 @@ hal_err_t dma_memcpy_cb(
 
 memcpy_state_t dma_memcpy_wait_for_flag(volatile memcpy_state_t* dma_done_flag,
                                         uint32_t                 timeout) {
+    if (timeout == 0) {
+        // Specialization on a timeout of 0
+        if (*dma_done_flag != DMA_MEMCPY_NOT_DONE) {
+            return *dma_done_flag;
+        } else {
+            return DMA_MEMCPY_TIMEOUT;
+        }
+    }
     for (uint32_t i = 0; i < timeout; i++) {
         if (*dma_done_flag != DMA_MEMCPY_NOT_DONE) {
             return *dma_done_flag;
