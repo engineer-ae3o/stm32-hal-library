@@ -1,15 +1,8 @@
 # STM32F411 HAL
 
-A hardware abstraction library for the STM32F411, written from scratch in C. It uses the chip's registers directly, using only the CMSIS headers.
+A hardware abstraction library/framework for embedded development on the STM32F411, written from scratch in C (tests are in C++). It uses the chip's registers directly, using the CMSIS headers.
 
-I built it for the STM32F411 Black Pill, so I have a set of drivers I plan to use in future projects.
-
-## Why this exists
-
-- **Small and readable.** Most peripherals have one header and one source file. You can read a driver in one sitting.
-- **Tested on real hardware.** The tests run on the board, not on a PC. They check register values, error handling and real signals.
-- **Strict builds.** The code compiles with a long list of extra warnings. CI also checks formatting and runs static analysis.
-- **Measured.** The heap and the logging system have written profiling reports in `profile_results/`.
+I wrote it for the STM32F411 Black Pill, so I have a set of drivers I plan to use in future projects.
 
 ## Example
 
