@@ -1037,7 +1037,11 @@ namespace test::adc {
             adc_enable_nvic_irq(true);
 
             constexpr auto CHANNELS = std::array{
-                ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_2, ADC_CHANNEL_4};
+                ADC_CHANNEL_0,
+                ADC_CHANNEL_1,
+                ADC_CHANNEL_2,
+                ADC_CHANNEL_4,
+            };
             for (const auto channel : CHANNELS) {
                 adc_configure_channel(channel);
             }
@@ -1047,8 +1051,11 @@ namespace test::adc {
 
             // The regular group: falling edge
             const adc_continuous_config_t config = {
-                .channels         = {.sequence        = CHANNELS.data(),
-                                     .num_of_channels = CHANNELS.size()},
+                .channels =
+                    {
+                        .sequence        = CHANNELS.data(),
+                        .num_of_channels = CHANNELS.size(),
+                    },
                 .trigger          = ADC_RG_TRIGGER_EXTI_LINE_11,
                 .trigger_polarity = ADC_POLARITY_FALLING_EDGE,
                 .buffer_0         = buffer_0.data(),
@@ -1113,8 +1120,11 @@ namespace test::adc {
 
             // The injected group: rising edge
             const adc_injected_group_config_t jg_config = {
-                .channels         = {.sequence        = CHANNELS.data(),
-                                     .num_of_channels = CHANNELS.size()},
+                .channels =
+                    {
+                        .sequence        = CHANNELS.data(),
+                        .num_of_channels = CHANNELS.size(),
+                    },
                 .trigger          = ADC_JG_TRIGGER_EXTI_LINE_15,
                 .trigger_polarity = ADC_POLARITY_RISING_EDGE,
                 .offsets          = {},
@@ -1172,6 +1182,12 @@ namespace test::adc {
                 TEST_ASSERT_TRUE(sample <= 0xFFFU);
                 LOGI(TAG, "Injected sample: %u", sample);
             }
+
+            gpio_clear_interrupt(GPIO_PIN_11);
+            gpio_reset_pin(GPIOA, GPIO_PIN_11);
+
+            gpio_clear_interrupt(GPIO_PIN_15);
+            gpio_reset_pin(GPIOA, GPIO_PIN_15);
 
             adc_enable_nvic_irq(false);
             reset_to_baseline();
@@ -1315,6 +1331,9 @@ namespace test::adc {
         RUN_TEST(regular_group_runs_in_circular_and_double_buffering_mode);
         RUN_TEST(external_trigger_source_works_for_regular_and_injected_groups);
         RUN_TEST(analog_watchdog_validates_thresholds_and_monitor_flags);
+
+        TRY_THEN_FAIL(adc_deconfigure(ADC1));
+        TRY_THEN_FAIL(adcx_clk_enable(ADC1, false));
 
         UNITY_END();
         LOGI(TAG, "Done with all tests on the ADC driver");

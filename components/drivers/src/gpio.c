@@ -185,6 +185,18 @@ bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin) {
     return false;
 }
 
+void gpio_reset_pin(GPIO_TypeDef* port, gpio_pin_t pin) {
+    port->MODER &= ~(0b11UL << (pin * 2));
+    if (pin <= GPIO_PIN_7) {
+        port->AFR[0] &= ~(0xFUL << (pin * 4UL));
+    } else {
+        port->AFR[1] &= ~(0xFUL << ((pin - 8) * 4UL));
+    }
+    port->PUPDR &= ~(0b11UL << (pin * 2));
+    port->OSPEEDR &= ~(1UL << (pin * 2));
+    port->OTYPER &= ~(1UL << pin);
+}
+
 hal_err_t gpio_set_interrupt(GPIO_TypeDef*       port,
                              gpio_pin_t          pin,
                              gpio_edge_trigger_t edge,
@@ -221,7 +233,11 @@ hal_err_t gpio_set_interrupt(GPIO_TypeDef*       port,
     }
 
     // Enable the SYSCFG clock
-    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+    static bool is_syscfg_enabled = false;
+    if (!is_syscfg_enabled) {
+        RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+        is_syscfg_enabled = true;
+    }
 
     // Set external interrupt configuration register
     SYSCFG->EXTICR[reg_idx] = (SYSCFG->EXTICR[reg_idx] & ~(0xFUL << bit_pos)) |

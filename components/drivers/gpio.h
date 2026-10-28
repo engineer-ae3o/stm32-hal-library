@@ -36,6 +36,7 @@ void gpio_set_output_type(GPIO_TypeDef*      port,
 void gpio_set_level(GPIO_TypeDef* port, gpio_pin_t pin, bool level);
 void gpio_level_toggle(GPIO_TypeDef* port, gpio_pin_t pin);
 bool gpio_get_level(GPIO_TypeDef* port, gpio_pin_t pin);
+void gpio_reset_pin(GPIO_TypeDef* port, gpio_pin_t pin);
 
 hal_err_t gpio_set_interrupt(GPIO_TypeDef*       port,
                              gpio_pin_t          pin,

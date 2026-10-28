@@ -9,12 +9,10 @@
 
 
 // Forward declarations
-[[__gnu__::__always_inline__]] static inline hal_err_t
-send_start(I2C_TypeDef* handle);
-[[__gnu__::__always_inline__]] static inline void
-send_stop(I2C_TypeDef* handle);
-[[__gnu__::__always_inline__]] static inline hal_err_t
-check_error_flags(I2C_TypeDef* handle, bool send_stop_on_error);
+static inline hal_err_t send_start(I2C_TypeDef* handle);
+static inline hal_err_t send_stop(I2C_TypeDef* handle);
+static inline hal_err_t check_error_flags(I2C_TypeDef* handle,
+                                          bool         send_stop_on_error);
 
 static hal_err_t tx_trans(I2C_TypeDef*   handle,
                           uint8_t        address,
@@ -75,13 +73,9 @@ hal_err_t i2c_master_init(I2C_TypeDef*               handle,
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Disable the I2C peripheral before writing to any of its registers and issue a software and hardware bus reset
-    TRY(i2c_master_hardware_reset(config->scl_pin.port,
-                                  config->scl_pin.pin,
-                                  config->sda_pin.port,
-                                  config->sda_pin.pin));
-    TRY(i2c_master_software_reset(handle));
+    // Disable the I2C peripheral before writing to any of its registers
     handle->CR1 &= ~I2C_CR1_PE;
+    __DSB();
 
     handle->CR2 &= ~I2C_CR2_FREQ;
     handle->CR2 |=
@@ -244,7 +238,7 @@ hal_err_t i2c_master_transmit(I2C_TypeDef*   handle,
     // Start the transaction
     TRY(send_start(handle));
     TRY_WITH_FUNC(tx_trans(handle, address, data, size), send_stop(handle));
-    send_stop(handle);
+    TRY(send_stop(handle));
 
     return HAL_OK;
 }
@@ -289,8 +283,8 @@ hal_err_t i2c_master_transceive(I2C_TypeDef*   handle,
     // Start the transaction
     TRY(send_start(handle));
     TRY_WITH_FUNC(tx_trans(handle, address, tx_data, tx_size),
-                  send_stop(handle));
-    TRY_WITH_FUNC(send_start(handle), send_stop(handle));
+                  (void)send_stop(handle));
+    TRY_WITH_FUNC(send_start(handle), (void)send_stop(handle));
     TRY(rx_trans(handle, address, rx_data, rx_size));
 
     return HAL_OK;
@@ -309,7 +303,7 @@ static hal_err_t send_start(I2C_TypeDef* handle) {
     }
 
     if (!(handle->SR1 & I2C_SR1_SB) || (timeout == 0)) {
-        send_stop(handle);
+        TRY(send_stop(handle));
         return HAL_ERR_TIMEOUT;
     }
 
@@ -318,9 +312,24 @@ static hal_err_t send_start(I2C_TypeDef* handle) {
     return HAL_OK;
 }
 
-static void send_stop(I2C_TypeDef* handle) {
+static hal_err_t send_stop(I2C_TypeDef* handle) {
     handle->CR1 |= I2C_CR1_STOP;
-    __DSB();
+
+    // Poll till the STOP bit has been cleared by the hardware
+    uint32_t timeout = TIMEOUT;
+    while ((handle->CR1 & I2C_CR1_STOP) && --timeout);
+    if ((handle->CR1 & I2C_CR1_STOP) || (timeout == 0)) {
+        return HAL_ERR_TIMEOUT;
+    }
+
+    // Poll till the bus has been disengaged
+    timeout = TIMEOUT;
+    while ((handle->SR2 & I2C_SR2_BUSY) && --timeout);
+    if ((handle->SR2 & I2C_SR2_BUSY) || (timeout == 0)) {
+        return HAL_ERR_TIMEOUT;
+    }
+
+    return HAL_OK;
 }
 
 static hal_err_t check_error_flags(I2C_TypeDef* handle,
@@ -345,7 +354,7 @@ static hal_err_t check_error_flags(I2C_TypeDef* handle,
     handle->SR1 = clear;
 
     if (send_stop_on_error && error != HAL_OK) {
-        send_stop(handle);
+        TRY(send_stop(handle));
     }
     return error;
 }
@@ -411,7 +420,7 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
 
     // Return if the ADDR bit still hasn't been set
     if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout == 0)) {
-        send_stop(handle);
+        TRY(send_stop(handle));
         return HAL_ERR_RX;
     }
 
@@ -431,7 +440,7 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
             (void)handle->SR2;
 
             // Send stop now so the peripheral sends the stop immediately after reception
-            send_stop(handle);
+            TRY(send_stop(handle));
 
             // Wait for the data register to contain the received data
             timeout = TIMEOUT;
@@ -467,12 +476,12 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
             }
 
             if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
-                send_stop(handle);
+                TRY(send_stop(handle));
                 return HAL_ERR_RX;
             }
 
             // Send stop now so the peripheral does this immediately after the transaction
-            send_stop(handle);
+            TRY(send_stop(handle));
 
             // Finally, read the DR twice to get the two bytes received
             data[0] = (uint8_t)handle->DR;
@@ -496,7 +505,7 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
 
                     // Return if RXNE still isn't set
                     if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) {
-                        send_stop(handle);
+                        TRY(send_stop(handle));
                         return HAL_ERR_RX;
                     }
 
@@ -517,7 +526,7 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
 
             // Return if the BTF bit still has not been set
             if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
-                send_stop(handle);
+                TRY(send_stop(handle));
                 return HAL_ERR_RX;
             }
 
@@ -536,12 +545,12 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
 
             // Return if the BTF bit still has not been set
             if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
-                send_stop(handle);
+                TRY(send_stop(handle));
                 return HAL_ERR_RX;
             }
 
             // Send stop now so the peripheral does this immediately after the transaction ends
-            send_stop(handle);
+            TRY(send_stop(handle));
 
             // Finally, read DR twice to get both remaining bytes
             data[size - remaining_bytes]     = (uint8_t)handle->DR;
