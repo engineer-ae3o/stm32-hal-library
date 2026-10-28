@@ -17,9 +17,11 @@
 
 namespace test::heap {
 
-    namespace {
+    constexpr const char* TAG = "Heap_Test";
 
-        constexpr const char* TAG = "Heap_Test";
+#if HEAP_SIZE_BYTES != 0
+
+    namespace {
 
         // Helper
         inline void assert_heap_clean() {
@@ -237,5 +239,13 @@ namespace test::heap {
         UNITY_END();
         LOGI(TAG, "Done with all tests on the heap allocation driver");
     }
+
+#else
+
+    void all() {
+        LOGI(TAG, "No heap test suite since heap size is 0");
+    }
+
+#endif
 
 } // namespace test::heap

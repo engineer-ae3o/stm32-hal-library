@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 
+#if HEAP_SIZE_BYTES != 0
 // The heap
 static O1HeapInstance* s_heap_handle        = NULL;
 static size_t          s_num_of_allocations = 0;
@@ -31,9 +32,14 @@ static const char* TAG = "O1heap";
          "Heap initialized with a size of %zukB",
          sizeof(s_heap_buffer) / 1024);
 }
+#endif
 
 // Public API
 void* lib_malloc(size_t size) {
+#if HEAP_SIZE_BYTES == 0
+    (void)size;
+    return NULL;
+#else
     if (size == 0 || size >= HEAP_SIZE_BYTES) {
         return NULL;
     }
@@ -42,9 +48,15 @@ void* lib_malloc(size_t size) {
         s_num_of_allocations++;
     }
     return ptr;
+#endif
 }
 
 void* lib_calloc(size_t nmemb, size_t size) {
+#if HEAP_SIZE_BYTES == 0
+    (void)nmemb;
+    (void)size;
+    return NULL;
+#else
     if (size == 0 || size >= HEAP_SIZE_BYTES || nmemb == 0 ||
         nmemb >= HEAP_SIZE_BYTES) {
         return NULL;
@@ -55,9 +67,15 @@ void* lib_calloc(size_t nmemb, size_t size) {
         memset(ptr, 0, nmemb * size);
     }
     return ptr;
+#endif
 }
 
 void* lib_realloc(void* old, size_t new_size) {
+#if HEAP_SIZE_BYTES == 0
+    (void)old;
+    (void)new_size;
+    return NULL;
+#else
     if (old == NULL) {
         return lib_malloc(new_size);
     }
@@ -69,20 +87,32 @@ void* lib_realloc(void* old, size_t new_size) {
         return NULL;
     }
     return o1heapReallocate(s_heap_handle, old, new_size);
+#endif
 }
 
 void lib_free(void* ptr) {
+#if HEAP_SIZE_BYTES == 0
+    (void)ptr;
+#else
     if (ptr != NULL) {
         o1heapFree(s_heap_handle, ptr);
         s_num_of_allocations--;
     }
+#endif
 }
 
 bool check_heap_state(void) {
+#if HEAP_SIZE_BYTES == 0
+    return false;
+#else
     return o1heapDoInvariantsHold(s_heap_handle);
+#endif
 }
 
 void get_heap_stats(heap_info_t* info) {
+#if HEAP_SIZE_BYTES == 0
+    (void)info;
+#else
     if (info) {
         const O1HeapDiagnostics diagnostics =
             o1heapGetDiagnostics(s_heap_handle);
@@ -93,9 +123,11 @@ void get_heap_stats(heap_info_t* info) {
         info->out_of_mem_count    = (size_t)diagnostics.oom_count;
         info->num_of_allocations  = s_num_of_allocations;
     }
+#endif
 }
 
 void print_heap_stats(void) {
+#if HEAP_SIZE_BYTES != 0
     heap_info_t info;
     get_heap_stats(&info);
     LOGI(TAG, "Max heap capacity: %zubytes", info.max_capacity);
@@ -110,4 +142,5 @@ void print_heap_stats(void) {
          "Number of failed allocation requests: %zu",
          info.out_of_mem_count);
     LOGI(TAG, "Number of allocations: %zu", info.num_of_allocations);
+#endif
 }
