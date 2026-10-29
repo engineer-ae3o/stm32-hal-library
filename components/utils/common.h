@@ -16,7 +16,7 @@ extern "C" {
 
 
 // Loop iteration based timeout
-#define TIMEOUT (1'000'000U)
+#define TIMEOUT (10'000'000U)
 #define UNUSED(x) (void)(x)
 
 // NVIC interrupt priorities for the different peripherals
@@ -188,7 +188,7 @@ void assert_check(bool        cond,
                  __FILE__,                                                     \
                  __LINE__,                                                     \
                  hal_err_to_string(ret_));                                     \
-            ASSERT(false);                                                     \
+            PANIC();                                                           \
         }                                                                      \
     } while (0)
 

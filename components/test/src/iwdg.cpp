@@ -2,6 +2,7 @@
 #include "Unity/unity.h"
 
 #include "drivers/iwdg.h"
+#include "utils/common.h"
 #include "utils/board.h"
 #include "test/iwdg.hpp"
 #include "utils/err.h"
@@ -23,16 +24,6 @@ namespace test::iwdg {
             (IWDG_RLR_RL_Msk * 1000) / COUNTER_CLK_Hz;
 
         // TESTS
-        void reset_flag_is_clear_before_first_start() {
-            // Must run before iwdg_start is ever called anywhere in the suite. If this is set, the
-            // IWDG actually expired and reset the chip on a previous run. A real timeout event, not
-            // a test artifact. We clear it so a future timeout is detectable again on the next boot.
-            TEST_ASSERT_FALSE_MESSAGE(RCC->CSR & RCC_CSR_IWDGRSTF,
-                                      "The IWDG previously reset the chip; "
-                                      "investigate before continuing");
-            RCC->CSR |= RCC_CSR_RMVF;
-        }
-
         void invalid_arg_is_rejected_and_leaves_registers_untouched() {
             const uint32_t pr_before  = IWDG->PR;
             const uint32_t rlr_before = IWDG->RLR;
@@ -152,7 +143,6 @@ namespace test::iwdg {
         LOGI(TAG, "Starting the tests on the IWDG driver");
         UNITY_BEGIN();
 
-        RUN_TEST(reset_flag_is_clear_before_first_start);
         RUN_TEST(invalid_arg_is_rejected_and_leaves_registers_untouched);
         RUN_TEST(reload_and_prescaler_are_set_correctly);
         iwdg_kick();

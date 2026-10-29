@@ -428,7 +428,7 @@ namespace test::i2c {
         }
 
         void aht20_deinits_fine() {
-            // This test must run last after all other AHT20 tests since it tears up the bus and deinitializes the AHT20
+            // This should run last after all other AHT20 tests since it tears up the bus and deinitializes the AHT20
             constexpr uint8_t aht20_reset_code = 0xBA;
             TEST_ASSERT_EQUAL(HAL_OK,
                               i2c_master_transmit(TEST_PORT,
@@ -456,6 +456,9 @@ namespace test::i2c {
             aht20_inits_fine();
             read_attempt_from_aht20();
             aht20_deinits_fine();
+            // Leave the AHT20 and the bus initialized
+            aht20_inits_fine();
+            read_attempt_from_aht20();
         }
 
     } // namespace

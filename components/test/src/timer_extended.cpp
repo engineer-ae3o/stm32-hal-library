@@ -7,6 +7,7 @@
 #include "drivers/timer_types.h"
 #include "test/loopback.hpp"
 #include "drivers/timer.h"
+#include "utils/common.h"
 #include "utils/board.h"
 #include "utils/tick.h"
 #include "utils/err.h"

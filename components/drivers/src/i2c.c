@@ -1,5 +1,5 @@
-#include "drivers/gpio_types.h"
 #include "stm32f411xe.h"
+#include "drivers/gpio_types.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
 #include "utils/board.h"
@@ -63,7 +63,8 @@ hal_err_t i2c_master_init(I2C_TypeDef*               handle,
     }
 
     // Get the APB1 bus frequency and cache it
-    const uint32_t apb1_clk_freq_mhz = get_apb1_core_clock() / 1'000'000U;
+    const uint32_t apb1_clk_freq_hz  = get_apb1_core_clock();
+    const uint32_t apb1_clk_freq_mhz = apb1_clk_freq_hz / 1'000'000U;
 
     if (config->frequency == I2C_FREQ_100kHz) {
         if (apb1_clk_freq_mhz < MINIMUM_I2C_100kHz_APB1_CLK_MHz) {
@@ -78,7 +79,7 @@ hal_err_t i2c_master_init(I2C_TypeDef*               handle,
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Configure pins for I2C
+    // Configure the pins for I2C
     TRY(gpiox_clk_enable(config->sda_pin.port, true));
     gpio_reset_pin(config->sda_pin.port, config->sda_pin.pin);
     gpio_set_alternate_function(
@@ -105,7 +106,7 @@ hal_err_t i2c_master_init(I2C_TypeDef*               handle,
     handle->CR1 &= ~I2C_CR1_PE;
     __DSB();
 
-    // Soft reset the I2C port
+    // Soft reset the I2C peripheral
     TRY(i2c_master_software_reset(handle));
 
     // Write the APB1 clock value in the freq bit positions
@@ -119,10 +120,9 @@ hal_err_t i2c_master_init(I2C_TypeDef*               handle,
     // Enable Full mode and duty cycle mode of 16:9 if using 400kHz. Leave at standard mode if 100kHz
     ccr |= (config->frequency == I2C_FREQ_400kHz) ? (I2C_CCR_FS | I2C_CCR_DUTY)
                                                   : 0;
-    const uint32_t clock_val =
-        (config->frequency == I2C_FREQ_400kHz)
-            ? (apb1_clk_freq_mhz * 1'000'000U) / (25 * I2C_FREQ_400kHz)
-            : (apb1_clk_freq_mhz * 1'000'000U) / (2 * I2C_FREQ_100kHz);
+    const uint32_t clock_val = (config->frequency == I2C_FREQ_400kHz)
+                                   ? apb1_clk_freq_hz / (25 * I2C_FREQ_400kHz)
+                                   : apb1_clk_freq_hz / (2 * I2C_FREQ_100kHz);
     ccr |= (clock_val << I2C_CCR_CCR_Pos) & I2C_CCR_CCR;
     handle->CCR = ccr;
 
@@ -329,33 +329,6 @@ static inline hal_err_t send_start(I2C_TypeDef* handle) {
     return HAL_OK;
 }
 
-static inline hal_err_t check_error_flags(I2C_TypeDef* handle,
-                                          bool         send_stop_on_error) {
-    hal_err_t error = HAL_OK;
-
-    const uint32_t status = handle->SR1;
-    uint32_t       clear  = status;
-
-    if (status & I2C_SR1_AF) {
-        clear &= ~I2C_SR1_AF;
-        error = HAL_ERR_I2C_DEVICE_NOT_FOUND;
-    }
-    if (status & I2C_SR1_BERR) {
-        clear &= ~I2C_SR1_BERR;
-        error = HAL_ERR_I2C_BUS_ERROR;
-    }
-    if (status & I2C_SR1_ARLO) {
-        clear &= ~I2C_SR1_ARLO;
-        error = HAL_ERR_I2C_ARBITRATION_LOST;
-    }
-    handle->SR1 = clear;
-
-    if (send_stop_on_error && error != HAL_OK) {
-        TRY(send_full_stop_sequence(handle));
-    }
-    return error;
-}
-
 static inline void request_stop(I2C_TypeDef* handle) {
     handle->CR1 |= I2C_CR1_STOP;
 }
@@ -382,6 +355,33 @@ static inline hal_err_t send_full_stop_sequence(I2C_TypeDef* handle) {
     request_stop(handle);
     TRY(wait_for_stop(handle));
     return HAL_OK;
+}
+
+static inline hal_err_t check_error_flags(I2C_TypeDef* handle,
+                                          bool         send_stop_on_error) {
+    hal_err_t error = HAL_OK;
+
+    const uint32_t status = handle->SR1;
+    uint32_t       clear  = status;
+
+    if (status & I2C_SR1_AF) {
+        clear &= ~I2C_SR1_AF;
+        error = HAL_ERR_I2C_DEVICE_NOT_FOUND;
+    }
+    if (status & I2C_SR1_BERR) {
+        clear &= ~I2C_SR1_BERR;
+        error = HAL_ERR_I2C_BUS_ERROR;
+    }
+    if (status & I2C_SR1_ARLO) {
+        clear &= ~I2C_SR1_ARLO;
+        error = HAL_ERR_I2C_ARBITRATION_LOST;
+    }
+    handle->SR1 = clear;
+
+    if (send_stop_on_error && error != HAL_OK) {
+        TRY(send_full_stop_sequence(handle));
+    }
+    return error;
 }
 
 static inline hal_err_t tx_trans(I2C_TypeDef*   handle,
@@ -475,7 +475,8 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
 
             // Return if the RXE bit still has not been set
             if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) {
-                return wait_for_stop(handle);
+                (void)wait_for_stop(handle);
+                return HAL_ERR_RX;
             }
 
             // Finally, read the data

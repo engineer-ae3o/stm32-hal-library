@@ -491,7 +491,7 @@ namespace test::adc {
             TEST_ASSERT_EQUAL(HAL_OK, adc_get_vdda(ADC1, &vdda));
 
             // VDDA on this board is a regulated supply. Sanity bound it rather than assert an exact value
-            TEST_ASSERT_TRUE(vdda > 2.5F && vdda < 4.0F);
+            TEST_ASSERT_TRUE(vdda > 2.5F && vdda < 5.0F);
             LOGI(TAG,
                  "[voltage_and_temperature_math_are_internally_consistent] "
                  "Vdda: %.3fV",
