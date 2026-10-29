@@ -1,3 +1,4 @@
+#include "drivers/gpio.h"
 #include "stm32f411xe.h"
 #include "Unity/unity.h"
 
@@ -22,7 +23,8 @@ namespace test::i2c {
         constexpr uint8_t  AHT20_I2C_ADDRESS = 0x38;
 
         const i2c_master_config_t PORT_CONFIG = {
-            .use_pullups    = true,
+            .use_pullups =
+                false, // Hardware pullups should be used. The onboard pullups are too weak
             .frequency      = I2C_FREQ_100kHz,
             .digital_filter = I2C_DIGITAL_FILTER_0,
             .sda_pin        = BOARD_I2C3_SDA_PB8,
@@ -356,14 +358,14 @@ namespace test::i2c {
                                      "unterminated start condition");
 
             TEST_ASSERT_EQUAL(
-                HAL_ERR_INVALID_STATE,
+                HAL_ERR_I2C_BUS_BUSY,
                 i2c_master_transmit(
                     TEST_PORT, AHT20_I2C_ADDRESS, &tx_data, sizeof(tx_data)));
             TEST_ASSERT_EQUAL(
-                HAL_ERR_INVALID_STATE,
+                HAL_ERR_I2C_BUS_BUSY,
                 i2c_master_receive(
                     TEST_PORT, AHT20_I2C_ADDRESS, &rx_data, sizeof(rx_data)));
-            TEST_ASSERT_EQUAL(HAL_ERR_INVALID_STATE,
+            TEST_ASSERT_EQUAL(HAL_ERR_I2C_BUS_BUSY,
                               i2c_master_transceive(TEST_PORT,
                                                     AHT20_I2C_ADDRESS,
                                                     &tx_data,

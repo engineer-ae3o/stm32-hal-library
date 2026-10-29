@@ -29,10 +29,12 @@ void tearDown() {
 namespace test {
 
     void runner() {
-        // Test runners for all components
-        // adc::all();
-        // dma::all();
-        i2c::all();
+        while (1) {
+            // Test runners for all components
+            // adc::all();
+            // dma::all();
+            i2c::all();
+        }
         // pwm::all();
         // crc::all();
         // spi::all();

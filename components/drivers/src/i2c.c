@@ -74,13 +74,39 @@ hal_err_t i2c_master_init(I2C_TypeDef*               handle,
         return HAL_ERR_INVALID_ARG;
     }
 
-    // Disable the I2C peripheral before writing to any of its registers
-    handle->CR1 &= ~I2C_CR1_PE;
-    __DSB();
+    // Configure pins for I2C
+    TRY(gpiox_clk_enable(config->sda_pin.port, true));
+    gpio_reset_pin(config->sda_pin.port, config->sda_pin.pin);
+    gpio_set_alternate_function(
+        config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af);
+    gpio_set_output_type(
+        config->sda_pin.port, config->sda_pin.pin, GPIO_OPEN_DRAIN);
+    gpio_set_speed_mode(
+        config->sda_pin.port, config->sda_pin.pin, GPIO_FULL_SPEED);
+    gpio_enable_pullup(
+        config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
+
+    TRY(gpiox_clk_enable(config->scl_pin.port, true));
+    gpio_reset_pin(config->scl_pin.port, config->scl_pin.pin);
+    gpio_set_alternate_function(
+        config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af);
+    gpio_set_output_type(
+        config->scl_pin.port, config->scl_pin.pin, GPIO_OPEN_DRAIN);
+    gpio_set_speed_mode(
+        config->scl_pin.port, config->scl_pin.pin, GPIO_FULL_SPEED);
+    gpio_enable_pullup(
+        config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
     handle->CR2 &= ~I2C_CR2_FREQ;
     handle->CR2 |=
         (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos) & I2C_CR2_FREQ;
+
+    // Disable the I2C peripheral before writing to any of its registers
+    handle->CR1 &= ~I2C_CR1_PE;
+    __DSB();
+
+    // Soft reset the I2C port
+    TRY(i2c_master_software_reset(handle));
 
     // Clock configuration
     uint32_t ccr = handle->CCR & ~(I2C_CCR_CCR | I2C_CCR_FS | I2C_CCR_DUTY);
@@ -107,28 +133,6 @@ hal_err_t i2c_master_init(I2C_TypeDef*               handle,
     handle->TRISE |= (((trise_ns * apb1_clk_freq_mhz) / 1000U) +
                       config->digital_filter + 1) &
                      I2C_TRISE_TRISE;
-
-    // Configure pins for I2C
-    // The pins already have their ports enabled and have been set as open drain already. No need to repeat here
-    TRY(gpiox_clk_enable(config->sda_pin.port, true));
-    gpio_set_alternate_function(
-        config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af);
-    gpio_set_output_type(
-        config->sda_pin.port, config->sda_pin.pin, GPIO_OPEN_DRAIN);
-    gpio_set_speed_mode(
-        config->sda_pin.port, config->sda_pin.pin, GPIO_MEDIUM_SPEED);
-    gpio_enable_pullup(
-        config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
-
-    TRY(gpiox_clk_enable(config->scl_pin.port, true));
-    gpio_set_alternate_function(
-        config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af);
-    gpio_set_output_type(
-        config->scl_pin.port, config->scl_pin.pin, GPIO_OPEN_DRAIN);
-    gpio_set_speed_mode(
-        config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
-    gpio_enable_pullup(
-        config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
     // Enable the I2C peripheral after all setup
     handle->CR1 |= I2C_CR1_PE;
