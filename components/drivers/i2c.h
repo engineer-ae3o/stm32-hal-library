@@ -38,13 +38,13 @@ typedef enum : uint8_t {
     I2C_DIGITAL_FILTER_13,
     I2C_DIGITAL_FILTER_14,
     I2C_DIGITAL_FILTER_15,
-} i2c_digi_filt_t;
+} i2c_filter_t;
 
 typedef struct {
     bool use_pullups;
 
     i2c_frequency_t frequency;
-    i2c_digi_filt_t digital_filter;
+    i2c_filter_t    digital_filter;
 
     board_pin_t sda_pin;
     board_pin_t scl_pin;

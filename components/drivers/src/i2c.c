@@ -1,3 +1,4 @@
+#include "drivers/gpio_types.h"
 #include "stm32f411xe.h"
 #include "drivers/gpio.h"
 #include "utils/common.h"
@@ -109,15 +110,21 @@ hal_err_t i2c_master_init(I2C_TypeDef*               handle,
 
     // Configure pins for I2C
     // The pins already have their ports enabled and have been set as open drain already. No need to repeat here
+    TRY(gpiox_clk_enable(config->sda_pin.port, true));
     gpio_set_alternate_function(
         config->sda_pin.port, config->sda_pin.pin, config->sda_pin.af);
+    gpio_set_output_type(
+        config->sda_pin.port, config->sda_pin.pin, GPIO_OPEN_DRAIN);
     gpio_set_speed_mode(
         config->sda_pin.port, config->sda_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_enable_pullup(
         config->sda_pin.port, config->sda_pin.pin, config->use_pullups);
 
+    TRY(gpiox_clk_enable(config->scl_pin.port, true));
     gpio_set_alternate_function(
         config->scl_pin.port, config->scl_pin.pin, config->scl_pin.af);
+    gpio_set_output_type(
+        config->scl_pin.port, config->scl_pin.pin, GPIO_OPEN_DRAIN);
     gpio_set_speed_mode(
         config->scl_pin.port, config->scl_pin.pin, GPIO_MEDIUM_SPEED);
     gpio_enable_pullup(

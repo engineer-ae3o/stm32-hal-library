@@ -13,6 +13,7 @@ static const char* s_err_code_lut[] = {
     [HAL_ERR_TIMEOUT]                 = "HAL_ERR_TIMEOUT",
     [HAL_ERR_NOT_DONE]                = "HAL_ERR_NOT_DONE",
     [HAL_ERR_NOT_FOUND]               = "HAL_ERR_NOT_FOUND",
+    [HAL_ERR_OUT_OF_MEM]              = "HAL_ERR_OUT_OF_MEM",
     [HAL_ERR_TX]                      = "HAL_ERR_TX",
     [HAL_ERR_RX]                      = "HAL_ERR_RX",
     [HAL_ERR_I2C_BUS_BUSY]            = "HAL_ERR_I2C_BUS_BUSY",
@@ -31,7 +32,7 @@ static const char* s_err_code_lut[] = {
 static_assert(HAL_SENTINEL_COUNT == ARRAY_SIZE(s_err_code_lut));
 
 const char* hal_err_to_string(hal_err_t error) {
-    if (error >= ARRAY_SIZE(s_err_code_lut)) {
+    if (gnu_unlikely(error >= ARRAY_SIZE(s_err_code_lut))) {
         return "HAL_ERR_UNKNOWN";
     }
     return s_err_code_lut[error];

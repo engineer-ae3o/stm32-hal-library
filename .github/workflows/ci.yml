@@ -131,7 +131,7 @@ jobs:
 
       - name: Install Latest Cppcheck
         run: |
-          git clone --depth 1 https://github.com/cppcheck-opensource/cppcheck.git /tmp/cppcheck
+          git clone --depth 1 --branch 2.21.1 https://github.com/cppcheck-opensource/cppcheck.git /tmp/cppcheck
           cmake -S /tmp/cppcheck -B /tmp/cppcheck/build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
