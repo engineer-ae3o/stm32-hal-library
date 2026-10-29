@@ -11,25 +11,21 @@ extern "C" {
 
 
 typedef enum : uint8_t {
-    // Success
-    HAL_OK = 0,
+    HAL_OK = 0, // Success
 
-    // Generic failure
-    HAL_FAIL,
+    HAL_FAIL, // Generic failure
 
-    // More specific errors
-    HAL_ERR_TIMEOUT,
-    HAL_ERR_NOT_DONE,
-    HAL_ERR_NOT_FOUND,
-    HAL_ERR_INVALID_ARG,
-    HAL_ERR_INVALID_SIZE,
-    HAL_ERR_INVALID_STATE,
-    HAL_ERR_NOT_SUPPORTED,
-    HAL_ERR_OUT_OF_MEM,
+    HAL_ERR_TX, // Generic transfer error
+    HAL_ERR_RX, // Generic reception error
 
-    // Generic Transfer and Reception failures
-    HAL_ERR_TX,
-    HAL_ERR_RX,
+    HAL_ERR_TIMEOUT, // Operation or function timed out
+    HAL_ERR_NOT_DONE, // Operation not completed when another operation is requested
+    HAL_ERR_NOT_FOUND,    // Resource not found
+    HAL_ERR_OUT_OF_MEM,   // The heap ran out of memory
+    HAL_ERR_INVALID_ARG,  // Invalid argument passed to a function
+    HAL_ERR_INVALID_SIZE, // Invalid size passed to a function
+    HAL_ERR_INVALID_STATE, // Application or hardware in an invalid state when something is requested
+    HAL_ERR_NOT_SUPPORTED, // Feature or operation not supported
 
     // I2C extensions
     HAL_ERR_I2C_BUS_BUSY, // The bus is in use by a different master
@@ -50,7 +46,7 @@ typedef enum : uint8_t {
     HAL_ERR_DMA_FE,  // FIFO mode error
 
     // Timer extension
-    HAL_ERR_TIM_OVER_CAPTURE, // Overcapture in input capture
+    HAL_ERR_TIM_OVER_CAPTURE, // Overcapture in input capture mode on a timer
 
     // Sentinel value
     HAL_SENTINEL_COUNT,

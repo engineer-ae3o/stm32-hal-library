@@ -11,14 +11,18 @@
 
 // Forward declarations
 static inline hal_err_t send_start(I2C_TypeDef* handle);
-static inline hal_err_t send_stop(I2C_TypeDef* handle);
 static inline hal_err_t check_error_flags(I2C_TypeDef* handle,
                                           bool         send_stop_on_error);
+
+static inline void      request_stop(I2C_TypeDef* handle);
+static inline hal_err_t wait_for_stop(I2C_TypeDef* handle);
+static inline hal_err_t send_full_stop_sequence(I2C_TypeDef* handle);
 
 static inline hal_err_t tx_trans(I2C_TypeDef*   handle,
                                  uint8_t        address,
                                  const uint8_t* data,
                                  size_t         size);
+
 static inline hal_err_t
 rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size);
 
@@ -97,16 +101,17 @@ hal_err_t i2c_master_init(I2C_TypeDef*               handle,
     gpio_enable_pullup(
         config->scl_pin.port, config->scl_pin.pin, config->use_pullups);
 
-    handle->CR2 &= ~I2C_CR2_FREQ;
-    handle->CR2 |=
-        (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos) & I2C_CR2_FREQ;
-
     // Disable the I2C peripheral before writing to any of its registers
     handle->CR1 &= ~I2C_CR1_PE;
     __DSB();
 
     // Soft reset the I2C port
     TRY(i2c_master_software_reset(handle));
+
+    // Write the APB1 clock value in the freq bit positions
+    handle->CR2 &= ~I2C_CR2_FREQ;
+    handle->CR2 |=
+        (uint32_t)(apb1_clk_freq_mhz << I2C_CR2_FREQ_Pos) & I2C_CR2_FREQ;
 
     // Clock configuration
     uint32_t ccr = handle->CCR & ~(I2C_CCR_CCR | I2C_CCR_FS | I2C_CCR_DUTY);
@@ -248,8 +253,9 @@ hal_err_t i2c_master_transmit(I2C_TypeDef*   handle,
 
     // Start the transaction
     TRY(send_start(handle));
-    TRY_WITH_FUNC(tx_trans(handle, address, data, size), send_stop(handle));
-    TRY(send_stop(handle));
+    TRY_WITH_FUNC(tx_trans(handle, address, data, size),
+                  (void)send_full_stop_sequence(handle));
+    TRY(send_full_stop_sequence(handle));
 
     return HAL_OK;
 }
@@ -294,8 +300,8 @@ hal_err_t i2c_master_transceive(I2C_TypeDef*   handle,
     // Start the transaction
     TRY(send_start(handle));
     TRY_WITH_FUNC(tx_trans(handle, address, tx_data, tx_size),
-                  (void)send_stop(handle));
-    TRY_WITH_FUNC(send_start(handle), (void)send_stop(handle));
+                  (void)send_full_stop_sequence(handle));
+    TRY_WITH_FUNC(send_start(handle), (void)send_full_stop_sequence(handle));
     TRY(rx_trans(handle, address, rx_data, rx_size));
 
     return HAL_OK;
@@ -303,7 +309,7 @@ hal_err_t i2c_master_transceive(I2C_TypeDef*   handle,
 
 
 // Helpers
-static hal_err_t send_start(I2C_TypeDef* handle) {
+static inline hal_err_t send_start(I2C_TypeDef* handle) {
     // Send the start condition
     handle->CR1 |= I2C_CR1_START;
 
@@ -314,7 +320,7 @@ static hal_err_t send_start(I2C_TypeDef* handle) {
     }
 
     if (!(handle->SR1 & I2C_SR1_SB) || (timeout == 0)) {
-        TRY(send_stop(handle));
+        TRY(send_full_stop_sequence(handle));
         return HAL_ERR_TIMEOUT;
     }
 
@@ -323,28 +329,8 @@ static hal_err_t send_start(I2C_TypeDef* handle) {
     return HAL_OK;
 }
 
-static hal_err_t send_stop(I2C_TypeDef* handle) {
-    handle->CR1 |= I2C_CR1_STOP;
-
-    // Poll till the STOP bit has been cleared by the hardware
-    uint32_t timeout = TIMEOUT;
-    while ((handle->CR1 & I2C_CR1_STOP) && --timeout);
-    if ((handle->CR1 & I2C_CR1_STOP) || (timeout == 0)) {
-        return HAL_ERR_TIMEOUT;
-    }
-
-    // Poll till the bus has been disengaged
-    timeout = TIMEOUT;
-    while ((handle->SR2 & I2C_SR2_BUSY) && --timeout);
-    if ((handle->SR2 & I2C_SR2_BUSY) || (timeout == 0)) {
-        return HAL_ERR_TIMEOUT;
-    }
-
-    return HAL_OK;
-}
-
-static hal_err_t check_error_flags(I2C_TypeDef* handle,
-                                   bool         send_stop_on_error) {
+static inline hal_err_t check_error_flags(I2C_TypeDef* handle,
+                                          bool         send_stop_on_error) {
     hal_err_t error = HAL_OK;
 
     const uint32_t status = handle->SR1;
@@ -365,15 +351,43 @@ static hal_err_t check_error_flags(I2C_TypeDef* handle,
     handle->SR1 = clear;
 
     if (send_stop_on_error && error != HAL_OK) {
-        TRY(send_stop(handle));
+        TRY(send_full_stop_sequence(handle));
     }
     return error;
 }
 
-static hal_err_t tx_trans(I2C_TypeDef*   handle,
-                          uint8_t        address,
-                          const uint8_t* data,
-                          size_t         size) {
+static inline void request_stop(I2C_TypeDef* handle) {
+    handle->CR1 |= I2C_CR1_STOP;
+}
+
+static inline hal_err_t wait_for_stop(I2C_TypeDef* handle) {
+    // Poll till the STOP bit has been cleared by the hardware
+    uint32_t timeout = TIMEOUT;
+    while ((handle->CR1 & I2C_CR1_STOP) && --timeout);
+    if ((handle->CR1 & I2C_CR1_STOP) || (timeout == 0)) {
+        return HAL_ERR_TIMEOUT;
+    }
+
+    // Poll till the bus has been disengaged
+    timeout = TIMEOUT;
+    while ((handle->SR2 & I2C_SR2_BUSY) && --timeout);
+    if ((handle->SR2 & I2C_SR2_BUSY) || (timeout == 0)) {
+        return HAL_ERR_TIMEOUT;
+    }
+
+    return HAL_OK;
+}
+
+static inline hal_err_t send_full_stop_sequence(I2C_TypeDef* handle) {
+    request_stop(handle);
+    TRY(wait_for_stop(handle));
+    return HAL_OK;
+}
+
+static inline hal_err_t tx_trans(I2C_TypeDef*   handle,
+                                 uint8_t        address,
+                                 const uint8_t* data,
+                                 size_t         size) {
     // Send address and write bit
     // cppcheck-suppress badBitmaskCheck
     handle->DR = ((uint32_t)(address << 1UL) | 0UL);
@@ -418,7 +432,7 @@ static hal_err_t tx_trans(I2C_TypeDef*   handle,
     return HAL_OK;
 }
 
-static hal_err_t
+static inline hal_err_t
 rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
     // Send address and read bit and set the ACK bit before starting
     handle->DR = ((uint32_t)(address << 1UL) | 1UL);
@@ -431,7 +445,7 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
 
     // Return if the ADDR bit still hasn't been set
     if (!(handle->SR1 & I2C_SR1_ADDR) || (timeout == 0)) {
-        TRY(send_stop(handle));
+        TRY(send_full_stop_sequence(handle));
         return HAL_ERR_RX;
     }
 
@@ -451,7 +465,7 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
             (void)handle->SR2;
 
             // Send stop now so the peripheral sends the stop immediately after reception
-            TRY(send_stop(handle));
+            request_stop(handle);
 
             // Wait for the data register to contain the received data
             timeout = TIMEOUT;
@@ -461,12 +475,13 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
 
             // Return if the RXE bit still has not been set
             if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) {
-                return HAL_ERR_RX;
+                return wait_for_stop(handle);
             }
 
             // Finally, read the data
             data[0] = (uint8_t)handle->DR;
-            return HAL_OK;
+
+            return wait_for_stop(handle);
 
         // When N == 2
         case 2:
@@ -487,17 +502,18 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
             }
 
             if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
-                TRY(send_stop(handle));
+                TRY(send_full_stop_sequence(handle));
                 return HAL_ERR_RX;
             }
 
             // Send stop now so the peripheral does this immediately after the transaction
-            TRY(send_stop(handle));
+            request_stop(handle);
 
             // Finally, read the DR twice to get the two bytes received
             data[0] = (uint8_t)handle->DR;
             data[1] = (uint8_t)handle->DR;
-            return HAL_OK;
+
+            return wait_for_stop(handle);
 
         // When N > 2
         default: {
@@ -516,7 +532,7 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
 
                     // Return if RXNE still isn't set
                     if (!(handle->SR1 & I2C_SR1_RXNE) || (timeout == 0)) {
-                        TRY(send_stop(handle));
+                        TRY(send_full_stop_sequence(handle));
                         return HAL_ERR_RX;
                     }
 
@@ -537,7 +553,7 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
 
             // Return if the BTF bit still has not been set
             if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
-                TRY(send_stop(handle));
+                TRY(send_full_stop_sequence(handle));
                 return HAL_ERR_RX;
             }
 
@@ -556,17 +572,18 @@ rx_trans(I2C_TypeDef* handle, uint8_t address, uint8_t* data, size_t size) {
 
             // Return if the BTF bit still has not been set
             if (!(handle->SR1 & I2C_SR1_BTF) || (timeout == 0)) {
-                TRY(send_stop(handle));
+                TRY(send_full_stop_sequence(handle));
                 return HAL_ERR_RX;
             }
 
             // Send stop now so the peripheral does this immediately after the transaction ends
-            TRY(send_stop(handle));
+            request_stop(handle);
 
             // Finally, read DR twice to get both remaining bytes
             data[size - remaining_bytes]     = (uint8_t)handle->DR;
             data[size - remaining_bytes + 1] = (uint8_t)handle->DR;
-            return HAL_OK;
+
+            return wait_for_stop(handle);
         }
     }
 }

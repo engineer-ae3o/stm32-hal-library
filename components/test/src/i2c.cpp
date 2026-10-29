@@ -259,6 +259,7 @@ namespace test::i2c {
                                                   AHT20_I2C_ADDRESS,
                                                   tx_buffer.data(),
                                                   tx_buffer.size()));
+            delay_ms(10);
 
             // Get the initialization status byte from the AHt20
             constexpr uint8_t tx_init_rq = 0x71;
@@ -279,6 +280,9 @@ namespace test::i2c {
         }
 
         void read_attempt_from_aht20() {
+            // A delay of 2s is required betweeb multiple read attempts from the AHT20
+            delay_ms(2'100);
+
             // Buffer which contains the values to trigger a read from the AHT20
             constexpr std::array<uint8_t, 3> tx_trigger = {0xAC, 0x33, 0x00};
             TEST_ASSERT_EQUAL(HAL_OK,
@@ -328,7 +332,7 @@ namespace test::i2c {
             TEST_ASSERT_TRUE(temperature >= -40 && temperature <= 80);
 
             LOGI(TAG,
-                 "Humidity: %f%%. Temperature: %fC",
+                 "Humidity: %.3f%%. Temperature: %.3fC",
                  (double)humidity,
                  (double)temperature);
         }
